@@ -6,6 +6,12 @@ Companion to [`design.md`](design.md) and
 mtv → muvid rename). Reading order is: thesis → friction inventory →
 ranked ideas → incremental rollout plan with a per-step test strategy.
 
+> **Status (as of the v0 audit follow-through):** I9, I8, I5, I6, I10,
+> I2, I4, S4, and a fal-events-into-muvid bridge have all landed.
+> Next leverage moves: I1 (lacing as the SSOT through `an`), I3
+> (cost rollup), I7 (interactive curate), I11 (shared contracts).
+> See the per-section "Status" lines below.
+
 ## Thesis
 
 `muvid` is a **timeline-locked orchestrator** sitting on top of a
