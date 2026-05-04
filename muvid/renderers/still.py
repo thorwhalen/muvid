@@ -10,8 +10,8 @@ from __future__ import annotations
 import subprocess
 from pathlib import Path
 
-from muvid.render import RenderContext
-from muvid.render._common import storyboard_prompt
+from muvid.renderers import RenderContext
+from muvid.renderers._common import storyboard_prompt
 
 
 def render_still(ctx: RenderContext, *, quality: str = "balanced") -> Path:

@@ -65,15 +65,15 @@ def render_shot(
     ctx = _build_context(project, shot, spec.global_style)
     strategy = shot.render_strategy
     if strategy == "lipsync":
-        from muvid.render.lipsync import render_lipsync as _render
+        from muvid.renderers.lipsync import render_lipsync as _render
     elif strategy == "image_to_video":
-        from muvid.render.image_to_video import render_image_to_video as _render
+        from muvid.renderers.image_to_video import render_image_to_video as _render
     elif strategy == "text_to_video":
-        from muvid.render.text_to_video import render_text_to_video as _render
+        from muvid.renderers.text_to_video import render_text_to_video as _render
     elif strategy == "still":
-        from muvid.render.still import render_still as _render
+        from muvid.renderers.still import render_still as _render
     elif strategy == "animation":
-        from muvid.render.animation import render_animation as _render
+        from muvid.renderers.animation import render_animation as _render
     else:
         raise ValueError(f"Unknown render_strategy: {strategy!r}")
 
@@ -192,8 +192,8 @@ def _lyric_lines_for_shot(project: MusicVideoProject, shot: ShotSpec) -> list:
             out.append(
                 {
                     "text": ann.body.get("text", ""),
-                    "start_s": float(ann.reference.interval.start),
-                    "end_s": float(ann.reference.interval.end),
+                    "start_s": ann.reference.interval.start.to_seconds(),
+                    "end_s": ann.reference.interval.end.to_seconds(),
                     "line_index": ann.body.get("line_index"),
                     "section": ann.body.get("section"),
                 }

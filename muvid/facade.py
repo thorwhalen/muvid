@@ -18,7 +18,7 @@ from muvid import environments as _envs
 from muvid import lyrics as _lyrics
 from muvid import script as _script
 from muvid.project import MusicVideoProject
-from muvid.render import render_all as _render_all, render_shot as _render_shot
+from muvid.renderers import render_all as _render_all, render_shot as _render_shot
 from muvid.schema import SectionSpec, ShotSpec
 
 

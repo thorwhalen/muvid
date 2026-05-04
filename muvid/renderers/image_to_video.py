@@ -12,8 +12,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from muvid.render import RenderContext
-from muvid.render._common import (
+from muvid.renderers import RenderContext
+from muvid.renderers._common import (
     storyboard_prompt,
     trim_video_to_duration,
     upload_local_file_to_temp_url,
