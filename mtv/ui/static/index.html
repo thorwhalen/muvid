@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>mtv — music video pipeline</title>
+<style>
+  :root { --bg:#101418; --fg:#e6e8eb; --muted:#9aa3ad; --accent:#7cd1ff; --ok:#7fd17f; --warn:#e0a060; --err:#e07880; --card:#181d23; --border:#272d34; }
+  body { background:var(--bg); color:var(--fg); font:14px/1.5 -apple-system,BlinkMacSystemFont,system-ui,sans-serif; margin:0; }
+  header { padding:14px 20px; border-bottom:1px solid var(--border); display:flex; align-items:baseline; gap:14px; }
+  header h1 { margin:0; font-size:18px; font-weight:600; }
+  header .root { color:var(--muted); font-family:ui-monospace,Menlo,monospace; }
+  main { display:grid; grid-template-columns:320px 1fr; min-height:calc(100vh - 50px); }
+  aside { border-right:1px solid var(--border); padding:14px 16px; overflow-y:auto; }
+  aside h2 { font-size:11px; text-transform:uppercase; color:var(--muted); margin:18px 0 8px; letter-spacing:.06em; }
+  aside h2:first-child { margin-top:0; }
+  .stage { display:flex; align-items:center; gap:8px; padding:6px 0; }
+  .dot { width:10px; height:10px; border-radius:50%; background:#3a4148; flex:none; }
+  .dot.ok { background:var(--ok); }
+  .dot.partial { background:var(--warn); }
+  .stage span { color:var(--muted); }
+  .stage span.done { color:var(--fg); }
+  section.panel { padding:18px 22px; border-bottom:1px solid var(--border); }
+  section.panel h3 { margin:0 0 10px; font-size:14px; font-weight:600; }
+  section.panel p { color:var(--muted); margin:0 0 12px; }
+  button { background:#222a32; color:var(--fg); border:1px solid var(--border); border-radius:6px; padding:6px 12px; cursor:pointer; font:inherit; }
+  button:hover { background:#2a333d; }
+  button:disabled { opacity:.5; cursor:not-allowed; }
+  button.primary { background:#1a4a6a; border-color:#1a4a6a; }
+  button.primary:hover { background:#235e87; }
+  input, textarea { background:#0e1216; color:var(--fg); border:1px solid var(--border); border-radius:6px; padding:6px 10px; font:inherit; }
+  input { width:240px; }
+  textarea { width:100%; min-height:280px; font-family:ui-monospace,Menlo,monospace; font-size:13px; }
+  .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:8px; }
+  .log { background:#0a0d10; border:1px solid var(--border); border-radius:6px; padding:10px; font-family:ui-monospace,Menlo,monospace; font-size:12px; height:140px; overflow-y:auto; white-space:pre-wrap; color:var(--muted); }
+  .log .err { color:var(--err); }
+  .pill { display:inline-block; padding:1px 7px; border-radius:10px; background:#222a32; color:var(--muted); font-size:11px; }
+  .ok { color:var(--ok); } .warn { color:var(--warn); } .err { color:var(--err); }
+  details { margin:6px 0; }
+  summary { cursor:pointer; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>mtv</h1>
+  <span class="root" id="root">…</span>
+</header>
+
+<main>
+
+<aside id="status">
+  <h2>Pipeline</h2>
+  <div class="stage" id="s-init"><div class="dot"></div><span>1. init + song</span></div>
+  <div class="stage" id="s-transcribe"><div class="dot"></div><span>2. transcribe</span></div>
+  <div class="stage" id="s-lyrics"><div class="dot"></div><span>3. edit lyrics.md</span></div>
+  <div class="stage" id="s-align"><div class="dot"></div><span>4. align</span></div>
+  <div class="stage" id="s-chars"><div class="dot"></div><span>5. characters</span></div>
+  <div class="stage" id="s-envs"><div class="dot"></div><span>6. environments</span></div>
+  <div class="stage" id="s-script"><div class="dot"></div><span>7. script</span></div>
+  <div class="stage" id="s-render"><div class="dot"></div><span>8. render shots</span></div>
+  <div class="stage" id="s-compose"><div class="dot"></div><span>9. compose</span></div>
+  <h2>Counts</h2>
+  <div id="counts" style="font-family:ui-monospace,Menlo,monospace; font-size:12px; color:var(--muted);">loading…</div>
+</aside>
+
+<div>
+
+<section class="panel">
+  <h3>Lyrics</h3>
+  <p>Run ElevenLabs Scribe on the song, then edit <code>lyrics/lyrics.md</code> in your editor (fix mishears, tag sections), then align.</p>
+  <div class="row">
+    <button class="primary" onclick="postJSON('/api/transcribe', {})">Transcribe</button>
+    <button class="primary" onclick="postJSON('/api/align', {})">Align</button>
+    <button onclick="openFile('lyrics/lyrics.md')">Open lyrics.md</button>
+  </div>
+</section>
+
+<section class="panel">
+  <h3>Characters</h3>
+  <div class="row">
+    <input id="char-name" placeholder="name (e.g. maya)">
+    <input id="char-desc" placeholder="description" style="width:380px;">
+    <button onclick="addCharacter()">Add / update</button>
+  </div>
+  <div class="row">
+    <input id="char-name-2" placeholder="name">
+    <input id="char-n" type="number" value="6" min="1" max="20" style="width:60px;">
+    <button onclick="generateImages()">Generate images</button>
+    <button onclick="curateImages()">Curate (lookbook)</button>
+  </div>
+  <div id="chars-list" style="color:var(--muted); margin-top:8px;"></div>
+</section>
+
+<section class="panel">
+  <h3>Environments</h3>
+  <div class="row">
+    <input id="env-name" placeholder="name (e.g. park_bench)">
+    <input id="env-desc" placeholder="description" style="width:380px;">
+    <button onclick="addEnvironment()">Add / update</button>
+  </div>
+  <div class="row">
+    <input id="env-name-2" placeholder="name">
+    <button onclick="renderEnvironment()">Generate establishing image</button>
+  </div>
+  <div id="envs-list" style="color:var(--muted); margin-top:8px;"></div>
+</section>
+
+<section class="panel">
+  <h3>Script</h3>
+  <p>Edit the screenplay, then save — sections and shots will be parsed back into <code>project.json</code>.</p>
+  <textarea id="script-area" placeholder="Loading…"></textarea>
+  <div class="row" style="margin-top:8px;">
+    <button class="primary" onclick="saveScript()">Save & apply</button>
+    <button onclick="loadScript()">Reload</button>
+  </div>
+</section>
+
+<section class="panel">
+  <h3>Render</h3>
+  <div class="row">
+    <input id="render-shot" placeholder="shot id (blank = all)">
+    <select id="render-quality">
+      <option>fast</option>
+      <option selected>balanced</option>
+      <option>high</option>
+    </select>
+    <label><input type="checkbox" id="render-force"> force</label>
+    <button class="primary" onclick="render()">Render</button>
+    <button class="primary" onclick="compose()">Compose final</button>
+  </div>
+  <div id="shots-list" style="color:var(--muted); margin-top:8px;"></div>
+</section>
+
+<section class="panel">
+  <h3>Log</h3>
+  <div class="log" id="log">…</div>
+</section>
+
+</div>
+</main>
+
+<script>
+const $ = (sel) => document.querySelector(sel);
+
+async function fetchJSON(url, opts) {
+  const r = await fetch(url, opts);
+  if (!r.ok) {
+    const txt = await r.text();
+    throw new Error(`${r.status}: ${txt}`);
+  }
+  const ct = r.headers.get('content-type') || '';
+  return ct.includes('application/json') ? r.json() : r.text();
+}
+
+async function postJSON(url, body) {
+  try {
+    const out = await fetchJSON(url, {
+      method: 'POST',
+      headers: {'content-type': 'application/json'},
+      body: JSON.stringify(body || {}),
+    });
+    refreshStatus();
+    return out;
+  } catch (e) {
+    alert(e.message);
+  }
+}
+
+async function refreshStatus() {
+  const s = await fetchJSON('/api/status');
+  $('#root').textContent = s.root;
+  setStage('s-init', !!s.song);
+  setStage('s-transcribe', s.has_transcript);
+  setStage('s-lyrics', s.has_lyrics_md);
+  setStage('s-align', s.has_alignment);
+  setStage('s-chars', s.n_characters > 0);
+  setStage('s-envs', s.n_environments > 0);
+  setStage('s-script', s.n_shots > 0);
+  setStage('s-render', s.n_rendered > 0, s.n_rendered === s.n_shots && s.n_shots > 0);
+  setStage('s-compose', s.has_final);
+  $('#counts').textContent = JSON.stringify({
+    song_s: s.song?.duration_s,
+    chars: s.n_characters, envs: s.n_environments,
+    sections: s.n_sections, shots: s.n_shots,
+    rendered: s.n_rendered, final: s.has_final,
+  }, null, 2);
+}
+
+function setStage(id, done, full) {
+  const el = document.querySelector('#' + id);
+  const dot = el.querySelector('.dot');
+  const span = el.querySelector('span');
+  dot.className = 'dot' + (full ? ' ok' : done ? ' partial' : '');
+  span.classList.toggle('done', !!done);
+}
+
+async function refreshLog() {
+  const txt = await fetch('/api/log').then(r => r.text());
+  const log = $('#log');
+  log.textContent = txt || '(empty)';
+  log.scrollTop = log.scrollHeight;
+}
+
+async function loadScript() {
+  const out = await fetchJSON('/api/script');
+  $('#script-area').value = out.content || '';
+}
+
+async function saveScript() {
+  await postJSON('/api/script', { content: $('#script-area').value });
+}
+
+function openFile(rel) {
+  window.open('/api/file?path=' + encodeURIComponent(rel), '_blank');
+}
+
+async function addCharacter() {
+  const name = $('#char-name').value.trim();
+  if (!name) { alert('name required'); return; }
+  await postJSON('/api/character', { name, description: $('#char-desc').value });
+}
+
+async function generateImages() {
+  const name = $('#char-name-2').value.trim();
+  if (!name) { alert('name required'); return; }
+  await postJSON('/api/character/generate', { name, n: parseInt($('#char-n').value, 10) });
+}
+
+async function curateImages() {
+  const name = $('#char-name-2').value.trim();
+  if (!name) { alert('name required'); return; }
+  await postJSON('/api/character/curate', { name, k: 8, recipe: 'person_mock' });
+}
+
+async function addEnvironment() {
+  const name = $('#env-name').value.trim();
+  if (!name) { alert('name required'); return; }
+  await postJSON('/api/environment', { name, description: $('#env-desc').value });
+}
+
+async function renderEnvironment() {
+  const name = $('#env-name-2').value.trim();
+  if (!name) { alert('name required'); return; }
+  await postJSON('/api/environment/' + encodeURIComponent(name) + '/render', {});
+}
+
+async function render() {
+  const shot_id = $('#render-shot').value.trim() || null;
+  const quality = $('#render-quality').value;
+  const force = $('#render-force').checked;
+  await postJSON('/api/render', { shot_id, quality, force });
+}
+
+async function compose() {
+  await postJSON('/api/compose', {});
+}
+
+loadScript();
+refreshStatus();
+refreshLog();
+setInterval(refreshStatus, 4000);
+setInterval(refreshLog, 2000);
+</script>
+</body>
+</html>
