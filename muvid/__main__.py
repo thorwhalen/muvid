@@ -1,6 +1,6 @@
-"""mtv CLI — argh dispatch over the top-level facade.
+"""muvid CLI — argh dispatch over the top-level facade.
 
-Run ``mtv --help`` after install. Every verb is the same Python
+Run ``muvid --help`` after install. Every verb is the same Python
 function the skill and UI call.
 """
 
@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import json as _json
 
-from mtv import facade
+from muvid import facade
 
 
 def _print_json(obj):
@@ -125,7 +125,7 @@ def status(root: str) -> None:
 
 def serve(root: str = ".", *, host: str = "127.0.0.1", port: int = 7800) -> None:
     """Launch the local web UI for managing a project."""
-    from mtv.ui.app import serve as _serve
+    from muvid.ui.app import serve as _serve
 
     _serve(root=root, host=host, port=port)
 
@@ -135,7 +135,7 @@ def main() -> None:
         import argh  # type: ignore
     except ImportError as e:
         raise SystemExit(
-            "mtv CLI requires `argh`. pip install argh."
+            "muvid CLI requires `argh`. pip install argh."
         ) from e
     argh.dispatch_commands([
         init,

@@ -22,8 +22,8 @@ from dataclasses import replace
 from pathlib import Path
 from typing import Iterable, Optional
 
-from mtv.project import MusicVideoProject
-from mtv.schema import ShotSpec, SectionSpec, RenderStrategy
+from muvid.project import MusicVideoProject
+from muvid.schema import ShotSpec, SectionSpec, RenderStrategy
 
 
 _SECTION_HDR = re.compile(

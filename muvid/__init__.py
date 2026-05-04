@@ -1,4 +1,4 @@
-"""mtv — tools to make music videos.
+"""muvid — tools to make music videos.
 
 Public surface (also the CLI verbs):
 
@@ -18,7 +18,7 @@ Project model:
 
 from __future__ import annotations
 
-from mtv.facade import (
+from muvid.facade import (
     add_character,
     add_character_images,
     add_environment,
@@ -35,8 +35,8 @@ from mtv.facade import (
     transcribe_song,
     write_script,
 )
-from mtv.project import MusicVideoProject
-from mtv.schema import (
+from muvid.project import MusicVideoProject
+from muvid.schema import (
     CharacterRef,
     EnvironmentRef,
     ProjectSpec,

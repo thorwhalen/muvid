@@ -1,15 +1,15 @@
 ---
-name: mtv
-description: Use when the user wants to make a music video from a song. Triggers on "make a music video", "turn this song into a video", "/mtv", or any work inside an mtv project folder (look for project.json with mtv schema_version). Walks the user through getting lyrics, aligning to audio, casting characters, picking environments, writing the script, and rendering shots.
+name: muvid
+description: Use when the user wants to make a music video from a song. Triggers on "make a music video", "turn this song into a video", "/muvid", or any work inside an muvid project folder (look for project.json with muvid schema_version). Walks the user through getting lyrics, aligning to audio, casting characters, picking environments, writing the script, and rendering shots.
 ---
 
-# mtv — guide a user from song to music video
+# muvid — guide a user from song to music video
 
-You are operating an `mtv` project: a folder containing a `project.json`,
+You are operating an `muvid` project: a folder containing a `project.json`,
 a song under `song/`, and progressively-filled-in artifacts under
 `lyrics/`, `characters/`, `environments/`, `script/`, `shots/`,
-`output/`. The Python package `mtv` exposes every step as a function;
-the CLI `mtv <verb>` is a thin dispatcher.
+`output/`. The Python package `muvid` exposes every step as a function;
+the CLI `muvid <verb>` is a thin dispatcher.
 
 Your job is to **drive that pipeline interactively** — pick the right
 next step based on the project's current state, run the command, show
@@ -17,38 +17,38 @@ the user what came out, and ask just enough questions to keep moving.
 
 ## The pipeline (eight stages, each idempotent)
 
-1. **init** — `mtv init <root> --song <audio>`. Fresh project, song
+1. **init** — `muvid init <root> --song <audio>`. Fresh project, song
    probed.
-2. **transcribe** — `mtv transcribe <root>`. ElevenLabs Scribe writes
+2. **transcribe** — `muvid transcribe <root>`. ElevenLabs Scribe writes
    `lyrics/transcript.json` and a draft `lyrics/lyrics.md`.
 3. **edit lyrics** — *user task*. The user opens `lyrics/lyrics.md`,
    fixes mishears (singing transcripts always have some), and adds
    real `[section]` headers like `[verse 1]`, `[chorus]`, `[bridge]`.
-4. **align** — `mtv align <root>`. Builds `lyrics/alignment.annot` (a
+4. **align** — `muvid align <root>`. Builds `lyrics/alignment.annot` (a
    `lacing` SqliteStore) with three tiers: sections / lines / words.
    Also syncs the parsed sections into `project.json`.
 5. **cast characters** — for each character:
-   - `mtv character <root> <name> --description "..."`
-   - `mtv character-images <root> <name> path1 path2 ...` (drop user
-     photos) or `mtv character-generate <root> <name> --n 6` (use fal
+   - `muvid character <root> <name> --description "..."`
+   - `muvid character-images <root> <name> path1 path2 ...` (drop user
+     photos) or `muvid character-generate <root> <name> --n 6` (use fal
      to generate variants).
-   - `mtv character-curate <root> <name> --k 8` (lookbook picks the
+   - `muvid character-curate <root> <name> --k 8` (lookbook picks the
      best diverse subset).
-6. **establish environments** — `mtv environment <root> <name>
+6. **establish environments** — `muvid environment <root> <name>
    --description "..." --time-of-day "..."` then
-   `mtv environment-render <root> <name>`.
+   `muvid environment-render <root> <name>`.
 7. **write the script** — author `script/script.md` (you can draft this
    from lyrics + characters + environments; the user edits). Then
-   `mtv script-apply <root>` to upsert sections+shots into the SSOT.
-8. **render** — `mtv render <root>` (all shots) or `mtv render <root>
+   `muvid script-apply <root>` to upsert sections+shots into the SSOT.
+8. **render** — `muvid render <root>` (all shots) or `muvid render <root>
    --shot s02`. Per-shot strategies: `lipsync`, `image_to_video`,
    `text_to_video`, `animation`, `still`.
-9. **compose** — `mtv compose <root>`. Concatenates shots, overlays
+9. **compose** — `muvid compose <root>`. Concatenates shots, overlays
    the original song.
 
 ## Always start by reading state
 
-Before doing anything, run `mtv status <root>` to see where the user
+Before doing anything, run `muvid status <root>` to see where the user
 is. The output is a JSON dict; pick the next stage where a flag is
 False or a count is zero. **Never** re-run a stage that's already
 done unless the user asks — every stage is idempotent but they cost
@@ -80,7 +80,7 @@ when the night comes calling
   not required.
 - The order of lines must match the song.
 
-After editing, run `mtv align` and read the resulting alignment
+After editing, run `muvid align` and read the resulting alignment
 quickly: lines whose `start_s` look obviously wrong (out of order,
 or in the middle of an instrumental break) are usually mishears
 that need a fix. Re-edit, re-align.
@@ -116,7 +116,7 @@ When proposing a script, default to a sensible mix:
 
 ## When you draft the script for the user
 
-Read the project: `mtv status`, then read `lyrics/lyrics.md`,
+Read the project: `muvid status`, then read `lyrics/lyrics.md`,
 character cards (`characters/<name>/card.json`), environment cards
 (`environments/<name>/card.json`). Write `script/script.md` in this
 shape:
@@ -151,16 +151,16 @@ Rules:
 
 After writing the markdown, **show the user the diff** (or just the
 content) and ask "edit anything before I apply this?" before running
-`mtv script-apply`.
+`muvid script-apply`.
 
 ## Render walk
 
 When the user says "render it", default to:
-1. Confirm with `mtv status` that all stages 1–7 are done.
-2. Render shot-by-shot (`mtv render --shot s01`, then `s02`, ...) so
+1. Confirm with `muvid status` that all stages 1–7 are done.
+2. Render shot-by-shot (`muvid render --shot s01`, then `s02`, ...) so
    if one fails the others aren't lost. Show the user each output as
    it lands.
-3. After all shots succeed: `mtv compose`.
+3. After all shots succeed: `muvid compose`.
 4. Print the final mp4 path and recommend they open it.
 
 If a shot's render strategy fails (fal API error, no character
@@ -169,24 +169,24 @@ strategy, generate the missing image, etc.) — don't just retry.
 
 ## Things to never do
 
-- Never re-run `mtv transcribe` after the user has edited
+- Never re-run `muvid transcribe` after the user has edited
   `lyrics/lyrics.md` — it would clobber the transcript that the
   alignment depends on. (The lyrics.md only gets clobbered if it
   doesn't already exist, but transcript.json gets overwritten.)
 - Never auto-edit `lyrics/lyrics.md`. The user is the source of
   truth for what the song actually says.
-- Never call `mtv render` with `--force` unless the user explicitly
+- Never call `muvid render` with `--force` unless the user explicitly
   asks; renders cost real money on fal.
 - Never compose before all shots have rendered outputs.
 
 ## Useful inspection commands
 
-- `mtv status <root>` — overview JSON.
+- `muvid status <root>` — overview JSON.
 - `cat <root>/project.json | jq` — the SSOT.
 - `cat <root>/lyrics/lyrics.md` — the user's lyrics.
 - `ls <root>/shots/` — see which shots have been rendered (each one
   is a folder with `output.mp4` if done).
-- `cat <root>/.mtv/decisions.jsonl` — append-only log of every
+- `cat <root>/.muvid/decisions.jsonl` — append-only log of every
   pipeline action.
 
 ## When the user starts from scratch
@@ -195,12 +195,12 @@ If the user just says "make a music video from `~/Downloads/song.mp3`"
 and there's no project yet:
 
 1. Pick a sensible project root (ask if unsure). Default to
-   `~/mtv/<song-stem>`.
-2. `mtv init <root> --song <path>` — show the resulting folder.
-3. `mtv transcribe <root>` — show the draft `lyrics.md`.
+   `~/muvid/<song-stem>`.
+2. `muvid init <root> --song <path>` — show the resulting folder.
+3. `muvid transcribe <root>` — show the draft `lyrics.md`.
 4. Pause. Tell the user: "Open `<root>/lyrics/lyrics.md`, fix any
    mishears, and add real section tags. Tell me when it's done."
-5. When they confirm, `mtv align <root>` → show them how many
+5. When they confirm, `muvid align <root>` → show them how many
    sections/lines/words got aligned.
 6. Walk them through casting (one character at a time), then
    environments, then drafting the script, then rendering.

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from mtv.script import parse_script, render_script
+from muvid.script import parse_script, render_script
 
 
 SAMPLE = """## [intro] 0.00 → 12.50

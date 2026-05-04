@@ -13,8 +13,8 @@ from pathlib import Path
 
 import pytest
 
-from mtv.project import MusicVideoProject
-from mtv.schema import SectionSpec, ShotSpec
+from muvid.project import MusicVideoProject
+from muvid.schema import SectionSpec, ShotSpec
 
 
 def test_init_creates_expected_folders(tmp_path):
@@ -22,7 +22,7 @@ def test_init_creates_expected_folders(tmp_path):
     proj = MusicVideoProject.init(root, title="X")
     for sub in (
         "song", "lyrics", "characters", "environments",
-        "script", "shots", "output", ".mtv",
+        "script", "shots", "output", ".muvid",
     ):
         assert (root / sub).is_dir()
     spec = proj.read_spec()
@@ -68,7 +68,7 @@ def test_log_decision_appends_jsonl(tmp_path):
     proj = MusicVideoProject.init(tmp_path / "p")
     proj.log_decision("foo", x=1)
     proj.log_decision("bar", y="two")
-    log = (tmp_path / "p" / ".mtv" / "decisions.jsonl").read_text().splitlines()
+    log = (tmp_path / "p" / ".muvid" / "decisions.jsonl").read_text().splitlines()
     assert len(log) == 2
     assert json.loads(log[0]) == {"kind": "foo", "x": 1}
     assert json.loads(log[1]) == {"kind": "bar", "y": "two"}

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from mtv.schema import (
+from muvid.schema import (
     CharacterRef,
     EnvironmentRef,
     ProjectSpec,

@@ -1,4 +1,4 @@
-"""Schema for an mtv project — the SSOT data shapes.
+"""Schema for an muvid project — the SSOT data shapes.
 
 A music video project is a folder. ``project.json`` at the root holds the
 plan: song metadata, named characters/environments, song sections, and

@@ -17,7 +17,7 @@ from __future__ import annotations
 import subprocess
 from pathlib import Path
 
-from mtv.render import RenderContext
+from muvid.render import RenderContext
 
 
 def render_animation(ctx: RenderContext, *, quality: str = "balanced") -> Path:
@@ -30,7 +30,7 @@ def render_animation(ctx: RenderContext, *, quality: str = "balanced") -> Path:
         from an.orchestrate import orchestrate
     except Exception:
         # Fall back to the still strategy.
-        from mtv.render.still import render_still
+        from muvid.render.still import render_still
 
         return render_still(ctx, quality=quality)
 
@@ -41,7 +41,7 @@ def render_animation(ctx: RenderContext, *, quality: str = "balanced") -> Path:
     report = orchestrate(str(scene_dir))
     if not getattr(report, "success", False):
         # Fall back rather than throwing a wall of errors.
-        from mtv.render.still import render_still
+        from muvid.render.still import render_still
 
         return render_still(ctx, quality=quality)
     out = ctx.shot_dir / "output.mp4"

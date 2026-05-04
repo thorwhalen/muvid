@@ -21,7 +21,7 @@ import shutil
 from pathlib import Path
 from typing import Any, Optional, Sequence
 
-from mtv.project import MusicVideoProject
+from muvid.project import MusicVideoProject
 
 
 def add_character(

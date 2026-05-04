@@ -36,7 +36,7 @@ from pathlib import Path
 from typing import Iterable, Optional
 from uuid import uuid4
 
-from mtv.lyrics import LyricsDoc, words_from_transcript
+from muvid.lyrics import LyricsDoc, words_from_transcript
 
 
 _WORD_TOKEN_RE = re.compile(r"[a-z0-9']+")
@@ -337,8 +337,8 @@ def write_alignment_store(
         store.add_tier(Tier(name="words"))
 
         prov = Provenance(
-            was_generated_by="mtv:align",
-            was_attributed_to="mtv",
+            was_generated_by="muvid:align",
+            was_attributed_to="muvid",
             generated_at_time=RationalTime.zero(rate),
         )
 

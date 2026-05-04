@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Iterable
 
-from mtv.render import RenderContext
+from muvid.render import RenderContext
 
 
 def storyboard_prompt(ctx: RenderContext, *, include_lyrics: bool = True) -> str:

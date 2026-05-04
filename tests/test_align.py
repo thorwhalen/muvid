@@ -6,8 +6,8 @@ import os
 
 import pytest
 
-from mtv.align import align_lyrics, write_alignment_store
-from mtv.lyrics import parse_lyrics_md
+from muvid.align import align_lyrics, write_alignment_store
+from muvid.lyrics import parse_lyrics_md
 
 
 SAMPLE_MD = """[intro]

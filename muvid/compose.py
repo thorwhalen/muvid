@@ -11,7 +11,7 @@ import subprocess
 import tempfile
 from pathlib import Path
 
-from mtv.project import MusicVideoProject
+from muvid.project import MusicVideoProject
 
 
 def compose(
@@ -35,7 +35,7 @@ def compose(
         p = project.shot_dir(sh.id) / "output.mp4"
         if not p.exists():
             raise RuntimeError(
-                f"Shot {sh.id} has no rendered output. Run mtv render first."
+                f"Shot {sh.id} has no rendered output. Run muvid render first."
             )
         paths.append(p)
 

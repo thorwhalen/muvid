@@ -1,4 +1,4 @@
-"""FastAPI app — thin wrapper around the mtv facade.
+"""FastAPI app — thin wrapper around the muvid facade.
 
 Single project per process; the project root is bound when the app is
 created (via ``serve(root=...)``). The frontend at ``GET /`` is a
@@ -45,16 +45,16 @@ def create_app(root: str | Path):
         from pydantic import BaseModel  # type: ignore
     except ImportError as e:
         raise RuntimeError(
-            "mtv UI requires `fastapi` and `uvicorn`. "
+            "muvid UI requires `fastapi` and `uvicorn`. "
             "pip install fastapi uvicorn pydantic"
         ) from e
 
     global _PROJECT_ROOT
     _PROJECT_ROOT = Path(root).expanduser().resolve()
 
-    from mtv import facade
+    from muvid import facade
 
-    app = FastAPI(title="mtv", description="Music video pipeline UI")
+    app = FastAPI(title="muvid", description="Music video pipeline UI")
 
     static_dir = Path(__file__).parent / "static"
 
@@ -261,7 +261,7 @@ def serve(*, root: str | Path = ".", host: str = "127.0.0.1", port: int = 7800) 
         import uvicorn  # type: ignore
     except ImportError as e:
         raise RuntimeError(
-            "mtv UI requires `uvicorn`. pip install uvicorn[standard]"
+            "muvid UI requires `uvicorn`. pip install uvicorn[standard]"
         ) from e
     app = create_app(root)
     uvicorn.run(app, host=host, port=port, log_level="info")

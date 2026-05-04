@@ -19,7 +19,7 @@ from dataclasses import replace
 from pathlib import Path
 from typing import Any, Iterable, Optional
 
-from mtv.schema import (
+from muvid.schema import (
     ProjectSpec,
     SongInfo,
     SectionSpec,
@@ -37,7 +37,7 @@ ENVIRONMENTS_DIR = "environments"
 SCRIPT_DIR = "script"
 SHOTS_DIR = "shots"
 OUTPUT_DIR = "output"
-HIDDEN_DIR = ".mtv"
+HIDDEN_DIR = ".muvid"
 
 
 class MusicVideoProject:
@@ -99,7 +99,7 @@ class MusicVideoProject:
         if not self.project_file.exists():
             raise FileNotFoundError(
                 f"No {PROJECT_FILE} in {self.root}. "
-                f"Did you run `mtv init` here?"
+                f"Did you run `muvid init` here?"
             )
         with self.project_file.open() as f:
             data = json.load(f)
@@ -236,7 +236,7 @@ class MusicVideoProject:
     # --- decisions log ---------------------------------------------------
 
     def log_decision(self, kind: str, **payload: Any) -> None:
-        """Append a one-line JSON entry to ``.mtv/decisions.jsonl``."""
+        """Append a one-line JSON entry to ``.muvid/decisions.jsonl``."""
         log = self.root / HIDDEN_DIR / "decisions.jsonl"
         log.parent.mkdir(parents=True, exist_ok=True)
         with log.open("a") as f:

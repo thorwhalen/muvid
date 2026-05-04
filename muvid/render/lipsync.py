@@ -13,8 +13,8 @@ from __future__ import annotations
 import warnings
 from pathlib import Path
 
-from mtv.render import RenderContext
-from mtv.render._common import trim_video_to_duration, upload_local_file_to_temp_url
+from muvid.render import RenderContext
+from muvid.render._common import trim_video_to_duration, upload_local_file_to_temp_url
 
 
 def render_lipsync(ctx: RenderContext, *, quality: str = "balanced") -> Path:
@@ -23,7 +23,7 @@ def render_lipsync(ctx: RenderContext, *, quality: str = "balanced") -> Path:
     if not ctx.character_image_paths:
         raise RuntimeError(
             f"render_lipsync: shot {ctx.shot.id!r} has no character anchor "
-            f"images. Add at least one reference image (mtv character add-images)."
+            f"images. Add at least one reference image (muvid character add-images)."
         )
     if len(ctx.character_image_paths) > 1:
         warnings.warn(

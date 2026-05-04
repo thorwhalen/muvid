@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from mtv.lyrics import (
+from muvid.lyrics import (
     lyrics_from_transcript,
     parse_lyrics_md,
     render_lyrics_md,

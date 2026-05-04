@@ -20,8 +20,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from mtv.project import MusicVideoProject
-from mtv.schema import ShotSpec
+from muvid.project import MusicVideoProject
+from muvid.schema import ShotSpec
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -34,7 +34,7 @@ class RenderContext:
     audio_slice_path: Path
     character_image_paths: dict[str, Path]
     environment_image_path: Path | None
-    lyric_lines: list[Any]  # mtv.align.LineAlignment
+    lyric_lines: list[Any]  # muvid.align.LineAlignment
     global_style: str = ""
 
 
@@ -65,15 +65,15 @@ def render_shot(
     ctx = _build_context(project, shot, spec.global_style)
     strategy = shot.render_strategy
     if strategy == "lipsync":
-        from mtv.render.lipsync import render_lipsync as _render
+        from muvid.render.lipsync import render_lipsync as _render
     elif strategy == "image_to_video":
-        from mtv.render.image_to_video import render_image_to_video as _render
+        from muvid.render.image_to_video import render_image_to_video as _render
     elif strategy == "text_to_video":
-        from mtv.render.text_to_video import render_text_to_video as _render
+        from muvid.render.text_to_video import render_text_to_video as _render
     elif strategy == "still":
-        from mtv.render.still import render_still as _render
+        from muvid.render.still import render_still as _render
     elif strategy == "animation":
-        from mtv.render.animation import render_animation as _render
+        from muvid.render.animation import render_animation as _render
     else:
         raise ValueError(f"Unknown render_strategy: {strategy!r}")
 
@@ -121,8 +121,8 @@ def _shot_dict(shot: ShotSpec) -> dict:
 def _build_context(
     project: MusicVideoProject, shot: ShotSpec, global_style: str
 ) -> RenderContext:
-    from mtv.characters import get_character_anchor_image
-    from mtv.environments import get_environment_anchor_image
+    from muvid.characters import get_character_anchor_image
+    from muvid.environments import get_environment_anchor_image
 
     shot_dir = project.shot_dir(shot.id)
     audio_slice = _ensure_audio_slice(project, shot)

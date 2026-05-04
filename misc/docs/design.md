@@ -1,4 +1,4 @@
-# mtv design — song → music video
+# muvid design — song → music video
 
 ## Thesis
 
@@ -8,7 +8,7 @@ that timeline with intent (lyrics, sections, characters, environments,
 shots, animation actions); the renderer's job is to turn intent into
 frames synced to the audio.
 
-`mtv` is the orchestrator. It does **not** re-implement TTS, lip-sync,
+`muvid` is the orchestrator. It does **not** re-implement TTS, lip-sync,
 image generation, video generation, character curation, audio editing,
 or interval annotation. Those are owned by sibling packages already in
 the local ecosystem:
@@ -21,7 +21,7 @@ the local ecosystem:
 | Structured 2D animation           | `an`        | Scene IR, cutout renderer, whisper lip-sync, character authoring |
 | Audio/video editing               | `mixing`    | `Audio`, `Video`, `transcribe` (ElevenLabs Scribe), `concatenate_audio`, `extract_audio`, `apply_keeps` |
 
-`mtv` adds: the **MusicVideoProject** (a directory layout + a SSOT JSON
+`muvid` adds: the **MusicVideoProject** (a directory layout + a SSOT JSON
 + a `dol`-backed mall), the **song timeline** (sections + lyrics +
 shots), the **alignment pipeline** (audio → words → user-edited),
 and the **render dispatch** (one of: AI generative video, structured
@@ -62,7 +62,7 @@ my-video/
 │       └── output.mp4        # rendered shot
 ├── output/
 │   └── final.mp4             # composited final
-└── .mtv/
+└── .muvid/
     └── decisions.jsonl       # decisions log (why each choice was made)
 ```
 
@@ -112,7 +112,7 @@ artifact the user can inspect/edit.
 
 ### Stage 1 — Bootstrap project
 
-`mtv init <name> --song <audio>` creates the directory, copies the
+`muvid init <name> --song <audio>` creates the directory, copies the
 audio in, probes its duration with ffprobe, writes a stub
 `project.json`. No network calls.
 
@@ -148,7 +148,7 @@ or drag to adjust.
 
 ### Stage 3 — Build the alignment
 
-`mtv align` produces `lyrics/alignment.annot` — a `lacing` SqliteStore
+`muvid align` produces `lyrics/alignment.annot` — a `lacing` SqliteStore
 with three tiers:
 
 - `sections` (stereotype `NONE`) — non-overlapping song sections
@@ -170,17 +170,17 @@ sections), and round-tripping (export to JAMS for later musicology).
 
 For each character the user wants in the video:
 
-1. `mtv character new <name>` writes a stub `card.json` (description,
+1. `muvid character new <name>` writes a stub `card.json` (description,
    voice slot).
 2. **Reference acquisition**: user drops images into
-   `characters/<name>/refs/` *or* `mtv character generate <name>` runs
+   `characters/<name>/refs/` *or* `muvid character generate <name>` runs
    `falaw.generate_image` N times with style variants and saves them
    into `refs/`.
-3. **Curation**: `mtv character curate <name>` runs
+3. **Curation**: `muvid character curate <name>` runs
    `lookbook.curate(refs_dir, recipe="person", k=20)` and copies the
    selected images to `selected/`. The first selected image becomes
    the `Character.reference_image_url` (used as the lipsync anchor).
-4. **Voice**: optional. `mtv character voice <name> <ref_audio>` saves
+4. **Voice**: optional. `muvid character voice <name> <ref_audio>` saves
    a voice id (ElevenLabs preset) or a reference audio for cloning.
 
 A `falaw.Character` is then materialized from the card and is what
@@ -188,8 +188,8 @@ downstream stages consume.
 
 ### Stage 5 — Establish environments
 
-Same pattern: `mtv env new <name>` → user provides a description →
-`mtv env render <name>` calls `falaw.establish_environment(...)` to
+Same pattern: `muvid env new <name>` → user provides a description →
+`muvid env render <name>` calls `falaw.establish_environment(...)` to
 generate the canonical establishing image. Stored as
 `environments/<name>/card.json` with a `reference_image_url`.
 
@@ -219,7 +219,7 @@ Medium close on Maya. She begins to sing, looking off-camera.
 Push in to a tight close-up. She closes her eyes on the last word.
 ```
 
-`mtv script parse` parses this into a list of `Shot` records and
+`muvid script parse` parses this into a list of `Shot` records and
 slots them into `project.json`. The agent can also generate a draft
 script from `(lyrics, characters, environments, style)` via
 `falaw.parse_screenplay`, then the user edits the markdown.
@@ -239,7 +239,7 @@ The render strategy per shot is one of:
 
 ### Stage 7 — Render shots
 
-`mtv render <shot_id>` (or `mtv render --all`) walks shots in order:
+`muvid render <shot_id>` (or `muvid render --all`) walks shots in order:
 
 1. Compute a content hash of `(shot.json, dependencies)` — skip if
    `output.mp4` exists and matches.
@@ -262,7 +262,7 @@ The render strategy per shot is one of:
 
 ### Stage 8 — Composite
 
-`mtv compose` concatenates all shots with `mixing.video.concatenate`,
+`muvid compose` concatenates all shots with `mixing.video.concatenate`,
 then `mixing.video.replace_audio` to overlay the original song over
 the visual track. Writes `output/final.mp4`.
 
@@ -272,7 +272,7 @@ Singing alignment is genuinely harder than speech (phoneme durations
 vary wildly with held notes and melisma; rhythmic structure breaks
 the priors speech-aligners assume). See
 [`alignment_references.md`](alignment_references.md) for the
-literature mtv builds on (WhisperX's CTC forced-alignment system,
+literature muvid builds on (WhisperX's CTC forced-alignment system,
 and the STARS unified singing-annotation framework). We have three
 acceptable solutions and pick the best per case:
 
@@ -308,12 +308,12 @@ For each shot rendered with `render_strategy: "lipsync"`:
    character): `falaw.lipsync(video, audio_slice)`.
 4. For stylized animation (cartoon characters in `an`):
    `an` already runs `WhisperLipSync` on synthesized TTS. For an
-   `mtv` integration we **re-use** the existing audio slice — same
+   `muvid` integration we **re-use** the existing audio slice — same
    audio path, same word timestamps from our alignment store —
    and feed those into the cutout renderer's viseme track. The
    alignment store IS the lip-sync source of truth across modes.
 
-## What `mtv` is *not* doing in v0
+## What `muvid` is *not* doing in v0
 
 - No song generation (we accept an audio file; could later wire
   `falaw.text_to_speech` → DiffRhythm/Lyria-2 for AI music).
@@ -328,9 +328,9 @@ For each shot rendered with `render_strategy: "lipsync"`:
 
 Every stage is callable three ways from the same Python function:
 
-1. **Python**: `from mtv import init, align, cast_character, render`
-2. **CLI** (`mtv ...`): argh dispatch over the same functions.
-3. **Skill** (Claude Code): `.claude/skills/mtv/SKILL.md` walks Claude
+1. **Python**: `from muvid import init, align, cast_character, render`
+2. **CLI** (`muvid ...`): argh dispatch over the same functions.
+3. **Skill** (Claude Code): `.claude/skills/muvid/SKILL.md` walks Claude
    through the orchestration so a user can sit in a terminal and say
    "make a music video from `song.mp3`" and get walked through the
    stages.
@@ -342,7 +342,7 @@ FastAPI app — `qh` already does this in this ecosystem).
 ## File layout for the package
 
 ```
-mtv/
+muvid/
   __init__.py            # public surface
   __main__.py            # CLI (argh)
   project.py             # MusicVideoProject (dol-backed mall + SSOT)
@@ -367,8 +367,8 @@ mtv/
     static/
       index.html         # single-page UI
   data/
-    skills/mtv/SKILL.md  # the Claude skill (also linked to .claude/)
-.claude/skills/mtv/SKILL.md  # symlink/copy of the above
+    skills/muvid/SKILL.md  # the Claude skill (also linked to .claude/)
+.claude/skills/muvid/SKILL.md  # symlink/copy of the above
 ```
 
 ## Status / phasing

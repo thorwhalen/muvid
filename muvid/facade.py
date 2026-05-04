@@ -11,15 +11,15 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Iterable, Optional, Sequence
 
-from mtv import align as _align_mod
-from mtv import characters as _chars
-from mtv import compose as _compose
-from mtv import environments as _envs
-from mtv import lyrics as _lyrics
-from mtv import script as _script
-from mtv.project import MusicVideoProject
-from mtv.render import render_all as _render_all, render_shot as _render_shot
-from mtv.schema import SectionSpec, ShotSpec
+from muvid import align as _align_mod
+from muvid import characters as _chars
+from muvid import compose as _compose
+from muvid import environments as _envs
+from muvid import lyrics as _lyrics
+from muvid import script as _script
+from muvid.project import MusicVideoProject
+from muvid.render import render_all as _render_all, render_shot as _render_shot
+from muvid.schema import SectionSpec, ShotSpec
 
 
 def init_project(

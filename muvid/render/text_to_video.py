@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from mtv.render import RenderContext
-from mtv.render._common import storyboard_prompt, trim_video_to_duration
+from muvid.render import RenderContext
+from muvid.render._common import storyboard_prompt, trim_video_to_duration
 
 
 def render_text_to_video(ctx: RenderContext, *, quality: str = "balanced") -> Path:

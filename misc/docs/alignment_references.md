@@ -1,12 +1,12 @@
 # Alignment — references
 
-Background reading on the lyric→audio alignment problem that mtv's
-`mtv.align` module currently solves with a greedy token-match. The
+Background reading on the lyric→audio alignment problem that muvid's
+`muvid.align` module currently solves with a greedy token-match. The
 files below live next to this one for offline reference.
 
-## Why this matters for mtv
+## Why this matters for muvid
 
-mtv's pipeline turns on the *lyric→audio alignment store*: every
+muvid's pipeline turns on the *lyric→audio alignment store*: every
 downstream stage (script writing, lipsync render, lyric overlay)
 queries it for "what is being sung in `[start, end]`?" v0 uses
 ElevenLabs Scribe (the same Scribe `mixing.transcript` already wraps)
@@ -32,12 +32,12 @@ The DeepWiki page on WhisperX's `whisperx/alignment.py`. Key points:
   → CTC log-softmax → trellis → backtrack → punkt sentence
   re-tokenization → NaN interpolation → aligned `TranscriptionResult`.
 
-**Why mtv could care**: WhisperX would replace mtv's "Scribe + greedy
+**Why muvid could care**: WhisperX would replace muvid's "Scribe + greedy
 match" with a real forced-alignment path that takes the user's
 canonical lyrics text *as input* and lines it up to audio with CTC.
 The trade-off is heavy: torch + a Wav2Vec2 download per language,
 versus Scribe's "one HTTP call, no local model." A future
-`mtv.align` could expose `aligner="scribe-greedy" | "whisperx" |
+`muvid.align` could expose `aligner="scribe-greedy" | "whisperx" |
 "user"` and let the user pick.
 
 ## 2. STARS — singing-specific alignment
@@ -67,7 +67,7 @@ that in singing, **lyric alignment, note transcription, and style
 annotation are coupled problems** and forcing them through a
 sequential pipeline injects cascading error.
 
-**Why mtv could care**:
+**Why muvid could care**:
 
 - It validates the design choice of having *one alignment store*
   (`lacing` SqliteStore) as the SSOT, with multiple tiers
@@ -75,23 +75,23 @@ sequential pipeline injects cascading error.
   `techniques` tiers with the same interval algebra, no schema
   migration needed.
 - Demo / audio samples: <https://gwx314.github.io/stars-demo/>.
-- If mtv ever needs *true* per-syllable lipsync for stylized
+- If muvid ever needs *true* per-syllable lipsync for stylized
   singing scenes (held notes, vibrato), STARS-style joint inference
   is the right reference. WhisperX-on-singing will under-perform
   because phoneme durations are too variable.
 
-## Practical implication for mtv today
+## Practical implication for muvid today
 
 - **Default** (Scribe + greedy match): cheap, network-only, good
   enough for clear pop vocals; the user is expected to fix mishears
-  in `lyrics.md`. This is what `mtv align` does now.
-- **Local fallback** (WhisperX): would let mtv work offline with
+  in `lyrics.md`. This is what `muvid align` does now.
+- **Local fallback** (WhisperX): would let muvid work offline with
   no API budget, at the cost of torch + model downloads.
   Re-using `an.audio.WhisperLipSync`'s already-installed
   `faster-whisper` is a smaller step than going to WhisperX
   proper, but loses the CTC refinement.
 - **Singing-grade** (STARS or similar): only worth pulling in if
-  mtv pivots toward generated/synthesized singing where the
+  muvid pivots toward generated/synthesized singing where the
   pipeline needs note-level + technique-level annotations to drive
   the renderer. For now, treating the song as fixed audio and
   the user's lyrics as ground truth keeps the problem tractable.

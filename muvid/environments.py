@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from mtv.project import MusicVideoProject
+from muvid.project import MusicVideoProject
 
 
 def add_environment(
