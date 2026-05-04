@@ -108,7 +108,8 @@ def create_app(root: str | Path):
     @app.post("/api/character")
     def character(req: CharacterReq):
         out = facade.add_character(
-            str(_PROJECT_ROOT), req.name,
+            str(_PROJECT_ROOT),
+            req.name,
             description=req.description,
             voice_id=req.voice_id,
             reference_audio_url=req.reference_audio_url,
@@ -126,7 +127,10 @@ def create_app(root: str | Path):
         _log(f"character.generate: {req.name} n={req.n}")
         try:
             out = facade.generate_character_images(
-                str(_PROJECT_ROOT), req.name, n=req.n, quality=req.quality,
+                str(_PROJECT_ROOT),
+                req.name,
+                n=req.n,
+                quality=req.quality,
             )
             _log(f"character.generate: ok ({len(out)})")
             return {"ok": True, "paths": out}
@@ -144,7 +148,10 @@ def create_app(root: str | Path):
         _log(f"character.curate: {req.name} k={req.k}")
         try:
             out = facade.curate_character(
-                str(_PROJECT_ROOT), req.name, k=req.k, recipe=req.recipe,
+                str(_PROJECT_ROOT),
+                req.name,
+                k=req.k,
+                recipe=req.recipe,
             )
             _log(f"character.curate: ok ({len(out)})")
             return {"ok": True, "paths": out}
@@ -161,7 +168,8 @@ def create_app(root: str | Path):
     @app.post("/api/environment")
     def environment(req: EnvironmentReq):
         out = facade.add_environment(
-            str(_PROJECT_ROOT), req.name,
+            str(_PROJECT_ROOT),
+            req.name,
             description=req.description,
             time_of_day=req.time_of_day,
             lighting=req.lighting,
@@ -210,13 +218,17 @@ def create_app(root: str | Path):
         try:
             if req.shot_id:
                 p = facade.render_shot(
-                    str(_PROJECT_ROOT), req.shot_id,
-                    quality=req.quality, force=req.force,
+                    str(_PROJECT_ROOT),
+                    req.shot_id,
+                    quality=req.quality,
+                    force=req.force,
                 )
                 _log(f"render: shot ok → {p}")
                 return {"ok": True, "paths": [p]}
             paths = facade.render(
-                str(_PROJECT_ROOT), quality=req.quality, force=req.force,
+                str(_PROJECT_ROOT),
+                quality=req.quality,
+                force=req.force,
             )
             _log(f"render: all ok ({len(paths)})")
             return {"ok": True, "paths": paths}
@@ -234,7 +246,8 @@ def create_app(root: str | Path):
         try:
             out = facade.compose(
                 str(_PROJECT_ROOT),
-                out_name=req.out_name, use_song_audio=req.use_song_audio,
+                out_name=req.out_name,
+                use_song_audio=req.use_song_audio,
             )
             _log(f"compose: ok → {out}")
             return {"ok": True, "path": out}

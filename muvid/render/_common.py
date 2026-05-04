@@ -75,6 +75,7 @@ def trim_video_to_duration(src: Path, target_s: float, dst: Path) -> Path:
         if abs(v.duration - target_s) < 0.05:
             if src.resolve() != dst.resolve():
                 import shutil
+
                 shutil.copy2(src, dst)
             return dst
         if v.duration > target_s:
@@ -84,9 +85,11 @@ def trim_video_to_duration(src: Path, target_s: float, dst: Path) -> Path:
         # Pad with the last frame held — simplest approximation: just copy.
         # (A proper hold would require an ffmpeg "tpad" filter.)
         import shutil
+
         shutil.copy2(src, dst)
         return dst
     except Exception:
         import shutil
+
         shutil.copy2(src, dst)
         return dst

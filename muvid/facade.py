@@ -81,7 +81,9 @@ def align_lyrics(root: str | Path) -> str:
                 label=s.label,
             )
         )
-    p.log_decision("align_lyrics", n_lines=len(alignment.lines), n_words=len(alignment.words))
+    p.log_decision(
+        "align_lyrics", n_lines=len(alignment.lines), n_words=len(alignment.words)
+    )
     return str(out)
 
 
@@ -95,8 +97,11 @@ def add_character(
 ) -> dict:
     p = MusicVideoProject(root)
     return _chars.add_character(
-        p, name, description=description,
-        voice_id=voice_id, reference_audio_url=reference_audio_url,
+        p,
+        name,
+        description=description,
+        voice_id=voice_id,
+        reference_audio_url=reference_audio_url,
     )
 
 
@@ -134,8 +139,11 @@ def add_environment(
 ) -> dict:
     p = MusicVideoProject(root)
     return _envs.add_environment(
-        p, name, description=description,
-        time_of_day=time_of_day, lighting=lighting,
+        p,
+        name,
+        description=description,
+        time_of_day=time_of_day,
+        lighting=lighting,
     )
 
 
@@ -161,7 +169,9 @@ def render_shot(
     return str(_render_shot(p, shot_id, quality=quality, force=force))
 
 
-def render(root: str | Path, *, quality: str = "balanced", force: bool = False) -> list[str]:
+def render(
+    root: str | Path, *, quality: str = "balanced", force: bool = False
+) -> list[str]:
     p = MusicVideoProject(root)
     return [str(x) for x in _render_all(p, quality=quality, force=force)]
 
@@ -197,9 +207,7 @@ def status(root: str | Path) -> dict:
         "has_lyrics_md": (p.root / "lyrics" / "lyrics.md").exists(),
         "has_alignment": (p.root / "lyrics" / "alignment.annot").exists(),
         "n_rendered": sum(
-            1
-            for sh in spec.shots
-            if (p.shot_dir(sh.id) / "output.mp4").exists()
+            1 for sh in spec.shots if (p.shot_dir(sh.id) / "output.mp4").exists()
         ),
         "has_final": (p.root / "output" / "final.mp4").exists(),
     }

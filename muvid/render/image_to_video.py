@@ -33,7 +33,9 @@ def render_image_to_video(ctx: RenderContext, *, quality: str = "balanced") -> P
         if not still_target.exists():
             r = generate_image(prompt, quality=quality, image_size="landscape_16_9")
             if not r.first:
-                raise RuntimeError(f"image_to_video: storyboard generation failed for {ctx.shot.id}")
+                raise RuntimeError(
+                    f"image_to_video: storyboard generation failed for {ctx.shot.id}"
+                )
             r.first.download(to=str(still_target))
         seed_image_url = upload_local_file_to_temp_url(still_target)
 

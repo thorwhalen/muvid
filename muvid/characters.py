@@ -136,7 +136,9 @@ def curate_references(
     selected_dir = project.character_dir(name) / "selected"
     selected_dir.mkdir(parents=True, exist_ok=True)
 
-    images = sorted(p for p in refs_dir.iterdir() if p.is_file() and not p.name.startswith("."))
+    images = sorted(
+        p for p in refs_dir.iterdir() if p.is_file() and not p.name.startswith(".")
+    )
     if not images:
         raise RuntimeError(
             f"No reference images in {refs_dir}. Add some first (drop files "
@@ -175,15 +177,17 @@ def curate_references(
         )
         project.write_character_card(name, card)
     project.log_decision(
-        "curate_references", character=name, recipe=recipe, k=k,
-        n_in=len(images), n_out=len(selected_paths),
+        "curate_references",
+        character=name,
+        recipe=recipe,
+        k=k,
+        n_in=len(images),
+        n_out=len(selected_paths),
     )
     return selected_paths
 
 
-def get_character_anchor_image(
-    project: MusicVideoProject, name: str
-) -> Path:
+def get_character_anchor_image(project: MusicVideoProject, name: str) -> Path:
     """Return the canonical anchor image path for a character.
 
     Resolves in order: ``card.reference_image_path`` (curated),

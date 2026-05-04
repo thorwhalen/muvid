@@ -129,7 +129,9 @@ def align_lyrics(
     that have no matched words and no later anchor.
     """
     transcript_words = words_from_transcript(transcript)
-    transcript_tokens = [_normalize(w["text"].strip("()[],.?!\"")) for w in transcript_words]
+    transcript_tokens = [
+        _normalize(w["text"].strip('()[],.?!"')) for w in transcript_words
+    ]
 
     # Build a single flat list of (line_index, token_index, normalized) for
     # every lyric token across all lines.
@@ -209,7 +211,9 @@ def align_lyrics(
         lines_for = tuple(by_label.get(s.label, ()))
         starts = [L.start_s for L in lines_for if L.start_s is not None]
         ends = [L.end_s for L in lines_for if L.end_s is not None]
-        s_start = s.start_s if s.start_s is not None else (min(starts) if starts else None)
+        s_start = (
+            s.start_s if s.start_s is not None else (min(starts) if starts else None)
+        )
         s_end = s.end_s if s.end_s is not None else (max(ends) if ends else None)
         section_alignments.append(
             SectionAlignment(
@@ -247,7 +251,7 @@ def _lev1(a: str, b: str) -> bool:
     # one-char insert/delete
     short, long = (a, b) if len(a) < len(b) else (b, a)
     for i in range(len(long)):
-        if long[:i] + long[i + 1:] == short:
+        if long[:i] + long[i + 1 :] == short:
             return True
     return False
 

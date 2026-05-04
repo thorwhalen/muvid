@@ -82,8 +82,11 @@ def render_shot(
         shutil.copy2(produced, out_path)
     hash_path.write_text(current_hash)
     project.log_decision(
-        "render_shot", shot_id=shot.id, strategy=strategy,
-        duration_s=shot.duration_s, quality=quality,
+        "render_shot",
+        shot_id=shot.id,
+        strategy=strategy,
+        duration_s=shot.duration_s,
+        quality=quality,
     )
     return out_path
 
@@ -93,8 +96,7 @@ def render_all(
 ) -> list[Path]:
     spec = project.read_spec()
     return [
-        render_shot(project, sh.id, quality=quality, force=force)
-        for sh in spec.shots
+        render_shot(project, sh.id, quality=quality, force=force) for sh in spec.shots
     ]
 
 
@@ -162,7 +164,7 @@ def _ensure_audio_slice(project: MusicVideoProject, shot: ShotSpec) -> Path:
         return out
     song = project.song_path()
     audio = Audio(str(song))
-    seg = audio[shot.start_s:shot.end_s]
+    seg = audio[shot.start_s : shot.end_s]
     seg.save(str(out))
     return out
 

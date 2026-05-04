@@ -137,7 +137,7 @@ def _is_only_kv(line: str, matches) -> bool:
         return False
     pos = 0
     for m in matches:
-        if line[pos:m.start()].strip():
+        if line[pos : m.start()].strip():
             return False
         pos = m.end()
     return not line[pos:].strip()
@@ -160,9 +160,7 @@ def _dict_to_shot(d: dict) -> ShotSpec:
     )
 
 
-def render_script(
-    sections: Iterable[SectionSpec], shots: Iterable[ShotSpec]
-) -> str:
+def render_script(sections: Iterable[SectionSpec], shots: Iterable[ShotSpec]) -> str:
     """Inverse of ``parse_script``. Writes the canonical markdown form."""
     sections = list(sections)
     shots = list(shots)
@@ -177,7 +175,9 @@ def render_script(
     lines: list[str] = []
     if sections:
         for sec in sections:
-            lines.append(f"## [{sec.label or sec.id}] {sec.start_s:.2f} → {sec.end_s:.2f}")
+            lines.append(
+                f"## [{sec.label or sec.id}] {sec.start_s:.2f} → {sec.end_s:.2f}"
+            )
             lines.append("")
             for sh in by_section.get(sec.id, []):
                 lines.extend(_shot_block(sh))
@@ -237,5 +237,7 @@ def parse_and_apply(project: MusicVideoProject, *, path: Path | None = None) -> 
     for sh in shots:
         project.upsert_shot(sh)
     project.log_decision(
-        "parse_and_apply_script", n_sections=len(sections), n_shots=len(shots),
+        "parse_and_apply_script",
+        n_sections=len(sections),
+        n_shots=len(shots),
     )

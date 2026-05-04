@@ -61,9 +61,7 @@ def render_environment(
     return target
 
 
-def get_environment_anchor_image(
-    project: MusicVideoProject, name: str
-) -> Path | None:
+def get_environment_anchor_image(project: MusicVideoProject, name: str) -> Path | None:
     """Return the canonical environment image, or None if not yet rendered."""
     card = project.read_environment_card(name)
     rel = card.get("reference_image_path")

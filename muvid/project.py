@@ -98,8 +98,7 @@ class MusicVideoProject:
     def read_spec(self) -> ProjectSpec:
         if not self.project_file.exists():
             raise FileNotFoundError(
-                f"No {PROJECT_FILE} in {self.root}. "
-                f"Did you run `muvid init` here?"
+                f"No {PROJECT_FILE} in {self.root}. Did you run `muvid init` here?"
             )
         with self.project_file.open() as f:
             data = json.load(f)
@@ -168,9 +167,12 @@ class MusicVideoProject:
             json.dump(card, f, indent=2)
         spec = self.read_spec()
         if name not in {c.name for c in spec.characters}:
-            self.write_spec(spec.with_(
-                characters=spec.characters + (CharacterRef(name=name, description=description),)
-            ))
+            self.write_spec(
+                spec.with_(
+                    characters=spec.characters
+                    + (CharacterRef(name=name, description=description),)
+                )
+            )
         return CharacterRef(name=name, description=description)
 
     def read_character_card(self, name: str) -> dict[str, Any]:
@@ -194,10 +196,12 @@ class MusicVideoProject:
             json.dump(card, f, indent=2)
         spec = self.read_spec()
         if name not in {e.name for e in spec.environments}:
-            self.write_spec(spec.with_(
-                environments=spec.environments
-                + (EnvironmentRef(name=name, description=description),)
-            ))
+            self.write_spec(
+                spec.with_(
+                    environments=spec.environments
+                    + (EnvironmentRef(name=name, description=description),)
+                )
+            )
         return EnvironmentRef(name=name, description=description)
 
     def read_environment_card(self, name: str) -> dict[str, Any]:
@@ -285,8 +289,12 @@ def _probe_audio(path: Path) -> dict[str, Any]:
     try:
         out = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
     except (FileNotFoundError, subprocess.CalledProcessError):
-        return {"duration_s": 0.0, "sample_rate": 0, "bitrate": 0,
-                "warning": "ffprobe not available; please set duration manually"}
+        return {
+            "duration_s": 0.0,
+            "sample_rate": 0,
+            "bitrate": 0,
+            "warning": "ffprobe not available; please set duration manually",
+        }
     data = json.loads(out)
     fmt = data.get("format", {})
     audio_stream = next(

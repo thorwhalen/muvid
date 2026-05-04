@@ -55,18 +55,32 @@ def compose(
     end_s = spec.shots[-1].end_s
     duration = max(0.001, end_s - start_s)
     cmd = [
-        "ffmpeg", "-y",
-        "-i", str(concat_path),
-        "-ss", f"{start_s}", "-t", f"{duration}",
-        "-i", str(song),
-        "-map", "0:v:0",
-        "-map", "1:a:0",
-        "-c:v", "copy",
-        "-c:a", "aac", "-b:a", "192k",
+        "ffmpeg",
+        "-y",
+        "-i",
+        str(concat_path),
+        "-ss",
+        f"{start_s}",
+        "-t",
+        f"{duration}",
+        "-i",
+        str(song),
+        "-map",
+        "0:v:0",
+        "-map",
+        "1:a:0",
+        "-c:v",
+        "copy",
+        "-c:a",
+        "aac",
+        "-b:a",
+        "192k",
         "-shortest",
         str(out_path),
     ]
-    subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    subprocess.run(
+        cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+    )
     concat_path.unlink(missing_ok=True)
     project.log_decision("compose", out_name=out_name, n_shots=len(paths))
     return out_path
@@ -83,22 +97,43 @@ def _ffconcat_video(paths: list[Path], out: Path) -> Path:
         list_path = f.name
     try:
         cmd = [
-            "ffmpeg", "-y", "-f", "concat", "-safe", "0",
-            "-i", list_path,
-            "-c", "copy",
+            "ffmpeg",
+            "-y",
+            "-f",
+            "concat",
+            "-safe",
+            "0",
+            "-i",
+            list_path,
+            "-c",
+            "copy",
             str(out),
         ]
         r = subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
         if r.returncode != 0:
             # Fall back to re-encode (handles mismatched codecs/sizes).
             cmd = [
-                "ffmpeg", "-y", "-f", "concat", "-safe", "0",
-                "-i", list_path,
-                "-c:v", "libx264", "-pix_fmt", "yuv420p",
-                "-c:a", "aac", "-b:a", "192k",
+                "ffmpeg",
+                "-y",
+                "-f",
+                "concat",
+                "-safe",
+                "0",
+                "-i",
+                list_path,
+                "-c:v",
+                "libx264",
+                "-pix_fmt",
+                "yuv420p",
+                "-c:a",
+                "aac",
+                "-b:a",
+                "192k",
                 str(out),
             ]
-            subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            subprocess.run(
+                cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+            )
     finally:
         Path(list_path).unlink(missing_ok=True)
     return out

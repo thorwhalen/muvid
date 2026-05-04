@@ -55,7 +55,13 @@ def render_animation(ctx: RenderContext, *, quality: str = "balanced") -> Path:
 
 def _build_an_scene_md(ctx: RenderContext) -> str:
     duration = max(1.0, ctx.shot.duration_s)
-    lyrics = ctx.lyric_lines or [{"text": ctx.shot.description or "...", "start_s": ctx.shot.start_s, "end_s": ctx.shot.end_s}]
+    lyrics = ctx.lyric_lines or [
+        {
+            "text": ctx.shot.description or "...",
+            "start_s": ctx.shot.start_s,
+            "end_s": ctx.shot.end_s,
+        }
+    ]
     speaker = ctx.shot.characters[0] if ctx.shot.characters else "narrator"
     chars_block = ""
     if ctx.shot.characters:

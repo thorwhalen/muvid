@@ -183,8 +183,7 @@ def _project_from_dict(data: Mapping[str, Any]) -> ProjectSpec:
             for e in data.get("environments", ())
         ),
         sections=tuple(
-            SectionSpec(**_only_known(SectionSpec, s))
-            for s in data.get("sections", ())
+            SectionSpec(**_only_known(SectionSpec, s)) for s in data.get("sections", ())
         ),
         shots=tuple(
             ShotSpec(**_only_known(ShotSpec, s)) for s in data.get("shots", ())

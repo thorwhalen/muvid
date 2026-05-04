@@ -27,20 +27,37 @@ def render_still(ctx: RenderContext, *, quality: str = "balanced") -> Path:
                 storyboard_prompt(ctx), quality=quality, image_size="landscape_16_9"
             )
             if not r.first:
-                raise RuntimeError(f"still: storyboard generation failed for {ctx.shot.id}")
+                raise RuntimeError(
+                    f"still: storyboard generation failed for {ctx.shot.id}"
+                )
             r.first.download(to=str(image_path))
 
     out = ctx.shot_dir / "output.mp4"
     cmd = [
-        "ffmpeg", "-y",
-        "-loop", "1", "-i", str(image_path),
-        "-i", str(ctx.audio_slice_path),
-        "-c:v", "libx264", "-tune", "stillimage",
-        "-c:a", "aac", "-b:a", "192k",
-        "-pix_fmt", "yuv420p",
+        "ffmpeg",
+        "-y",
+        "-loop",
+        "1",
+        "-i",
+        str(image_path),
+        "-i",
+        str(ctx.audio_slice_path),
+        "-c:v",
+        "libx264",
+        "-tune",
+        "stillimage",
+        "-c:a",
+        "aac",
+        "-b:a",
+        "192k",
+        "-pix_fmt",
+        "yuv420p",
         "-shortest",
-        "-t", f"{ctx.shot.duration_s:.3f}",
+        "-t",
+        f"{ctx.shot.duration_s:.3f}",
         str(out),
     ]
-    subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    subprocess.run(
+        cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+    )
     return out

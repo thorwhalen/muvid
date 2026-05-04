@@ -40,12 +40,15 @@ def character(
     reference_audio_url: str = "",
 ) -> None:
     """Create or update a character card."""
-    _print_json(facade.add_character(
-        root, name,
-        description=description,
-        voice_id=voice_id,
-        reference_audio_url=reference_audio_url,
-    ))
+    _print_json(
+        facade.add_character(
+            root,
+            name,
+            description=description,
+            voice_id=voice_id,
+            reference_audio_url=reference_audio_url,
+        )
+    )
 
 
 def character_images(root: str, name: str, *paths: str) -> None:
@@ -76,12 +79,15 @@ def environment(
     lighting: str = "",
 ) -> None:
     """Create or update an environment card."""
-    _print_json(facade.add_environment(
-        root, name,
-        description=description,
-        time_of_day=time_of_day,
-        lighting=lighting,
-    ))
+    _print_json(
+        facade.add_environment(
+            root,
+            name,
+            description=description,
+            time_of_day=time_of_day,
+            lighting=lighting,
+        )
+    )
 
 
 def environment_render(root: str, name: str, *, quality: str = "high") -> None:
@@ -111,9 +117,7 @@ def render(
             print(p)
 
 
-def compose(
-    root: str, *, out_name: str = "final.mp4", song_audio: bool = True
-) -> None:
+def compose(root: str, *, out_name: str = "final.mp4", song_audio: bool = True) -> None:
     """Concatenate rendered shots and (optionally) overlay song audio."""
     print(facade.compose(root, out_name=out_name, use_song_audio=song_audio))
 
@@ -134,26 +138,26 @@ def main() -> None:
     try:
         import argh  # type: ignore
     except ImportError as e:
-        raise SystemExit(
-            "muvid CLI requires `argh`. pip install argh."
-        ) from e
-    argh.dispatch_commands([
-        init,
-        transcribe,
-        align,
-        character,
-        character_images,
-        character_generate,
-        character_curate,
-        environment,
-        environment_render,
-        script,
-        script_apply,
-        render,
-        compose,
-        status,
-        serve,
-    ])
+        raise SystemExit("muvid CLI requires `argh`. pip install argh.") from e
+    argh.dispatch_commands(
+        [
+            init,
+            transcribe,
+            align,
+            character,
+            character_images,
+            character_generate,
+            character_curate,
+            environment,
+            environment_render,
+            script,
+            script_apply,
+            render,
+            compose,
+            status,
+            serve,
+        ]
+    )
 
 
 if __name__ == "__main__":
