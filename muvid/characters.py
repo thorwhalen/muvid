@@ -161,8 +161,16 @@ def curate_references(
         if old.is_file():
             old.unlink()
     selected_paths: list[Path] = []
+    try:
+        from lookbook import to_local_path
+    except ImportError:  # pragma: no cover — older lookbook
+        to_local_path = None  # type: ignore[assignment]
+
     for r in result.kept:
-        src = Path(getattr(r, "path", None) or r.image_id)
+        if to_local_path is not None:
+            src = Path(to_local_path(r))
+        else:
+            src = Path(getattr(r, "path", None) or r.image_id)
         if not src.exists():
             continue
         target = selected_dir / src.name

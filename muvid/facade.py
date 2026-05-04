@@ -15,11 +15,17 @@ from muvid import align as _align_mod
 from muvid import characters as _chars
 from muvid import compose as _compose
 from muvid import environments as _envs
+from muvid import events as _events
 from muvid import lyrics as _lyrics
 from muvid import script as _script
 from muvid.project import MusicVideoProject
 from muvid.renderers import render_all as _render_all, render_shot as _render_shot
 from muvid.schema import SectionSpec, ShotSpec
+
+
+def _fal_events_log(project: MusicVideoProject) -> Path:
+    """Path to the per-project fal events JSONL."""
+    return project.root / ".muvid" / "fal_events.jsonl"
 
 
 def init_project(
@@ -165,7 +171,8 @@ def add_environment(
 
 def render_environment(root: str | Path, name: str, *, quality: str = "high") -> str:
     p = MusicVideoProject(root)
-    return str(_envs.render_environment(p, name, quality=quality))
+    with _events.log_fal_events_to(_fal_events_log(p)):
+        return str(_envs.render_environment(p, name, quality=quality))
 
 
 def write_script(root: str | Path) -> str:
@@ -182,14 +189,16 @@ def render_shot(
     root: str | Path, shot_id: str, *, quality: str = "balanced", force: bool = False
 ) -> str:
     p = MusicVideoProject(root)
-    return str(_render_shot(p, shot_id, quality=quality, force=force))
+    with _events.log_fal_events_to(_fal_events_log(p)):
+        return str(_render_shot(p, shot_id, quality=quality, force=force))
 
 
 def render(
     root: str | Path, *, quality: str = "balanced", force: bool = False
 ) -> list[str]:
     p = MusicVideoProject(root)
-    return [str(x) for x in _render_all(p, quality=quality, force=force)]
+    with _events.log_fal_events_to(_fal_events_log(p)):
+        return [str(x) for x in _render_all(p, quality=quality, force=force)]
 
 
 def compose(
@@ -295,6 +304,9 @@ def status(root: str | Path) -> dict:
         "has_alignment": alignment_path.exists(),
         "n_rendered": n_rendered,
         "has_final": final_path.exists(),
+        "recent_fal_events": _events.read_recent_fal_events(
+            _fal_events_log(p), limit=10
+        ),
     }
 
 
