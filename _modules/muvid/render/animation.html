@@ -1,0 +1,226 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>muvid.render.animation &mdash; muvid 0.0.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=e3a6060d"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
+      <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            muvid
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid.html">muvid</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/__main__.html">muvid.__main__</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/align.html">muvid.align</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/characters.html">muvid.characters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/compose.html">muvid.compose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/environments.html">muvid.environments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/facade.html">muvid.facade</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyrics.html">muvid.lyrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/project.html">muvid.project</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/render.html">muvid.render</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/render/_common.html">muvid.render._common</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/render/animation.html">muvid.render.animation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/render/image_to_video.html">muvid.render.image_to_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/render/lipsync.html">muvid.render.lipsync</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/render/still.html">muvid.render.still</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/render/text_to_video.html">muvid.render.text_to_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/schema.html">muvid.schema</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/script.html">muvid.script</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/ui.html">muvid.ui</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/ui/app.html">muvid.ui.app</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">muvid</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+          <li class="breadcrumb-item"><a href="../render.html">muvid.render</a></li>
+      <li class="breadcrumb-item active">muvid.render.animation</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for muvid.render.animation</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Render strategy: animation — handoff to the ``an`` package.</span>
+
+<span class="sd">We synthesize a minimal ``an`` scene for this shot&#39;s interval: each</span>
+<span class="sd">lyric line becomes a dialogue beat for the singing character; the shot&#39;s</span>
+<span class="sd">environment becomes the entity backdrop. ``an`` has its own</span>
+<span class="sd">WhisperLipSync that re-aligns to the synthesized TTS, but for music</span>
+<span class="sd">videos we want lipsync against the *original song* — so we instead</span>
+<span class="sd">write the audio slice as the scene&#39;s pre-baked audio and let an&#39;s</span>
+<span class="sd">viseme machinery sync against it.</span>
+
+<span class="sd">This is a deliberately minimal v0 — `an` is mature enough to grow this</span>
+<span class="sd">out into a proper scripted scene later.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">muvid.render</span><span class="w"> </span><span class="kn">import</span> <span class="n">RenderContext</span>
+
+
+<div class="viewcode-block" id="render_animation">
+<a class="viewcode-back" href="../../../module_docs/muvid/render/animation.html#muvid.render.animation.render_animation">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">render_animation</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="n">RenderContext</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">quality</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;balanced&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Synthesize a tiny ``an`` scene for this shot and orchestrate it.</span>
+
+<span class="sd">    Falls back to a &quot;still&quot; render if the ``an`` package isn&#39;t usable</span>
+<span class="sd">    (it currently has heavy native deps for the cutout backend).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">an.orchestrate</span><span class="w"> </span><span class="kn">import</span> <span class="n">orchestrate</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+        <span class="c1"># Fall back to the still strategy.</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.render.still</span><span class="w"> </span><span class="kn">import</span> <span class="n">render_still</span>
+
+        <span class="k">return</span> <span class="n">render_still</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">quality</span><span class="o">=</span><span class="n">quality</span><span class="p">)</span>
+
+    <span class="n">scene_dir</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">shot_dir</span> <span class="o">/</span> <span class="s2">&quot;an_scene&quot;</span>
+    <span class="n">scene_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">md</span> <span class="o">=</span> <span class="n">_build_an_scene_md</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span>
+    <span class="p">(</span><span class="n">scene_dir</span> <span class="o">/</span> <span class="s2">&quot;scene.md&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">md</span><span class="p">)</span>
+    <span class="n">report</span> <span class="o">=</span> <span class="n">orchestrate</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">scene_dir</span><span class="p">))</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">report</span><span class="p">,</span> <span class="s2">&quot;success&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
+        <span class="c1"># Fall back rather than throwing a wall of errors.</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.render.still</span><span class="w"> </span><span class="kn">import</span> <span class="n">render_still</span>
+
+        <span class="k">return</span> <span class="n">render_still</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">quality</span><span class="o">=</span><span class="n">quality</span><span class="p">)</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">shot_dir</span> <span class="o">/</span> <span class="s2">&quot;output.mp4&quot;</span>
+    <span class="n">src</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">report</span><span class="o">.</span><span class="n">output_path</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">src</span> <span class="o">!=</span> <span class="n">out</span><span class="p">:</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
+
+        <span class="n">shutil</span><span class="o">.</span><span class="n">copy2</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">out</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">out</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_build_an_scene_md</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="n">RenderContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="n">duration</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">ctx</span><span class="o">.</span><span class="n">shot</span><span class="o">.</span><span class="n">duration_s</span><span class="p">)</span>
+    <span class="n">lyrics</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">lyric_lines</span> <span class="ow">or</span> <span class="p">[{</span><span class="s2">&quot;text&quot;</span><span class="p">:</span> <span class="n">ctx</span><span class="o">.</span><span class="n">shot</span><span class="o">.</span><span class="n">description</span> <span class="ow">or</span> <span class="s2">&quot;...&quot;</span><span class="p">,</span> <span class="s2">&quot;start_s&quot;</span><span class="p">:</span> <span class="n">ctx</span><span class="o">.</span><span class="n">shot</span><span class="o">.</span><span class="n">start_s</span><span class="p">,</span> <span class="s2">&quot;end_s&quot;</span><span class="p">:</span> <span class="n">ctx</span><span class="o">.</span><span class="n">shot</span><span class="o">.</span><span class="n">end_s</span><span class="p">}]</span>
+    <span class="n">speaker</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">shot</span><span class="o">.</span><span class="n">characters</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">ctx</span><span class="o">.</span><span class="n">shot</span><span class="o">.</span><span class="n">characters</span> <span class="k">else</span> <span class="s2">&quot;narrator&quot;</span>
+    <span class="n">chars_block</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">ctx</span><span class="o">.</span><span class="n">shot</span><span class="o">.</span><span class="n">characters</span><span class="p">:</span>
+        <span class="n">chars_block</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;- </span><span class="se">{{</span><span class="s2"> kind: character, id: </span><span class="si">{</span><span class="n">c</span><span class="si">}</span><span class="s2">, store: characters, ref: </span><span class="si">{</span><span class="n">c</span><span class="si">}</span><span class="s2">-v1 </span><span class="se">}}</span><span class="s2">&quot;</span>
+            <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">ctx</span><span class="o">.</span><span class="n">shot</span><span class="o">.</span><span class="n">characters</span>
+        <span class="p">)</span>
+    <span class="n">env_block</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">ctx</span><span class="o">.</span><span class="n">shot</span><span class="o">.</span><span class="n">environment</span><span class="p">:</span>
+        <span class="n">env_block</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;- </span><span class="se">{{</span><span class="s2"> kind: environment, id: </span><span class="si">{</span><span class="n">ctx</span><span class="o">.</span><span class="n">shot</span><span class="o">.</span><span class="n">environment</span><span class="si">}</span><span class="s2">, &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;store: environments, ref: </span><span class="si">{</span><span class="n">ctx</span><span class="o">.</span><span class="n">shot</span><span class="o">.</span><span class="n">environment</span><span class="si">}</span><span class="s2"> </span><span class="se">}}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+    <span class="n">entities</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">b</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="p">(</span><span class="n">env_block</span><span class="p">,</span> <span class="n">chars_block</span><span class="p">)</span> <span class="k">if</span> <span class="n">b</span><span class="p">)</span>
+    <span class="n">dialogue</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">speaker</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">L</span><span class="p">[</span><span class="s1">&#39;text&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">L</span> <span class="ow">in</span> <span class="n">lyrics</span><span class="p">)</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;# </span><span class="si">{</span><span class="n">ctx</span><span class="o">.</span><span class="n">shot</span><span class="o">.</span><span class="n">id</span><span class="si">}</span>
+
+<span class="s2">```yaml meta</span>
+<span class="s2">title: </span><span class="si">{</span><span class="n">ctx</span><span class="o">.</span><span class="n">shot</span><span class="o">.</span><span class="n">id</span><span class="si">}</span>
+<span class="s2">duration: </span><span class="si">{</span><span class="n">duration</span><span class="si">}</span>
+<span class="s2">fps: 24</span>
+<span class="s2">resolution: </span><span class="se">{{</span><span class="s2"> width: 640, height: 360 </span><span class="se">}}</span>
+<span class="s2">```</span>
+
+<span class="s2">## Shot </span><span class="si">{</span><span class="n">ctx</span><span class="o">.</span><span class="n">shot</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2"> (cutout)</span>
+
+<span class="s2">```yaml shot</span>
+<span class="s2">duration: </span><span class="si">{</span><span class="n">duration</span><span class="si">}</span>
+<span class="s2">camera: </span><span class="se">{{</span><span class="s2"> move: static </span><span class="se">}}</span>
+<span class="s2">```</span>
+
+<span class="s2">```yaml entities</span>
+<span class="si">{</span><span class="n">entities</span><span class="si">}</span>
+<span class="s2">```</span>
+
+<span class="s2">```dialogue</span>
+<span class="si">{</span><span class="n">dialogue</span><span class="si">}</span>
+<span class="s2">```</span>
+<span class="s2">&quot;&quot;&quot;</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright NO COPYRIGHT.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
