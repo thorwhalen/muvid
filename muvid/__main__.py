@@ -26,9 +26,12 @@ def transcribe(root: str, *, api_key: str = "") -> None:
     print(facade.transcribe_song(root, api_key=api_key or None))
 
 
-def align(root: str) -> None:
-    """Build lyrics/alignment.annot from transcript + lyrics.md."""
-    print(facade.align_lyrics(root))
+def align(root: str, *, aligner: str = "scribe-greedy") -> None:
+    """Build lyrics/alignment.annot from transcript + lyrics.md.
+
+    --aligner: scribe-greedy (default) | user | whisperx-lite | stars.
+    """
+    print(facade.align_lyrics(root, aligner=aligner))
 
 
 def character(
@@ -122,9 +125,17 @@ def compose(root: str, *, out_name: str = "final.mp4", song_audio: bool = True) 
     print(facade.compose(root, out_name=out_name, use_song_audio=song_audio))
 
 
-def status(root: str) -> None:
-    """Print a summary of the project's current state."""
-    _print_json(facade.status(root))
+def status(root: str, *, json: bool = False) -> None:
+    """Print a summary of the project's current state.
+
+    Default output is human-readable. Pass ``--json`` for the
+    structured shape (stages, render progress, alignment quality).
+    """
+    s = facade.status(root)
+    if json:
+        _print_json(s)
+    else:
+        print(facade.format_status(s))
 
 
 def serve(root: str = ".", *, host: str = "127.0.0.1", port: int = 7800) -> None:

@@ -75,15 +75,20 @@ def transcribe(
     *,
     api_key: str | None = None,
     out_path: str | Path | None = None,
+    cache: bool | str | Path = True,
 ) -> dict[str, Any]:
-    """Run ElevenLabs Scribe on the audio and (optionally) cache the JSON.
+    """Run ElevenLabs Scribe on the audio and (optionally) write the JSON.
 
     Returns the raw response dict (which contains ``words: [...]`` with
-    per-word ``text``, ``start``, ``end``).
+    per-word ``text``, ``start``, ``end``, ``confidence``).
+
+    The on-disk Scribe cache (in ``mixing.transcript``) is enabled by
+    default, so re-running on the same audio is free. Pass
+    ``cache=False`` to force a fresh round-trip.
     """
     from mixing.transcript import transcribe as _transcribe
 
-    response = _transcribe(audio_path, api_key=api_key)
+    response = _transcribe(audio_path, api_key=api_key, cache=cache)
     if out_path is not None:
         out_path = Path(out_path)
         out_path.parent.mkdir(parents=True, exist_ok=True)
@@ -93,10 +98,11 @@ def transcribe(
 
 
 def words_from_transcript(transcript: dict[str, Any]) -> list[dict[str, Any]]:
-    """Normalize Scribe's word entries: ``[{text, start, end}, ...]``.
+    """Normalize Scribe's word entries: ``[{text, start, end, confidence}, ...]``.
 
     Filters out non-word events (Scribe surfaces ``(laughs)`` etc. with
-    ``type`` ≠ ``word``) and ones missing timing.
+    ``type`` ≠ ``word``) and ones missing timing. ``confidence`` is
+    pass-through; absent → ``None``.
     """
     out: list[dict[str, Any]] = []
     for w in transcript.get("words", ()):
@@ -107,7 +113,15 @@ def words_from_transcript(transcript: dict[str, Any]) -> list[dict[str, Any]]:
         end = w.get("end")
         if not text or start is None or end is None:
             continue
-        out.append({"text": text, "start": float(start), "end": float(end)})
+        conf = w.get("confidence")
+        out.append(
+            {
+                "text": text,
+                "start": float(start),
+                "end": float(end),
+                "confidence": float(conf) if conf is not None else None,
+            }
+        )
     return out
 
 

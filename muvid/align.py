@@ -34,7 +34,6 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable, Optional
-from uuid import uuid4
 
 from muvid.lyrics import LyricsDoc, words_from_transcript
 
@@ -113,7 +112,57 @@ class AlignmentResult:
         return None
 
 
-# --- core alignment -------------------------------------------------------
+# --- aligner registry -----------------------------------------------------
+
+#: Built-in aligner names. ``align_lyrics(aligner=...)`` accepts these
+#: plus any name added later via :func:`register_aligner`.
+AlignerName = str  # kept loose so user-registered names work too
+
+_ALIGNERS: dict[str, "AlignerSpec"] = {}
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class AlignerSpec:
+    """One row in the aligner registry."""
+
+    name: str
+    description: str
+    fn: "object"  # Callable[..., AlignmentResult]
+    requires: tuple[str, ...] = ()
+
+
+def register_aligner(
+    name: str,
+    fn,
+    *,
+    description: str,
+    requires: tuple[str, ...] = (),
+) -> None:
+    """Register an aligner under ``name``.
+
+    The function should accept ``(lyrics, transcript, *, duration_s,
+    **kw) -> AlignmentResult``. Extra keyword arguments forwarded by
+    :func:`align_lyrics` are passed through.
+    """
+    _ALIGNERS[name] = AlignerSpec(
+        name=name, description=description, fn=fn, requires=tuple(requires)
+    )
+
+
+def list_aligners() -> list[str]:
+    """Return all registered aligner names, sorted."""
+    return sorted(_ALIGNERS)
+
+
+def aligner_info(name: str) -> AlignerSpec:
+    if name not in _ALIGNERS:
+        raise KeyError(
+            f"Unknown aligner {name!r}. Registered: {list_aligners()}"
+        )
+    return _ALIGNERS[name]
+
+
+# --- public dispatch ------------------------------------------------------
 
 
 def align_lyrics(
@@ -121,12 +170,54 @@ def align_lyrics(
     transcript: dict,
     *,
     duration_s: float = 0.0,
+    aligner: str = "scribe-greedy",
+    **aligner_kwargs,
+) -> AlignmentResult:
+    """Align a ``LyricsDoc`` to a transcript.
+
+    Args:
+        lyrics: User-edited lyrics document (the ground-truth text).
+        transcript: Aligner-specific input. For ``"scribe-greedy"``
+            this is a Scribe / faster-whisper response with
+            ``words: [...]``. For ``"user"`` this can be empty if you
+            pass ``user_line_timings=...``. For ``"whisperx-lite"`` the
+            transcript is ignored — the aligner runs on the audio
+            directly (path passed via ``audio_path=``).
+        duration_s: Used to extrapolate end times for lines with no
+            matched words and no later anchor.
+        aligner: Name of a registered aligner. See :func:`list_aligners`.
+        **aligner_kwargs: Forwarded to the aligner.
+
+    Returns:
+        :class:`AlignmentResult`.
+    """
+    spec = aligner_info(aligner)
+    for pkg in spec.requires:
+        try:
+            __import__(pkg)
+        except ImportError as e:
+            raise RuntimeError(
+                f"aligner {aligner!r} requires {pkg!r}; install it first "
+                f"(pip install {pkg})"
+            ) from e
+    return spec.fn(lyrics, transcript, duration_s=duration_s, **aligner_kwargs)
+
+
+# --- aligner: scribe-greedy ----------------------------------------------
+
+
+def align_scribe_greedy(
+    lyrics: LyricsDoc,
+    transcript: dict,
+    *,
+    duration_s: float = 0.0,
     lookahead: int = 6,
 ) -> AlignmentResult:
-    """Greedy token-match alignment.
+    """Greedy token-match against a word-timestamped transcript.
 
-    ``duration_s`` is used only when extrapolating end times for lines
-    that have no matched words and no later anchor.
+    Cheap, network-only (assumes the transcript came from Scribe or
+    similar). Tolerates 1-character mishears between sung and written
+    text. ``duration_s`` is used only when extrapolating end times.
     """
     transcript_words = words_from_transcript(transcript)
     transcript_tokens = [
@@ -305,6 +396,176 @@ def _interpolate_line_times(
     return out
 
 
+# --- aligner: user-provided -----------------------------------------------
+
+
+def align_user_provided(
+    lyrics: LyricsDoc,
+    transcript: dict,
+    *,
+    duration_s: float = 0.0,
+    user_line_timings: Optional[list[dict]] = None,
+) -> AlignmentResult:
+    """Use line-level timings the caller has already determined.
+
+    Useful when the user has hand-anchored every line, or when an
+    external aligner has produced ``line_index → (start, end)``
+    timings and you don't want any token-matching.
+
+    ``user_line_timings`` is a list of ``{"line_index": int,
+    "start_s": float, "end_s": float}``. If omitted, this aligner
+    falls back to the manual anchors already on ``lyrics`` (the
+    ``// 12.5`` end-of-line markers in ``lyrics.md``).
+    """
+    user_line_timings = user_line_timings or []
+    timings_by_line = {int(t["line_index"]): t for t in user_line_timings}
+
+    line_alignments: list[LineAlignment] = []
+    for L in lyrics.lines:
+        t = timings_by_line.get(L.line_index)
+        if t is not None:
+            start = float(t["start_s"])
+            end = float(t["end_s"])
+        else:
+            start = L.start_s
+            end = None
+        line_alignments.append(
+            LineAlignment(
+                line_index=L.line_index,
+                section_label=L.section_label,
+                text=L.text,
+                start_s=start,
+                end_s=end,
+                word_alignments=(),
+            )
+        )
+    line_alignments = _interpolate_line_times(line_alignments, duration_s)
+
+    # Re-group into sections (mirror of scribe-greedy logic).
+    by_label: dict[str, list[LineAlignment]] = {}
+    for la in line_alignments:
+        by_label.setdefault(la.section_label, []).append(la)
+
+    section_alignments: list[SectionAlignment] = []
+    for s in lyrics.sections:
+        lines_for = tuple(by_label.get(s.label, ()))
+        starts = [L.start_s for L in lines_for if L.start_s is not None]
+        ends = [L.end_s for L in lines_for if L.end_s is not None]
+        s_start = s.start_s if s.start_s is not None else (min(starts) if starts else None)
+        s_end = s.end_s if s.end_s is not None else (max(ends) if ends else None)
+        section_alignments.append(
+            SectionAlignment(
+                label=s.label,
+                title=s.title,
+                start_s=s_start,
+                end_s=s_end,
+                lines=lines_for,
+            )
+        )
+    return AlignmentResult(sections=tuple(section_alignments))
+
+
+# --- aligner: whisperx-lite (offline via faster-whisper) ------------------
+
+
+def align_whisperx_lite(
+    lyrics: LyricsDoc,
+    transcript: dict,
+    *,
+    duration_s: float = 0.0,
+    audio_path: Optional[str | Path] = None,
+    model_size: str = "tiny",
+    lookahead: int = 6,
+) -> AlignmentResult:
+    """Local-only aligner that re-uses ``faster-whisper`` (no API).
+
+    The ``transcript`` argument is ignored when ``audio_path`` is given:
+    we re-transcribe locally with faster-whisper and then run the same
+    greedy match used by ``scribe-greedy``. When ``audio_path`` is not
+    given, we fall through and just use the supplied ``transcript``.
+
+    Trade-offs vs ``scribe-greedy``: free + offline; slower; less
+    accurate on singing; needs torch + faster-whisper installed.
+    """
+    if audio_path is None:
+        return align_scribe_greedy(
+            lyrics, transcript, duration_s=duration_s, lookahead=lookahead
+        )
+
+    try:
+        from faster_whisper import WhisperModel  # type: ignore
+    except ImportError as e:  # pragma: no cover — exercised only when installed
+        raise RuntimeError(
+            "whisperx-lite requires faster-whisper. "
+            "pip install faster-whisper"
+        ) from e
+
+    model = WhisperModel(model_size, device="cpu", compute_type="int8")
+    segments, _info = model.transcribe(str(audio_path), word_timestamps=True)
+    words = []
+    for seg in segments:
+        for w in seg.words or ():
+            words.append(
+                {
+                    "text": w.word.strip(),
+                    "start": float(w.start),
+                    "end": float(w.end),
+                    "type": "word",
+                    "confidence": float(getattr(w, "probability", 1.0) or 1.0),
+                }
+            )
+    transcript = {"words": words}
+    return align_scribe_greedy(
+        lyrics, transcript, duration_s=duration_s, lookahead=lookahead
+    )
+
+
+# --- aligner: stars (singing-grade — stub) --------------------------------
+
+
+def align_stars(
+    lyrics: LyricsDoc,
+    transcript: dict,
+    *,
+    duration_s: float = 0.0,
+    **kwargs,
+) -> AlignmentResult:  # pragma: no cover — not implemented
+    """Singing-specific alignment (STARS / similar). Not yet implemented.
+
+    See ``misc/docs/alignment_references.md`` for the literature
+    motivating this aligner. The slot exists so callers can already
+    write ``aligner="stars"`` and get a clear NotImplementedError.
+    """
+    raise NotImplementedError(
+        "stars-style joint singing alignment is not implemented yet. "
+        "Use aligner='scribe-greedy' (default) or 'whisperx-lite'."
+    )
+
+
+# Register built-in aligners.
+register_aligner(
+    "scribe-greedy",
+    align_scribe_greedy,
+    description="Greedy token-match against a Scribe / faster-whisper transcript.",
+)
+register_aligner(
+    "user",
+    align_user_provided,
+    description="Caller-provided line-level timings (line_index → start, end).",
+)
+register_aligner(
+    "whisperx-lite",
+    align_whisperx_lite,
+    description="Offline: faster-whisper transcribe + greedy match.",
+    requires=("faster_whisper",),
+)
+register_aligner(
+    "stars",
+    align_stars,
+    description="Singing-grade joint alignment (not yet implemented).",
+)
+
+
 # --- lacing serialization -------------------------------------------------
 
 
@@ -317,103 +578,41 @@ def write_alignment_store(
 ) -> None:
     """Write alignment to a ``lacing.SqliteStore`` file (.annot).
 
-    Three tiers: ``sections``, ``lines``, ``words``. Body schemas use
-    custom URIs registered locally; we don't enforce them here (the
-    store still validates structure).
+    Uses :class:`lacing.tracks.subtitle.SubtitleBuilder` for the
+    standard ``(sections, lines, words)`` tier set.
     """
-    from lacing import (
-        Annotation,
-        MediaRef,
-        Provenance,
-        RationalTime,
-        SqliteStore,
-        Tier,
-        TimeInterval,
-    )
+    from lacing import SqliteStore
+    from lacing.tracks.subtitle import SubtitleBuilder
 
     path = Path(path)
     if path.exists():
         path.unlink()
     store = SqliteStore(str(path))
     try:
-        store.add_tier(Tier(name="sections"))
-        store.add_tier(Tier(name="lines"))
-        store.add_tier(Tier(name="words"))
-
-        prov = Provenance(
+        b = SubtitleBuilder(
+            store,
+            asset_id=asset_id,
+            rate=rate,
             was_generated_by="muvid:align",
             was_attributed_to="muvid",
-            generated_at_time=RationalTime.zero(rate),
         )
-
-        def interval(start_s: float, end_s: float) -> TimeInterval:
-            if end_s <= start_s:
-                end_s = start_s + 1.0 / rate
-            # Round to the integer rate-tick so we never trip lacing's
-            # strict "lossy conversion" guard for decimals like 14.2 at
-            # rate=1000 (14.2 → 14199.999... ticks).
-            start_t = int(round(start_s * rate))
-            end_t = int(round(end_s * rate))
-            if end_t <= start_t:
-                end_t = start_t + 1
-            return TimeInterval(
-                RationalTime(start_t, rate),
-                RationalTime(end_t, rate),
-            )
-
         for s in alignment.sections:
             if s.start_s is None or s.end_s is None:
                 continue
-            store.add(
-                Annotation(
-                    id=uuid4(),
-                    tier="sections",
-                    reference=MediaRef(
-                        asset_id=asset_id,
-                        interval=interval(s.start_s, s.end_s),
-                    ),
-                    body={"label": s.label, "title": s.title},
-                    body_schema_uri="annot://schema/song-section/v1",
-                    provenance=prov,
-                )
-            )
+            b.section(s.label, s.start_s, s.end_s, title=s.title)
         for L in alignment.lines:
             if L.start_s is None or L.end_s is None:
                 continue
-            store.add(
-                Annotation(
-                    id=uuid4(),
-                    tier="lines",
-                    reference=MediaRef(
-                        asset_id=asset_id,
-                        interval=interval(L.start_s, L.end_s),
-                    ),
-                    body={
-                        "text": L.text,
-                        "line_index": L.line_index,
-                        "section": L.section_label,
-                    },
-                    body_schema_uri="annot://schema/lyric-line/v1",
-                    provenance=prov,
-                )
+            b.line(
+                L.text,
+                L.start_s, L.end_s,
+                line_index=L.line_index,
+                section=L.section_label,
             )
         for w in alignment.words:
-            store.add(
-                Annotation(
-                    id=uuid4(),
-                    tier="words",
-                    reference=MediaRef(
-                        asset_id=asset_id,
-                        interval=interval(w.start_s, w.end_s),
-                    ),
-                    body={
-                        "text": w.text,
-                        "line_index": w.line_index,
-                        "confidence": w.confidence,
-                    },
-                    body_schema_uri="annot://schema/word/v1",
-                    provenance=prov,
-                )
+            b.word(
+                w.text, w.start_s, w.end_s,
+                line_index=w.line_index, confidence=w.confidence,
             )
     finally:
         store.close()

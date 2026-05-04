@@ -175,30 +175,22 @@ def _lyric_lines_for_shot(project: MusicVideoProject, shot: ShotSpec) -> list:
     if not align_path.exists():
         return []
     try:
-        from lacing import SqliteStore, TimeInterval, RationalTime
+        from lacing import SqliteStore
+        from lacing.tracks.subtitle import SubtitleTrack
     except Exception:
         return []
     store = SqliteStore(str(align_path))
     try:
-        rate = 1000
-        window = TimeInterval(
-            RationalTime(int(shot.start_s * rate), rate),
-            RationalTime(int(shot.end_s * rate), rate),
-        )
-        out: list[dict] = []
-        for ann in store.intersects(window):
-            if ann.tier != "lines":
-                continue
-            out.append(
-                {
-                    "text": ann.body.get("text", ""),
-                    "start_s": ann.reference.interval.start.to_seconds(),
-                    "end_s": ann.reference.interval.end.to_seconds(),
-                    "line_index": ann.body.get("line_index"),
-                    "section": ann.body.get("section"),
-                }
-            )
-        out.sort(key=lambda r: r["start_s"])
-        return out
+        track = SubtitleTrack(store, asset_id=None)
+        return [
+            {
+                "text": ann.body.get("text", ""),
+                "start_s": ann.reference.interval.start.to_seconds(),
+                "end_s": ann.reference.interval.end.to_seconds(),
+                "line_index": ann.body.get("line_index"),
+                "section": ann.body.get("section"),
+            }
+            for ann in track.lines_in(shot.start_s, shot.end_s)
+        ]
     finally:
         store.close()

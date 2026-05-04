@@ -55,17 +55,33 @@ def transcribe_song(root: str | Path, *, api_key: str | None = None) -> str:
     return str(lyrics_md)
 
 
-def align_lyrics(root: str | Path) -> str:
+def align_lyrics(
+    root: str | Path,
+    *,
+    aligner: str = "scribe-greedy",
+    **aligner_kwargs,
+) -> str:
     """Build ``lyrics/alignment.annot`` from transcript + lyrics.md.
+
+    ``aligner`` selects the alignment strategy (see
+    :func:`muvid.align.list_aligners`); extra kwargs are forwarded to
+    the chosen aligner. Defaults to ``scribe-greedy``.
 
     Returns the path to the alignment store.
     """
     p = MusicVideoProject(root)
-    transcript = _lyrics.read_transcript(p.root / "lyrics" / "transcript.json")
+    transcript_path = p.root / "lyrics" / "transcript.json"
+    transcript = (
+        _lyrics.read_transcript(transcript_path)
+        if transcript_path.exists()
+        else {"words": []}
+    )
     doc = _lyrics.read_lyrics_md(p.root / "lyrics" / "lyrics.md")
     spec = p.read_spec()
     duration = spec.song.duration_s if spec.song else 0.0
-    alignment = _align_mod.align_lyrics(doc, transcript, duration_s=duration)
+    alignment = _align_mod.align_lyrics(
+        doc, transcript, duration_s=duration, aligner=aligner, **aligner_kwargs,
+    )
     out = p.root / "lyrics" / "alignment.annot"
     _align_mod.write_alignment_store(alignment, path=out)
     # Sync the parsed sections into the project SSOT so the script can
@@ -188,9 +204,62 @@ def status(root: str | Path) -> dict:
 
     Useful for the skill / UI to show the user where they are in the
     pipeline. No side effects.
+
+    Returns a structured shape with stage progression, per-shot render
+    status, and (when an alignment store exists) a word-confidence
+    histogram. Stable enough to be programmatic; pass through
+    :func:`format_status` for human-readable text.
     """
     p = MusicVideoProject(root)
     spec = p.read_spec()
+
+    transcript_path = p.root / "lyrics" / "transcript.json"
+    lyrics_path = p.root / "lyrics" / "lyrics.md"
+    alignment_path = p.root / "lyrics" / "alignment.annot"
+    final_path = p.root / "output" / "final.mp4"
+
+    shot_states = []
+    for sh in spec.shots:
+        out = p.shot_dir(sh.id) / "output.mp4"
+        shot_states.append(
+            {
+                "id": sh.id,
+                "strategy": sh.render_strategy,
+                "duration_s": sh.duration_s,
+                "rendered": out.exists(),
+            }
+        )
+    n_rendered = sum(1 for s in shot_states if s["rendered"])
+
+    char_states = []
+    for c in spec.characters:
+        cdir = p.character_dir(c.name)
+        refs = list((cdir / "refs").iterdir()) if (cdir / "refs").exists() else []
+        sel = (
+            list((cdir / "selected").iterdir())
+            if (cdir / "selected").exists()
+            else []
+        )
+        char_states.append(
+            {
+                "name": c.name,
+                "n_refs": len(refs),
+                "n_selected": len(sel),
+                "has_anchor": (
+                    "reference_image_path" in p.read_character_card(c.name)
+                ),
+            }
+        )
+
+    env_states = []
+    for e in spec.environments:
+        env_states.append(
+            {
+                "name": e.name,
+                "rendered": (p.environment_dir(e.name) / "establishing.png").exists(),
+            }
+        )
+
     return {
         "root": str(p.root),
         "title": spec.title,
@@ -199,18 +268,147 @@ def status(root: str | Path) -> dict:
             if spec.song is None
             else {"path": spec.song.audio_path, "duration_s": spec.song.duration_s}
         ),
+        "stages": {
+            "init": p.project_file.exists(),
+            "transcribe": transcript_path.exists(),
+            "lyrics_md": lyrics_path.exists(),
+            "align": alignment_path.exists(),
+            "characters": char_states,
+            "environments": env_states,
+            "script": bool(spec.shots),
+            "render": {
+                "total": len(spec.shots),
+                "done": n_rendered,
+                "pending": len(spec.shots) - n_rendered,
+                "shots": shot_states,
+            },
+            "compose": final_path.exists(),
+        },
+        "alignment": _alignment_stats(alignment_path),
+        # Backwards-compat counters:
         "n_characters": len(spec.characters),
         "n_environments": len(spec.environments),
         "n_sections": len(spec.sections),
         "n_shots": len(spec.shots),
-        "has_transcript": (p.root / "lyrics" / "transcript.json").exists(),
-        "has_lyrics_md": (p.root / "lyrics" / "lyrics.md").exists(),
-        "has_alignment": (p.root / "lyrics" / "alignment.annot").exists(),
-        "n_rendered": sum(
-            1 for sh in spec.shots if (p.shot_dir(sh.id) / "output.mp4").exists()
-        ),
-        "has_final": (p.root / "output" / "final.mp4").exists(),
+        "has_transcript": transcript_path.exists(),
+        "has_lyrics_md": lyrics_path.exists(),
+        "has_alignment": alignment_path.exists(),
+        "n_rendered": n_rendered,
+        "has_final": final_path.exists(),
     }
+
+
+def format_status(status_dict: dict) -> str:
+    """Human-readable rendering of :func:`status`'s output.
+
+    Single-screen-ish: title, song, stage checkmarks, render progress
+    bar, alignment quality summary. No colour (we don't pull in a TTY
+    library).
+    """
+    parts: list[str] = []
+    parts.append(f"# {status_dict.get('title') or status_dict['root']}")
+    parts.append(f"  root: {status_dict['root']}")
+    song = status_dict.get("song")
+    if song:
+        parts.append(
+            f"  song: {song['path']} ({song['duration_s']:.1f}s)"
+        )
+    else:
+        parts.append("  song: (not set)")
+
+    stages = status_dict.get("stages", {})
+    parts.append("")
+    parts.append("Stages:")
+    for label, key in [
+        ("init",       "init"),
+        ("transcribe", "transcribe"),
+        ("lyrics.md",  "lyrics_md"),
+        ("align",      "align"),
+        ("script",     "script"),
+        ("compose",    "compose"),
+    ]:
+        ok = "✓" if stages.get(key) else " "
+        parts.append(f"  [{ok}] {label}")
+
+    chars = stages.get("characters", [])
+    if chars:
+        parts.append("")
+        parts.append("Characters:")
+        for c in chars:
+            anchor = "anchor" if c["has_anchor"] else "no-anchor"
+            parts.append(
+                f"  - {c['name']}: {c['n_refs']} refs, "
+                f"{c['n_selected']} selected, {anchor}"
+            )
+
+    envs = stages.get("environments", [])
+    if envs:
+        parts.append("")
+        parts.append("Environments:")
+        for e in envs:
+            ok = "rendered" if e["rendered"] else "pending"
+            parts.append(f"  - {e['name']}: {ok}")
+
+    render = stages.get("render", {})
+    if render.get("total"):
+        parts.append("")
+        bar_w = 24
+        done_w = (
+            int(round(bar_w * render["done"] / render["total"]))
+            if render["total"]
+            else 0
+        )
+        bar = "█" * done_w + "░" * (bar_w - done_w)
+        parts.append(
+            f"Render: {bar} {render['done']}/{render['total']}"
+        )
+
+    al = status_dict.get("alignment", {})
+    if al:
+        hist = al.get("confidence_histogram", {})
+        parts.append(
+            f"Alignment: {al.get('n_lines', 0)} lines, "
+            f"{al.get('n_words', 0)} words "
+            f"(high={hist.get('high', 0)}, med={hist.get('medium', 0)}, "
+            f"low={hist.get('low', 0)})"
+        )
+    return "\n".join(parts)
+
+
+def _alignment_stats(alignment_path: Path) -> dict | None:
+    """Return n_lines, n_words, and a confidence histogram. ``None`` if
+    no alignment store yet."""
+    if not alignment_path.exists():
+        return None
+    try:
+        from lacing import SqliteStore
+        from lacing.tracks.subtitle import SubtitleTrack
+    except Exception:
+        return None
+    store = SqliteStore(str(alignment_path))
+    try:
+        track = SubtitleTrack(store, asset_id=None)
+        lines = track.all_lines()
+        words = track.all_words()
+        # Confidence buckets: high ≥0.85, low <0.5, else medium.
+        hist = {"high": 0, "medium": 0, "low": 0}
+        for w in words:
+            c = w.body.get("confidence")
+            if c is None:
+                continue
+            if c >= 0.85:
+                hist["high"] += 1
+            elif c < 0.5:
+                hist["low"] += 1
+            else:
+                hist["medium"] += 1
+        return {
+            "n_lines": len(lines),
+            "n_words": len(words),
+            "confidence_histogram": hist,
+        }
+    finally:
+        store.close()
 
 
 def _slugify(text: str) -> str:
