@@ -194,11 +194,39 @@ def render_shot(
 
 
 def render(
-    root: str | Path, *, quality: str = "balanced", force: bool = False
+    root: str | Path,
+    *,
+    quality: str = "balanced",
+    force: bool = False,
+    budget: float | None = None,
 ) -> list[str]:
+    """Render every shot. Returns the produced mp4 paths.
+
+    ``budget`` (USD): when set, refuses to start if
+    :func:`estimate_render_cost` exceeds it. Pass ``None`` to skip the
+    gate entirely.
+    """
     p = MusicVideoProject(root)
+    if budget is not None:
+        rollup = estimate_render_cost(root, quality=quality)
+        if rollup.total_amount > budget:
+            raise RuntimeError(
+                f"render aborted: estimated cost ${rollup.total_amount:.2f} "
+                f"{rollup.currency} exceeds budget ${budget:.2f}. "
+                f"Pass --budget=0 to disable, or raise the cap."
+            )
     with _events.log_fal_events_to(_fal_events_log(p)):
         return [str(x) for x in _render_all(p, quality=quality, force=force)]
+
+
+def estimate_render_cost(
+    root: str | Path, *, quality: str = "balanced"
+):
+    """Return a :class:`muvid.cost.CostRollup` for the project's pending shots."""
+    from muvid.cost import estimate_render_cost as _estimate
+
+    p = MusicVideoProject(root)
+    return _estimate(p, quality=quality)
 
 
 def compose(
@@ -307,6 +335,25 @@ def status(root: str | Path) -> dict:
         "recent_fal_events": _events.read_recent_fal_events(
             _fal_events_log(p), limit=10
         ),
+        "estimated_render_cost": _try_estimate_cost(p),
+    }
+
+
+def _try_estimate_cost(project: MusicVideoProject) -> dict | None:
+    """Return ``{total_amount, currency, by_kind, n_skipped}`` or None."""
+    try:
+        from muvid.cost import estimate_render_cost as _estimate
+    except ImportError:
+        return None
+    try:
+        rollup = _estimate(project)
+    except Exception:
+        return None
+    return {
+        "total_amount": rollup.total_amount,
+        "currency": rollup.currency,
+        "by_kind": rollup.by_kind(),
+        "n_skipped": len(rollup.skipped),
     }
 
 
@@ -383,6 +430,19 @@ def format_status(status_dict: dict) -> str:
             f"{al.get('n_words', 0)} words "
             f"(high={hist.get('high', 0)}, med={hist.get('medium', 0)}, "
             f"low={hist.get('low', 0)})"
+        )
+
+    cost = status_dict.get("estimated_render_cost") or {}
+    if cost:
+        skipped_note = (
+            f" ({cost['n_skipped']} unpriced)"
+            if cost.get("n_skipped")
+            else ""
+        )
+        parts.append(
+            f"Estimated remaining render cost: "
+            f"~${cost.get('total_amount', 0.0):.2f} "
+            f"{cost.get('currency', 'USD')}{skipped_note}"
         )
     return "\n".join(parts)
 

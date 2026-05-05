@@ -110,14 +110,46 @@ def script_apply(root: str) -> None:
 
 
 def render(
-    root: str, *, shot: str = "", quality: str = "balanced", force: bool = False
+    root: str,
+    *,
+    shot: str = "",
+    quality: str = "balanced",
+    force: bool = False,
+    budget: float = -1.0,
 ) -> None:
-    """Render one shot (--shot ID) or all shots."""
+    """Render one shot (--shot ID) or all shots.
+
+    ``--budget USD``: when ≥ 0, abort if the estimated cost exceeds
+    this. Pass ``-1`` (the default) to disable the gate.
+    """
     if shot:
         print(facade.render_shot(root, shot, quality=quality, force=force))
     else:
-        for p in facade.render(root, quality=quality, force=force):
+        budget_arg = budget if budget >= 0 else None
+        for p in facade.render(root, quality=quality, force=force, budget=budget_arg):
             print(p)
+
+
+def estimate_cost(root: str, *, quality: str = "balanced") -> None:
+    """Estimate USD cost of rendering pending shots. Prints a rollup."""
+    rollup = facade.estimate_render_cost(root, quality=quality)
+    summary = {
+        "total_amount": rollup.total_amount,
+        "currency": rollup.currency,
+        "by_kind": rollup.by_kind(),
+        "n_skipped": len(rollup.skipped),
+        "lines": [
+            {
+                "kind": ln.kind,
+                "item_id": ln.item_id,
+                "model_id": ln.model_id,
+                "amount": ln.amount,
+                "note": ln.note,
+            }
+            for ln in rollup.lines
+        ],
+    }
+    _print_json(summary)
 
 
 def compose(root: str, *, out_name: str = "final.mp4", song_audio: bool = True) -> None:
@@ -164,6 +196,7 @@ def main() -> None:
             script,
             script_apply,
             render,
+            estimate_cost,
             compose,
             status,
             serve,
