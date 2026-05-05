@@ -2,20 +2,20 @@
 
 We synthesize a minimal ``an`` scene for this shot's interval: each
 lyric line becomes a dialogue beat for the singing character; the shot's
-environment becomes the entity backdrop. ``an`` has its own
-WhisperLipSync that re-aligns to the synthesized TTS, but for music
-videos we want lipsync against the *original song* — so we instead
-write the audio slice as the scene's pre-baked audio and let an's
-viseme machinery sync against it.
+environment becomes the entity backdrop.
 
-This is a deliberately minimal v0 — `an` is mature enough to grow this
-out into a proper scripted scene later.
+Lipsync alignment: muvid already owns the SSOT for word timings (the
+``lacing`` alignment store written by ``muvid align``). We build a
+:class:`an.audio.WordTimingsLipSync` from those timings and pass it
+into ``an.orchestrate`` so ``an`` does NOT re-transcribe the same
+audio with whisper. Falls back to ``an``'s default lipsync provider
+when no alignment store exists yet (e.g. user skipped ``muvid align``).
 """
 
 from __future__ import annotations
 
-import subprocess
 from pathlib import Path
+from typing import Sequence
 
 from muvid.renderers import RenderContext
 
@@ -38,7 +38,10 @@ def render_animation(ctx: RenderContext, *, quality: str = "balanced") -> Path:
     scene_dir.mkdir(parents=True, exist_ok=True)
     md = _build_an_scene_md(ctx)
     (scene_dir / "scene.md").write_text(md)
-    report = orchestrate(str(scene_dir))
+
+    lipsync = _make_lipsync_provider(ctx)
+    orchestrate_kwargs = {"lipsync": lipsync} if lipsync is not None else {}
+    report = orchestrate(str(scene_dir), **orchestrate_kwargs)
     if not getattr(report, "success", False):
         # Fall back rather than throwing a wall of errors.
         from muvid.renderers.still import render_still
@@ -51,6 +54,69 @@ def render_animation(ctx: RenderContext, *, quality: str = "balanced") -> Path:
 
         shutil.copy2(src, out)
     return out
+
+
+def _make_lipsync_provider(ctx: RenderContext):
+    """Build a ``WordTimingsLipSync`` from this project's alignment store.
+
+    Returns ``None`` if either:
+
+    - ``an.audio.WordTimingsLipSync`` is not available (older ``an``), or
+    - the project has no ``lyrics/alignment.annot`` yet, or
+    - no words fall in this shot's window.
+
+    In those cases the caller skips the override and ``an`` falls back to
+    its default offline lipsync.
+    """
+    try:
+        from an.audio import StaticWordTimings, WordTimingsLipSync
+    except ImportError:
+        return None
+
+    timings = _word_timings_for_shot(ctx)
+    if not timings:
+        return None
+
+    provider = StaticWordTimings(timings, label="muvid:lacing")
+    return WordTimingsLipSync(provider)
+
+
+def _word_timings_for_shot(
+    ctx: RenderContext,
+) -> Sequence[tuple[str, float, float]]:
+    """Read this shot's word timings from the lacing alignment store.
+
+    Returns timings as ``(text, start, end)`` *relative to the shot's
+    audio slice* (i.e. shifted so the slice's t=0 corresponds to
+    ``ctx.shot.start_s`` in the song).
+    """
+    align_path = ctx.project.root / "lyrics" / "alignment.annot"
+    if not align_path.exists():
+        return ()
+    try:
+        from lacing import SqliteStore
+        from lacing.tracks.subtitle import SubtitleTrack
+    except ImportError:
+        return ()
+
+    store = SqliteStore(str(align_path))
+    try:
+        track = SubtitleTrack(store, asset_id=None)
+        words = track.words_in(ctx.shot.start_s, ctx.shot.end_s)
+        out: list[tuple[str, float, float]] = []
+        offset = ctx.shot.start_s
+        for ann in words:
+            text = ann.body.get("text", "")
+            if not text:
+                continue
+            ws = ann.reference.interval.start.to_seconds() - offset
+            we = ann.reference.interval.end.to_seconds() - offset
+            ws = max(0.0, ws)
+            we = max(ws, we)
+            out.append((text, ws, we))
+        return out
+    finally:
+        store.close()
 
 
 def _build_an_scene_md(ctx: RenderContext) -> str:
