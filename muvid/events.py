@@ -36,20 +36,14 @@ def log_fal_events_to(path: str | Path) -> Iterator[None]:
         yield
         return
 
+    from muvid.contracts import progress_event_to_dict
+
     target = Path(path)
     target.parent.mkdir(parents=True, exist_ok=True)
 
     def _write(event):
-        payload = {
-            "kind": event.kind,
-            "application": event.application,
-            "call_id": event.call_id,
-            "message": event.message or "",
-            "pct": event.pct,
-            "elapsed_s": event.elapsed_s,
-        }
         with target.open("a") as f:
-            f.write(json.dumps(payload) + "\n")
+            f.write(json.dumps(progress_event_to_dict(event)) + "\n")
 
     subscribe(_write)
     try:

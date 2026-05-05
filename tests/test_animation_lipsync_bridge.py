@@ -95,7 +95,7 @@ def test_word_timings_for_shot_empty_without_alignment_store(tmp_path):
     facade.init_project(tmp_path / "p")
     # No alignment store written.
     ctx = _make_render_ctx(tmp_path / "p", 0.0, 10.0)
-    assert _word_timings_for_shot(ctx) == ()
+    assert list(_word_timings_for_shot(ctx)) == []
 
 
 def test_make_lipsync_provider_returns_word_timings_lipsync(tmp_path):

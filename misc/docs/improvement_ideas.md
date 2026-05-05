@@ -6,11 +6,11 @@ Companion to [`design.md`](design.md) and
 mtv → muvid rename). Reading order is: thesis → friction inventory →
 ranked ideas → incremental rollout plan with a per-step test strategy.
 
-> **Status (as of the v0 audit follow-through):** I9, I8, I5, I6, I10,
-> I2, I4, S4, fal-events-into-muvid, **I1, I3, I7** have all landed.
-> Only **I11 (shared contracts)** is still open from the original
-> roadmap, and it's deliberately deferred until the dust settles.
-> See the per-section "Status" lines below.
+> **Status: every roadmap item has shipped.** I9, I8, I5, I6, I10,
+> I2, I4, S4, fal-events-into-muvid, I1, I3, I7, **and I11** have all
+> landed. I11 was deliberately scoped *down* from "new shared package"
+> to a `muvid.contracts` adapter module — see I11's section for the
+> reasoning.
 
 ## Thesis
 
@@ -315,21 +315,50 @@ to a `/api/events` SSE that streams the same shape during a run.
 
 ### I11 — A shared contracts package (`mvtypes` or fold into `lacing`)
 
-Long-tail cleanup. Solves the typing inconsistency where each
-package has its own `Character` / word-timing shape.
+**Status: addressed via `muvid.contracts` adapter module instead of a
+new package.**
 
-**What.** Extract `WordTiming`, `IntervalAlignment`, `Character`,
-`Environment`, `ProgressEvent`, `CostEstimate` into a tiny
-zero-dep package. Every other package depends on this only. The
-runtime cost is one import; the design cost is keeping the package
-small (no logic, only frozen dataclasses + JSON-schema).
+After the rest of the roadmap landed, the audit showed that each
+sibling has *legitimate* reasons for its own type shape — falaw's
+`Character` carries inline URLs because it's about to be sent to fal,
+muvid's `CharacterRef` is just a name+description because it's a
+folder pointer, lacing's `Annotation` is interval-keyed because it's
+about timeline positioning. Forcing them through one shared shape
+would either flatten distinctions or balloon the shared shape until
+nobody owns it. Fragmenting deployment into one more repo bought
+nothing.
 
-**Where.** New repo. Or fold into `lacing` since it's already
-the typed-data hub.
+What we built instead, in `muvid/contracts.py`:
 
-**How to test.** Reference equality across siblings: assert
-`isinstance(falaw_char, mvtypes.Character) is True`. JSON-roundtrip
-parametrized by every dataclass.
+- `character_to_falaw(project, name)` / `environment_to_falaw(...)` —
+  build live `falaw.Character` / `falaw.Environment` instances from
+  muvid's persistent cards, resolving the curated reference image
+  anchor along the way.
+- `word_timings_for_window(project, start_s, end_s)` — read absolute
+  word timings from the lacing alignment store; pulled out so any
+  render strategy (not just animation) can consume them.
+- `shifted_word_timings(timings, *, offset_s)` — pure-data helper for
+  shifting absolute song-time timings into shot-slice-relative form.
+- `progress_event_to_dict(event)` — canonical JSON-safe shape for
+  `falaw.ProgressEvent`. Used by the per-project events log; also
+  exported for SSE/UI/telemetry consumers that want the same record
+  layout.
+
+Each adapter is one obvious place a sibling's type change would
+ripple through. The seams are inspectable, the SSOTs stay where they
+were, no new package.
+
+**How to test (what's in `tests/test_contracts.py`).**
+
+- Card → Character round-trip with and without voice; anchor image
+  lookup falls back through `selected/` → `refs/`.
+- Card → Environment includes time_of_day / lighting fields.
+- Word-timings query with absolute times; tighter window excludes
+  trailing words.
+- `shifted_word_timings` clamps negative starts to zero.
+- `progress_event_to_dict` round-trips through `json.dumps`.
+- The animation render's private `_word_timings_for_shot` now routes
+  through `contracts` and still produces correct slice-relative output.
 
 ## Incremental rollout plan
 

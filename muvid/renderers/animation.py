@@ -84,39 +84,19 @@ def _make_lipsync_provider(ctx: RenderContext):
 def _word_timings_for_shot(
     ctx: RenderContext,
 ) -> Sequence[tuple[str, float, float]]:
-    """Read this shot's word timings from the lacing alignment store.
+    """Read this shot's word timings, relative to the slice's t=0.
 
-    Returns timings as ``(text, start, end)`` *relative to the shot's
-    audio slice* (i.e. shifted so the slice's t=0 corresponds to
-    ``ctx.shot.start_s`` in the song).
+    Thin wrapper over :func:`muvid.contracts.word_timings_for_window`
+    + :func:`muvid.contracts.shifted_word_timings`. Kept here as a
+    private name so the existing tests in this module's neighbourhood
+    don't need to know about ``muvid.contracts``.
     """
-    align_path = ctx.project.root / "lyrics" / "alignment.annot"
-    if not align_path.exists():
-        return ()
-    try:
-        from lacing import SqliteStore
-        from lacing.tracks.subtitle import SubtitleTrack
-    except ImportError:
-        return ()
+    from muvid.contracts import shifted_word_timings, word_timings_for_window
 
-    store = SqliteStore(str(align_path))
-    try:
-        track = SubtitleTrack(store, asset_id=None)
-        words = track.words_in(ctx.shot.start_s, ctx.shot.end_s)
-        out: list[tuple[str, float, float]] = []
-        offset = ctx.shot.start_s
-        for ann in words:
-            text = ann.body.get("text", "")
-            if not text:
-                continue
-            ws = ann.reference.interval.start.to_seconds() - offset
-            we = ann.reference.interval.end.to_seconds() - offset
-            ws = max(0.0, ws)
-            we = max(ws, we)
-            out.append((text, ws, we))
-        return out
-    finally:
-        store.close()
+    absolute = word_timings_for_window(
+        ctx.project, ctx.shot.start_s, ctx.shot.end_s,
+    )
+    return shifted_word_timings(absolute, offset_s=ctx.shot.start_s)
 
 
 def _build_an_scene_md(ctx: RenderContext) -> str:
