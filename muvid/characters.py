@@ -117,6 +117,52 @@ def generate_reference_images(
     return out
 
 
+def curate_references_interactive(
+    project: MusicVideoProject,
+    name: str,
+    *,
+    on_decision,
+    k: int = 8,
+    recipe: str = "person_mock",
+    present: int = 6,
+    max_rounds: int = 20,
+) -> list[Path]:
+    """Same as :func:`curate_references` but routes through
+    :func:`lookbook.curate_interactive` so the user (or a scripted
+    decision callable) drives keep/reject decisions per round.
+
+    ``on_decision`` is forwarded directly; see lookbook for the API.
+    """
+    from lookbook import curate_interactive
+    from lookbook.profiles import load as load_profile
+
+    refs_dir = project.character_dir(name) / "refs"
+    selected_dir = project.character_dir(name) / "selected"
+    selected_dir.mkdir(parents=True, exist_ok=True)
+    images = sorted(
+        p for p in refs_dir.iterdir() if p.is_file() and not p.name.startswith(".")
+    )
+    if not images:
+        raise RuntimeError(
+            f"No reference images in {refs_dir}. Add some first."
+        )
+
+    profile = load_profile(recipe)
+    result = curate_interactive(
+        images,
+        on_decision=on_decision,
+        k=k,
+        present=present,
+        max_rounds=max_rounds,
+        scorer_ids=profile.get("scorers", ()),
+        embedder_ids=profile.get("embedders", ()),
+        filter_ids=profile.get("filters", ()),
+        selector_id=profile.get("selector", "top_k"),
+        constraints=profile.get("constraints"),
+    )
+    return _copy_kept_to_selected(project, name, result, selected_dir)
+
+
 def curate_references(
     project: MusicVideoProject,
     name: str,
@@ -156,16 +202,39 @@ def curate_references(
         constraints=profile.get("constraints"),
     )
 
-    # Copy the selected images into selected/.
+    selected_paths = _copy_kept_to_selected(project, name, result, selected_dir)
+    project.log_decision(
+        "curate_references",
+        character=name,
+        recipe=recipe,
+        k=k,
+        n_in=len(images),
+        n_out=len(selected_paths),
+    )
+    return selected_paths
+
+
+def _copy_kept_to_selected(
+    project: MusicVideoProject,
+    name: str,
+    result,
+    selected_dir: Path,
+) -> list[Path]:
+    """Copy the kept ImageRefs into ``selected/`` and update the card anchor.
+
+    Shared by the one-shot and interactive curate paths.
+    """
+    # Wipe stale selections first.
     for old in selected_dir.iterdir():
         if old.is_file():
             old.unlink()
-    selected_paths: list[Path] = []
+
     try:
         from lookbook import to_local_path
     except ImportError:  # pragma: no cover — older lookbook
         to_local_path = None  # type: ignore[assignment]
 
+    selected_paths: list[Path] = []
     for r in result.kept:
         if to_local_path is not None:
             src = Path(to_local_path(r))
@@ -177,21 +246,13 @@ def curate_references(
         shutil.copy2(src, target)
         selected_paths.append(target)
 
-    # Use the first selected image as the canonical anchor.
+    # Update the canonical anchor on the card.
     if selected_paths:
         card = project.read_character_card(name)
         card["reference_image_path"] = (
             selected_paths[0].relative_to(project.root).as_posix()
         )
         project.write_character_card(name, card)
-    project.log_decision(
-        "curate_references",
-        character=name,
-        recipe=recipe,
-        k=k,
-        n_in=len(images),
-        n_out=len(selected_paths),
-    )
     return selected_paths
 
 

@@ -151,6 +151,50 @@ def curate_character(
     return [str(x) for x in out]
 
 
+def curate_character_interactive(
+    root: str | Path,
+    name: str,
+    *,
+    decisions: str | Path | list,
+    k: int = 8,
+    recipe: str = "person_mock",
+    present: int = 6,
+    max_rounds: int = 20,
+) -> list[str]:
+    """Interactive curate driven by a pre-recorded decisions JSON.
+
+    ``decisions`` is either a path to a JSON file or an in-memory list,
+    each element shaped like ``{"keep": [<image_id>], "reject": [...],
+    "stop": false}``. The decisions are applied in order, one per
+    round. Useful for skill-driven flows: the agent shows the user the
+    candidates, collects their answers, writes a JSON, and re-runs.
+    """
+    import json as _json
+
+    from lookbook import InteractiveDecision
+
+    if isinstance(decisions, (str, Path)):
+        records = _json.loads(Path(decisions).read_text())
+    else:
+        records = list(decisions)
+
+    decision_objs = [
+        InteractiveDecision(
+            keep=tuple(r.get("keep", ())),
+            reject=tuple(r.get("reject", ())),
+            stop=bool(r.get("stop", False)),
+        )
+        for r in records
+    ]
+    p = MusicVideoProject(root)
+    out = _chars.curate_references_interactive(
+        p, name,
+        on_decision=decision_objs,
+        k=k, recipe=recipe, present=present, max_rounds=max_rounds,
+    )
+    return [str(x) for x in out]
+
+
 def add_environment(
     root: str | Path,
     name: str,

@@ -73,6 +73,28 @@ def character_curate(
     _print_json(facade.curate_character(root, name, k=k, recipe=recipe))
 
 
+def character_curate_interactive(
+    root: str,
+    name: str,
+    *,
+    decisions: str,
+    k: int = 8,
+    recipe: str = "person_mock",
+    present: int = 6,
+) -> None:
+    """Run an interactive curate loop driven by a pre-recorded JSON file.
+
+    ``--decisions PATH`` points at a JSON list shaped like
+    ``[{"keep": ["<image_id>"], "reject": [...], "stop": false}, ...]``.
+    """
+    _print_json(
+        facade.curate_character_interactive(
+            root, name,
+            decisions=decisions, k=k, recipe=recipe, present=present,
+        )
+    )
+
+
 def environment(
     root: str,
     name: str,
@@ -191,6 +213,7 @@ def main() -> None:
             character_images,
             character_generate,
             character_curate,
+            character_curate_interactive,
             environment,
             environment_render,
             script,
