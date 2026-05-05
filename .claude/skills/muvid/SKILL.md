@@ -27,13 +27,24 @@ the user what came out, and ask just enough questions to keep moving.
 4. **align** — `muvid align <root>`. Builds `lyrics/alignment.annot` (a
    `lacing` SqliteStore) with three tiers: sections / lines / words.
    Also syncs the parsed sections into `project.json`.
+   *Aligner choice:* `--aligner=scribe-greedy` (default), `user`,
+   `whisperx-lite`, or `stars` (stub). The default is right for most
+   cases; switch to `whisperx-lite` for offline runs and `user` when
+   you've authored line timings yourself. The alignment store is the
+   SSOT for word timings — animation renders read it directly instead
+   of letting `an` re-transcribe.
 5. **cast characters** — for each character:
    - `muvid character <root> <name> --description "..."`
    - `muvid character-images <root> <name> path1 path2 ...` (drop user
      photos) or `muvid character-generate <root> <name> --n 6` (use fal
      to generate variants).
    - `muvid character-curate <root> <name> --k 8` (lookbook picks the
-     best diverse subset).
+     best diverse subset). When the user wants a say in which
+     specific images survive, use
+     `muvid character-curate-interactive <root> <name> --decisions <file>`
+     where the decisions file is a JSON list of
+     `{"keep": ["<image_id>"], "reject": [...], "stop": false}`
+     records (one per round).
 6. **establish environments** — `muvid environment <root> <name>
    --description "..." --time-of-day "..."` then
    `muvid environment-render <root> <name>`.
@@ -42,17 +53,23 @@ the user what came out, and ask just enough questions to keep moving.
    `muvid script-apply <root>` to upsert sections+shots into the SSOT.
 8. **render** — `muvid render <root>` (all shots) or `muvid render <root>
    --shot s02`. Per-shot strategies: `lipsync`, `image_to_video`,
-   `text_to_video`, `animation`, `still`.
+   `text_to_video`, `animation`, `still`. *Cost gate:* pass
+   `--budget 2.50` to refuse to start if the estimate exceeds the
+   given USD budget. Use `muvid estimate-cost <root>` to preview the
+   rollup before committing.
 9. **compose** — `muvid compose <root>`. Concatenates shots, overlays
    the original song.
 
 ## Always start by reading state
 
-Before doing anything, run `muvid status <root>` to see where the user
-is. The output is a JSON dict; pick the next stage where a flag is
-False or a count is zero. **Never** re-run a stage that's already
-done unless the user asks — every stage is idempotent but they cost
-API calls (Scribe, fal).
+Before doing anything, run `muvid status <root>` (or
+`muvid status --json <root>` when you want to grep into it). The
+output shows stage progression, per-shot render state, alignment
+quality (lines / words / confidence histogram), and an estimated USD
+remaining-render cost. Pick the next stage where a flag is False or
+a count is zero. **Never** re-run a stage that's already done unless
+the user asks — every stage is idempotent but they cost API calls
+(Scribe, fal).
 
 ## Lyric editing — the part that needs you most
 
@@ -181,13 +198,20 @@ strategy, generate the missing image, etc.) — don't just retry.
 
 ## Useful inspection commands
 
-- `muvid status <root>` — overview JSON.
+- `muvid status <root>` — human-readable summary (stages, render bar,
+  alignment quality, estimated remaining cost).
+- `muvid status --json <root>` — same data structured. Pipe through
+  `jq '.stages.render'` etc.
+- `muvid estimate-cost <root>` — preview the per-shot USD rollup
+  before committing to `muvid render`.
 - `cat <root>/project.json | jq` — the SSOT.
 - `cat <root>/lyrics/lyrics.md` — the user's lyrics.
 - `ls <root>/shots/` — see which shots have been rendered (each one
   is a folder with `output.mp4` if done).
 - `cat <root>/.muvid/decisions.jsonl` — append-only log of every
   pipeline action.
+- `tail -f <root>/.muvid/fal_events.jsonl` — live falaw progress
+  events (one JSON per line) emitted during any fal-touching run.
 
 ## When the user starts from scratch
 
