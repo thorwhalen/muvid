@@ -66,30 +66,93 @@ def upload_local_file_to_temp_url(path: Path) -> str:
 def trim_video_to_duration(src: Path, target_s: float, dst: Path) -> Path:
     """Cut/pad a video to exactly ``target_s`` seconds.
 
-    Falls back to copying ``src`` to ``dst`` if mixing's helpers fail.
+    - Within 50ms of target → copy unchanged.
+    - Longer than target → cut to ``target_s`` via mixing.video.
+    - Shorter than target → pad by holding the last video frame and
+      appending silence to the audio track. Done in a single ffmpeg call
+      using the ``tpad`` (video) and ``apad`` (audio) filters.
+
+    On any failure, falls back to copying ``src`` to ``dst`` so the caller
+    always gets *some* file at ``dst`` — but the caller should treat a
+    failure as a soft warning (the video may not be the requested length).
     """
     try:
         from mixing.video import Video
 
         v = Video(str(src))
-        if abs(v.duration - target_s) < 0.05:
+        delta = target_s - v.duration
+
+        if abs(delta) < 0.05:
             if src.resolve() != dst.resolve():
                 import shutil
 
                 shutil.copy2(src, dst)
             return dst
-        if v.duration > target_s:
+
+        if delta < 0:
+            # src is longer than target — straight cut.
             cut = v[0:target_s]
             cut.save(str(dst))
             return dst
-        # Pad with the last frame held — simplest approximation: just copy.
-        # (A proper hold would require an ffmpeg "tpad" filter.)
+
+        # src is shorter than target — pad video via tpad (clone last frame)
+        # and pad audio via apad (silence). One ffmpeg call.
+        return _pad_video_to_duration(src, target_s, dst, pad_seconds=delta)
+
+    except Exception:
         import shutil
 
         shutil.copy2(src, dst)
         return dst
-    except Exception:
-        import shutil
 
+
+def _pad_video_to_duration(
+    src: Path, target_s: float, dst: Path, *, pad_seconds: float
+) -> Path:
+    """Pad ``src`` to ``target_s`` by holding the last frame + silencing audio.
+
+    Uses ffmpeg's ``tpad=stop_mode=clone`` (video) and ``apad`` (audio) filters
+    in a single call. Re-encodes (filter graph requires it). Falls through to
+    a simple copy on any subprocess failure.
+    """
+    import shutil
+    import subprocess
+
+    if pad_seconds <= 0:
+        if src.resolve() != dst.resolve():
+            shutil.copy2(src, dst)
+        return dst
+
+    # Whole-millisecond stop_duration is what tpad takes (in seconds, float).
+    cmd = [
+        "ffmpeg",
+        "-y",
+        "-i",
+        str(src),
+        "-vf",
+        f"tpad=stop_mode=clone:stop_duration={pad_seconds:.3f}",
+        "-af",
+        f"apad=pad_dur={pad_seconds:.3f}",
+        # -t caps the output length so any rounding can't push past target.
+        "-t",
+        f"{target_s:.3f}",
+        # Sane defaults: H.264 + AAC, faststart for streaming.
+        "-c:v",
+        "libx264",
+        "-pix_fmt",
+        "yuv420p",
+        "-c:a",
+        "aac",
+        "-movflags",
+        "+faststart",
+        str(dst),
+    ]
+    try:
+        subprocess.run(cmd, check=True, capture_output=True)
+        return dst
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        # ffmpeg not on PATH or filter rejected — copy as a soft fallback so
+        # the caller still gets a file. The duration mismatch will be visible
+        # in any QA report (avp.inspect.shot_report).
         shutil.copy2(src, dst)
         return dst
