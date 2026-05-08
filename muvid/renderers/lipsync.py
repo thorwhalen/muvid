@@ -14,7 +14,10 @@ import warnings
 from pathlib import Path
 
 from muvid.renderers import RenderContext
-from muvid.renderers._common import trim_video_to_duration, upload_local_file_to_temp_url
+from muvid.renderers._common import (
+    trim_video_to_duration,
+    upload_local_file_to_temp_url,
+)
 
 
 def render_lipsync(ctx: RenderContext, *, quality: str = "balanced") -> Path:

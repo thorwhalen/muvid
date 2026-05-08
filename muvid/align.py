@@ -156,9 +156,7 @@ def list_aligners() -> list[str]:
 
 def aligner_info(name: str) -> AlignerSpec:
     if name not in _ALIGNERS:
-        raise KeyError(
-            f"Unknown aligner {name!r}. Registered: {list_aligners()}"
-        )
+        raise KeyError(f"Unknown aligner {name!r}. Registered: {list_aligners()}")
     return _ALIGNERS[name]
 
 
@@ -451,7 +449,9 @@ def align_user_provided(
         lines_for = tuple(by_label.get(s.label, ()))
         starts = [L.start_s for L in lines_for if L.start_s is not None]
         ends = [L.end_s for L in lines_for if L.end_s is not None]
-        s_start = s.start_s if s.start_s is not None else (min(starts) if starts else None)
+        s_start = (
+            s.start_s if s.start_s is not None else (min(starts) if starts else None)
+        )
         s_end = s.end_s if s.end_s is not None else (max(ends) if ends else None)
         section_alignments.append(
             SectionAlignment(
@@ -496,8 +496,7 @@ def align_whisperx_lite(
         from faster_whisper import WhisperModel  # type: ignore
     except ImportError as e:  # pragma: no cover — exercised only when installed
         raise RuntimeError(
-            "whisperx-lite requires faster-whisper. "
-            "pip install faster-whisper"
+            "whisperx-lite requires faster-whisper. pip install faster-whisper"
         ) from e
 
     model = WhisperModel(model_size, device="cpu", compute_type="int8")
@@ -605,14 +604,18 @@ def write_alignment_store(
                 continue
             b.line(
                 L.text,
-                L.start_s, L.end_s,
+                L.start_s,
+                L.end_s,
                 line_index=L.line_index,
                 section=L.section_label,
             )
         for w in alignment.words:
             b.word(
-                w.text, w.start_s, w.end_s,
-                line_index=w.line_index, confidence=w.confidence,
+                w.text,
+                w.start_s,
+                w.end_s,
+                line_index=w.line_index,
+                confidence=w.confidence,
             )
     finally:
         store.close()

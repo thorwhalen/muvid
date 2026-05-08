@@ -52,9 +52,7 @@ def log_fal_events_to(path: str | Path) -> Iterator[None]:
         unsubscribe(_write)
 
 
-def read_recent_fal_events(
-    path: str | Path, *, limit: int = 50
-) -> list[dict]:
+def read_recent_fal_events(path: str | Path, *, limit: int = 50) -> list[dict]:
     """Read the tail of the JSONL log. Returns empty list if absent."""
     p = Path(path)
     if not p.exists():
