@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.compose &mdash; muvid 0.0.2 documentation</title>
+  <title>muvid.compose &mdash; muvid 0.0.3 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -14,9 +14,9 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=e3a6060d"></script>
-      <script src="../../_static/doctools.js?v=9bcbadda"></script>
-      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../_static/documentation_options.js?v=47de8214"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
       <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
       <script src="../../_static/copybutton.js?v=f281be69"></script>
@@ -51,17 +51,20 @@
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/align.html">muvid.align</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/characters.html">muvid.characters</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/compose.html">muvid.compose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/contracts.html">muvid.contracts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/cost.html">muvid.cost</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/environments.html">muvid.environments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/events.html">muvid.events</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/facade.html">muvid.facade</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/lyrics.html">muvid.lyrics</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/project.html">muvid.project</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/render.html">muvid.render</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/render/_common.html">muvid.render._common</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/render/animation.html">muvid.render.animation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/render/image_to_video.html">muvid.render.image_to_video</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/render/lipsync.html">muvid.render.lipsync</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/render/still.html">muvid.render.still</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/render/text_to_video.html">muvid.render.text_to_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/renderers.html">muvid.renderers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/renderers/_common.html">muvid.renderers._common</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/renderers/animation.html">muvid.renderers.animation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/renderers/image_to_video.html">muvid.renderers.image_to_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/renderers/lipsync.html">muvid.renderers.lipsync</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/renderers/still.html">muvid.renderers.still</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/renderers/text_to_video.html">muvid.renderers.text_to_video</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/schema.html">muvid.schema</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/script.html">muvid.script</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/ui.html">muvid.ui</a></li>
@@ -152,18 +155,32 @@
     <span class="n">end_s</span> <span class="o">=</span> <span class="n">spec</span><span class="o">.</span><span class="n">shots</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">end_s</span>
     <span class="n">duration</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mf">0.001</span><span class="p">,</span> <span class="n">end_s</span> <span class="o">-</span> <span class="n">start_s</span><span class="p">)</span>
     <span class="n">cmd</span> <span class="o">=</span> <span class="p">[</span>
-        <span class="s2">&quot;ffmpeg&quot;</span><span class="p">,</span> <span class="s2">&quot;-y&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;-i&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">concat_path</span><span class="p">),</span>
-        <span class="s2">&quot;-ss&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">start_s</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;-t&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">duration</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;-i&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">song</span><span class="p">),</span>
-        <span class="s2">&quot;-map&quot;</span><span class="p">,</span> <span class="s2">&quot;0:v:0&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;-map&quot;</span><span class="p">,</span> <span class="s2">&quot;1:a:0&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;-c:v&quot;</span><span class="p">,</span> <span class="s2">&quot;copy&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;-c:a&quot;</span><span class="p">,</span> <span class="s2">&quot;aac&quot;</span><span class="p">,</span> <span class="s2">&quot;-b:a&quot;</span><span class="p">,</span> <span class="s2">&quot;192k&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;ffmpeg&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;-y&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;-i&quot;</span><span class="p">,</span>
+        <span class="nb">str</span><span class="p">(</span><span class="n">concat_path</span><span class="p">),</span>
+        <span class="s2">&quot;-ss&quot;</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">start_s</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;-t&quot;</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">duration</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;-i&quot;</span><span class="p">,</span>
+        <span class="nb">str</span><span class="p">(</span><span class="n">song</span><span class="p">),</span>
+        <span class="s2">&quot;-map&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;0:v:0&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;-map&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;1:a:0&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;-c:v&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;copy&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;-c:a&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;aac&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;-b:a&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;192k&quot;</span><span class="p">,</span>
         <span class="s2">&quot;-shortest&quot;</span><span class="p">,</span>
         <span class="nb">str</span><span class="p">(</span><span class="n">out_path</span><span class="p">),</span>
     <span class="p">]</span>
-    <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span> <span class="n">check</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">stdout</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">DEVNULL</span><span class="p">,</span> <span class="n">stderr</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">DEVNULL</span><span class="p">)</span>
+    <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+        <span class="n">cmd</span><span class="p">,</span> <span class="n">check</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">stdout</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">DEVNULL</span><span class="p">,</span> <span class="n">stderr</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">DEVNULL</span>
+    <span class="p">)</span>
     <span class="n">concat_path</span><span class="o">.</span><span class="n">unlink</span><span class="p">(</span><span class="n">missing_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">project</span><span class="o">.</span><span class="n">log_decision</span><span class="p">(</span><span class="s2">&quot;compose&quot;</span><span class="p">,</span> <span class="n">out_name</span><span class="o">=</span><span class="n">out_name</span><span class="p">,</span> <span class="n">n_shots</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">paths</span><span class="p">))</span>
     <span class="k">return</span> <span class="n">out_path</span></div>
@@ -181,22 +198,43 @@
         <span class="n">list_path</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">name</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">cmd</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="s2">&quot;ffmpeg&quot;</span><span class="p">,</span> <span class="s2">&quot;-y&quot;</span><span class="p">,</span> <span class="s2">&quot;-f&quot;</span><span class="p">,</span> <span class="s2">&quot;concat&quot;</span><span class="p">,</span> <span class="s2">&quot;-safe&quot;</span><span class="p">,</span> <span class="s2">&quot;0&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;-i&quot;</span><span class="p">,</span> <span class="n">list_path</span><span class="p">,</span>
-            <span class="s2">&quot;-c&quot;</span><span class="p">,</span> <span class="s2">&quot;copy&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;ffmpeg&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;-y&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;-f&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;concat&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;-safe&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;0&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;-i&quot;</span><span class="p">,</span>
+            <span class="n">list_path</span><span class="p">,</span>
+            <span class="s2">&quot;-c&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;copy&quot;</span><span class="p">,</span>
             <span class="nb">str</span><span class="p">(</span><span class="n">out</span><span class="p">),</span>
         <span class="p">]</span>
         <span class="n">r</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span> <span class="n">stdout</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">DEVNULL</span><span class="p">,</span> <span class="n">stderr</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">returncode</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
             <span class="c1"># Fall back to re-encode (handles mismatched codecs/sizes).</span>
             <span class="n">cmd</span> <span class="o">=</span> <span class="p">[</span>
-                <span class="s2">&quot;ffmpeg&quot;</span><span class="p">,</span> <span class="s2">&quot;-y&quot;</span><span class="p">,</span> <span class="s2">&quot;-f&quot;</span><span class="p">,</span> <span class="s2">&quot;concat&quot;</span><span class="p">,</span> <span class="s2">&quot;-safe&quot;</span><span class="p">,</span> <span class="s2">&quot;0&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;-i&quot;</span><span class="p">,</span> <span class="n">list_path</span><span class="p">,</span>
-                <span class="s2">&quot;-c:v&quot;</span><span class="p">,</span> <span class="s2">&quot;libx264&quot;</span><span class="p">,</span> <span class="s2">&quot;-pix_fmt&quot;</span><span class="p">,</span> <span class="s2">&quot;yuv420p&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;-c:a&quot;</span><span class="p">,</span> <span class="s2">&quot;aac&quot;</span><span class="p">,</span> <span class="s2">&quot;-b:a&quot;</span><span class="p">,</span> <span class="s2">&quot;192k&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;ffmpeg&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;-y&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;-f&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;concat&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;-safe&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;0&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;-i&quot;</span><span class="p">,</span>
+                <span class="n">list_path</span><span class="p">,</span>
+                <span class="s2">&quot;-c:v&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;libx264&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;-pix_fmt&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;yuv420p&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;-c:a&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;aac&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;-b:a&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;192k&quot;</span><span class="p">,</span>
                 <span class="nb">str</span><span class="p">(</span><span class="n">out</span><span class="p">),</span>
             <span class="p">]</span>
-            <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span> <span class="n">check</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">stdout</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">DEVNULL</span><span class="p">,</span> <span class="n">stderr</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">DEVNULL</span><span class="p">)</span>
+            <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+                <span class="n">cmd</span><span class="p">,</span> <span class="n">check</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">stdout</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">DEVNULL</span><span class="p">,</span> <span class="n">stderr</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">DEVNULL</span>
+            <span class="p">)</span>
     <span class="k">finally</span><span class="p">:</span>
         <span class="n">Path</span><span class="p">(</span><span class="n">list_path</span><span class="p">)</span><span class="o">.</span><span class="n">unlink</span><span class="p">(</span><span class="n">missing_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">out</span>

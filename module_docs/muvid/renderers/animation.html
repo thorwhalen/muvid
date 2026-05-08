@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.render.animation &mdash; muvid 0.0.2 documentation</title>
+  <title>muvid.renderers.animation &mdash; muvid 0.0.3 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -15,17 +15,17 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=e3a6060d"></script>
-      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
-      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/documentation_options.js?v=47de8214"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
       <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
       <script src="../../../_static/copybutton.js?v=f281be69"></script>
     <script src="../../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
-    <link rel="next" title="muvid.render.image_to_video" href="image_to_video.html" />
-    <link rel="prev" title="muvid.render._common" href="_common.html" /> 
+    <link rel="next" title="muvid.renderers.image_to_video" href="image_to_video.html" />
+    <link rel="prev" title="muvid.renderers._common" href="_common.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -54,20 +54,23 @@
 <li class="toctree-l1"><a class="reference internal" href="../align.html">muvid.align</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../characters.html">muvid.characters</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../compose.html">muvid.compose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contracts.html">muvid.contracts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cost.html">muvid.cost</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../environments.html">muvid.environments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../events.html">muvid.events</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../facade.html">muvid.facade</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../lyrics.html">muvid.lyrics</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../project.html">muvid.project</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../render.html">muvid.render</a></li>
-<li class="toctree-l1"><a class="reference internal" href="_common.html">muvid.render._common</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">muvid.render.animation</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#muvid.render.animation.render_animation"><code class="docutils literal notranslate"><span class="pre">render_animation()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../renderers.html">muvid.renderers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="_common.html">muvid.renderers._common</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">muvid.renderers.animation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.renderers.animation.render_animation"><code class="docutils literal notranslate"><span class="pre">render_animation()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="image_to_video.html">muvid.render.image_to_video</a></li>
-<li class="toctree-l1"><a class="reference internal" href="lipsync.html">muvid.render.lipsync</a></li>
-<li class="toctree-l1"><a class="reference internal" href="still.html">muvid.render.still</a></li>
-<li class="toctree-l1"><a class="reference internal" href="text_to_video.html">muvid.render.text_to_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="image_to_video.html">muvid.renderers.image_to_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lipsync.html">muvid.renderers.lipsync</a></li>
+<li class="toctree-l1"><a class="reference internal" href="still.html">muvid.renderers.still</a></li>
+<li class="toctree-l1"><a class="reference internal" href="text_to_video.html">muvid.renderers.text_to_video</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../schema.html">muvid.schema</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../script.html">muvid.script</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../ui.html">muvid.ui</a></li>
@@ -88,9 +91,9 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">muvid.render.animation</li>
+      <li class="breadcrumb-item active">muvid.renderers.animation</li>
       <li class="wy-breadcrumbs-aside">
-            <a href="../../../_sources/module_docs/muvid/render/animation.rst.txt" rel="nofollow"> View page source</a>
+            <a href="../../../_sources/module_docs/muvid/renderers/animation.rst.txt" rel="nofollow"> View page source</a>
       </li>
   </ul>
   <hr/>
@@ -98,21 +101,21 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="module-muvid.render.animation">
-<span id="muvid-render-animation"></span><h1>muvid.render.animation<a class="headerlink" href="#module-muvid.render.animation" title="Link to this heading"></a></h1>
+  <section id="module-muvid.renderers.animation">
+<span id="muvid-renderers-animation"></span><h1>muvid.renderers.animation<a class="headerlink" href="#module-muvid.renderers.animation" title="Link to this heading"></a></h1>
 <p>Render strategy: animation — handoff to the <code class="docutils literal notranslate"><span class="pre">an</span></code> package.</p>
 <p>We synthesize a minimal <code class="docutils literal notranslate"><span class="pre">an</span></code> scene for this shot’s interval: each
 lyric line becomes a dialogue beat for the singing character; the shot’s
-environment becomes the entity backdrop. <code class="docutils literal notranslate"><span class="pre">an</span></code> has its own
-WhisperLipSync that re-aligns to the synthesized TTS, but for music
-videos we want lipsync against the <em>original song</em> — so we instead
-write the audio slice as the scene’s pre-baked audio and let an’s
-viseme machinery sync against it.</p>
-<p>This is a deliberately minimal v0 — <cite>an</cite> is mature enough to grow this
-out into a proper scripted scene later.</p>
+environment becomes the entity backdrop.</p>
+<p>Lipsync alignment: muvid already owns the SSOT for word timings (the
+<code class="docutils literal notranslate"><span class="pre">lacing</span></code> alignment store written by <code class="docutils literal notranslate"><span class="pre">muvid</span> <span class="pre">align</span></code>). We build a
+<code class="xref py py-class docutils literal notranslate"><span class="pre">an.audio.WordTimingsLipSync</span></code> from those timings and pass it
+into <code class="docutils literal notranslate"><span class="pre">an.orchestrate</span></code> so <code class="docutils literal notranslate"><span class="pre">an</span></code> does NOT re-transcribe the same
+audio with whisper. Falls back to <code class="docutils literal notranslate"><span class="pre">an</span></code>’s default lipsync provider
+when no alignment store exists yet (e.g. user skipped <code class="docutils literal notranslate"><span class="pre">muvid</span> <span class="pre">align</span></code>).</p>
 <dl class="py function">
-<dt class="sig sig-object py" id="muvid.render.animation.render_animation">
-<span class="sig-prename descclassname"><span class="pre">muvid.render.animation.</span></span><span class="sig-name descname"><span class="pre">render_animation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../render.html#muvid.render.RenderContext" title="muvid.render.RenderContext"><span class="pre">RenderContext</span></a></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quality</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'balanced'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Path</span></span></span><a class="reference internal" href="../../../_modules/muvid/render/animation.html#render_animation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.render.animation.render_animation" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py" id="muvid.renderers.animation.render_animation">
+<span class="sig-prename descclassname"><span class="pre">muvid.renderers.animation.</span></span><span class="sig-name descname"><span class="pre">render_animation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../renderers.html#muvid.renderers.RenderContext" title="muvid.renderers.RenderContext"><span class="pre">RenderContext</span></a></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">quality</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'balanced'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Path</span></span></span><a class="reference internal" href="../../../_modules/muvid/renderers/animation.html#render_animation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.renderers.animation.render_animation" title="Link to this definition"></a></dt>
 <dd><p>Synthesize a tiny <code class="docutils literal notranslate"><span class="pre">an</span></code> scene for this shot and orchestrate it.</p>
 <p>Falls back to a “still” render if the <code class="docutils literal notranslate"><span class="pre">an</span></code> package isn’t usable
 (it currently has heavy native deps for the cutout backend).</p>
@@ -124,8 +127,8 @@ out into a proper scripted scene later.</p>
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="_common.html" class="btn btn-neutral float-left" title="muvid.render._common" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="image_to_video.html" class="btn btn-neutral float-right" title="muvid.render.image_to_video" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="_common.html" class="btn btn-neutral float-left" title="muvid.renderers._common" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="image_to_video.html" class="btn btn-neutral float-right" title="muvid.renderers.image_to_video" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

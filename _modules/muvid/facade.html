@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.facade &mdash; muvid 0.0.2 documentation</title>
+  <title>muvid.facade &mdash; muvid 0.0.3 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -14,9 +14,9 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=e3a6060d"></script>
-      <script src="../../_static/doctools.js?v=9bcbadda"></script>
-      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../_static/documentation_options.js?v=47de8214"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
       <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
       <script src="../../_static/copybutton.js?v=f281be69"></script>
@@ -51,17 +51,20 @@
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/align.html">muvid.align</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/characters.html">muvid.characters</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/compose.html">muvid.compose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/contracts.html">muvid.contracts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/cost.html">muvid.cost</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/environments.html">muvid.environments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/events.html">muvid.events</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/facade.html">muvid.facade</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/lyrics.html">muvid.lyrics</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/project.html">muvid.project</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/render.html">muvid.render</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/render/_common.html">muvid.render._common</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/render/animation.html">muvid.render.animation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/render/image_to_video.html">muvid.render.image_to_video</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/render/lipsync.html">muvid.render.lipsync</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/render/still.html">muvid.render.still</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/render/text_to_video.html">muvid.render.text_to_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/renderers.html">muvid.renderers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/renderers/_common.html">muvid.renderers._common</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/renderers/animation.html">muvid.renderers.animation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/renderers/image_to_video.html">muvid.renderers.image_to_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/renderers/lipsync.html">muvid.renderers.lipsync</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/renderers/still.html">muvid.renderers.still</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/renderers/text_to_video.html">muvid.renderers.text_to_video</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/schema.html">muvid.schema</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/script.html">muvid.script</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/ui.html">muvid.ui</a></li>
@@ -110,11 +113,17 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">muvid</span><span class="w"> </span><span class="kn">import</span> <span class="n">characters</span> <span class="k">as</span> <span class="n">_chars</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">muvid</span><span class="w"> </span><span class="kn">import</span> <span class="n">compose</span> <span class="k">as</span> <span class="n">_compose</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">muvid</span><span class="w"> </span><span class="kn">import</span> <span class="n">environments</span> <span class="k">as</span> <span class="n">_envs</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">muvid</span><span class="w"> </span><span class="kn">import</span> <span class="n">events</span> <span class="k">as</span> <span class="n">_events</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">muvid</span><span class="w"> </span><span class="kn">import</span> <span class="n">lyrics</span> <span class="k">as</span> <span class="n">_lyrics</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">muvid</span><span class="w"> </span><span class="kn">import</span> <span class="n">script</span> <span class="k">as</span> <span class="n">_script</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.project</span><span class="w"> </span><span class="kn">import</span> <span class="n">MusicVideoProject</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">muvid.render</span><span class="w"> </span><span class="kn">import</span> <span class="n">render_all</span> <span class="k">as</span> <span class="n">_render_all</span><span class="p">,</span> <span class="n">render_shot</span> <span class="k">as</span> <span class="n">_render_shot</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">muvid.renderers</span><span class="w"> </span><span class="kn">import</span> <span class="n">render_all</span> <span class="k">as</span> <span class="n">_render_all</span><span class="p">,</span> <span class="n">render_shot</span> <span class="k">as</span> <span class="n">_render_shot</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.schema</span><span class="w"> </span><span class="kn">import</span> <span class="n">SectionSpec</span><span class="p">,</span> <span class="n">ShotSpec</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_fal_events_log</span><span class="p">(</span><span class="n">project</span><span class="p">:</span> <span class="n">MusicVideoProject</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Path to the per-project fal events JSONL.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">project</span><span class="o">.</span><span class="n">root</span> <span class="o">/</span> <span class="s2">&quot;.muvid&quot;</span> <span class="o">/</span> <span class="s2">&quot;fal_events.jsonl&quot;</span>
 
 
 <div class="viewcode-block" id="init_project">
@@ -158,17 +167,33 @@
 
 <div class="viewcode-block" id="align_lyrics">
 <a class="viewcode-back" href="../../module_docs/muvid/facade.html#muvid.align_lyrics">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">align_lyrics</span><span class="p">(</span><span class="n">root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">align_lyrics</span><span class="p">(</span>
+    <span class="n">root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">aligner</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;scribe-greedy&quot;</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">aligner_kwargs</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Build ``lyrics/alignment.annot`` from transcript + lyrics.md.</span>
+
+<span class="sd">    ``aligner`` selects the alignment strategy (see</span>
+<span class="sd">    :func:`muvid.align.list_aligners`); extra kwargs are forwarded to</span>
+<span class="sd">    the chosen aligner. Defaults to ``scribe-greedy``.</span>
 
 <span class="sd">    Returns the path to the alignment store.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">p</span> <span class="o">=</span> <span class="n">MusicVideoProject</span><span class="p">(</span><span class="n">root</span><span class="p">)</span>
-    <span class="n">transcript</span> <span class="o">=</span> <span class="n">_lyrics</span><span class="o">.</span><span class="n">read_transcript</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">root</span> <span class="o">/</span> <span class="s2">&quot;lyrics&quot;</span> <span class="o">/</span> <span class="s2">&quot;transcript.json&quot;</span><span class="p">)</span>
+    <span class="n">transcript_path</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">root</span> <span class="o">/</span> <span class="s2">&quot;lyrics&quot;</span> <span class="o">/</span> <span class="s2">&quot;transcript.json&quot;</span>
+    <span class="n">transcript</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">_lyrics</span><span class="o">.</span><span class="n">read_transcript</span><span class="p">(</span><span class="n">transcript_path</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">transcript_path</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+        <span class="k">else</span> <span class="p">{</span><span class="s2">&quot;words&quot;</span><span class="p">:</span> <span class="p">[]}</span>
+    <span class="p">)</span>
     <span class="n">doc</span> <span class="o">=</span> <span class="n">_lyrics</span><span class="o">.</span><span class="n">read_lyrics_md</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">root</span> <span class="o">/</span> <span class="s2">&quot;lyrics&quot;</span> <span class="o">/</span> <span class="s2">&quot;lyrics.md&quot;</span><span class="p">)</span>
     <span class="n">spec</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">read_spec</span><span class="p">()</span>
     <span class="n">duration</span> <span class="o">=</span> <span class="n">spec</span><span class="o">.</span><span class="n">song</span><span class="o">.</span><span class="n">duration_s</span> <span class="k">if</span> <span class="n">spec</span><span class="o">.</span><span class="n">song</span> <span class="k">else</span> <span class="mf">0.0</span>
-    <span class="n">alignment</span> <span class="o">=</span> <span class="n">_align_mod</span><span class="o">.</span><span class="n">align_lyrics</span><span class="p">(</span><span class="n">doc</span><span class="p">,</span> <span class="n">transcript</span><span class="p">,</span> <span class="n">duration_s</span><span class="o">=</span><span class="n">duration</span><span class="p">)</span>
+    <span class="n">alignment</span> <span class="o">=</span> <span class="n">_align_mod</span><span class="o">.</span><span class="n">align_lyrics</span><span class="p">(</span>
+        <span class="n">doc</span><span class="p">,</span> <span class="n">transcript</span><span class="p">,</span> <span class="n">duration_s</span><span class="o">=</span><span class="n">duration</span><span class="p">,</span> <span class="n">aligner</span><span class="o">=</span><span class="n">aligner</span><span class="p">,</span> <span class="o">**</span><span class="n">aligner_kwargs</span><span class="p">,</span>
+    <span class="p">)</span>
     <span class="n">out</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">root</span> <span class="o">/</span> <span class="s2">&quot;lyrics&quot;</span> <span class="o">/</span> <span class="s2">&quot;alignment.annot&quot;</span>
     <span class="n">_align_mod</span><span class="o">.</span><span class="n">write_alignment_store</span><span class="p">(</span><span class="n">alignment</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="n">out</span><span class="p">)</span>
     <span class="c1"># Sync the parsed sections into the project SSOT so the script can</span>
@@ -184,7 +209,9 @@
                 <span class="n">label</span><span class="o">=</span><span class="n">s</span><span class="o">.</span><span class="n">label</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="p">)</span>
-    <span class="n">p</span><span class="o">.</span><span class="n">log_decision</span><span class="p">(</span><span class="s2">&quot;align_lyrics&quot;</span><span class="p">,</span> <span class="n">n_lines</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">alignment</span><span class="o">.</span><span class="n">lines</span><span class="p">),</span> <span class="n">n_words</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">alignment</span><span class="o">.</span><span class="n">words</span><span class="p">))</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">log_decision</span><span class="p">(</span>
+        <span class="s2">&quot;align_lyrics&quot;</span><span class="p">,</span> <span class="n">n_lines</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">alignment</span><span class="o">.</span><span class="n">lines</span><span class="p">),</span> <span class="n">n_words</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">alignment</span><span class="o">.</span><span class="n">words</span><span class="p">)</span>
+    <span class="p">)</span>
     <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">out</span><span class="p">)</span></div>
 
 
@@ -199,8 +226,11 @@
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
     <span class="n">p</span> <span class="o">=</span> <span class="n">MusicVideoProject</span><span class="p">(</span><span class="n">root</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">_chars</span><span class="o">.</span><span class="n">add_character</span><span class="p">(</span>
-        <span class="n">p</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="n">description</span><span class="p">,</span>
-        <span class="n">voice_id</span><span class="o">=</span><span class="n">voice_id</span><span class="p">,</span> <span class="n">reference_audio_url</span><span class="o">=</span><span class="n">reference_audio_url</span><span class="p">,</span>
+        <span class="n">p</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="n">description</span><span class="p">,</span>
+        <span class="n">voice_id</span><span class="o">=</span><span class="n">voice_id</span><span class="p">,</span>
+        <span class="n">reference_audio_url</span><span class="o">=</span><span class="n">reference_audio_url</span><span class="p">,</span>
     <span class="p">)</span>
 
 
@@ -228,6 +258,53 @@
     <span class="k">return</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">out</span><span class="p">]</span>
 
 
+<div class="viewcode-block" id="curate_character_interactive">
+<a class="viewcode-back" href="../../module_docs/muvid/facade.html#muvid.curate_character_interactive">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">curate_character_interactive</span><span class="p">(</span>
+    <span class="n">root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">decisions</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">|</span> <span class="nb">list</span><span class="p">,</span>
+    <span class="n">k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">8</span><span class="p">,</span>
+    <span class="n">recipe</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;person_mock&quot;</span><span class="p">,</span>
+    <span class="n">present</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">6</span><span class="p">,</span>
+    <span class="n">max_rounds</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Interactive curate driven by a pre-recorded decisions JSON.</span>
+
+<span class="sd">    ``decisions`` is either a path to a JSON file or an in-memory list,</span>
+<span class="sd">    each element shaped like ``{&quot;keep&quot;: [&lt;image_id&gt;], &quot;reject&quot;: [...],</span>
+<span class="sd">    &quot;stop&quot;: false}``. The decisions are applied in order, one per</span>
+<span class="sd">    round. Useful for skill-driven flows: the agent shows the user the</span>
+<span class="sd">    candidates, collects their answers, writes a JSON, and re-runs.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">json</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">_json</span>
+
+    <span class="kn">from</span><span class="w"> </span><span class="nn">lookbook</span><span class="w"> </span><span class="kn">import</span> <span class="n">InteractiveDecision</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">decisions</span><span class="p">,</span> <span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">)):</span>
+        <span class="n">records</span> <span class="o">=</span> <span class="n">_json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">decisions</span><span class="p">)</span><span class="o">.</span><span class="n">read_text</span><span class="p">())</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">records</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">decisions</span><span class="p">)</span>
+
+    <span class="n">decision_objs</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">InteractiveDecision</span><span class="p">(</span>
+            <span class="n">keep</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;keep&quot;</span><span class="p">,</span> <span class="p">())),</span>
+            <span class="n">reject</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;reject&quot;</span><span class="p">,</span> <span class="p">())),</span>
+            <span class="n">stop</span><span class="o">=</span><span class="nb">bool</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;stop&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)),</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">records</span>
+    <span class="p">]</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">MusicVideoProject</span><span class="p">(</span><span class="n">root</span><span class="p">)</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">_chars</span><span class="o">.</span><span class="n">curate_references_interactive</span><span class="p">(</span>
+        <span class="n">p</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span>
+        <span class="n">on_decision</span><span class="o">=</span><span class="n">decision_objs</span><span class="p">,</span>
+        <span class="n">k</span><span class="o">=</span><span class="n">k</span><span class="p">,</span> <span class="n">recipe</span><span class="o">=</span><span class="n">recipe</span><span class="p">,</span> <span class="n">present</span><span class="o">=</span><span class="n">present</span><span class="p">,</span> <span class="n">max_rounds</span><span class="o">=</span><span class="n">max_rounds</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">out</span><span class="p">]</span></div>
+
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">add_environment</span><span class="p">(</span>
     <span class="n">root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span>
     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
@@ -238,14 +315,18 @@
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
     <span class="n">p</span> <span class="o">=</span> <span class="n">MusicVideoProject</span><span class="p">(</span><span class="n">root</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">_envs</span><span class="o">.</span><span class="n">add_environment</span><span class="p">(</span>
-        <span class="n">p</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="n">description</span><span class="p">,</span>
-        <span class="n">time_of_day</span><span class="o">=</span><span class="n">time_of_day</span><span class="p">,</span> <span class="n">lighting</span><span class="o">=</span><span class="n">lighting</span><span class="p">,</span>
+        <span class="n">p</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="n">description</span><span class="p">,</span>
+        <span class="n">time_of_day</span><span class="o">=</span><span class="n">time_of_day</span><span class="p">,</span>
+        <span class="n">lighting</span><span class="o">=</span><span class="n">lighting</span><span class="p">,</span>
     <span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">render_environment</span><span class="p">(</span><span class="n">root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">quality</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;high&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
     <span class="n">p</span> <span class="o">=</span> <span class="n">MusicVideoProject</span><span class="p">(</span><span class="n">root</span><span class="p">)</span>
-    <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">_envs</span><span class="o">.</span><span class="n">render_environment</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">quality</span><span class="o">=</span><span class="n">quality</span><span class="p">))</span>
+    <span class="k">with</span> <span class="n">_events</span><span class="o">.</span><span class="n">log_fal_events_to</span><span class="p">(</span><span class="n">_fal_events_log</span><span class="p">(</span><span class="n">p</span><span class="p">)):</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">_envs</span><span class="o">.</span><span class="n">render_environment</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">quality</span><span class="o">=</span><span class="n">quality</span><span class="p">))</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">write_script</span><span class="p">(</span><span class="n">root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -262,12 +343,50 @@
     <span class="n">root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="n">shot_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">quality</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;balanced&quot;</span><span class="p">,</span> <span class="n">force</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
     <span class="n">p</span> <span class="o">=</span> <span class="n">MusicVideoProject</span><span class="p">(</span><span class="n">root</span><span class="p">)</span>
-    <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">_render_shot</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">shot_id</span><span class="p">,</span> <span class="n">quality</span><span class="o">=</span><span class="n">quality</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="n">force</span><span class="p">))</span>
+    <span class="k">with</span> <span class="n">_events</span><span class="o">.</span><span class="n">log_fal_events_to</span><span class="p">(</span><span class="n">_fal_events_log</span><span class="p">(</span><span class="n">p</span><span class="p">)):</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">_render_shot</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">shot_id</span><span class="p">,</span> <span class="n">quality</span><span class="o">=</span><span class="n">quality</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="n">force</span><span class="p">))</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">render</span><span class="p">(</span><span class="n">root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">quality</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;balanced&quot;</span><span class="p">,</span> <span class="n">force</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<div class="viewcode-block" id="render">
+<a class="viewcode-back" href="../../module_docs/muvid/facade.html#muvid.render">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">render</span><span class="p">(</span>
+    <span class="n">root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">quality</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;balanced&quot;</span><span class="p">,</span>
+    <span class="n">force</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">budget</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Render every shot. Returns the produced mp4 paths.</span>
+
+<span class="sd">    ``budget`` (USD): when set, refuses to start if</span>
+<span class="sd">    :func:`estimate_render_cost` exceeds it. Pass ``None`` to skip the</span>
+<span class="sd">    gate entirely.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">p</span> <span class="o">=</span> <span class="n">MusicVideoProject</span><span class="p">(</span><span class="n">root</span><span class="p">)</span>
-    <span class="k">return</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">_render_all</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">quality</span><span class="o">=</span><span class="n">quality</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="n">force</span><span class="p">)]</span>
+    <span class="k">if</span> <span class="n">budget</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">rollup</span> <span class="o">=</span> <span class="n">estimate_render_cost</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">quality</span><span class="o">=</span><span class="n">quality</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">rollup</span><span class="o">.</span><span class="n">total_amount</span> <span class="o">&gt;</span> <span class="n">budget</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;render aborted: estimated cost $</span><span class="si">{</span><span class="n">rollup</span><span class="o">.</span><span class="n">total_amount</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">rollup</span><span class="o">.</span><span class="n">currency</span><span class="si">}</span><span class="s2"> exceeds budget $</span><span class="si">{</span><span class="n">budget</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">. &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;Pass --budget=0 to disable, or raise the cap.&quot;</span>
+            <span class="p">)</span>
+    <span class="k">with</span> <span class="n">_events</span><span class="o">.</span><span class="n">log_fal_events_to</span><span class="p">(</span><span class="n">_fal_events_log</span><span class="p">(</span><span class="n">p</span><span class="p">)):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">_render_all</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">quality</span><span class="o">=</span><span class="n">quality</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="n">force</span><span class="p">)]</span></div>
+
+
+
+<div class="viewcode-block" id="estimate_render_cost">
+<a class="viewcode-back" href="../../module_docs/muvid/facade.html#muvid.estimate_render_cost">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">estimate_render_cost</span><span class="p">(</span>
+    <span class="n">root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">quality</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;balanced&quot;</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a :class:`muvid.cost.CostRollup` for the project&#39;s pending shots.&quot;&quot;&quot;</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.cost</span><span class="w"> </span><span class="kn">import</span> <span class="n">estimate_render_cost</span> <span class="k">as</span> <span class="n">_estimate</span>
+
+    <span class="n">p</span> <span class="o">=</span> <span class="n">MusicVideoProject</span><span class="p">(</span><span class="n">root</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_estimate</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">quality</span><span class="o">=</span><span class="n">quality</span><span class="p">)</span></div>
+
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">compose</span><span class="p">(</span>
@@ -284,9 +403,62 @@
 
 <span class="sd">    Useful for the skill / UI to show the user where they are in the</span>
 <span class="sd">    pipeline. No side effects.</span>
+
+<span class="sd">    Returns a structured shape with stage progression, per-shot render</span>
+<span class="sd">    status, and (when an alignment store exists) a word-confidence</span>
+<span class="sd">    histogram. Stable enough to be programmatic; pass through</span>
+<span class="sd">    :func:`format_status` for human-readable text.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">p</span> <span class="o">=</span> <span class="n">MusicVideoProject</span><span class="p">(</span><span class="n">root</span><span class="p">)</span>
     <span class="n">spec</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">read_spec</span><span class="p">()</span>
+
+    <span class="n">transcript_path</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">root</span> <span class="o">/</span> <span class="s2">&quot;lyrics&quot;</span> <span class="o">/</span> <span class="s2">&quot;transcript.json&quot;</span>
+    <span class="n">lyrics_path</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">root</span> <span class="o">/</span> <span class="s2">&quot;lyrics&quot;</span> <span class="o">/</span> <span class="s2">&quot;lyrics.md&quot;</span>
+    <span class="n">alignment_path</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">root</span> <span class="o">/</span> <span class="s2">&quot;lyrics&quot;</span> <span class="o">/</span> <span class="s2">&quot;alignment.annot&quot;</span>
+    <span class="n">final_path</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">root</span> <span class="o">/</span> <span class="s2">&quot;output&quot;</span> <span class="o">/</span> <span class="s2">&quot;final.mp4&quot;</span>
+
+    <span class="n">shot_states</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">sh</span> <span class="ow">in</span> <span class="n">spec</span><span class="o">.</span><span class="n">shots</span><span class="p">:</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">shot_dir</span><span class="p">(</span><span class="n">sh</span><span class="o">.</span><span class="n">id</span><span class="p">)</span> <span class="o">/</span> <span class="s2">&quot;output.mp4&quot;</span>
+        <span class="n">shot_states</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="n">sh</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
+                <span class="s2">&quot;strategy&quot;</span><span class="p">:</span> <span class="n">sh</span><span class="o">.</span><span class="n">render_strategy</span><span class="p">,</span>
+                <span class="s2">&quot;duration_s&quot;</span><span class="p">:</span> <span class="n">sh</span><span class="o">.</span><span class="n">duration_s</span><span class="p">,</span>
+                <span class="s2">&quot;rendered&quot;</span><span class="p">:</span> <span class="n">out</span><span class="o">.</span><span class="n">exists</span><span class="p">(),</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+    <span class="n">n_rendered</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">shot_states</span> <span class="k">if</span> <span class="n">s</span><span class="p">[</span><span class="s2">&quot;rendered&quot;</span><span class="p">])</span>
+
+    <span class="n">char_states</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">spec</span><span class="o">.</span><span class="n">characters</span><span class="p">:</span>
+        <span class="n">cdir</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">character_dir</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="n">refs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">((</span><span class="n">cdir</span> <span class="o">/</span> <span class="s2">&quot;refs&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">iterdir</span><span class="p">())</span> <span class="k">if</span> <span class="p">(</span><span class="n">cdir</span> <span class="o">/</span> <span class="s2">&quot;refs&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span> <span class="k">else</span> <span class="p">[]</span>
+        <span class="n">sel</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="nb">list</span><span class="p">((</span><span class="n">cdir</span> <span class="o">/</span> <span class="s2">&quot;selected&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">iterdir</span><span class="p">())</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">cdir</span> <span class="o">/</span> <span class="s2">&quot;selected&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+            <span class="k">else</span> <span class="p">[]</span>
+        <span class="p">)</span>
+        <span class="n">char_states</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">c</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                <span class="s2">&quot;n_refs&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">refs</span><span class="p">),</span>
+                <span class="s2">&quot;n_selected&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">sel</span><span class="p">),</span>
+                <span class="s2">&quot;has_anchor&quot;</span><span class="p">:</span> <span class="p">(</span>
+                    <span class="s2">&quot;reference_image_path&quot;</span> <span class="ow">in</span> <span class="n">p</span><span class="o">.</span><span class="n">read_character_card</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+                <span class="p">),</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+
+    <span class="n">env_states</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">spec</span><span class="o">.</span><span class="n">environments</span><span class="p">:</span>
+        <span class="n">env_states</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">e</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                <span class="s2">&quot;rendered&quot;</span><span class="p">:</span> <span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">environment_dir</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">name</span><span class="p">)</span> <span class="o">/</span> <span class="s2">&quot;establishing.png&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">(),</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+
     <span class="k">return</span> <span class="p">{</span>
         <span class="s2">&quot;root&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">root</span><span class="p">),</span>
         <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="n">spec</span><span class="o">.</span><span class="n">title</span><span class="p">,</span>
@@ -295,21 +467,186 @@
             <span class="k">if</span> <span class="n">spec</span><span class="o">.</span><span class="n">song</span> <span class="ow">is</span> <span class="kc">None</span>
             <span class="k">else</span> <span class="p">{</span><span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="n">spec</span><span class="o">.</span><span class="n">song</span><span class="o">.</span><span class="n">audio_path</span><span class="p">,</span> <span class="s2">&quot;duration_s&quot;</span><span class="p">:</span> <span class="n">spec</span><span class="o">.</span><span class="n">song</span><span class="o">.</span><span class="n">duration_s</span><span class="p">}</span>
         <span class="p">),</span>
+        <span class="s2">&quot;stages&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;init&quot;</span><span class="p">:</span> <span class="n">p</span><span class="o">.</span><span class="n">project_file</span><span class="o">.</span><span class="n">exists</span><span class="p">(),</span>
+            <span class="s2">&quot;transcribe&quot;</span><span class="p">:</span> <span class="n">transcript_path</span><span class="o">.</span><span class="n">exists</span><span class="p">(),</span>
+            <span class="s2">&quot;lyrics_md&quot;</span><span class="p">:</span> <span class="n">lyrics_path</span><span class="o">.</span><span class="n">exists</span><span class="p">(),</span>
+            <span class="s2">&quot;align&quot;</span><span class="p">:</span> <span class="n">alignment_path</span><span class="o">.</span><span class="n">exists</span><span class="p">(),</span>
+            <span class="s2">&quot;characters&quot;</span><span class="p">:</span> <span class="n">char_states</span><span class="p">,</span>
+            <span class="s2">&quot;environments&quot;</span><span class="p">:</span> <span class="n">env_states</span><span class="p">,</span>
+            <span class="s2">&quot;script&quot;</span><span class="p">:</span> <span class="nb">bool</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">shots</span><span class="p">),</span>
+            <span class="s2">&quot;render&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">&quot;total&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">shots</span><span class="p">),</span>
+                <span class="s2">&quot;done&quot;</span><span class="p">:</span> <span class="n">n_rendered</span><span class="p">,</span>
+                <span class="s2">&quot;pending&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">shots</span><span class="p">)</span> <span class="o">-</span> <span class="n">n_rendered</span><span class="p">,</span>
+                <span class="s2">&quot;shots&quot;</span><span class="p">:</span> <span class="n">shot_states</span><span class="p">,</span>
+            <span class="p">},</span>
+            <span class="s2">&quot;compose&quot;</span><span class="p">:</span> <span class="n">final_path</span><span class="o">.</span><span class="n">exists</span><span class="p">(),</span>
+        <span class="p">},</span>
+        <span class="s2">&quot;alignment&quot;</span><span class="p">:</span> <span class="n">_alignment_stats</span><span class="p">(</span><span class="n">alignment_path</span><span class="p">),</span>
+        <span class="c1"># Backwards-compat counters:</span>
         <span class="s2">&quot;n_characters&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">characters</span><span class="p">),</span>
         <span class="s2">&quot;n_environments&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">environments</span><span class="p">),</span>
         <span class="s2">&quot;n_sections&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">sections</span><span class="p">),</span>
         <span class="s2">&quot;n_shots&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">shots</span><span class="p">),</span>
-        <span class="s2">&quot;has_transcript&quot;</span><span class="p">:</span> <span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">root</span> <span class="o">/</span> <span class="s2">&quot;lyrics&quot;</span> <span class="o">/</span> <span class="s2">&quot;transcript.json&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">(),</span>
-        <span class="s2">&quot;has_lyrics_md&quot;</span><span class="p">:</span> <span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">root</span> <span class="o">/</span> <span class="s2">&quot;lyrics&quot;</span> <span class="o">/</span> <span class="s2">&quot;lyrics.md&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">(),</span>
-        <span class="s2">&quot;has_alignment&quot;</span><span class="p">:</span> <span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">root</span> <span class="o">/</span> <span class="s2">&quot;lyrics&quot;</span> <span class="o">/</span> <span class="s2">&quot;alignment.annot&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">(),</span>
-        <span class="s2">&quot;n_rendered&quot;</span><span class="p">:</span> <span class="nb">sum</span><span class="p">(</span>
-            <span class="mi">1</span>
-            <span class="k">for</span> <span class="n">sh</span> <span class="ow">in</span> <span class="n">spec</span><span class="o">.</span><span class="n">shots</span>
-            <span class="k">if</span> <span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">shot_dir</span><span class="p">(</span><span class="n">sh</span><span class="o">.</span><span class="n">id</span><span class="p">)</span> <span class="o">/</span> <span class="s2">&quot;output.mp4&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+        <span class="s2">&quot;has_transcript&quot;</span><span class="p">:</span> <span class="n">transcript_path</span><span class="o">.</span><span class="n">exists</span><span class="p">(),</span>
+        <span class="s2">&quot;has_lyrics_md&quot;</span><span class="p">:</span> <span class="n">lyrics_path</span><span class="o">.</span><span class="n">exists</span><span class="p">(),</span>
+        <span class="s2">&quot;has_alignment&quot;</span><span class="p">:</span> <span class="n">alignment_path</span><span class="o">.</span><span class="n">exists</span><span class="p">(),</span>
+        <span class="s2">&quot;n_rendered&quot;</span><span class="p">:</span> <span class="n">n_rendered</span><span class="p">,</span>
+        <span class="s2">&quot;has_final&quot;</span><span class="p">:</span> <span class="n">final_path</span><span class="o">.</span><span class="n">exists</span><span class="p">(),</span>
+        <span class="s2">&quot;recent_fal_events&quot;</span><span class="p">:</span> <span class="n">_events</span><span class="o">.</span><span class="n">read_recent_fal_events</span><span class="p">(</span>
+            <span class="n">_fal_events_log</span><span class="p">(</span><span class="n">p</span><span class="p">),</span> <span class="n">limit</span><span class="o">=</span><span class="mi">10</span>
         <span class="p">),</span>
-        <span class="s2">&quot;has_final&quot;</span><span class="p">:</span> <span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">root</span> <span class="o">/</span> <span class="s2">&quot;output&quot;</span> <span class="o">/</span> <span class="s2">&quot;final.mp4&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">(),</span>
+        <span class="s2">&quot;estimated_render_cost&quot;</span><span class="p">:</span> <span class="n">_try_estimate_cost</span><span class="p">(</span><span class="n">p</span><span class="p">),</span>
     <span class="p">}</span></div>
 
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_try_estimate_cost</span><span class="p">(</span><span class="n">project</span><span class="p">:</span> <span class="n">MusicVideoProject</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return ``{total_amount, currency, by_kind, n_skipped}`` or None.&quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.cost</span><span class="w"> </span><span class="kn">import</span> <span class="n">estimate_render_cost</span> <span class="k">as</span> <span class="n">_estimate</span>
+    <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">rollup</span> <span class="o">=</span> <span class="n">_estimate</span><span class="p">(</span><span class="n">project</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">&quot;total_amount&quot;</span><span class="p">:</span> <span class="n">rollup</span><span class="o">.</span><span class="n">total_amount</span><span class="p">,</span>
+        <span class="s2">&quot;currency&quot;</span><span class="p">:</span> <span class="n">rollup</span><span class="o">.</span><span class="n">currency</span><span class="p">,</span>
+        <span class="s2">&quot;by_kind&quot;</span><span class="p">:</span> <span class="n">rollup</span><span class="o">.</span><span class="n">by_kind</span><span class="p">(),</span>
+        <span class="s2">&quot;n_skipped&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">rollup</span><span class="o">.</span><span class="n">skipped</span><span class="p">),</span>
+    <span class="p">}</span>
+
+
+<div class="viewcode-block" id="format_status">
+<a class="viewcode-back" href="../../module_docs/muvid/facade.html#muvid.format_status">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">format_status</span><span class="p">(</span><span class="n">status_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Human-readable rendering of :func:`status`&#39;s output.</span>
+
+<span class="sd">    Single-screen-ish: title, song, stage checkmarks, render progress</span>
+<span class="sd">    bar, alignment quality summary. No colour (we don&#39;t pull in a TTY</span>
+<span class="sd">    library).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">parts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;# </span><span class="si">{</span><span class="n">status_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;title&#39;</span><span class="p">)</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="n">status_dict</span><span class="p">[</span><span class="s1">&#39;root&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  root: </span><span class="si">{</span><span class="n">status_dict</span><span class="p">[</span><span class="s1">&#39;root&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">song</span> <span class="o">=</span> <span class="n">status_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;song&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">song</span><span class="p">:</span>
+        <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;  song: </span><span class="si">{</span><span class="n">song</span><span class="p">[</span><span class="s1">&#39;path&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">song</span><span class="p">[</span><span class="s1">&#39;duration_s&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">s)&quot;</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;  song: (not set)&quot;</span><span class="p">)</span>
+
+    <span class="n">stages</span> <span class="o">=</span> <span class="n">status_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;stages&quot;</span><span class="p">,</span> <span class="p">{})</span>
+    <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+    <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;Stages:&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">[</span>
+        <span class="p">(</span><span class="s2">&quot;init&quot;</span><span class="p">,</span>       <span class="s2">&quot;init&quot;</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">&quot;transcribe&quot;</span><span class="p">,</span> <span class="s2">&quot;transcribe&quot;</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">&quot;lyrics.md&quot;</span><span class="p">,</span>  <span class="s2">&quot;lyrics_md&quot;</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">&quot;align&quot;</span><span class="p">,</span>      <span class="s2">&quot;align&quot;</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">&quot;script&quot;</span><span class="p">,</span>     <span class="s2">&quot;script&quot;</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">&quot;compose&quot;</span><span class="p">,</span>    <span class="s2">&quot;compose&quot;</span><span class="p">),</span>
+    <span class="p">]:</span>
+        <span class="n">ok</span> <span class="o">=</span> <span class="s2">&quot;✓&quot;</span> <span class="k">if</span> <span class="n">stages</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="k">else</span> <span class="s2">&quot; &quot;</span>
+        <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  [</span><span class="si">{</span><span class="n">ok</span><span class="si">}</span><span class="s2">] </span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="n">chars</span> <span class="o">=</span> <span class="n">stages</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;characters&quot;</span><span class="p">,</span> <span class="p">[])</span>
+    <span class="k">if</span> <span class="n">chars</span><span class="p">:</span>
+        <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+        <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;Characters:&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">chars</span><span class="p">:</span>
+            <span class="n">anchor</span> <span class="o">=</span> <span class="s2">&quot;anchor&quot;</span> <span class="k">if</span> <span class="n">c</span><span class="p">[</span><span class="s2">&quot;has_anchor&quot;</span><span class="p">]</span> <span class="k">else</span> <span class="s2">&quot;no-anchor&quot;</span>
+            <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;  - </span><span class="si">{</span><span class="n">c</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">c</span><span class="p">[</span><span class="s1">&#39;n_refs&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> refs, &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">c</span><span class="p">[</span><span class="s1">&#39;n_selected&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> selected, </span><span class="si">{</span><span class="n">anchor</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+
+    <span class="n">envs</span> <span class="o">=</span> <span class="n">stages</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;environments&quot;</span><span class="p">,</span> <span class="p">[])</span>
+    <span class="k">if</span> <span class="n">envs</span><span class="p">:</span>
+        <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+        <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;Environments:&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">envs</span><span class="p">:</span>
+            <span class="n">ok</span> <span class="o">=</span> <span class="s2">&quot;rendered&quot;</span> <span class="k">if</span> <span class="n">e</span><span class="p">[</span><span class="s2">&quot;rendered&quot;</span><span class="p">]</span> <span class="k">else</span> <span class="s2">&quot;pending&quot;</span>
+            <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  - </span><span class="si">{</span><span class="n">e</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">ok</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="n">render</span> <span class="o">=</span> <span class="n">stages</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;render&quot;</span><span class="p">,</span> <span class="p">{})</span>
+    <span class="k">if</span> <span class="n">render</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;total&quot;</span><span class="p">):</span>
+        <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+        <span class="n">bar_w</span> <span class="o">=</span> <span class="mi">24</span>
+        <span class="n">done_w</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">bar_w</span> <span class="o">*</span> <span class="n">render</span><span class="p">[</span><span class="s2">&quot;done&quot;</span><span class="p">]</span> <span class="o">/</span> <span class="n">render</span><span class="p">[</span><span class="s2">&quot;total&quot;</span><span class="p">]))</span>
+            <span class="k">if</span> <span class="n">render</span><span class="p">[</span><span class="s2">&quot;total&quot;</span><span class="p">]</span>
+            <span class="k">else</span> <span class="mi">0</span>
+        <span class="p">)</span>
+        <span class="n">bar</span> <span class="o">=</span> <span class="s2">&quot;█&quot;</span> <span class="o">*</span> <span class="n">done_w</span> <span class="o">+</span> <span class="s2">&quot;░&quot;</span> <span class="o">*</span> <span class="p">(</span><span class="n">bar_w</span> <span class="o">-</span> <span class="n">done_w</span><span class="p">)</span>
+        <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Render: </span><span class="si">{</span><span class="n">bar</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">render</span><span class="p">[</span><span class="s1">&#39;done&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">render</span><span class="p">[</span><span class="s1">&#39;total&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+
+    <span class="n">al</span> <span class="o">=</span> <span class="n">status_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;alignment&quot;</span><span class="p">,</span> <span class="p">{})</span>
+    <span class="k">if</span> <span class="n">al</span><span class="p">:</span>
+        <span class="n">hist</span> <span class="o">=</span> <span class="n">al</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;confidence_histogram&quot;</span><span class="p">,</span> <span class="p">{})</span>
+        <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Alignment: </span><span class="si">{</span><span class="n">al</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;n_lines&#39;</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="si">}</span><span class="s2"> lines, &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">al</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;n_words&#39;</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="si">}</span><span class="s2"> words &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;(high=</span><span class="si">{</span><span class="n">hist</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;high&#39;</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="si">}</span><span class="s2">, med=</span><span class="si">{</span><span class="n">hist</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;medium&#39;</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="si">}</span><span class="s2">, &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;low=</span><span class="si">{</span><span class="n">hist</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;low&#39;</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="si">}</span><span class="s2">)&quot;</span>
+        <span class="p">)</span>
+
+    <span class="n">cost</span> <span class="o">=</span> <span class="n">status_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;estimated_render_cost&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{}</span>
+    <span class="k">if</span> <span class="n">cost</span><span class="p">:</span>
+        <span class="n">skipped_note</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot; (</span><span class="si">{</span><span class="n">cost</span><span class="p">[</span><span class="s1">&#39;n_skipped&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> unpriced)&quot;</span>
+            <span class="k">if</span> <span class="n">cost</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;n_skipped&quot;</span><span class="p">)</span>
+            <span class="k">else</span> <span class="s2">&quot;&quot;</span>
+        <span class="p">)</span>
+        <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Estimated remaining render cost: &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;~$</span><span class="si">{</span><span class="n">cost</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;total_amount&#39;</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">)</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">cost</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;currency&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;USD&#39;</span><span class="p">)</span><span class="si">}{</span><span class="n">skipped_note</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_alignment_stats</span><span class="p">(</span><span class="n">alignment_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return n_lines, n_words, and a confidence histogram. ``None`` if</span>
+<span class="sd">    no alignment store yet.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">alignment_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">lacing</span><span class="w"> </span><span class="kn">import</span> <span class="n">SqliteStore</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">lacing.tracks.subtitle</span><span class="w"> </span><span class="kn">import</span> <span class="n">SubtitleTrack</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">store</span> <span class="o">=</span> <span class="n">SqliteStore</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">alignment_path</span><span class="p">))</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">track</span> <span class="o">=</span> <span class="n">SubtitleTrack</span><span class="p">(</span><span class="n">store</span><span class="p">,</span> <span class="n">asset_id</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="n">track</span><span class="o">.</span><span class="n">all_lines</span><span class="p">()</span>
+        <span class="n">words</span> <span class="o">=</span> <span class="n">track</span><span class="o">.</span><span class="n">all_words</span><span class="p">()</span>
+        <span class="c1"># Confidence buckets: high ≥0.85, low &lt;0.5, else medium.</span>
+        <span class="n">hist</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;high&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;medium&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;low&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
+        <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">words</span><span class="p">:</span>
+            <span class="n">c</span> <span class="o">=</span> <span class="n">w</span><span class="o">.</span><span class="n">body</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;confidence&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">c</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="n">c</span> <span class="o">&gt;=</span> <span class="mf">0.85</span><span class="p">:</span>
+                <span class="n">hist</span><span class="p">[</span><span class="s2">&quot;high&quot;</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">elif</span> <span class="n">c</span> <span class="o">&lt;</span> <span class="mf">0.5</span><span class="p">:</span>
+                <span class="n">hist</span><span class="p">[</span><span class="s2">&quot;low&quot;</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">hist</span><span class="p">[</span><span class="s2">&quot;medium&quot;</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;n_lines&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">lines</span><span class="p">),</span>
+            <span class="s2">&quot;n_words&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">words</span><span class="p">),</span>
+            <span class="s2">&quot;confidence_histogram&quot;</span><span class="p">:</span> <span class="n">hist</span><span class="p">,</span>
+        <span class="p">}</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="n">store</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_slugify</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>

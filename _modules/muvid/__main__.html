@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.__main__ &mdash; muvid 0.0.2 documentation</title>
+  <title>muvid.__main__ &mdash; muvid 0.0.3 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -14,9 +14,9 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=e3a6060d"></script>
-      <script src="../../_static/doctools.js?v=9bcbadda"></script>
-      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../_static/documentation_options.js?v=47de8214"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
       <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
       <script src="../../_static/copybutton.js?v=f281be69"></script>
@@ -51,17 +51,20 @@
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/align.html">muvid.align</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/characters.html">muvid.characters</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/compose.html">muvid.compose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/contracts.html">muvid.contracts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/cost.html">muvid.cost</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/environments.html">muvid.environments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/events.html">muvid.events</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/facade.html">muvid.facade</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/lyrics.html">muvid.lyrics</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/project.html">muvid.project</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/render.html">muvid.render</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/render/_common.html">muvid.render._common</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/render/animation.html">muvid.render.animation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/render/image_to_video.html">muvid.render.image_to_video</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/render/lipsync.html">muvid.render.lipsync</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/render/still.html">muvid.render.still</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/render/text_to_video.html">muvid.render.text_to_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/renderers.html">muvid.renderers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/renderers/_common.html">muvid.renderers._common</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/renderers/animation.html">muvid.renderers.animation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/renderers/image_to_video.html">muvid.renderers.image_to_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/renderers/lipsync.html">muvid.renderers.lipsync</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/renderers/still.html">muvid.renderers.still</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/renderers/text_to_video.html">muvid.renderers.text_to_video</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/schema.html">muvid.schema</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/script.html">muvid.script</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/ui.html">muvid.ui</a></li>
@@ -129,9 +132,12 @@
 
 <div class="viewcode-block" id="align">
 <a class="viewcode-back" href="../../module_docs/muvid/__main__.html#muvid.__main__.align">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">align</span><span class="p">(</span><span class="n">root</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build lyrics/alignment.annot from transcript + lyrics.md.&quot;&quot;&quot;</span>
-    <span class="nb">print</span><span class="p">(</span><span class="n">facade</span><span class="o">.</span><span class="n">align_lyrics</span><span class="p">(</span><span class="n">root</span><span class="p">))</span></div>
+<span class="k">def</span><span class="w"> </span><span class="nf">align</span><span class="p">(</span><span class="n">root</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">aligner</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;scribe-greedy&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build lyrics/alignment.annot from transcript + lyrics.md.</span>
+
+<span class="sd">    --aligner: scribe-greedy (default) | user | whisperx-lite | stars.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">facade</span><span class="o">.</span><span class="n">align_lyrics</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">aligner</span><span class="o">=</span><span class="n">aligner</span><span class="p">))</span></div>
 
 
 
@@ -146,12 +152,15 @@
     <span class="n">reference_audio_url</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Create or update a character card.&quot;&quot;&quot;</span>
-    <span class="n">_print_json</span><span class="p">(</span><span class="n">facade</span><span class="o">.</span><span class="n">add_character</span><span class="p">(</span>
-        <span class="n">root</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="n">description</span><span class="p">,</span>
-        <span class="n">voice_id</span><span class="o">=</span><span class="n">voice_id</span><span class="p">,</span>
-        <span class="n">reference_audio_url</span><span class="o">=</span><span class="n">reference_audio_url</span><span class="p">,</span>
-    <span class="p">))</span></div>
+    <span class="n">_print_json</span><span class="p">(</span>
+        <span class="n">facade</span><span class="o">.</span><span class="n">add_character</span><span class="p">(</span>
+            <span class="n">root</span><span class="p">,</span>
+            <span class="n">name</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="n">description</span><span class="p">,</span>
+            <span class="n">voice_id</span><span class="o">=</span><span class="n">voice_id</span><span class="p">,</span>
+            <span class="n">reference_audio_url</span><span class="o">=</span><span class="n">reference_audio_url</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span></div>
 
 
 
@@ -183,6 +192,31 @@
 
 
 
+<div class="viewcode-block" id="character_curate_interactive">
+<a class="viewcode-back" href="../../module_docs/muvid/__main__.html#muvid.__main__.character_curate_interactive">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">character_curate_interactive</span><span class="p">(</span>
+    <span class="n">root</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">decisions</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">8</span><span class="p">,</span>
+    <span class="n">recipe</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;person_mock&quot;</span><span class="p">,</span>
+    <span class="n">present</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">6</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Run an interactive curate loop driven by a pre-recorded JSON file.</span>
+
+<span class="sd">    ``--decisions PATH`` points at a JSON list shaped like</span>
+<span class="sd">    ``[{&quot;keep&quot;: [&quot;&lt;image_id&gt;&quot;], &quot;reject&quot;: [...], &quot;stop&quot;: false}, ...]``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">_print_json</span><span class="p">(</span>
+        <span class="n">facade</span><span class="o">.</span><span class="n">curate_character_interactive</span><span class="p">(</span>
+            <span class="n">root</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span>
+            <span class="n">decisions</span><span class="o">=</span><span class="n">decisions</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="n">k</span><span class="p">,</span> <span class="n">recipe</span><span class="o">=</span><span class="n">recipe</span><span class="p">,</span> <span class="n">present</span><span class="o">=</span><span class="n">present</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span></div>
+
+
+
 <div class="viewcode-block" id="environment">
 <a class="viewcode-back" href="../../module_docs/muvid/__main__.html#muvid.__main__.environment">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">environment</span><span class="p">(</span>
@@ -194,12 +228,15 @@
     <span class="n">lighting</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Create or update an environment card.&quot;&quot;&quot;</span>
-    <span class="n">_print_json</span><span class="p">(</span><span class="n">facade</span><span class="o">.</span><span class="n">add_environment</span><span class="p">(</span>
-        <span class="n">root</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="n">description</span><span class="p">,</span>
-        <span class="n">time_of_day</span><span class="o">=</span><span class="n">time_of_day</span><span class="p">,</span>
-        <span class="n">lighting</span><span class="o">=</span><span class="n">lighting</span><span class="p">,</span>
-    <span class="p">))</span></div>
+    <span class="n">_print_json</span><span class="p">(</span>
+        <span class="n">facade</span><span class="o">.</span><span class="n">add_environment</span><span class="p">(</span>
+            <span class="n">root</span><span class="p">,</span>
+            <span class="n">name</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="n">description</span><span class="p">,</span>
+            <span class="n">time_of_day</span><span class="o">=</span><span class="n">time_of_day</span><span class="p">,</span>
+            <span class="n">lighting</span><span class="o">=</span><span class="n">lighting</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span></div>
 
 
 
@@ -231,22 +268,55 @@
 <div class="viewcode-block" id="render">
 <a class="viewcode-back" href="../../module_docs/muvid/__main__.html#muvid.__main__.render">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">render</span><span class="p">(</span>
-    <span class="n">root</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">shot</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">quality</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;balanced&quot;</span><span class="p">,</span> <span class="n">force</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">root</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">shot</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="n">quality</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;balanced&quot;</span><span class="p">,</span>
+    <span class="n">force</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">budget</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Render one shot (--shot ID) or all shots.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Render one shot (--shot ID) or all shots.</span>
+
+<span class="sd">    ``--budget USD``: when ≥ 0, abort if the estimated cost exceeds</span>
+<span class="sd">    this. Pass ``-1`` (the default) to disable the gate.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">shot</span><span class="p">:</span>
         <span class="nb">print</span><span class="p">(</span><span class="n">facade</span><span class="o">.</span><span class="n">render_shot</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">shot</span><span class="p">,</span> <span class="n">quality</span><span class="o">=</span><span class="n">quality</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="n">force</span><span class="p">))</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">facade</span><span class="o">.</span><span class="n">render</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">quality</span><span class="o">=</span><span class="n">quality</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="n">force</span><span class="p">):</span>
+        <span class="n">budget_arg</span> <span class="o">=</span> <span class="n">budget</span> <span class="k">if</span> <span class="n">budget</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">facade</span><span class="o">.</span><span class="n">render</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">quality</span><span class="o">=</span><span class="n">quality</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="n">force</span><span class="p">,</span> <span class="n">budget</span><span class="o">=</span><span class="n">budget_arg</span><span class="p">):</span>
             <span class="nb">print</span><span class="p">(</span><span class="n">p</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="estimate_cost">
+<a class="viewcode-back" href="../../module_docs/muvid/__main__.html#muvid.__main__.estimate_cost">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">estimate_cost</span><span class="p">(</span><span class="n">root</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">quality</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;balanced&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Estimate USD cost of rendering pending shots. Prints a rollup.&quot;&quot;&quot;</span>
+    <span class="n">rollup</span> <span class="o">=</span> <span class="n">facade</span><span class="o">.</span><span class="n">estimate_render_cost</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">quality</span><span class="o">=</span><span class="n">quality</span><span class="p">)</span>
+    <span class="n">summary</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;total_amount&quot;</span><span class="p">:</span> <span class="n">rollup</span><span class="o">.</span><span class="n">total_amount</span><span class="p">,</span>
+        <span class="s2">&quot;currency&quot;</span><span class="p">:</span> <span class="n">rollup</span><span class="o">.</span><span class="n">currency</span><span class="p">,</span>
+        <span class="s2">&quot;by_kind&quot;</span><span class="p">:</span> <span class="n">rollup</span><span class="o">.</span><span class="n">by_kind</span><span class="p">(),</span>
+        <span class="s2">&quot;n_skipped&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">rollup</span><span class="o">.</span><span class="n">skipped</span><span class="p">),</span>
+        <span class="s2">&quot;lines&quot;</span><span class="p">:</span> <span class="p">[</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;kind&quot;</span><span class="p">:</span> <span class="n">ln</span><span class="o">.</span><span class="n">kind</span><span class="p">,</span>
+                <span class="s2">&quot;item_id&quot;</span><span class="p">:</span> <span class="n">ln</span><span class="o">.</span><span class="n">item_id</span><span class="p">,</span>
+                <span class="s2">&quot;model_id&quot;</span><span class="p">:</span> <span class="n">ln</span><span class="o">.</span><span class="n">model_id</span><span class="p">,</span>
+                <span class="s2">&quot;amount&quot;</span><span class="p">:</span> <span class="n">ln</span><span class="o">.</span><span class="n">amount</span><span class="p">,</span>
+                <span class="s2">&quot;note&quot;</span><span class="p">:</span> <span class="n">ln</span><span class="o">.</span><span class="n">note</span><span class="p">,</span>
+            <span class="p">}</span>
+            <span class="k">for</span> <span class="n">ln</span> <span class="ow">in</span> <span class="n">rollup</span><span class="o">.</span><span class="n">lines</span>
+        <span class="p">],</span>
+    <span class="p">}</span>
+    <span class="n">_print_json</span><span class="p">(</span><span class="n">summary</span><span class="p">)</span></div>
 
 
 
 <div class="viewcode-block" id="compose">
 <a class="viewcode-back" href="../../module_docs/muvid/__main__.html#muvid.__main__.compose">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">compose</span><span class="p">(</span>
-    <span class="n">root</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">out_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;final.mp4&quot;</span><span class="p">,</span> <span class="n">song_audio</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">compose</span><span class="p">(</span><span class="n">root</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">out_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;final.mp4&quot;</span><span class="p">,</span> <span class="n">song_audio</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Concatenate rendered shots and (optionally) overlay song audio.&quot;&quot;&quot;</span>
     <span class="nb">print</span><span class="p">(</span><span class="n">facade</span><span class="o">.</span><span class="n">compose</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">out_name</span><span class="o">=</span><span class="n">out_name</span><span class="p">,</span> <span class="n">use_song_audio</span><span class="o">=</span><span class="n">song_audio</span><span class="p">))</span></div>
 
@@ -254,9 +324,17 @@
 
 <div class="viewcode-block" id="status">
 <a class="viewcode-back" href="../../module_docs/muvid/__main__.html#muvid.__main__.status">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">status</span><span class="p">(</span><span class="n">root</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Print a summary of the project&#39;s current state.&quot;&quot;&quot;</span>
-    <span class="n">_print_json</span><span class="p">(</span><span class="n">facade</span><span class="o">.</span><span class="n">status</span><span class="p">(</span><span class="n">root</span><span class="p">))</span></div>
+<span class="k">def</span><span class="w"> </span><span class="nf">status</span><span class="p">(</span><span class="n">root</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">json</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Print a summary of the project&#39;s current state.</span>
+
+<span class="sd">    Default output is human-readable. Pass ``--json`` for the</span>
+<span class="sd">    structured shape (stages, render progress, alignment quality).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">facade</span><span class="o">.</span><span class="n">status</span><span class="p">(</span><span class="n">root</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">json</span><span class="p">:</span>
+        <span class="n">_print_json</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">facade</span><span class="o">.</span><span class="n">format_status</span><span class="p">(</span><span class="n">s</span><span class="p">))</span></div>
 
 
 
@@ -274,26 +352,28 @@
     <span class="k">try</span><span class="p">:</span>
         <span class="kn">import</span><span class="w"> </span><span class="nn">argh</span>  <span class="c1"># type: ignore</span>
     <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">SystemExit</span><span class="p">(</span>
-            <span class="s2">&quot;muvid CLI requires `argh`. pip install argh.&quot;</span>
-        <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
-    <span class="n">argh</span><span class="o">.</span><span class="n">dispatch_commands</span><span class="p">([</span>
-        <span class="n">init</span><span class="p">,</span>
-        <span class="n">transcribe</span><span class="p">,</span>
-        <span class="n">align</span><span class="p">,</span>
-        <span class="n">character</span><span class="p">,</span>
-        <span class="n">character_images</span><span class="p">,</span>
-        <span class="n">character_generate</span><span class="p">,</span>
-        <span class="n">character_curate</span><span class="p">,</span>
-        <span class="n">environment</span><span class="p">,</span>
-        <span class="n">environment_render</span><span class="p">,</span>
-        <span class="n">script</span><span class="p">,</span>
-        <span class="n">script_apply</span><span class="p">,</span>
-        <span class="n">render</span><span class="p">,</span>
-        <span class="n">compose</span><span class="p">,</span>
-        <span class="n">status</span><span class="p">,</span>
-        <span class="n">serve</span><span class="p">,</span>
-    <span class="p">])</span>
+        <span class="k">raise</span> <span class="ne">SystemExit</span><span class="p">(</span><span class="s2">&quot;muvid CLI requires `argh`. pip install argh.&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+    <span class="n">argh</span><span class="o">.</span><span class="n">dispatch_commands</span><span class="p">(</span>
+        <span class="p">[</span>
+            <span class="n">init</span><span class="p">,</span>
+            <span class="n">transcribe</span><span class="p">,</span>
+            <span class="n">align</span><span class="p">,</span>
+            <span class="n">character</span><span class="p">,</span>
+            <span class="n">character_images</span><span class="p">,</span>
+            <span class="n">character_generate</span><span class="p">,</span>
+            <span class="n">character_curate</span><span class="p">,</span>
+            <span class="n">character_curate_interactive</span><span class="p">,</span>
+            <span class="n">environment</span><span class="p">,</span>
+            <span class="n">environment_render</span><span class="p">,</span>
+            <span class="n">script</span><span class="p">,</span>
+            <span class="n">script_apply</span><span class="p">,</span>
+            <span class="n">render</span><span class="p">,</span>
+            <span class="n">estimate_cost</span><span class="p">,</span>
+            <span class="n">compose</span><span class="p">,</span>
+            <span class="n">status</span><span class="p">,</span>
+            <span class="n">serve</span><span class="p">,</span>
+        <span class="p">]</span>
+    <span class="p">)</span>
 
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>

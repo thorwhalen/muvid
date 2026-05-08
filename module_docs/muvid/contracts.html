@@ -1,0 +1,214 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>muvid.contracts &mdash; muvid 0.0.3 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=47de8214"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
+      <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="muvid.cost" href="cost.html" />
+    <link rel="prev" title="muvid.compose" href="compose.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            muvid
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../muvid.html">muvid</a></li>
+<li class="toctree-l1"><a class="reference internal" href="__main__.html">muvid.__main__</a></li>
+<li class="toctree-l1"><a class="reference internal" href="align.html">muvid.align</a></li>
+<li class="toctree-l1"><a class="reference internal" href="characters.html">muvid.characters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="compose.html">muvid.compose</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">muvid.contracts</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.contracts.character_to_falaw"><code class="docutils literal notranslate"><span class="pre">character_to_falaw()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.contracts.environment_to_falaw"><code class="docutils literal notranslate"><span class="pre">environment_to_falaw()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.contracts.progress_event_to_dict"><code class="docutils literal notranslate"><span class="pre">progress_event_to_dict()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.contracts.shifted_word_timings"><code class="docutils literal notranslate"><span class="pre">shifted_word_timings()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.contracts.word_timings_for_window"><code class="docutils literal notranslate"><span class="pre">word_timings_for_window()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="cost.html">muvid.cost</a></li>
+<li class="toctree-l1"><a class="reference internal" href="environments.html">muvid.environments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="events.html">muvid.events</a></li>
+<li class="toctree-l1"><a class="reference internal" href="facade.html">muvid.facade</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lyrics.html">muvid.lyrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="project.html">muvid.project</a></li>
+<li class="toctree-l1"><a class="reference internal" href="renderers.html">muvid.renderers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="renderers/_common.html">muvid.renderers._common</a></li>
+<li class="toctree-l1"><a class="reference internal" href="renderers/animation.html">muvid.renderers.animation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="renderers/image_to_video.html">muvid.renderers.image_to_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="renderers/lipsync.html">muvid.renderers.lipsync</a></li>
+<li class="toctree-l1"><a class="reference internal" href="renderers/still.html">muvid.renderers.still</a></li>
+<li class="toctree-l1"><a class="reference internal" href="renderers/text_to_video.html">muvid.renderers.text_to_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="schema.html">muvid.schema</a></li>
+<li class="toctree-l1"><a class="reference internal" href="script.html">muvid.script</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ui.html">muvid.ui</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ui/app.html">muvid.ui.app</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">muvid</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">muvid.contracts</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/module_docs/muvid/contracts.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-muvid.contracts">
+<span id="muvid-contracts"></span><h1>muvid.contracts<a class="headerlink" href="#module-muvid.contracts" title="Link to this heading"></a></h1>
+<p>Adapters between muvid’s SSOT and sibling-package shapes.</p>
+<p>muvid’s source of truth is <code class="docutils literal notranslate"><span class="pre">project.json</span></code> + a folder of cards. The
+sibling packages (<code class="docutils literal notranslate"><span class="pre">falaw</span></code>, <code class="docutils literal notranslate"><span class="pre">an</span></code>, <code class="docutils literal notranslate"><span class="pre">lacing</span></code>) have their own typed
+shapes for related concepts — <code class="docutils literal notranslate"><span class="pre">falaw.Character</span></code> carries inline URLs,
+<code class="docutils literal notranslate"><span class="pre">an.audio.WordTiming</span></code> is a tuple, etc. Each package having its own
+abstraction is intentional (different concerns, different lifecycles),
+but <strong>translation</strong> between them belongs in one place — here — so the
+seams are inspectable and a single change in any sibling’s type only
+ripples through one module.</p>
+<p>Three families of adapters:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">character_to_falaw(project,</span> <span class="pre">name)</span></code> / <code class="docutils literal notranslate"><span class="pre">environment_to_falaw(...)</span></code>:
+build live <code class="docutils literal notranslate"><span class="pre">falaw.Character</span></code> / <code class="docutils literal notranslate"><span class="pre">falaw.Environment</span></code> instances from
+muvid’s persistent card.json + curated reference images.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">word_timings_for_window(project,</span> <span class="pre">start_s,</span> <span class="pre">end_s)</span></code>: pull
+<code class="docutils literal notranslate"><span class="pre">(text,</span> <span class="pre">start,</span> <span class="pre">end)</span></code> tuples from the project’s lacing alignment
+store, in the shape <code class="docutils literal notranslate"><span class="pre">an.audio.WordTimingProvider</span></code> and
+<code class="docutils literal notranslate"><span class="pre">muvid.cost</span></code> callers expect. Times are absolute (in song-seconds),
+not slice-relative — see <a class="reference internal" href="#muvid.contracts.shifted_word_timings" title="muvid.contracts.shifted_word_timings"><code class="xref py py-func docutils literal notranslate"><span class="pre">shifted_word_timings()</span></code></a> if you need
+shot-slice-relative output.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">shifted_word_timings(timings,</span> <span class="pre">*,</span> <span class="pre">offset_s)</span></code> / <code class="docutils literal notranslate"><span class="pre">progress_event_to_dict(event)</span></code>:
+pure-data transformations that don’t need a project handle.</p></li>
+</ul>
+<p>These are deliberately thin: each function delegates to the canonical
+home (<code class="docutils literal notranslate"><span class="pre">falaw.scene.Character</span></code>, <code class="docutils literal notranslate"><span class="pre">lacing.tracks.subtitle.SubtitleTrack</span></code>,
+etc.) and just glues to muvid’s persistent state. None of them
+introduces new types — they translate, they don’t redefine.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.contracts.character_to_falaw">
+<span class="sig-prename descclassname"><span class="pre">muvid.contracts.</span></span><span class="sig-name descname"><span class="pre">character_to_falaw</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">project</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="project.html#muvid.project.MusicVideoProject" title="muvid.project.MusicVideoProject"><span class="pre">MusicVideoProject</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/muvid/contracts.html#character_to_falaw"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.contracts.character_to_falaw" title="Link to this definition"></a></dt>
+<dd><p>Build a <code class="docutils literal notranslate"><span class="pre">falaw.Character</span></code> from this project’s character card.</p>
+<p>Resolves <code class="docutils literal notranslate"><span class="pre">reference_image_url</span></code> from the curated anchor (the first
+<code class="docutils literal notranslate"><span class="pre">selected/</span></code> image, falling back to the first <code class="docutils literal notranslate"><span class="pre">refs/</span></code> image) so
+downstream falaw renders have a usable URL or local path. The
+voice spec (if any) is mirrored 1:1.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.contracts.environment_to_falaw">
+<span class="sig-prename descclassname"><span class="pre">muvid.contracts.</span></span><span class="sig-name descname"><span class="pre">environment_to_falaw</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">project</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="project.html#muvid.project.MusicVideoProject" title="muvid.project.MusicVideoProject"><span class="pre">MusicVideoProject</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/muvid/contracts.html#environment_to_falaw"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.contracts.environment_to_falaw" title="Link to this definition"></a></dt>
+<dd><p>Build a <code class="docutils literal notranslate"><span class="pre">falaw.Environment</span></code> from this project’s environment card.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.contracts.progress_event_to_dict">
+<span class="sig-prename descclassname"><span class="pre">muvid.contracts.</span></span><span class="sig-name descname"><span class="pre">progress_event_to_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/muvid/contracts.html#progress_event_to_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.contracts.progress_event_to_dict" title="Link to this definition"></a></dt>
+<dd><p>Serialize a <code class="docutils literal notranslate"><span class="pre">falaw.ProgressEvent</span></code> into a JSON-safe dict.</p>
+<p>The shape matches the records <a class="reference internal" href="events.html#muvid.events.log_fal_events_to" title="muvid.events.log_fal_events_to"><code class="xref py py-func docutils literal notranslate"><span class="pre">muvid.events.log_fal_events_to()</span></code></a>
+writes — pulled out as a public helper so other consumers (a UI
+SSE stream, a remote telemetry sink) don’t have to rebuild it.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.contracts.shifted_word_timings">
+<span class="sig-prename descclassname"><span class="pre">muvid.contracts.</span></span><span class="sig-name descname"><span class="pre">shifted_word_timings</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">timings</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">offset_s</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/muvid/contracts.html#shifted_word_timings"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.contracts.shifted_word_timings" title="Link to this definition"></a></dt>
+<dd><p>Shift each timing by <code class="docutils literal notranslate"><span class="pre">-offset_s</span></code> (clamping starts at 0).</p>
+<p>Use when handing absolute song-time timings to a tool that wants
+them relative to a shot’s audio slice (where t=0 is the slice’s
+start). Mirrors <code class="docutils literal notranslate"><span class="pre">audio[shot.start_s:shot.end_s]</span></code> cropping.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.contracts.word_timings_for_window">
+<span class="sig-prename descclassname"><span class="pre">muvid.contracts.</span></span><span class="sig-name descname"><span class="pre">word_timings_for_window</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">project</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="project.html#muvid.project.MusicVideoProject" title="muvid.project.MusicVideoProject"><span class="pre">MusicVideoProject</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_s</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_s</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">asset_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/muvid/contracts.html#word_timings_for_window"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.contracts.word_timings_for_window" title="Link to this definition"></a></dt>
+<dd><p>Read <code class="docutils literal notranslate"><span class="pre">(text,</span> <span class="pre">start,</span> <span class="pre">end)</span></code> tuples from the alignment store.</p>
+<p>Times are <strong>absolute song-seconds</strong>. Returns an empty list when
+the alignment store doesn’t exist yet, or when <code class="docutils literal notranslate"><span class="pre">lacing</span></code> /
+<code class="docutils literal notranslate"><span class="pre">lacing.tracks</span></code> aren’t installed (so callers can degrade
+gracefully).</p>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="compose.html" class="btn btn-neutral float-left" title="muvid.compose" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="cost.html" class="btn btn-neutral float-right" title="muvid.cost" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright NO COPYRIGHT.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
