@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.cost &mdash; muvid 0.0.3 documentation</title>
+  <title>muvid.cost &mdash; muvid 0.0.4 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=47de8214"></script>
+      <script src="../../_static/documentation_options.js?v=8c5712d9"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -202,39 +202,69 @@
 
     <span class="k">if</span> <span class="n">strategy</span> <span class="o">==</span> <span class="s2">&quot;still&quot;</span><span class="p">:</span>
         <span class="k">yield from</span> <span class="n">_price_one</span><span class="p">(</span>
-            <span class="s2">&quot;shot.image&quot;</span><span class="p">,</span> <span class="n">shot</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="s2">&quot;image&quot;</span><span class="p">,</span> <span class="n">quality</span><span class="p">,</span>
-            <span class="n">pick_model</span><span class="p">,</span> <span class="n">estimate_call_cost</span><span class="p">,</span> <span class="n">skipped</span><span class="p">,</span>
-            <span class="n">seconds</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">note</span><span class="o">=</span><span class="s2">&quot;still&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;shot.image&quot;</span><span class="p">,</span>
+            <span class="n">shot</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
+            <span class="s2">&quot;image&quot;</span><span class="p">,</span>
+            <span class="n">quality</span><span class="p">,</span>
+            <span class="n">pick_model</span><span class="p">,</span>
+            <span class="n">estimate_call_cost</span><span class="p">,</span>
+            <span class="n">skipped</span><span class="p">,</span>
+            <span class="n">seconds</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">note</span><span class="o">=</span><span class="s2">&quot;still&quot;</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="k">return</span>
 
     <span class="k">if</span> <span class="n">strategy</span> <span class="o">==</span> <span class="s2">&quot;image_to_video&quot;</span><span class="p">:</span>
         <span class="k">yield from</span> <span class="n">_price_one</span><span class="p">(</span>
-            <span class="s2">&quot;shot.image&quot;</span><span class="p">,</span> <span class="n">shot</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="s2">&quot;image&quot;</span><span class="p">,</span> <span class="n">quality</span><span class="p">,</span>
-            <span class="n">pick_model</span><span class="p">,</span> <span class="n">estimate_call_cost</span><span class="p">,</span> <span class="n">skipped</span><span class="p">,</span>
-            <span class="n">seconds</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">note</span><span class="o">=</span><span class="s2">&quot;storyboard still&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;shot.image&quot;</span><span class="p">,</span>
+            <span class="n">shot</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
+            <span class="s2">&quot;image&quot;</span><span class="p">,</span>
+            <span class="n">quality</span><span class="p">,</span>
+            <span class="n">pick_model</span><span class="p">,</span>
+            <span class="n">estimate_call_cost</span><span class="p">,</span>
+            <span class="n">skipped</span><span class="p">,</span>
+            <span class="n">seconds</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">note</span><span class="o">=</span><span class="s2">&quot;storyboard still&quot;</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="k">yield from</span> <span class="n">_price_one</span><span class="p">(</span>
-            <span class="s2">&quot;shot.image_to_video&quot;</span><span class="p">,</span> <span class="n">shot</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="s2">&quot;image_to_video&quot;</span><span class="p">,</span> <span class="n">quality</span><span class="p">,</span>
-            <span class="n">pick_model</span><span class="p">,</span> <span class="n">estimate_call_cost</span><span class="p">,</span> <span class="n">skipped</span><span class="p">,</span>
-            <span class="n">seconds</span><span class="o">=</span><span class="n">duration</span><span class="p">,</span> <span class="n">note</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;i2v × </span><span class="si">{</span><span class="n">duration</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">s&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;shot.image_to_video&quot;</span><span class="p">,</span>
+            <span class="n">shot</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
+            <span class="s2">&quot;image_to_video&quot;</span><span class="p">,</span>
+            <span class="n">quality</span><span class="p">,</span>
+            <span class="n">pick_model</span><span class="p">,</span>
+            <span class="n">estimate_call_cost</span><span class="p">,</span>
+            <span class="n">skipped</span><span class="p">,</span>
+            <span class="n">seconds</span><span class="o">=</span><span class="n">duration</span><span class="p">,</span>
+            <span class="n">note</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;i2v × </span><span class="si">{</span><span class="n">duration</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">s&quot;</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="k">return</span>
 
     <span class="k">if</span> <span class="n">strategy</span> <span class="o">==</span> <span class="s2">&quot;text_to_video&quot;</span><span class="p">:</span>
         <span class="k">yield from</span> <span class="n">_price_one</span><span class="p">(</span>
-            <span class="s2">&quot;shot.text_to_video&quot;</span><span class="p">,</span> <span class="n">shot</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="s2">&quot;text_to_video&quot;</span><span class="p">,</span> <span class="n">quality</span><span class="p">,</span>
-            <span class="n">pick_model</span><span class="p">,</span> <span class="n">estimate_call_cost</span><span class="p">,</span> <span class="n">skipped</span><span class="p">,</span>
-            <span class="n">seconds</span><span class="o">=</span><span class="n">duration</span><span class="p">,</span> <span class="n">note</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;t2v × </span><span class="si">{</span><span class="n">duration</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">s&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;shot.text_to_video&quot;</span><span class="p">,</span>
+            <span class="n">shot</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
+            <span class="s2">&quot;text_to_video&quot;</span><span class="p">,</span>
+            <span class="n">quality</span><span class="p">,</span>
+            <span class="n">pick_model</span><span class="p">,</span>
+            <span class="n">estimate_call_cost</span><span class="p">,</span>
+            <span class="n">skipped</span><span class="p">,</span>
+            <span class="n">seconds</span><span class="o">=</span><span class="n">duration</span><span class="p">,</span>
+            <span class="n">note</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;t2v × </span><span class="si">{</span><span class="n">duration</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">s&quot;</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="k">return</span>
 
     <span class="k">if</span> <span class="n">strategy</span> <span class="o">==</span> <span class="s2">&quot;lipsync&quot;</span><span class="p">:</span>
         <span class="c1"># animate_face uses category=&quot;avatar&quot; in falaw.</span>
         <span class="k">yield from</span> <span class="n">_price_one</span><span class="p">(</span>
-            <span class="s2">&quot;shot.lipsync&quot;</span><span class="p">,</span> <span class="n">shot</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="s2">&quot;avatar&quot;</span><span class="p">,</span> <span class="n">quality</span><span class="p">,</span>
-            <span class="n">pick_model</span><span class="p">,</span> <span class="n">estimate_call_cost</span><span class="p">,</span> <span class="n">skipped</span><span class="p">,</span>
-            <span class="n">seconds</span><span class="o">=</span><span class="n">duration</span><span class="p">,</span> <span class="n">note</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;avatar × </span><span class="si">{</span><span class="n">duration</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">s&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;shot.lipsync&quot;</span><span class="p">,</span>
+            <span class="n">shot</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
+            <span class="s2">&quot;avatar&quot;</span><span class="p">,</span>
+            <span class="n">quality</span><span class="p">,</span>
+            <span class="n">pick_model</span><span class="p">,</span>
+            <span class="n">estimate_call_cost</span><span class="p">,</span>
+            <span class="n">skipped</span><span class="p">,</span>
+            <span class="n">seconds</span><span class="o">=</span><span class="n">duration</span><span class="p">,</span>
+            <span class="n">note</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;avatar × </span><span class="si">{</span><span class="n">duration</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">s&quot;</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="k">return</span>
 
@@ -262,19 +292,18 @@
         <span class="k">return</span>
     <span class="n">cost</span> <span class="o">=</span> <span class="n">estimate_call_cost</span><span class="p">(</span><span class="n">record</span><span class="p">,</span> <span class="n">seconds</span><span class="o">=</span><span class="n">seconds</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">cost</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">skipped</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;shot </span><span class="si">{</span><span class="n">shot_id</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">kind</span><span class="si">}</span><span class="s2">: no cost_estimate on </span><span class="si">{</span><span class="n">record</span><span class="o">.</span><span class="n">id</span><span class="si">!r}</span><span class="s2">&quot;</span>
-        <span class="p">)</span>
+        <span class="n">skipped</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;shot </span><span class="si">{</span><span class="n">shot_id</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">kind</span><span class="si">}</span><span class="s2">: no cost_estimate on </span><span class="si">{</span><span class="n">record</span><span class="o">.</span><span class="n">id</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="k">return</span>
     <span class="n">currency</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">record</span><span class="o">.</span><span class="n">cost_estimate</span><span class="o">.</span><span class="n">currency</span>
-        <span class="k">if</span> <span class="n">record</span><span class="o">.</span><span class="n">cost_estimate</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-        <span class="k">else</span> <span class="s2">&quot;USD&quot;</span>
+        <span class="n">record</span><span class="o">.</span><span class="n">cost_estimate</span><span class="o">.</span><span class="n">currency</span> <span class="k">if</span> <span class="n">record</span><span class="o">.</span><span class="n">cost_estimate</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s2">&quot;USD&quot;</span>
     <span class="p">)</span>
     <span class="k">yield</span> <span class="n">_RolledLine</span><span class="p">(</span>
-        <span class="n">kind</span><span class="o">=</span><span class="n">kind</span><span class="p">,</span> <span class="n">item_id</span><span class="o">=</span><span class="n">shot_id</span><span class="p">,</span>
-        <span class="n">model_id</span><span class="o">=</span><span class="n">record</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">amount</span><span class="o">=</span><span class="n">cost</span><span class="p">,</span>
-        <span class="n">currency</span><span class="o">=</span><span class="n">currency</span><span class="p">,</span> <span class="n">note</span><span class="o">=</span><span class="n">note</span><span class="p">,</span>
+        <span class="n">kind</span><span class="o">=</span><span class="n">kind</span><span class="p">,</span>
+        <span class="n">item_id</span><span class="o">=</span><span class="n">shot_id</span><span class="p">,</span>
+        <span class="n">model_id</span><span class="o">=</span><span class="n">record</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
+        <span class="n">amount</span><span class="o">=</span><span class="n">cost</span><span class="p">,</span>
+        <span class="n">currency</span><span class="o">=</span><span class="n">currency</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="n">note</span><span class="p">,</span>
     <span class="p">)</span>
 
 

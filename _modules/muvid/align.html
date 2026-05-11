@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.align &mdash; muvid 0.0.3 documentation</title>
+  <title>muvid.align &mdash; muvid 0.0.4 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=47de8214"></script>
+      <script src="../../_static/documentation_options.js?v=8c5712d9"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -278,9 +278,7 @@
 
 <span class="k">def</span><span class="w"> </span><span class="nf">aligner_info</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AlignerSpec</span><span class="p">:</span>
     <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_ALIGNERS</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;Unknown aligner </span><span class="si">{</span><span class="n">name</span><span class="si">!r}</span><span class="s2">. Registered: </span><span class="si">{</span><span class="n">list_aligners</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span>
-        <span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown aligner </span><span class="si">{</span><span class="n">name</span><span class="si">!r}</span><span class="s2">. Registered: </span><span class="si">{</span><span class="n">list_aligners</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">_ALIGNERS</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
 
 
@@ -581,7 +579,9 @@
         <span class="n">lines_for</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">by_label</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">label</span><span class="p">,</span> <span class="p">()))</span>
         <span class="n">starts</span> <span class="o">=</span> <span class="p">[</span><span class="n">L</span><span class="o">.</span><span class="n">start_s</span> <span class="k">for</span> <span class="n">L</span> <span class="ow">in</span> <span class="n">lines_for</span> <span class="k">if</span> <span class="n">L</span><span class="o">.</span><span class="n">start_s</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">]</span>
         <span class="n">ends</span> <span class="o">=</span> <span class="p">[</span><span class="n">L</span><span class="o">.</span><span class="n">end_s</span> <span class="k">for</span> <span class="n">L</span> <span class="ow">in</span> <span class="n">lines_for</span> <span class="k">if</span> <span class="n">L</span><span class="o">.</span><span class="n">end_s</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">]</span>
-        <span class="n">s_start</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">start_s</span> <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">start_s</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">starts</span><span class="p">)</span> <span class="k">if</span> <span class="n">starts</span> <span class="k">else</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">s_start</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">s</span><span class="o">.</span><span class="n">start_s</span> <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">start_s</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">starts</span><span class="p">)</span> <span class="k">if</span> <span class="n">starts</span> <span class="k">else</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="p">)</span>
         <span class="n">s_end</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">end_s</span> <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">end_s</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">ends</span><span class="p">)</span> <span class="k">if</span> <span class="n">ends</span> <span class="k">else</span> <span class="kc">None</span><span class="p">)</span>
         <span class="n">section_alignments</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
             <span class="n">SectionAlignment</span><span class="p">(</span>
@@ -629,8 +629,7 @@
         <span class="kn">from</span><span class="w"> </span><span class="nn">faster_whisper</span><span class="w"> </span><span class="kn">import</span> <span class="n">WhisperModel</span>  <span class="c1"># type: ignore</span>
     <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>  <span class="c1"># pragma: no cover — exercised only when installed</span>
         <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-            <span class="s2">&quot;whisperx-lite requires faster-whisper. &quot;</span>
-            <span class="s2">&quot;pip install faster-whisper&quot;</span>
+            <span class="s2">&quot;whisperx-lite requires faster-whisper. pip install faster-whisper&quot;</span>
         <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
 
     <span class="n">model</span> <span class="o">=</span> <span class="n">WhisperModel</span><span class="p">(</span><span class="n">model_size</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="s2">&quot;cpu&quot;</span><span class="p">,</span> <span class="n">compute_type</span><span class="o">=</span><span class="s2">&quot;int8&quot;</span><span class="p">)</span>
@@ -744,14 +743,18 @@
                 <span class="k">continue</span>
             <span class="n">b</span><span class="o">.</span><span class="n">line</span><span class="p">(</span>
                 <span class="n">L</span><span class="o">.</span><span class="n">text</span><span class="p">,</span>
-                <span class="n">L</span><span class="o">.</span><span class="n">start_s</span><span class="p">,</span> <span class="n">L</span><span class="o">.</span><span class="n">end_s</span><span class="p">,</span>
+                <span class="n">L</span><span class="o">.</span><span class="n">start_s</span><span class="p">,</span>
+                <span class="n">L</span><span class="o">.</span><span class="n">end_s</span><span class="p">,</span>
                 <span class="n">line_index</span><span class="o">=</span><span class="n">L</span><span class="o">.</span><span class="n">line_index</span><span class="p">,</span>
                 <span class="n">section</span><span class="o">=</span><span class="n">L</span><span class="o">.</span><span class="n">section_label</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">alignment</span><span class="o">.</span><span class="n">words</span><span class="p">:</span>
             <span class="n">b</span><span class="o">.</span><span class="n">word</span><span class="p">(</span>
-                <span class="n">w</span><span class="o">.</span><span class="n">text</span><span class="p">,</span> <span class="n">w</span><span class="o">.</span><span class="n">start_s</span><span class="p">,</span> <span class="n">w</span><span class="o">.</span><span class="n">end_s</span><span class="p">,</span>
-                <span class="n">line_index</span><span class="o">=</span><span class="n">w</span><span class="o">.</span><span class="n">line_index</span><span class="p">,</span> <span class="n">confidence</span><span class="o">=</span><span class="n">w</span><span class="o">.</span><span class="n">confidence</span><span class="p">,</span>
+                <span class="n">w</span><span class="o">.</span><span class="n">text</span><span class="p">,</span>
+                <span class="n">w</span><span class="o">.</span><span class="n">start_s</span><span class="p">,</span>
+                <span class="n">w</span><span class="o">.</span><span class="n">end_s</span><span class="p">,</span>
+                <span class="n">line_index</span><span class="o">=</span><span class="n">w</span><span class="o">.</span><span class="n">line_index</span><span class="p">,</span>
+                <span class="n">confidence</span><span class="o">=</span><span class="n">w</span><span class="o">.</span><span class="n">confidence</span><span class="p">,</span>
             <span class="p">)</span>
     <span class="k">finally</span><span class="p">:</span>
         <span class="n">store</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
