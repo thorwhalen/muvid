@@ -193,7 +193,7 @@ def curate_references(
 
     profile = load_profile(recipe)
     result = curate(
-        images,
+        refs_dir,
         k=k,
         scorer_ids=profile.get("scorers", ()),
         embedder_ids=profile.get("embedders", ()),
