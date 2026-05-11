@@ -86,7 +86,11 @@ def align_lyrics(
     spec = p.read_spec()
     duration = spec.song.duration_s if spec.song else 0.0
     alignment = _align_mod.align_lyrics(
-        doc, transcript, duration_s=duration, aligner=aligner, **aligner_kwargs,
+        doc,
+        transcript,
+        duration_s=duration,
+        aligner=aligner,
+        **aligner_kwargs,
     )
     out = p.root / "lyrics" / "alignment.annot"
     _align_mod.write_alignment_store(alignment, path=out)
@@ -188,9 +192,13 @@ def curate_character_interactive(
     ]
     p = MusicVideoProject(root)
     out = _chars.curate_references_interactive(
-        p, name,
+        p,
+        name,
         on_decision=decision_objs,
-        k=k, recipe=recipe, present=present, max_rounds=max_rounds,
+        k=k,
+        recipe=recipe,
+        present=present,
+        max_rounds=max_rounds,
     )
     return [str(x) for x in out]
 
@@ -263,9 +271,7 @@ def render(
         return [str(x) for x in _render_all(p, quality=quality, force=force)]
 
 
-def estimate_render_cost(
-    root: str | Path, *, quality: str = "balanced"
-):
+def estimate_render_cost(root: str | Path, *, quality: str = "balanced"):
     """Return a :class:`muvid.cost.CostRollup` for the project's pending shots."""
     from muvid.cost import estimate_render_cost as _estimate
 
@@ -317,18 +323,14 @@ def status(root: str | Path) -> dict:
         cdir = p.character_dir(c.name)
         refs = list((cdir / "refs").iterdir()) if (cdir / "refs").exists() else []
         sel = (
-            list((cdir / "selected").iterdir())
-            if (cdir / "selected").exists()
-            else []
+            list((cdir / "selected").iterdir()) if (cdir / "selected").exists() else []
         )
         char_states.append(
             {
                 "name": c.name,
                 "n_refs": len(refs),
                 "n_selected": len(sel),
-                "has_anchor": (
-                    "reference_image_path" in p.read_character_card(c.name)
-                ),
+                "has_anchor": ("reference_image_path" in p.read_character_card(c.name)),
             }
         )
 
@@ -413,9 +415,7 @@ def format_status(status_dict: dict) -> str:
     parts.append(f"  root: {status_dict['root']}")
     song = status_dict.get("song")
     if song:
-        parts.append(
-            f"  song: {song['path']} ({song['duration_s']:.1f}s)"
-        )
+        parts.append(f"  song: {song['path']} ({song['duration_s']:.1f}s)")
     else:
         parts.append("  song: (not set)")
 
@@ -423,12 +423,12 @@ def format_status(status_dict: dict) -> str:
     parts.append("")
     parts.append("Stages:")
     for label, key in [
-        ("init",       "init"),
+        ("init", "init"),
         ("transcribe", "transcribe"),
-        ("lyrics.md",  "lyrics_md"),
-        ("align",      "align"),
-        ("script",     "script"),
-        ("compose",    "compose"),
+        ("lyrics.md", "lyrics_md"),
+        ("align", "align"),
+        ("script", "script"),
+        ("compose", "compose"),
     ]:
         ok = "✓" if stages.get(key) else " "
         parts.append(f"  [{ok}] {label}")
@@ -462,9 +462,7 @@ def format_status(status_dict: dict) -> str:
             else 0
         )
         bar = "█" * done_w + "░" * (bar_w - done_w)
-        parts.append(
-            f"Render: {bar} {render['done']}/{render['total']}"
-        )
+        parts.append(f"Render: {bar} {render['done']}/{render['total']}")
 
     al = status_dict.get("alignment", {})
     if al:
@@ -479,9 +477,7 @@ def format_status(status_dict: dict) -> str:
     cost = status_dict.get("estimated_render_cost") or {}
     if cost:
         skipped_note = (
-            f" ({cost['n_skipped']} unpriced)"
-            if cost.get("n_skipped")
-            else ""
+            f" ({cost['n_skipped']} unpriced)" if cost.get("n_skipped") else ""
         )
         parts.append(
             f"Estimated remaining render cost: "

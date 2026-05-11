@@ -94,7 +94,9 @@ def _word_timings_for_shot(
     from muvid.contracts import shifted_word_timings, word_timings_for_window
 
     absolute = word_timings_for_window(
-        ctx.project, ctx.shot.start_s, ctx.shot.end_s,
+        ctx.project,
+        ctx.shot.start_s,
+        ctx.shot.end_s,
     )
     return shifted_word_timings(absolute, offset_s=ctx.shot.start_s)
 

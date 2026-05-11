@@ -89,8 +89,12 @@ def character_curate_interactive(
     """
     _print_json(
         facade.curate_character_interactive(
-            root, name,
-            decisions=decisions, k=k, recipe=recipe, present=present,
+            root,
+            name,
+            decisions=decisions,
+            k=k,
+            recipe=recipe,
+            present=present,
         )
     )
 

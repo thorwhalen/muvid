@@ -101,39 +101,69 @@ def _shot_lines(
 
     if strategy == "still":
         yield from _price_one(
-            "shot.image", shot.id, "image", quality,
-            pick_model, estimate_call_cost, skipped,
-            seconds=None, note="still",
+            "shot.image",
+            shot.id,
+            "image",
+            quality,
+            pick_model,
+            estimate_call_cost,
+            skipped,
+            seconds=None,
+            note="still",
         )
         return
 
     if strategy == "image_to_video":
         yield from _price_one(
-            "shot.image", shot.id, "image", quality,
-            pick_model, estimate_call_cost, skipped,
-            seconds=None, note="storyboard still",
+            "shot.image",
+            shot.id,
+            "image",
+            quality,
+            pick_model,
+            estimate_call_cost,
+            skipped,
+            seconds=None,
+            note="storyboard still",
         )
         yield from _price_one(
-            "shot.image_to_video", shot.id, "image_to_video", quality,
-            pick_model, estimate_call_cost, skipped,
-            seconds=duration, note=f"i2v × {duration:.1f}s",
+            "shot.image_to_video",
+            shot.id,
+            "image_to_video",
+            quality,
+            pick_model,
+            estimate_call_cost,
+            skipped,
+            seconds=duration,
+            note=f"i2v × {duration:.1f}s",
         )
         return
 
     if strategy == "text_to_video":
         yield from _price_one(
-            "shot.text_to_video", shot.id, "text_to_video", quality,
-            pick_model, estimate_call_cost, skipped,
-            seconds=duration, note=f"t2v × {duration:.1f}s",
+            "shot.text_to_video",
+            shot.id,
+            "text_to_video",
+            quality,
+            pick_model,
+            estimate_call_cost,
+            skipped,
+            seconds=duration,
+            note=f"t2v × {duration:.1f}s",
         )
         return
 
     if strategy == "lipsync":
         # animate_face uses category="avatar" in falaw.
         yield from _price_one(
-            "shot.lipsync", shot.id, "avatar", quality,
-            pick_model, estimate_call_cost, skipped,
-            seconds=duration, note=f"avatar × {duration:.1f}s",
+            "shot.lipsync",
+            shot.id,
+            "avatar",
+            quality,
+            pick_model,
+            estimate_call_cost,
+            skipped,
+            seconds=duration,
+            note=f"avatar × {duration:.1f}s",
         )
         return
 
@@ -161,19 +191,18 @@ def _price_one(
         return
     cost = estimate_call_cost(record, seconds=seconds)
     if cost is None:
-        skipped.append(
-            f"shot {shot_id} {kind}: no cost_estimate on {record.id!r}"
-        )
+        skipped.append(f"shot {shot_id} {kind}: no cost_estimate on {record.id!r}")
         return
     currency = (
-        record.cost_estimate.currency
-        if record.cost_estimate is not None
-        else "USD"
+        record.cost_estimate.currency if record.cost_estimate is not None else "USD"
     )
     yield _RolledLine(
-        kind=kind, item_id=shot_id,
-        model_id=record.id, amount=cost,
-        currency=currency, note=note,
+        kind=kind,
+        item_id=shot_id,
+        model_id=record.id,
+        amount=cost,
+        currency=currency,
+        note=note,
     )
 
 

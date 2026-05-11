@@ -143,9 +143,7 @@ def curate_references_interactive(
         p for p in refs_dir.iterdir() if p.is_file() and not p.name.startswith(".")
     )
     if not images:
-        raise RuntimeError(
-            f"No reference images in {refs_dir}. Add some first."
-        )
+        raise RuntimeError(f"No reference images in {refs_dir}. Add some first.")
 
     profile = load_profile(recipe)
     result = curate_interactive(
