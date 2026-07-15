@@ -109,15 +109,15 @@ doctest_optionflags = [
 
 # ffmpeg is a hard system requirement for muvid.visualize (and the pipeline's
 # audio slicing). Declaring it here makes CI install it so the render tests run.
+# Windows is intentionally omitted: the wads installer crashes emitting a "✓"
+# on Windows' cp1252 console, and the ffmpeg-backed tests skip without it anyway.
 [tool.wads.ops.ffmpeg]
 description = "Multimedia framework for video/audio processing"
 url = "https://ffmpeg.org/"
 check.linux = "which ffmpeg"
 check.macos = "which ffmpeg"
-check.windows = "which ffmpeg"
 install.linux = ["sudo apt-get update", "sudo apt-get install -y ffmpeg"]
 install.macos = "brew install ffmpeg"
-install.windows = "choco install ffmpeg -y --no-progress"
 
 [tool.wads.ci]
 project_name = ""
