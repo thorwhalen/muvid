@@ -21,18 +21,64 @@ the terminal, or the local web UI) drives the stages.
 > [`misc/docs/alignment_references.md`](misc/docs/alignment_references.md)
 > for the lyric-alignment literature muvid builds on.
 
+muvid has **two independent halves**: the AI narrative pipeline above, and
+[`muvid.visualize`](#muvidvisualize--audio--cover--video) — a lightweight,
+deterministic, ffmpeg-only path that turns a song and a cover into an
+audio-reactive visualizer video (no AI, no network).
+
 ## Install
 
 ```bash
-pip install -e ./muvid
-pip install -e ./muvid[ui]   # adds FastAPI + uvicorn for the web UI
+pip install muvid              # core: CLI + muvid.visualize (needs ffmpeg + mixing)
+pip install 'muvid[ai]'        # the narrative pipeline (falaw, lacing, lookbook)
+pip install 'muvid[ui]'        # FastAPI + uvicorn for the web UI
 ```
 
-This package depends on local sibling packages (`falaw`, `lookbook`,
-`lacing`, `mixing`); install them editable first.
+The narrative pipeline depends on local sibling packages (`falaw`, `lookbook`,
+`lacing`); with editable installs, install them first and use `pip install -e
+./muvid[ai]`. `muvid.visualize` needs only `mixing`.
 
-System: `ffmpeg` and `ffprobe` on `PATH`. Env: `ELEVENLABS_API_KEY`
-(for transcription), `FAL_KEY` (for fal.ai generation).
+System: `ffmpeg` and `ffprobe` on `PATH`. Env (pipeline only):
+`ELEVENLABS_API_KEY` (transcription), `FAL_KEY` (fal.ai generation).
+
+## `muvid.visualize` — audio + cover → video
+
+Turn a song into a publishable music video, without the AI pipeline:
+
+```python
+from muvid.visualize import render_audio_video, list_visuals, verify_video, report
+
+# Simplest: the cover on a 16:9 canvas, held for the song, loudness-normalized.
+result = render_audio_video("song.wav", image="cover.png")
+
+# Pick a visualizer (list_visuals() -> still, ken_burns, cqt, spectrum, waves,
+# bars, scope), or pass "auto" / your own callable.
+render_audio_video("song.wav", image="cover.png", visual="cqt", normalize=True)
+
+# Check what you produced before shipping it.
+print(report(verify_video(result.path, audio="song.wav")))
+```
+
+What it does, by default:
+
+- **16:9, never pillarboxed** — square/portrait art is composed onto 1080p filled
+  with a blurred, darkened copy of itself, sharp cover centred on top.
+- **Loudness −14 LUFS** (two-pass EBU R128), so a set of songs plays level.
+- **Video exactly as long as the song**, H.264 High / yuv420p / AAC 48 kHz,
+  `+faststart`, no edit lists — what YouTube asks for.
+- **A teal accent** across the reactive visualizers (one tunable tint) over a
+  muted background, so an album reads as one release whatever each cover's colours.
+- **A matching thumbnail** derivable from the same composition
+  (`thumbnail_image`, 1280×720, under YouTube's 2 MiB cap).
+
+Every knob is overridable (`visual`, `size`, `fps`, `normalize`,
+`CoverLayout(...)`, `options={...}`); add your own look with
+`register_visual`. Needs only **ffmpeg** — every built-in visual is ffmpeg-native
+except Ken Burns (via `burns`, which comes with `mixing`).
+
+Publishing these to YouTube (single song or a whole folder as an album) is the
+[`yb`](https://github.com/thorwhalen/yb) package's job — it renders through
+`muvid.visualize` and uploads.
 
 ## 30-second tour
 

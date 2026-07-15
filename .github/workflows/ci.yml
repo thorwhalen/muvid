@@ -70,6 +70,8 @@ jobs:
 
       - name: Install Dependencies
         uses: i2mint/wads/actions/install-deps-uv@master
+        with:
+          extras: ai  # the narrative-pipeline tests need falaw/lacing/lookbook
 
       - name: Format Source Code
         run: uvx ruff format .
@@ -103,6 +105,11 @@ jobs:
     needs: setup
     runs-on: windows-latest
     continue-on-error: true
+    # The wads system-deps installer prints a "✓" that the default Windows
+    # cp1252 console can't encode; force UTF-8 stdout so it doesn't crash.
+    env:
+      PYTHONIOENCODING: utf-8
+      PYTHONUTF8: "1"
 
     steps:
       - uses: actions/checkout@v6
@@ -124,6 +131,8 @@ jobs:
 
       - name: Install Dependencies
         uses: i2mint/wads/actions/install-deps-uv@master
+        with:
+          extras: ai  # the narrative-pipeline tests need falaw/lacing/lookbook
 
       - name: Run Tests
         uses: i2mint/wads/actions/run-tests-uv@master
