@@ -59,6 +59,8 @@ __all__ = [*_LAZY, "visualize"]
 
 def __getattr__(name: str):
     """Lazily import a public name on first access (PEP 562)."""
+    if name == "visualize":  # the subpackage itself, not a name re-exported from it
+        return importlib.import_module("muvid.visualize")
     module = _LAZY.get(name)
     if module is None:
         raise AttributeError(f"module 'muvid' has no attribute {name!r}")

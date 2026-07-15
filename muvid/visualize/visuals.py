@@ -373,23 +373,29 @@ def _reactive_plan(
 
 @register_visual("cqt")
 def cqt_visual(ctx: VisualContext) -> VisualPlan:
-    """Constant-Q transform bars — pitch-aligned, the most *musical* reactive look."""
+    """Constant-Q transform bars — pitch-aligned, the most *musical* reactive look.
+
+    Rendered white; colour comes from the accent ``tint`` (recolour it with the
+    ``tint`` option — *not* a per-filter colour, which the tint would multiply).
+    """
     width, height = ctx.size
-    # White bars/sonogram; the teal accent is applied as a tint in _reactive_plan.
     viz = (
         f"showcqt=s={width}x{height}:r={ctx.fps}:count=6:gamma=3:bar_g=2"
-        f":cscheme={ctx.options.get('cscheme', '1|1|1|1|1|1')}:sono_h=0:axis=0"
+        ":cscheme=1|1|1|1|1|1:sono_h=0:axis=0"
     )
     return _reactive_plan(ctx, viz, filter_name="showcqt")
 
 
 @register_visual("bars")
 def bars_visual(ctx: VisualContext) -> VisualPlan:
-    """Frequency bars (the classic EQ look), via ffmpeg's ``showfreqs``."""
+    """Frequency bars (the classic EQ look), via ffmpeg's ``showfreqs``.
+
+    Rendered white; colour comes from the accent ``tint`` (see :data:`DEFAULT_TINT`).
+    """
     width, height = ctx.size
     viz = (
         f"showfreqs=s={width}x{height}:rate={ctx.fps}:mode=bar:ascale=log"
-        f":fscale=log:win_size=2048:colors={ctx.options.get('colors', 'white')}"
+        ":fscale=log:win_size=2048:colors=white"
     )
     return _reactive_plan(ctx, viz, filter_name="showfreqs")
 
@@ -425,12 +431,15 @@ def spectrum_visual(ctx: VisualContext) -> VisualPlan:
 
 @register_visual("waves")
 def waves_visual(ctx: VisualContext) -> VisualPlan:
-    """The waveform, via ffmpeg's ``showwaves``."""
+    """The waveform, via ffmpeg's ``showwaves``.
+
+    Rendered white; colour comes from the accent ``tint``. ``options={"mode":
+    ...}`` sets the waveform *shape* (``cline``/``line``/``p2p``/``point``).
+    """
     width, height = ctx.size
     viz = (
         f"showwaves=s={width}x{height}:rate={ctx.fps}"
-        f":mode={ctx.options.get('mode', 'cline')}"
-        f":colors={ctx.options.get('colors', 'white')}"
+        f":mode={ctx.options.get('mode', 'cline')}:colors=white"
     )
     return _reactive_plan(ctx, viz, filter_name="showwaves")
 
