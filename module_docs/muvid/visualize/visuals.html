@@ -1,0 +1,579 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>muvid.visualize.visuals &mdash; muvid 0.0.6 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=1fd71caa"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
+      <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="prev" title="muvid.visualize.video" href="video.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            muvid
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../muvid.html">muvid</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../__main__.html">muvid.__main__</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../align.html">muvid.align</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../characters.html">muvid.characters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../compose.html">muvid.compose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contracts.html">muvid.contracts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cost.html">muvid.cost</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../environments.html">muvid.environments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../events.html">muvid.events</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../facade.html">muvid.facade</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../lyrics.html">muvid.lyrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../project.html">muvid.project</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../renderers.html">muvid.renderers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../renderers/_common.html">muvid.renderers._common</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../renderers/animation.html">muvid.renderers.animation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../renderers/image_to_video.html">muvid.renderers.image_to_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../renderers/lipsync.html">muvid.renderers.lipsync</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../renderers/still.html">muvid.renderers.still</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../renderers/text_to_video.html">muvid.renderers.text_to_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../schema.html">muvid.schema</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../script.html">muvid.script</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ui.html">muvid.ui</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ui/app.html">muvid.ui.app</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../visualize.html">muvid.visualize</a></li>
+<li class="toctree-l1"><a class="reference internal" href="canvas.html">muvid.visualize.canvas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ffmpeg.html">muvid.visualize.ffmpeg</a></li>
+<li class="toctree-l1"><a class="reference internal" href="verify.html">muvid.visualize.verify</a></li>
+<li class="toctree-l1"><a class="reference internal" href="video.html">muvid.visualize.video</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">muvid.visualize.visuals</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.visualize.visuals.DEFAULT_TINT"><code class="docutils literal notranslate"><span class="pre">DEFAULT_TINT</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.visualize.visuals.REACTIVE_BG_SATURATION"><code class="docutils literal notranslate"><span class="pre">REACTIVE_BG_SATURATION</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.visualize.visuals.REACTIVE_COVER_FRACTION"><code class="docutils literal notranslate"><span class="pre">REACTIVE_COVER_FRACTION</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.visualize.visuals.SCOPE_COVER_ALPHA"><code class="docutils literal notranslate"><span class="pre">SCOPE_COVER_ALPHA</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.visualize.visuals.Visual"><code class="docutils literal notranslate"><span class="pre">Visual</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.visualize.visuals.VisualContext"><code class="docutils literal notranslate"><span class="pre">VisualContext</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#muvid.visualize.visuals.VisualContext.audio"><code class="docutils literal notranslate"><span class="pre">VisualContext.audio</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#muvid.visualize.visuals.VisualContext.image"><code class="docutils literal notranslate"><span class="pre">VisualContext.image</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#muvid.visualize.visuals.VisualContext.duration"><code class="docutils literal notranslate"><span class="pre">VisualContext.duration</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#muvid.visualize.visuals.VisualContext.size"><code class="docutils literal notranslate"><span class="pre">VisualContext.size</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#muvid.visualize.visuals.VisualContext.fps"><code class="docutils literal notranslate"><span class="pre">VisualContext.fps</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#muvid.visualize.visuals.VisualContext.layout"><code class="docutils literal notranslate"><span class="pre">VisualContext.layout</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#muvid.visualize.visuals.VisualContext.title"><code class="docutils literal notranslate"><span class="pre">VisualContext.title</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#muvid.visualize.visuals.VisualContext.title_style"><code class="docutils literal notranslate"><span class="pre">VisualContext.title_style</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#muvid.visualize.visuals.VisualContext.workdir"><code class="docutils literal notranslate"><span class="pre">VisualContext.workdir</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#muvid.visualize.visuals.VisualContext.options"><code class="docutils literal notranslate"><span class="pre">VisualContext.options</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#muvid.visualize.visuals.VisualContext.require_image"><code class="docutils literal notranslate"><span class="pre">VisualContext.require_image()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.visualize.visuals.VisualPlan"><code class="docutils literal notranslate"><span class="pre">VisualPlan</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#muvid.visualize.visuals.VisualPlan.inputs"><code class="docutils literal notranslate"><span class="pre">VisualPlan.inputs</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#muvid.visualize.visuals.VisualPlan.filters"><code class="docutils literal notranslate"><span class="pre">VisualPlan.filters</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#muvid.visualize.visuals.VisualPlan.video"><code class="docutils literal notranslate"><span class="pre">VisualPlan.video</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#muvid.visualize.visuals.VisualPlan.uses_audio"><code class="docutils literal notranslate"><span class="pre">VisualPlan.uses_audio</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#muvid.visualize.visuals.VisualPlan.has_cover"><code class="docutils literal notranslate"><span class="pre">VisualPlan.has_cover</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#muvid.visualize.visuals.VisualPlan.has_title"><code class="docutils literal notranslate"><span class="pre">VisualPlan.has_title</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#muvid.visualize.visuals.VisualPlan.still"><code class="docutils literal notranslate"><span class="pre">VisualPlan.still</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.visualize.visuals.bars_visual"><code class="docutils literal notranslate"><span class="pre">bars_visual()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.visualize.visuals.cqt_visual"><code class="docutils literal notranslate"><span class="pre">cqt_visual()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.visualize.visuals.ken_burns_visual"><code class="docutils literal notranslate"><span class="pre">ken_burns_visual()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.visualize.visuals.list_visuals"><code class="docutils literal notranslate"><span class="pre">list_visuals()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.visualize.visuals.register_visual"><code class="docutils literal notranslate"><span class="pre">register_visual()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.visualize.visuals.resolve_visual"><code class="docutils literal notranslate"><span class="pre">resolve_visual()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.visualize.visuals.scope_visual"><code class="docutils literal notranslate"><span class="pre">scope_visual()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.visualize.visuals.spectrum_visual"><code class="docutils literal notranslate"><span class="pre">spectrum_visual()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.visualize.visuals.still_visual"><code class="docutils literal notranslate"><span class="pre">still_visual()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.visualize.visuals.waves_visual"><code class="docutils literal notranslate"><span class="pre">waves_visual()</span></code></a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">muvid</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">muvid.visualize.visuals</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../_sources/module_docs/muvid/visualize/visuals.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-muvid.visualize.visuals">
+<span id="muvid-visualize-visuals"></span><h1>muvid.visualize.visuals<a class="headerlink" href="#module-muvid.visualize.visuals" title="Link to this heading"></a></h1>
+<p>Visual strategies: how the <em>picture</em> of an audio-driven video is produced.</p>
+<p>A strategy is a function from a <a class="reference internal" href="#muvid.visualize.visuals.VisualContext" title="muvid.visualize.visuals.VisualContext"><code class="xref py py-class docutils literal notranslate"><span class="pre">VisualContext</span></code></a> (the audio, the optional
+cover, the duration, the canvas) to a <a class="reference internal" href="#muvid.visualize.visuals.VisualPlan" title="muvid.visualize.visuals.VisualPlan"><code class="xref py py-class docutils literal notranslate"><span class="pre">VisualPlan</span></code></a> (the ffmpeg inputs
+and filter chains that yield one video stream). <a class="reference internal" href="video.html#module-muvid.visualize.video" title="muvid.visualize.video"><code class="xref py py-mod docutils literal notranslate"><span class="pre">muvid.visualize.video</span></code></a> owns the
+muxing, encoding, and loudness; a strategy only says what the frames look like.</p>
+<p>That split is what keeps this open-closed: the built-ins are registered by name
+(<code class="docutils literal notranslate"><span class="pre">&quot;still&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;ken_burns&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;cqt&quot;</span></code>, …), and anything else you can express
+as a callable — a librosa/matplotlib animation, a projectM render, a shader —
+plugs in through the same seam, either by returning a <a class="reference internal" href="#muvid.visualize.visuals.VisualPlan" title="muvid.visualize.visuals.VisualPlan"><code class="xref py py-class docutils literal notranslate"><span class="pre">VisualPlan</span></code></a> or by
+returning the path of a silent video it rendered itself.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">sorted</span><span class="p">(</span><span class="n">list_visuals</span><span class="p">())</span>
+<span class="go">[&#39;bars&#39;, &#39;cqt&#39;, &#39;ken_burns&#39;, &#39;scope&#39;, &#39;spectrum&#39;, &#39;still&#39;, &#39;waves&#39;]</span>
+</pre></div>
+</div>
+<p>Conventions a strategy must honour:</p>
+<ul class="simple">
+<li><p><strong>ffmpeg input 0 is always the audio.</strong> Inputs a plan adds are numbered from
+1, in the order they appear in <a class="reference internal" href="#muvid.visualize.visuals.VisualPlan.inputs" title="muvid.visualize.visuals.VisualPlan.inputs"><code class="xref py py-attr docutils literal notranslate"><span class="pre">VisualPlan.inputs</span></code></a>.</p></li>
+<li><p>To react to the audio, set <code class="docutils literal notranslate"><span class="pre">uses_audio=True</span></code> and consume the <code class="docutils literal notranslate"><span class="pre">[aviz]</span></code>
+label — a dedicated copy of the audio, split off so the output track stays
+untouched.</p></li>
+<li><p>Emit exactly one video stream, labelled <a class="reference internal" href="#muvid.visualize.visuals.VisualPlan.video" title="muvid.visualize.visuals.VisualPlan.video"><code class="xref py py-attr docutils literal notranslate"><span class="pre">VisualPlan.video</span></code></a>.</p></li>
+</ul>
+<dl class="py data">
+<dt class="sig sig-object py" id="muvid.visualize.visuals.DEFAULT_TINT">
+<span class="sig-prename descclassname"><span class="pre">muvid.visualize.visuals.</span></span><span class="sig-name descname"><span class="pre">DEFAULT_TINT</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'colorchannelmixer=rr=0.16:gg=0.80:bb=0.85'</span></span><a class="headerlink" href="#muvid.visualize.visuals.DEFAULT_TINT" title="Link to this definition"></a></dt>
+<dd><p>Default accent for the line/bar visualizers, applied as a <em>tint</em>. Several
+ffmpeg visualizers ignore their <code class="docutils literal notranslate"><span class="pre">colors</span></code> option (<code class="docutils literal notranslate"><span class="pre">showfreqs</span></code> draws white
+whatever you ask for), so rather than fight each filter we render them white
+and recolour the whole visualization here — one knob, identical accent across
+every method, so a whole album’s videos read as one release. It is a
+<code class="docutils literal notranslate"><span class="pre">colorchannelmixer</span></code> mapping white (r=g=b) to a light teal; override per call
+with the <code class="docutils literal notranslate"><span class="pre">tint</span></code> option (an empty string leaves the visualizer’s own colour).</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="muvid.visualize.visuals.REACTIVE_BG_SATURATION">
+<span class="sig-prename descclassname"><span class="pre">muvid.visualize.visuals.</span></span><span class="sig-name descname"><span class="pre">REACTIVE_BG_SATURATION</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.18</span></span><a class="headerlink" href="#muvid.visualize.visuals.REACTIVE_BG_SATURATION" title="Link to this definition"></a></dt>
+<dd><p>Reactive backgrounds are pushed dark and near-neutral so the teal accent reads
+(a bright, saturated blurred cover both tints everything its own colour and,
+under the screen blend, washes the accent out to white). The sharp centred
+cover still carries the artwork’s colour; only the surround is muted.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="muvid.visualize.visuals.REACTIVE_COVER_FRACTION">
+<span class="sig-prename descclassname"><span class="pre">muvid.visualize.visuals.</span></span><span class="sig-name descname"><span class="pre">REACTIVE_COVER_FRACTION</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.95</span></span><a class="headerlink" href="#muvid.visualize.visuals.REACTIVE_COVER_FRACTION" title="Link to this definition"></a></dt>
+<dd><p>Over a reactive background the cover fills nearly the whole frame (with a
+little padding), and is made slightly transparent so the visualizer plays on
+through it rather than being hidden behind an opaque card.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="muvid.visualize.visuals.SCOPE_COVER_ALPHA">
+<span class="sig-prename descclassname"><span class="pre">muvid.visualize.visuals.</span></span><span class="sig-name descname"><span class="pre">SCOPE_COVER_ALPHA</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.72</span></span><a class="headerlink" href="#muvid.visualize.visuals.SCOPE_COVER_ALPHA" title="Link to this definition"></a></dt>
+<dd><p>The vectorscope fills the whole frame, so it keeps the same big cover as the
+other visuals but a touch more transparent, letting the line-work read both
+through the cover and in the space around it.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="muvid.visualize.visuals.Visual">
+<span class="sig-prename descclassname"><span class="pre">muvid.visualize.visuals.</span></span><span class="sig-name descname"><span class="pre">Visual</span></span><a class="headerlink" href="#muvid.visualize.visuals.Visual" title="Link to this definition"></a></dt>
+<dd><p>context in, plan out. Returning a path to an already-rendered
+silent video is also accepted (see <a class="reference internal" href="#muvid.visualize.visuals.resolve_visual" title="muvid.visualize.visuals.resolve_visual"><code class="xref py py-func docutils literal notranslate"><span class="pre">resolve_visual()</span></code></a>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A strategy</p>
+</dd>
+</dl>
+<p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">Callable</span></code>[[<a class="reference internal" href="#muvid.visualize.visuals.VisualContext" title="muvid.visualize.visuals.VisualContext"><code class="xref py py-class docutils literal notranslate"><span class="pre">VisualContext</span></code></a>], <code class="xref py py-class docutils literal notranslate"><span class="pre">VisualPlan</span> <span class="pre">|</span> <span class="pre">Path</span> <span class="pre">|</span> <span class="pre">str</span></code>]</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="muvid.visualize.visuals.VisualContext">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">muvid.visualize.visuals.</span></span><span class="sig-name descname"><span class="pre">VisualContext</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">audio:</span> <span class="pre">~pathlib.Path,</span> <span class="pre">image:</span> <span class="pre">~pathlib.Path</span> <span class="pre">|</span> <span class="pre">None,</span> <span class="pre">duration:</span> <span class="pre">float,</span> <span class="pre">size:</span> <span class="pre">tuple[int,</span> <span class="pre">int],</span> <span class="pre">fps:</span> <span class="pre">int,</span> <span class="pre">layout:</span> <span class="pre">~muvid.visualize.canvas.CoverLayout</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;,</span> <span class="pre">title:</span> <span class="pre">str</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None,</span> <span class="pre">title_style:</span> <span class="pre">~muvid.visualize.canvas.TitleStyle</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None,</span> <span class="pre">workdir:</span> <span class="pre">~pathlib.Path</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;,</span> <span class="pre">options:</span> <span class="pre">dict</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/muvid/visualize/visuals.html#VisualContext"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.visualize.visuals.VisualContext" title="Link to this definition"></a></dt>
+<dd><p>Everything a visual strategy needs to know about the render.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="muvid.visualize.visuals.VisualContext.audio">
+<span class="sig-name descname"><span class="pre">audio</span></span><a class="headerlink" href="#muvid.visualize.visuals.VisualContext.audio" title="Link to this definition"></a></dt>
+<dd><p>The audio file (ffmpeg input 0).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pathlib.Path</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="muvid.visualize.visuals.VisualContext.image">
+<span class="sig-name descname"><span class="pre">image</span></span><a class="headerlink" href="#muvid.visualize.visuals.VisualContext.image" title="Link to this definition"></a></dt>
+<dd><p>The cover art, if the caller supplied one.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pathlib.Path | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="muvid.visualize.visuals.VisualContext.duration">
+<span class="sig-name descname"><span class="pre">duration</span></span><a class="headerlink" href="#muvid.visualize.visuals.VisualContext.duration" title="Link to this definition"></a></dt>
+<dd><p>Audio duration in seconds.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="muvid.visualize.visuals.VisualContext.size">
+<span class="sig-name descname"><span class="pre">size</span></span><a class="headerlink" href="#muvid.visualize.visuals.VisualContext.size" title="Link to this definition"></a></dt>
+<dd><p>Canvas size (width, height).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[int, int]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="muvid.visualize.visuals.VisualContext.fps">
+<span class="sig-name descname"><span class="pre">fps</span></span><a class="headerlink" href="#muvid.visualize.visuals.VisualContext.fps" title="Link to this definition"></a></dt>
+<dd><p>Output frame rate.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="muvid.visualize.visuals.VisualContext.layout">
+<span class="sig-name descname"><span class="pre">layout</span></span><a class="headerlink" href="#muvid.visualize.visuals.VisualContext.layout" title="Link to this definition"></a></dt>
+<dd><p>How the cover sits on the canvas.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="canvas.html#muvid.visualize.canvas.CoverLayout" title="muvid.visualize.canvas.CoverLayout">muvid.visualize.canvas.CoverLayout</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="muvid.visualize.visuals.VisualContext.title">
+<span class="sig-name descname"><span class="pre">title</span></span><a class="headerlink" href="#muvid.visualize.visuals.VisualContext.title" title="Link to this definition"></a></dt>
+<dd><p>Title to burn in, if any.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="muvid.visualize.visuals.VisualContext.title_style">
+<span class="sig-name descname"><span class="pre">title_style</span></span><a class="headerlink" href="#muvid.visualize.visuals.VisualContext.title_style" title="Link to this definition"></a></dt>
+<dd><p>How to draw that title.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="canvas.html#muvid.visualize.canvas.TitleStyle" title="muvid.visualize.canvas.TitleStyle">muvid.visualize.canvas.TitleStyle</a> | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="muvid.visualize.visuals.VisualContext.workdir">
+<span class="sig-name descname"><span class="pre">workdir</span></span><a class="headerlink" href="#muvid.visualize.visuals.VisualContext.workdir" title="Link to this definition"></a></dt>
+<dd><p>A directory the strategy may write intermediate files into.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pathlib.Path</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="muvid.visualize.visuals.VisualContext.options">
+<span class="sig-name descname"><span class="pre">options</span></span><a class="headerlink" href="#muvid.visualize.visuals.VisualContext.options" title="Link to this definition"></a></dt>
+<dd><p>Strategy-specific knobs, passed straight through by the caller.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="muvid.visualize.visuals.VisualContext.require_image">
+<span class="sig-name descname"><span class="pre">require_image</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">visual</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Path</span></span></span><a class="reference internal" href="../../../_modules/muvid/visualize/visuals.html#VisualContext.require_image"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.visualize.visuals.VisualContext.require_image" title="Link to this definition"></a></dt>
+<dd><p>The cover image, or a <code class="xref py py-class docutils literal notranslate"><span class="pre">ValueError</span></code> naming what to do instead.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="muvid.visualize.visuals.VisualPlan">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">muvid.visualize.visuals.</span></span><span class="sig-name descname"><span class="pre">VisualPlan</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filters</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">video</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'vbg'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uses_audio</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">has_cover</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">has_title</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">still</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/muvid/visualize/visuals.html#VisualPlan"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.visualize.visuals.VisualPlan" title="Link to this definition"></a></dt>
+<dd><p>The ffmpeg fragments that render one strategy’s video stream.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="muvid.visualize.visuals.VisualPlan.inputs">
+<span class="sig-name descname"><span class="pre">inputs</span></span><a class="headerlink" href="#muvid.visualize.visuals.VisualPlan.inputs" title="Link to this definition"></a></dt>
+<dd><p>Extra ffmpeg input argument groups (each ends with <code class="docutils literal notranslate"><span class="pre">-i</span> <span class="pre">PATH</span></code>),
+numbered from input 1.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[list[str]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="muvid.visualize.visuals.VisualPlan.filters">
+<span class="sig-name descname"><span class="pre">filters</span></span><a class="headerlink" href="#muvid.visualize.visuals.VisualPlan.filters" title="Link to this definition"></a></dt>
+<dd><p><code class="docutils literal notranslate"><span class="pre">filter_complex</span></code> chains, joined with <code class="docutils literal notranslate"><span class="pre">;</span></code> by the renderer.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="muvid.visualize.visuals.VisualPlan.video">
+<span class="sig-name descname"><span class="pre">video</span></span><a class="headerlink" href="#muvid.visualize.visuals.VisualPlan.video" title="Link to this definition"></a></dt>
+<dd><p>Label of the video stream the chains emit.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="muvid.visualize.visuals.VisualPlan.uses_audio">
+<span class="sig-name descname"><span class="pre">uses_audio</span></span><a class="headerlink" href="#muvid.visualize.visuals.VisualPlan.uses_audio" title="Link to this definition"></a></dt>
+<dd><p>The plan consumes the <code class="docutils literal notranslate"><span class="pre">[aviz]</span></code> audio copy.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="muvid.visualize.visuals.VisualPlan.has_cover">
+<span class="sig-name descname"><span class="pre">has_cover</span></span><a class="headerlink" href="#muvid.visualize.visuals.VisualPlan.has_cover" title="Link to this definition"></a></dt>
+<dd><p>The plan already placed the cover; the renderer must not
+overlay it again.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="muvid.visualize.visuals.VisualPlan.has_title">
+<span class="sig-name descname"><span class="pre">has_title</span></span><a class="headerlink" href="#muvid.visualize.visuals.VisualPlan.has_title" title="Link to this definition"></a></dt>
+<dd><p>The plan already burnt in the title; the renderer must not
+draw it again.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="muvid.visualize.visuals.VisualPlan.still">
+<span class="sig-name descname"><span class="pre">still</span></span><a class="headerlink" href="#muvid.visualize.visuals.VisualPlan.still" title="Link to this definition"></a></dt>
+<dd><p>When set, the video <em>is</em> this static image — the renderer takes a
+much cheaper path (encode one short segment, then loop it) and
+ignores <code class="docutils literal notranslate"><span class="pre">inputs</span></code>/<code class="docutils literal notranslate"><span class="pre">filters</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pathlib.Path | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.visualize.visuals.bars_visual">
+<span class="sig-prename descclassname"><span class="pre">muvid.visualize.visuals.</span></span><span class="sig-name descname"><span class="pre">bars_visual</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#muvid.visualize.visuals.VisualContext" title="muvid.visualize.visuals.VisualContext"><span class="pre">VisualContext</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#muvid.visualize.visuals.VisualPlan" title="muvid.visualize.visuals.VisualPlan"><span class="pre">VisualPlan</span></a></span></span><a class="reference internal" href="../../../_modules/muvid/visualize/visuals.html#bars_visual"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.visualize.visuals.bars_visual" title="Link to this definition"></a></dt>
+<dd><p>Frequency bars (the classic EQ look), via ffmpeg’s <code class="docutils literal notranslate"><span class="pre">showfreqs</span></code>.</p>
+<p>Rendered white; colour comes from the accent <code class="docutils literal notranslate"><span class="pre">tint</span></code> (see <a class="reference internal" href="#muvid.visualize.visuals.DEFAULT_TINT" title="muvid.visualize.visuals.DEFAULT_TINT"><code class="xref py py-data docutils literal notranslate"><span class="pre">DEFAULT_TINT</span></code></a>).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.visualize.visuals.cqt_visual">
+<span class="sig-prename descclassname"><span class="pre">muvid.visualize.visuals.</span></span><span class="sig-name descname"><span class="pre">cqt_visual</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#muvid.visualize.visuals.VisualContext" title="muvid.visualize.visuals.VisualContext"><span class="pre">VisualContext</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#muvid.visualize.visuals.VisualPlan" title="muvid.visualize.visuals.VisualPlan"><span class="pre">VisualPlan</span></a></span></span><a class="reference internal" href="../../../_modules/muvid/visualize/visuals.html#cqt_visual"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.visualize.visuals.cqt_visual" title="Link to this definition"></a></dt>
+<dd><p>Constant-Q transform bars — pitch-aligned, the most <em>musical</em> reactive look.</p>
+<p>Rendered white; colour comes from the accent <code class="docutils literal notranslate"><span class="pre">tint</span></code> (recolour it with the
+<code class="docutils literal notranslate"><span class="pre">tint</span></code> option — <em>not</em> a per-filter colour, which the tint would multiply).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.visualize.visuals.ken_burns_visual">
+<span class="sig-prename descclassname"><span class="pre">muvid.visualize.visuals.</span></span><span class="sig-name descname"><span class="pre">ken_burns_visual</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#muvid.visualize.visuals.VisualContext" title="muvid.visualize.visuals.VisualContext"><span class="pre">VisualContext</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#muvid.visualize.visuals.VisualPlan" title="muvid.visualize.visuals.VisualPlan"><span class="pre">VisualPlan</span></a></span></span><a class="reference internal" href="../../../_modules/muvid/visualize/visuals.html#ken_burns_visual"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.visualize.visuals.ken_burns_visual" title="Link to this definition"></a></dt>
+<dd><p>A slow pan/zoom across the cover, lasting exactly as long as the song.</p>
+<p>Renders through the <code class="docutils literal notranslate"><span class="pre">burns</span></code> package (via <code class="docutils literal notranslate"><span class="pre">mixing.video</span></code>). By default it
+pans across the <em>composed canvas</em> rather than the raw cover, so a square or
+portrait image still fills a 16:9 frame instead of being letterboxed by the
+pan.</p>
+<p>Frames are rendered in Python (Pillow), so this is by far the slowest
+visual — budget several times the song’s duration. The ffmpeg-native
+visuals are an order of magnitude faster.</p>
+<dl class="simple">
+<dt>Options:</dt><dd><p><code class="docutils literal notranslate"><span class="pre">source</span></code>: <code class="docutils literal notranslate"><span class="pre">&quot;canvas&quot;</span></code> (default) or <code class="docutils literal notranslate"><span class="pre">&quot;image&quot;</span></code> — what to pan across.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.visualize.visuals.list_visuals">
+<span class="sig-prename descclassname"><span class="pre">muvid.visualize.visuals.</span></span><span class="sig-name descname"><span class="pre">list_visuals</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../_modules/muvid/visualize/visuals.html#list_visuals"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.visualize.visuals.list_visuals" title="Link to this definition"></a></dt>
+<dd><p>The names of every registered visual strategy.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.visualize.visuals.register_visual">
+<span class="sig-prename descclassname"><span class="pre">muvid.visualize.visuals.</span></span><span class="sig-name descname"><span class="pre">register_visual</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#muvid.visualize.visuals.VisualContext" title="muvid.visualize.visuals.VisualContext"><span class="pre">VisualContext</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#muvid.visualize.visuals.VisualPlan" title="muvid.visualize.visuals.VisualPlan"><span class="pre">VisualPlan</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#muvid.visualize.visuals.VisualContext" title="muvid.visualize.visuals.VisualContext"><span class="pre">VisualContext</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#muvid.visualize.visuals.VisualPlan" title="muvid.visualize.visuals.VisualPlan"><span class="pre">VisualPlan</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../_modules/muvid/visualize/visuals.html#register_visual"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.visualize.visuals.register_visual" title="Link to this definition"></a></dt>
+<dd><p>Register a visual strategy under <code class="docutils literal notranslate"><span class="pre">name</span></code> (the open-closed seam).</p>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nd">@register_visual</span><span class="p">(</span><span class="s2">&quot;black&quot;</span><span class="p">)</span>
+<span class="gp">... </span><span class="k">def</span><span class="w"> </span><span class="nf">_black</span><span class="p">(</span><span class="n">ctx</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="n">w</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">size</span>
+<span class="gp">... </span>    <span class="k">return</span> <span class="n">VisualPlan</span><span class="p">(</span><span class="n">filters</span><span class="o">=</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;color=c=black:s=</span><span class="si">{</span><span class="n">w</span><span class="si">}</span><span class="s2">x</span><span class="si">{</span><span class="n">h</span><span class="si">}</span><span class="s2">[vbg]&quot;</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="s2">&quot;black&quot;</span> <span class="ow">in</span> <span class="n">list_visuals</span><span class="p">()</span>
+<span class="go">True</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">_</span> <span class="o">=</span> <span class="n">_VISUALS</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;black&quot;</span><span class="p">)</span>  <span class="c1"># (keep the registry tidy for the next doctest)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.visualize.visuals.resolve_visual">
+<span class="sig-prename descclassname"><span class="pre">muvid.visualize.visuals.</span></span><span class="sig-name descname"><span class="pre">resolve_visual</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">visual</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#muvid.visualize.visuals.VisualContext" title="muvid.visualize.visuals.VisualContext"><span class="pre">VisualContext</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#muvid.visualize.visuals.VisualPlan" title="muvid.visualize.visuals.VisualPlan"><span class="pre">VisualPlan</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ctx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#muvid.visualize.visuals.VisualContext" title="muvid.visualize.visuals.VisualContext"><span class="pre">VisualContext</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#muvid.visualize.visuals.VisualPlan" title="muvid.visualize.visuals.VisualPlan"><span class="pre">VisualPlan</span></a></span></span><a class="reference internal" href="../../../_modules/muvid/visualize/visuals.html#resolve_visual"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.visualize.visuals.resolve_visual" title="Link to this definition"></a></dt>
+<dd><p>Turn <code class="docutils literal notranslate"><span class="pre">visual</span></code> (a name, or any callable) into a <a class="reference internal" href="#muvid.visualize.visuals.VisualPlan" title="muvid.visualize.visuals.VisualPlan"><code class="xref py py-class docutils literal notranslate"><span class="pre">VisualPlan</span></code></a>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">&quot;auto&quot;</span></code> picks the cheapest strategy that suits the inputs: a still cover
+when there is an image, an audio-reactive CQT when there is not.</p>
+<p>A callable may return a <a class="reference internal" href="#muvid.visualize.visuals.VisualPlan" title="muvid.visualize.visuals.VisualPlan"><code class="xref py py-class docutils literal notranslate"><span class="pre">VisualPlan</span></code></a>, or the path of a silent video
+it rendered itself — the latter is the escape hatch for backends that do not
+express themselves as an ffmpeg filtergraph (librosa/matplotlib, projectM,
+a headless-browser capture…).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ValueError</strong> – <code class="docutils literal notranslate"><span class="pre">visual</span></code> names a strategy that is not registered.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.visualize.visuals.scope_visual">
+<span class="sig-prename descclassname"><span class="pre">muvid.visualize.visuals.</span></span><span class="sig-name descname"><span class="pre">scope_visual</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#muvid.visualize.visuals.VisualContext" title="muvid.visualize.visuals.VisualContext"><span class="pre">VisualContext</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#muvid.visualize.visuals.VisualPlan" title="muvid.visualize.visuals.VisualPlan"><span class="pre">VisualPlan</span></a></span></span><a class="reference internal" href="../../../_modules/muvid/visualize/visuals.html#scope_visual"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.visualize.visuals.scope_visual" title="Link to this definition"></a></dt>
+<dd><p>The stereo Lissajous figure, via ffmpeg’s <code class="docutils literal notranslate"><span class="pre">avectorscope</span></code>.</p>
+<p>Tuned for drama <em>and</em> dynamics. Anti-aliased lines, <code class="docutils literal notranslate"><span class="pre">mirror=xy</span></code> to fill all
+four quadrants symmetrically, and a generous <code class="docutils literal notranslate"><span class="pre">zoom</span></code> so the figure spills
+into the space around the cover. Crucially the amplitude scale is <strong>linear</strong>,
+not <code class="docutils literal notranslate"><span class="pre">sqrt</span></code>: a compressive scale keeps a steady mix pinned wide the whole
+time (a constant scribble), whereas linear lets the figure <em>breathe</em> — wide
+and full when the music swells, small and calm when it settles. The cover
+stays the same big size as the other visuals, a touch more transparent so
+the line-work reads through it too.</p>
+<p>Options: <code class="docutils literal notranslate"><span class="pre">zoom</span></code>, <code class="docutils literal notranslate"><span class="pre">scale</span></code> (<code class="docutils literal notranslate"><span class="pre">lin</span></code>/<code class="docutils literal notranslate"><span class="pre">sqrt</span></code>/<code class="docutils literal notranslate"><span class="pre">cbrt</span></code>/<code class="docutils literal notranslate"><span class="pre">log</span></code>), <code class="docutils literal notranslate"><span class="pre">mirror</span></code>
+(<code class="docutils literal notranslate"><span class="pre">none</span></code>/<code class="docutils literal notranslate"><span class="pre">x</span></code>/<code class="docutils literal notranslate"><span class="pre">y</span></code>/<code class="docutils literal notranslate"><span class="pre">xy</span></code>), <code class="docutils literal notranslate"><span class="pre">draw</span></code>, plus the shared background/cover keys.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.visualize.visuals.spectrum_visual">
+<span class="sig-prename descclassname"><span class="pre">muvid.visualize.visuals.</span></span><span class="sig-name descname"><span class="pre">spectrum_visual</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#muvid.visualize.visuals.VisualContext" title="muvid.visualize.visuals.VisualContext"><span class="pre">VisualContext</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#muvid.visualize.visuals.VisualPlan" title="muvid.visualize.visuals.VisualPlan"><span class="pre">VisualPlan</span></a></span></span><a class="reference internal" href="../../../_modules/muvid/visualize/visuals.html#spectrum_visual"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.visualize.visuals.spectrum_visual" title="Link to this definition"></a></dt>
+<dd><p>A scrolling spectrogram, via ffmpeg’s <code class="docutils literal notranslate"><span class="pre">showspectrum</span></code>.</p>
+<p>A <code class="docutils literal notranslate"><span class="pre">log</span></code> <em>frequency</em> axis spreads out the low-mid range where music lives
+(a linear axis crams it into the bottom edge), lifted gain makes the detail
+read, and <code class="docutils literal notranslate"><span class="pre">overlap</span></code> quickens the right-to-left scroll. Rendered over a
+darker background so it stands out. The default <code class="docutils literal notranslate"><span class="pre">green</span></code> colormap is tinted
+to the teal accent; pass a <code class="docutils literal notranslate"><span class="pre">color</span></code> to use ffmpeg’s colormap instead.</p>
+<p>Options: <code class="docutils literal notranslate"><span class="pre">color</span></code> (colormap — the teal tint applies only to the default),
+<code class="docutils literal notranslate"><span class="pre">gain</span></code>, <code class="docutils literal notranslate"><span class="pre">saturation</span></code>, <code class="docutils literal notranslate"><span class="pre">overlap</span></code> (scroll speed, 0–1), plus the shared
+background/cover keys.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.visualize.visuals.still_visual">
+<span class="sig-prename descclassname"><span class="pre">muvid.visualize.visuals.</span></span><span class="sig-name descname"><span class="pre">still_visual</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#muvid.visualize.visuals.VisualContext" title="muvid.visualize.visuals.VisualContext"><span class="pre">VisualContext</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#muvid.visualize.visuals.VisualPlan" title="muvid.visualize.visuals.VisualPlan"><span class="pre">VisualPlan</span></a></span></span><a class="reference internal" href="../../../_modules/muvid/visualize/visuals.html#still_visual"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.visualize.visuals.still_visual" title="Link to this definition"></a></dt>
+<dd><p>The cover, composed on a 16:9 canvas, held for the whole song.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.visualize.visuals.waves_visual">
+<span class="sig-prename descclassname"><span class="pre">muvid.visualize.visuals.</span></span><span class="sig-name descname"><span class="pre">waves_visual</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#muvid.visualize.visuals.VisualContext" title="muvid.visualize.visuals.VisualContext"><span class="pre">VisualContext</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#muvid.visualize.visuals.VisualPlan" title="muvid.visualize.visuals.VisualPlan"><span class="pre">VisualPlan</span></a></span></span><a class="reference internal" href="../../../_modules/muvid/visualize/visuals.html#waves_visual"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.visualize.visuals.waves_visual" title="Link to this definition"></a></dt>
+<dd><p>The waveform, via ffmpeg’s <code class="docutils literal notranslate"><span class="pre">showwaves</span></code>.</p>
+<p>Rendered white; colour comes from the accent <code class="docutils literal notranslate"><span class="pre">tint</span></code>. <code class="docutils literal notranslate"><span class="pre">options={&quot;mode&quot;:</span>
+<span class="pre">...}</span></code> sets the waveform <em>shape</em> (<code class="docutils literal notranslate"><span class="pre">cline</span></code>/<code class="docutils literal notranslate"><span class="pre">line</span></code>/<code class="docutils literal notranslate"><span class="pre">p2p</span></code>/<code class="docutils literal notranslate"><span class="pre">point</span></code>).</p>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="video.html" class="btn btn-neutral float-left" title="muvid.visualize.video" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p></p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,290 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>muvid.visualize.ffmpeg &mdash; muvid 0.0.6 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=1fd71caa"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
+      <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="muvid.visualize.verify" href="verify.html" />
+    <link rel="prev" title="muvid.visualize.canvas" href="canvas.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            muvid
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../muvid.html">muvid</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../__main__.html">muvid.__main__</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../align.html">muvid.align</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../characters.html">muvid.characters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../compose.html">muvid.compose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contracts.html">muvid.contracts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cost.html">muvid.cost</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../environments.html">muvid.environments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../events.html">muvid.events</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../facade.html">muvid.facade</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../lyrics.html">muvid.lyrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../project.html">muvid.project</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../renderers.html">muvid.renderers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../renderers/_common.html">muvid.renderers._common</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../renderers/animation.html">muvid.renderers.animation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../renderers/image_to_video.html">muvid.renderers.image_to_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../renderers/lipsync.html">muvid.renderers.lipsync</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../renderers/still.html">muvid.renderers.still</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../renderers/text_to_video.html">muvid.renderers.text_to_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../schema.html">muvid.schema</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../script.html">muvid.script</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ui.html">muvid.ui</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ui/app.html">muvid.ui.app</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../visualize.html">muvid.visualize</a></li>
+<li class="toctree-l1"><a class="reference internal" href="canvas.html">muvid.visualize.canvas</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">muvid.visualize.ffmpeg</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.visualize.ffmpeg.DEFAULT_LOUDNESS_I"><code class="docutils literal notranslate"><span class="pre">DEFAULT_LOUDNESS_I</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.visualize.ffmpeg.FfmpegError"><code class="docutils literal notranslate"><span class="pre">FfmpegError</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.visualize.ffmpeg.Loudness"><code class="docutils literal notranslate"><span class="pre">Loudness</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#muvid.visualize.ffmpeg.Loudness.filter_spec"><code class="docutils literal notranslate"><span class="pre">Loudness.filter_spec()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.visualize.ffmpeg.has_filter"><code class="docutils literal notranslate"><span class="pre">has_filter()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.visualize.ffmpeg.measure_loudness"><code class="docutils literal notranslate"><span class="pre">measure_loudness()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.visualize.ffmpeg.media_duration"><code class="docutils literal notranslate"><span class="pre">media_duration()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.visualize.ffmpeg.probe"><code class="docutils literal notranslate"><span class="pre">probe()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.visualize.ffmpeg.require_ffmpeg"><code class="docutils literal notranslate"><span class="pre">require_ffmpeg()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.visualize.ffmpeg.require_filter"><code class="docutils literal notranslate"><span class="pre">require_filter()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.visualize.ffmpeg.run_ffmpeg"><code class="docutils literal notranslate"><span class="pre">run_ffmpeg()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="verify.html">muvid.visualize.verify</a></li>
+<li class="toctree-l1"><a class="reference internal" href="video.html">muvid.visualize.video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="visuals.html">muvid.visualize.visuals</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">muvid</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">muvid.visualize.ffmpeg</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../_sources/module_docs/muvid/visualize/ffmpeg.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-muvid.visualize.ffmpeg">
+<span id="muvid-visualize-ffmpeg"></span><h1>muvid.visualize.ffmpeg<a class="headerlink" href="#module-muvid.visualize.ffmpeg" title="Link to this heading"></a></h1>
+<p>Low-level ffmpeg/ffprobe primitives shared across <a class="reference internal" href="../visualize.html#module-muvid.visualize" title="muvid.visualize"><code class="xref py py-mod docutils literal notranslate"><span class="pre">muvid.visualize</span></code></a>.</p>
+<p>Thin, dependency-free wrappers around the <code class="docutils literal notranslate"><span class="pre">ffmpeg</span></code>/<code class="docutils literal notranslate"><span class="pre">ffprobe</span></code> binaries that
+<code class="docutils literal notranslate"><span class="pre">muvid.visualize</span></code> assumes on the PATH: running a command with a readable
+error, probing duration and streams, checking that an optional filter was
+compiled in, and measuring loudness (EBU R128) for two-pass normalization.</p>
+<p>Nothing here knows about music or a destination platform — it is the shared
+substrate under <a class="reference internal" href="canvas.html#module-muvid.visualize.canvas" title="muvid.visualize.canvas"><code class="xref py py-mod docutils literal notranslate"><span class="pre">muvid.visualize.canvas</span></code></a>, <a class="reference internal" href="visuals.html#module-muvid.visualize.visuals" title="muvid.visualize.visuals"><code class="xref py py-mod docutils literal notranslate"><span class="pre">muvid.visualize.visuals</span></code></a>,
+and <a class="reference internal" href="video.html#module-muvid.visualize.video" title="muvid.visualize.video"><code class="xref py py-mod docutils literal notranslate"><span class="pre">muvid.visualize.video</span></code></a>.</p>
+<dl class="py data">
+<dt class="sig sig-object py" id="muvid.visualize.ffmpeg.DEFAULT_LOUDNESS_I">
+<span class="sig-prename descclassname"><span class="pre">muvid.visualize.ffmpeg.</span></span><span class="sig-name descname"><span class="pre">DEFAULT_LOUDNESS_I</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">-14.0</span></span><a class="headerlink" href="#muvid.visualize.ffmpeg.DEFAULT_LOUDNESS_I" title="Link to this definition"></a></dt>
+<dd><p>Loudness targets, in the units EBU R128 / ffmpeg <code class="docutils literal notranslate"><span class="pre">loudnorm</span></code> uses.
+The defaults match what YouTube normalizes playback to, so a track mastered
+here is neither turned down nor left quiet relative to the rest of a playlist.</p>
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="muvid.visualize.ffmpeg.FfmpegError">
+<span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">muvid.visualize.ffmpeg.</span></span><span class="sig-name descname"><span class="pre">FfmpegError</span></span><a class="reference internal" href="../../../_modules/muvid/visualize/ffmpeg.html#FfmpegError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.visualize.ffmpeg.FfmpegError" title="Link to this definition"></a></dt>
+<dd><p>An ffmpeg/ffprobe invocation failed, or a needed tool/filter is absent.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="muvid.visualize.ffmpeg.Loudness">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">muvid.visualize.ffmpeg.</span></span><span class="sig-name descname"><span class="pre">Loudness</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">integrated</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-14.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">true_peak</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lra</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">11.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">measured</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/muvid/visualize/ffmpeg.html#Loudness"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.visualize.ffmpeg.Loudness" title="Link to this definition"></a></dt>
+<dd><p>An EBU R128 loudness target, plus the measurement of a specific track.</p>
+<p><code class="docutils literal notranslate"><span class="pre">measured</span></code> is the <code class="docutils literal notranslate"><span class="pre">loudnorm</span></code> analysis pass output (<code class="docutils literal notranslate"><span class="pre">None</span></code> until
+<a class="reference internal" href="#muvid.visualize.ffmpeg.measure_loudness" title="muvid.visualize.ffmpeg.measure_loudness"><code class="xref py py-func docutils literal notranslate"><span class="pre">measure_loudness()</span></code></a> has run). Carrying both lets <a class="reference internal" href="#muvid.visualize.ffmpeg.Loudness.filter_spec" title="muvid.visualize.ffmpeg.Loudness.filter_spec"><code class="xref py py-meth docutils literal notranslate"><span class="pre">filter_spec()</span></code></a>
+emit the accurate two-pass filter when a measurement exists and fall back
+to the (less accurate) single-pass form when it does not.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="muvid.visualize.ffmpeg.Loudness.filter_spec">
+<span class="sig-name descname"><span class="pre">filter_spec</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../../_modules/muvid/visualize/ffmpeg.html#Loudness.filter_spec"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.visualize.ffmpeg.Loudness.filter_spec" title="Link to this definition"></a></dt>
+<dd><p>The <code class="docutils literal notranslate"><span class="pre">loudnorm</span></code> filter string for this target.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.visualize.ffmpeg.has_filter">
+<span class="sig-prename descclassname"><span class="pre">muvid.visualize.ffmpeg.</span></span><span class="sig-name descname"><span class="pre">has_filter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../../../_modules/muvid/visualize/ffmpeg.html#has_filter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.visualize.ffmpeg.has_filter" title="Link to this definition"></a></dt>
+<dd><p>Whether this ffmpeg build has the <code class="docutils literal notranslate"><span class="pre">name</span></code> filter compiled in.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.visualize.ffmpeg.measure_loudness">
+<span class="sig-prename descclassname"><span class="pre">muvid.visualize.ffmpeg.</span></span><span class="sig-name descname"><span class="pre">measure_loudness</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">audio</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#muvid.visualize.ffmpeg.Loudness" title="muvid.visualize.ffmpeg.Loudness"><span class="pre">Loudness</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#muvid.visualize.ffmpeg.Loudness" title="muvid.visualize.ffmpeg.Loudness"><span class="pre">Loudness</span></a></span></span><a class="reference internal" href="../../../_modules/muvid/visualize/ffmpeg.html#measure_loudness"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.visualize.ffmpeg.measure_loudness" title="Link to this definition"></a></dt>
+<dd><p>Analyse <code class="docutils literal notranslate"><span class="pre">audio</span></code> (loudnorm pass 1) and return <code class="docutils literal notranslate"><span class="pre">target</span></code> with the result.</p>
+<p>Two-pass <code class="docutils literal notranslate"><span class="pre">loudnorm</span></code> is the only accurate way to hit a loudness target:
+pass 1 measures the program loudness, pass 2 applies a <em>linear</em> gain from
+that measurement. Single-pass loudnorm is a dynamic normalizer and will
+both miss the target and squash the dynamics of music.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>audio</strong> – The audio (or video) file to measure.</p></li>
+<li><p><strong>target</strong> – The loudness target; a default one is used when omitted.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A new <a class="reference internal" href="#muvid.visualize.ffmpeg.Loudness" title="muvid.visualize.ffmpeg.Loudness"><code class="xref py py-class docutils literal notranslate"><span class="pre">Loudness</span></code></a> with <code class="docutils literal notranslate"><span class="pre">measured</span></code> populated.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.visualize.ffmpeg.media_duration">
+<span class="sig-prename descclassname"><span class="pre">muvid.visualize.ffmpeg.</span></span><span class="sig-name descname"><span class="pre">media_duration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">media</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="reference internal" href="../../../_modules/muvid/visualize/ffmpeg.html#media_duration"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.visualize.ffmpeg.media_duration" title="Link to this definition"></a></dt>
+<dd><p>Duration of <code class="docutils literal notranslate"><span class="pre">media</span></code> in seconds.</p>
+<p>Falls back to the longest stream duration when the container has none.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#muvid.visualize.ffmpeg.FfmpegError" title="muvid.visualize.ffmpeg.FfmpegError"><strong>FfmpegError</strong></a> – The duration could not be determined.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.visualize.ffmpeg.probe">
+<span class="sig-prename descclassname"><span class="pre">muvid.visualize.ffmpeg.</span></span><span class="sig-name descname"><span class="pre">probe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">media</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="../../../_modules/muvid/visualize/ffmpeg.html#probe"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.visualize.ffmpeg.probe" title="Link to this definition"></a></dt>
+<dd><p>Return <code class="docutils literal notranslate"><span class="pre">ffprobe</span></code>’s <code class="docutils literal notranslate"><span class="pre">format</span></code> + <code class="docutils literal notranslate"><span class="pre">streams</span></code> JSON for <code class="docutils literal notranslate"><span class="pre">media</span></code>.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.visualize.ffmpeg.require_ffmpeg">
+<span class="sig-prename descclassname"><span class="pre">muvid.visualize.ffmpeg.</span></span><span class="sig-name descname"><span class="pre">require_ffmpeg</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">tools</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../../_modules/muvid/visualize/ffmpeg.html#require_ffmpeg"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.visualize.ffmpeg.require_ffmpeg" title="Link to this definition"></a></dt>
+<dd><p>Raise a helpful <a class="reference internal" href="#muvid.visualize.ffmpeg.FfmpegError" title="muvid.visualize.ffmpeg.FfmpegError"><code class="xref py py-class docutils literal notranslate"><span class="pre">FfmpegError</span></code></a> if any of <code class="docutils literal notranslate"><span class="pre">tools</span></code> is not on PATH.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>*tools</strong> – Binaries to require (defaults to <code class="docutils literal notranslate"><span class="pre">ffmpeg</span></code> and <code class="docutils literal notranslate"><span class="pre">ffprobe</span></code>).</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#muvid.visualize.ffmpeg.FfmpegError" title="muvid.visualize.ffmpeg.FfmpegError"><strong>FfmpegError</strong></a> – With per-platform install instructions.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.visualize.ffmpeg.require_filter">
+<span class="sig-prename descclassname"><span class="pre">muvid.visualize.ffmpeg.</span></span><span class="sig-name descname"><span class="pre">require_filter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">needed_for</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../../_modules/muvid/visualize/ffmpeg.html#require_filter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.visualize.ffmpeg.require_filter" title="Link to this definition"></a></dt>
+<dd><p>Raise unless this ffmpeg build has the <code class="docutils literal notranslate"><span class="pre">name</span></code> filter.</p>
+<p>Filters like <code class="docutils literal notranslate"><span class="pre">drawtext</span></code> (libfreetype) and <code class="docutils literal notranslate"><span class="pre">showcqt</span></code> (libfftw/avfilter
+extras) are build-time options, so a working ffmpeg is not enough — the
+specific filter has to be there.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#muvid.visualize.ffmpeg.FfmpegError" title="muvid.visualize.ffmpeg.FfmpegError"><strong>FfmpegError</strong></a> – Naming the filter, the feature that needs it, and the fix.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.visualize.ffmpeg.run_ffmpeg">
+<span class="sig-prename descclassname"><span class="pre">muvid.visualize.ffmpeg.</span></span><span class="sig-name descname"><span class="pre">run_ffmpeg</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">CompletedProcess</span></span></span><a class="reference internal" href="../../../_modules/muvid/visualize/ffmpeg.html#run_ffmpeg"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.visualize.ffmpeg.run_ffmpeg" title="Link to this definition"></a></dt>
+<dd><p>Run <code class="docutils literal notranslate"><span class="pre">ffmpeg</span></code> with <code class="docutils literal notranslate"><span class="pre">args</span></code>, raising a readable error on failure.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>args</strong> – Arguments after the global flags (inputs, filters, output).</p></li>
+<li><p><strong>overwrite</strong> – Pass <code class="docutils literal notranslate"><span class="pre">-y</span></code> (overwrite the output without prompting).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The completed process.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#muvid.visualize.ffmpeg.FfmpegError" title="muvid.visualize.ffmpeg.FfmpegError"><strong>FfmpegError</strong></a> – ffmpeg exited non-zero; the message carries the tail of
+    stderr and the full command, which is what you actually need to
+    debug a filtergraph.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="canvas.html" class="btn btn-neutral float-left" title="muvid.visualize.canvas" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="verify.html" class="btn btn-neutral float-right" title="muvid.visualize.verify" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p></p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

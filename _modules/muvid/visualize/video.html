@@ -1,0 +1,588 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>muvid.visualize.video &mdash; muvid 0.0.6 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=1fd71caa"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
+      <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            muvid
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid.html">muvid</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/__main__.html">muvid.__main__</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/align.html">muvid.align</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/characters.html">muvid.characters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/compose.html">muvid.compose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/contracts.html">muvid.contracts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/cost.html">muvid.cost</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/environments.html">muvid.environments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/events.html">muvid.events</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/facade.html">muvid.facade</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyrics.html">muvid.lyrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/project.html">muvid.project</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers.html">muvid.renderers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers/_common.html">muvid.renderers._common</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers/animation.html">muvid.renderers.animation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers/image_to_video.html">muvid.renderers.image_to_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers/lipsync.html">muvid.renderers.lipsync</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers/still.html">muvid.renderers.still</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers/text_to_video.html">muvid.renderers.text_to_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/schema.html">muvid.schema</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/script.html">muvid.script</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/ui.html">muvid.ui</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/ui/app.html">muvid.ui.app</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize.html">muvid.visualize</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/canvas.html">muvid.visualize.canvas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/ffmpeg.html">muvid.visualize.ffmpeg</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/verify.html">muvid.visualize.verify</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/video.html">muvid.visualize.video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/visuals.html">muvid.visualize.visuals</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">muvid</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">muvid.visualize.video</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for muvid.visualize.video</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Render an audio file into a video: pick a visual, mux, normalize, encode.</span>
+
+<span class="sd">This is the assembler. A :mod:`~muvid.visualize.visuals` strategy says what the</span>
+<span class="sd">frames look like; everything platform-facing lives here — the 16:9 canvas, the</span>
+<span class="sd">H.264/AAC encode YouTube prefers, EBU R128 loudness normalization, and the</span>
+<span class="sd">guarantee that the video ends exactly when the song does.</span>
+
+<span class="sd">    &gt;&gt;&gt; from muvid.visualize import render_audio_video</span>
+<span class="sd">    &gt;&gt;&gt; result = render_audio_video(&quot;song.wav&quot;, image=&quot;cover.png&quot;)  # doctest: +SKIP</span>
+<span class="sd">    &gt;&gt;&gt; result.path, result.duration                                # doctest: +SKIP</span>
+<span class="sd">    (PosixPath(&#39;song.mp4&#39;), 154.92)</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">tempfile</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">muvid.visualize.canvas</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">DEFAULT_SIZE</span><span class="p">,</span>
+    <span class="n">CoverLayout</span><span class="p">,</span>
+    <span class="n">TitleStyle</span><span class="p">,</span>
+    <span class="n">cover_chain</span><span class="p">,</span>
+    <span class="n">overlay_chain</span><span class="p">,</span>
+    <span class="n">title_chain</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">muvid.visualize.ffmpeg</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Loudness</span><span class="p">,</span>
+    <span class="n">PathLike</span><span class="p">,</span>
+    <span class="n">media_duration</span><span class="p">,</span>
+    <span class="n">measure_loudness</span><span class="p">,</span>
+    <span class="n">require_ffmpeg</span><span class="p">,</span>
+    <span class="n">run_ffmpeg</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">muvid.visualize.visuals</span><span class="w"> </span><span class="kn">import</span> <span class="n">Visual</span><span class="p">,</span> <span class="n">VisualContext</span><span class="p">,</span> <span class="n">VisualPlan</span><span class="p">,</span> <span class="n">resolve_visual</span>
+
+<span class="n">DEFAULT_FPS</span> <span class="o">=</span> <span class="mi">24</span>
+
+<span class="c1">#: Constant-rate-factor: visually lossless enough for a source YouTube re-encodes.</span>
+<span class="n">DEFAULT_CRF</span> <span class="o">=</span> <span class="mi">18</span>
+<span class="n">DEFAULT_PRESET</span> <span class="o">=</span> <span class="s2">&quot;medium&quot;</span>
+
+<span class="c1">#: YouTube&#39;s recommended audio for stereo uploads.</span>
+<span class="n">DEFAULT_AUDIO_BITRATE</span> <span class="o">=</span> <span class="s2">&quot;384k&quot;</span>
+
+<span class="c1">#: Pinned deliberately: ``loudnorm`` upsamples to 192 kHz internally for true-peak</span>
+<span class="c1">#: detection, and leaks that rate into the output unless the rate is fixed here.</span>
+<span class="n">AUDIO_SAMPLE_RATE</span> <span class="o">=</span> <span class="mi">48000</span>
+
+<span class="c1">#: Seconds between keyframes. YouTube nominally asks for a GOP of half the frame</span>
+<span class="c1">#: rate (a keyframe every 0.5 s); for the static and near-static pictures this</span>
+<span class="c1">#: module produces, that multiplies the intra-frames — and the upload size — for</span>
+<span class="c1">#: no gain, since YouTube re-encodes anyway. Two seconds is the usual compromise.</span>
+<span class="c1">#: Pass ``gop_seconds=0.5`` for strict compliance.</span>
+<span class="n">DEFAULT_GOP_SECONDS</span> <span class="o">=</span> <span class="mf">2.0</span>
+
+<span class="c1">#: Length of the single segment the still fast-path encodes before looping it.</span>
+<span class="n">_STILL_SEGMENT_SECONDS</span> <span class="o">=</span> <span class="mf">2.0</span>
+
+
+<div class="viewcode-block" id="RenderResult">
+<a class="viewcode-back" href="../../../module_docs/muvid/visualize/video.html#muvid.RenderResult">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">RenderResult</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A rendered video and what is worth knowing about it.</span>
+
+<span class="sd">    Usable anywhere a path is (it implements ``os.PathLike``).</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        path: The rendered mp4.</span>
+<span class="sd">        duration: Its duration in seconds.</span>
+<span class="sd">        size: Frame size.</span>
+<span class="sd">        fps: Frame rate.</span>
+<span class="sd">        visual: The strategy that produced it.</span>
+<span class="sd">        loudness: The applied loudness target and measurement, if normalized.</span>
+<span class="sd">        canvas: The composed canvas image, when the strategy built one — reuse</span>
+<span class="sd">            it as the thumbnail rather than re-deriving it.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">path</span><span class="p">:</span> <span class="n">Path</span>
+    <span class="n">duration</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">size</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span>
+    <span class="n">fps</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">visual</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">loudness</span><span class="p">:</span> <span class="n">Loudness</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">canvas</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">extras</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__fspath__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="render_audio_video">
+<a class="viewcode-back" href="../../../module_docs/muvid/visualize/video.html#muvid.render_audio_video">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">render_audio_video</span><span class="p">(</span>
+    <span class="n">audio</span><span class="p">:</span> <span class="n">PathLike</span><span class="p">,</span>
+    <span class="n">image</span><span class="p">:</span> <span class="n">PathLike</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">visual</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Visual</span> <span class="o">=</span> <span class="s2">&quot;auto&quot;</span><span class="p">,</span>
+    <span class="n">saveas</span><span class="p">:</span> <span class="n">PathLike</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">size</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">DEFAULT_SIZE</span><span class="p">,</span>
+    <span class="n">fps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">DEFAULT_FPS</span><span class="p">,</span>
+    <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">layout</span><span class="p">:</span> <span class="n">CoverLayout</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">title_style</span><span class="p">:</span> <span class="n">TitleStyle</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">normalize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">loudness</span><span class="p">:</span> <span class="n">Loudness</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">crf</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">DEFAULT_CRF</span><span class="p">,</span>
+    <span class="n">preset</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">DEFAULT_PRESET</span><span class="p">,</span>
+    <span class="n">audio_bitrate</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">DEFAULT_AUDIO_BITRATE</span><span class="p">,</span>
+    <span class="n">gop_seconds</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">DEFAULT_GOP_SECONDS</span><span class="p">,</span>
+    <span class="n">options</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">workdir</span><span class="p">:</span> <span class="n">PathLike</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RenderResult</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Render ``audio`` into a video, using ``visual`` for the picture.</span>
+
+<span class="sd">    The video is exactly as long as the audio, 16:9, H.264/yuv420p + AAC — what</span>
+<span class="sd">    YouTube asks for. With ``normalize=True`` the audio is brought to a fixed</span>
+<span class="sd">    EBU R128 loudness with a two-pass ``loudnorm``, which is what makes a batch</span>
+<span class="sd">    of songs play back at a consistent level.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        audio: The song (``.wav`` is preferred when you have it — YouTube</span>
+<span class="sd">            re-encodes regardless, so give it the cleanest input).</span>
+<span class="sd">        image: Cover art. Used for the picture, and composed onto a 16:9 canvas.</span>
+<span class="sd">        visual: A registered strategy name (``&quot;still&quot;``, ``&quot;ken_burns&quot;``,</span>
+<span class="sd">            ``&quot;cqt&quot;``, ``&quot;bars&quot;``, ``&quot;spectrum&quot;``, ``&quot;waves&quot;``, ``&quot;scope&quot;``),</span>
+<span class="sd">            ``&quot;auto&quot;``, or any callable (see :mod:`muvid.visualize.visuals`).</span>
+<span class="sd">        saveas: Output path (default: ``&lt;audio-stem&gt;.mp4``).</span>
+<span class="sd">        size: Canvas size; the default is 1080p.</span>
+<span class="sd">        fps: Frame rate.</span>
+<span class="sd">        title: Burn this title into the frame.</span>
+<span class="sd">        layout: How the cover sits on the canvas.</span>
+<span class="sd">        title_style: How the title is drawn.</span>
+<span class="sd">        normalize: Loudness-normalize the audio (two-pass EBU R128).</span>
+<span class="sd">        loudness: The loudness target; a YouTube-appropriate default is used</span>
+<span class="sd">            when omitted.</span>
+<span class="sd">        crf / preset / audio_bitrate / gop_seconds: Encoder knobs.</span>
+<span class="sd">        options: Strategy-specific options, passed to the visual.</span>
+<span class="sd">        workdir: Where intermediates go (a temporary directory by default).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A :class:`RenderResult`.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: ``size`` has an odd dimension — H.264 at yuv420p (the only</span>
+<span class="sd">            pixel format every player decodes) cannot encode one.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Arguments first, environment second: a caller who passed an odd size has a</span>
+    <span class="c1"># bug worth reporting whether or not ffmpeg happens to be installed.</span>
+    <span class="n">_check_even</span><span class="p">(</span><span class="n">size</span><span class="p">)</span>
+    <span class="n">require_ffmpeg</span><span class="p">()</span>
+    <span class="n">audio</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">audio</span><span class="p">)</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">saveas</span><span class="p">)</span> <span class="k">if</span> <span class="n">saveas</span> <span class="k">else</span> <span class="n">audio</span><span class="o">.</span><span class="n">with_suffix</span><span class="p">(</span><span class="s2">&quot;.mp4&quot;</span><span class="p">)</span>
+    <span class="n">out</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">duration</span> <span class="o">=</span> <span class="n">media_duration</span><span class="p">(</span><span class="n">audio</span><span class="p">)</span>
+
+    <span class="k">with</span> <span class="n">_work_dir</span><span class="p">(</span><span class="n">workdir</span><span class="p">)</span> <span class="k">as</span> <span class="n">work</span><span class="p">:</span>
+        <span class="n">ctx</span> <span class="o">=</span> <span class="n">VisualContext</span><span class="p">(</span>
+            <span class="n">audio</span><span class="o">=</span><span class="n">audio</span><span class="p">,</span>
+            <span class="n">image</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="n">image</span><span class="p">)</span> <span class="k">if</span> <span class="n">image</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">duration</span><span class="o">=</span><span class="n">duration</span><span class="p">,</span>
+            <span class="n">size</span><span class="o">=</span><span class="n">size</span><span class="p">,</span>
+            <span class="n">fps</span><span class="o">=</span><span class="n">fps</span><span class="p">,</span>
+            <span class="n">layout</span><span class="o">=</span><span class="n">layout</span> <span class="ow">or</span> <span class="n">CoverLayout</span><span class="p">(),</span>
+            <span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">,</span>
+            <span class="n">title_style</span><span class="o">=</span><span class="n">title_style</span><span class="p">,</span>
+            <span class="n">workdir</span><span class="o">=</span><span class="n">work</span><span class="p">,</span>
+            <span class="n">options</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">options</span> <span class="ow">or</span> <span class="p">{}),</span>
+        <span class="p">)</span>
+        <span class="n">plan</span> <span class="o">=</span> <span class="n">resolve_visual</span><span class="p">(</span><span class="n">visual</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span>
+
+        <span class="n">loud</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">normalize</span><span class="p">:</span>
+            <span class="n">loud</span> <span class="o">=</span> <span class="n">measure_loudness</span><span class="p">(</span><span class="n">audio</span><span class="p">,</span> <span class="n">loudness</span> <span class="ow">or</span> <span class="n">Loudness</span><span class="p">())</span>
+
+        <span class="n">encode</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+            <span class="n">crf</span><span class="o">=</span><span class="n">crf</span><span class="p">,</span> <span class="n">preset</span><span class="o">=</span><span class="n">preset</span><span class="p">,</span> <span class="n">audio_bitrate</span><span class="o">=</span><span class="n">audio_bitrate</span><span class="p">,</span> <span class="n">gop_seconds</span><span class="o">=</span><span class="n">gop_seconds</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">plan</span><span class="o">.</span><span class="n">still</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">_render_still</span><span class="p">(</span><span class="n">plan</span><span class="o">.</span><span class="n">still</span><span class="p">,</span> <span class="n">ctx</span><span class="p">,</span> <span class="n">out</span><span class="p">,</span> <span class="n">loud</span><span class="o">=</span><span class="n">loud</span><span class="p">,</span> <span class="o">**</span><span class="n">encode</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">_render_filtergraph</span><span class="p">(</span><span class="n">plan</span><span class="p">,</span> <span class="n">ctx</span><span class="p">,</span> <span class="n">out</span><span class="p">,</span> <span class="n">loud</span><span class="o">=</span><span class="n">loud</span><span class="p">,</span> <span class="o">**</span><span class="n">encode</span><span class="p">)</span>
+
+        <span class="n">canvas</span> <span class="o">=</span> <span class="n">plan</span><span class="o">.</span><span class="n">still</span> <span class="k">if</span> <span class="n">plan</span><span class="o">.</span><span class="n">still</span> <span class="ow">and</span> <span class="n">plan</span><span class="o">.</span><span class="n">still</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">canvas</span> <span class="ow">and</span> <span class="n">workdir</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">canvas</span> <span class="o">=</span> <span class="n">_keep</span><span class="p">(</span><span class="n">canvas</span><span class="p">,</span> <span class="n">out</span><span class="o">.</span><span class="n">with_suffix</span><span class="p">(</span><span class="s2">&quot;.canvas.png&quot;</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">RenderResult</span><span class="p">(</span>
+        <span class="n">path</span><span class="o">=</span><span class="n">out</span><span class="p">,</span>
+        <span class="n">duration</span><span class="o">=</span><span class="n">media_duration</span><span class="p">(</span><span class="n">out</span><span class="p">),</span>
+        <span class="n">size</span><span class="o">=</span><span class="n">size</span><span class="p">,</span>
+        <span class="n">fps</span><span class="o">=</span><span class="n">fps</span><span class="p">,</span>
+        <span class="n">visual</span><span class="o">=</span><span class="n">visual</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">visual</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
+        <span class="k">else</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">visual</span><span class="p">,</span> <span class="s2">&quot;__name__&quot;</span><span class="p">,</span> <span class="s2">&quot;custom&quot;</span><span class="p">),</span>
+        <span class="n">loudness</span><span class="o">=</span><span class="n">loud</span><span class="p">,</span>
+        <span class="n">canvas</span><span class="o">=</span><span class="n">canvas</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_render_still</span><span class="p">(</span>
+    <span class="n">canvas</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="n">ctx</span><span class="p">:</span> <span class="n">VisualContext</span><span class="p">,</span>
+    <span class="n">out</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">loud</span><span class="p">:</span> <span class="n">Loudness</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">crf</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">preset</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">audio_bitrate</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">gop_seconds</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Encode one short segment of the static canvas, then loop it, copying.</span>
+
+<span class="sd">    A still video is thousands of identical frames. Encoding them all is a</span>
+<span class="sd">    waste: instead encode a couple of seconds once, then concatenate that</span>
+<span class="sd">    segment with ``-c:v copy``, which touches no pixels. On a small machine</span>
+<span class="sd">    this is an order of magnitude faster than the naive encode, and the output</span>
+<span class="sd">    is byte-for-byte the same picture.</span>
+
+<span class="sd">    The loop count is finite and the output is bounded by ``-t`` on purpose:</span>
+<span class="sd">    ``-shortest`` alone does *not* stop an infinitely looping copied stream,</span>
+<span class="sd">    and ffmpeg will happily fill the disk.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">segment_seconds</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">_STILL_SEGMENT_SECONDS</span><span class="p">,</span> <span class="n">ctx</span><span class="o">.</span><span class="n">duration</span><span class="p">)</span>
+    <span class="n">segment</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">workdir</span> <span class="o">/</span> <span class="s2">&quot;segment.mp4&quot;</span>
+    <span class="c1"># The segment must start on a keyframe and be a whole number of GOPs, or the</span>
+    <span class="c1"># copies would not concatenate cleanly.</span>
+    <span class="n">gop</span> <span class="o">=</span> <span class="n">_gop_frames</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">fps</span><span class="p">,</span> <span class="n">gop_seconds</span><span class="p">)</span>
+    <span class="n">run_ffmpeg</span><span class="p">(</span>
+        <span class="p">[</span>
+            <span class="s2">&quot;-loop&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;1&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;-framerate&quot;</span><span class="p">,</span>
+            <span class="nb">str</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">fps</span><span class="p">),</span>
+            <span class="s2">&quot;-i&quot;</span><span class="p">,</span>
+            <span class="nb">str</span><span class="p">(</span><span class="n">canvas</span><span class="p">),</span>
+            <span class="s2">&quot;-t&quot;</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">segment_seconds</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;-an&quot;</span><span class="p">,</span>
+            <span class="o">*</span><span class="n">_video_encode_args</span><span class="p">(</span><span class="n">crf</span><span class="o">=</span><span class="n">crf</span><span class="p">,</span> <span class="n">preset</span><span class="o">=</span><span class="n">preset</span><span class="p">,</span> <span class="n">fps</span><span class="o">=</span><span class="n">ctx</span><span class="o">.</span><span class="n">fps</span><span class="p">,</span> <span class="n">gop</span><span class="o">=</span><span class="n">gop</span><span class="p">),</span>
+            <span class="s2">&quot;-tune&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;stillimage&quot;</span><span class="p">,</span>
+            <span class="nb">str</span><span class="p">(</span><span class="n">segment</span><span class="p">),</span>
+        <span class="p">]</span>
+    <span class="p">)</span>
+    <span class="n">loops</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">duration</span> <span class="o">/</span> <span class="n">segment_seconds</span><span class="p">)</span>
+    <span class="n">run_ffmpeg</span><span class="p">(</span>
+        <span class="p">[</span>
+            <span class="s2">&quot;-stream_loop&quot;</span><span class="p">,</span>
+            <span class="nb">str</span><span class="p">(</span><span class="n">loops</span><span class="p">),</span>
+            <span class="s2">&quot;-i&quot;</span><span class="p">,</span>
+            <span class="nb">str</span><span class="p">(</span><span class="n">segment</span><span class="p">),</span>
+            <span class="s2">&quot;-i&quot;</span><span class="p">,</span>
+            <span class="nb">str</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">audio</span><span class="p">),</span>
+            <span class="o">*</span><span class="p">([</span><span class="s2">&quot;-af&quot;</span><span class="p">,</span> <span class="n">loud</span><span class="o">.</span><span class="n">filter_spec</span><span class="p">()]</span> <span class="k">if</span> <span class="n">loud</span> <span class="k">else</span> <span class="p">[]),</span>
+            <span class="s2">&quot;-map&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;0:v&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;-map&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;1:a&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;-c:v&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;copy&quot;</span><span class="p">,</span>
+            <span class="o">*</span><span class="n">_audio_encode_args</span><span class="p">(</span><span class="n">audio_bitrate</span><span class="p">),</span>
+            <span class="s2">&quot;-t&quot;</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">ctx</span><span class="o">.</span><span class="n">duration</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="o">*</span><span class="n">_container_args</span><span class="p">(),</span>
+            <span class="nb">str</span><span class="p">(</span><span class="n">out</span><span class="p">),</span>
+        <span class="p">]</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_render_filtergraph</span><span class="p">(</span>
+    <span class="n">plan</span><span class="p">:</span> <span class="n">VisualPlan</span><span class="p">,</span>
+    <span class="n">ctx</span><span class="p">:</span> <span class="n">VisualContext</span><span class="p">,</span>
+    <span class="n">out</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">loud</span><span class="p">:</span> <span class="n">Loudness</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">crf</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">preset</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">audio_bitrate</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">gop_seconds</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The general path: build one filter_complex, encode video and audio.&quot;&quot;&quot;</span>
+    <span class="n">inputs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;-i&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">audio</span><span class="p">)]</span>
+    <span class="k">for</span> <span class="n">group</span> <span class="ow">in</span> <span class="n">plan</span><span class="o">.</span><span class="n">inputs</span><span class="p">:</span>
+        <span class="n">inputs</span> <span class="o">+=</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">group</span><span class="p">]</span>
+
+    <span class="n">chains</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">audio_label</span> <span class="o">=</span> <span class="s2">&quot;0:a&quot;</span>
+    <span class="k">if</span> <span class="n">plan</span><span class="o">.</span><span class="n">uses_audio</span><span class="p">:</span>
+        <span class="n">chains</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;[0:a]asplit=2[atrack][aviz]&quot;</span><span class="p">)</span>
+        <span class="n">audio_label</span> <span class="o">=</span> <span class="s2">&quot;[atrack]&quot;</span>
+    <span class="n">chains</span> <span class="o">+=</span> <span class="nb">list</span><span class="p">(</span><span class="n">plan</span><span class="o">.</span><span class="n">filters</span><span class="p">)</span>
+
+    <span class="n">video</span> <span class="o">=</span> <span class="n">plan</span><span class="o">.</span><span class="n">video</span>
+    <span class="k">if</span> <span class="n">ctx</span><span class="o">.</span><span class="n">image</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">plan</span><span class="o">.</span><span class="n">has_cover</span><span class="p">:</span>
+        <span class="n">index</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">plan</span><span class="o">.</span><span class="n">inputs</span><span class="p">)</span>
+        <span class="n">inputs</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;-loop&quot;</span><span class="p">,</span> <span class="s2">&quot;1&quot;</span><span class="p">,</span> <span class="s2">&quot;-framerate&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">fps</span><span class="p">),</span> <span class="s2">&quot;-i&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">image</span><span class="p">)]</span>
+        <span class="n">chains</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cover_chain</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="n">ctx</span><span class="o">.</span><span class="n">layout</span><span class="p">,</span> <span class="n">src</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">index</span><span class="si">}</span><span class="s2">:v&quot;</span><span class="p">,</span> <span class="n">out</span><span class="o">=</span><span class="s2">&quot;_fgc&quot;</span><span class="p">))</span>
+        <span class="n">chains</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">overlay_chain</span><span class="p">(</span><span class="n">background</span><span class="o">=</span><span class="n">video</span><span class="p">,</span> <span class="n">cover</span><span class="o">=</span><span class="s2">&quot;_fgc&quot;</span><span class="p">,</span> <span class="n">out</span><span class="o">=</span><span class="s2">&quot;_vc&quot;</span><span class="p">,</span> <span class="n">shortest</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">video</span> <span class="o">=</span> <span class="s2">&quot;_vc&quot;</span>
+
+    <span class="k">if</span> <span class="n">ctx</span><span class="o">.</span><span class="n">title</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">plan</span><span class="o">.</span><span class="n">has_title</span><span class="p">:</span>
+        <span class="n">chains</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">title_chain</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">title</span><span class="p">,</span> <span class="n">ctx</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="n">ctx</span><span class="o">.</span><span class="n">title_style</span><span class="p">,</span> <span class="n">src</span><span class="o">=</span><span class="n">video</span><span class="p">,</span> <span class="n">out</span><span class="o">=</span><span class="s2">&quot;_vt&quot;</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">video</span> <span class="o">=</span> <span class="s2">&quot;_vt&quot;</span>
+
+    <span class="n">chains</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="n">video</span><span class="si">}</span><span class="s2">]fps=</span><span class="si">{</span><span class="n">ctx</span><span class="o">.</span><span class="n">fps</span><span class="si">}</span><span class="s2">,format=yuv420p[vout]&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">loud</span><span class="p">:</span>
+        <span class="n">chains</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">_as_label</span><span class="p">(</span><span class="n">audio_label</span><span class="p">)</span><span class="si">}{</span><span class="n">loud</span><span class="o">.</span><span class="n">filter_spec</span><span class="p">()</span><span class="si">}</span><span class="s2">[aout]&quot;</span><span class="p">)</span>
+        <span class="n">audio_label</span> <span class="o">=</span> <span class="s2">&quot;[aout]&quot;</span>
+
+    <span class="n">run_ffmpeg</span><span class="p">(</span>
+        <span class="p">[</span>
+            <span class="o">*</span><span class="n">inputs</span><span class="p">,</span>
+            <span class="s2">&quot;-filter_complex&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">chains</span><span class="p">),</span>
+            <span class="s2">&quot;-map&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;[vout]&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;-map&quot;</span><span class="p">,</span>
+            <span class="n">audio_label</span><span class="p">,</span>
+            <span class="o">*</span><span class="n">_video_encode_args</span><span class="p">(</span>
+                <span class="n">crf</span><span class="o">=</span><span class="n">crf</span><span class="p">,</span>
+                <span class="n">preset</span><span class="o">=</span><span class="n">preset</span><span class="p">,</span>
+                <span class="n">fps</span><span class="o">=</span><span class="n">ctx</span><span class="o">.</span><span class="n">fps</span><span class="p">,</span>
+                <span class="n">gop</span><span class="o">=</span><span class="n">_gop_frames</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">fps</span><span class="p">,</span> <span class="n">gop_seconds</span><span class="p">),</span>
+            <span class="p">),</span>
+            <span class="o">*</span><span class="n">_audio_encode_args</span><span class="p">(</span><span class="n">audio_bitrate</span><span class="p">),</span>
+            <span class="c1"># -t bounds the render; -shortest ends it with the audio. Note we do</span>
+            <span class="c1"># NOT pass `-fflags +shortest`: the widely copied incantation cuts</span>
+            <span class="c1"># tens of milliseconds off the end of the song.</span>
+            <span class="s2">&quot;-t&quot;</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">ctx</span><span class="o">.</span><span class="n">duration</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;-shortest&quot;</span><span class="p">,</span>
+            <span class="o">*</span><span class="n">_container_args</span><span class="p">(),</span>
+            <span class="nb">str</span><span class="p">(</span><span class="n">out</span><span class="p">),</span>
+        <span class="p">]</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_as_label</span><span class="p">(</span><span class="n">stream</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;``0:a`` -&gt; ``[0:a]``; an already-bracketed label passes through.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">stream</span> <span class="k">if</span> <span class="n">stream</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;[&quot;</span><span class="p">)</span> <span class="k">else</span> <span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="n">stream</span><span class="si">}</span><span class="s2">]&quot;</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_gop_frames</span><span class="p">(</span><span class="n">fps</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">gop_seconds</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Keyframe interval in frames (at least one).&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">fps</span> <span class="o">*</span> <span class="n">gop_seconds</span><span class="p">)))</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_container_args</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Mux the mp4 the way YouTube asks for it.</span>
+
+<span class="sd">    ``+faststart`` puts the moov atom first. The other two are the fix for a</span>
+<span class="sd">    requirement that is easy to miss: YouTube&#39;s spec says *&quot;No Edit Lists (or the</span>
+<span class="sd">    video might not get processed correctly)&quot;*, and ffmpeg writes an ``elst`` box</span>
+<span class="sd">    by default (to signal AAC encoder priming delay). ``+faststart`` alone does</span>
+<span class="sd">    not remove it — ``-use_editlist 0`` does, and ``+negative_cts_offsets``</span>
+<span class="sd">    carries the B-frame timing that the edit list would otherwise have expressed.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">[</span>
+        <span class="s2">&quot;-use_editlist&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;0&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;-movflags&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;+faststart+negative_cts_offsets&quot;</span><span class="p">,</span>
+    <span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_video_encode_args</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">crf</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">preset</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">fps</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">gop</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;H.264 as YouTube asks for it: High profile, yuv420p, closed GOP, 2 B-frames.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">[</span>
+        <span class="s2">&quot;-c:v&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;libx264&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;-preset&quot;</span><span class="p">,</span>
+        <span class="n">preset</span><span class="p">,</span>
+        <span class="s2">&quot;-crf&quot;</span><span class="p">,</span>
+        <span class="nb">str</span><span class="p">(</span><span class="n">crf</span><span class="p">),</span>
+        <span class="s2">&quot;-profile:v&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;high&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;-pix_fmt&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;yuv420p&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;-r&quot;</span><span class="p">,</span>
+        <span class="nb">str</span><span class="p">(</span><span class="n">fps</span><span class="p">),</span>
+        <span class="s2">&quot;-g&quot;</span><span class="p">,</span>
+        <span class="nb">str</span><span class="p">(</span><span class="n">gop</span><span class="p">),</span>
+        <span class="c1"># No -keyint_min: x264 clamps it to keyint/2+1 and silently ignores it.</span>
+        <span class="s2">&quot;-sc_threshold&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;0&quot;</span><span class="p">,</span>  <span class="c1"># closed GOP: no scene-cut keyframes</span>
+        <span class="s2">&quot;-bf&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;2&quot;</span><span class="p">,</span>
+    <span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_audio_encode_args</span><span class="p">(</span><span class="n">bitrate</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;AAC-LC, 48 kHz, stereo. The sample rate is pinned on purpose — see above.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">[</span>
+        <span class="s2">&quot;-c:a&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;aac&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;-b:a&quot;</span><span class="p">,</span>
+        <span class="n">bitrate</span><span class="p">,</span>
+        <span class="s2">&quot;-ar&quot;</span><span class="p">,</span>
+        <span class="nb">str</span><span class="p">(</span><span class="n">AUDIO_SAMPLE_RATE</span><span class="p">),</span>
+        <span class="s2">&quot;-ac&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;2&quot;</span><span class="p">,</span>
+    <span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_check_even</span><span class="p">(</span><span class="n">size</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;H.264 at yuv420p cannot encode odd dimensions — fail before ffmpeg does.</span>
+
+<span class="sd">    Cover art is routinely an odd square (1401x1401, 999x999); a canvas sized</span>
+<span class="sd">    from it inherits the problem, and libx264&#39;s own error (&quot;width not divisible</span>
+<span class="sd">    by 2&quot;) is a long way from the cause.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">width</span><span class="p">,</span> <span class="n">height</span> <span class="o">=</span> <span class="n">size</span>
+    <span class="k">if</span> <span class="n">width</span> <span class="o">%</span> <span class="mi">2</span> <span class="ow">or</span> <span class="n">height</span> <span class="o">%</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="n">even</span> <span class="o">=</span> <span class="p">(</span><span class="n">width</span> <span class="o">-</span> <span class="n">width</span> <span class="o">%</span> <span class="mi">2</span><span class="p">,</span> <span class="n">height</span> <span class="o">-</span> <span class="n">height</span> <span class="o">%</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;size=</span><span class="si">{</span><span class="n">size</span><span class="si">}</span><span class="s2"> has an odd dimension; H.264 at yuv420p needs even ones &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;(the pixel format every player can decode). Use size=</span><span class="si">{</span><span class="n">even</span><span class="si">}</span><span class="s2">.&quot;</span>
+        <span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">_work_dir</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Context manager yielding ``workdir``, or a temporary directory.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">workdir</span><span class="p">:</span> <span class="n">PathLike</span> <span class="o">|</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_given</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">workdir</span><span class="p">)</span> <span class="k">if</span> <span class="n">workdir</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_tmp</span><span class="p">:</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">TemporaryDirectory</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__enter__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_given</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_given</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_given</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_tmp</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">TemporaryDirectory</span><span class="p">(</span><span class="n">prefix</span><span class="o">=</span><span class="s2">&quot;muvid-visualize-&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_tmp</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__exit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">exc</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tmp</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_tmp</span><span class="o">.</span><span class="n">cleanup</span><span class="p">()</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_keep</span><span class="p">(</span><span class="n">src</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">dest</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Copy a temporary artefact out before its temp dir is cleaned up.&quot;&quot;&quot;</span>
+    <span class="n">dest</span><span class="o">.</span><span class="n">write_bytes</span><span class="p">(</span><span class="n">src</span><span class="o">.</span><span class="n">read_bytes</span><span class="p">())</span>
+    <span class="k">return</span> <span class="n">dest</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p></p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

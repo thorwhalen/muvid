@@ -1,0 +1,518 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>muvid.visualize.canvas &mdash; muvid 0.0.6 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=1fd71caa"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
+      <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            muvid
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid.html">muvid</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/__main__.html">muvid.__main__</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/align.html">muvid.align</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/characters.html">muvid.characters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/compose.html">muvid.compose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/contracts.html">muvid.contracts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/cost.html">muvid.cost</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/environments.html">muvid.environments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/events.html">muvid.events</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/facade.html">muvid.facade</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyrics.html">muvid.lyrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/project.html">muvid.project</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers.html">muvid.renderers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers/_common.html">muvid.renderers._common</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers/animation.html">muvid.renderers.animation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers/image_to_video.html">muvid.renderers.image_to_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers/lipsync.html">muvid.renderers.lipsync</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers/still.html">muvid.renderers.still</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers/text_to_video.html">muvid.renderers.text_to_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/schema.html">muvid.schema</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/script.html">muvid.script</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/ui.html">muvid.ui</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/ui/app.html">muvid.ui.app</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize.html">muvid.visualize</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/canvas.html">muvid.visualize.canvas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/ffmpeg.html">muvid.visualize.ffmpeg</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/verify.html">muvid.visualize.verify</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/video.html">muvid.visualize.video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/visuals.html">muvid.visualize.visuals</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">muvid</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">muvid.visualize.canvas</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for muvid.visualize.canvas</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Lay a cover image out on a 16:9 canvas, and derive a thumbnail from it.</span>
+
+<span class="sd">Cover art is usually square (or, worse, portrait) while video platforms are</span>
+<span class="sd">16:9. Letting the platform pillarbox the art leaves black bars; instead we fill</span>
+<span class="sd">the frame with a blurred, darkened copy of the cover and place the sharp cover</span>
+<span class="sd">centred on top. It reads as intentional, and it is the same treatment whether</span>
+<span class="sd">the result becomes a still video, the ground truth for a Ken Burns pan, or the</span>
+<span class="sd">upload thumbnail — one :class:`CoverLayout`, one filtergraph, three uses.</span>
+
+<span class="sd">Every filter chain here is built as a *string* rather than executed, so the</span>
+<span class="sd">same chains compose into the bigger filtergraph that :mod:`muvid.visualize.video`</span>
+<span class="sd">assembles for audio-reactive visuals.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">lru_cache</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">muvid.visualize.ffmpeg</span><span class="w"> </span><span class="kn">import</span> <span class="n">FfmpegError</span><span class="p">,</span> <span class="n">PathLike</span><span class="p">,</span> <span class="n">require_filter</span><span class="p">,</span> <span class="n">run_ffmpeg</span>
+
+<span class="c1">#: Default 16:9 canvas: 1080p is YouTube&#39;s sweet spot for a static music video.</span>
+<span class="n">DEFAULT_SIZE</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1920</span><span class="p">,</span> <span class="mi">1080</span><span class="p">)</span>
+
+<span class="c1">#: YouTube rejects thumbnails over 2 MiB, and wants at least 1280x720.</span>
+<span class="n">THUMBNAIL_SIZE</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1280</span><span class="p">,</span> <span class="mi">720</span><span class="p">)</span>
+<span class="n">THUMBNAIL_MAX_BYTES</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="mi">1024</span> <span class="o">*</span> <span class="mi">1024</span>
+
+<span class="c1">#: Fonts we fall back through when the system has no fontconfig.</span>
+<span class="n">_FONT_CANDIDATES</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">&quot;/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;/System/Library/Fonts/Helvetica.ttc&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;/Library/Fonts/Arial.ttf&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;C:/Windows/Fonts/arial.ttf&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="CoverLayout">
+<a class="viewcode-back" href="../../../module_docs/muvid/visualize/canvas.html#muvid.visualize.CoverLayout">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">CoverLayout</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;How a cover image is placed on the canvas.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        background: ``&quot;blur&quot;`` (a blurred, darkened copy of the cover fills the</span>
+<span class="sd">            frame) or ``&quot;color&quot;`` (a flat :attr:`background_color`).</span>
+<span class="sd">        blur_sigma: Gaussian blur strength for the ``&quot;blur&quot;`` background.</span>
+<span class="sd">        dim: How much to darken the background, 0 (unchanged) to 1 (black).</span>
+<span class="sd">        saturation: Background saturation (&lt; 1 desaturates, so the sharp cover</span>
+<span class="sd">            stays the focal point).</span>
+<span class="sd">        cover_fraction: How much of the frame the sharp cover fills. The cover</span>
+<span class="sd">            is scaled up, keeping its aspect ratio, until it reaches this</span>
+<span class="sd">            fraction of *either* the frame width or the frame height — whichever</span>
+<span class="sd">            it hits first (so a wide cover is width-bound, a tall one</span>
+<span class="sd">            height-bound). ``1.0`` touches the edges; below 1 leaves padding.</span>
+<span class="sd">        cover_alpha: Opacity of the sharp cover, 0 (invisible) to 1 (opaque).</span>
+<span class="sd">            Below 1 lets whatever is behind the cover — a reactive visualizer,</span>
+<span class="sd">            the blurred background — show through it.</span>
+<span class="sd">        background_color: Fill colour when ``background=&quot;color&quot;``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">background</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;blur&quot;</span>
+    <span class="n">blur_sigma</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">30.0</span>
+    <span class="n">dim</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.25</span>
+    <span class="n">saturation</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.8</span>
+    <span class="n">cover_fraction</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.92</span>
+    <span class="n">cover_alpha</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span>
+    <span class="n">background_color</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;black&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="TitleStyle">
+<a class="viewcode-back" href="../../../module_docs/muvid/visualize/canvas.html#muvid.visualize.TitleStyle">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">TitleStyle</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;How a burnt-in title is drawn (ffmpeg ``drawtext``).</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        size_fraction: Font size as a fraction of canvas height.</span>
+<span class="sd">        color: Text colour.</span>
+<span class="sd">        font: Font file path, or ``None`` to auto-detect one.</span>
+<span class="sd">        margin_fraction: Distance from the bottom edge, as a fraction of height.</span>
+<span class="sd">        box: Draw a translucent plate behind the text (keeps it legible over</span>
+<span class="sd">            busy artwork).</span>
+<span class="sd">        box_color: Colour (with alpha) of that plate.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">size_fraction</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.045</span>
+    <span class="n">color</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;white&quot;</span>
+    <span class="n">font</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">margin_fraction</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.06</span>
+    <span class="n">box</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">box_color</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;black@0.45&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="cover_box">
+<a class="viewcode-back" href="../../../module_docs/muvid/visualize/canvas.html#muvid.visualize.cover_box">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">cover_box</span><span class="p">(</span><span class="n">size</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">layout</span><span class="p">:</span> <span class="n">CoverLayout</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The bounding box the sharp cover is fitted into, for ``size``/``layout``.</span>
+
+<span class="sd">    Scales with *both* frame dimensions, so a cover fitted into it with</span>
+<span class="sd">    ``force_original_aspect_ratio=decrease`` grows until it meets whichever edge</span>
+<span class="sd">    comes first — filling the frame up to ``cover_fraction``, minus padding.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">width</span><span class="p">,</span> <span class="n">height</span> <span class="o">=</span> <span class="n">size</span>
+    <span class="k">return</span> <span class="nb">round</span><span class="p">(</span><span class="n">width</span> <span class="o">*</span> <span class="n">layout</span><span class="o">.</span><span class="n">cover_fraction</span><span class="p">),</span> <span class="nb">round</span><span class="p">(</span><span class="n">height</span> <span class="o">*</span> <span class="n">layout</span><span class="o">.</span><span class="n">cover_fraction</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="default_font">
+<a class="viewcode-back" href="../../../module_docs/muvid/visualize/canvas.html#muvid.visualize.default_font">[docs]</a>
+<span class="nd">@lru_cache</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">default_font</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Path to a usable TrueType font, or ``None`` if none was found.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">shutil</span><span class="o">.</span><span class="n">which</span><span class="p">(</span><span class="s2">&quot;fc-match&quot;</span><span class="p">):</span>
+        <span class="n">proc</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+            <span class="p">[</span><span class="s2">&quot;fc-match&quot;</span><span class="p">,</span> <span class="s2">&quot;-f&quot;</span><span class="p">,</span> <span class="s2">&quot;%</span><span class="si">{file}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;sans-serif&quot;</span><span class="p">],</span>
+            <span class="n">capture_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">candidate</span> <span class="o">=</span> <span class="n">proc</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">candidate</span> <span class="ow">and</span> <span class="n">Path</span><span class="p">(</span><span class="n">candidate</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="k">return</span> <span class="n">candidate</span>
+    <span class="k">return</span> <span class="nb">next</span><span class="p">((</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">_FONT_CANDIDATES</span> <span class="k">if</span> <span class="n">Path</span><span class="p">(</span><span class="n">f</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()),</span> <span class="kc">None</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="escape_filter_value">
+<a class="viewcode-back" href="../../../module_docs/muvid/visualize/canvas.html#muvid.visualize.escape_filter_value">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">escape_filter_value</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Escape ``value`` for use inside an ffmpeg filtergraph argument.</span>
+
+<span class="sd">    A filtergraph is parsed before the filter sees its options, so the graph&#39;s</span>
+<span class="sd">    own punctuation (``\\ : , ; [ ] &#39; %``) has to be escaped or a title with a</span>
+<span class="sd">    colon in it silently becomes a syntax error.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">char</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;</span><span class="se">\\</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;&#39;&quot;</span><span class="p">,</span> <span class="s2">&quot;:&quot;</span><span class="p">,</span> <span class="s2">&quot;,&quot;</span><span class="p">,</span> <span class="s2">&quot;;&quot;</span><span class="p">,</span> <span class="s2">&quot;[&quot;</span><span class="p">,</span> <span class="s2">&quot;]&quot;</span><span class="p">,</span> <span class="s2">&quot;%&quot;</span><span class="p">):</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">char</span><span class="p">,</span> <span class="s2">&quot;</span><span class="se">\\</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="n">char</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">value</span></div>
+
+
+
+<div class="viewcode-block" id="title_chain">
+<a class="viewcode-back" href="../../../module_docs/muvid/visualize/canvas.html#muvid.visualize.title_chain">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">title_chain</span><span class="p">(</span>
+    <span class="n">title</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">size</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span>
+    <span class="n">style</span><span class="p">:</span> <span class="n">TitleStyle</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">src</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">out</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Filter chain burning ``title`` into the bottom of stream ``src``.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        FfmpegError: This ffmpeg has no ``drawtext``, or no font was found.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">style</span> <span class="o">=</span> <span class="n">style</span> <span class="ow">or</span> <span class="n">TitleStyle</span><span class="p">()</span>
+    <span class="n">require_filter</span><span class="p">(</span><span class="s2">&quot;drawtext&quot;</span><span class="p">,</span> <span class="n">needed_for</span><span class="o">=</span><span class="s2">&quot;burning in a title&quot;</span><span class="p">)</span>
+    <span class="n">font</span> <span class="o">=</span> <span class="n">style</span><span class="o">.</span><span class="n">font</span> <span class="ow">or</span> <span class="n">default_font</span><span class="p">()</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">font</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">FfmpegError</span><span class="p">(</span>
+            <span class="s2">&quot;No font found for the burnt-in title. Install one (Debian/Ubuntu: &quot;</span>
+            <span class="s2">&quot;&#39;sudo apt-get install fonts-dejavu-core&#39;), or pass &quot;</span>
+            <span class="s2">&quot;TitleStyle(font=&#39;/path/to/font.ttf&#39;), or render without a title.&quot;</span>
+        <span class="p">)</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">height</span> <span class="o">=</span> <span class="n">size</span>
+    <span class="n">fontsize</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">height</span> <span class="o">*</span> <span class="n">style</span><span class="o">.</span><span class="n">size_fraction</span><span class="p">)))</span>
+    <span class="n">margin</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">height</span> <span class="o">*</span> <span class="n">style</span><span class="o">.</span><span class="n">margin_fraction</span><span class="p">))</span>
+    <span class="n">opts</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="sa">f</span><span class="s2">&quot;fontfile=</span><span class="si">{</span><span class="n">escape_filter_value</span><span class="p">(</span><span class="n">font</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s2">&quot;text=</span><span class="si">{</span><span class="n">escape_filter_value</span><span class="p">(</span><span class="n">title</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s2">&quot;fontsize=</span><span class="si">{</span><span class="n">fontsize</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s2">&quot;fontcolor=</span><span class="si">{</span><span class="n">style</span><span class="o">.</span><span class="n">color</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;x=(w-text_w)/2&quot;</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s2">&quot;y=h-text_h-</span><span class="si">{</span><span class="n">margin</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+    <span class="p">]</span>
+    <span class="k">if</span> <span class="n">style</span><span class="o">.</span><span class="n">box</span><span class="p">:</span>
+        <span class="n">opts</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;box=1&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;boxcolor=</span><span class="si">{</span><span class="n">style</span><span class="o">.</span><span class="n">box_color</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;boxborderw=20&quot;</span><span class="p">]</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="n">src</span><span class="si">}</span><span class="s2">]drawtext=</span><span class="si">{</span><span class="s1">&#39;:&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">opts</span><span class="p">)</span><span class="si">}</span><span class="s2">[</span><span class="si">{</span><span class="n">out</span><span class="si">}</span><span class="s2">]&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="background_chain">
+<a class="viewcode-back" href="../../../module_docs/muvid/visualize/canvas.html#muvid.visualize.background_chain">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">background_chain</span><span class="p">(</span>
+    <span class="n">size</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">layout</span><span class="p">:</span> <span class="n">CoverLayout</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">src</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">out</span><span class="p">:</span> <span class="nb">str</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Filter chain turning cover stream ``src`` into a full-frame background.&quot;&quot;&quot;</span>
+    <span class="n">width</span><span class="p">,</span> <span class="n">height</span> <span class="o">=</span> <span class="n">size</span>
+    <span class="k">if</span> <span class="n">layout</span><span class="o">.</span><span class="n">background</span> <span class="o">==</span> <span class="s2">&quot;color&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="n">src</span><span class="si">}</span><span class="s2">]scale=</span><span class="si">{</span><span class="n">width</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">height</span><span class="si">}</span><span class="s2">,&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;drawbox=x=0:y=0:w=</span><span class="si">{</span><span class="n">width</span><span class="si">}</span><span class="s2">:h=</span><span class="si">{</span><span class="n">height</span><span class="si">}</span><span class="s2">:&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;color=</span><span class="si">{</span><span class="n">layout</span><span class="o">.</span><span class="n">background_color</span><span class="si">}</span><span class="s2">:t=fill[</span><span class="si">{</span><span class="n">out</span><span class="si">}</span><span class="s2">]&quot;</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="n">src</span><span class="si">}</span><span class="s2">]scale=</span><span class="si">{</span><span class="n">width</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">height</span><span class="si">}</span><span class="s2">:force_original_aspect_ratio=increase,&quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;crop=</span><span class="si">{</span><span class="n">width</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">height</span><span class="si">}</span><span class="s2">,gblur=sigma=</span><span class="si">{</span><span class="n">layout</span><span class="o">.</span><span class="n">blur_sigma</span><span class="si">}</span><span class="s2">,&quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;eq=brightness=-</span><span class="si">{</span><span class="n">layout</span><span class="o">.</span><span class="n">dim</span><span class="si">}</span><span class="s2">:saturation=</span><span class="si">{</span><span class="n">layout</span><span class="o">.</span><span class="n">saturation</span><span class="si">}</span><span class="s2">[</span><span class="si">{</span><span class="n">out</span><span class="si">}</span><span class="s2">]&quot;</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="cover_chain">
+<a class="viewcode-back" href="../../../module_docs/muvid/visualize/canvas.html#muvid.visualize.cover_chain">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">cover_chain</span><span class="p">(</span>
+    <span class="n">size</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">layout</span><span class="p">:</span> <span class="n">CoverLayout</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">src</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">out</span><span class="p">:</span> <span class="nb">str</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Filter chain scaling cover stream ``src`` to the centred sharp cover.</span>
+
+<span class="sd">    When ``layout.cover_alpha &lt; 1`` the scaled cover is made semi-transparent</span>
+<span class="sd">    (``colorchannelmixer=aa=…``, over an ``rgba`` copy so an opaque source gains</span>
+<span class="sd">    an alpha channel), so a following :func:`overlay_chain` lets the background</span>
+<span class="sd">    show through it.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">box_w</span><span class="p">,</span> <span class="n">box_h</span> <span class="o">=</span> <span class="n">cover_box</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="n">layout</span><span class="p">)</span>
+    <span class="n">scale</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="n">src</span><span class="si">}</span><span class="s2">]scale=</span><span class="si">{</span><span class="n">box_w</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">box_h</span><span class="si">}</span><span class="s2">:force_original_aspect_ratio=decrease&quot;</span>
+    <span class="k">if</span> <span class="n">layout</span><span class="o">.</span><span class="n">cover_alpha</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">scale</span><span class="si">}</span><span class="s2">[</span><span class="si">{</span><span class="n">out</span><span class="si">}</span><span class="s2">]&quot;</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">scale</span><span class="si">}</span><span class="s2">,format=rgba,colorchannelmixer=aa=</span><span class="si">{</span><span class="n">layout</span><span class="o">.</span><span class="n">cover_alpha</span><span class="si">}</span><span class="s2">[</span><span class="si">{</span><span class="n">out</span><span class="si">}</span><span class="s2">]&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="overlay_chain">
+<a class="viewcode-back" href="../../../module_docs/muvid/visualize/canvas.html#muvid.visualize.overlay_chain">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">overlay_chain</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span> <span class="n">background</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">cover</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">out</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">shortest</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Filter chain centring the ``cover`` stream over the ``background`` stream.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        background: Label of the background video stream.</span>
+<span class="sd">        cover: Label of the (already scaled) cover stream.</span>
+<span class="sd">        out: Label to emit.</span>
+<span class="sd">        shortest: End the overlay when the shortest input ends — required when a</span>
+<span class="sd">            finite, audio-driven background is overlaid with an endlessly</span>
+<span class="sd">            looping still cover, or the render would never terminate.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">opts</span> <span class="o">=</span> <span class="s2">&quot;:shortest=1&quot;</span> <span class="k">if</span> <span class="n">shortest</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="n">background</span><span class="si">}</span><span class="s2">][</span><span class="si">{</span><span class="n">cover</span><span class="si">}</span><span class="s2">]overlay=(W-w)/2:(H-h)/2</span><span class="si">{</span><span class="n">opts</span><span class="si">}</span><span class="s2">,setsar=1[</span><span class="si">{</span><span class="n">out</span><span class="si">}</span><span class="s2">]&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="compose_chain">
+<a class="viewcode-back" href="../../../module_docs/muvid/visualize/canvas.html#muvid.visualize.compose_chain">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">compose_chain</span><span class="p">(</span>
+    <span class="n">size</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span>
+    <span class="n">layout</span><span class="p">:</span> <span class="n">CoverLayout</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">src</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">out</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">title_style</span><span class="p">:</span> <span class="n">TitleStyle</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The whole cover-on-canvas filtergraph: background, centred cover, title.</span>
+
+<span class="sd">    ``src`` is a single cover-image stream; it is split so the same image feeds</span>
+<span class="sd">    both the blurred background and the sharp foreground.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">composed</span> <span class="o">=</span> <span class="n">out</span> <span class="k">if</span> <span class="n">title</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="s2">&quot;_composed&quot;</span>
+    <span class="n">chains</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="n">src</span><span class="si">}</span><span class="s2">]split=2[_bgsrc][_fgsrc]&quot;</span><span class="p">,</span>
+        <span class="n">background_chain</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="n">layout</span><span class="p">,</span> <span class="n">src</span><span class="o">=</span><span class="s2">&quot;_bgsrc&quot;</span><span class="p">,</span> <span class="n">out</span><span class="o">=</span><span class="s2">&quot;_bg&quot;</span><span class="p">),</span>
+        <span class="n">cover_chain</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="n">layout</span><span class="p">,</span> <span class="n">src</span><span class="o">=</span><span class="s2">&quot;_fgsrc&quot;</span><span class="p">,</span> <span class="n">out</span><span class="o">=</span><span class="s2">&quot;_fg&quot;</span><span class="p">),</span>
+        <span class="n">overlay_chain</span><span class="p">(</span><span class="n">background</span><span class="o">=</span><span class="s2">&quot;_bg&quot;</span><span class="p">,</span> <span class="n">cover</span><span class="o">=</span><span class="s2">&quot;_fg&quot;</span><span class="p">,</span> <span class="n">out</span><span class="o">=</span><span class="n">composed</span><span class="p">),</span>
+    <span class="p">]</span>
+    <span class="k">if</span> <span class="n">title</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">chains</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">title_chain</span><span class="p">(</span><span class="n">title</span><span class="p">,</span> <span class="n">size</span><span class="p">,</span> <span class="n">title_style</span><span class="p">,</span> <span class="n">src</span><span class="o">=</span><span class="n">composed</span><span class="p">,</span> <span class="n">out</span><span class="o">=</span><span class="n">out</span><span class="p">))</span>
+    <span class="k">return</span> <span class="s2">&quot;;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">chains</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="canvas_image">
+<a class="viewcode-back" href="../../../module_docs/muvid/visualize/canvas.html#muvid.visualize.canvas_image">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">canvas_image</span><span class="p">(</span>
+    <span class="n">image</span><span class="p">:</span> <span class="n">PathLike</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">saveas</span><span class="p">:</span> <span class="n">PathLike</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">size</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">DEFAULT_SIZE</span><span class="p">,</span>
+    <span class="n">layout</span><span class="p">:</span> <span class="n">CoverLayout</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">title_style</span><span class="p">:</span> <span class="n">TitleStyle</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Render the composed canvas (background + centred cover + title) as a PNG.</span>
+
+<span class="sd">    Composing once into an image — rather than re-running a 1080p blur on every</span>
+<span class="sd">    frame — is what makes a still-image music video cheap to render, and it</span>
+<span class="sd">    gives the thumbnail and the video&#39;s first frame a single source of truth.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        image: The cover art.</span>
+<span class="sd">        saveas: Output PNG path (default: ``&lt;image-stem&gt;.canvas.png``).</span>
+<span class="sd">        size: Canvas size.</span>
+<span class="sd">        layout: Placement/treatment of the cover (a default one when omitted).</span>
+<span class="sd">        title: Burn this title into the canvas (omit for no title).</span>
+<span class="sd">        title_style: How to draw that title.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Path to the rendered PNG.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">image</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
+    <span class="n">layout</span> <span class="o">=</span> <span class="n">layout</span> <span class="ow">or</span> <span class="n">CoverLayout</span><span class="p">()</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">saveas</span><span class="p">)</span> <span class="k">if</span> <span class="n">saveas</span> <span class="k">else</span> <span class="n">image</span><span class="o">.</span><span class="n">with_suffix</span><span class="p">(</span><span class="s2">&quot;.canvas.png&quot;</span><span class="p">)</span>
+    <span class="n">run_ffmpeg</span><span class="p">(</span>
+        <span class="p">[</span>
+            <span class="s2">&quot;-i&quot;</span><span class="p">,</span>
+            <span class="nb">str</span><span class="p">(</span><span class="n">image</span><span class="p">),</span>
+            <span class="s2">&quot;-filter_complex&quot;</span><span class="p">,</span>
+            <span class="n">compose_chain</span><span class="p">(</span>
+                <span class="n">size</span><span class="p">,</span> <span class="n">layout</span><span class="p">,</span> <span class="n">src</span><span class="o">=</span><span class="s2">&quot;0:v&quot;</span><span class="p">,</span> <span class="n">out</span><span class="o">=</span><span class="s2">&quot;v&quot;</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">,</span> <span class="n">title_style</span><span class="o">=</span><span class="n">title_style</span>
+            <span class="p">),</span>
+            <span class="s2">&quot;-map&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;[v]&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;-frames:v&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;1&quot;</span><span class="p">,</span>
+            <span class="nb">str</span><span class="p">(</span><span class="n">out</span><span class="p">),</span>
+        <span class="p">]</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">out</span></div>
+
+
+
+<div class="viewcode-block" id="thumbnail_image">
+<a class="viewcode-back" href="../../../module_docs/muvid/visualize/canvas.html#muvid.visualize.thumbnail_image">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">thumbnail_image</span><span class="p">(</span>
+    <span class="n">image</span><span class="p">:</span> <span class="n">PathLike</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">saveas</span><span class="p">:</span> <span class="n">PathLike</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">size</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">THUMBNAIL_SIZE</span><span class="p">,</span>
+    <span class="n">layout</span><span class="p">:</span> <span class="n">CoverLayout</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">title_style</span><span class="p">:</span> <span class="n">TitleStyle</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">max_bytes</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">THUMBNAIL_MAX_BYTES</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Render ``image`` as a 16:9 JPEG thumbnail that YouTube will accept.</span>
+
+<span class="sd">    Same composition as the video canvas, so the thumbnail matches what the</span>
+<span class="sd">    viewer sees when they press play. JPEG quality is stepped down until the</span>
+<span class="sd">    file fits ``max_bytes`` (YouTube&#39;s hard limit).</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        image: The cover art.</span>
+<span class="sd">        saveas: Output JPEG path (default: ``&lt;image-stem&gt;.thumb.jpg``).</span>
+<span class="sd">        size: Thumbnail size (YouTube wants &gt;= 1280x720, 16:9).</span>
+<span class="sd">        layout: Placement/treatment of the cover.</span>
+<span class="sd">        title: Burn this title into the thumbnail (omit for none).</span>
+<span class="sd">        title_style: How to draw that title.</span>
+<span class="sd">        max_bytes: Hard size ceiling.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Path to the rendered JPEG.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">image</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
+    <span class="n">layout</span> <span class="o">=</span> <span class="n">layout</span> <span class="ow">or</span> <span class="n">CoverLayout</span><span class="p">()</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">saveas</span><span class="p">)</span> <span class="k">if</span> <span class="n">saveas</span> <span class="k">else</span> <span class="n">image</span><span class="o">.</span><span class="n">with_suffix</span><span class="p">(</span><span class="s2">&quot;.thumb.jpg&quot;</span><span class="p">)</span>
+    <span class="n">chain</span> <span class="o">=</span> <span class="n">compose_chain</span><span class="p">(</span>
+        <span class="n">size</span><span class="p">,</span> <span class="n">layout</span><span class="p">,</span> <span class="n">src</span><span class="o">=</span><span class="s2">&quot;0:v&quot;</span><span class="p">,</span> <span class="n">out</span><span class="o">=</span><span class="s2">&quot;v&quot;</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">,</span> <span class="n">title_style</span><span class="o">=</span><span class="n">title_style</span>
+    <span class="p">)</span>
+    <span class="k">for</span> <span class="n">quality</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">16</span><span class="p">,</span> <span class="mi">20</span><span class="p">):</span>  <span class="c1"># ffmpeg mjpeg: 2 = best, 31 = worst</span>
+        <span class="n">run_ffmpeg</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="s2">&quot;-i&quot;</span><span class="p">,</span>
+                <span class="nb">str</span><span class="p">(</span><span class="n">image</span><span class="p">),</span>
+                <span class="s2">&quot;-filter_complex&quot;</span><span class="p">,</span>
+                <span class="n">chain</span><span class="p">,</span>
+                <span class="s2">&quot;-map&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;[v]&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;-frames:v&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;1&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;-q:v&quot;</span><span class="p">,</span>
+                <span class="nb">str</span><span class="p">(</span><span class="n">quality</span><span class="p">),</span>
+                <span class="nb">str</span><span class="p">(</span><span class="n">out</span><span class="p">),</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">out</span><span class="o">.</span><span class="n">stat</span><span class="p">()</span><span class="o">.</span><span class="n">st_size</span> <span class="o">&lt;=</span> <span class="n">max_bytes</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">out</span>
+    <span class="k">return</span> <span class="n">out</span>  <span class="c1"># best effort: the smallest we could make it</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p></p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
