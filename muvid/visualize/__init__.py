@@ -27,6 +27,7 @@ dependency of ``mixing``, so it needs no extra).
 from muvid.visualize.ffmpeg import (
     FfmpegError,
     Loudness,
+    PathLike,
     has_filter,
     measure_loudness,
     media_duration,
@@ -69,6 +70,7 @@ __all__ = [
     "verify_video",
     "FfmpegError",
     "Loudness",
+    "PathLike",
     "has_filter",
     "measure_loudness",
     "media_duration",
