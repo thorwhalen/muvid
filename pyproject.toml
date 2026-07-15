@@ -14,11 +14,11 @@ keywords = []
 authors = [
     { name = "Thor Whalen" },
 ]
+# Core: the CLI (argh) and the ffmpeg-based visualizer (mixing). The AI
+# narrative pipeline's heavy dependencies are the optional `ai` extra, so
+# `muvid.visualize` (and downstreams like `yb`) stay lightweight.
 dependencies = [
     "argh",
-    "falaw",
-    "lacing",
-    "lookbook",
     "mixing",
 ]
 
@@ -34,12 +34,22 @@ Repository = "https://github.com/thorwhalen/muvid"
 Documentation = "https://thorwhalen.github.io/muvid"
 
 [project.optional-dependencies]
+# The AI narrative pipeline (muvid.facade / muvid.renderers): image/video
+# generation, lyric alignment, character/environment assets.
+ai = [
+    "falaw",
+    "lacing",
+    "lookbook",
+]
 ui = [
     "fastapi",
     "uvicorn[standard]",
     "pydantic",
 ]
 dev = [
+    "falaw",
+    "lacing",
+    "lookbook",
     "pytest>=7.0",
     "pytest-cov>=4.0",
     "ruff>=0.1.0",
@@ -96,6 +106,18 @@ doctest_optionflags = [
     "NORMALIZE_WHITESPACE",
     "ELLIPSIS",
 ]
+
+# ffmpeg is a hard system requirement for muvid.visualize (and the pipeline's
+# audio slicing). Declaring it here makes CI install it so the render tests run.
+[tool.wads.ops.ffmpeg]
+description = "Multimedia framework for video/audio processing"
+url = "https://ffmpeg.org/"
+check.linux = "which ffmpeg"
+check.macos = "which ffmpeg"
+check.windows = "which ffmpeg"
+install.linux = ["sudo apt-get update", "sudo apt-get install -y ffmpeg"]
+install.macos = "brew install ffmpeg"
+install.windows = "choco install ffmpeg -y --no-progress"
 
 [tool.wads.ci]
 project_name = ""
