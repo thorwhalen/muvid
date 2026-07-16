@@ -377,11 +377,48 @@ def cqt_visual(ctx: VisualContext) -> VisualPlan:
 
     Rendered white; colour comes from the accent ``tint`` (recolour it with the
     ``tint`` option — *not* a per-filter colour, which the tint would multiply).
+
+    ``showcqt`` can draw two panes: the bargraph, and beneath it a *sonogram*
+    that keeps every past frame and scrolls it downward, so the music leaves a
+    trail of where it has been. The sonogram is off by default (bars only, the
+    cleanest read). Give ``sono_fraction`` a value in (0, 1) to hand that share
+    of the frame's height to the trail — the bargraph keeps the rest.
+
+    Options:
+        ``sono_fraction``: share of the height given to the scrolling sonogram,
+            0 (default, bars only) to just under 1.
+        ``sono_v`` / ``bar_v``: sonogram and bargraph volume (sensitivity).
+        ``sono_g`` / ``bar_g``: sonogram and bargraph gamma (contrast).
+        Plus the shared background/cover keys of :func:`_reactive_plan`.
+
+    Examples:
+        >>> ctx = VisualContext(Path("a.wav"), None, 10.0, (1920, 1080), 24)
+        >>> "sono_h=0" in cqt_visual(ctx).filters[0]  # bars only, by default
+        True
+        >>> trail = replace(ctx, options={"sono_fraction": 0.6})
+        >>> f = cqt_visual(trail).filters[0]
+        >>> "bar_h=432" in f and "sono_h=648" in f  # 40% bars / 60% trail
+        True
     """
     width, height = ctx.size
+    opt = ctx.options
+    # showcqt lays the frame out as bar_h + axis_h + sono_h, and rejects a set
+    # that does not add up to the height — so derive one pane from the other
+    # rather than letting a caller specify both and get an ffmpeg error.
+    sono_fraction = opt.get("sono_fraction", 0.0)
+    if not 0 <= sono_fraction < 1:
+        raise ValueError(
+            f"sono_fraction must be in [0, 1), got {sono_fraction!r}. It is the "
+            "share of the frame the scrolling sonogram takes; the bargraph gets "
+            "the rest, so 1 would leave the bargraph no height."
+        )
+    sono_h = int(height * sono_fraction)
     viz = (
-        f"showcqt=s={width}x{height}:r={ctx.fps}:count=6:gamma=3:bar_g=2"
-        ":cscheme=1|1|1|1|1|1:sono_h=0:axis=0"
+        f"showcqt=s={width}x{height}:r={ctx.fps}:count=6"
+        f":sono_v={opt.get('sono_v', 16)}:bar_v={opt.get('bar_v', 16)}"
+        f":gamma={opt.get('sono_g', 3)}:bar_g={opt.get('bar_g', 2)}"
+        f":cscheme=1|1|1|1|1|1:bar_h={height - sono_h}:axis_h=0:sono_h={sono_h}"
+        ":axis=0"
     )
     return _reactive_plan(ctx, viz, filter_name="showcqt")
 
