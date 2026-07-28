@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.visualize.visuals &mdash; muvid 0.0.6 documentation</title>
+  <title>muvid.visualize.visuals &mdash; muvid 0.0.7 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=1fd71caa"></script>
+      <script src="../../../_static/documentation_options.js?v=bbaf98b3"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -507,11 +507,48 @@
 
 <span class="sd">    Rendered white; colour comes from the accent ``tint`` (recolour it with the</span>
 <span class="sd">    ``tint`` option — *not* a per-filter colour, which the tint would multiply).</span>
+
+<span class="sd">    ``showcqt`` can draw two panes: the bargraph, and beneath it a *sonogram*</span>
+<span class="sd">    that keeps every past frame and scrolls it downward, so the music leaves a</span>
+<span class="sd">    trail of where it has been. The sonogram is off by default (bars only, the</span>
+<span class="sd">    cleanest read). Give ``sono_fraction`` a value in (0, 1) to hand that share</span>
+<span class="sd">    of the frame&#39;s height to the trail — the bargraph keeps the rest.</span>
+
+<span class="sd">    Options:</span>
+<span class="sd">        ``sono_fraction``: share of the height given to the scrolling sonogram,</span>
+<span class="sd">            0 (default, bars only) to just under 1.</span>
+<span class="sd">        ``sono_v`` / ``bar_v``: sonogram and bargraph volume (sensitivity).</span>
+<span class="sd">        ``sono_g`` / ``bar_g``: sonogram and bargraph gamma (contrast).</span>
+<span class="sd">        Plus the shared background/cover keys of :func:`_reactive_plan`.</span>
+
+<span class="sd">    Examples:</span>
+<span class="sd">        &gt;&gt;&gt; ctx = VisualContext(Path(&quot;a.wav&quot;), None, 10.0, (1920, 1080), 24)</span>
+<span class="sd">        &gt;&gt;&gt; &quot;sono_h=0&quot; in cqt_visual(ctx).filters[0]  # bars only, by default</span>
+<span class="sd">        True</span>
+<span class="sd">        &gt;&gt;&gt; trail = replace(ctx, options={&quot;sono_fraction&quot;: 0.6})</span>
+<span class="sd">        &gt;&gt;&gt; f = cqt_visual(trail).filters[0]</span>
+<span class="sd">        &gt;&gt;&gt; &quot;bar_h=432&quot; in f and &quot;sono_h=648&quot; in f  # 40% bars / 60% trail</span>
+<span class="sd">        True</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">width</span><span class="p">,</span> <span class="n">height</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">size</span>
+    <span class="n">opt</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">options</span>
+    <span class="c1"># showcqt lays the frame out as bar_h + axis_h + sono_h, and rejects a set</span>
+    <span class="c1"># that does not add up to the height — so derive one pane from the other</span>
+    <span class="c1"># rather than letting a caller specify both and get an ffmpeg error.</span>
+    <span class="n">sono_fraction</span> <span class="o">=</span> <span class="n">opt</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;sono_fraction&quot;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">sono_fraction</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;sono_fraction must be in [0, 1), got </span><span class="si">{</span><span class="n">sono_fraction</span><span class="si">!r}</span><span class="s2">. It is the &quot;</span>
+            <span class="s2">&quot;share of the frame the scrolling sonogram takes; the bargraph gets &quot;</span>
+            <span class="s2">&quot;the rest, so 1 would leave the bargraph no height.&quot;</span>
+        <span class="p">)</span>
+    <span class="n">sono_h</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">height</span> <span class="o">*</span> <span class="n">sono_fraction</span><span class="p">)</span>
     <span class="n">viz</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="sa">f</span><span class="s2">&quot;showcqt=s=</span><span class="si">{</span><span class="n">width</span><span class="si">}</span><span class="s2">x</span><span class="si">{</span><span class="n">height</span><span class="si">}</span><span class="s2">:r=</span><span class="si">{</span><span class="n">ctx</span><span class="o">.</span><span class="n">fps</span><span class="si">}</span><span class="s2">:count=6:gamma=3:bar_g=2&quot;</span>
-        <span class="s2">&quot;:cscheme=1|1|1|1|1|1:sono_h=0:axis=0&quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;showcqt=s=</span><span class="si">{</span><span class="n">width</span><span class="si">}</span><span class="s2">x</span><span class="si">{</span><span class="n">height</span><span class="si">}</span><span class="s2">:r=</span><span class="si">{</span><span class="n">ctx</span><span class="o">.</span><span class="n">fps</span><span class="si">}</span><span class="s2">:count=6&quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;:sono_v=</span><span class="si">{</span><span class="n">opt</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;sono_v&#39;</span><span class="p">,</span><span class="w"> </span><span class="mi">16</span><span class="p">)</span><span class="si">}</span><span class="s2">:bar_v=</span><span class="si">{</span><span class="n">opt</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;bar_v&#39;</span><span class="p">,</span><span class="w"> </span><span class="mi">16</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;:gamma=</span><span class="si">{</span><span class="n">opt</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;sono_g&#39;</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">)</span><span class="si">}</span><span class="s2">:bar_g=</span><span class="si">{</span><span class="n">opt</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;bar_g&#39;</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;:cscheme=1|1|1|1|1|1:bar_h=</span><span class="si">{</span><span class="n">height</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">sono_h</span><span class="si">}</span><span class="s2">:axis_h=0:sono_h=</span><span class="si">{</span><span class="n">sono_h</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="s2">&quot;:axis=0&quot;</span>
     <span class="p">)</span>
     <span class="k">return</span> <span class="n">_reactive_plan</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">viz</span><span class="p">,</span> <span class="n">filter_name</span><span class="o">=</span><span class="s2">&quot;showcqt&quot;</span><span class="p">)</span></div>
 
