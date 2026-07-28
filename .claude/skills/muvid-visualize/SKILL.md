@@ -19,11 +19,11 @@ narrative pipeline. Needs **ffmpeg** on the PATH; `pip install muvid` (core).
 ```python
 from muvid.visualize import render_audio_video, list_visuals, verify_video, report
 
-r = render_audio_video("song.wav", image="cover.png")            # still cover, 1080p, -14 LUFS
+r = render_audio_video("song.wav", image="cover.png")  # still cover, 1080p, -14 LUFS
 render_audio_video("song.wav", image="cover.png", visual="cqt", normalize=True)
-render_audio_video("song.wav", visual="cqt")                     # no image → reactive only
+render_audio_video("song.wav", visual="cqt")  # no image → reactive only
 
-print(report(verify_video(r.path, audio="song.wav")))            # check before shipping
+print(report(verify_video(r.path, audio="song.wav")))  # check before shipping
 ```
 
 ## Visuals
@@ -79,8 +79,10 @@ white→accent; `""` keeps the visualizer's own colour), `bg_dim`, `bg_saturatio
 
 ```python
 from muvid.visualize import verify_video, report, failures
-checks = verify_video("song.mp4", audio="song.wav", thumbnail="song.thumb.jpg",
-                      check_loudness=True)
+
+checks = verify_video(
+    "song.mp4", audio="song.wav", thumbnail="song.thumb.jpg", check_loudness=True
+)
 assert not failures(checks)
 ```
 Covers codec/pix_fmt/16:9/≥720p/48 kHz/duration-match/edit-lists/loudness/thumbnail.
@@ -90,11 +92,13 @@ Covers codec/pix_fmt/16:9/≥720p/48 kHz/duration-match/edit-lists/loudness/thum
 ```python
 from muvid.visualize import register_visual, VisualPlan
 
+
 @register_visual("pulse")
-def pulse(ctx):                       # ctx: VisualContext (audio is input 0)
+def pulse(ctx):  # ctx: VisualContext (audio is input 0)
     w, h = ctx.size
-    return VisualPlan(filters=[f"[aviz]showvolume=w={w}:h={h}[vbg]"],
-                      video="vbg", uses_audio=True)
+    return VisualPlan(
+        filters=[f"[aviz]showvolume=w={w}:h={h}[vbg]"], video="vbg", uses_audio=True
+    )
 ```
 Escape hatch: **return a path** to a silent video you rendered yourself and the
 renderer muxes the audio in — that's how a numpy/Pillow, moderngl/EGL, or
