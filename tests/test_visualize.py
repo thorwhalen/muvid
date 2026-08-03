@@ -51,13 +51,37 @@ SIZE = (1920, 1080)
 def _ffmpeg_accepts(source: str, *graph_args: str) -> None:
     """Push one frame of the lavfi ``source`` through ``graph_args``.
 
-    ffmpeg is the only real judge of filtergraph escaping: an under-escaped
-    option value is a hard parse error ("No option name near …") or an
-    unopenable file, never a subtly different picture. So ``check=True`` *is*
-    the assertion — if this returns, the graph was well formed.
+    ffmpeg is the only real judge of filtergraph escaping, and for a *path* an
+    under-escaped value is always loud — a parse error ("No option name near …")
+    or an unopenable file — so ``check=True`` *is* the assertion here.
+
+    It is not a sufficient assertion for a *text* value: an unclosed quote is a
+    silent wrong render, not an error. Compare pixels for those — see
+    :func:`_rendered_frame`.
     """
-    base = f"ffmpeg -y -loglevel error -f lavfi -i {source}".split()
-    subprocess.run([*base, *graph_args, "-frames:v", "1"], check=True)
+    # -frames:v is a per-output option, so it has to come *before* the output
+    # URL that ``graph_args`` ends with; trailing it there would silently apply
+    # to nothing and render the whole clip.
+    base = f"ffmpeg -y -loglevel error -f lavfi -i {source} -frames:v 1".split()
+    subprocess.run([*base, *graph_args], check=True)
+
+
+def _rendered_frame(chain: str, saveas) -> bytes:
+    """Render one PNG frame of ``chain`` over black and return its bytes.
+
+    PNG is lossless and the render is deterministic, so two frames comparing
+    equal byte for byte means ffmpeg drew the same picture — which is the only
+    way to catch an escaping bug that ffmpeg accepts without complaint.
+    """
+    _ffmpeg_accepts(
+        f"color=c=black:s={SIZE[0]}x{SIZE[1]}:d=0.2",
+        "-filter_complex",
+        chain,
+        "-map",
+        "[v]",
+        str(saveas),
+    )
+    return Path(saveas).read_bytes()
 
 
 # --------------------------------------------------------------------------
@@ -149,19 +173,27 @@ def test_escaping_survives_both_of_ffmpegs_unescaping_passes():
 @needs_ffmpeg_filter("drawtext")
 @pytest.mark.parametrize("title", ["Song: Part 1", "Take 2, live", "Bob's Song"])
 def test_a_punctuated_title_survives_a_real_ffmpeg_round_trip(tmp_path, title):
-    # The escaping's only real judge is ffmpeg: under-escape and the graph is a
-    # syntax error rather than a video. (Skips where this build has no drawtext.)
+    # "ffmpeg exited 0" is NOT enough to prove a *text* value was escaped right.
+    # A ':' under-escapes into a syntax error, which is loud — but an under-
+    # escaped "'" opens a quoted section the option parser never closes, which
+    # swallows the text silently and still exits 0. So compare the pixels
+    # against the same drawtext handed the title through `textfile=`, which
+    # involves no filtergraph escaping at all and is therefore ground truth for
+    # "what ffmpeg actually drew". (Skips where this build has no drawtext.)
     chain = compose_chain(SIZE, CoverLayout(), src="0:v", out="v", title=title)
-    out = tmp_path / "titled.mp4"
-    _ffmpeg_accepts(
-        f"color=c=black:s={SIZE[0]}x{SIZE[1]}:d=0.2",
-        "-filter_complex",
-        chain,
-        "-map",
-        "[v]",
-        str(out),
+
+    truth_file = tmp_path / "title.txt"
+    truth_file.write_text(title)
+    truth_chain = chain.replace(
+        f"text={escape_filter_value(title)}", f"textfile={truth_file}"
     )
-    assert out.exists() and out.stat().st_size > 0
+    # Guard the rewrite: if title_chain ever stops emitting `text=<escaped>`,
+    # this would compare the chain against itself and pass for any escaper.
+    assert truth_chain != chain, "the escaped title is not where this test expects it"
+
+    assert _rendered_frame(chain, tmp_path / "escaped.png") == _rendered_frame(
+        truth_chain, tmp_path / "truth.png"
+    )
 
 
 # --------------------------------------------------------------------------
