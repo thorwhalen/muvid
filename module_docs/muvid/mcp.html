@@ -1,0 +1,269 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>muvid.mcp &mdash; muvid 0.0.8 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=53b53b71"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
+      <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="muvid.mcp._fetch" href="mcp/_fetch.html" />
+    <link rel="prev" title="muvid.lyrics" href="lyrics.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            muvid
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../muvid.html">muvid</a></li>
+<li class="toctree-l1"><a class="reference internal" href="__main__.html">muvid.__main__</a></li>
+<li class="toctree-l1"><a class="reference internal" href="align.html">muvid.align</a></li>
+<li class="toctree-l1"><a class="reference internal" href="characters.html">muvid.characters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="compose.html">muvid.compose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contracts.html">muvid.contracts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cost.html">muvid.cost</a></li>
+<li class="toctree-l1"><a class="reference internal" href="environments.html">muvid.environments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="events.html">muvid.events</a></li>
+<li class="toctree-l1"><a class="reference internal" href="facade.html">muvid.facade</a></li>
+<li class="toctree-l1"><a class="reference internal" href="genre.html">muvid.genre</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lyrics.html">muvid.lyrics</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">muvid.mcp</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.mcp.FREE_TOOLS"><code class="docutils literal notranslate"><span class="pre">FREE_TOOLS</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.mcp.TOOL_NAMES"><code class="docutils literal notranslate"><span class="pre">TOOL_NAMES</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.mcp.TOOL_REFS"><code class="docutils literal notranslate"><span class="pre">TOOL_REFS</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.mcp.VisualizerWorkspace"><code class="docutils literal notranslate"><span class="pre">VisualizerWorkspace</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#muvid.mcp.VisualizerWorkspace.create_project"><code class="docutils literal notranslate"><span class="pre">VisualizerWorkspace.create_project()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#muvid.mcp.VisualizerWorkspace.list_projects"><code class="docutils literal notranslate"><span class="pre">VisualizerWorkspace.list_projects()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#muvid.mcp.VisualizerWorkspace.open_project"><code class="docutils literal notranslate"><span class="pre">VisualizerWorkspace.open_project()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.mcp.build_server"><code class="docutils literal notranslate"><span class="pre">build_server()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.mcp.current_email"><code class="docutils literal notranslate"><span class="pre">current_email()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.mcp.data_root"><code class="docutils literal notranslate"><span class="pre">data_root()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.mcp.register_tools"><code class="docutils literal notranslate"><span class="pre">register_tools()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.mcp.token_email"><code class="docutils literal notranslate"><span class="pre">token_email()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.mcp.use_email"><code class="docutils literal notranslate"><span class="pre">use_email()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="mcp/_fetch.html">muvid.mcp._fetch</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mcp/_guide.html">muvid.mcp._guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mcp/identity.html">muvid.mcp.identity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mcp/tools.html">muvid.mcp.tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mcp/workspace.html">muvid.mcp.workspace</a></li>
+<li class="toctree-l1"><a class="reference internal" href="project.html">muvid.project</a></li>
+<li class="toctree-l1"><a class="reference internal" href="renderers.html">muvid.renderers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="renderers/_common.html">muvid.renderers._common</a></li>
+<li class="toctree-l1"><a class="reference internal" href="renderers/animation.html">muvid.renderers.animation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="renderers/image_to_video.html">muvid.renderers.image_to_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="renderers/lipsync.html">muvid.renderers.lipsync</a></li>
+<li class="toctree-l1"><a class="reference internal" href="renderers/still.html">muvid.renderers.still</a></li>
+<li class="toctree-l1"><a class="reference internal" href="renderers/text_to_video.html">muvid.renderers.text_to_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="schema.html">muvid.schema</a></li>
+<li class="toctree-l1"><a class="reference internal" href="script.html">muvid.script</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ui.html">muvid.ui</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ui/app.html">muvid.ui.app</a></li>
+<li class="toctree-l1"><a class="reference internal" href="visualize.html">muvid.visualize</a></li>
+<li class="toctree-l1"><a class="reference internal" href="visualize/canvas.html">muvid.visualize.canvas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="visualize/ffmpeg.html">muvid.visualize.ffmpeg</a></li>
+<li class="toctree-l1"><a class="reference internal" href="visualize/verify.html">muvid.visualize.verify</a></li>
+<li class="toctree-l1"><a class="reference internal" href="visualize/video.html">muvid.visualize.video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="visualize/visuals.html">muvid.visualize.visuals</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">muvid</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">muvid.mcp</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/module_docs/muvid/mcp.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-muvid.mcp">
+<span id="muvid-mcp"></span><h1>muvid.mcp<a class="headerlink" href="#module-muvid.mcp" title="Link to this heading"></a></h1>
+<p>muvid MCP server — the <code class="docutils literal notranslate"><span class="pre">music-visualizer</span></code> tool surface for a remote connector.</p>
+<p>Optional subpackage (extra <code class="docutils literal notranslate"><span class="pre">muvid[mcp]</span></code>: <code class="docutils literal notranslate"><span class="pre">fastmcp</span></code> + <code class="docutils literal notranslate"><span class="pre">py2mcp</span></code> + <code class="docutils literal notranslate"><span class="pre">nw</span></code>).
+<code class="docutils literal notranslate"><span class="pre">import</span> <span class="pre">muvid</span></code> never imports this. The connector references the tools by name via
+<a class="reference internal" href="#muvid.mcp.TOOL_REFS" title="muvid.mcp.TOOL_REFS"><code class="xref py py-data docutils literal notranslate"><span class="pre">TOOL_REFS</span></code></a>; <a class="reference internal" href="#muvid.mcp.register_tools" title="muvid.mcp.register_tools"><code class="xref py py-func docutils literal notranslate"><span class="pre">register_tools()</span></code></a> aggregates them onto a host FastMCP server
+(the unified reelee AV connector, thorwhalen/muvid#3), and <a class="reference internal" href="#muvid.mcp.build_server" title="muvid.mcp.build_server"><code class="xref py py-func docutils literal notranslate"><span class="pre">build_server()</span></code></a>
+assembles a standalone server for local (stdio) testing.</p>
+<p>Every tool is <strong>free</strong> (<a class="reference internal" href="#muvid.mcp.FREE_TOOLS" title="muvid.mcp.FREE_TOOLS"><code class="xref py py-data docutils literal notranslate"><span class="pre">FREE_TOOLS</span></code></a> == <a class="reference internal" href="#muvid.mcp.TOOL_NAMES" title="muvid.mcp.TOOL_NAMES"><code class="xref py py-data docutils literal notranslate"><span class="pre">TOOL_NAMES</span></code></a>): the visualizer spends
+no money. There are no costed tools, so there is no metering here — a host records the
+calls and, when it sets <code class="docutils literal notranslate"><span class="pre">metered_tools</span></code>, these bypass its credit gate.</p>
+<dl class="py data">
+<dt class="sig sig-object py" id="muvid.mcp.FREE_TOOLS">
+<span class="sig-prename descclassname"><span class="pre">muvid.mcp.</span></span><span class="sig-name descname"><span class="pre">FREE_TOOLS</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['list_visuals',</span> <span class="pre">'list_projects',</span> <span class="pre">'project_status',</span> <span class="pre">'render_visualizer']</span></span><a class="headerlink" href="#muvid.mcp.FREE_TOOLS" title="Link to this definition"></a></dt>
+<dd><p>Alias — muvid has no costed tools.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="muvid.mcp.TOOL_NAMES">
+<span class="sig-prename descclassname"><span class="pre">muvid.mcp.</span></span><span class="sig-name descname"><span class="pre">TOOL_NAMES</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['list_visuals',</span> <span class="pre">'list_projects',</span> <span class="pre">'project_status',</span> <span class="pre">'render_visualizer']</span></span><a class="headerlink" href="#muvid.mcp.TOOL_NAMES" title="Link to this definition"></a></dt>
+<dd><p>The tools this package exposes (all free). Bare names; a host may prefix them.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="muvid.mcp.TOOL_REFS">
+<span class="sig-prename descclassname"><span class="pre">muvid.mcp.</span></span><span class="sig-name descname"><span class="pre">TOOL_REFS</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['muvid.mcp.tools:list_visuals',</span> <span class="pre">'muvid.mcp.tools:list_projects',</span> <span class="pre">'muvid.mcp.tools:project_status',</span> <span class="pre">'muvid.mcp.tools:render_visualizer']</span></span><a class="headerlink" href="#muvid.mcp.TOOL_REFS" title="Link to this definition"></a></dt>
+<dd><p><code class="docutils literal notranslate"><span class="pre">mod:fn</span></code> references for py2mcp-style aggregation.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="muvid.mcp.VisualizerWorkspace">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">muvid.mcp.</span></span><span class="sig-name descname"><span class="pre">VisualizerWorkspace</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">email</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">root</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/muvid/mcp/workspace.html#VisualizerWorkspace"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.mcp.VisualizerWorkspace" title="Link to this definition"></a></dt>
+<dd><p>A single caller’s private visualizer area, addressed by <code class="docutils literal notranslate"><span class="pre">email</span></code>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">email</span></code> and every <code class="docutils literal notranslate"><span class="pre">project_id</span></code> are validated as single path components, so a
+caller can never escape their own subtree.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="muvid.mcp.VisualizerWorkspace.create_project">
+<span class="sig-name descname"><span class="pre">create_project</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">project_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="mcp/workspace.html#muvid.mcp.workspace.VisualizerProject" title="muvid.mcp.workspace.VisualizerProject"><span class="pre">VisualizerProject</span></a></span></span><a class="reference internal" href="../../_modules/muvid/mcp/workspace.html#VisualizerWorkspace.create_project"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.mcp.VisualizerWorkspace.create_project" title="Link to this definition"></a></dt>
+<dd><p>Create (and return) a new visualizer bucket under this user.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="muvid.mcp.VisualizerWorkspace.list_projects">
+<span class="sig-name descname"><span class="pre">list_projects</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/muvid/mcp/workspace.html#VisualizerWorkspace.list_projects"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.mcp.VisualizerWorkspace.list_projects" title="Link to this definition"></a></dt>
+<dd><p>This user’s buckets: <code class="docutils literal notranslate"><span class="pre">[{project_id,</span> <span class="pre">title}]</span></code> (newest-modified first).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="muvid.mcp.VisualizerWorkspace.open_project">
+<span class="sig-name descname"><span class="pre">open_project</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">project_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="mcp/workspace.html#muvid.mcp.workspace.VisualizerProject" title="muvid.mcp.workspace.VisualizerProject"><span class="pre">VisualizerProject</span></a></span></span><a class="reference internal" href="../../_modules/muvid/mcp/workspace.html#VisualizerWorkspace.open_project"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.mcp.VisualizerWorkspace.open_project" title="Link to this definition"></a></dt>
+<dd><p>Open an existing visualizer bucket (raises if it doesn’t exist).</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.mcp.build_server">
+<span class="sig-prename descclassname"><span class="pre">muvid.mcp.</span></span><span class="sig-name descname"><span class="pre">build_server</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'muvid'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">instructions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&quot;muvid</span> <span class="pre">music-visualizer</span> <span class="pre">—</span> <span class="pre">turn</span> <span class="pre">a</span> <span class="pre">song</span> <span class="pre">into</span> <span class="pre">a</span> <span class="pre">16:9,</span> <span class="pre">YouTube-ready</span> <span class="pre">visualizer</span> <span class="pre">video</span> <span class="pre">(+</span> <span class="pre">thumbnail),</span> <span class="pre">deterministically</span> <span class="pre">and</span> <span class="pre">for</span> <span class="pre">free</span> <span class="pre">(ffmpeg</span> <span class="pre">only,</span> <span class="pre">no</span> <span class="pre">AI,</span> <span class="pre">no</span> <span class="pre">keys).\n\nWorkflow:\n1.</span> <span class="pre">Create</span> <span class="pre">a</span> <span class="pre">project:</span> <span class="pre">create_project(genre='music-visualizer',</span> <span class="pre">template='&lt;look&gt;').</span> <span class="pre">See</span> <span class="pre">list_visuals()</span> <span class="pre">for</span> <span class="pre">the</span> <span class="pre">looks</span> <span class="pre">(still</span> <span class="pre">/</span> <span class="pre">cqt</span> <span class="pre">/</span> <span class="pre">bars</span> <span class="pre">/</span> <span class="pre">spectrum</span> <span class="pre">/</span> <span class="pre">waves</span> <span class="pre">/</span> <span class="pre">scope)</span> <span class="pre">or</span> <span class="pre">use</span> <span class="pre">'auto'.\n2.</span> <span class="pre">Render:</span> <span class="pre">render_visualizer(project_id,</span> <span class="pre">audio='&lt;https</span> <span class="pre">URL</span> <span class="pre">to</span> <span class="pre">the</span> <span class="pre">song&gt;',</span> <span class="pre">cover='&lt;https</span> <span class="pre">URL</span> <span class="pre">to</span> <span class="pre">the</span> <span class="pre">cover&gt;',</span> <span class="pre">visual='&lt;look&gt;').</span> <span class="pre">Audio/cover</span> <span class="pre">are</span> <span class="pre">direct</span> <span class="pre">media</span> <span class="pre">URLs,</span> <span class="pre">fetched</span> <span class="pre">server-side;</span> <span class="pre">the</span> <span class="pre">'still'</span> <span class="pre">look</span> <span class="pre">needs</span> <span class="pre">a</span> <span class="pre">cover.\n3.</span> <span class="pre">Inspect:</span> <span class="pre">project_status(project_id)</span> <span class="pre">lists</span> <span class="pre">your</span> <span class="pre">renders</span> <span class="pre">(paths</span> <span class="pre">+</span> <span class="pre">the</span> <span class="pre">platform-check</span> <span class="pre">verdict).\n\nAll</span> <span class="pre">tools</span> <span class="pre">are</span> <span class="pre">free.</span> <span class="pre">Renders</span> <span class="pre">are</span> <span class="pre">stored</span> <span class="pre">server-side</span> <span class="pre">in</span> <span class="pre">your</span> <span class="pre">project</span> <span class="pre">bucket.&quot;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">auth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">middleware</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/muvid/mcp.html#build_server"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.mcp.build_server" title="Link to this definition"></a></dt>
+<dd><p>Assemble a standalone FastMCP server exposing muvid’s tools (stdio dev/testing).</p>
+<p>The hosted path aggregates onto the reelee connector via <a class="reference internal" href="#muvid.mcp.register_tools" title="muvid.mcp.register_tools"><code class="xref py py-func docutils literal notranslate"><span class="pre">register_tools()</span></code></a>;
+this is the convenience builder for <code class="docutils literal notranslate"><span class="pre">muvid.mcp</span></code> on its own.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.mcp.current_email">
+<span class="sig-prename descclassname"><span class="pre">muvid.mcp.</span></span><span class="sig-name descname"><span class="pre">current_email</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../_modules/muvid/mcp/identity.html#current_email"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.mcp.current_email" title="Link to this definition"></a></dt>
+<dd><p>The caller’s identity for the in-flight tool call (raises if unauthenticated).</p>
+<p>Resolves from the explicit <a class="reference internal" href="#muvid.mcp.use_email" title="muvid.mcp.use_email"><code class="xref py py-func docutils literal notranslate"><span class="pre">use_email()</span></code></a> override when present (local/stdio/
+tests), else the verified OAuth token — so tools work under any host middleware, and
+an unauthenticated call is failed closed.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.mcp.data_root">
+<span class="sig-prename descclassname"><span class="pre">muvid.mcp.</span></span><span class="sig-name descname"><span class="pre">data_root</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Path</span></span></span><a class="reference internal" href="../../_modules/muvid/mcp/workspace.html#data_root"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.mcp.data_root" title="Link to this definition"></a></dt>
+<dd><p>The muvid data root: <code class="docutils literal notranslate"><span class="pre">$MUVID_DATA_HOME</span></code> or <code class="docutils literal notranslate"><span class="pre">~/.local/share/muvid</span></code>.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.mcp.register_tools">
+<span class="sig-prename descclassname"><span class="pre">muvid.mcp.</span></span><span class="sig-name descname"><span class="pre">register_tools</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">server</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">include</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exclude</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/muvid/mcp.html#register_tools"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.mcp.register_tools" title="Link to this definition"></a></dt>
+<dd><p>Register muvid’s MCP tools onto an EXISTING FastMCP <code class="docutils literal notranslate"><span class="pre">server</span></code> — the aggregation
+seam for a host connector (the unified reelee connector, muvid#3).</p>
+<p>Mirrors <code class="docutils literal notranslate"><span class="pre">braidio.mcp.register_tools</span></code> / <code class="docutils literal notranslate"><span class="pre">falaw.bridges.mcp.register_tools</span></code>.
+<code class="docutils literal notranslate"><span class="pre">prefix</span></code> namespaces the tool names (e.g. <code class="docutils literal notranslate"><span class="pre">&quot;muvid_&quot;</span></code>) to avoid collisions;
+<code class="docutils literal notranslate"><span class="pre">include</span></code> / <code class="docutils literal notranslate"><span class="pre">exclude</span></code> (sets of bare names) select a subset. Returns the
+registered (prefixed) names. The host installs identity/metering separately —
+muvid’s tools resolve the caller via <a class="reference internal" href="#muvid.mcp.current_email" title="muvid.mcp.current_email"><code class="xref py py-func docutils literal notranslate"><span class="pre">current_email()</span></code></a>, which works under any
+host middleware.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.mcp.token_email">
+<span class="sig-prename descclassname"><span class="pre">muvid.mcp.</span></span><span class="sig-name descname"><span class="pre">token_email</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/muvid/mcp/identity.html#token_email"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.mcp.token_email" title="Link to this definition"></a></dt>
+<dd><p>The verified caller’s email from the OAuth token (<code class="docutils literal notranslate"><span class="pre">email</span></code> claim, else <code class="docutils literal notranslate"><span class="pre">sub</span></code>).</p>
+<p>Lowercased, or <code class="docutils literal notranslate"><span class="pre">None</span></code> when there is no request/token context — deliberately no
+fallback, so a caller is failed closed rather than handed a shared identity.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.mcp.use_email">
+<span class="sig-prename descclassname"><span class="pre">muvid.mcp.</span></span><span class="sig-name descname"><span class="pre">use_email</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">email</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/muvid/mcp/identity.html#use_email"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.mcp.use_email" title="Link to this definition"></a></dt>
+<dd><p>Bind the caller identity for the duration of the block (local/stdio/testing).</p>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="lyrics.html" class="btn btn-neutral float-left" title="muvid.lyrics" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="mcp/_fetch.html" class="btn btn-neutral float-right" title="muvid.mcp._fetch" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p></p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

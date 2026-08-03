@@ -1,0 +1,185 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>muvid.mcp.identity &mdash; muvid 0.0.8 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=53b53b71"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
+      <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="muvid.mcp.tools" href="tools.html" />
+    <link rel="prev" title="muvid.mcp._guide" href="_guide.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            muvid
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../muvid.html">muvid</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../__main__.html">muvid.__main__</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../align.html">muvid.align</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../characters.html">muvid.characters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../compose.html">muvid.compose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contracts.html">muvid.contracts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cost.html">muvid.cost</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../environments.html">muvid.environments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../events.html">muvid.events</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../facade.html">muvid.facade</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../genre.html">muvid.genre</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../lyrics.html">muvid.lyrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mcp.html">muvid.mcp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="_fetch.html">muvid.mcp._fetch</a></li>
+<li class="toctree-l1"><a class="reference internal" href="_guide.html">muvid.mcp._guide</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">muvid.mcp.identity</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.mcp.identity.current_email"><code class="docutils literal notranslate"><span class="pre">current_email()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.mcp.identity.token_email"><code class="docutils literal notranslate"><span class="pre">token_email()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.mcp.identity.use_email"><code class="docutils literal notranslate"><span class="pre">use_email()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tools.html">muvid.mcp.tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="workspace.html">muvid.mcp.workspace</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../project.html">muvid.project</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../renderers.html">muvid.renderers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../renderers/_common.html">muvid.renderers._common</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../renderers/animation.html">muvid.renderers.animation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../renderers/image_to_video.html">muvid.renderers.image_to_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../renderers/lipsync.html">muvid.renderers.lipsync</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../renderers/still.html">muvid.renderers.still</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../renderers/text_to_video.html">muvid.renderers.text_to_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../schema.html">muvid.schema</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../script.html">muvid.script</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ui.html">muvid.ui</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ui/app.html">muvid.ui.app</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../visualize.html">muvid.visualize</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../visualize/canvas.html">muvid.visualize.canvas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../visualize/ffmpeg.html">muvid.visualize.ffmpeg</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../visualize/verify.html">muvid.visualize.verify</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../visualize/video.html">muvid.visualize.video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../visualize/visuals.html">muvid.visualize.visuals</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">muvid</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">muvid.mcp.identity</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../_sources/module_docs/muvid/mcp/identity.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-muvid.mcp.identity">
+<span id="muvid-mcp-identity"></span><h1>muvid.mcp.identity<a class="headerlink" href="#module-muvid.mcp.identity" title="Link to this heading"></a></h1>
+<p>Caller identity for the muvid MCP tools — resolved from the OAuth token, fail-closed.</p>
+<p>A hosted connector is multi-user: every tool must place work under the <em>verified</em>
+caller, never a shared/ambient identity. muvid’s tools resolve the caller via
+<a class="reference internal" href="#muvid.mcp.identity.current_email" title="muvid.mcp.identity.current_email"><code class="xref py py-func docutils literal notranslate"><span class="pre">current_email()</span></code></a>, which reads the fastmcp request’s access token — so they work
+under ANY host middleware, including the shared <code class="docutils literal notranslate"><span class="pre">enlace_metering.MeteringMiddleware</span></code>
+the unified reelee connector installs (thorwhalen/reelee#232), which keys its own
+context var. There is <strong>no fallback</strong> beyond the token: an unauthenticated call is
+failed closed. Mirrors <code class="docutils literal notranslate"><span class="pre">braidio.mcp.metering.token_email</span></code>/<code class="docutils literal notranslate"><span class="pre">current_email</span></code>.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.mcp.identity.current_email">
+<span class="sig-prename descclassname"><span class="pre">muvid.mcp.identity.</span></span><span class="sig-name descname"><span class="pre">current_email</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../../_modules/muvid/mcp/identity.html#current_email"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.mcp.identity.current_email" title="Link to this definition"></a></dt>
+<dd><p>The caller’s identity for the in-flight tool call (raises if unauthenticated).</p>
+<p>Resolves from the explicit <a class="reference internal" href="#muvid.mcp.identity.use_email" title="muvid.mcp.identity.use_email"><code class="xref py py-func docutils literal notranslate"><span class="pre">use_email()</span></code></a> override when present (local/stdio/
+tests), else the verified OAuth token — so tools work under any host middleware, and
+an unauthenticated call is failed closed.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.mcp.identity.token_email">
+<span class="sig-prename descclassname"><span class="pre">muvid.mcp.identity.</span></span><span class="sig-name descname"><span class="pre">token_email</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../../../_modules/muvid/mcp/identity.html#token_email"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.mcp.identity.token_email" title="Link to this definition"></a></dt>
+<dd><p>The verified caller’s email from the OAuth token (<code class="docutils literal notranslate"><span class="pre">email</span></code> claim, else <code class="docutils literal notranslate"><span class="pre">sub</span></code>).</p>
+<p>Lowercased, or <code class="docutils literal notranslate"><span class="pre">None</span></code> when there is no request/token context — deliberately no
+fallback, so a caller is failed closed rather than handed a shared identity.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.mcp.identity.use_email">
+<span class="sig-prename descclassname"><span class="pre">muvid.mcp.identity.</span></span><span class="sig-name descname"><span class="pre">use_email</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">email</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/muvid/mcp/identity.html#use_email"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.mcp.identity.use_email" title="Link to this definition"></a></dt>
+<dd><p>Bind the caller identity for the duration of the block (local/stdio/testing).</p>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="_guide.html" class="btn btn-neutral float-left" title="muvid.mcp._guide" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="tools.html" class="btn btn-neutral float-right" title="muvid.mcp.tools" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p></p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

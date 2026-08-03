@@ -1,0 +1,215 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>muvid.mcp._fetch &mdash; muvid 0.0.8 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=53b53b71"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
+      <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="muvid.mcp._guide" href="_guide.html" />
+    <link rel="prev" title="muvid.mcp" href="../mcp.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            muvid
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../muvid.html">muvid</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../__main__.html">muvid.__main__</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../align.html">muvid.align</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../characters.html">muvid.characters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../compose.html">muvid.compose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contracts.html">muvid.contracts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cost.html">muvid.cost</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../environments.html">muvid.environments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../events.html">muvid.events</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../facade.html">muvid.facade</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../genre.html">muvid.genre</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../lyrics.html">muvid.lyrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mcp.html">muvid.mcp</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">muvid.mcp._fetch</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.mcp._fetch.FetchError"><code class="docutils literal notranslate"><span class="pre">FetchError</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.mcp._fetch.MAX_BYTES"><code class="docutils literal notranslate"><span class="pre">MAX_BYTES</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.mcp._fetch.MAX_REDIRECTS"><code class="docutils literal notranslate"><span class="pre">MAX_REDIRECTS</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.mcp._fetch.TOTAL_TIMEOUT_S"><code class="docutils literal notranslate"><span class="pre">TOTAL_TIMEOUT_S</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.mcp._fetch.fetch_bytes"><code class="docutils literal notranslate"><span class="pre">fetch_bytes()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.mcp._fetch.fetch_to_file"><code class="docutils literal notranslate"><span class="pre">fetch_to_file()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="_guide.html">muvid.mcp._guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="identity.html">muvid.mcp.identity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tools.html">muvid.mcp.tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="workspace.html">muvid.mcp.workspace</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../project.html">muvid.project</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../renderers.html">muvid.renderers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../renderers/_common.html">muvid.renderers._common</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../renderers/animation.html">muvid.renderers.animation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../renderers/image_to_video.html">muvid.renderers.image_to_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../renderers/lipsync.html">muvid.renderers.lipsync</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../renderers/still.html">muvid.renderers.still</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../renderers/text_to_video.html">muvid.renderers.text_to_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../schema.html">muvid.schema</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../script.html">muvid.script</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ui.html">muvid.ui</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ui/app.html">muvid.ui.app</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../visualize.html">muvid.visualize</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../visualize/canvas.html">muvid.visualize.canvas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../visualize/ffmpeg.html">muvid.visualize.ffmpeg</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../visualize/verify.html">muvid.visualize.verify</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../visualize/video.html">muvid.visualize.video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../visualize/visuals.html">muvid.visualize.visuals</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">muvid</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">muvid.mcp._fetch</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../_sources/module_docs/muvid/mcp/_fetch.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-muvid.mcp._fetch">
+<span id="muvid-mcp-fetch"></span><h1>muvid.mcp._fetch<a class="headerlink" href="#module-muvid.mcp._fetch" title="Link to this heading"></a></h1>
+<p>SSRF-hardened fetch of a caller-supplied media URL (server-side, shared prod box).</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">music-visualizer</span></code> tools fetch a user-given audio (and optional cover) URL on the
+server, so an unguarded fetch is a server-side request forgery hole: a URL could point
+at localhost, cloud metadata (169.254.169.254), or a private/link-local address. This
+module is the guard — a deliberately minimal, dependency-free mirror of braidio’s
+<code class="docutils literal notranslate"><span class="pre">braidio.mcp._docs</span></code> (which muvid must not import — wrong dependency direction). It is
+no weaker than that guard:</p>
+<ul class="simple">
+<li><p><strong>scheme</strong> must be <code class="docutils literal notranslate"><span class="pre">http</span></code>/<code class="docutils literal notranslate"><span class="pre">https</span></code> on ports {80, 443};</p></li>
+<li><p>the <strong>host must resolve to a public address</strong> (<a href="#id1"><span class="problematic" id="id2">:pyattr:`ipaddress.is_global`</span></a>), which
+rejects loopback/private/link-local/reserved/carrier-grade-NAT, IPv4-mapped IPv6 too;</p></li>
+<li><p><strong>redirects are NOT auto-followed</strong> — every hop’s <code class="docutils literal notranslate"><span class="pre">Location</span></code> is re-validated, so a
+public URL can’t 302 into an internal one;</p></li>
+<li><p>the whole fetch is bounded by a wall-clock deadline, a redirect cap, and a total-bytes
+cap (chunked read), so a slow-loris or redirect loop can’t pin a worker.</p></li>
+</ul>
+<p>Because audio is legitimately tens of MB, the byte cap is larger than a document cap and
+env-tunable. A per-<em>duration</em> cap (a long song is cheap to download but expensive to
+render) is enforced separately, on the render path, via <code class="docutils literal notranslate"><span class="pre">muvid.visualize.media_duration</span></code>.</p>
+<p>A shared, zero-dep safe-fetch util (folding braidio’s and this one together) is a filed
+follow-up; until then each connector keeps its own guard rather than sharing a weaker one.</p>
+<dl class="py exception">
+<dt class="sig sig-object py" id="muvid.mcp._fetch.FetchError">
+<span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">muvid.mcp._fetch.</span></span><span class="sig-name descname"><span class="pre">FetchError</span></span><a class="reference internal" href="../../../_modules/muvid/mcp/_fetch.html#FetchError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.mcp._fetch.FetchError" title="Link to this definition"></a></dt>
+<dd><p>A media fetch was rejected (unsafe target) or failed (network/size/timeout).</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="muvid.mcp._fetch.MAX_BYTES">
+<span class="sig-prename descclassname"><span class="pre">muvid.mcp._fetch.</span></span><span class="sig-name descname"><span class="pre">MAX_BYTES</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">62914560</span></span><a class="headerlink" href="#muvid.mcp._fetch.MAX_BYTES" title="Link to this definition"></a></dt>
+<dd><p>Total-bytes cap for a media fetch (env <code class="docutils literal notranslate"><span class="pre">MUVID_FETCH_MAX_BYTES</span></code>; default 60 MB —
+audio is legitimately large, matching braidio’s audio-download cap intent).</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="muvid.mcp._fetch.MAX_REDIRECTS">
+<span class="sig-prename descclassname"><span class="pre">muvid.mcp._fetch.</span></span><span class="sig-name descname"><span class="pre">MAX_REDIRECTS</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">5</span></span><a class="headerlink" href="#muvid.mcp._fetch.MAX_REDIRECTS" title="Link to this definition"></a></dt>
+<dd><p>Redirect-hop cap (each hop is re-validated).</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="muvid.mcp._fetch.TOTAL_TIMEOUT_S">
+<span class="sig-prename descclassname"><span class="pre">muvid.mcp._fetch.</span></span><span class="sig-name descname"><span class="pre">TOTAL_TIMEOUT_S</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">60.0</span></span><a class="headerlink" href="#muvid.mcp._fetch.TOTAL_TIMEOUT_S" title="Link to this definition"></a></dt>
+<dd><p>Wall-clock deadline for the whole fetch, in seconds (env <code class="docutils literal notranslate"><span class="pre">MUVID_FETCH_TIMEOUT_S</span></code>).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.mcp._fetch.fetch_bytes">
+<span class="sig-prename descclassname"><span class="pre">muvid.mcp._fetch.</span></span><span class="sig-name descname"><span class="pre">fetch_bytes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">uri</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bytes</span></span></span><a class="reference internal" href="../../../_modules/muvid/mcp/_fetch.html#fetch_bytes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.mcp._fetch.fetch_bytes" title="Link to this definition"></a></dt>
+<dd><p>Fetch <code class="docutils literal notranslate"><span class="pre">uri</span></code>’s body as bytes, re-validating scheme/host/port at EVERY hop.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.mcp._fetch.fetch_to_file">
+<span class="sig-prename descclassname"><span class="pre">muvid.mcp._fetch.</span></span><span class="sig-name descname"><span class="pre">fetch_to_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">uri</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dest</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Path</span></span></span><a class="reference internal" href="../../../_modules/muvid/mcp/_fetch.html#fetch_to_file"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.mcp._fetch.fetch_to_file" title="Link to this definition"></a></dt>
+<dd><p>Fetch <code class="docutils literal notranslate"><span class="pre">uri</span></code> to <code class="docutils literal notranslate"><span class="pre">dest</span></code> (SSRF-guarded, size/time-bounded). Returns <code class="docutils literal notranslate"><span class="pre">dest</span></code>.</p>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../mcp.html" class="btn btn-neutral float-left" title="muvid.mcp" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="_guide.html" class="btn btn-neutral float-right" title="muvid.mcp._guide" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p></p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

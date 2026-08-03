@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.visualize.ffmpeg &mdash; muvid 0.0.7 documentation</title>
+  <title>muvid.visualize.ffmpeg &mdash; muvid 0.0.8 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -15,7 +15,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=bbaf98b3"></script>
+      <script src="../../../_static/documentation_options.js?v=53b53b71"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -59,7 +59,14 @@
 <li class="toctree-l1"><a class="reference internal" href="../environments.html">muvid.environments</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../events.html">muvid.events</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../facade.html">muvid.facade</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../genre.html">muvid.genre</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../lyrics.html">muvid.lyrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mcp.html">muvid.mcp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mcp/_fetch.html">muvid.mcp._fetch</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mcp/_guide.html">muvid.mcp._guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mcp/identity.html">muvid.mcp.identity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mcp/tools.html">muvid.mcp.tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mcp/workspace.html">muvid.mcp.workspace</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../project.html">muvid.project</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../renderers.html">muvid.renderers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../renderers/_common.html">muvid.renderers._common</a></li>
@@ -76,6 +83,7 @@
 <li class="toctree-l1"><a class="reference internal" href="canvas.html">muvid.visualize.canvas</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">muvid.visualize.ffmpeg</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.visualize.ffmpeg.DEFAULT_LOUDNESS_I"><code class="docutils literal notranslate"><span class="pre">DEFAULT_LOUDNESS_I</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.visualize.ffmpeg.FFMPEG_TIMEOUT_ENV_VAR"><code class="docutils literal notranslate"><span class="pre">FFMPEG_TIMEOUT_ENV_VAR</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.visualize.ffmpeg.FfmpegError"><code class="docutils literal notranslate"><span class="pre">FfmpegError</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.visualize.ffmpeg.Loudness"><code class="docutils literal notranslate"><span class="pre">Loudness</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#muvid.visualize.ffmpeg.Loudness.filter_spec"><code class="docutils literal notranslate"><span class="pre">Loudness.filter_spec()</span></code></a></li>
@@ -135,6 +143,16 @@ and <a class="reference internal" href="video.html#module-muvid.visualize.video"
 <dd><p>Loudness targets, in the units EBU R128 / ffmpeg <code class="docutils literal notranslate"><span class="pre">loudnorm</span></code> uses.
 The defaults match what YouTube normalizes playback to, so a track mastered
 here is neither turned down nor left quiet relative to the rest of a playlist.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="muvid.visualize.ffmpeg.FFMPEG_TIMEOUT_ENV_VAR">
+<span class="sig-prename descclassname"><span class="pre">muvid.visualize.ffmpeg.</span></span><span class="sig-name descname"><span class="pre">FFMPEG_TIMEOUT_ENV_VAR</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'MUVID_FFMPEG_TIMEOUT_S'</span></span><a class="headerlink" href="#muvid.visualize.ffmpeg.FFMPEG_TIMEOUT_ENV_VAR" title="Link to this definition"></a></dt>
+<dd><p>Env var bounding a single ffmpeg invocation’s wall-clock (seconds). Unset =
+no timeout (the historical behaviour). A long-running host (the reelee MCP
+connector renders synchronously over HTTP) sets this so an oversized or
+adversarial input can’t pin a worker indefinitely — a belt-and-braces bound
+on top of the caller’s own input-duration cap.</p>
 </dd></dl>
 
 <dl class="py exception">

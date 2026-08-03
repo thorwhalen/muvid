@@ -1,0 +1,239 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>muvid.mcp.workspace &mdash; muvid 0.0.8 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=53b53b71"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
+      <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="muvid.project" href="../project.html" />
+    <link rel="prev" title="muvid.mcp.tools" href="tools.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            muvid
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../muvid.html">muvid</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../__main__.html">muvid.__main__</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../align.html">muvid.align</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../characters.html">muvid.characters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../compose.html">muvid.compose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contracts.html">muvid.contracts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cost.html">muvid.cost</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../environments.html">muvid.environments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../events.html">muvid.events</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../facade.html">muvid.facade</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../genre.html">muvid.genre</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../lyrics.html">muvid.lyrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mcp.html">muvid.mcp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="_fetch.html">muvid.mcp._fetch</a></li>
+<li class="toctree-l1"><a class="reference internal" href="_guide.html">muvid.mcp._guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="identity.html">muvid.mcp.identity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tools.html">muvid.mcp.tools</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">muvid.mcp.workspace</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.mcp.workspace.DATA_HOME_ENV_VAR"><code class="docutils literal notranslate"><span class="pre">DATA_HOME_ENV_VAR</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.mcp.workspace.VisualizerProject"><code class="docutils literal notranslate"><span class="pre">VisualizerProject</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#muvid.mcp.workspace.VisualizerProject.list_renders"><code class="docutils literal notranslate"><span class="pre">VisualizerProject.list_renders()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#muvid.mcp.workspace.VisualizerProject.new_render_dir"><code class="docutils literal notranslate"><span class="pre">VisualizerProject.new_render_dir()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.mcp.workspace.VisualizerWorkspace"><code class="docutils literal notranslate"><span class="pre">VisualizerWorkspace</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#muvid.mcp.workspace.VisualizerWorkspace.create_project"><code class="docutils literal notranslate"><span class="pre">VisualizerWorkspace.create_project()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#muvid.mcp.workspace.VisualizerWorkspace.list_projects"><code class="docutils literal notranslate"><span class="pre">VisualizerWorkspace.list_projects()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#muvid.mcp.workspace.VisualizerWorkspace.open_project"><code class="docutils literal notranslate"><span class="pre">VisualizerWorkspace.open_project()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.mcp.workspace.data_root"><code class="docutils literal notranslate"><span class="pre">data_root()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../project.html">muvid.project</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../renderers.html">muvid.renderers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../renderers/_common.html">muvid.renderers._common</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../renderers/animation.html">muvid.renderers.animation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../renderers/image_to_video.html">muvid.renderers.image_to_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../renderers/lipsync.html">muvid.renderers.lipsync</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../renderers/still.html">muvid.renderers.still</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../renderers/text_to_video.html">muvid.renderers.text_to_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../schema.html">muvid.schema</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../script.html">muvid.script</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ui.html">muvid.ui</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ui/app.html">muvid.ui.app</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../visualize.html">muvid.visualize</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../visualize/canvas.html">muvid.visualize.canvas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../visualize/ffmpeg.html">muvid.visualize.ffmpeg</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../visualize/verify.html">muvid.visualize.verify</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../visualize/video.html">muvid.visualize.video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../visualize/visuals.html">muvid.visualize.visuals</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">muvid</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">muvid.mcp.workspace</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../_sources/module_docs/muvid/mcp/workspace.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-muvid.mcp.workspace">
+<span id="muvid-mcp-workspace"></span><h1>muvid.mcp.workspace<a class="headerlink" href="#module-muvid.mcp.workspace" title="Link to this heading"></a></h1>
+<p>Per-user output bucket for the muvid <code class="docutils literal notranslate"><span class="pre">music-visualizer</span></code> MCP genre.</p>
+<p>A remote MCP connector is stateless and multi-user, so each caller must be isolated
+and address work by <code class="docutils literal notranslate"><span class="pre">project_id</span></code> (never a path). The visualizer is itself stateless
+— a render is a pure function of (audio, cover, visual) — so a “project” here is just a
+<strong>lightweight bucket</strong> where a caller’s renders land, not a full nw/muvid project (no
+graph, no asset store). That keeps the <code class="docutils literal notranslate"><span class="pre">music-visualizer</span></code> genre the cheapest possible
+2nd genre (thorwhalen/muvid#3); a richer per-user asset library (content-addressed
+uploads shared across genres) is a deliberate follow-up.</p>
+<p>Layout (default root <code class="docutils literal notranslate"><span class="pre">~/.local/share/muvid</span></code>; override via <code class="docutils literal notranslate"><span class="pre">MUVID_DATA_HOME</span></code>):</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">{root}/visualizer/projects/{email}/{project_id}/manifest.json</span></code> — the bucket</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">{root}/visualizer/projects/{email}/{project_id}/renders/{render_id}/</span></code> — one render
+(its <code class="docutils literal notranslate"><span class="pre">.mp4</span></code>, optional <code class="docutils literal notranslate"><span class="pre">thumbnail.jpg</span></code>, and a <code class="docutils literal notranslate"><span class="pre">meta.json</span></code> sidecar)</p></li>
+</ul>
+<p>Per the app-data-lifecycle rule this lives in the user-data dir, <strong>never</strong> inside the
+app/deploy tree (a deploy’s <code class="docutils literal notranslate"><span class="pre">rsync</span> <span class="pre">--delete</span></code> would erase it).</p>
+<dl class="py data">
+<dt class="sig sig-object py" id="muvid.mcp.workspace.DATA_HOME_ENV_VAR">
+<span class="sig-prename descclassname"><span class="pre">muvid.mcp.workspace.</span></span><span class="sig-name descname"><span class="pre">DATA_HOME_ENV_VAR</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'MUVID_DATA_HOME'</span></span><a class="headerlink" href="#muvid.mcp.workspace.DATA_HOME_ENV_VAR" title="Link to this definition"></a></dt>
+<dd><p>Env var overriding the muvid data root (where per-user visualizer buckets live).</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="muvid.mcp.workspace.VisualizerProject">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">muvid.mcp.workspace.</span></span><span class="sig-name descname"><span class="pre">VisualizerProject</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">email</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">project_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">root</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/muvid/mcp/workspace.html#VisualizerProject"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.mcp.workspace.VisualizerProject" title="Link to this definition"></a></dt>
+<dd><p>One caller’s visualizer bucket — a folder its renders land in.</p>
+<p><code class="docutils literal notranslate"><span class="pre">root</span></code> is exposed so <code class="docutils literal notranslate"><span class="pre">nw.create_genre_project</span></code>’s all-or-nothing rollback
+(<code class="docutils literal notranslate"><span class="pre">nw.genres._rollback_project</span></code> removes <code class="docutils literal notranslate"><span class="pre">project.root</span></code>) reverts a half-created
+bucket. Kept storage-only: no nw graph, no asset library.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="muvid.mcp.workspace.VisualizerProject.list_renders">
+<span class="sig-name descname"><span class="pre">list_renders</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../_modules/muvid/mcp/workspace.html#VisualizerProject.list_renders"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.mcp.workspace.VisualizerProject.list_renders" title="Link to this definition"></a></dt>
+<dd><p>This bucket’s renders (newest-first), from each render’s <code class="docutils literal notranslate"><span class="pre">meta.json</span></code>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="muvid.mcp.workspace.VisualizerProject.new_render_dir">
+<span class="sig-name descname"><span class="pre">new_render_dir</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">render_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Path</span></span></span><a class="reference internal" href="../../../_modules/muvid/mcp/workspace.html#VisualizerProject.new_render_dir"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.mcp.workspace.VisualizerProject.new_render_dir" title="Link to this definition"></a></dt>
+<dd><p>Create + return a fresh directory for one render (traversal-checked id).</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="muvid.mcp.workspace.VisualizerWorkspace">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">muvid.mcp.workspace.</span></span><span class="sig-name descname"><span class="pre">VisualizerWorkspace</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">email</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">root</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/muvid/mcp/workspace.html#VisualizerWorkspace"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.mcp.workspace.VisualizerWorkspace" title="Link to this definition"></a></dt>
+<dd><p>A single caller’s private visualizer area, addressed by <code class="docutils literal notranslate"><span class="pre">email</span></code>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">email</span></code> and every <code class="docutils literal notranslate"><span class="pre">project_id</span></code> are validated as single path components, so a
+caller can never escape their own subtree.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="muvid.mcp.workspace.VisualizerWorkspace.create_project">
+<span class="sig-name descname"><span class="pre">create_project</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">project_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#muvid.mcp.workspace.VisualizerProject" title="muvid.mcp.workspace.VisualizerProject"><span class="pre">VisualizerProject</span></a></span></span><a class="reference internal" href="../../../_modules/muvid/mcp/workspace.html#VisualizerWorkspace.create_project"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.mcp.workspace.VisualizerWorkspace.create_project" title="Link to this definition"></a></dt>
+<dd><p>Create (and return) a new visualizer bucket under this user.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="muvid.mcp.workspace.VisualizerWorkspace.list_projects">
+<span class="sig-name descname"><span class="pre">list_projects</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../_modules/muvid/mcp/workspace.html#VisualizerWorkspace.list_projects"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.mcp.workspace.VisualizerWorkspace.list_projects" title="Link to this definition"></a></dt>
+<dd><p>This user’s buckets: <code class="docutils literal notranslate"><span class="pre">[{project_id,</span> <span class="pre">title}]</span></code> (newest-modified first).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="muvid.mcp.workspace.VisualizerWorkspace.open_project">
+<span class="sig-name descname"><span class="pre">open_project</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">project_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#muvid.mcp.workspace.VisualizerProject" title="muvid.mcp.workspace.VisualizerProject"><span class="pre">VisualizerProject</span></a></span></span><a class="reference internal" href="../../../_modules/muvid/mcp/workspace.html#VisualizerWorkspace.open_project"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.mcp.workspace.VisualizerWorkspace.open_project" title="Link to this definition"></a></dt>
+<dd><p>Open an existing visualizer bucket (raises if it doesn’t exist).</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.mcp.workspace.data_root">
+<span class="sig-prename descclassname"><span class="pre">muvid.mcp.workspace.</span></span><span class="sig-name descname"><span class="pre">data_root</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Path</span></span></span><a class="reference internal" href="../../../_modules/muvid/mcp/workspace.html#data_root"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.mcp.workspace.data_root" title="Link to this definition"></a></dt>
+<dd><p>The muvid data root: <code class="docutils literal notranslate"><span class="pre">$MUVID_DATA_HOME</span></code> or <code class="docutils literal notranslate"><span class="pre">~/.local/share/muvid</span></code>.</p>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="tools.html" class="btn btn-neutral float-left" title="muvid.mcp.tools" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../project.html" class="btn btn-neutral float-right" title="muvid.project" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p></p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

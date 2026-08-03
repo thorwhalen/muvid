@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.visualize.ffmpeg &mdash; muvid 0.0.7 documentation</title>
+  <title>muvid.visualize.ffmpeg &mdash; muvid 0.0.8 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=bbaf98b3"></script>
+      <script src="../../../_static/documentation_options.js?v=53b53b71"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -56,7 +56,14 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/environments.html">muvid.environments</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/events.html">muvid.events</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/facade.html">muvid.facade</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/genre.html">muvid.genre</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyrics.html">muvid.lyrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp.html">muvid.mcp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/_fetch.html">muvid.mcp._fetch</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/_guide.html">muvid.mcp._guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/identity.html">muvid.mcp.identity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/tools.html">muvid.mcp.tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/workspace.html">muvid.mcp.workspace</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/project.html">muvid.project</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers.html">muvid.renderers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers/_common.html">muvid.renderers._common</a></li>
@@ -117,6 +124,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">shlex</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
@@ -125,6 +133,26 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 
 <span class="n">PathLike</span> <span class="o">=</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span>
+
+<span class="c1">#: Env var bounding a single ffmpeg invocation&#39;s wall-clock (seconds). Unset =</span>
+<span class="c1">#: no timeout (the historical behaviour). A long-running host (the reelee MCP</span>
+<span class="c1">#: connector renders synchronously over HTTP) sets this so an oversized or</span>
+<span class="c1">#: adversarial input can&#39;t pin a worker indefinitely — a belt-and-braces bound</span>
+<span class="c1">#: on top of the caller&#39;s own input-duration cap.</span>
+<span class="n">FFMPEG_TIMEOUT_ENV_VAR</span> <span class="o">=</span> <span class="s2">&quot;MUVID_FFMPEG_TIMEOUT_S&quot;</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_ffmpeg_timeout</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The per-invocation ffmpeg timeout from ``$MUVID_FFMPEG_TIMEOUT_S`` (or ``None``).&quot;&quot;&quot;</span>
+    <span class="n">raw</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">FFMPEG_TIMEOUT_ENV_VAR</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">raw</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="n">value</span> <span class="k">if</span> <span class="n">value</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="kc">None</span>
+
 
 <span class="c1">#: Loudness targets, in the units EBU R128 / ffmpeg ``loudnorm`` uses.</span>
 <span class="c1">#: The defaults match what YouTube normalizes playback to, so a track mastered</span>
@@ -203,6 +231,25 @@
 
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_run_bounded</span><span class="p">(</span><span class="n">cmd</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">CompletedProcess</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Run an ffmpeg/ffprobe ``cmd`` (capturing output), bounded by the timeout.</span>
+
+<span class="sd">    EVERY ffmpeg/ffprobe spawn that may decode caller-supplied media goes through here,</span>
+<span class="sd">    so ``$MUVID_FFMPEG_TIMEOUT_S`` bounds them all consistently: a metadata-spoofing or</span>
+<span class="sd">    decode-bomb input can&#39;t pin a worker past the timeout on the synchronous render path</span>
+<span class="sd">    (the loudnorm analysis pass and ffprobe are full/partial decodes, not just the mux).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+            <span class="n">cmd</span><span class="p">,</span> <span class="n">capture_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">_ffmpeg_timeout</span><span class="p">()</span>
+        <span class="p">)</span>
+    <span class="k">except</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">TimeoutExpired</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">FfmpegError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">cmd</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2"> timed out after </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">timeout</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2">s &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;(bound by $</span><span class="si">{</span><span class="n">FFMPEG_TIMEOUT_ENV_VAR</span><span class="si">}</span><span class="s2">).</span><span class="se">\n\n</span><span class="s2">command: </span><span class="si">{</span><span class="n">shlex</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+
+
 <div class="viewcode-block" id="run_ffmpeg">
 <a class="viewcode-back" href="../../../module_docs/muvid/visualize/ffmpeg.html#muvid.visualize.run_ffmpeg">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">run_ffmpeg</span><span class="p">(</span>
@@ -227,7 +274,7 @@
     <span class="k">if</span> <span class="n">overwrite</span><span class="p">:</span>
         <span class="n">cmd</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;-y&quot;</span><span class="p">)</span>
     <span class="n">cmd</span> <span class="o">+=</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">args</span><span class="p">]</span>
-    <span class="n">proc</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span> <span class="n">capture_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">proc</span> <span class="o">=</span> <span class="n">_run_bounded</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">proc</span><span class="o">.</span><span class="n">returncode</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
         <span class="n">tail</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">((</span><span class="n">proc</span><span class="o">.</span><span class="n">stderr</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()[</span><span class="o">-</span><span class="mi">15</span><span class="p">:])</span>
         <span class="k">raise</span> <span class="n">FfmpegError</span><span class="p">(</span>
@@ -242,7 +289,7 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">probe</span><span class="p">(</span><span class="n">media</span><span class="p">:</span> <span class="n">PathLike</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return ``ffprobe``&#39;s ``format`` + ``streams`` JSON for ``media``.&quot;&quot;&quot;</span>
     <span class="n">require_ffmpeg</span><span class="p">(</span><span class="s2">&quot;ffprobe&quot;</span><span class="p">)</span>
-    <span class="n">proc</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+    <span class="n">proc</span> <span class="o">=</span> <span class="n">_run_bounded</span><span class="p">(</span>
         <span class="p">[</span>
             <span class="s2">&quot;ffprobe&quot;</span><span class="p">,</span>
             <span class="s2">&quot;-v&quot;</span><span class="p">,</span>
@@ -252,9 +299,7 @@
             <span class="s2">&quot;-of&quot;</span><span class="p">,</span>
             <span class="s2">&quot;json&quot;</span><span class="p">,</span>
             <span class="nb">str</span><span class="p">(</span><span class="n">media</span><span class="p">),</span>
-        <span class="p">],</span>
-        <span class="n">capture_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">]</span>
     <span class="p">)</span>
     <span class="k">if</span> <span class="n">proc</span><span class="o">.</span><span class="n">returncode</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
         <span class="k">raise</span> <span class="n">FfmpegError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;ffprobe could not read </span><span class="si">{</span><span class="n">media</span><span class="si">!s}</span><span class="s2">: </span><span class="si">{</span><span class="n">proc</span><span class="o">.</span><span class="n">stderr</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
@@ -288,9 +333,7 @@
 <span class="nd">@lru_cache</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">_available_filters</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">frozenset</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
     <span class="n">require_ffmpeg</span><span class="p">(</span><span class="s2">&quot;ffmpeg&quot;</span><span class="p">)</span>
-    <span class="n">proc</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
-        <span class="p">[</span><span class="s2">&quot;ffmpeg&quot;</span><span class="p">,</span> <span class="s2">&quot;-hide_banner&quot;</span><span class="p">,</span> <span class="s2">&quot;-filters&quot;</span><span class="p">],</span> <span class="n">capture_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="kc">True</span>
-    <span class="p">)</span>
+    <span class="n">proc</span> <span class="o">=</span> <span class="n">_run_bounded</span><span class="p">([</span><span class="s2">&quot;ffmpeg&quot;</span><span class="p">,</span> <span class="s2">&quot;-hide_banner&quot;</span><span class="p">,</span> <span class="s2">&quot;-filters&quot;</span><span class="p">])</span>
     <span class="n">names</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
     <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">proc</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">splitlines</span><span class="p">():</span>
         <span class="n">parts</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
@@ -349,7 +392,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">target</span> <span class="o">=</span> <span class="n">target</span> <span class="ow">or</span> <span class="n">Loudness</span><span class="p">()</span>
     <span class="n">require_ffmpeg</span><span class="p">(</span><span class="s2">&quot;ffmpeg&quot;</span><span class="p">)</span>
-    <span class="n">proc</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+    <span class="n">proc</span> <span class="o">=</span> <span class="n">_run_bounded</span><span class="p">(</span>
         <span class="p">[</span>
             <span class="s2">&quot;ffmpeg&quot;</span><span class="p">,</span>
             <span class="s2">&quot;-hide_banner&quot;</span><span class="p">,</span>
@@ -361,9 +404,7 @@
             <span class="s2">&quot;-f&quot;</span><span class="p">,</span>
             <span class="s2">&quot;null&quot;</span><span class="p">,</span>
             <span class="s2">&quot;-&quot;</span><span class="p">,</span>
-        <span class="p">],</span>
-        <span class="n">capture_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">]</span>
     <span class="p">)</span>
     <span class="n">measured</span> <span class="o">=</span> <span class="n">_last_json_object</span><span class="p">(</span><span class="n">proc</span><span class="o">.</span><span class="n">stderr</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">measured</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
