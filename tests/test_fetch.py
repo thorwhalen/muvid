@@ -122,3 +122,37 @@ def test_a_public_redirect_hop_is_followed_then_bodied(monkeypatch, allow_public
     _use_opener(monkeypatch, opener)
     assert _fetch.fetch_bytes("http://public.test/start") == b"final-body"
     assert opener.calls == 2  # both hops were actually requested
+
+
+# -- streaming (video) fetch: chunk-to-disk, byte-capped, cleaned on failure --
+
+
+def test_streaming_fetch_writes_to_disk_under_the_cap(
+    monkeypatch, allow_public_test, tmp_path
+):
+    _use_opener(monkeypatch, _ScriptedOpener([("body", b"hello-video-bytes")]))
+    dest = tmp_path / "clip.mp4"
+    out = _fetch.fetch_to_file_streaming("http://public.test/v", dest, max_bytes=1024)
+    assert out == dest and dest.read_bytes() == b"hello-video-bytes"
+
+
+def test_streaming_fetch_enforces_the_cap_and_cleans_up(
+    monkeypatch, allow_public_test, tmp_path
+):
+    _use_opener(monkeypatch, _ScriptedOpener([("body", b"x" * 5000)]))
+    dest = tmp_path / "big.mp4"
+    with pytest.raises(_fetch.FetchError, match="limit"):
+        _fetch.fetch_to_file_streaming("http://public.test/big", dest, max_bytes=1024)
+    assert not dest.exists()  # partial file removed on failure
+
+
+def test_streaming_fetch_revalidates_a_redirect_to_internal(
+    monkeypatch, allow_public_test, tmp_path
+):
+    _use_opener(
+        monkeypatch, _ScriptedOpener([("redirect", "http://169.254.169.254/x")])
+    )
+    dest = tmp_path / "ssrf.mp4"
+    with pytest.raises(_fetch.FetchError):
+        _fetch.fetch_to_file_streaming("http://public.test/v", dest, max_bytes=1024)
+    assert not dest.exists()

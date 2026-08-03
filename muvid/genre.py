@@ -31,6 +31,11 @@ from __future__ import annotations
 # in its [mcp] extra; muvid CORE never imports this module, so muvid stays nw-free.
 from nw import Genre, Template, register_genre, register_genre_project_factory
 
+# Registering the footage-aligned `music_video` genre too, so a host's single
+# `import muvid.genre` surfaces both muvid genres in the nw catalog. Import-safe (nw only
+# at module top; heavy align/assemble code is lazy). thorwhalen/reelee#229.
+import muvid.genre_music_video  # noqa: F401,E402 — registers music_video + its factory
+
 from muvid.visualize.visuals import list_visuals
 
 MUSIC_VISUALIZER_SLUG = "music-visualizer"

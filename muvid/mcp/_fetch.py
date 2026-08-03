@@ -118,9 +118,12 @@ def _opener() -> urllib.request.OpenerDirector:
     return urllib.request.build_opener(_NoRedirect)
 
 
-def fetch_bytes(uri: str) -> bytes:
-    """Fetch ``uri``'s body as bytes, re-validating scheme/host/port at EVERY hop."""
-    deadline = time.monotonic() + TOTAL_TIMEOUT_S
+def _open_following_redirects(uri: str, deadline: float):
+    """Open ``uri``, re-validating scheme/host/port at EVERY hop; return the response.
+
+    Redirects are not auto-followed (``_NoRedirect``); each ``Location`` is re-validated,
+    so a public URL can't 302 into an internal one. The caller consumes + closes the body.
+    """
     current = uri
     opener = _opener()
     for _ in range(MAX_REDIRECTS + 1):
@@ -129,26 +132,63 @@ def fetch_bytes(uri: str) -> bytes:
         if remaining <= 0:
             raise FetchError("fetch exceeded the time budget")
         try:
-            resp = opener.open(current, timeout=remaining)
+            return opener.open(current, timeout=remaining)
         except urllib.error.HTTPError as e:
-            # A redirect surfaces here because _NoRedirect returns None.
-            if e.code in (301, 302, 303, 307, 308):
+            if e.code in (301, 302, 303, 307, 308):  # surfaced by _NoRedirect
                 loc = e.headers.get("Location")
                 if not loc:
                     raise FetchError("redirect without a Location") from e
                 current = urllib.parse.urljoin(current, loc)
-                continue  # the loop re-validates the redirect target
+                continue  # re-validate the redirect target on the next iteration
             raise FetchError(f"fetch failed: HTTP {e.code}") from e
         except (urllib.error.URLError, OSError) as e:
             raise FetchError(f"fetch failed: {e}") from e
-        with resp:
-            return _read_bounded(resp, deadline)
     raise FetchError(f"too many redirects (>{MAX_REDIRECTS})")
 
 
+def fetch_bytes(uri: str) -> bytes:
+    """Fetch ``uri``'s body as bytes (SSRF-guarded, byte/time-capped, in-memory).
+
+    For SMALL resources (audio, images) — buffers the whole body in RAM. Use
+    :func:`fetch_to_file_streaming` for large media (video) so a big file is written
+    straight to disk rather than materialized (~2x) in memory.
+    """
+    deadline = time.monotonic() + TOTAL_TIMEOUT_S
+    with _open_following_redirects(uri, deadline) as resp:
+        return _read_bounded(resp, deadline)
+
+
 def fetch_to_file(uri: str, dest: Path) -> Path:
-    """Fetch ``uri`` to ``dest`` (SSRF-guarded, size/time-bounded). Returns ``dest``."""
+    """Fetch a SMALL ``uri`` to ``dest`` (in-memory then written). Returns ``dest``."""
     data = fetch_bytes(uri)
     dest.parent.mkdir(parents=True, exist_ok=True)
     dest.write_bytes(data)
+    return dest
+
+
+def fetch_to_file_streaming(uri: str, dest: Path, *, max_bytes: int) -> Path:
+    """Stream a (large) ``uri`` straight to ``dest``, chunk by chunk (SSRF/size/time-bound).
+
+    For video footage: the body is written to disk as it arrives and the running total is
+    checked against ``max_bytes`` — never buffered whole in RAM. A partial file is removed
+    on any failure. Returns ``dest``.
+    """
+    deadline = time.monotonic() + TOTAL_TIMEOUT_S
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    total = 0
+    try:
+        with _open_following_redirects(uri, deadline) as resp, open(dest, "wb") as f:
+            while True:
+                if time.monotonic() > deadline:
+                    raise FetchError("fetch exceeded the time budget")
+                chunk = resp.read(_CHUNK)
+                if not chunk:
+                    break
+                total += len(chunk)
+                if total > max_bytes:
+                    raise FetchError(f"resource exceeds the {max_bytes}-byte limit")
+                f.write(chunk)
+    except BaseException:
+        dest.unlink(missing_ok=True)
+        raise
     return dest

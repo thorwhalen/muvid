@@ -33,12 +33,14 @@ def test_register_tools_prefixes_and_selects():
 
     srv = FastMCP(name="t")
     names = mcp.register_tools(srv, prefix="muvid_")
-    assert names == [
+    # the visualizer tools are present (the footage music_video tools are registered too)
+    assert {
         "muvid_list_visuals",
         "muvid_list_projects",
         "muvid_project_status",
         "muvid_render_visualizer",
-    ]
+    }.issubset(names)
+    assert len(names) == len(set(names))  # no collisions across genres
     # include/exclude select a subset
     srv2 = FastMCP(name="t2")
     only = mcp.register_tools(srv2, prefix="m_", include=["list_visuals"])
