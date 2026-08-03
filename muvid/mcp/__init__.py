@@ -15,20 +15,35 @@ from muvid.mcp._guide import INSTRUCTIONS
 from muvid.mcp.identity import current_email, token_email, use_email
 from muvid.mcp.workspace import VisualizerWorkspace, data_root
 
-#: The tools this package exposes (all free). Bare names; a host may prefix them.
-TOOL_NAMES = [
+#: The ``music-visualizer`` genre tools (muvid.mcp.tools).
+VISUALIZER_TOOLS = [
     "list_visuals",
     "list_projects",
     "project_status",
     "render_visualizer",
 ]
 
+#: The footage-aligned ``music_video`` genre tools (muvid.mcp.footage_tools).
+FOOTAGE_TOOLS = [
+    "set_song",
+    "add_footage",
+    "align_footage",
+    "footage_timeline",
+    "assemble_music_video",
+    "footage_status",
+    "list_strategies",
+]
+
+#: All tools this package exposes (all free). Bare names; a host may prefix them.
+TOOL_NAMES = VISUALIZER_TOOLS + FOOTAGE_TOOLS
+
 #: Alias — muvid has no costed tools.
 FREE_TOOLS = list(TOOL_NAMES)
 COSTED_TOOLS: list[str] = []
 
-#: ``mod:fn`` references for py2mcp-style aggregation.
-TOOL_REFS = [f"muvid.mcp.tools:{name}" for name in TOOL_NAMES]
+#: Bare tool name → its ``module:function`` reference (tools live in two modules).
+TOOL_REFS = {name: f"muvid.mcp.tools:{name}" for name in VISUALIZER_TOOLS}
+TOOL_REFS.update({name: f"muvid.mcp.footage_tools:{name}" for name in FOOTAGE_TOOLS})
 
 
 def register_tools(server, *, prefix="", include=None, exclude=None):
@@ -50,7 +65,7 @@ def register_tools(server, *, prefix="", include=None, exclude=None):
     for name in names:
         if name in skip:
             continue
-        fn = import_object(f"muvid.mcp.tools:{name}")
+        fn = import_object(TOOL_REFS[name])
         server.tool(
             fn, name=f"{prefix}{name}", description=(fn.__doc__ or "").strip() or None
         )
