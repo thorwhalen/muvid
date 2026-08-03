@@ -81,6 +81,10 @@ def onset_envelope(
     Returns:
         One value per frame. Empty if the audio could not be decoded.
     """
+    # Deferred on purpose: numpy is needed only to measure an envelope, so
+    # importing it here keeps it off muvid.visualize's import path for the many
+    # renders (a still cover, a Ken Burns pan) that never ask for a flash.
+    # Do not hoist this to module scope.
     import numpy as np
 
     raw = decode_pcm(audio, sample_rate=sr, channels=1)
@@ -112,7 +116,7 @@ def onset_envelope(
     return out.tolist()
 
 
-def write_flash_script(
+def _write_flash_script(
     envelope: list[float],
     path: PathLike,
     *,
@@ -189,7 +193,7 @@ def flash_filter(
     if not envelope:
         return ""
     target = f"eq@{label}"
-    script = write_flash_script(
+    script = _write_flash_script(
         envelope,
         Path(workdir) / f"{label}.cmd",
         fps=fps,

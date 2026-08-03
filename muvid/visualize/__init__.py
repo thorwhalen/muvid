@@ -50,7 +50,12 @@ from muvid.visualize.canvas import (
     thumbnail_image,
 )
 from muvid.visualize.reactive import (
+    DEFAULT_FLASH_LABEL,
     ENVELOPE_SR,
+    FLASH_BRIGHTNESS,
+    FLASH_DECAY,
+    FLASH_FILTERS,
+    FLASH_SATURATION,
     flash_filter,
     onset_envelope,
 )
@@ -95,7 +100,12 @@ __all__ = [
     "TitleStyle",
     "canvas_image",
     "thumbnail_image",
+    "DEFAULT_FLASH_LABEL",
     "ENVELOPE_SR",
+    "FLASH_BRIGHTNESS",
+    "FLASH_DECAY",
+    "FLASH_FILTERS",
+    "FLASH_SATURATION",
     "flash_filter",
     "onset_envelope",
     "DEFAULT_TINT",

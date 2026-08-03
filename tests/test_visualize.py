@@ -33,9 +33,9 @@ from muvid.visualize.reactive import (
     DEFAULT_FLASH_LABEL,
     FLASH_BRIGHTNESS,
     FLASH_SATURATION,
+    _write_flash_script,
     flash_filter,
     onset_envelope,
-    write_flash_script,
 )
 from muvid.visualize.visuals import (
     VisualContext,
@@ -46,6 +46,18 @@ from muvid.visualize.visuals import (
 )
 
 SIZE = (1920, 1080)
+
+
+def _ffmpeg_accepts(source: str, *graph_args: str) -> None:
+    """Push one frame of the lavfi ``source`` through ``graph_args``.
+
+    ffmpeg is the only real judge of filtergraph escaping: an under-escaped
+    option value is a hard parse error ("No option name near …") or an
+    unopenable file, never a subtly different picture. So ``check=True`` *is*
+    the assertion — if this returns, the graph was well formed.
+    """
+    base = f"ffmpeg -y -loglevel error -f lavfi -i {source}".split()
+    subprocess.run([*base, *graph_args, "-frames:v", "1"], check=True)
 
 
 # --------------------------------------------------------------------------
@@ -116,11 +128,40 @@ def test_compose_chain_can_burn_in_a_title():
     assert chain.endswith("[v]")
 
 
-def test_escaping_protects_the_filtergraph_from_the_title():
-    # A title with a colon would otherwise be read as an option separator.
-    assert escape_filter_value("Song: Part 1, take 2") == r"Song\: Part 1\, take 2"
-    assert escape_filter_value("100%") == r"100\%"
-    assert escape_filter_value("a'b") == r"a\'b"
+def test_escaping_survives_both_of_ffmpegs_unescaping_passes():
+    # ffmpeg unescapes a filter option value TWICE — once parsing the graph,
+    # then again splitting that filter's argument string into options — so a
+    # single backslash is consumed by the first pass and never reaches the
+    # second. ':' and "'" are special to both parsers and so need two layers.
+    assert escape_filter_value("Song: Part 1, take 2") == r"Song\\: Part 1\, take 2"
+    assert escape_filter_value("a'b") == r"a\\\'b"
+    assert escape_filter_value("a\\b") == "a" + "\\" * 4 + "b"
+
+    # ',', ';' and '[]' are graph punctuation only: the option parser does not
+    # touch them, so one layer is exactly right.
+    assert escape_filter_value("a,b;c[d]e") == r"a\,b\;c\[d\]e"
+
+    # '%' is special to neither parser — '\%' is unescaped straight back to '%',
+    # so escaping it was always a no-op.
+    assert escape_filter_value("100%") == "100%"
+
+
+@needs_ffmpeg_filter("drawtext")
+@pytest.mark.parametrize("title", ["Song: Part 1", "Take 2, live", "Bob's Song"])
+def test_a_punctuated_title_survives_a_real_ffmpeg_round_trip(tmp_path, title):
+    # The escaping's only real judge is ffmpeg: under-escape and the graph is a
+    # syntax error rather than a video. (Skips where this build has no drawtext.)
+    chain = compose_chain(SIZE, CoverLayout(), src="0:v", out="v", title=title)
+    out = tmp_path / "titled.mp4"
+    _ffmpeg_accepts(
+        f"color=c=black:s={SIZE[0]}x{SIZE[1]}:d=0.2",
+        "-filter_complex",
+        chain,
+        "-map",
+        "[v]",
+        str(out),
+    )
+    assert out.exists() and out.stat().st_size > 0
 
 
 # --------------------------------------------------------------------------
@@ -557,7 +598,7 @@ def test_a_faster_decay_makes_the_flash_shorter(click_track):
 
 def test_the_sendcmd_script_is_well_formed(tmp_path):
     envelope = [0.0, 0.5, 1.0]
-    script = write_flash_script(
+    script = _write_flash_script(
         envelope,
         tmp_path / "f.cmd",
         fps=CLICK_FPS,
@@ -586,19 +627,52 @@ def test_the_sendcmd_script_is_well_formed(tmp_path):
     assert values["saturation"] == [1.0, 1 + FLASH_SATURATION / 2, 1 + FLASH_SATURATION]
 
 
-@needs_ffmpeg
-def test_the_flash_fragment_points_at_an_escaped_script_path(click_track, tmp_path):
+#: Workdir names covering every character that is special to one or both of
+#: ffmpeg's parsers, plus two that are special to neither (the control cases).
+#: The flash writes its ``sendcmd`` script *into* the workdir and then names
+#: that path inside a filtergraph, so the directory's name is attacker-grade
+#: input to the escaper.
+AWKWARD_WORKDIR_NAMES = [
+    "plain",
+    "has space",
+    "has'quote",
+    "has:colon",
+    "has,comma",
+    "has;semi",
+    "has[bracket]",
+]
+
+
+@needs_ffmpeg_filter("sendcmd", "eq")
+@pytest.mark.parametrize("dirname", AWKWARD_WORKDIR_NAMES)
+def test_the_flash_fragment_renders_from_a_workdir_that_needs_escaping(
+    click_track, tmp_path, dirname
+):
+    workdir = tmp_path / dirname
+    workdir.mkdir()
     fragment = flash_filter(
-        click_track, fps=CLICK_FPS, duration=float(CLICK_SECONDS), workdir=tmp_path
+        click_track, fps=CLICK_FPS, duration=float(CLICK_SECONDS), workdir=workdir
     )
     # It is appended to a visual's chain, so it must open with the separator.
     assert fragment.startswith(",sendcmd=f=")
     assert f",eq@{DEFAULT_FLASH_LABEL}=brightness=0:saturation=1:eval=frame" in fragment
 
-    script = tmp_path / f"{DEFAULT_FLASH_LABEL}.cmd"
+    script = workdir / f"{DEFAULT_FLASH_LABEL}.cmd"
     assert script.exists()
     # The path goes into a filtergraph, so it must be escaped, not raw.
     assert escape_filter_value(str(script)) in fragment
+
+    # ...and ffmpeg is the only judge of whether that escaping is *correct*.
+    # Under-escaped, this is a filtergraph syntax error ("No option name near
+    # ...") or a sendcmd that cannot open the file it was handed.
+    _ffmpeg_accepts(
+        f"color=c=black:s=64x64:d={CLICK_SECONDS}",
+        "-vf",
+        f"null{fragment}",
+        "-f",
+        "null",
+        "-",
+    )
 
 
 @needs_ffmpeg
