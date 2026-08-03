@@ -41,6 +41,15 @@ ai = [
     "lacing",
     "lookbook",
 ]
+# The MCP tool surface (muvid.mcp) + the nw genre registration (muvid.genre) that
+# lets a host connector serve the ffmpeg-only `music-visualizer` genre. `import muvid`
+# never pulls these; only serving/aggregating does (thorwhalen/muvid#3). nw>=0.0.15 has
+# the genre project-factory registry; py2mcp>=0.1.9 has the aggregation helpers.
+mcp = [
+    "fastmcp",
+    "py2mcp>=0.1.9",
+    "nw>=0.0.15",
+]
 ui = [
     "fastapi",
     "uvicorn[standard]",
@@ -121,6 +130,11 @@ install.macos = "brew install ffmpeg"
 
 [tool.wads.ci]
 project_name = ""
+
+# Install the `mcp` extra in CI so the muvid.genre / muvid.mcp tests (which import nw +
+# fastmcp) actually run instead of being silently skipped (thorwhalen/muvid#3).
+[tool.wads.ci.install]
+extras = "mcp"
 
 [tool.wads.ci.commands]
 pre_test = []

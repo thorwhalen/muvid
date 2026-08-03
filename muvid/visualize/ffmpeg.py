@@ -13,6 +13,7 @@ and :mod:`muvid.visualize.video`.
 from __future__ import annotations
 
 import json
+import os
 import shlex
 import shutil
 import subprocess
@@ -21,6 +22,26 @@ from functools import lru_cache
 from pathlib import Path
 
 PathLike = str | Path
+
+#: Env var bounding a single ffmpeg invocation's wall-clock (seconds). Unset =
+#: no timeout (the historical behaviour). A long-running host (the reelee MCP
+#: connector renders synchronously over HTTP) sets this so an oversized or
+#: adversarial input can't pin a worker indefinitely — a belt-and-braces bound
+#: on top of the caller's own input-duration cap.
+FFMPEG_TIMEOUT_ENV_VAR = "MUVID_FFMPEG_TIMEOUT_S"
+
+
+def _ffmpeg_timeout() -> float | None:
+    """The per-invocation ffmpeg timeout from ``$MUVID_FFMPEG_TIMEOUT_S`` (or ``None``)."""
+    raw = os.environ.get(FFMPEG_TIMEOUT_ENV_VAR)
+    if not raw:
+        return None
+    try:
+        value = float(raw)
+    except ValueError:
+        return None
+    return value if value > 0 else None
+
 
 #: Loudness targets, in the units EBU R128 / ffmpeg ``loudnorm`` uses.
 #: The defaults match what YouTube normalizes playback to, so a track mastered
@@ -87,6 +108,25 @@ def require_ffmpeg(*tools: str) -> None:
         )
 
 
+def _run_bounded(cmd: list[str]) -> subprocess.CompletedProcess:
+    """Run an ffmpeg/ffprobe ``cmd`` (capturing output), bounded by the timeout.
+
+    EVERY ffmpeg/ffprobe spawn that may decode caller-supplied media goes through here,
+    so ``$MUVID_FFMPEG_TIMEOUT_S`` bounds them all consistently: a metadata-spoofing or
+    decode-bomb input can't pin a worker past the timeout on the synchronous render path
+    (the loudnorm analysis pass and ffprobe are full/partial decodes, not just the mux).
+    """
+    try:
+        return subprocess.run(
+            cmd, capture_output=True, text=True, timeout=_ffmpeg_timeout()
+        )
+    except subprocess.TimeoutExpired as e:
+        raise FfmpegError(
+            f"{cmd[0]} timed out after {e.timeout:g}s "
+            f"(bound by ${FFMPEG_TIMEOUT_ENV_VAR}).\n\ncommand: {shlex.join(cmd)}"
+        ) from e
+
+
 def run_ffmpeg(
     args: list[str], *, overwrite: bool = True
 ) -> subprocess.CompletedProcess:
@@ -109,7 +149,7 @@ def run_ffmpeg(
     if overwrite:
         cmd.append("-y")
     cmd += [str(a) for a in args]
-    proc = subprocess.run(cmd, capture_output=True, text=True)
+    proc = _run_bounded(cmd)
     if proc.returncode != 0:
         tail = "\n".join((proc.stderr or "").strip().splitlines()[-15:])
         raise FfmpegError(
@@ -121,7 +161,7 @@ def run_ffmpeg(
 def probe(media: PathLike) -> dict:
     """Return ``ffprobe``'s ``format`` + ``streams`` JSON for ``media``."""
     require_ffmpeg("ffprobe")
-    proc = subprocess.run(
+    proc = _run_bounded(
         [
             "ffprobe",
             "-v",
@@ -131,9 +171,7 @@ def probe(media: PathLike) -> dict:
             "-of",
             "json",
             str(media),
-        ],
-        capture_output=True,
-        text=True,
+        ]
     )
     if proc.returncode != 0:
         raise FfmpegError(f"ffprobe could not read {media!s}: {proc.stderr.strip()}")
@@ -163,9 +201,7 @@ def media_duration(media: PathLike) -> float:
 @lru_cache(maxsize=1)
 def _available_filters() -> frozenset[str]:
     require_ffmpeg("ffmpeg")
-    proc = subprocess.run(
-        ["ffmpeg", "-hide_banner", "-filters"], capture_output=True, text=True
-    )
+    proc = _run_bounded(["ffmpeg", "-hide_banner", "-filters"])
     names = set()
     for line in proc.stdout.splitlines():
         parts = line.split()
@@ -216,7 +252,7 @@ def measure_loudness(audio: PathLike, target: Loudness | None = None) -> Loudnes
     """
     target = target or Loudness()
     require_ffmpeg("ffmpeg")
-    proc = subprocess.run(
+    proc = _run_bounded(
         [
             "ffmpeg",
             "-hide_banner",
@@ -228,9 +264,7 @@ def measure_loudness(audio: PathLike, target: Loudness | None = None) -> Loudnes
             "-f",
             "null",
             "-",
-        ],
-        capture_output=True,
-        text=True,
+        ]
     )
     measured = _last_json_object(proc.stderr or "")
     if measured is None:
