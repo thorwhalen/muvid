@@ -1,0 +1,242 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>muvid.footage.strategy &mdash; muvid 0.0.9 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=f7cdbf68"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
+      <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="muvid.footage.workspace" href="workspace.html" />
+    <link rel="prev" title="muvid.footage.edl" href="edl.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            muvid
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../muvid.html">muvid</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../__main__.html">muvid.__main__</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../align.html">muvid.align</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../characters.html">muvid.characters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../compose.html">muvid.compose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contracts.html">muvid.contracts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cost.html">muvid.cost</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../environments.html">muvid.environments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../events.html">muvid.events</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../facade.html">muvid.facade</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../footage.html">muvid.footage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="align.html">muvid.footage.align</a></li>
+<li class="toctree-l1"><a class="reference internal" href="assemble.html">muvid.footage.assemble</a></li>
+<li class="toctree-l1"><a class="reference internal" href="edl.html">muvid.footage.edl</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">muvid.footage.strategy</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.footage.strategy.DEFAULT_STRATEGY"><code class="docutils literal notranslate"><span class="pre">DEFAULT_STRATEGY</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.footage.strategy.SelectionStrategy"><code class="docutils literal notranslate"><span class="pre">SelectionStrategy</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.footage.strategy.best_confidence"><code class="docutils literal notranslate"><span class="pre">best_confidence()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.footage.strategy.fewest_cuts"><code class="docutils literal notranslate"><span class="pre">fewest_cuts()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.footage.strategy.list_strategies"><code class="docutils literal notranslate"><span class="pre">list_strategies()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.footage.strategy.longest_take"><code class="docutils literal notranslate"><span class="pre">longest_take()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.footage.strategy.register_selection_strategy"><code class="docutils literal notranslate"><span class="pre">register_selection_strategy()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.footage.strategy.resolve_strategy"><code class="docutils literal notranslate"><span class="pre">resolve_strategy()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.footage.strategy.select_edl"><code class="docutils literal notranslate"><span class="pre">select_edl()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="workspace.html">muvid.footage.workspace</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../genre.html">muvid.genre</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../genre_music_video.html">muvid.genre_music_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../lyrics.html">muvid.lyrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mcp.html">muvid.mcp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mcp/_fetch.html">muvid.mcp._fetch</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mcp/_guide.html">muvid.mcp._guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mcp/footage_tools.html">muvid.mcp.footage_tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mcp/identity.html">muvid.mcp.identity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mcp/tools.html">muvid.mcp.tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mcp/workspace.html">muvid.mcp.workspace</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../project.html">muvid.project</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../renderers.html">muvid.renderers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../renderers/_common.html">muvid.renderers._common</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../renderers/animation.html">muvid.renderers.animation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../renderers/image_to_video.html">muvid.renderers.image_to_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../renderers/lipsync.html">muvid.renderers.lipsync</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../renderers/still.html">muvid.renderers.still</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../renderers/text_to_video.html">muvid.renderers.text_to_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../schema.html">muvid.schema</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../script.html">muvid.script</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ui.html">muvid.ui</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ui/app.html">muvid.ui.app</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../visualize.html">muvid.visualize</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../visualize/canvas.html">muvid.visualize.canvas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../visualize/ffmpeg.html">muvid.visualize.ffmpeg</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../visualize/verify.html">muvid.visualize.verify</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../visualize/video.html">muvid.visualize.video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../visualize/visuals.html">muvid.visualize.visuals</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">muvid</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">muvid.footage.strategy</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../_sources/module_docs/muvid/footage/strategy.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-muvid.footage.strategy">
+<span id="muvid-footage-strategy"></span><h1>muvid.footage.strategy<a class="headerlink" href="#module-muvid.footage.strategy" title="Link to this heading"></a></h1>
+<p>The pluggable <code class="docutils literal notranslate"><span class="pre">SelectionStrategy</span></code> registry — alignments → an EDL.</p>
+<p>The user-extensible strategy pattern behind full-auto assembly: a strategy turns a set of
+<a class="reference internal" href="edl.html#muvid.footage.edl.FootageAlignment" title="muvid.footage.edl.FootageAlignment"><code class="xref py py-class docutils literal notranslate"><span class="pre">FootageAlignment</span></code></a>s (which clip covers which span of the
+song, with a confidence) into an EDL (which clip to SHOW for each span). Strategies emit
+only <code class="docutils literal notranslate"><span class="pre">{song_start,</span> <span class="pre">song_end,</span> <span class="pre">clip_id}</span></code> — the <code class="docutils literal notranslate"><span class="pre">clip_in</span></code> sign convention lives in
+<a class="reference internal" href="edl.html#muvid.footage.edl.derive_cuts" title="muvid.footage.edl.derive_cuts"><code class="xref py py-func docutils literal notranslate"><span class="pre">muvid.footage.edl.derive_cuts()</span></code></a> (SSOT), so a third-party strategy can’t desync the
+cut. Every strategy’s output still passes <a class="reference internal" href="edl.html#muvid.footage.edl.validate_edl" title="muvid.footage.edl.validate_edl"><code class="xref py py-func docutils literal notranslate"><span class="pre">validate_edl()</span></code></a> before
+any cutting, so a strategy that leaves a gap fails loudly with the exact uncovered span.</p>
+<p>Registry idiom mirrors <code class="docutils literal notranslate"><span class="pre">mixing.audio.segmentation</span></code> (a <code class="docutils literal notranslate"><span class="pre">strategy:</span> <span class="pre">str</span> <span class="pre">|</span> <span class="pre">callable</span></code> param
++ a <code class="docutils literal notranslate"><span class="pre">_STRATEGIES</span></code> dict + <a class="reference internal" href="#muvid.footage.strategy.resolve_strategy" title="muvid.footage.strategy.resolve_strategy"><code class="xref py py-func docutils literal notranslate"><span class="pre">resolve_strategy()</span></code></a>) — the federation’s established shape.
+Register your own with <a class="reference internal" href="#muvid.footage.strategy.register_selection_strategy" title="muvid.footage.strategy.register_selection_strategy"><code class="xref py py-func docutils literal notranslate"><span class="pre">register_selection_strategy()</span></code></a>.</p>
+<dl class="py data">
+<dt class="sig sig-object py" id="muvid.footage.strategy.DEFAULT_STRATEGY">
+<span class="sig-prename descclassname"><span class="pre">muvid.footage.strategy.</span></span><span class="sig-name descname"><span class="pre">DEFAULT_STRATEGY</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'best_confidence'</span></span><a class="headerlink" href="#muvid.footage.strategy.DEFAULT_STRATEGY" title="Link to this definition"></a></dt>
+<dd><p>The default auto-strategy when none is chosen.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="muvid.footage.strategy.SelectionStrategy">
+<span class="sig-prename descclassname"><span class="pre">muvid.footage.strategy.</span></span><span class="sig-name descname"><span class="pre">SelectionStrategy</span></span><a class="headerlink" href="#muvid.footage.strategy.SelectionStrategy" title="Link to this definition"></a></dt>
+<dd><p>alignments + song duration → an EDL (built-ins ignore song_duration but it
+is passed so a strategy MAY reason about the full timeline).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A strategy</p>
+</dd>
+</dl>
+<p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code>[<a class="reference internal" href="edl.html#muvid.footage.edl.FootageAlignment" title="muvid.footage.edl.FootageAlignment"><code class="xref py py-class docutils literal notranslate"><span class="pre">FootageAlignment</span></code></a>], <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">list[EdlEntry]</span></code>]</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.footage.strategy.best_confidence">
+<span class="sig-prename descclassname"><span class="pre">muvid.footage.strategy.</span></span><span class="sig-name descname"><span class="pre">best_confidence</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alignments</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">song_duration</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="edl.html#muvid.footage.edl.EdlEntry" title="muvid.footage.edl.EdlEntry"><span class="pre">EdlEntry</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../_modules/muvid/footage/strategy.html#best_confidence"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.strategy.best_confidence" title="Link to this definition"></a></dt>
+<dd><p>For each covered span, show the highest-confidence clip (ties: longest coverage).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.footage.strategy.fewest_cuts">
+<span class="sig-prename descclassname"><span class="pre">muvid.footage.strategy.</span></span><span class="sig-name descname"><span class="pre">fewest_cuts</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alignments</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">song_duration</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="edl.html#muvid.footage.edl.EdlEntry" title="muvid.footage.edl.EdlEntry"><span class="pre">EdlEntry</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../_modules/muvid/footage/strategy.html#fewest_cuts"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.strategy.fewest_cuts" title="Link to this definition"></a></dt>
+<dd><p>Stay on the current clip as long as it covers; only switch when it runs out
+(then to the clip extending furthest). Minimizes the number of cuts.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.footage.strategy.list_strategies">
+<span class="sig-prename descclassname"><span class="pre">muvid.footage.strategy.</span></span><span class="sig-name descname"><span class="pre">list_strategies</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../_modules/muvid/footage/strategy.html#list_strategies"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.strategy.list_strategies" title="Link to this definition"></a></dt>
+<dd><p>The registered strategy slugs, sorted.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.footage.strategy.longest_take">
+<span class="sig-prename descclassname"><span class="pre">muvid.footage.strategy.</span></span><span class="sig-name descname"><span class="pre">longest_take</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alignments</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">song_duration</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="edl.html#muvid.footage.edl.EdlEntry" title="muvid.footage.edl.EdlEntry"><span class="pre">EdlEntry</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../_modules/muvid/footage/strategy.html#longest_take"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.strategy.longest_take" title="Link to this definition"></a></dt>
+<dd><p>Prefer the clip that keeps rolling longest — pick the one whose coverage extends
+furthest forward (ties: higher confidence). Yields long, continuous takes.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.footage.strategy.register_selection_strategy">
+<span class="sig-prename descclassname"><span class="pre">muvid.footage.strategy.</span></span><span class="sig-name descname"><span class="pre">register_selection_strategy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">slug</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="edl.html#muvid.footage.edl.FootageAlignment" title="muvid.footage.edl.FootageAlignment"><span class="pre">FootageAlignment</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="edl.html#muvid.footage.edl.EdlEntry" title="muvid.footage.edl.EdlEntry"><span class="pre">EdlEntry</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="edl.html#muvid.footage.edl.FootageAlignment" title="muvid.footage.edl.FootageAlignment"><span class="pre">FootageAlignment</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="edl.html#muvid.footage.edl.EdlEntry" title="muvid.footage.edl.EdlEntry"><span class="pre">EdlEntry</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../_modules/muvid/footage/strategy.html#register_selection_strategy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.strategy.register_selection_strategy" title="Link to this definition"></a></dt>
+<dd><p>Register a selection strategy under <code class="docutils literal notranslate"><span class="pre">slug</span></code> (returns it, for inline use).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.footage.strategy.resolve_strategy">
+<span class="sig-prename descclassname"><span class="pre">muvid.footage.strategy.</span></span><span class="sig-name descname"><span class="pre">resolve_strategy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">strategy</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="edl.html#muvid.footage.edl.FootageAlignment" title="muvid.footage.edl.FootageAlignment"><span class="pre">FootageAlignment</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="edl.html#muvid.footage.edl.EdlEntry" title="muvid.footage.edl.EdlEntry"><span class="pre">EdlEntry</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="edl.html#muvid.footage.edl.FootageAlignment" title="muvid.footage.edl.FootageAlignment"><span class="pre">FootageAlignment</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="edl.html#muvid.footage.edl.EdlEntry" title="muvid.footage.edl.EdlEntry"><span class="pre">EdlEntry</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../_modules/muvid/footage/strategy.html#resolve_strategy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.strategy.resolve_strategy" title="Link to this definition"></a></dt>
+<dd><p>Resolve a strategy name OR a bare callable to a <a class="reference internal" href="#muvid.footage.strategy.SelectionStrategy" title="muvid.footage.strategy.SelectionStrategy"><code class="xref py py-data docutils literal notranslate"><span class="pre">SelectionStrategy</span></code></a>.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.footage.strategy.select_edl">
+<span class="sig-prename descclassname"><span class="pre">muvid.footage.strategy.</span></span><span class="sig-name descname"><span class="pre">select_edl</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">strategy</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="edl.html#muvid.footage.edl.FootageAlignment" title="muvid.footage.edl.FootageAlignment"><span class="pre">FootageAlignment</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="edl.html#muvid.footage.edl.EdlEntry" title="muvid.footage.edl.EdlEntry"><span class="pre">EdlEntry</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alignments</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="edl.html#muvid.footage.edl.FootageAlignment" title="muvid.footage.edl.FootageAlignment"><span class="pre">FootageAlignment</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">song_duration</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="edl.html#muvid.footage.edl.EdlEntry" title="muvid.footage.edl.EdlEntry"><span class="pre">EdlEntry</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../_modules/muvid/footage/strategy.html#select_edl"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.strategy.select_edl" title="Link to this definition"></a></dt>
+<dd><p>Run <code class="docutils literal notranslate"><span class="pre">strategy</span></code> (name or callable) to produce an EDL from <code class="docutils literal notranslate"><span class="pre">alignments</span></code>.</p>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="edl.html" class="btn btn-neutral float-left" title="muvid.footage.edl" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="workspace.html" class="btn btn-neutral float-right" title="muvid.footage.workspace" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p></p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

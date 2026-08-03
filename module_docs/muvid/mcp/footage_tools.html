@@ -1,0 +1,235 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>muvid.mcp.footage_tools &mdash; muvid 0.0.9 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=f7cdbf68"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
+      <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="muvid.mcp.identity" href="identity.html" />
+    <link rel="prev" title="muvid.mcp._guide" href="_guide.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            muvid
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../muvid.html">muvid</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../__main__.html">muvid.__main__</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../align.html">muvid.align</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../characters.html">muvid.characters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../compose.html">muvid.compose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contracts.html">muvid.contracts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cost.html">muvid.cost</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../environments.html">muvid.environments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../events.html">muvid.events</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../facade.html">muvid.facade</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../footage.html">muvid.footage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../footage/align.html">muvid.footage.align</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../footage/assemble.html">muvid.footage.assemble</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../footage/edl.html">muvid.footage.edl</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../footage/strategy.html">muvid.footage.strategy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../footage/workspace.html">muvid.footage.workspace</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../genre.html">muvid.genre</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../genre_music_video.html">muvid.genre_music_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../lyrics.html">muvid.lyrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mcp.html">muvid.mcp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="_fetch.html">muvid.mcp._fetch</a></li>
+<li class="toctree-l1"><a class="reference internal" href="_guide.html">muvid.mcp._guide</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">muvid.mcp.footage_tools</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.mcp.footage_tools.add_footage"><code class="docutils literal notranslate"><span class="pre">add_footage()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.mcp.footage_tools.align_footage"><code class="docutils literal notranslate"><span class="pre">align_footage()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.mcp.footage_tools.assemble_music_video"><code class="docutils literal notranslate"><span class="pre">assemble_music_video()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.mcp.footage_tools.footage_status"><code class="docutils literal notranslate"><span class="pre">footage_status()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.mcp.footage_tools.footage_timeline"><code class="docutils literal notranslate"><span class="pre">footage_timeline()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.mcp.footage_tools.list_strategies"><code class="docutils literal notranslate"><span class="pre">list_strategies()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.mcp.footage_tools.set_song"><code class="docutils literal notranslate"><span class="pre">set_song()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="identity.html">muvid.mcp.identity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tools.html">muvid.mcp.tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="workspace.html">muvid.mcp.workspace</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../project.html">muvid.project</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../renderers.html">muvid.renderers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../renderers/_common.html">muvid.renderers._common</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../renderers/animation.html">muvid.renderers.animation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../renderers/image_to_video.html">muvid.renderers.image_to_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../renderers/lipsync.html">muvid.renderers.lipsync</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../renderers/still.html">muvid.renderers.still</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../renderers/text_to_video.html">muvid.renderers.text_to_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../schema.html">muvid.schema</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../script.html">muvid.script</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ui.html">muvid.ui</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ui/app.html">muvid.ui.app</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../visualize.html">muvid.visualize</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../visualize/canvas.html">muvid.visualize.canvas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../visualize/ffmpeg.html">muvid.visualize.ffmpeg</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../visualize/verify.html">muvid.visualize.verify</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../visualize/video.html">muvid.visualize.video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../visualize/visuals.html">muvid.visualize.visuals</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">muvid</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">muvid.mcp.footage_tools</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../_sources/module_docs/muvid/mcp/footage_tools.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-muvid.mcp.footage_tools">
+<span id="muvid-mcp-footage-tools"></span><h1>muvid.mcp.footage_tools<a class="headerlink" href="#module-muvid.mcp.footage_tools" title="Link to this heading"></a></h1>
+<p>MCP tools for the footage-aligned <code class="docutils literal notranslate"><span class="pre">music_video</span></code> genre (thorwhalen/reelee#229).</p>
+<p>Module-level tool functions (referenced <code class="docutils literal notranslate"><span class="pre">muvid.mcp.footage_tools:&lt;name&gt;</span></code>) a host
+aggregates via <a class="reference internal" href="../mcp.html#muvid.mcp.register_tools" title="muvid.mcp.register_tools"><code class="xref py py-func docutils literal notranslate"><span class="pre">muvid.mcp.register_tools()</span></code></a>. All FREE (ffmpeg + numpy only, no AI/keys).
+The caller is resolved from the OAuth token; all work lands in that caller’s stateful
+<a class="reference internal" href="../footage/workspace.html#muvid.footage.workspace.FootageWorkspace" title="muvid.footage.workspace.FootageWorkspace"><code class="xref py py-class docutils literal notranslate"><span class="pre">FootageWorkspace</span></code></a> project. Media URLs are fetched
+server-side through the SSRF-guarded, size/time-bounded fetch (video streams straight to
+disk); alignment + the single-ffmpeg-pass assembly are bounded by hard resource caps and
+<code class="docutils literal notranslate"><span class="pre">$MUVID_FFMPEG_TIMEOUT_S</span></code> — the connector renders synchronously over HTTP.</p>
+<p>Workflow: <code class="docutils literal notranslate"><span class="pre">create_project(genre='music_video')</span></code> → <code class="docutils literal notranslate"><span class="pre">set_song</span></code> → <code class="docutils literal notranslate"><span class="pre">add_footage</span></code> ×N →
+<code class="docutils literal notranslate"><span class="pre">align_footage</span></code> → (<code class="docutils literal notranslate"><span class="pre">footage_timeline</span></code> to inspect) → <code class="docutils literal notranslate"><span class="pre">assemble_music_video</span></code>.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.mcp.footage_tools.add_footage">
+<span class="sig-prename descclassname"><span class="pre">muvid.mcp.footage_tools.</span></span><span class="sig-name descname"><span class="pre">add_footage</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">project_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">url</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="../../../_modules/muvid/mcp/footage_tools.html#add_footage"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.mcp.footage_tools.add_footage" title="Link to this definition"></a></dt>
+<dd><p>Add a footage video clip from an http(s) URL (a recording of the song). Free.</p>
+<p>Fetched server-side (streamed to disk; SSRF-guarded, size/duration-capped). Returns
+the assigned <code class="docutils literal notranslate"><span class="pre">clip_id</span></code>. Re-run <code class="docutils literal notranslate"><span class="pre">align_footage</span></code> after adding clips.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.mcp.footage_tools.align_footage">
+<span class="sig-prename descclassname"><span class="pre">muvid.mcp.footage_tools.</span></span><span class="sig-name descname"><span class="pre">align_footage</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">project_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="../../../_modules/muvid/mcp/footage_tools.html#align_footage"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.mcp.footage_tools.align_footage" title="Link to this definition"></a></dt>
+<dd><p>Align every uploaded clip to the song by audio, and persist the result. Free.</p>
+<p>Returns each clip’s offset, a confidence in [0,1], and its coverage of the song, plus a
+<code class="docutils literal notranslate"><span class="pre">low_confidence</span></code> list (clips that matched weakly — likely wrong; re-shoot or drop).
+Run this after adding/removing clips and before assembling.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.mcp.footage_tools.assemble_music_video">
+<span class="sig-prename descclassname"><span class="pre">muvid.mcp.footage_tools.</span></span><span class="sig-name descname"><span class="pre">assemble_music_video</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">project_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">strategy</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">edl</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="../../../_modules/muvid/mcp/footage_tools.html#assemble_music_video"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.mcp.footage_tools.assemble_music_video" title="Link to this definition"></a></dt>
+<dd><p>Assemble the music video — auto (a selection <code class="docutils literal notranslate"><span class="pre">strategy</span></code>) or an explicit <code class="docutils literal notranslate"><span class="pre">edl</span></code>. Free.</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">edl</span></code>: an explicit edit — a list of <code class="docutils literal notranslate"><span class="pre">{song_start,</span> <span class="pre">song_end,</span> <span class="pre">clip_id}</span></code> spans. Must
+be in order, non-overlapping, contiguous, and each within its clip’s coverage.</p></li>
+<li><p>otherwise <strong>full-auto</strong>: a registered <code class="docutils literal notranslate"><span class="pre">strategy</span></code> (see <code class="docutils literal notranslate"><span class="pre">list_strategies</span></code>; default
+<code class="docutils literal notranslate"><span class="pre">best_confidence</span></code>) builds the edit from the alignments.</p></li>
+</ul>
+<p>Each cut is trimmed at its aligned in-point, scaled onto the project canvas, and
+concatenated; the CLEAN song audio for the covered span is used. Returns the render.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.mcp.footage_tools.footage_status">
+<span class="sig-prename descclassname"><span class="pre">muvid.mcp.footage_tools.</span></span><span class="sig-name descname"><span class="pre">footage_status</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">project_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="../../../_modules/muvid/mcp/footage_tools.html#footage_status"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.mcp.footage_tools.footage_status" title="Link to this definition"></a></dt>
+<dd><p>Your project’s song, clips, alignment summary, and renders. Free.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.mcp.footage_tools.footage_timeline">
+<span class="sig-prename descclassname"><span class="pre">muvid.mcp.footage_tools.</span></span><span class="sig-name descname"><span class="pre">footage_timeline</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">project_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="../../../_modules/muvid/mcp/footage_tools.html#footage_timeline"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.mcp.footage_tools.footage_timeline" title="Link to this definition"></a></dt>
+<dd><p>The coverage map: which clips cover which spans of the song (overlaps shown). Free.</p>
+<p>The surface for choosing which parts to use before <code class="docutils literal notranslate"><span class="pre">assemble_music_video</span></code>. Built from
+the persisted alignment (run <code class="docutils literal notranslate"><span class="pre">align_footage</span></code> first).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.mcp.footage_tools.list_strategies">
+<span class="sig-prename descclassname"><span class="pre">muvid.mcp.footage_tools.</span></span><span class="sig-name descname"><span class="pre">list_strategies</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="../../../_modules/muvid/mcp/footage_tools.html#list_strategies"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.mcp.footage_tools.list_strategies" title="Link to this definition"></a></dt>
+<dd><p>The selection strategies available for full-auto assembly. Free.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.mcp.footage_tools.set_song">
+<span class="sig-prename descclassname"><span class="pre">muvid.mcp.footage_tools.</span></span><span class="sig-name descname"><span class="pre">set_song</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">project_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">url</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="../../../_modules/muvid/mcp/footage_tools.html#set_song"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.mcp.footage_tools.set_song" title="Link to this definition"></a></dt>
+<dd><p>Set the project’s fixed clean song from an http(s) URL (a direct media link). Free.</p>
+<p>This is the reference every uploaded clip is aligned to and whose audio the final
+video uses. Replaces any previous song. Duration/size-capped.</p>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="_guide.html" class="btn btn-neutral float-left" title="muvid.mcp._guide" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="identity.html" class="btn btn-neutral float-right" title="muvid.mcp.identity" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p></p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
