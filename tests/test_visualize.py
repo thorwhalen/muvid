@@ -2,16 +2,21 @@
 
 Most of these are pure: the filter chains are built as strings, so they can be
 asserted without running ffmpeg. The end-to-end render at the bottom does run
-ffmpeg, and skips when it is not installed.
+ffmpeg, and skips when it — or the particular filter a test exercises — is not
+available (see :mod:`tests.ffmpeg_support`).
 """
 
 from __future__ import annotations
 
-import shutil
+import hashlib
+import re
 import subprocess
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
+
+from tests.ffmpeg_support import needs_ffmpeg, needs_ffmpeg_filter
 
 from muvid.visualize.canvas import (
     CoverLayout,
@@ -24,6 +29,14 @@ from muvid.visualize.canvas import (
     overlay_chain,
 )
 from muvid.visualize.ffmpeg import Loudness, media_duration
+from muvid.visualize.reactive import (
+    DEFAULT_FLASH_LABEL,
+    FLASH_BRIGHTNESS,
+    FLASH_SATURATION,
+    flash_filter,
+    onset_envelope,
+    write_flash_script,
+)
 from muvid.visualize.visuals import (
     VisualContext,
     VisualPlan,
@@ -31,9 +44,6 @@ from muvid.visualize.visuals import (
     register_visual,
     resolve_visual,
 )
-
-HAS_FFMPEG = shutil.which("ffmpeg") is not None and shutil.which("ffprobe") is not None
-needs_ffmpeg = pytest.mark.skipif(not HAS_FFMPEG, reason="ffmpeg is not installed")
 
 SIZE = (1920, 1080)
 
@@ -98,7 +108,8 @@ def test_compose_chain_splits_the_cover_into_background_and_foreground():
     assert "gblur" in chain and "overlay" in chain
 
 
-@pytest.mark.skipif(not HAS_FFMPEG, reason="title_chain checks the ffmpeg build")
+# title_chain requires drawtext, so guard on drawtext — not on ffmpeg being installed.
+@needs_ffmpeg_filter("drawtext")
 def test_compose_chain_can_burn_in_a_title():
     chain = compose_chain(SIZE, CoverLayout(), src="0:v", out="v", title="Hi")
     assert "drawtext=" in chain
@@ -359,7 +370,7 @@ def test_still_render_is_16_9_yuv420p_and_as_long_as_the_song(song_and_cover, tm
     assert result.canvas and result.canvas.exists()
 
 
-@needs_ffmpeg
+@needs_ffmpeg_filter("showcqt")  # one of the two visuals below is showcqt
 def test_the_render_carries_no_edit_lists(song_and_cover, tmp_path):
     # YouTube: "No Edit Lists (or the video might not get processed correctly)".
     # ffmpeg writes one by default and +faststart does not remove it.
@@ -382,7 +393,7 @@ def test_the_render_carries_no_edit_lists(song_and_cover, tmp_path):
         assert edit_lists.ok, f"{visual}: {edit_lists.detail}"
 
 
-@needs_ffmpeg
+@needs_ffmpeg_filter("showcqt")
 def test_a_reactive_render_reacts_to_the_audio_without_an_image(
     song_and_cover, tmp_path
 ):
@@ -426,7 +437,7 @@ def test_thumbnail_from_cover_is_youtube_ready(song_and_cover, tmp_path):
     assert thumb.stat().st_size <= 2 * 1024 * 1024  # thumbnails.set cap
 
 
-@needs_ffmpeg
+@needs_ffmpeg_filter("showfreqs")  # the 'bars' visual
 def test_the_teal_tint_recolors_the_visualizer(song_and_cover, tmp_path):
     # The blend/tint colour bug: a screen blend must run in alpha-free RGB or the
     # visualizer's colour is mangled. Assert the default accent actually lands teal
@@ -466,3 +477,196 @@ def test_the_teal_tint_recolors_the_visualizer(song_and_cover, tmp_path):
     if len(lit):
         r, g, b = lit.mean(0)
         assert g > r and b > r, f"accent not teal: RGB {(r, g, b)}"
+
+
+# --------------------------------------------------------------------------
+# the beat-reactive flash (muvid.visualize.reactive)
+# --------------------------------------------------------------------------
+
+#: The synthesized click track: 20 ms of 1 kHz once a second, silence between.
+#: Its onset envelope is knowable up front, which is what makes it assertable.
+CLICK_PERIOD_S = 1.0
+CLICK_SECONDS = 4
+CLICK_FPS = 10
+
+#: One ``sendcmd`` line per (frame, property), e.g.
+#: ``1.000 [enter] eq@flash brightness 0.250;``
+SENDCMD_LINE = re.compile(
+    r"^(?P<t>\d+\.\d{3}) \[enter\] (?P<target>\S+) "
+    r"(?P<prop>brightness|saturation) (?P<value>-?\d+\.\d{3});$"
+)
+
+
+@pytest.fixture
+def click_track(tmp_path):
+    """Four one-second-apart clicks, synthesized by ffmpeg into ``tmp_path``."""
+    audio = tmp_path / "clicks.wav"
+    subprocess.run(
+        [
+            "ffmpeg",
+            "-y",
+            "-loglevel",
+            "error",
+            "-f",
+            "lavfi",
+            "-i",
+            f"aevalsrc=exprs=0.9*sin(2*PI*1000*t)*lt(mod(t\\,{CLICK_PERIOD_S})\\,0.02)"
+            f":d={CLICK_SECONDS}:s=44100",
+            "-ac",
+            "1",
+            str(audio),
+        ],
+        check=True,
+    )
+    return audio
+
+
+@needs_ffmpeg
+def test_the_onset_envelope_peaks_on_the_clicks_and_decays_between_them(click_track):
+    env = onset_envelope(click_track, fps=CLICK_FPS, duration=float(CLICK_SECONDS))
+    assert len(env) == CLICK_SECONDS * CLICK_FPS
+    assert all(0.0 <= v <= 1.0 for v in env), "the envelope must be normalized"
+
+    # A click at t=N lands on frame fps*N. (t=0 is not detected: the envelope
+    # measures the *rise* in loudness, and the track opens on its first click,
+    # so there is no quiet frame before it to rise from.)
+    for beat in range(1, CLICK_SECONDS):
+        click = beat * CLICK_FPS
+        # +/-1 frame: resampling a click out of digital silence leaves a little
+        # pre-ringing, and against a -90 dB floor even that reads as an onset,
+        # so the flash may start one frame early.
+        assert max(env[click - 1 : click + 2]) > 0.5, f"beat {beat} did not flash"
+        # Well before the click, the previous beat has long since faded out.
+        assert env[click - CLICK_FPS // 2] < 0.05, f"beat {beat} lit up early"
+        # And after it, the pulse fades — smoothly, not in one step.
+        trail = env[click + 1 : click + CLICK_FPS - 1]
+        assert trail == sorted(trail, reverse=True), f"beat {beat} trail: {trail}"
+        assert trail[-1] < 0.05, f"beat {beat} never went dark: {trail[-1]}"
+
+
+@needs_ffmpeg
+def test_a_faster_decay_makes_the_flash_shorter(click_track):
+    """``decay`` is the afterglow knob, not decoration — it must move the trail."""
+    kwargs = dict(fps=CLICK_FPS, duration=float(CLICK_SECONDS))
+    snappy = onset_envelope(click_track, decay=0.1, **kwargs)
+    lingering = onset_envelope(click_track, decay=0.9, **kwargs)
+    frame_after_a_beat = CLICK_FPS + 2
+    assert snappy[frame_after_a_beat] < lingering[frame_after_a_beat]
+    assert sum(snappy) < sum(lingering)
+
+
+def test_the_sendcmd_script_is_well_formed(tmp_path):
+    envelope = [0.0, 0.5, 1.0]
+    script = write_flash_script(
+        envelope,
+        tmp_path / "f.cmd",
+        fps=CLICK_FPS,
+        target="eq@flash",
+        brightness=FLASH_BRIGHTNESS,
+        saturation=FLASH_SATURATION,
+    )
+    lines = script.read_text().splitlines()
+    assert len(lines) == 2 * len(envelope)  # a brightness and a saturation per frame
+
+    matched = [SENDCMD_LINE.match(line) for line in lines]
+    assert all(matched), [ln for ln, m in zip(lines, matched) if not m]
+    assert {m["target"] for m in matched} == {"eq@flash"}
+
+    times = [float(m["t"]) for m in matched]
+    assert times == sorted(times)  # sendcmd needs its commands in time order
+    assert times[0] == 0.0
+    assert times[-1] == (len(envelope) - 1) / CLICK_FPS
+
+    values = {
+        prop: [float(m["value"]) for m in matched if m["prop"] == prop]
+        for prop in ("brightness", "saturation")
+    }
+    # At rest the eq is a no-op (0 / 1); a full pulse reaches the configured peaks.
+    assert values["brightness"] == [0.0, FLASH_BRIGHTNESS / 2, FLASH_BRIGHTNESS]
+    assert values["saturation"] == [1.0, 1 + FLASH_SATURATION / 2, 1 + FLASH_SATURATION]
+
+
+@needs_ffmpeg
+def test_the_flash_fragment_points_at_an_escaped_script_path(click_track, tmp_path):
+    fragment = flash_filter(
+        click_track, fps=CLICK_FPS, duration=float(CLICK_SECONDS), workdir=tmp_path
+    )
+    # It is appended to a visual's chain, so it must open with the separator.
+    assert fragment.startswith(",sendcmd=f=")
+    assert f",eq@{DEFAULT_FLASH_LABEL}=brightness=0:saturation=1:eval=frame" in fragment
+
+    script = tmp_path / f"{DEFAULT_FLASH_LABEL}.cmd"
+    assert script.exists()
+    # The path goes into a filtergraph, so it must be escaped, not raw.
+    assert escape_filter_value(str(script)) in fragment
+
+
+@needs_ffmpeg
+def test_an_undecodable_track_yields_no_flash_rather_than_an_error(tmp_path):
+    # The flash is a garnish; a track ffmpeg cannot read should cost the render
+    # its flash, not fail it.
+    junk = tmp_path / "not-really-a.wav"
+    junk.write_bytes(b"this is not audio")
+    assert onset_envelope(junk, fps=CLICK_FPS) == []
+    assert flash_filter(junk, fps=CLICK_FPS, duration=1.0, workdir=tmp_path) == ""
+
+
+def test_a_build_without_sendcmd_drops_the_flash_instead_of_breaking_the_graph(
+    tmp_path, monkeypatch
+):
+    import muvid.visualize.reactive as reactive
+
+    monkeypatch.setattr(reactive, "has_filter", lambda name: name != "sendcmd")
+    fragment = reactive.flash_filter(
+        tmp_path / "song.wav", fps=CLICK_FPS, duration=1.0, workdir=tmp_path
+    )
+    assert fragment == ""
+
+
+@needs_ffmpeg_filter("showspectrum", "sendcmd", "eq")
+def test_the_spectrum_visual_flashes_last_in_the_chain_and_can_be_switched_off(
+    click_track, tmp_path
+):
+    ctx = VisualContext(
+        audio=click_track,
+        image=None,
+        duration=float(CLICK_SECONDS),
+        size=(320, 180),
+        fps=CLICK_FPS,
+        workdir=tmp_path,
+    )
+    chain = resolve_visual("spectrum", ctx).filters[0]
+    assert "sendcmd=f=" in chain and f"eq@{DEFAULT_FLASH_LABEL}=" in chain
+    # The flash must come *after* the recolour, so it modulates the colours the
+    # frame actually shows rather than ones that are about to be replaced.
+    assert chain.index("colorchannelmixer") < chain.index("sendcmd")
+
+    off = resolve_visual("spectrum", replace(ctx, options={"flash": False}))
+    assert "sendcmd" not in off.filters[0]
+
+
+@needs_ffmpeg_filter("showspectrum", "sendcmd", "eq")
+def test_the_flashing_spectrum_renders_and_changes_the_picture(click_track, tmp_path):
+    # ffmpeg is the real judge of a sendcmd script: a malformed one fails the
+    # render outright. And the flash has to *do* something, so the same source
+    # rendered with and without it must not come out identical.
+    from muvid.visualize import render_audio_video
+
+    renders = {}
+    for name, options in (("on", {}), ("off", {"flash": False})):
+        renders[name] = render_audio_video(
+            click_track,
+            visual="spectrum",
+            saveas=tmp_path / f"flash-{name}.mp4",
+            size=(320, 180),
+            fps=CLICK_FPS,
+            options=options,
+        )
+    assert _video_stream(renders["on"].path)["pix_fmt"] == "yuv420p"
+    assert abs(renders["on"].duration - media_duration(click_track)) < 0.5
+    # Digest rather than raw bytes: identical mp4s would otherwise dump two
+    # multi-kilobyte blobs into the failure report.
+    digests = {
+        k: hashlib.sha256(r.path.read_bytes()).hexdigest() for k, r in renders.items()
+    }
+    assert digests["on"] != digests["off"], "the flash changed nothing in the picture"

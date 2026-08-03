@@ -19,6 +19,11 @@ sits on the canvas, and :func:`~muvid.visualize.canvas.thumbnail_image` derives
 a 16:9 thumbnail from that same composition. :func:`~muvid.visualize.verify.
 verify_video` checks a render against what a platform will actually accept.
 
+Because the whole song is known before the first frame is drawn, a visual can
+also be driven by *precomputed* audio analysis:
+:func:`~muvid.visualize.reactive.flash_filter` turns an onset envelope into an
+ffmpeg ``sendcmd`` script, which is how the spectrogram pulses on the beat.
+
 Needs ``ffmpeg`` (and ``ffprobe``) on the PATH. Every built-in visual is
 ffmpeg-native, except Ken Burns, which renders through ``burns`` (already a
 dependency of ``mixing``, so it needs no extra).
@@ -28,6 +33,7 @@ from muvid.visualize.ffmpeg import (
     FfmpegError,
     Loudness,
     PathLike,
+    decode_pcm,
     has_filter,
     measure_loudness,
     media_duration,
@@ -42,6 +48,11 @@ from muvid.visualize.canvas import (
     TitleStyle,
     canvas_image,
     thumbnail_image,
+)
+from muvid.visualize.reactive import (
+    ENVELOPE_SR,
+    flash_filter,
+    onset_envelope,
 )
 from muvid.visualize.visuals import (
     DEFAULT_TINT,
@@ -71,6 +82,7 @@ __all__ = [
     "FfmpegError",
     "Loudness",
     "PathLike",
+    "decode_pcm",
     "has_filter",
     "measure_loudness",
     "media_duration",
@@ -83,6 +95,9 @@ __all__ = [
     "TitleStyle",
     "canvas_image",
     "thumbnail_image",
+    "ENVELOPE_SR",
+    "flash_filter",
+    "onset_envelope",
     "DEFAULT_TINT",
     "VisualContext",
     "VisualPlan",

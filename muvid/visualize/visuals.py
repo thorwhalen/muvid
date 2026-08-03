@@ -39,6 +39,11 @@ from muvid.visualize.canvas import (
     overlay_chain,
 )
 from muvid.visualize.ffmpeg import PathLike, require_filter
+from muvid.visualize.reactive import (
+    FLASH_BRIGHTNESS,
+    FLASH_SATURATION,
+    flash_filter,
+)
 
 #: Over a reactive background the cover fills nearly the whole frame (with a
 #: little padding), and is made slightly transparent so the visualizer plays on
@@ -447,8 +452,16 @@ def spectrum_visual(ctx: VisualContext) -> VisualPlan:
     darker background so it stands out. The default ``green`` colormap is tinted
     to the teal accent; pass a ``color`` to use ffmpeg's colormap instead.
 
+    The whole spectrogram also **pulses with the beat**: a precomputed onset
+    envelope (see :mod:`muvid.visualize.reactive`) drives a ``sendcmd``-controlled
+    brightness/saturation flash, so attacks in the music read as flashes at the
+    live leading edge instead of the display feeling merely synced to playback.
+    The flash is appended last, after the recolour, so it modulates the colours
+    the frame actually shows.
+
     Options: ``color`` (colormap — the teal tint applies only to the default),
-    ``gain``, ``saturation``, ``overlap`` (scroll speed, 0–1), plus the shared
+    ``gain``, ``saturation``, ``overlap`` (scroll speed, 0–1), ``flash`` (bool,
+    default on), ``flash_brightness``, ``flash_saturation``, plus the shared
     background/cover keys.
     """
     width, height = ctx.size
@@ -462,6 +475,15 @@ def spectrum_visual(ctx: VisualContext) -> VisualPlan:
     )
     if color == "green":  # green magnitude → teal (add a little red, lots of blue)
         viz += ",format=rgba,colorchannelmixer=rg=0.05:bg=0.9"
+    if ctx.options.get("flash", True):
+        viz += flash_filter(
+            ctx.audio,
+            fps=ctx.fps,
+            duration=ctx.duration,
+            workdir=ctx.workdir,
+            brightness=ctx.options.get("flash_brightness", FLASH_BRIGHTNESS),
+            saturation=ctx.options.get("flash_saturation", FLASH_SATURATION),
+        )
     # spectrum colours itself, so skip the shared line tint (tint="").
     return _reactive_plan(ctx, viz, filter_name="showspectrum", bg_dim=0.5, tint="")
 

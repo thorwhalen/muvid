@@ -3,11 +3,12 @@
 Thin, dependency-free wrappers around the ``ffmpeg``/``ffprobe`` binaries that
 ``muvid.visualize`` assumes on the PATH: running a command with a readable
 error, probing duration and streams, checking that an optional filter was
-compiled in, and measuring loudness (EBU R128) for two-pass normalization.
+compiled in, decoding raw PCM for an analysis pass, and measuring loudness
+(EBU R128) for two-pass normalization.
 
 Nothing here knows about music or a destination platform — it is the shared
 substrate under :mod:`muvid.visualize.canvas`, :mod:`muvid.visualize.visuals`,
-and :mod:`muvid.visualize.video`.
+:mod:`muvid.visualize.reactive`, and :mod:`muvid.visualize.video`.
 """
 
 from __future__ import annotations
@@ -108,17 +109,23 @@ def require_ffmpeg(*tools: str) -> None:
         )
 
 
-def _run_bounded(cmd: list[str]) -> subprocess.CompletedProcess:
+def _run_bounded(cmd: list[str], *, text: bool = True) -> subprocess.CompletedProcess:
     """Run an ffmpeg/ffprobe ``cmd`` (capturing output), bounded by the timeout.
 
     EVERY ffmpeg/ffprobe spawn that may decode caller-supplied media goes through here,
     so ``$MUVID_FFMPEG_TIMEOUT_S`` bounds them all consistently: a metadata-spoofing or
     decode-bomb input can't pin a worker past the timeout on the synchronous render path
     (the loudnorm analysis pass and ffprobe are full/partial decodes, not just the mux).
+
+    Args:
+        cmd: The full command line.
+        text: Decode the captured output as text. Pass ``False`` when ffmpeg is
+            piping raw samples rather than a report (see :func:`decode_pcm`) —
+            decoding PCM as text would corrupt it.
     """
     try:
         return subprocess.run(
-            cmd, capture_output=True, text=True, timeout=_ffmpeg_timeout()
+            cmd, capture_output=True, text=text, timeout=_ffmpeg_timeout()
         )
     except subprocess.TimeoutExpired as e:
         raise FfmpegError(
@@ -196,6 +203,51 @@ def media_duration(media: PathLike) -> float:
     if duration is None:
         raise FfmpegError(f"Could not determine the duration of {media!s}.")
     return float(duration)
+
+
+#: Sample format the raw-PCM decode emits: little-endian 32-bit float, which is
+#: exactly ``numpy.float32``'s memory layout, so an analysis pass can read the
+#: bytes straight into an array with no conversion step.
+PCM_SAMPLE_FORMAT = "f32le"
+
+
+def decode_pcm(audio: PathLike, *, sample_rate: int, channels: int = 1) -> bytes:
+    """Decode ``audio`` to raw :data:`PCM_SAMPLE_FORMAT` samples on stdout.
+
+    Analysis passes (loudness envelopes, onset detection) want *samples*, not a
+    container. This is the single place muvid turns a media file into raw PCM,
+    so ``$MUVID_FFMPEG_TIMEOUT_S`` bounds that decode like every other one.
+
+    Args:
+        audio: The media file to decode.
+        sample_rate: Resample to this rate. Analysis rarely needs full quality,
+            and a low rate keeps a long track's decode cheap.
+        channels: Downmix to this many channels (1 = mono).
+
+    Returns:
+        The raw PCM bytes — empty when ffmpeg could not decode ``audio``.
+        Returning empty rather than raising lets a caller treat "no usable
+        audio" as "no effect" (see :func:`muvid.visualize.reactive.flash_filter`).
+    """
+    require_ffmpeg("ffmpeg")
+    proc = _run_bounded(
+        [
+            "ffmpeg",
+            "-v",
+            "error",
+            "-i",
+            str(audio),
+            "-ac",
+            str(channels),
+            "-ar",
+            str(sample_rate),
+            "-f",
+            PCM_SAMPLE_FORMAT,
+            "-",
+        ],
+        text=False,
+    )
+    return proc.stdout or b""
 
 
 @lru_cache(maxsize=1)

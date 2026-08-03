@@ -1,9 +1,10 @@
 """Tests for muvid.mcp — the ``music-visualizer`` tool surface + aggregation seam.
 
 Gated on the ``[mcp]`` extra (nw + fastmcp). The end-to-end render tests also need
-ffmpeg and skip without it. The caller identity is bound via ``use_email`` (the same
-override local/stdio use relies on); the SSRF-guarded fetch is patched to local fixtures
-because the guard correctly blocks localhost.
+ffmpeg — and, where they exercise one, the specific filter it must have been built
+with (see :mod:`tests.ffmpeg_support`) — and skip without it. The caller identity is
+bound via ``use_email`` (the same override local/stdio use relies on); the SSRF-guarded
+fetch is patched to local fixtures because the guard correctly blocks localhost.
 """
 
 from __future__ import annotations
@@ -14,15 +15,14 @@ from pathlib import Path
 
 import pytest
 
+from tests.ffmpeg_support import needs_ffmpeg, needs_ffmpeg_filter
+
 pytest.importorskip("nw")
 pytest.importorskip("fastmcp")
 
 import muvid.mcp as mcp  # noqa: E402
 import muvid.mcp.tools as tools  # noqa: E402
 from muvid.mcp.identity import current_email, use_email  # noqa: E402
-
-HAS_FFMPEG = shutil.which("ffmpeg") is not None and shutil.which("ffprobe") is not None
-needs_ffmpeg = pytest.mark.skipif(not HAS_FFMPEG, reason="ffmpeg is not installed")
 
 
 # -- aggregation seam --------------------------------------------------------
@@ -191,7 +191,7 @@ def patched_fetch(song_and_cover, monkeypatch):
     return audio, cover
 
 
-@needs_ffmpeg
+@needs_ffmpeg_filter("showcqt")  # the 'cqt' visual is showcqt, an optional build flag
 def test_reactive_render_without_a_cover_has_no_thumbnail(
     tmp_path, monkeypatch, patched_fetch
 ):
@@ -204,7 +204,7 @@ def test_reactive_render_without_a_cover_has_no_thumbnail(
     assert out["ok"] is True
 
 
-@needs_ffmpeg
+@needs_ffmpeg_filter("drawtext")  # it renders with title=, and drawtext burns that in
 def test_still_render_with_cover_produces_a_thumbnail(
     tmp_path, monkeypatch, patched_fetch
 ):
