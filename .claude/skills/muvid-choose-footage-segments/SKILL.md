@@ -16,7 +16,7 @@ description: >
 The `music_video` genre aligns N different-device recordings of one fixed song to the
 clean master's timeline (`mixing.audio`, per-clip offset). This skill is the layer above:
 **score** footage segments and **select** which clip is on-air over each span. Full
-design + citations: `muvid/docs/footage_scoring_research.md`.
+design + citations: `misc/docs/footage_scoring_research.md`.
 
 ## The one idea to hold onto: one grid, two consumers
 
@@ -70,7 +70,7 @@ higher = better) + `raw_values[]` + a coverage `mask[]`; grid frame *k* ↔ song
 - **Normalize robustly across clips** (median/IQR, percentile-clipped) so a "motion" peak
   in clip A is comparable to clip B and to A's "sharpness" — but know this is the
   editor/auto tension (per-clip contrast vs cross-clip truth); it's a settled decision, so
-  check `docs/footage_scoring_research.md` §7 before changing it.
+  check `misc/docs/footage_scoring_research.md` §7 before changing it.
 - **Cut on the beat:** the DP only switches at beat/downbeat grid points; shot-length
   limits and the switch penalty are the strategy's tunables, not hardcoded.
 - **Feasibility first:** ship the off-the-shelf tier (quality gates + master beat grid +
