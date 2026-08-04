@@ -16,21 +16,39 @@ Every recipe emits a score track on the shared song-time grid (`hop≈0.1s`; val
 higher=better; a coverage `mask`). Compute audio beats + the vocal stem **once on the
 master**; map to each clip via its known offset.
 
-## Decided constraints (2026-08-03)
+## Decided constraints (v1 — implemented, see `misc/docs/footage_scoring_design.md` LOCKED)
 
-- **Commercial → MIT/BSD/Apache ONLY.** Use `syncnet-python` (MIT weights), `demucs`,
-  `madmom`/`librosa`, OpenCV, MediaPipe, PySceneDetect, and **BRISQUE/NIQE** for any
-  aesthetic term. **Do NOT** use the Wav2Lip expert-discriminator weights, `pyiqa`
-  NIMA/MUSIQ/TOPIQ, or DOVER (all non-commercial). VocaLiST is out for now (research
-  license); revisit only if relicensed.
-- **Async, CPU-first.** Scoring is a background job after align (NOT the synchronous
-  render path). Use **Farneback** optical flow (not RAFT) and `syncnet-python` on CPU so
-  it runs on the current keyless box; keep a GPU fast-path optional behind a flag.
+- **Two tiers.** The **core tier** (`muvid[scoring]`, torch-free) = quality gates +
+  motion-to-beat + the selector + editor tracks; this is what prod installs. The
+  **lip-sync tier** (`muvid[scoring-lipsync]`: Demucs + `syncnet-python`) is **OPT-IN,
+  OFF BY DEFAULT, off-prod** — the htdemucs weights are **CC-BY-NC (research-only, NOT
+  commercial-clean)** and Demucs+SyncNet on CPU peak ~2-3 GB (OOM risk on the fragile box).
+  Enable only on a local/worker box (`MUVID_SCORING_ENABLE_LIPSYNC=1`) with operator-provided
+  licensed weights (`MUVID_SYNCNET_*_WEIGHTS`).
+- **Commercial → MIT/BSD/Apache/ISC ONLY** for the core: OpenCV, MediaPipe, `librosa` (ISC),
+  optional PySceneDetect (BSD-3, `muvid[scoring-shots]`). **`madmom` is DROPPED** (its beat
+  models are academic-licensed) — librosa is the sole beat backend. **Do NOT** use Wav2Lip
+  expert weights, `pyiqa` NIMA/MUSIQ/TOPIQ, DOVER, or VocaLiST (all non-commercial).
+- **Async, CPU-first.** Scoring is a background job (`nw.jobs`) after align, NOT the render
+  path — a process-wide concurrency=1 semaphore, `should_cancel` between clips. Farneback
+  flow (not RAFT), heavy extractors out-of-process when enabled.
 
-## Lip-sync (`lip_sync_lse_c` + `lse_d_offset` + `face_gate`)
+## Implemented module map (v1)
 
+- `mixing.audio.beat_grid` (mixing[beats], librosa) — the master beat/onset grid, computed ONCE.
+- `muvid/footage/scoring/`: `grid.py` (ScoreTrack + resample + robust-normalize + tensor +
+  atomic/NaN-safe persistence), `frames.py` (ONE decode pass → shared per-clip artifacts),
+  `quality.py`, `motionbeat.py`, `segment.py`, `lipsync.py` (opt-in), `orchestrator.py`
+  (`score_project`). The selector is `muvid/footage/select_score.py` (`weighted` strategy).
+
+## Lip-sync (`lip_sync_lse_c` + `lse_d_offset` + `face_gate`) — OPT-IN TIER (off-prod)
+
+Implemented in `muvid/footage/scoring/lipsync.py`, gated: skips cleanly (returns `[]`) unless
+`muvid[scoring-lipsync]` is installed AND `MUVID_SYNCNET_*_WEIGHTS` are set. ⚠ its glue is
+untestable without the deps → needs a live validation pass before first real use.
 Pipeline: face-detect → track → mouth-crop → SyncNet score vs **master vocal stem**.
-- Separate the master's vocals once: **Demucs** (`pip install demucs`, MIT).
+- Separate the master's vocals once: **Demucs** (`pip install demucs`, MIT code — but the
+  htdemucs **weights are CC-BY-NC**, so this tier is off-prod / local-worker only).
 - Per clip: `syncnet-python` (`pip install syncnet-python`, **MIT**) runs S3FD face detect
   → track → mouth crop → per-window LSE-C (confidence, higher=better) + LSE-D (distance) +
   offset. Feed the co-temporal **master vocal** window (offset already known) so SyncNet
@@ -47,8 +65,9 @@ Pipeline: face-detect → track → mouth-crop → SyncNet score vs **master voc
 
 ## Motion-to-beat (`motion_beat_bas` + `motion_onset_xcorr`)
 
-- **Audio beats/onsets (master, once):** `madmom` DBNBeatTracker (BSD-2; models academic)
-  or `librosa.beat` (ISC) / `BeatNet` (MIT). Also the onset-strength envelope.
+- **Audio beats/onsets (master, once):** `mixing.audio.beat_grid` (librosa, ISC) — beats +
+  onset envelope in one call, computed ONCE on the master. (madmom is DROPPED — academic
+  models; librosa is the sole backend.)
 - **Motion envelope (per clip):** optical-flow magnitude (OpenCV Farneback CPU, or RAFT
   on GPU) or frame-difference energy → 1-D; when a person is tracked, **pose-keypoint**
   velocity/acceleration (MediaPipe) gives cleaner "body beats". Abe Davis's
