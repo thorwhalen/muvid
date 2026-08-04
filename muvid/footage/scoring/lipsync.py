@@ -68,7 +68,9 @@ def separate_master_vocals(song_path: str, *, out_dir: str) -> Path | None:
         return None
     try:
         model = os.environ.get("MUVID_DEMUCS_MODEL", "htdemucs")
-        separator = Separator(model=model, segment=int(os.environ.get("MUVID_DEMUCS_SEGMENT", "7")))
+        separator = Separator(
+            model=model, segment=int(os.environ.get("MUVID_DEMUCS_SEGMENT", "7"))
+        )
         _origin, stems = separator.separate_audio_file(str(song_path))
         vocals = stems.get("vocals")
         if vocals is None:
@@ -81,7 +83,9 @@ def separate_master_vocals(song_path: str, *, out_dir: str) -> Path | None:
         return None
 
 
-def _slice_stem(vocal_stem_path: str, *, start_s: float, dur_s: float, out_dir: str) -> str:
+def _slice_stem(
+    vocal_stem_path: str, *, start_s: float, dur_s: float, out_dir: str
+) -> str:
     """Write the ``[start_s, start_s+dur_s]`` slice of the master vocal stem to a temp wav.
 
     So SyncNet's audio-frame-0 lines up with the clip's video-frame-0 (the clip is aligned to
@@ -152,11 +156,15 @@ def lipsync_tracks(
                 _best_dist,
                 detections_json,
                 success,
-            ) = pipeline.inference(video_path=str(clip_path), audio_path=str(audio_path))
+            ) = pipeline.inference(
+                video_path=str(clip_path), audio_path=str(audio_path)
+            )
         except Exception:
             # Fail safe (skip lip-sync) BUT log — a misconfigured worker must be
             # distinguishable from a genuine "no singing face" skip.
-            logger.warning("SyncNet lip-sync failed for clip %s", clip_id, exc_info=True)
+            logger.warning(
+                "SyncNet lip-sync failed for clip %s", clip_id, exc_info=True
+            )
             return []
     if not success or not confidence_list:
         return []
@@ -167,8 +175,16 @@ def lipsync_tracks(
     spans = _detection_spans(detections_json, duration_s=duration_s)
     fps = _detections_fps(detections_json) or 25.0
     for ti, (f0, f1) in enumerate(spans):
-        conf = float(confidence_list[ti]) if ti < len(confidence_list) else float(confidence_list[0])
-        dist = float(min_dist_list[ti]) if ti < len(min_dist_list) else float(min_dist_list[0])
+        conf = (
+            float(confidence_list[ti])
+            if ti < len(confidence_list)
+            else float(confidence_list[0])
+        )
+        dist = (
+            float(min_dist_list[ti])
+            if ti < len(min_dist_list)
+            else float(min_dist_list[0])
+        )
         for f in range(f0, f1):
             st = f / fps + offset_s
             if st < lo - hop_s or st > hi + hop_s:  # never beyond the clip's coverage
@@ -183,12 +199,16 @@ def lipsync_tracks(
     c_vals, c_mask = resample_to_grid(lse_c_times, lse_c_vals, t0=t0, hop_s=hop_s, n=n)
     d_vals, d_mask = resample_to_grid(lse_d_times, lse_d_vals, t0=t0, hop_s=hop_s, n=n)
     return [
-        ScoreTrack(clip_id, "lip_sync_lse_c", t0, hop_s, c_vals, c_mask, "higher_better"),
+        ScoreTrack(
+            clip_id, "lip_sync_lse_c", t0, hop_s, c_vals, c_mask, "higher_better"
+        ),
         ScoreTrack(clip_id, "lse_d_offset", t0, hop_s, d_vals, d_mask, "lower_better"),
     ]
 
 
-def _detection_spans(detections_json, *, duration_s: float, fps: float = 25.0) -> list[tuple[int, int]]:
+def _detection_spans(
+    detections_json, *, duration_s: float, fps: float = 25.0
+) -> list[tuple[int, int]]:
     """Best-effort (start_frame, end_frame) per face track from SyncNet's detections JSON.
 
     Defensive: SyncNet's detections shape varies by version; on a parse miss return ONE span
@@ -197,7 +217,11 @@ def _detection_spans(detections_json, *, duration_s: float, fps: float = 25.0) -
     This glue needs live validation (see the module docstring).
     """
     try:
-        tracks = detections_json.get("tracks") if isinstance(detections_json, dict) else detections_json
+        tracks = (
+            detections_json.get("tracks")
+            if isinstance(detections_json, dict)
+            else detections_json
+        )
         spans = []
         for tr in tracks or []:
             frames = tr.get("frame") if isinstance(tr, dict) else None
@@ -213,7 +237,11 @@ def _detection_spans(detections_json, *, duration_s: float, fps: float = 25.0) -
 def _detections_fps(detections_json) -> float | None:
     try:
         if isinstance(detections_json, dict):
-            return float(detections_json.get("fps")) if detections_json.get("fps") else None
+            return (
+                float(detections_json.get("fps"))
+                if detections_json.get("fps")
+                else None
+            )
     except Exception:
         return None
     return None

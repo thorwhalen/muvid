@@ -49,11 +49,17 @@ _SCORING_SEMAPHORE = threading.BoundedSemaphore(_MAX_CONCURRENT)
 def _lipsync_enabled(explicit: bool | None) -> bool:
     if explicit is not None:
         return explicit
-    return os.environ.get("MUVID_SCORING_ENABLE_LIPSYNC", "0") not in ("0", "", "false", "False")
+    return os.environ.get("MUVID_SCORING_ENABLE_LIPSYNC", "0") not in (
+        "0",
+        "",
+        "false",
+        "False",
+    )
 
 
 def list_available_extractors() -> dict:
     """Which tiers can run here (import + weight availability) — for diagnostics / the tool."""
+
     def _has(mod):
         import importlib.util
 
@@ -121,7 +127,9 @@ def _cancelled(should_cancel):
     return should_cancel is not None and should_cancel()
 
 
-def _score(project, *, metrics, hop_s, sample_fps, enable_lipsync, progress_cb, should_cancel):
+def _score(
+    project, *, metrics, hop_s, sample_fps, enable_lipsync, progress_cb, should_cancel
+):
     from muvid.footage.scoring import frames as F
     from muvid.footage.scoring.motionbeat import motionbeat_tracks
     from muvid.footage.scoring.quality import quality_gate_mask, quality_tracks
@@ -149,8 +157,10 @@ def _score(project, *, metrics, hop_s, sample_fps, enable_lipsync, progress_cb, 
                 f"unavailable: {reason} (install muvid[scoring-lipsync] + set weights)"
             )
         want_lipsync = True
-    wanted = set(metrics) if metrics else set(DEFAULT_METRICS) | (
-        set(_LIPSYNC_METRICS) if want_lipsync else set()
+    wanted = (
+        set(metrics)
+        if metrics
+        else set(DEFAULT_METRICS) | (set(_LIPSYNC_METRICS) if want_lipsync else set())
     )
 
     total_stages = 1 + (1 if want_lipsync else 0) + len(aligns)
@@ -169,12 +179,16 @@ def _score(project, *, metrics, hop_s, sample_fps, enable_lipsync, progress_cb, 
     vocal_stem = None
     if want_lipsync:
         _emit(progress_cb, stage, total_stages, "separate_vocals")
-        from muvid.footage.scoring.lipsync import lipsync_available, separate_master_vocals
+        from muvid.footage.scoring.lipsync import (
+            lipsync_available,
+            separate_master_vocals,
+        )
 
         ok, _reason = lipsync_available()
         if ok:
             vocal_stem = separate_master_vocals(
-                str(project.song_path()), out_dir=str(project.root / "scores" / "_stems")
+                str(project.song_path()),
+                out_dir=str(project.root / "scores" / "_stems"),
             )
         stage += 1
         if _cancelled(should_cancel):
@@ -205,7 +219,9 @@ def _score(project, *, metrics, hop_s, sample_fps, enable_lipsync, progress_cb, 
             skipped[a.clip_id] = f"decode failed: {e}"
             continue
 
-        qt = quality_tracks(fp, clip_id=a.clip_id, offset_s=a.offset_s, t0=t0, hop_s=hop_s, n=n)
+        qt = quality_tracks(
+            fp, clip_id=a.clip_id, offset_s=a.offset_s, t0=t0, hop_s=hop_s, n=n
+        )
         mt = motionbeat_tracks(
             fp,
             clip_id=a.clip_id,
@@ -223,9 +239,7 @@ def _score(project, *, metrics, hop_s, sample_fps, enable_lipsync, progress_cb, 
         # Optional hard quality gate → AND into every metric's mask for this clip.
         gate = quality_gate_mask(fp, offset_s=a.offset_s, t0=t0, hop_s=hop_s, n=n)
         if not gate.all():
-            clip_tracks = [
-                _and_mask(tr, gate) for tr in clip_tracks
-            ]
+            clip_tracks = [_and_mask(tr, gate) for tr in clip_tracks]
 
         # Shot boundaries (for the selector's beats+shots mode).
         shots_by_clip[a.clip_id] = shot_boundaries(str(path), offset_s=a.offset_s)
@@ -252,7 +266,9 @@ def _score(project, *, metrics, hop_s, sample_fps, enable_lipsync, progress_cb, 
 
     # Metric axis = the wanted metrics actually produced by ≥1 clip.
     produced = {tr.metric for trs in tracks_by_clip.values() for tr in trs}
-    metric_axis = [m for m in _ordered_metrics(want_lipsync) if m in produced and m in wanted]
+    metric_axis = [
+        m for m in _ordered_metrics(want_lipsync) if m in produced and m in wanted
+    ]
 
     import math
 
@@ -305,5 +321,11 @@ def _and_mask(track, gate):
     new_mask = track.mask & gate
     new_vals = np.where(new_mask, track.raw_values, np.nan).astype("float32")
     return ScoreTrack(
-        track.clip_id, track.metric, track.t0, track.hop_s, new_vals, new_mask, track.direction
+        track.clip_id,
+        track.metric,
+        track.t0,
+        track.hop_s,
+        new_vals,
+        new_mask,
+        track.direction,
     )

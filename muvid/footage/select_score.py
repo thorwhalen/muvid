@@ -155,7 +155,9 @@ class SelectionContext:
     list of ``(song_start, song_end, clip_id)`` hard constraints.
     """
 
-    tensor: object | None  # ScoreTensor (typed loosely to avoid importing grid eagerly here)
+    tensor: (
+        object | None
+    )  # ScoreTensor (typed loosely to avoid importing grid eagerly here)
     beat_times: Sequence[float] = ()
     downbeat_times: Sequence[float] = ()
     shot_boundaries: Mapping[str, Sequence[float]] | None = None
@@ -235,7 +237,11 @@ def run_weighted(
     while len(entries) > MAX_EDL_ENTRIES and tries < 6:
         lam *= 2.0
         escalated, _ = _viterbi(
-            aligns, boundaries, composite, tensor, replace(solved_cfg, lambda_switch=lam)
+            aligns,
+            boundaries,
+            composite,
+            tensor,
+            replace(solved_cfg, lambda_switch=lam),
         )
         if escalated is None:  # feasibility is λ-independent, so this shouldn't happen
             break  # keep the last good `entries`
@@ -247,7 +253,9 @@ def run_weighted(
             "raise lambda_switch or l_min_s"
         )
 
-    validated = validate_edl(entries, aligns, song_duration)  # tautology by construction
+    validated = validate_edl(
+        entries, aligns, song_duration
+    )  # tautology by construction
     meta = {
         "strategy": "weighted",
         "cuts": len(validated),
@@ -480,7 +488,11 @@ def _arg_other(row, c):
 def _coalesce(entries: list[EdlEntry]) -> list[EdlEntry]:
     out: list[EdlEntry] = []
     for e in entries:
-        if out and out[-1].clip_id == e.clip_id and abs(out[-1].song_end - e.song_start) <= 1e-3:
+        if (
+            out
+            and out[-1].clip_id == e.clip_id
+            and abs(out[-1].song_end - e.song_start) <= 1e-3
+        ):
             out[-1] = EdlEntry(out[-1].song_start, e.song_end, e.clip_id)
         else:
             out.append(e)

@@ -74,9 +74,7 @@ def flow_residual_and_global(
         size = (max(1, w // downscale), max(1, h // downscale))
         prev_gray = cv2.resize(prev_gray, size)
         gray = cv2.resize(gray, size)
-    flow = cv2.calcOpticalFlowFarneback(
-        prev_gray, gray, None, 0.5, 2, 15, 3, 5, 1.2, 0
-    )
+    flow = cv2.calcOpticalFlowFarneback(prev_gray, gray, None, 0.5, 2, 15, 3, 5, 1.2, 0)
     fx, fy = flow[..., 0], flow[..., 1]
     gdx, gdy = float(np.median(fx)), float(np.median(fy))
     residual = float(np.mean(np.hypot(fx - gdx, fy - gdy)))

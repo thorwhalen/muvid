@@ -18,7 +18,13 @@ from muvid.footage.edl import _EPS
 
 
 def coverage_mask(
-    *, offset_s: float, duration_s: float, coverage: tuple, t0: float, hop_s: float, n: int
+    *,
+    offset_s: float,
+    duration_s: float,
+    coverage: tuple,
+    t0: float,
+    hop_s: float,
+    n: int,
 ) -> np.ndarray:
     """Grid frames (bool[n]) the clip covers — using its clamped ``coverage`` span."""
     lo, hi = coverage

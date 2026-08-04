@@ -77,8 +77,6 @@ def quality_gate_mask(
         frame_pass.exposure >= EXPOSURE_FLOOR
     )
     song_t = frame_pass.clip_times + offset_s
-    vals, mask = resample_to_grid(
-        song_t, ok.astype(float), t0=t0, hop_s=hop_s, n=n
-    )
+    vals, mask = resample_to_grid(song_t, ok.astype(float), t0=t0, hop_s=hop_s, n=n)
     # A frame is gated OUT where it is covered but the (interpolated) ok-signal < 0.5.
     return ~(mask & (np.nan_to_num(vals, nan=1.0) < 0.5))

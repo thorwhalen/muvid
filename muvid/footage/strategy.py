@@ -122,7 +122,9 @@ def select_edl(
     ``context`` (a ``SelectionContext``) is passed to score-driven strategies that declare it;
     the alignment-only built-ins ignore it. See :data:`SelectionStrategy`.
     """
-    return list(_call_strategy(resolve_strategy(strategy), alignments, song_duration, context))
+    return list(
+        _call_strategy(resolve_strategy(strategy), alignments, song_duration, context)
+    )
 
 
 # --------------------------------------------------------------------------

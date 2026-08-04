@@ -251,19 +251,31 @@ list[ScoreTrack]` (or a per-clip variant the orchestrator maps). Rules:
 ```python
 @dataclass(frozen=True)
 class WeightedSelectionConfig:
-    weights: dict[str, float]      # per-metric weight; missing metric ⇒ weight 0
-    lambda_switch: float = 0.35    # Potts penalty per clip switch (in composite units)
-    l_min_s: float = 1.2           # min shot length (relaxed on the terminal segment)
-    l_max_s: float = 8.0           # max shot length (a dwell cap)
-    boundary_mode: str = "beats"   # "beats" | "beats+shots"
-    beat_unit: str = "beat"        # "beat" | "downbeat" (which grid the DP may switch on)
+    weights: dict[str, float]  # per-metric weight; missing metric ⇒ weight 0
+    lambda_switch: float = 0.35  # Potts penalty per clip switch (in composite units)
+    l_min_s: float = 1.2  # min shot length (relaxed on the terminal segment)
+    l_max_s: float = 8.0  # max shot length (a dwell cap)
+    boundary_mode: str = "beats"  # "beats" | "beats+shots"
+    beat_unit: str = "beat"  # "beat" | "downbeat" (which grid the DP may switch on)
+
 
 PRESETS = {
-  "energetic":     WeightedSelectionConfig(weights={...}, lambda_switch=0.2, l_min_s=0.8, l_max_s=4.0),
-  "contemplative": WeightedSelectionConfig(weights={...}, lambda_switch=0.6, l_min_s=3.0, l_max_s=12.0),
+    "energetic": WeightedSelectionConfig(
+        weights={...}, lambda_switch=0.2, l_min_s=0.8, l_max_s=4.0
+    ),
+    "contemplative": WeightedSelectionConfig(
+        weights={...}, lambda_switch=0.6, l_min_s=3.0, l_max_s=12.0
+    ),
 }
-DEFAULT_WEIGHTS = {"lip_sync_lse_c":1.0,"motion_beat_bas":0.8,"motion_onset_xcorr":0.5,
-                   "sharpness":0.4,"exposure":0.3,"face_framing":0.4,"stability_shake":0.3}
+DEFAULT_WEIGHTS = {
+    "lip_sync_lse_c": 1.0,
+    "motion_beat_bas": 0.8,
+    "motion_onset_xcorr": 0.5,
+    "sharpness": 0.4,
+    "exposure": 0.3,
+    "face_framing": 0.4,
+    "stability_shake": 0.3,
+}
 ```
 
 ### 4b. Fitting into the existing registry (open-closed, no compat shims)
@@ -279,9 +291,12 @@ untouched.
 class SelectionContext:
     alignments: Sequence[FootageAlignment]
     song_duration: float
-    tensor: ScoreTensor | None      # S[clip,frame,metric] + M + clip_ids + metrics + t0 + hop
-    beats: BeatSet | None           # beat_times, downbeat_times (song time)
+    tensor: (
+        ScoreTensor | None
+    )  # S[clip,frame,metric] + M + clip_ids + metrics + t0 + hop
+    beats: BeatSet | None  # beat_times, downbeat_times (song time)
     config: WeightedSelectionConfig
+
 
 # select_edl(strategy, alignments, song_duration, *, context=None):
 #   fn = resolve_strategy(strategy)
@@ -349,10 +364,15 @@ ETA) and only needs `project.root` — which `MusicVideoFootageProject` has. No 
 the cost/estimate machinery is inert (`estimated_usd=0`). The dispatch callable is the
 orchestrator, adapted:
 ```python
-nw.jobs.enqueue(proj, kind="footage.score",
+nw.jobs.enqueue(
+    proj,
+    kind="footage.score",
     params={"metrics": [...], "config": {...}, "estimated_usd": 0.0},
-    dispatch={"footage.score": _run_scoring},   # (project, params, *, job_id, on_event, should_cancel)
-    label="Score footage")
+    dispatch={
+        "footage.score": _run_scoring
+    },  # (project, params, *, job_id, on_event, should_cancel)
+    label="Score footage",
+)
 ```
 `_run_scoring` calls the orchestrator with `progress_cb` mapped to `on_event`
 (stage_index/stage_count/current_transform → the tray) and `should_cancel` threaded in so a

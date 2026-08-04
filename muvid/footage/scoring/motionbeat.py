@@ -66,14 +66,24 @@ def motionbeat_tracks(
         motion, mmask, onset_env, onset_hop_s, t0, hop_s, n, cover
     )
     return [
-        ScoreTrack(clip_id, "motion_beat_bas", t0, hop_s, bas_vals, bas_mask, "higher_better"),
         ScoreTrack(
-            clip_id, "motion_onset_xcorr", t0, hop_s, xcorr_vals, xcorr_mask, "higher_better"
+            clip_id, "motion_beat_bas", t0, hop_s, bas_vals, bas_mask, "higher_better"
+        ),
+        ScoreTrack(
+            clip_id,
+            "motion_onset_xcorr",
+            t0,
+            hop_s,
+            xcorr_vals,
+            xcorr_mask,
+            "higher_better",
         ),
     ]
 
 
-def _motion_peaks(motion: np.ndarray, mask: np.ndarray, t0: float, hop_s: float) -> np.ndarray:
+def _motion_peaks(
+    motion: np.ndarray, mask: np.ndarray, t0: float, hop_s: float
+) -> np.ndarray:
     """Song-times of local maxima of the motion envelope above a robust threshold."""
     m = np.where(mask, motion, np.nan)
     finite = m[np.isfinite(m)]
@@ -87,7 +97,9 @@ def _motion_peaks(motion: np.ndarray, mask: np.ndarray, t0: float, hop_s: float)
         if not (np.isfinite(m[k]) and np.isfinite(m[k - 1]) and np.isfinite(m[k + 1])):
             continue
         if m[k] >= m[k - 1] and m[k] > m[k + 1] and m[k] >= thr:
-            peaks.append(t0 + k * hop_s)  # absolute song time (matches _bas_track's beats)
+            peaks.append(
+                t0 + k * hop_s
+            )  # absolute song time (matches _bas_track's beats)
     return np.asarray(peaks, dtype=float)
 
 

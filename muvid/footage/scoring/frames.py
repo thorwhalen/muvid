@@ -37,7 +37,9 @@ class FramePass:
     sharpness: np.ndarray  # float[k]
     exposure: np.ndarray  # float[k] in [0,1]
     face: np.ndarray  # float[k] (0 where no face / no detector)
-    motion_residual: np.ndarray  # float[k], camera-compensated subject motion (NaN @ frame 0)
+    motion_residual: (
+        np.ndarray
+    )  # float[k], camera-compensated subject motion (NaN @ frame 0)
     global_dx: np.ndarray  # float[k], camera-motion vector x (NaN @ frame 0)
     global_dy: np.ndarray  # float[k], camera-motion vector y (NaN @ frame 0)
     fps: float
@@ -95,8 +97,12 @@ def sample_clip_frames(
                         prev_gray, gray, downscale=flow_downscale
                     )
                     motion.append(res)
-                    gxs.append(gdx)  # keep the camera-motion VECTOR so shake = its jitter,
-                    gys.append(gdy)  # not its magnitude (a smooth pan has large mag, low jitter)
+                    gxs.append(
+                        gdx
+                    )  # keep the camera-motion VECTOR so shake = its jitter,
+                    gys.append(
+                        gdy
+                    )  # not its magnitude (a smooth pan has large mag, low jitter)
                 else:
                     motion.append(np.nan)
                     gxs.append(np.nan)
@@ -188,7 +194,12 @@ def make_face_scorer():
                     bb = d.bounding_box
                     best = max(
                         best,
-                        _framing_score(bb.width / w, bb.height / h, bb.origin_x / w, bb.origin_y / h),
+                        _framing_score(
+                            bb.width / w,
+                            bb.height / h,
+                            bb.origin_x / w,
+                            bb.origin_y / h,
+                        ),
                     )
                 return best
 

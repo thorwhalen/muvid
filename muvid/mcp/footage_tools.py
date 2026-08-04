@@ -234,7 +234,9 @@ def assemble_music_video(
     try:
         if edl is not None:
             if has_selection_config:
-                raise ValueError("selection config (preset/weights/config) can't accompany an explicit edl")
+                raise ValueError(
+                    "selection config (preset/weights/config) can't accompany an explicit edl"
+                )
             entries = validate_edl(edl, aligns, song_dur)
             used_strategy = None
         else:

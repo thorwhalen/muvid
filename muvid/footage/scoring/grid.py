@@ -352,7 +352,9 @@ def build_tensor(
     )
 
 
-def _metric_direction(by_clip: Mapping[str, Mapping[str, ScoreTrack]], metric: str) -> str:
+def _metric_direction(
+    by_clip: Mapping[str, Mapping[str, ScoreTrack]], metric: str
+) -> str:
     for tracks in by_clip.values():
         if metric in tracks:
             return tracks[metric].direction
@@ -407,9 +409,7 @@ def save_scores(
     d.mkdir(parents=True, exist_ok=True)
 
     # Compute per-metric-global norms once (shared by save + the manifest).
-    tensor = build_tensor(
-        tracks, t0=t0, hop_s=hop_s, n=n, metrics=list(metrics)
-    )
+    tensor = build_tensor(tracks, t0=t0, hop_s=hop_s, n=n, metrics=list(metrics))
     clip_ids = tensor.clip_ids
 
     written = []

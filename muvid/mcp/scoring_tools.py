@@ -49,7 +49,9 @@ def _open(project_id: str):
 def _score_dispatch():
     """The nw.jobs dispatch callable for a scoring job (kept tiny + picklable-free)."""
 
-    def _run_scoring(project, params, *, job_id=None, on_event=None, should_cancel=None):
+    def _run_scoring(
+        project, params, *, job_id=None, on_event=None, should_cancel=None
+    ):
         from muvid.footage.scoring import score_project
 
         return score_project(
@@ -64,7 +66,9 @@ def _score_dispatch():
     return {_SCORE_KIND: _run_scoring}
 
 
-def score_footage(project_id: str, *, hop_s: float = 0.1, metrics: list | None = None) -> dict:
+def score_footage(
+    project_id: str, *, hop_s: float = 0.1, metrics: list | None = None
+) -> dict:
     """Kick a BACKGROUND job that scores every aligned clip (quality + motion-to-beat). Free.
 
     Returns immediately with a ``job_id``; poll ``footage_score_status``. Scoring extracts ALL
@@ -88,17 +92,18 @@ def score_footage(project_id: str, *, hop_s: float = 0.1, metrics: list | None =
     # the fingerprint → a fresh job (never a dedup onto the stale offsets).
     from muvid.footage.scoring.grid import align_fingerprint
 
-    key_basis = (
-        f"{proj.song_hash()}:{align_fingerprint(aligns)}:{sorted(metrics or [])}:{hop_s}"
-    )
-    idem = hashlib.sha256(
-        f"{proj.root}:{_SCORE_KIND}:{key_basis}".encode()
-    ).hexdigest()
+    key_basis = f"{proj.song_hash()}:{align_fingerprint(aligns)}:{sorted(metrics or [])}:{hop_s}"
+    idem = hashlib.sha256(f"{proj.root}:{_SCORE_KIND}:{key_basis}".encode()).hexdigest()
 
     job = nw_jobs.enqueue(
         proj,
         _SCORE_KIND,
-        {"hop_s": hop_s, "metrics": metrics, "estimated_usd": 0.0, "output_kind": "compute"},
+        {
+            "hop_s": hop_s,
+            "metrics": metrics,
+            "estimated_usd": 0.0,
+            "output_kind": "compute",
+        },
         dispatch=_score_dispatch(),
         idempotency_key=idem,
         label="Score footage",
@@ -107,7 +112,9 @@ def score_footage(project_id: str, *, hop_s: float = 0.1, metrics: list | None =
     return {"project_id": project_id, "job_id": job.job_id, "status": job.status}
 
 
-def footage_score_status(project_id: str, *, job_id: str = "", wait_s: float = 0) -> dict:
+def footage_score_status(
+    project_id: str, *, job_id: str = "", wait_s: float = 0
+) -> dict:
     """The scoring job's status (bounded long-poll). Free.
 
     Pass the ``job_id`` from ``score_footage`` (or omit for the newest scoring job). With
@@ -130,7 +137,9 @@ def footage_score_status(project_id: str, *, job_id: str = "", wait_s: float = 0
 
     job = _current()
     terminal = {"succeeded", "failed", "cancelled"}
-    while job is not None and job.status not in terminal and time.monotonic() < deadline:
+    while (
+        job is not None and job.status not in terminal and time.monotonic() < deadline
+    ):
         time.sleep(0.5)
         job = _current()
     if job is None:
@@ -267,8 +276,12 @@ def _decimate_values(arr, max_points: int, *, pool: str = "stride") -> list:
     if s == 1:
         picked = a
     elif pool == "min":  # preserve toss-up minima (selection_margin)
-        picked = np.array([np.nanmin(a[i : i + s]) if np.isfinite(a[i : i + s]).any() else np.nan
-                           for i in range(0, len(a), s)])
+        picked = np.array(
+            [
+                np.nanmin(a[i : i + s]) if np.isfinite(a[i : i + s]).any() else np.nan
+                for i in range(0, len(a), s)
+            ]
+        )
     else:
         picked = a[::s]
     return [None if not math.isfinite(x) else round(float(x), 4) for x in picked]
