@@ -34,16 +34,25 @@ FOOTAGE_TOOLS = [
     "list_strategies",
 ]
 
+#: The footage SCORING tools (muvid.mcp.scoring_tools) — the background scoring job + the
+#: editor's score-track reads (thorwhalen/muvid#13). Also free.
+SCORING_TOOLS = [
+    "score_footage",
+    "footage_score_status",
+    "footage_scores",
+]
+
 #: All tools this package exposes (all free). Bare names; a host may prefix them.
-TOOL_NAMES = VISUALIZER_TOOLS + FOOTAGE_TOOLS
+TOOL_NAMES = VISUALIZER_TOOLS + FOOTAGE_TOOLS + SCORING_TOOLS
 
 #: Alias — muvid has no costed tools.
 FREE_TOOLS = list(TOOL_NAMES)
 COSTED_TOOLS: list[str] = []
 
-#: Bare tool name → its ``module:function`` reference (tools live in two modules).
+#: Bare tool name → its ``module:function`` reference (tools live in three modules).
 TOOL_REFS = {name: f"muvid.mcp.tools:{name}" for name in VISUALIZER_TOOLS}
 TOOL_REFS.update({name: f"muvid.mcp.footage_tools:{name}" for name in FOOTAGE_TOOLS})
+TOOL_REFS.update({name: f"muvid.mcp.scoring_tools:{name}" for name in SCORING_TOOLS})
 
 
 def register_tools(server, *, prefix="", include=None, exclude=None):

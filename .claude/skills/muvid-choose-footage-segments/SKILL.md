@@ -50,16 +50,19 @@ higher = better) + `raw_values[]` + a coverage `mask[]`; grid frame *k* ↔ song
   `coverage_mask`, the fused `composite`, the Viterbi path, and `selection_margin`
   (best − 2nd-best → "where a human should decide").
 
-## Decided v1 (2026-08-03)
+## Decided v1 (implemented; LOCKED post-critique — see `misc/docs/footage_scoring_design.md`)
 
-- **In scope:** all four — lip-sync + motion-to-beat + the quality gates + the
-  selector/editor-tracks machinery. (Everything else in the menu stays v2.)
-- **Commercial → MIT/BSD/Apache only** (see `muvid-score-footage`).
-- **Async, CPU-first** scoring (a background job after align, not the synchronous render).
-- **Cut grid:** the DP DEFAULTS to switching **between clips, on beats** (the clean,
-  musically-safe path) — but cutting **within a clip** at its own shot boundaries is a
-  supported, easily-reverted option (a boundary-set/config flag on the strategy), not
-  disallowed. The clean default must always be one flag away.
+- **Core tier (default, prod-safe, torch-free):** motion-to-beat + quality gates + the
+  selector/editor-tracks machinery. **Lip-sync is an OPT-IN tier, OFF by default, off-prod**
+  (htdemucs weights are CC-BY-NC + Demucs/SyncNet OOM the fragile box) — present as a
+  `lip_sync_lse_c` column when enabled, absent (collapses to weight 0) otherwise.
+- **Commercial → MIT/BSD/Apache/ISC only** for the core; madmom dropped (see `muvid-score-footage`).
+- **Async, CPU-first** scoring (`nw.jobs` background job, concurrency=1) after align.
+- **Cut grid:** the DP DEFAULTS to switching **between clips, on beats**.
+  `boundary_mode="beats+shots"` adds **inter-clip** cut candidates at each clip's PySceneDetect
+  shot boundaries (needs `muvid[scoring-shots]`; degrades to beats-only without it). NB a true
+  *within-single-clip jump cut* is unrepresentable in the single-`offset_s` EDL model → a
+  deferred data-model change, NOT this flag.
 
 ## Rules
 
@@ -78,12 +81,24 @@ higher = better) + `raw_values[]` + a coverage `mask[]`; grid frame *k* ↔ song
   defer VocaLiST, learned aesthetic VQA (non-commercial + GPU), emotion, and
   diversity/pacing ILP to v2 (see the report's phasing).
 
-## Where this plugs into the existing code
+## Where this plugs into the existing code (IMPLEMENTED v1 — muvid#13)
 
-- `muvid/footage/strategy.py` — the `SelectionStrategy` registry. A score-driven strategy
-  is `select_edl(...)` implemented as the weighted-DP over the score tensor; the built-in
-  `best_confidence`/`longest_take`/`fewest_cuts` remain the alignment-only fallbacks.
-- `muvid/footage/edl.py` — `validate_edl` still gates the produced EDL; the DP produces a
-  gapless, in-order, within-coverage EDL by construction.
-- New (once scope is agreed): `muvid/footage/scoring/` (per-metric extractors → grid) +
-  a `clip-score-track` persistence type.
+- `muvid/footage/scoring/` — the layer: `grid.py` (`ScoreTrack` + resample + robust-normalize
+  + `ScoreTensor` + atomic/NaN-safe `.npz`+manifest persistence under `{project}/scores/`),
+  `frames.py` (ONE decode pass → shared per-clip artifacts), `quality.py`, `motionbeat.py`,
+  `segment.py`, `lipsync.py` (opt-in tier), `orchestrator.py` (`score_project`).
+- `muvid/footage/select_score.py` — the **`weighted`** strategy: the beat-snapped semi-Markov
+  Viterbi DP over the tensor. **The "strategy" is `WeightedSelectionConfig`** (weights,
+  `lambda_switch`, `l_min_s`, `l_max_s`, `boundary_mode`) passed via a `SelectionContext`.
+  Registered LAZILY in `muvid/footage/strategy.py` (numpy-free import). λ_switch is in
+  "seconds of perfect-footage reward a cut must earn"; feasibility is CONTINUOUS containment
+  (matches `validate_edl` exactly → valid EDL by construction); segments are different-clip
+  (so `l_max_s` is a true max-shot-length).
+- `muvid/footage/strategy.py` — `select_edl(strategy, aligns, dur, *, context=None)`; the
+  built-in `best_confidence`/`longest_take`/`fewest_cuts` remain the alignment-only fallbacks
+  (context is passed only to strategies that declare it — the `nw.jobs._call_dispatch` idiom).
+- **Scoring is keyed on INPUTS ONLY** (`song_hash` + offsets + metrics + hop) — weights enter
+  at ASSEMBLE, so one tensor serves every preset. MCP: `score_footage` (background `nw.jobs`),
+  `footage_score_status` (bounded long-poll), `footage_scores` (editor reads), and
+  `assemble_music_video(strategy='weighted', preset=…, weights=…, config=…)`.
+- `mixing.audio.beat_grid` (mixing[beats]) supplies the master beat/onset grid.
