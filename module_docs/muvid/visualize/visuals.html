@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.visualize.visuals &mdash; muvid 0.0.12 documentation</title>
+  <title>muvid.visualize.visuals &mdash; muvid 0.0.13 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -15,7 +15,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=3bbcec59"></script>
+      <script src="../../../_static/documentation_options.js?v=9fc46840"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -100,6 +100,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../visualize.html">muvid.visualize</a></li>
 <li class="toctree-l1"><a class="reference internal" href="canvas.html">muvid.visualize.canvas</a></li>
 <li class="toctree-l1"><a class="reference internal" href="ffmpeg.html">muvid.visualize.ffmpeg</a></li>
+<li class="toctree-l1"><a class="reference internal" href="reactive.html">muvid.visualize.reactive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="verify.html">muvid.visualize.verify</a></li>
 <li class="toctree-l1"><a class="reference internal" href="video.html">muvid.visualize.video</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">muvid.visualize.visuals</a><ul>
@@ -576,8 +577,15 @@ the line-work reads through it too.</p>
 read, and <code class="docutils literal notranslate"><span class="pre">overlap</span></code> quickens the right-to-left scroll. Rendered over a
 darker background so it stands out. The default <code class="docutils literal notranslate"><span class="pre">green</span></code> colormap is tinted
 to the teal accent; pass a <code class="docutils literal notranslate"><span class="pre">color</span></code> to use ffmpeg’s colormap instead.</p>
+<p>The whole spectrogram also <strong>pulses with the beat</strong>: a precomputed onset
+envelope (see <a class="reference internal" href="reactive.html#module-muvid.visualize.reactive" title="muvid.visualize.reactive"><code class="xref py py-mod docutils literal notranslate"><span class="pre">muvid.visualize.reactive</span></code></a>) drives a <code class="docutils literal notranslate"><span class="pre">sendcmd</span></code>-controlled
+brightness/saturation flash, so attacks in the music read as flashes at the
+live leading edge instead of the display feeling merely synced to playback.
+The flash is appended last, after the recolour, so it modulates the colours
+the frame actually shows.</p>
 <p>Options: <code class="docutils literal notranslate"><span class="pre">color</span></code> (colormap — the teal tint applies only to the default),
-<code class="docutils literal notranslate"><span class="pre">gain</span></code>, <code class="docutils literal notranslate"><span class="pre">saturation</span></code>, <code class="docutils literal notranslate"><span class="pre">overlap</span></code> (scroll speed, 0–1), plus the shared
+<code class="docutils literal notranslate"><span class="pre">gain</span></code>, <code class="docutils literal notranslate"><span class="pre">saturation</span></code>, <code class="docutils literal notranslate"><span class="pre">overlap</span></code> (scroll speed, 0–1), <code class="docutils literal notranslate"><span class="pre">flash</span></code> (bool,
+default on), <code class="docutils literal notranslate"><span class="pre">flash_brightness</span></code>, <code class="docutils literal notranslate"><span class="pre">flash_saturation</span></code>, plus the shared
 background/cover keys.</p>
 </dd></dl>
 

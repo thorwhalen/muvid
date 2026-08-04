@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.footage.select_score &mdash; muvid 0.0.12 documentation</title>
+  <title>muvid.footage.select_score &mdash; muvid 0.0.13 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=3bbcec59"></script>
+      <script src="../../../_static/documentation_options.js?v=9fc46840"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -98,6 +98,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize.html">muvid.visualize</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/canvas.html">muvid.visualize.canvas</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/ffmpeg.html">muvid.visualize.ffmpeg</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/reactive.html">muvid.visualize.reactive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/verify.html">muvid.visualize.verify</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/video.html">muvid.visualize.video</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/visuals.html">muvid.visualize.visuals</a></li>
@@ -293,7 +294,9 @@
 <span class="sd">    list of ``(song_start, song_end, clip_id)`` hard constraints.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">tensor</span><span class="p">:</span> <span class="nb">object</span> <span class="o">|</span> <span class="kc">None</span>  <span class="c1"># ScoreTensor (typed loosely to avoid importing grid eagerly here)</span>
+    <span class="n">tensor</span><span class="p">:</span> <span class="p">(</span>
+        <span class="nb">object</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="p">)</span>  <span class="c1"># ScoreTensor (typed loosely to avoid importing grid eagerly here)</span>
     <span class="n">beat_times</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">()</span>
     <span class="n">downbeat_times</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">()</span>
     <span class="n">shot_boundaries</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
@@ -379,7 +382,11 @@
     <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">entries</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">MAX_EDL_ENTRIES</span> <span class="ow">and</span> <span class="n">tries</span> <span class="o">&lt;</span> <span class="mi">6</span><span class="p">:</span>
         <span class="n">lam</span> <span class="o">*=</span> <span class="mf">2.0</span>
         <span class="n">escalated</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">_viterbi</span><span class="p">(</span>
-            <span class="n">aligns</span><span class="p">,</span> <span class="n">boundaries</span><span class="p">,</span> <span class="n">composite</span><span class="p">,</span> <span class="n">tensor</span><span class="p">,</span> <span class="n">replace</span><span class="p">(</span><span class="n">solved_cfg</span><span class="p">,</span> <span class="n">lambda_switch</span><span class="o">=</span><span class="n">lam</span><span class="p">)</span>
+            <span class="n">aligns</span><span class="p">,</span>
+            <span class="n">boundaries</span><span class="p">,</span>
+            <span class="n">composite</span><span class="p">,</span>
+            <span class="n">tensor</span><span class="p">,</span>
+            <span class="n">replace</span><span class="p">(</span><span class="n">solved_cfg</span><span class="p">,</span> <span class="n">lambda_switch</span><span class="o">=</span><span class="n">lam</span><span class="p">),</span>
         <span class="p">)</span>
         <span class="k">if</span> <span class="n">escalated</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># feasibility is λ-independent, so this shouldn&#39;t happen</span>
             <span class="k">break</span>  <span class="c1"># keep the last good `entries`</span>
@@ -391,7 +398,9 @@
             <span class="s2">&quot;raise lambda_switch or l_min_s&quot;</span>
         <span class="p">)</span>
 
-    <span class="n">validated</span> <span class="o">=</span> <span class="n">validate_edl</span><span class="p">(</span><span class="n">entries</span><span class="p">,</span> <span class="n">aligns</span><span class="p">,</span> <span class="n">song_duration</span><span class="p">)</span>  <span class="c1"># tautology by construction</span>
+    <span class="n">validated</span> <span class="o">=</span> <span class="n">validate_edl</span><span class="p">(</span>
+        <span class="n">entries</span><span class="p">,</span> <span class="n">aligns</span><span class="p">,</span> <span class="n">song_duration</span>
+    <span class="p">)</span>  <span class="c1"># tautology by construction</span>
     <span class="n">meta</span> <span class="o">=</span> <span class="p">{</span>
         <span class="s2">&quot;strategy&quot;</span><span class="p">:</span> <span class="s2">&quot;weighted&quot;</span><span class="p">,</span>
         <span class="s2">&quot;cuts&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">validated</span><span class="p">),</span>
@@ -625,7 +634,11 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_coalesce</span><span class="p">(</span><span class="n">entries</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">EdlEntry</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">EdlEntry</span><span class="p">]:</span>
     <span class="n">out</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">EdlEntry</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">entries</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">out</span> <span class="ow">and</span> <span class="n">out</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">clip_id</span> <span class="o">==</span> <span class="n">e</span><span class="o">.</span><span class="n">clip_id</span> <span class="ow">and</span> <span class="nb">abs</span><span class="p">(</span><span class="n">out</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">song_end</span> <span class="o">-</span> <span class="n">e</span><span class="o">.</span><span class="n">song_start</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mf">1e-3</span><span class="p">:</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">out</span>
+            <span class="ow">and</span> <span class="n">out</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">clip_id</span> <span class="o">==</span> <span class="n">e</span><span class="o">.</span><span class="n">clip_id</span>
+            <span class="ow">and</span> <span class="nb">abs</span><span class="p">(</span><span class="n">out</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">song_end</span> <span class="o">-</span> <span class="n">e</span><span class="o">.</span><span class="n">song_start</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mf">1e-3</span>
+        <span class="p">):</span>
             <span class="n">out</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">EdlEntry</span><span class="p">(</span><span class="n">out</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">song_start</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">song_end</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">clip_id</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>

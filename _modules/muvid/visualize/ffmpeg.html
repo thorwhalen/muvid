@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.visualize.ffmpeg &mdash; muvid 0.0.12 documentation</title>
+  <title>muvid.visualize.ffmpeg &mdash; muvid 0.0.13 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=3bbcec59"></script>
+      <script src="../../../_static/documentation_options.js?v=9fc46840"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -98,6 +98,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize.html">muvid.visualize</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/canvas.html">muvid.visualize.canvas</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/ffmpeg.html">muvid.visualize.ffmpeg</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/reactive.html">muvid.visualize.reactive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/verify.html">muvid.visualize.verify</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/video.html">muvid.visualize.video</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/visuals.html">muvid.visualize.visuals</a></li>
@@ -133,11 +134,12 @@
 <span class="sd">Thin, dependency-free wrappers around the ``ffmpeg``/``ffprobe`` binaries that</span>
 <span class="sd">``muvid.visualize`` assumes on the PATH: running a command with a readable</span>
 <span class="sd">error, probing duration and streams, checking that an optional filter was</span>
-<span class="sd">compiled in, and measuring loudness (EBU R128) for two-pass normalization.</span>
+<span class="sd">compiled in, decoding raw PCM for an analysis pass, and measuring loudness</span>
+<span class="sd">(EBU R128) for two-pass normalization.</span>
 
 <span class="sd">Nothing here knows about music or a destination platform — it is the shared</span>
 <span class="sd">substrate under :mod:`muvid.visualize.canvas`, :mod:`muvid.visualize.visuals`,</span>
-<span class="sd">and :mod:`muvid.visualize.video`.</span>
+<span class="sd">:mod:`muvid.visualize.reactive`, and :mod:`muvid.visualize.video`.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
@@ -250,17 +252,23 @@
 
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_run_bounded</span><span class="p">(</span><span class="n">cmd</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">CompletedProcess</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_run_bounded</span><span class="p">(</span><span class="n">cmd</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="o">*</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">CompletedProcess</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Run an ffmpeg/ffprobe ``cmd`` (capturing output), bounded by the timeout.</span>
 
 <span class="sd">    EVERY ffmpeg/ffprobe spawn that may decode caller-supplied media goes through here,</span>
 <span class="sd">    so ``$MUVID_FFMPEG_TIMEOUT_S`` bounds them all consistently: a metadata-spoofing or</span>
 <span class="sd">    decode-bomb input can&#39;t pin a worker past the timeout on the synchronous render path</span>
 <span class="sd">    (the loudnorm analysis pass and ffprobe are full/partial decodes, not just the mux).</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        cmd: The full command line.</span>
+<span class="sd">        text: Decode the captured output as text. Pass ``False`` when ffmpeg is</span>
+<span class="sd">            piping raw samples rather than a report (see :func:`decode_pcm`) —</span>
+<span class="sd">            decoding PCM as text would corrupt it.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
-            <span class="n">cmd</span><span class="p">,</span> <span class="n">capture_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">_ffmpeg_timeout</span><span class="p">()</span>
+            <span class="n">cmd</span><span class="p">,</span> <span class="n">capture_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="n">text</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">_ffmpeg_timeout</span><span class="p">()</span>
         <span class="p">)</span>
     <span class="k">except</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">TimeoutExpired</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
         <span class="k">raise</span> <span class="n">FfmpegError</span><span class="p">(</span>
@@ -346,6 +354,54 @@
     <span class="k">if</span> <span class="n">duration</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">raise</span> <span class="n">FfmpegError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Could not determine the duration of </span><span class="si">{</span><span class="n">media</span><span class="si">!s}</span><span class="s2">.&quot;</span><span class="p">)</span>
     <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">duration</span><span class="p">)</span></div>
+
+
+
+<span class="c1">#: Sample format the raw-PCM decode emits: little-endian 32-bit float, which is</span>
+<span class="c1">#: exactly ``numpy.float32``&#39;s memory layout, so an analysis pass can read the</span>
+<span class="c1">#: bytes straight into an array with no conversion step.</span>
+<span class="n">PCM_SAMPLE_FORMAT</span> <span class="o">=</span> <span class="s2">&quot;f32le&quot;</span>
+
+
+<div class="viewcode-block" id="decode_pcm">
+<a class="viewcode-back" href="../../../module_docs/muvid/visualize/ffmpeg.html#muvid.visualize.decode_pcm">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">decode_pcm</span><span class="p">(</span><span class="n">audio</span><span class="p">:</span> <span class="n">PathLike</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">sample_rate</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">channels</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytes</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Decode ``audio`` to raw :data:`PCM_SAMPLE_FORMAT` samples on stdout.</span>
+
+<span class="sd">    Analysis passes (loudness envelopes, onset detection) want *samples*, not a</span>
+<span class="sd">    container. This is the single place muvid turns a media file into raw PCM,</span>
+<span class="sd">    so ``$MUVID_FFMPEG_TIMEOUT_S`` bounds that decode like every other one.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        audio: The media file to decode.</span>
+<span class="sd">        sample_rate: Resample to this rate. Analysis rarely needs full quality,</span>
+<span class="sd">            and a low rate keeps a long track&#39;s decode cheap.</span>
+<span class="sd">        channels: Downmix to this many channels (1 = mono).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The raw PCM bytes — empty when ffmpeg could not decode ``audio``.</span>
+<span class="sd">        Returning empty rather than raising lets a caller treat &quot;no usable</span>
+<span class="sd">        audio&quot; as &quot;no effect&quot; (see :func:`muvid.visualize.reactive.flash_filter`).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">require_ffmpeg</span><span class="p">(</span><span class="s2">&quot;ffmpeg&quot;</span><span class="p">)</span>
+    <span class="n">proc</span> <span class="o">=</span> <span class="n">_run_bounded</span><span class="p">(</span>
+        <span class="p">[</span>
+            <span class="s2">&quot;ffmpeg&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;-v&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;error&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;-i&quot;</span><span class="p">,</span>
+            <span class="nb">str</span><span class="p">(</span><span class="n">audio</span><span class="p">),</span>
+            <span class="s2">&quot;-ac&quot;</span><span class="p">,</span>
+            <span class="nb">str</span><span class="p">(</span><span class="n">channels</span><span class="p">),</span>
+            <span class="s2">&quot;-ar&quot;</span><span class="p">,</span>
+            <span class="nb">str</span><span class="p">(</span><span class="n">sample_rate</span><span class="p">),</span>
+            <span class="s2">&quot;-f&quot;</span><span class="p">,</span>
+            <span class="n">PCM_SAMPLE_FORMAT</span><span class="p">,</span>
+            <span class="s2">&quot;-&quot;</span><span class="p">,</span>
+        <span class="p">],</span>
+        <span class="n">text</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">proc</span><span class="o">.</span><span class="n">stdout</span> <span class="ow">or</span> <span class="sa">b</span><span class="s2">&quot;&quot;</span></div>
 
 
 

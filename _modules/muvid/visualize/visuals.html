@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.visualize.visuals &mdash; muvid 0.0.12 documentation</title>
+  <title>muvid.visualize.visuals &mdash; muvid 0.0.13 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=3bbcec59"></script>
+      <script src="../../../_static/documentation_options.js?v=9fc46840"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -98,6 +98,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize.html">muvid.visualize</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/canvas.html">muvid.visualize.canvas</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/ffmpeg.html">muvid.visualize.ffmpeg</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/reactive.html">muvid.visualize.reactive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/verify.html">muvid.visualize.verify</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/video.html">muvid.visualize.video</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/visuals.html">muvid.visualize.visuals</a></li>
@@ -169,6 +170,11 @@
     <span class="n">overlay_chain</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.visualize.ffmpeg</span><span class="w"> </span><span class="kn">import</span> <span class="n">PathLike</span><span class="p">,</span> <span class="n">require_filter</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">muvid.visualize.reactive</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">FLASH_BRIGHTNESS</span><span class="p">,</span>
+    <span class="n">FLASH_SATURATION</span><span class="p">,</span>
+    <span class="n">flash_filter</span><span class="p">,</span>
+<span class="p">)</span>
 
 <span class="c1">#: Over a reactive background the cover fills nearly the whole frame (with a</span>
 <span class="c1">#: little padding), and is made slightly transparent so the visualizer plays on</span>
@@ -609,8 +615,16 @@
 <span class="sd">    darker background so it stands out. The default ``green`` colormap is tinted</span>
 <span class="sd">    to the teal accent; pass a ``color`` to use ffmpeg&#39;s colormap instead.</span>
 
+<span class="sd">    The whole spectrogram also **pulses with the beat**: a precomputed onset</span>
+<span class="sd">    envelope (see :mod:`muvid.visualize.reactive`) drives a ``sendcmd``-controlled</span>
+<span class="sd">    brightness/saturation flash, so attacks in the music read as flashes at the</span>
+<span class="sd">    live leading edge instead of the display feeling merely synced to playback.</span>
+<span class="sd">    The flash is appended last, after the recolour, so it modulates the colours</span>
+<span class="sd">    the frame actually shows.</span>
+
 <span class="sd">    Options: ``color`` (colormap — the teal tint applies only to the default),</span>
-<span class="sd">    ``gain``, ``saturation``, ``overlap`` (scroll speed, 0–1), plus the shared</span>
+<span class="sd">    ``gain``, ``saturation``, ``overlap`` (scroll speed, 0–1), ``flash`` (bool,</span>
+<span class="sd">    default on), ``flash_brightness``, ``flash_saturation``, plus the shared</span>
 <span class="sd">    background/cover keys.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">width</span><span class="p">,</span> <span class="n">height</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">size</span>
@@ -624,6 +638,15 @@
     <span class="p">)</span>
     <span class="k">if</span> <span class="n">color</span> <span class="o">==</span> <span class="s2">&quot;green&quot;</span><span class="p">:</span>  <span class="c1"># green magnitude → teal (add a little red, lots of blue)</span>
         <span class="n">viz</span> <span class="o">+=</span> <span class="s2">&quot;,format=rgba,colorchannelmixer=rg=0.05:bg=0.9&quot;</span>
+    <span class="k">if</span> <span class="n">ctx</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;flash&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">):</span>
+        <span class="n">viz</span> <span class="o">+=</span> <span class="n">flash_filter</span><span class="p">(</span>
+            <span class="n">ctx</span><span class="o">.</span><span class="n">audio</span><span class="p">,</span>
+            <span class="n">fps</span><span class="o">=</span><span class="n">ctx</span><span class="o">.</span><span class="n">fps</span><span class="p">,</span>
+            <span class="n">duration</span><span class="o">=</span><span class="n">ctx</span><span class="o">.</span><span class="n">duration</span><span class="p">,</span>
+            <span class="n">workdir</span><span class="o">=</span><span class="n">ctx</span><span class="o">.</span><span class="n">workdir</span><span class="p">,</span>
+            <span class="n">brightness</span><span class="o">=</span><span class="n">ctx</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;flash_brightness&quot;</span><span class="p">,</span> <span class="n">FLASH_BRIGHTNESS</span><span class="p">),</span>
+            <span class="n">saturation</span><span class="o">=</span><span class="n">ctx</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;flash_saturation&quot;</span><span class="p">,</span> <span class="n">FLASH_SATURATION</span><span class="p">),</span>
+        <span class="p">)</span>
     <span class="c1"># spectrum colours itself, so skip the shared line tint (tint=&quot;&quot;).</span>
     <span class="k">return</span> <span class="n">_reactive_plan</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">viz</span><span class="p">,</span> <span class="n">filter_name</span><span class="o">=</span><span class="s2">&quot;showspectrum&quot;</span><span class="p">,</span> <span class="n">bg_dim</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">tint</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">)</span></div>
 

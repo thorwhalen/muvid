@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.mcp.scoring_tools &mdash; muvid 0.0.12 documentation</title>
+  <title>muvid.mcp.scoring_tools &mdash; muvid 0.0.13 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=3bbcec59"></script>
+      <script src="../../../_static/documentation_options.js?v=9fc46840"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -98,6 +98,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize.html">muvid.visualize</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/canvas.html">muvid.visualize.canvas</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/ffmpeg.html">muvid.visualize.ffmpeg</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/reactive.html">muvid.visualize.reactive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/verify.html">muvid.visualize.verify</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/video.html">muvid.visualize.video</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/visuals.html">muvid.visualize.visuals</a></li>
@@ -180,7 +181,9 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_score_dispatch</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;The nw.jobs dispatch callable for a scoring job (kept tiny + picklable-free).&quot;&quot;&quot;</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_run_scoring</span><span class="p">(</span><span class="n">project</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">job_id</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">on_event</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">should_cancel</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_run_scoring</span><span class="p">(</span>
+        <span class="n">project</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">job_id</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">on_event</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">should_cancel</span><span class="o">=</span><span class="kc">None</span>
+    <span class="p">):</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.footage.scoring</span><span class="w"> </span><span class="kn">import</span> <span class="n">score_project</span>
 
         <span class="k">return</span> <span class="n">score_project</span><span class="p">(</span>
@@ -197,7 +200,9 @@
 
 <div class="viewcode-block" id="score_footage">
 <a class="viewcode-back" href="../../../module_docs/muvid/mcp/scoring_tools.html#muvid.mcp.scoring_tools.score_footage">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">score_footage</span><span class="p">(</span><span class="n">project_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">hop_s</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span> <span class="n">metrics</span><span class="p">:</span> <span class="nb">list</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">score_footage</span><span class="p">(</span>
+    <span class="n">project_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">hop_s</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span> <span class="n">metrics</span><span class="p">:</span> <span class="nb">list</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Kick a BACKGROUND job that scores every aligned clip (quality + motion-to-beat). Free.</span>
 
 <span class="sd">    Returns immediately with a ``job_id``; poll ``footage_score_status``. Scoring extracts ALL</span>
@@ -221,17 +226,18 @@
     <span class="c1"># the fingerprint → a fresh job (never a dedup onto the stale offsets).</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.footage.scoring.grid</span><span class="w"> </span><span class="kn">import</span> <span class="n">align_fingerprint</span>
 
-    <span class="n">key_basis</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">proj</span><span class="o">.</span><span class="n">song_hash</span><span class="p">()</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">align_fingerprint</span><span class="p">(</span><span class="n">aligns</span><span class="p">)</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">metrics</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="p">[])</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">hop_s</span><span class="si">}</span><span class="s2">&quot;</span>
-    <span class="p">)</span>
-    <span class="n">idem</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span>
-        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">proj</span><span class="o">.</span><span class="n">root</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">_SCORE_KIND</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">key_basis</span><span class="si">}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">encode</span><span class="p">()</span>
-    <span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+    <span class="n">key_basis</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">proj</span><span class="o">.</span><span class="n">song_hash</span><span class="p">()</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">align_fingerprint</span><span class="p">(</span><span class="n">aligns</span><span class="p">)</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">metrics</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="p">[])</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">hop_s</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="n">idem</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">proj</span><span class="o">.</span><span class="n">root</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">_SCORE_KIND</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">key_basis</span><span class="si">}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
 
     <span class="n">job</span> <span class="o">=</span> <span class="n">nw_jobs</span><span class="o">.</span><span class="n">enqueue</span><span class="p">(</span>
         <span class="n">proj</span><span class="p">,</span>
         <span class="n">_SCORE_KIND</span><span class="p">,</span>
-        <span class="p">{</span><span class="s2">&quot;hop_s&quot;</span><span class="p">:</span> <span class="n">hop_s</span><span class="p">,</span> <span class="s2">&quot;metrics&quot;</span><span class="p">:</span> <span class="n">metrics</span><span class="p">,</span> <span class="s2">&quot;estimated_usd&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span> <span class="s2">&quot;output_kind&quot;</span><span class="p">:</span> <span class="s2">&quot;compute&quot;</span><span class="p">},</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;hop_s&quot;</span><span class="p">:</span> <span class="n">hop_s</span><span class="p">,</span>
+            <span class="s2">&quot;metrics&quot;</span><span class="p">:</span> <span class="n">metrics</span><span class="p">,</span>
+            <span class="s2">&quot;estimated_usd&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span>
+            <span class="s2">&quot;output_kind&quot;</span><span class="p">:</span> <span class="s2">&quot;compute&quot;</span><span class="p">,</span>
+        <span class="p">},</span>
         <span class="n">dispatch</span><span class="o">=</span><span class="n">_score_dispatch</span><span class="p">(),</span>
         <span class="n">idempotency_key</span><span class="o">=</span><span class="n">idem</span><span class="p">,</span>
         <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Score footage&quot;</span><span class="p">,</span>
@@ -243,7 +249,9 @@
 
 <div class="viewcode-block" id="footage_score_status">
 <a class="viewcode-back" href="../../../module_docs/muvid/mcp/scoring_tools.html#muvid.mcp.scoring_tools.footage_score_status">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">footage_score_status</span><span class="p">(</span><span class="n">project_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">job_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">wait_s</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">footage_score_status</span><span class="p">(</span>
+    <span class="n">project_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">job_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">wait_s</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;The scoring job&#39;s status (bounded long-poll). Free.</span>
 
 <span class="sd">    Pass the ``job_id`` from ``score_footage`` (or omit for the newest scoring job). With</span>
@@ -266,7 +274,9 @@
 
     <span class="n">job</span> <span class="o">=</span> <span class="n">_current</span><span class="p">()</span>
     <span class="n">terminal</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;succeeded&quot;</span><span class="p">,</span> <span class="s2">&quot;failed&quot;</span><span class="p">,</span> <span class="s2">&quot;cancelled&quot;</span><span class="p">}</span>
-    <span class="k">while</span> <span class="n">job</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">job</span><span class="o">.</span><span class="n">status</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">terminal</span> <span class="ow">and</span> <span class="n">time</span><span class="o">.</span><span class="n">monotonic</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">deadline</span><span class="p">:</span>
+    <span class="k">while</span> <span class="p">(</span>
+        <span class="n">job</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">job</span><span class="o">.</span><span class="n">status</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">terminal</span> <span class="ow">and</span> <span class="n">time</span><span class="o">.</span><span class="n">monotonic</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">deadline</span>
+    <span class="p">):</span>
         <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span>
         <span class="n">job</span> <span class="o">=</span> <span class="n">_current</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">job</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -407,8 +417,12 @@
     <span class="k">if</span> <span class="n">s</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
         <span class="n">picked</span> <span class="o">=</span> <span class="n">a</span>
     <span class="k">elif</span> <span class="n">pool</span> <span class="o">==</span> <span class="s2">&quot;min&quot;</span><span class="p">:</span>  <span class="c1"># preserve toss-up minima (selection_margin)</span>
-        <span class="n">picked</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">nanmin</span><span class="p">(</span><span class="n">a</span><span class="p">[</span><span class="n">i</span> <span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="n">s</span><span class="p">])</span> <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">a</span><span class="p">[</span><span class="n">i</span> <span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="n">s</span><span class="p">])</span><span class="o">.</span><span class="n">any</span><span class="p">()</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
-                           <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">a</span><span class="p">),</span> <span class="n">s</span><span class="p">)])</span>
+        <span class="n">picked</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">nanmin</span><span class="p">(</span><span class="n">a</span><span class="p">[</span><span class="n">i</span> <span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="n">s</span><span class="p">])</span> <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">a</span><span class="p">[</span><span class="n">i</span> <span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="n">s</span><span class="p">])</span><span class="o">.</span><span class="n">any</span><span class="p">()</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">a</span><span class="p">),</span> <span class="n">s</span><span class="p">)</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">picked</span> <span class="o">=</span> <span class="n">a</span><span class="p">[::</span><span class="n">s</span><span class="p">]</span>
     <span class="k">return</span> <span class="p">[</span><span class="kc">None</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">math</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">else</span> <span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="mi">4</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">picked</span><span class="p">]</span>

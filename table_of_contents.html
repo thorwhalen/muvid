@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>&lt;no title&gt; &mdash; muvid 0.0.12 documentation</title>
+  <title>&lt;no title&gt; &mdash; muvid 0.0.13 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
@@ -15,7 +15,7 @@
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=3bbcec59"></script>
+      <script src="_static/documentation_options.js?v=9fc46840"></script>
       <script src="_static/doctools.js?v=fd6eb6e6"></script>
       <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -99,6 +99,7 @@
 <li class="toctree-l1"><a class="reference internal" href="module_docs/muvid/visualize.html">muvid.visualize</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/muvid/visualize/canvas.html">muvid.visualize.canvas</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/muvid/visualize/ffmpeg.html">muvid.visualize.ffmpeg</a></li>
+<li class="toctree-l1"><a class="reference internal" href="module_docs/muvid/visualize/reactive.html">muvid.visualize.reactive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/muvid/visualize/verify.html">muvid.visualize.verify</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/muvid/visualize/video.html">muvid.visualize.video</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/muvid/visualize/visuals.html">muvid.visualize.visuals</a></li>
@@ -474,11 +475,14 @@
 <li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/visualize.html#muvid.visualize.VisualContext"><code class="docutils literal notranslate"><span class="pre">VisualContext</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/visualize.html#muvid.visualize.VisualPlan"><code class="docutils literal notranslate"><span class="pre">VisualPlan</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/visualize.html#muvid.visualize.canvas_image"><code class="docutils literal notranslate"><span class="pre">canvas_image()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/visualize.html#muvid.visualize.decode_pcm"><code class="docutils literal notranslate"><span class="pre">decode_pcm()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/visualize.html#muvid.visualize.failures"><code class="docutils literal notranslate"><span class="pre">failures()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/visualize.html#muvid.visualize.flash_filter"><code class="docutils literal notranslate"><span class="pre">flash_filter()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/visualize.html#muvid.visualize.has_filter"><code class="docutils literal notranslate"><span class="pre">has_filter()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/visualize.html#muvid.visualize.list_visuals"><code class="docutils literal notranslate"><span class="pre">list_visuals()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/visualize.html#muvid.visualize.measure_loudness"><code class="docutils literal notranslate"><span class="pre">measure_loudness()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/visualize.html#muvid.visualize.media_duration"><code class="docutils literal notranslate"><span class="pre">media_duration()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/visualize.html#muvid.visualize.onset_envelope"><code class="docutils literal notranslate"><span class="pre">onset_envelope()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/visualize.html#muvid.visualize.probe"><code class="docutils literal notranslate"><span class="pre">probe()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/visualize.html#muvid.visualize.register_visual"><code class="docutils literal notranslate"><span class="pre">register_visual()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/visualize.html#muvid.visualize.render_audio_video"><code class="docutils literal notranslate"><span class="pre">render_audio_video()</span></code></a></li>
@@ -512,6 +516,8 @@
 <li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/visualize/ffmpeg.html#muvid.visualize.ffmpeg.FFMPEG_TIMEOUT_ENV_VAR"><code class="docutils literal notranslate"><span class="pre">FFMPEG_TIMEOUT_ENV_VAR</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/visualize/ffmpeg.html#muvid.visualize.ffmpeg.FfmpegError"><code class="docutils literal notranslate"><span class="pre">FfmpegError</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/visualize/ffmpeg.html#muvid.visualize.ffmpeg.Loudness"><code class="docutils literal notranslate"><span class="pre">Loudness</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/visualize/ffmpeg.html#muvid.visualize.ffmpeg.PCM_SAMPLE_FORMAT"><code class="docutils literal notranslate"><span class="pre">PCM_SAMPLE_FORMAT</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/visualize/ffmpeg.html#muvid.visualize.ffmpeg.decode_pcm"><code class="docutils literal notranslate"><span class="pre">decode_pcm()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/visualize/ffmpeg.html#muvid.visualize.ffmpeg.has_filter"><code class="docutils literal notranslate"><span class="pre">has_filter()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/visualize/ffmpeg.html#muvid.visualize.ffmpeg.measure_loudness"><code class="docutils literal notranslate"><span class="pre">measure_loudness()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/visualize/ffmpeg.html#muvid.visualize.ffmpeg.media_duration"><code class="docutils literal notranslate"><span class="pre">media_duration()</span></code></a></li>
@@ -519,6 +525,17 @@
 <li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/visualize/ffmpeg.html#muvid.visualize.ffmpeg.require_ffmpeg"><code class="docutils literal notranslate"><span class="pre">require_ffmpeg()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/visualize/ffmpeg.html#muvid.visualize.ffmpeg.require_filter"><code class="docutils literal notranslate"><span class="pre">require_filter()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/visualize/ffmpeg.html#muvid.visualize.ffmpeg.run_ffmpeg"><code class="docutils literal notranslate"><span class="pre">run_ffmpeg()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="module_docs/muvid/visualize/reactive.html">muvid.visualize.reactive</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/visualize/reactive.html#muvid.visualize.reactive.DEFAULT_FLASH_LABEL"><code class="docutils literal notranslate"><span class="pre">DEFAULT_FLASH_LABEL</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/visualize/reactive.html#muvid.visualize.reactive.ENVELOPE_SR"><code class="docutils literal notranslate"><span class="pre">ENVELOPE_SR</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/visualize/reactive.html#muvid.visualize.reactive.FLASH_BRIGHTNESS"><code class="docutils literal notranslate"><span class="pre">FLASH_BRIGHTNESS</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/visualize/reactive.html#muvid.visualize.reactive.FLASH_DECAY"><code class="docutils literal notranslate"><span class="pre">FLASH_DECAY</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/visualize/reactive.html#muvid.visualize.reactive.FLASH_FILTERS"><code class="docutils literal notranslate"><span class="pre">FLASH_FILTERS</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/visualize/reactive.html#muvid.visualize.reactive.FLASH_SATURATION"><code class="docutils literal notranslate"><span class="pre">FLASH_SATURATION</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/visualize/reactive.html#muvid.visualize.reactive.flash_filter"><code class="docutils literal notranslate"><span class="pre">flash_filter()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/visualize/reactive.html#muvid.visualize.reactive.onset_envelope"><code class="docutils literal notranslate"><span class="pre">onset_envelope()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/muvid/visualize/verify.html">muvid.visualize.verify</a><ul>

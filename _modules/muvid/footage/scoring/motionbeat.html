@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.footage.scoring.motionbeat &mdash; muvid 0.0.12 documentation</title>
+  <title>muvid.footage.scoring.motionbeat &mdash; muvid 0.0.13 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../../_static/documentation_options.js?v=3bbcec59"></script>
+      <script src="../../../../_static/documentation_options.js?v=9fc46840"></script>
       <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -98,6 +98,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../../module_docs/muvid/visualize.html">muvid.visualize</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../module_docs/muvid/visualize/canvas.html">muvid.visualize.canvas</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../module_docs/muvid/visualize/ffmpeg.html">muvid.visualize.ffmpeg</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../module_docs/muvid/visualize/reactive.html">muvid.visualize.reactive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../module_docs/muvid/visualize/verify.html">muvid.visualize.verify</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../module_docs/muvid/visualize/video.html">muvid.visualize.video</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../module_docs/muvid/visualize/visuals.html">muvid.visualize.visuals</a></li>
@@ -198,15 +199,25 @@
         <span class="n">motion</span><span class="p">,</span> <span class="n">mmask</span><span class="p">,</span> <span class="n">onset_env</span><span class="p">,</span> <span class="n">onset_hop_s</span><span class="p">,</span> <span class="n">t0</span><span class="p">,</span> <span class="n">hop_s</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">cover</span>
     <span class="p">)</span>
     <span class="k">return</span> <span class="p">[</span>
-        <span class="n">ScoreTrack</span><span class="p">(</span><span class="n">clip_id</span><span class="p">,</span> <span class="s2">&quot;motion_beat_bas&quot;</span><span class="p">,</span> <span class="n">t0</span><span class="p">,</span> <span class="n">hop_s</span><span class="p">,</span> <span class="n">bas_vals</span><span class="p">,</span> <span class="n">bas_mask</span><span class="p">,</span> <span class="s2">&quot;higher_better&quot;</span><span class="p">),</span>
         <span class="n">ScoreTrack</span><span class="p">(</span>
-            <span class="n">clip_id</span><span class="p">,</span> <span class="s2">&quot;motion_onset_xcorr&quot;</span><span class="p">,</span> <span class="n">t0</span><span class="p">,</span> <span class="n">hop_s</span><span class="p">,</span> <span class="n">xcorr_vals</span><span class="p">,</span> <span class="n">xcorr_mask</span><span class="p">,</span> <span class="s2">&quot;higher_better&quot;</span>
+            <span class="n">clip_id</span><span class="p">,</span> <span class="s2">&quot;motion_beat_bas&quot;</span><span class="p">,</span> <span class="n">t0</span><span class="p">,</span> <span class="n">hop_s</span><span class="p">,</span> <span class="n">bas_vals</span><span class="p">,</span> <span class="n">bas_mask</span><span class="p">,</span> <span class="s2">&quot;higher_better&quot;</span>
+        <span class="p">),</span>
+        <span class="n">ScoreTrack</span><span class="p">(</span>
+            <span class="n">clip_id</span><span class="p">,</span>
+            <span class="s2">&quot;motion_onset_xcorr&quot;</span><span class="p">,</span>
+            <span class="n">t0</span><span class="p">,</span>
+            <span class="n">hop_s</span><span class="p">,</span>
+            <span class="n">xcorr_vals</span><span class="p">,</span>
+            <span class="n">xcorr_mask</span><span class="p">,</span>
+            <span class="s2">&quot;higher_better&quot;</span><span class="p">,</span>
         <span class="p">),</span>
     <span class="p">]</span></div>
 
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_motion_peaks</span><span class="p">(</span><span class="n">motion</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">mask</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">t0</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">hop_s</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_motion_peaks</span><span class="p">(</span>
+    <span class="n">motion</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">mask</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">t0</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">hop_s</span><span class="p">:</span> <span class="nb">float</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Song-times of local maxima of the motion envelope above a robust threshold.&quot;&quot;&quot;</span>
     <span class="n">m</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">mask</span><span class="p">,</span> <span class="n">motion</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
     <span class="n">finite</span> <span class="o">=</span> <span class="n">m</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">m</span><span class="p">)]</span>
@@ -220,7 +231,9 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">m</span><span class="p">[</span><span class="n">k</span><span class="p">])</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">m</span><span class="p">[</span><span class="n">k</span> <span class="o">-</span> <span class="mi">1</span><span class="p">])</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">m</span><span class="p">[</span><span class="n">k</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])):</span>
             <span class="k">continue</span>
         <span class="k">if</span> <span class="n">m</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">m</span><span class="p">[</span><span class="n">k</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="ow">and</span> <span class="n">m</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">m</span><span class="p">[</span><span class="n">k</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="ow">and</span> <span class="n">m</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">thr</span><span class="p">:</span>
-            <span class="n">peaks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">t0</span> <span class="o">+</span> <span class="n">k</span> <span class="o">*</span> <span class="n">hop_s</span><span class="p">)</span>  <span class="c1"># absolute song time (matches _bas_track&#39;s beats)</span>
+            <span class="n">peaks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">t0</span> <span class="o">+</span> <span class="n">k</span> <span class="o">*</span> <span class="n">hop_s</span>
+            <span class="p">)</span>  <span class="c1"># absolute song time (matches _bas_track&#39;s beats)</span>
     <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">peaks</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
 
 

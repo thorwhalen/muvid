@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.visualize &mdash; muvid 0.0.12 documentation</title>
+  <title>muvid.visualize &mdash; muvid 0.0.13 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -15,7 +15,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=3bbcec59"></script>
+      <script src="../../_static/documentation_options.js?v=9fc46840"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -159,11 +159,14 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.visualize.canvas_image"><code class="docutils literal notranslate"><span class="pre">canvas_image()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.visualize.decode_pcm"><code class="docutils literal notranslate"><span class="pre">decode_pcm()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.visualize.failures"><code class="docutils literal notranslate"><span class="pre">failures()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.visualize.flash_filter"><code class="docutils literal notranslate"><span class="pre">flash_filter()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.visualize.has_filter"><code class="docutils literal notranslate"><span class="pre">has_filter()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.visualize.list_visuals"><code class="docutils literal notranslate"><span class="pre">list_visuals()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.visualize.measure_loudness"><code class="docutils literal notranslate"><span class="pre">measure_loudness()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.visualize.media_duration"><code class="docutils literal notranslate"><span class="pre">media_duration()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.visualize.onset_envelope"><code class="docutils literal notranslate"><span class="pre">onset_envelope()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.visualize.probe"><code class="docutils literal notranslate"><span class="pre">probe()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.visualize.register_visual"><code class="docutils literal notranslate"><span class="pre">register_visual()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.visualize.render_audio_video"><code class="docutils literal notranslate"><span class="pre">render_audio_video()</span></code></a></li>
@@ -177,6 +180,7 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="visualize/canvas.html">muvid.visualize.canvas</a></li>
 <li class="toctree-l1"><a class="reference internal" href="visualize/ffmpeg.html">muvid.visualize.ffmpeg</a></li>
+<li class="toctree-l1"><a class="reference internal" href="visualize/reactive.html">muvid.visualize.reactive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="visualize/verify.html">muvid.visualize.verify</a></li>
 <li class="toctree-l1"><a class="reference internal" href="visualize/video.html">muvid.visualize.video</a></li>
 <li class="toctree-l1"><a class="reference internal" href="visualize/visuals.html">muvid.visualize.visuals</a></li>
@@ -226,6 +230,10 @@ your own, <a class="reference internal" href="visualize/canvas.html#muvid.visual
 sits on the canvas, and <a class="reference internal" href="visualize/canvas.html#muvid.visualize.canvas.thumbnail_image" title="muvid.visualize.canvas.thumbnail_image"><code class="xref py py-func docutils literal notranslate"><span class="pre">thumbnail_image()</span></code></a> derives
 a 16:9 thumbnail from that same composition. <code class="xref py py-func docutils literal notranslate">
 <span class="pre">verify_video()</span></code> checks a render against what a platform will actually accept.</p>
+<p>Because the whole song is known before the first frame is drawn, a visual can
+also be driven by <em>precomputed</em> audio analysis:
+<a class="reference internal" href="visualize/reactive.html#muvid.visualize.reactive.flash_filter" title="muvid.visualize.reactive.flash_filter"><code class="xref py py-func docutils literal notranslate"><span class="pre">flash_filter()</span></code></a> turns an onset envelope into an
+ffmpeg <code class="docutils literal notranslate"><span class="pre">sendcmd</span></code> script, which is how the spectrogram pulses on the beat.</p>
 <p>Needs <code class="docutils literal notranslate"><span class="pre">ffmpeg</span></code> (and <code class="docutils literal notranslate"><span class="pre">ffprobe</span></code>) on the PATH. Every built-in visual is
 ffmpeg-native, except Ken Burns, which renders through <code class="docutils literal notranslate"><span class="pre">burns</span></code> (already a
 dependency of <code class="docutils literal notranslate"><span class="pre">mixing</span></code>, so it needs no extra).</p>
@@ -741,9 +749,61 @@ gives the thumbnail and the video’s first frame a single source of truth.</p>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="muvid.visualize.decode_pcm">
+<span class="sig-prename descclassname"><span class="pre">muvid.visualize.</span></span><span class="sig-name descname"><span class="pre">decode_pcm</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">audio</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_rate</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channels</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bytes</span></span></span><a class="reference internal" href="../../_modules/muvid/visualize/ffmpeg.html#decode_pcm"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.visualize.decode_pcm" title="Link to this definition"></a></dt>
+<dd><p>Decode <code class="docutils literal notranslate"><span class="pre">audio</span></code> to raw <code class="xref py py-data docutils literal notranslate"><span class="pre">PCM_SAMPLE_FORMAT</span></code> samples on stdout.</p>
+<p>Analysis passes (loudness envelopes, onset detection) want <em>samples</em>, not a
+container. This is the single place muvid turns a media file into raw PCM,
+so <code class="docutils literal notranslate"><span class="pre">$MUVID_FFMPEG_TIMEOUT_S</span></code> bounds that decode like every other one.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>audio</strong> – The media file to decode.</p></li>
+<li><p><strong>sample_rate</strong> – Resample to this rate. Analysis rarely needs full quality,
+and a low rate keeps a long track’s decode cheap.</p></li>
+<li><p><strong>channels</strong> – Downmix to this many channels (1 = mono).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The raw PCM bytes — empty when ffmpeg could not decode <code class="docutils literal notranslate"><span class="pre">audio</span></code>.
+Returning empty rather than raising lets a caller treat “no usable
+audio” as “no effect” (see <a class="reference internal" href="visualize/reactive.html#muvid.visualize.reactive.flash_filter" title="muvid.visualize.reactive.flash_filter"><code class="xref py py-func docutils literal notranslate"><span class="pre">muvid.visualize.reactive.flash_filter()</span></code></a>).</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="muvid.visualize.failures">
 <span class="sig-prename descclassname"><span class="pre">muvid.visualize.</span></span><span class="sig-name descname"><span class="pre">failures</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">checks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="visualize/verify.html#muvid.visualize.verify.Check" title="muvid.visualize.verify.Check"><span class="pre">Check</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="visualize/verify.html#muvid.visualize.verify.Check" title="muvid.visualize.verify.Check"><span class="pre">Check</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/muvid/visualize/verify.html#failures"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.visualize.failures" title="Link to this definition"></a></dt>
 <dd><p>Just the checks that failed.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.visualize.flash_filter">
+<span class="sig-prename descclassname"><span class="pre">muvid.visualize.</span></span><span class="sig-name descname"><span class="pre">flash_filter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">audio</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">fps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">duration</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">workdir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'flash'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">brightness</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.25</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">saturation</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.8</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decay</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.5</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../_modules/muvid/visualize/reactive.html#flash_filter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.visualize.flash_filter" title="Link to this definition"></a></dt>
+<dd><p>A filter fragment that makes the stream it follows pulse with the beat.</p>
+<p>Computes the envelope, writes the <code class="docutils literal notranslate"><span class="pre">sendcmd</span></code> script into <code class="docutils literal notranslate"><span class="pre">workdir</span></code>, and
+returns the chain <code class="docutils literal notranslate"><span class="pre">,sendcmd=f=…,eq&#64;&lt;label&gt;=…</span></code> to append after the visual
+filter (e.g. <code class="docutils literal notranslate"><span class="pre">showspectrum</span></code>).</p>
+<p>Returns <code class="docutils literal notranslate"><span class="pre">&quot;&quot;</span></code> — a fragment that changes nothing — when the audio yields no
+envelope or this ffmpeg build lacks <code class="xref py py-data docutils literal notranslate"><span class="pre">FLASH_FILTERS</span></code>, so a caller can
+append it unconditionally and still render.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">eq</span></code> starts as a no-op (<code class="docutils literal notranslate"><span class="pre">brightness=0:saturation=1</span></code>); the script
+drives it. <code class="docutils literal notranslate"><span class="pre">eval=frame</span></code> so it re-reads every frame.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>audio</strong> – The track whose beats drive the flash.</p></li>
+<li><p><strong>fps</strong> – The render’s frame rate (one command pair per frame).</p></li>
+<li><p><strong>duration</strong> – Clamp the flash to this many seconds (<code class="docutils literal notranslate"><span class="pre">None</span></code> = whole track).</p></li>
+<li><p><strong>workdir</strong> – Directory to write the <code class="docutils literal notranslate"><span class="pre">sendcmd</span></code> script into.</p></li>
+<li><p><strong>label</strong> – <code class="docutils literal notranslate"><span class="pre">sendcmd</span></code> label for this flash’s <code class="docutils literal notranslate"><span class="pre">eq</span></code>.</p></li>
+<li><p><strong>brightness</strong> – Peak brightness boost on a beat.</p></li>
+<li><p><strong>saturation</strong> – Peak saturation boost on a beat.</p></li>
+<li><p><strong>decay</strong> – Per-frame afterglow of a pulse.</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
@@ -787,6 +847,33 @@ both miss the target and squash the dynamics of music.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Raises<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference internal" href="#muvid.visualize.FfmpegError" title="muvid.visualize.FfmpegError"><strong>FfmpegError</strong></a> – The duration could not be determined.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.visualize.onset_envelope">
+<span class="sig-prename descclassname"><span class="pre">muvid.visualize.</span></span><span class="sig-name descname"><span class="pre">onset_envelope</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">audio</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">fps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">duration</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sr</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">22050</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decay</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.5</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/muvid/visualize/reactive.html#onset_envelope"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.visualize.onset_envelope" title="Link to this definition"></a></dt>
+<dd><p>Per-video-frame onset strength in <code class="docutils literal notranslate"><span class="pre">[0,</span> <span class="pre">1]</span></code>, with phosphor-style decay.</p>
+<p>Decodes <code class="docutils literal notranslate"><span class="pre">audio</span></code> to mono, measures frame-wise loudness, takes the
+half-wave-rectified <em>rise</em> in loudness (an onset/transient measure, so
+sustained loud passages don’t stay lit — only attacks do), scales it
+robustly to <code class="docutils literal notranslate"><span class="pre">[0,</span> <span class="pre">1]</span></code>, then lets each pulse fade by <code class="docutils literal notranslate"><span class="pre">decay</span></code> per frame so a
+beat flashes and trails off rather than blinking for a single frame.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>audio</strong> – The track to analyse.</p></li>
+<li><p><strong>fps</strong> – Video frame rate — one envelope value per frame.</p></li>
+<li><p><strong>duration</strong> – Clamp the envelope to this many seconds (defaults to the whole
+track).</p></li>
+<li><p><strong>sr</strong> – Analysis sample rate.</p></li>
+<li><p><strong>decay</strong> – Per-frame persistence of a pulse, 0 (no trail) to &lt;1 (longer
+afterglow).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>One value per frame. Empty if the audio could not be decoded.</p>
 </dd>
 </dl>
 </dd></dl>

@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.footage.scoring.lipsync &mdash; muvid 0.0.12 documentation</title>
+  <title>muvid.footage.scoring.lipsync &mdash; muvid 0.0.13 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../../_static/documentation_options.js?v=3bbcec59"></script>
+      <script src="../../../../_static/documentation_options.js?v=9fc46840"></script>
       <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -98,6 +98,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../../module_docs/muvid/visualize.html">muvid.visualize</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../module_docs/muvid/visualize/canvas.html">muvid.visualize.canvas</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../module_docs/muvid/visualize/ffmpeg.html">muvid.visualize.ffmpeg</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../module_docs/muvid/visualize/reactive.html">muvid.visualize.reactive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../module_docs/muvid/visualize/verify.html">muvid.visualize.verify</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../module_docs/muvid/visualize/video.html">muvid.visualize.video</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../module_docs/muvid/visualize/visuals.html">muvid.visualize.visuals</a></li>
@@ -203,7 +204,9 @@
         <span class="k">return</span> <span class="kc">None</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">model</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;MUVID_DEMUCS_MODEL&quot;</span><span class="p">,</span> <span class="s2">&quot;htdemucs&quot;</span><span class="p">)</span>
-        <span class="n">separator</span> <span class="o">=</span> <span class="n">Separator</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">segment</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;MUVID_DEMUCS_SEGMENT&quot;</span><span class="p">,</span> <span class="s2">&quot;7&quot;</span><span class="p">)))</span>
+        <span class="n">separator</span> <span class="o">=</span> <span class="n">Separator</span><span class="p">(</span>
+            <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">segment</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;MUVID_DEMUCS_SEGMENT&quot;</span><span class="p">,</span> <span class="s2">&quot;7&quot;</span><span class="p">))</span>
+        <span class="p">)</span>
         <span class="n">_origin</span><span class="p">,</span> <span class="n">stems</span> <span class="o">=</span> <span class="n">separator</span><span class="o">.</span><span class="n">separate_audio_file</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">song_path</span><span class="p">))</span>
         <span class="n">vocals</span> <span class="o">=</span> <span class="n">stems</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;vocals&quot;</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">vocals</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -217,7 +220,9 @@
 
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_slice_stem</span><span class="p">(</span><span class="n">vocal_stem_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">start_s</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">dur_s</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">out_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_slice_stem</span><span class="p">(</span>
+    <span class="n">vocal_stem_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">start_s</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">dur_s</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">out_dir</span><span class="p">:</span> <span class="nb">str</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Write the ``[start_s, start_s+dur_s]`` slice of the master vocal stem to a temp wav.</span>
 
 <span class="sd">    So SyncNet&#39;s audio-frame-0 lines up with the clip&#39;s video-frame-0 (the clip is aligned to</span>
@@ -290,11 +295,15 @@
                 <span class="n">_best_dist</span><span class="p">,</span>
                 <span class="n">detections_json</span><span class="p">,</span>
                 <span class="n">success</span><span class="p">,</span>
-            <span class="p">)</span> <span class="o">=</span> <span class="n">pipeline</span><span class="o">.</span><span class="n">inference</span><span class="p">(</span><span class="n">video_path</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">clip_path</span><span class="p">),</span> <span class="n">audio_path</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">audio_path</span><span class="p">))</span>
+            <span class="p">)</span> <span class="o">=</span> <span class="n">pipeline</span><span class="o">.</span><span class="n">inference</span><span class="p">(</span>
+                <span class="n">video_path</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">clip_path</span><span class="p">),</span> <span class="n">audio_path</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">audio_path</span><span class="p">)</span>
+            <span class="p">)</span>
         <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
             <span class="c1"># Fail safe (skip lip-sync) BUT log — a misconfigured worker must be</span>
             <span class="c1"># distinguishable from a genuine &quot;no singing face&quot; skip.</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;SyncNet lip-sync failed for clip </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">clip_id</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="s2">&quot;SyncNet lip-sync failed for clip </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">clip_id</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="kc">True</span>
+            <span class="p">)</span>
             <span class="k">return</span> <span class="p">[]</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">success</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">confidence_list</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">[]</span>
@@ -305,8 +314,16 @@
     <span class="n">spans</span> <span class="o">=</span> <span class="n">_detection_spans</span><span class="p">(</span><span class="n">detections_json</span><span class="p">,</span> <span class="n">duration_s</span><span class="o">=</span><span class="n">duration_s</span><span class="p">)</span>
     <span class="n">fps</span> <span class="o">=</span> <span class="n">_detections_fps</span><span class="p">(</span><span class="n">detections_json</span><span class="p">)</span> <span class="ow">or</span> <span class="mf">25.0</span>
     <span class="k">for</span> <span class="n">ti</span><span class="p">,</span> <span class="p">(</span><span class="n">f0</span><span class="p">,</span> <span class="n">f1</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">spans</span><span class="p">):</span>
-        <span class="n">conf</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">confidence_list</span><span class="p">[</span><span class="n">ti</span><span class="p">])</span> <span class="k">if</span> <span class="n">ti</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">confidence_list</span><span class="p">)</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="n">confidence_list</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-        <span class="n">dist</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">min_dist_list</span><span class="p">[</span><span class="n">ti</span><span class="p">])</span> <span class="k">if</span> <span class="n">ti</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">min_dist_list</span><span class="p">)</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="n">min_dist_list</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">conf</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="nb">float</span><span class="p">(</span><span class="n">confidence_list</span><span class="p">[</span><span class="n">ti</span><span class="p">])</span>
+            <span class="k">if</span> <span class="n">ti</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">confidence_list</span><span class="p">)</span>
+            <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="n">confidence_list</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="p">)</span>
+        <span class="n">dist</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="nb">float</span><span class="p">(</span><span class="n">min_dist_list</span><span class="p">[</span><span class="n">ti</span><span class="p">])</span>
+            <span class="k">if</span> <span class="n">ti</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">min_dist_list</span><span class="p">)</span>
+            <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="n">min_dist_list</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="p">)</span>
         <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">f0</span><span class="p">,</span> <span class="n">f1</span><span class="p">):</span>
             <span class="n">st</span> <span class="o">=</span> <span class="n">f</span> <span class="o">/</span> <span class="n">fps</span> <span class="o">+</span> <span class="n">offset_s</span>
             <span class="k">if</span> <span class="n">st</span> <span class="o">&lt;</span> <span class="n">lo</span> <span class="o">-</span> <span class="n">hop_s</span> <span class="ow">or</span> <span class="n">st</span> <span class="o">&gt;</span> <span class="n">hi</span> <span class="o">+</span> <span class="n">hop_s</span><span class="p">:</span>  <span class="c1"># never beyond the clip&#39;s coverage</span>
@@ -321,13 +338,17 @@
     <span class="n">c_vals</span><span class="p">,</span> <span class="n">c_mask</span> <span class="o">=</span> <span class="n">resample_to_grid</span><span class="p">(</span><span class="n">lse_c_times</span><span class="p">,</span> <span class="n">lse_c_vals</span><span class="p">,</span> <span class="n">t0</span><span class="o">=</span><span class="n">t0</span><span class="p">,</span> <span class="n">hop_s</span><span class="o">=</span><span class="n">hop_s</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="n">n</span><span class="p">)</span>
     <span class="n">d_vals</span><span class="p">,</span> <span class="n">d_mask</span> <span class="o">=</span> <span class="n">resample_to_grid</span><span class="p">(</span><span class="n">lse_d_times</span><span class="p">,</span> <span class="n">lse_d_vals</span><span class="p">,</span> <span class="n">t0</span><span class="o">=</span><span class="n">t0</span><span class="p">,</span> <span class="n">hop_s</span><span class="o">=</span><span class="n">hop_s</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="n">n</span><span class="p">)</span>
     <span class="k">return</span> <span class="p">[</span>
-        <span class="n">ScoreTrack</span><span class="p">(</span><span class="n">clip_id</span><span class="p">,</span> <span class="s2">&quot;lip_sync_lse_c&quot;</span><span class="p">,</span> <span class="n">t0</span><span class="p">,</span> <span class="n">hop_s</span><span class="p">,</span> <span class="n">c_vals</span><span class="p">,</span> <span class="n">c_mask</span><span class="p">,</span> <span class="s2">&quot;higher_better&quot;</span><span class="p">),</span>
+        <span class="n">ScoreTrack</span><span class="p">(</span>
+            <span class="n">clip_id</span><span class="p">,</span> <span class="s2">&quot;lip_sync_lse_c&quot;</span><span class="p">,</span> <span class="n">t0</span><span class="p">,</span> <span class="n">hop_s</span><span class="p">,</span> <span class="n">c_vals</span><span class="p">,</span> <span class="n">c_mask</span><span class="p">,</span> <span class="s2">&quot;higher_better&quot;</span>
+        <span class="p">),</span>
         <span class="n">ScoreTrack</span><span class="p">(</span><span class="n">clip_id</span><span class="p">,</span> <span class="s2">&quot;lse_d_offset&quot;</span><span class="p">,</span> <span class="n">t0</span><span class="p">,</span> <span class="n">hop_s</span><span class="p">,</span> <span class="n">d_vals</span><span class="p">,</span> <span class="n">d_mask</span><span class="p">,</span> <span class="s2">&quot;lower_better&quot;</span><span class="p">),</span>
     <span class="p">]</span></div>
 
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_detection_spans</span><span class="p">(</span><span class="n">detections_json</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">duration_s</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">fps</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">25.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_detection_spans</span><span class="p">(</span>
+    <span class="n">detections_json</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">duration_s</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">fps</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">25.0</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Best-effort (start_frame, end_frame) per face track from SyncNet&#39;s detections JSON.</span>
 
 <span class="sd">    Defensive: SyncNet&#39;s detections shape varies by version; on a parse miss return ONE span</span>
@@ -336,7 +357,11 @@
 <span class="sd">    This glue needs live validation (see the module docstring).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">try</span><span class="p">:</span>
-        <span class="n">tracks</span> <span class="o">=</span> <span class="n">detections_json</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;tracks&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">detections_json</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="n">detections_json</span>
+        <span class="n">tracks</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">detections_json</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;tracks&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">detections_json</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span>
+            <span class="k">else</span> <span class="n">detections_json</span>
+        <span class="p">)</span>
         <span class="n">spans</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">tr</span> <span class="ow">in</span> <span class="n">tracks</span> <span class="ow">or</span> <span class="p">[]:</span>
             <span class="n">frames</span> <span class="o">=</span> <span class="n">tr</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;frame&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tr</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
@@ -352,7 +377,11 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_detections_fps</span><span class="p">(</span><span class="n">detections_json</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">detections_json</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-            <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">detections_json</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;fps&quot;</span><span class="p">))</span> <span class="k">if</span> <span class="n">detections_json</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;fps&quot;</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
+            <span class="k">return</span> <span class="p">(</span>
+                <span class="nb">float</span><span class="p">(</span><span class="n">detections_json</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;fps&quot;</span><span class="p">))</span>
+                <span class="k">if</span> <span class="n">detections_json</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;fps&quot;</span><span class="p">)</span>
+                <span class="k">else</span> <span class="kc">None</span>
+            <span class="p">)</span>
     <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">None</span>
     <span class="k">return</span> <span class="kc">None</span>

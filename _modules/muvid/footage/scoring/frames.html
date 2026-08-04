@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.footage.scoring.frames &mdash; muvid 0.0.12 documentation</title>
+  <title>muvid.footage.scoring.frames &mdash; muvid 0.0.13 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../../_static/documentation_options.js?v=3bbcec59"></script>
+      <script src="../../../../_static/documentation_options.js?v=9fc46840"></script>
       <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -98,6 +98,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../../module_docs/muvid/visualize.html">muvid.visualize</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../module_docs/muvid/visualize/canvas.html">muvid.visualize.canvas</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../module_docs/muvid/visualize/ffmpeg.html">muvid.visualize.ffmpeg</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../module_docs/muvid/visualize/reactive.html">muvid.visualize.reactive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../module_docs/muvid/visualize/verify.html">muvid.visualize.verify</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../module_docs/muvid/visualize/video.html">muvid.visualize.video</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../module_docs/muvid/visualize/visuals.html">muvid.visualize.visuals</a></li>
@@ -169,7 +170,9 @@
     <span class="n">sharpness</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>  <span class="c1"># float[k]</span>
     <span class="n">exposure</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>  <span class="c1"># float[k] in [0,1]</span>
     <span class="n">face</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>  <span class="c1"># float[k] (0 where no face / no detector)</span>
-    <span class="n">motion_residual</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>  <span class="c1"># float[k], camera-compensated subject motion (NaN @ frame 0)</span>
+    <span class="n">motion_residual</span><span class="p">:</span> <span class="p">(</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="p">)</span>  <span class="c1"># float[k], camera-compensated subject motion (NaN @ frame 0)</span>
     <span class="n">global_dx</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>  <span class="c1"># float[k], camera-motion vector x (NaN @ frame 0)</span>
     <span class="n">global_dy</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>  <span class="c1"># float[k], camera-motion vector y (NaN @ frame 0)</span>
     <span class="n">fps</span><span class="p">:</span> <span class="nb">float</span>
@@ -230,8 +233,12 @@
                         <span class="n">prev_gray</span><span class="p">,</span> <span class="n">gray</span><span class="p">,</span> <span class="n">downscale</span><span class="o">=</span><span class="n">flow_downscale</span>
                     <span class="p">)</span>
                     <span class="n">motion</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">res</span><span class="p">)</span>
-                    <span class="n">gxs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">gdx</span><span class="p">)</span>  <span class="c1"># keep the camera-motion VECTOR so shake = its jitter,</span>
-                    <span class="n">gys</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">gdy</span><span class="p">)</span>  <span class="c1"># not its magnitude (a smooth pan has large mag, low jitter)</span>
+                    <span class="n">gxs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                        <span class="n">gdx</span>
+                    <span class="p">)</span>  <span class="c1"># keep the camera-motion VECTOR so shake = its jitter,</span>
+                    <span class="n">gys</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                        <span class="n">gdy</span>
+                    <span class="p">)</span>  <span class="c1"># not its magnitude (a smooth pan has large mag, low jitter)</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="n">motion</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
                     <span class="n">gxs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
@@ -326,7 +333,12 @@
                     <span class="n">bb</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">bounding_box</span>
                     <span class="n">best</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span>
                         <span class="n">best</span><span class="p">,</span>
-                        <span class="n">_framing_score</span><span class="p">(</span><span class="n">bb</span><span class="o">.</span><span class="n">width</span> <span class="o">/</span> <span class="n">w</span><span class="p">,</span> <span class="n">bb</span><span class="o">.</span><span class="n">height</span> <span class="o">/</span> <span class="n">h</span><span class="p">,</span> <span class="n">bb</span><span class="o">.</span><span class="n">origin_x</span> <span class="o">/</span> <span class="n">w</span><span class="p">,</span> <span class="n">bb</span><span class="o">.</span><span class="n">origin_y</span> <span class="o">/</span> <span class="n">h</span><span class="p">),</span>
+                        <span class="n">_framing_score</span><span class="p">(</span>
+                            <span class="n">bb</span><span class="o">.</span><span class="n">width</span> <span class="o">/</span> <span class="n">w</span><span class="p">,</span>
+                            <span class="n">bb</span><span class="o">.</span><span class="n">height</span> <span class="o">/</span> <span class="n">h</span><span class="p">,</span>
+                            <span class="n">bb</span><span class="o">.</span><span class="n">origin_x</span> <span class="o">/</span> <span class="n">w</span><span class="p">,</span>
+                            <span class="n">bb</span><span class="o">.</span><span class="n">origin_y</span> <span class="o">/</span> <span class="n">h</span><span class="p">,</span>
+                        <span class="p">),</span>
                     <span class="p">)</span>
                 <span class="k">return</span> <span class="n">best</span>
 

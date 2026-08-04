@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.visualize.canvas &mdash; muvid 0.0.12 documentation</title>
+  <title>muvid.visualize.canvas &mdash; muvid 0.0.13 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=3bbcec59"></script>
+      <script src="../../../_static/documentation_options.js?v=9fc46840"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -98,6 +98,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize.html">muvid.visualize</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/canvas.html">muvid.visualize.canvas</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/ffmpeg.html">muvid.visualize.ffmpeg</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/reactive.html">muvid.visualize.reactive</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/verify.html">muvid.visualize.verify</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/video.html">muvid.visualize.video</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/visuals.html">muvid.visualize.visuals</a></li>
@@ -260,18 +261,57 @@
 
 
 
+<span class="c1">#: Characters ffmpeg&#39;s *option* parser gives special meaning to inside a single</span>
+<span class="c1">#: filter&#39;s argument string: ``:`` separates one option from the next, and</span>
+<span class="c1">#: ``\`` / ``&#39;`` do that parser&#39;s quoting.</span>
+<span class="n">_OPTION_LEVEL_SPECIALS</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;</span><span class="se">\\</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;&#39;&quot;</span><span class="p">,</span> <span class="s2">&quot;:&quot;</span><span class="p">)</span>
+
+<span class="c1">#: Characters ffmpeg&#39;s *filtergraph* parser gives special meaning to across the</span>
+<span class="c1">#: graph as a whole: ``,`` chains filters, ``;`` separates chains, ``[]`` delimit</span>
+<span class="c1">#: pad labels, and ``\`` / ``&#39;`` do that parser&#39;s quoting.</span>
+<span class="n">_GRAPH_LEVEL_SPECIALS</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;</span><span class="se">\\</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;&#39;&quot;</span><span class="p">,</span> <span class="s2">&quot;,&quot;</span><span class="p">,</span> <span class="s2">&quot;;&quot;</span><span class="p">,</span> <span class="s2">&quot;[&quot;</span><span class="p">,</span> <span class="s2">&quot;]&quot;</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_backslash_escape</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">specials</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Prefix each character of ``specials`` found in ``value`` with a backslash.</span>
+
+<span class="sd">    ``specials`` must lead with ``\\``: the backslashes this introduces for the</span>
+<span class="sd">    later characters must not themselves be escaped again by the ``\\`` pass.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">char</span> <span class="ow">in</span> <span class="n">specials</span><span class="p">:</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">char</span><span class="p">,</span> <span class="s2">&quot;</span><span class="se">\\</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="n">char</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">value</span>
+
+
 <div class="viewcode-block" id="escape_filter_value">
 <a class="viewcode-back" href="../../../module_docs/muvid/visualize/canvas.html#muvid.visualize.escape_filter_value">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">escape_filter_value</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Escape ``value`` for use inside an ffmpeg filtergraph argument.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Escape ``value`` for use as a filter option inside an ffmpeg filtergraph.</span>
 
-<span class="sd">    A filtergraph is parsed before the filter sees its options, so the graph&#39;s</span>
-<span class="sd">    own punctuation (``\\ : , ; [ ] &#39; %``) has to be escaped or a title with a</span>
-<span class="sd">    colon in it silently becomes a syntax error.</span>
+<span class="sd">    ffmpeg unescapes such a value **twice**, so escaping it once is not enough:</span>
+
+<span class="sd">    1. The *filtergraph* parser reads the whole graph first, splitting it on</span>
+<span class="sd">       ``_GRAPH_LEVEL_SPECIALS`` and consuming one layer of quoting.</span>
+<span class="sd">    2. Each surviving per-filter argument string is only then split into options</span>
+<span class="sd">       on ``_OPTION_LEVEL_SPECIALS``, consuming a second layer.</span>
+
+<span class="sd">    Escaping therefore runs in the mirror order — option level first, then graph</span>
+<span class="sd">    level over that result — so that each ffmpeg pass peels off exactly one</span>
+<span class="sd">    layer. A literal ``&#39;`` comes out as ``\\\&#39;`` and a literal ``:`` as ``\\:``.</span>
+
+<span class="sd">    Escaping only once is why a title like ``&quot;Song: Part 1&quot;`` used to become a</span>
+<span class="sd">    filtergraph syntax error, and why a workdir whose name contained ``&#39;`` or</span>
+<span class="sd">    ``:`` broke every ``sendcmd=f=&lt;path&gt;`` render.</span>
+
+<span class="sd">    Note that ``%`` is deliberately *not* escaped: neither parser treats it as</span>
+<span class="sd">    special, so ``\%`` was simply unescaped back to ``%`` and escaping it never</span>
+<span class="sd">    did anything. drawtext&#39;s ``%{...}`` text expansion is a third level that</span>
+<span class="sd">    applies to that one filter&#39;s ``text`` option only, and is out of scope for a</span>
+<span class="sd">    general-purpose filtergraph escaper.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">for</span> <span class="n">char</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;</span><span class="se">\\</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;&#39;&quot;</span><span class="p">,</span> <span class="s2">&quot;:&quot;</span><span class="p">,</span> <span class="s2">&quot;,&quot;</span><span class="p">,</span> <span class="s2">&quot;;&quot;</span><span class="p">,</span> <span class="s2">&quot;[&quot;</span><span class="p">,</span> <span class="s2">&quot;]&quot;</span><span class="p">,</span> <span class="s2">&quot;%&quot;</span><span class="p">):</span>
-        <span class="n">value</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">char</span><span class="p">,</span> <span class="s2">&quot;</span><span class="se">\\</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="n">char</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">value</span></div>
+    <span class="k">return</span> <span class="n">_backslash_escape</span><span class="p">(</span>
+        <span class="n">_backslash_escape</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">_OPTION_LEVEL_SPECIALS</span><span class="p">),</span> <span class="n">_GRAPH_LEVEL_SPECIALS</span>
+    <span class="p">)</span></div>
 
 
 

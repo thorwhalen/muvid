@@ -1,0 +1,374 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>muvid.visualize.reactive &mdash; muvid 0.0.13 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=9fc46840"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
+      <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            muvid
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid.html">muvid</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/__main__.html">muvid.__main__</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/align.html">muvid.align</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/characters.html">muvid.characters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/compose.html">muvid.compose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/contracts.html">muvid.contracts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/cost.html">muvid.cost</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/environments.html">muvid.environments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/events.html">muvid.events</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/facade.html">muvid.facade</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage.html">muvid.footage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/align.html">muvid.footage.align</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/assemble.html">muvid.footage.assemble</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/edl.html">muvid.footage.edl</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring.html">muvid.footage.scoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring/_frame_metrics.html">muvid.footage.scoring._frame_metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring/frames.html">muvid.footage.scoring.frames</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring/grid.html">muvid.footage.scoring.grid</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring/lipsync.html">muvid.footage.scoring.lipsync</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring/motionbeat.html">muvid.footage.scoring.motionbeat</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring/orchestrator.html">muvid.footage.scoring.orchestrator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring/quality.html">muvid.footage.scoring.quality</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring/segment.html">muvid.footage.scoring.segment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/select_score.html">muvid.footage.select_score</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/strategy.html">muvid.footage.strategy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/workspace.html">muvid.footage.workspace</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/genre.html">muvid.genre</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/genre_music_video.html">muvid.genre_music_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyrics.html">muvid.lyrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp.html">muvid.mcp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/_fetch.html">muvid.mcp._fetch</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/_guide.html">muvid.mcp._guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/footage_tools.html">muvid.mcp.footage_tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/identity.html">muvid.mcp.identity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/scoring_tools.html">muvid.mcp.scoring_tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/tools.html">muvid.mcp.tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/workspace.html">muvid.mcp.workspace</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/project.html">muvid.project</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers.html">muvid.renderers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers/_common.html">muvid.renderers._common</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers/animation.html">muvid.renderers.animation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers/image_to_video.html">muvid.renderers.image_to_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers/lipsync.html">muvid.renderers.lipsync</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers/still.html">muvid.renderers.still</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers/text_to_video.html">muvid.renderers.text_to_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/schema.html">muvid.schema</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/script.html">muvid.script</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/ui.html">muvid.ui</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/ui/app.html">muvid.ui.app</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize.html">muvid.visualize</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/canvas.html">muvid.visualize.canvas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/ffmpeg.html">muvid.visualize.ffmpeg</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/reactive.html">muvid.visualize.reactive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/verify.html">muvid.visualize.verify</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/video.html">muvid.visualize.video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/visuals.html">muvid.visualize.visuals</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">muvid</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">muvid.visualize.reactive</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for muvid.visualize.reactive</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Precomputed audio-reactivity: pulse a video filter in time with the music.</span>
+
+<span class="sd">Because ``muvid`` renders from an audio *file*, not a live stream, the whole</span>
+<span class="sd">loudness envelope is knowable up front. This module turns that envelope into an</span>
+<span class="sd">ffmpeg ``sendcmd`` script that modulates a named filter (brightness/saturation)</span>
+<span class="sd">frame by frame — a beat-reactive &quot;flash&quot; baked deterministically into the</span>
+<span class="sd">render. No realtime, and no dependency beyond ``numpy`` and the ffmpeg</span>
+<span class="sd">:mod:`muvid.visualize` already requires.</span>
+
+<span class="sd">It is a general seam, not spectrum-specific: any visual can attach a flash to a</span>
+<span class="sd">named filter in its chain (see :func:`flash_filter`). The vectorscope reacts to</span>
+<span class="sd">the music through its own amplitude; the spectrogram uses this.</span>
+
+<span class="sd">The whole chain degrades to *nothing* rather than to an error: a track that will</span>
+<span class="sd">not decode, or an ffmpeg build without :data:`FLASH_FILTERS`, yields an empty</span>
+<span class="sd">fragment, so a visual can append it unconditionally.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">muvid.visualize.canvas</span><span class="w"> </span><span class="kn">import</span> <span class="n">escape_filter_value</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">muvid.visualize.ffmpeg</span><span class="w"> </span><span class="kn">import</span> <span class="n">PathLike</span><span class="p">,</span> <span class="n">decode_pcm</span><span class="p">,</span> <span class="n">has_filter</span>
+
+<span class="c1">#: Sample rate the envelope is measured at. Low is fine — we only need a</span>
+<span class="c1">#: per-frame loudness curve, not audio quality.</span>
+<span class="n">ENVELOPE_SR</span> <span class="o">=</span> <span class="mi">22050</span>
+
+<span class="c1">#: The loudness percentile mapped to a full-strength pulse. Below 100 so a few</span>
+<span class="c1">#: peaks saturate and the bulk of the track spans the range, rather than one</span>
+<span class="c1">#: outlier transient flattening everything else.</span>
+<span class="n">_PULSE_PERCENTILE</span> <span class="o">=</span> <span class="mi">92</span>
+
+<span class="c1">#: Per-frame persistence of a pulse, 0 (no trail) to &lt;1 (longer afterglow), so a</span>
+<span class="c1">#: beat flashes and fades rather than blinking for a single frame.</span>
+<span class="n">FLASH_DECAY</span> <span class="o">=</span> <span class="mf">0.5</span>
+
+<span class="c1">#: Peak brightness boost at a full-strength pulse (ffmpeg ``eq`` ``brightness``,</span>
+<span class="c1">#: -1..1). At rest the filter is a no-op; this is how far a beat pushes it.</span>
+<span class="n">FLASH_BRIGHTNESS</span> <span class="o">=</span> <span class="mf">0.25</span>
+
+<span class="c1">#: Peak saturation boost at a full-strength pulse, *added to* 1.0 (ffmpeg ``eq``).</span>
+<span class="n">FLASH_SATURATION</span> <span class="o">=</span> <span class="mf">0.8</span>
+
+<span class="c1">#: Default ``sendcmd`` label for the pulsing ``eq``. Distinct per flash, so one</span>
+<span class="c1">#: filtergraph can carry several without their commands crossing.</span>
+<span class="n">DEFAULT_FLASH_LABEL</span> <span class="o">=</span> <span class="s2">&quot;flash&quot;</span>
+
+<span class="c1">#: The ffmpeg filters a flash chain is built from. Both are core filters, but a</span>
+<span class="c1">#: stripped build can omit either — and the flash is a garnish, so a build that</span>
+<span class="c1">#: cannot do it should render the visual *without* the flash rather than fail.</span>
+<span class="n">FLASH_FILTERS</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;sendcmd&quot;</span><span class="p">,</span> <span class="s2">&quot;eq&quot;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="onset_envelope">
+<a class="viewcode-back" href="../../../module_docs/muvid/visualize/reactive.html#muvid.visualize.onset_envelope">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">onset_envelope</span><span class="p">(</span>
+    <span class="n">audio</span><span class="p">:</span> <span class="n">PathLike</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">fps</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">duration</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">sr</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">ENVELOPE_SR</span><span class="p">,</span>
+    <span class="n">decay</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">FLASH_DECAY</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Per-video-frame onset strength in ``[0, 1]``, with phosphor-style decay.</span>
+
+<span class="sd">    Decodes ``audio`` to mono, measures frame-wise loudness, takes the</span>
+<span class="sd">    half-wave-rectified *rise* in loudness (an onset/transient measure, so</span>
+<span class="sd">    sustained loud passages don&#39;t stay lit — only attacks do), scales it</span>
+<span class="sd">    robustly to ``[0, 1]``, then lets each pulse fade by ``decay`` per frame so a</span>
+<span class="sd">    beat flashes and trails off rather than blinking for a single frame.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        audio: The track to analyse.</span>
+<span class="sd">        fps: Video frame rate — one envelope value per frame.</span>
+<span class="sd">        duration: Clamp the envelope to this many seconds (defaults to the whole</span>
+<span class="sd">            track).</span>
+<span class="sd">        sr: Analysis sample rate.</span>
+<span class="sd">        decay: Per-frame persistence of a pulse, 0 (no trail) to &lt;1 (longer</span>
+<span class="sd">            afterglow).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        One value per frame. Empty if the audio could not be decoded.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Deferred on purpose: numpy is needed only to measure an envelope, so</span>
+    <span class="c1"># importing it here keeps it off muvid.visualize&#39;s import path for the many</span>
+    <span class="c1"># renders (a still cover, a Ken Burns pan) that never ask for a flash.</span>
+    <span class="c1"># Do not hoist this to module scope.</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+    <span class="n">raw</span> <span class="o">=</span> <span class="n">decode_pcm</span><span class="p">(</span><span class="n">audio</span><span class="p">,</span> <span class="n">sample_rate</span><span class="o">=</span><span class="n">sr</span><span class="p">,</span> <span class="n">channels</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="c1"># A truncated decode (a corrupt or half-written file) can leave a partial</span>
+    <span class="c1"># sample at the tail, which np.frombuffer rejects outright — drop it.</span>
+    <span class="n">itemsize</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span><span class="o">.</span><span class="n">itemsize</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">frombuffer</span><span class="p">(</span><span class="n">raw</span><span class="p">[:</span> <span class="nb">len</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span> <span class="o">%</span> <span class="n">itemsize</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+    <span class="n">hop</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">sr</span> <span class="o">//</span> <span class="n">fps</span><span class="p">)</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">//</span> <span class="n">hop</span>
+    <span class="k">if</span> <span class="n">duration</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">duration</span> <span class="o">*</span> <span class="n">fps</span><span class="p">)))</span>
+    <span class="k">if</span> <span class="n">n</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[]</span>
+
+    <span class="n">frames</span> <span class="o">=</span> <span class="n">x</span><span class="p">[:</span> <span class="n">n</span> <span class="o">*</span> <span class="n">hop</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">hop</span><span class="p">)</span>
+    <span class="n">rms_db</span> <span class="o">=</span> <span class="mi">20</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">((</span><span class="n">frames</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="mf">1e-9</span><span class="p">)</span> <span class="o">+</span> <span class="mf">1e-9</span><span class="p">)</span>
+    <span class="n">flux</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">rms_db</span><span class="p">,</span> <span class="n">prepend</span><span class="o">=</span><span class="n">rms_db</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">flux</span><span class="p">[</span><span class="n">flux</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">scale</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">flux</span><span class="p">,</span> <span class="n">_PULSE_PERCENTILE</span><span class="p">)</span> <span class="ow">or</span> <span class="mf">1.0</span>
+    <span class="n">pulse</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">flux</span> <span class="o">/</span> <span class="n">scale</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+    <span class="c1"># The decay is a recurrence (each frame depends on the previous *output*),</span>
+    <span class="c1"># so it does not vectorize; at one step per video frame it is cheap anyway.</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+    <span class="n">acc</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">pulse</span><span class="p">):</span>
+        <span class="n">acc</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">v</span><span class="p">),</span> <span class="n">acc</span> <span class="o">*</span> <span class="n">decay</span><span class="p">)</span>
+        <span class="n">out</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">acc</span>
+    <span class="k">return</span> <span class="n">out</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_write_flash_script</span><span class="p">(</span>
+    <span class="n">envelope</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
+    <span class="n">path</span><span class="p">:</span> <span class="n">PathLike</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">fps</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">target</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">brightness</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">saturation</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Write a ``sendcmd`` script pulsing ``target``&#39;s brightness/saturation.</span>
+
+<span class="sd">    Each frame ``i`` gets a command setting the named filter&#39;s ``brightness`` to</span>
+<span class="sd">    ``brightness * envelope[i]`` and ``saturation`` to ``1 + saturation *</span>
+<span class="sd">    envelope[i]`` — so at rest (envelope 0) the filter is a no-op, and on a beat</span>
+<span class="sd">    it brightens and intensifies.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        envelope: Per-frame pulse from :func:`onset_envelope`.</span>
+<span class="sd">        path: Where to write the script.</span>
+<span class="sd">        fps: Frame rate (to turn frame index into a timestamp).</span>
+<span class="sd">        target: The ``sendcmd`` target — a filter labelled ``name@label``.</span>
+<span class="sd">        brightness: Peak brightness boost (ffmpeg ``eq`` brightness, -1..1).</span>
+<span class="sd">        saturation: Peak saturation boost added to 1.0 (ffmpeg ``eq``).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The written path.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">lines</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">envelope</span><span class="p">):</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="n">i</span> <span class="o">/</span> <span class="n">fps</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">t</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> [enter] </span><span class="si">{</span><span class="n">target</span><span class="si">}</span><span class="s2"> brightness </span><span class="si">{</span><span class="n">brightness</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">v</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">;&quot;</span><span class="p">)</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">t</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> [enter] </span><span class="si">{</span><span class="n">target</span><span class="si">}</span><span class="s2"> saturation </span><span class="si">{</span><span class="mi">1</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">saturation</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">v</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">;&quot;</span><span class="p">)</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="n">path</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">path</span>
+
+
+<div class="viewcode-block" id="flash_filter">
+<a class="viewcode-back" href="../../../module_docs/muvid/visualize/reactive.html#muvid.visualize.flash_filter">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">flash_filter</span><span class="p">(</span>
+    <span class="n">audio</span><span class="p">:</span> <span class="n">PathLike</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">fps</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">duration</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">workdir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="n">label</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">DEFAULT_FLASH_LABEL</span><span class="p">,</span>
+    <span class="n">brightness</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">FLASH_BRIGHTNESS</span><span class="p">,</span>
+    <span class="n">saturation</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">FLASH_SATURATION</span><span class="p">,</span>
+    <span class="n">decay</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">FLASH_DECAY</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A filter fragment that makes the stream it follows pulse with the beat.</span>
+
+<span class="sd">    Computes the envelope, writes the ``sendcmd`` script into ``workdir``, and</span>
+<span class="sd">    returns the chain ``,sendcmd=f=…,eq@&lt;label&gt;=…`` to append after the visual</span>
+<span class="sd">    filter (e.g. ``showspectrum``).</span>
+
+<span class="sd">    Returns ``&quot;&quot;`` — a fragment that changes nothing — when the audio yields no</span>
+<span class="sd">    envelope or this ffmpeg build lacks :data:`FLASH_FILTERS`, so a caller can</span>
+<span class="sd">    append it unconditionally and still render.</span>
+
+<span class="sd">    The ``eq`` starts as a no-op (``brightness=0:saturation=1``); the script</span>
+<span class="sd">    drives it. ``eval=frame`` so it re-reads every frame.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        audio: The track whose beats drive the flash.</span>
+<span class="sd">        fps: The render&#39;s frame rate (one command pair per frame).</span>
+<span class="sd">        duration: Clamp the flash to this many seconds (``None`` = whole track).</span>
+<span class="sd">        workdir: Directory to write the ``sendcmd`` script into.</span>
+<span class="sd">        label: ``sendcmd`` label for this flash&#39;s ``eq``.</span>
+<span class="sd">        brightness: Peak brightness boost on a beat.</span>
+<span class="sd">        saturation: Peak saturation boost on a beat.</span>
+<span class="sd">        decay: Per-frame afterglow of a pulse.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">has_filter</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">FLASH_FILTERS</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">envelope</span> <span class="o">=</span> <span class="n">onset_envelope</span><span class="p">(</span><span class="n">audio</span><span class="p">,</span> <span class="n">fps</span><span class="o">=</span><span class="n">fps</span><span class="p">,</span> <span class="n">duration</span><span class="o">=</span><span class="n">duration</span><span class="p">,</span> <span class="n">decay</span><span class="o">=</span><span class="n">decay</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">envelope</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">target</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;eq@</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="n">script</span> <span class="o">=</span> <span class="n">_write_flash_script</span><span class="p">(</span>
+        <span class="n">envelope</span><span class="p">,</span>
+        <span class="n">Path</span><span class="p">(</span><span class="n">workdir</span><span class="p">)</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">.cmd&quot;</span><span class="p">,</span>
+        <span class="n">fps</span><span class="o">=</span><span class="n">fps</span><span class="p">,</span>
+        <span class="n">target</span><span class="o">=</span><span class="n">target</span><span class="p">,</span>
+        <span class="n">brightness</span><span class="o">=</span><span class="n">brightness</span><span class="p">,</span>
+        <span class="n">saturation</span><span class="o">=</span><span class="n">saturation</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;,sendcmd=f=</span><span class="si">{</span><span class="n">escape_filter_value</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">script</span><span class="p">))</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;,</span><span class="si">{</span><span class="n">target</span><span class="si">}</span><span class="s2">=brightness=0:saturation=1:eval=frame&quot;</span>
+    <span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p></p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
