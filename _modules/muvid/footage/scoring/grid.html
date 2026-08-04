@@ -1,0 +1,744 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>muvid.footage.scoring.grid &mdash; muvid 0.0.12 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=3bbcec59"></script>
+      <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../../_static/toggleprompt.js?v=d7ede5d2"></script>
+      <script src="../../../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            muvid
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../module_docs/muvid.html">muvid</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../module_docs/muvid/__main__.html">muvid.__main__</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../module_docs/muvid/align.html">muvid.align</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../module_docs/muvid/characters.html">muvid.characters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../module_docs/muvid/compose.html">muvid.compose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../module_docs/muvid/contracts.html">muvid.contracts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../module_docs/muvid/cost.html">muvid.cost</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../module_docs/muvid/environments.html">muvid.environments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../module_docs/muvid/events.html">muvid.events</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../module_docs/muvid/facade.html">muvid.facade</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../module_docs/muvid/footage.html">muvid.footage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../module_docs/muvid/footage/align.html">muvid.footage.align</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../module_docs/muvid/footage/assemble.html">muvid.footage.assemble</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../module_docs/muvid/footage/edl.html">muvid.footage.edl</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../module_docs/muvid/footage/scoring.html">muvid.footage.scoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../module_docs/muvid/footage/scoring/_frame_metrics.html">muvid.footage.scoring._frame_metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../module_docs/muvid/footage/scoring/frames.html">muvid.footage.scoring.frames</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../module_docs/muvid/footage/scoring/grid.html">muvid.footage.scoring.grid</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../module_docs/muvid/footage/scoring/lipsync.html">muvid.footage.scoring.lipsync</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../module_docs/muvid/footage/scoring/motionbeat.html">muvid.footage.scoring.motionbeat</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../module_docs/muvid/footage/scoring/orchestrator.html">muvid.footage.scoring.orchestrator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../module_docs/muvid/footage/scoring/quality.html">muvid.footage.scoring.quality</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../module_docs/muvid/footage/scoring/segment.html">muvid.footage.scoring.segment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../module_docs/muvid/footage/select_score.html">muvid.footage.select_score</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../module_docs/muvid/footage/strategy.html">muvid.footage.strategy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../module_docs/muvid/footage/workspace.html">muvid.footage.workspace</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../module_docs/muvid/genre.html">muvid.genre</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../module_docs/muvid/genre_music_video.html">muvid.genre_music_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../module_docs/muvid/lyrics.html">muvid.lyrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../module_docs/muvid/mcp.html">muvid.mcp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../module_docs/muvid/mcp/_fetch.html">muvid.mcp._fetch</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../module_docs/muvid/mcp/_guide.html">muvid.mcp._guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../module_docs/muvid/mcp/footage_tools.html">muvid.mcp.footage_tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../module_docs/muvid/mcp/identity.html">muvid.mcp.identity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../module_docs/muvid/mcp/scoring_tools.html">muvid.mcp.scoring_tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../module_docs/muvid/mcp/tools.html">muvid.mcp.tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../module_docs/muvid/mcp/workspace.html">muvid.mcp.workspace</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../module_docs/muvid/project.html">muvid.project</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../module_docs/muvid/renderers.html">muvid.renderers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../module_docs/muvid/renderers/_common.html">muvid.renderers._common</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../module_docs/muvid/renderers/animation.html">muvid.renderers.animation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../module_docs/muvid/renderers/image_to_video.html">muvid.renderers.image_to_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../module_docs/muvid/renderers/lipsync.html">muvid.renderers.lipsync</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../module_docs/muvid/renderers/still.html">muvid.renderers.still</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../module_docs/muvid/renderers/text_to_video.html">muvid.renderers.text_to_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../module_docs/muvid/schema.html">muvid.schema</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../module_docs/muvid/script.html">muvid.script</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../module_docs/muvid/ui.html">muvid.ui</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../module_docs/muvid/ui/app.html">muvid.ui.app</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../module_docs/muvid/visualize.html">muvid.visualize</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../module_docs/muvid/visualize/canvas.html">muvid.visualize.canvas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../module_docs/muvid/visualize/ffmpeg.html">muvid.visualize.ffmpeg</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../module_docs/muvid/visualize/verify.html">muvid.visualize.verify</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../module_docs/muvid/visualize/video.html">muvid.visualize.video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../module_docs/muvid/visualize/visuals.html">muvid.visualize.visuals</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">muvid</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">muvid.footage.scoring.grid</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for muvid.footage.scoring.grid</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;The song-time score grid: ``ScoreTrack``, resample-to-grid, robust normalization,</span>
+<span class="sd">the fused ``ScoreTensor``, and crash-consistent persistence.</span>
+
+<span class="sd">The keystone of the footage-scoring layer (thorwhalen/muvid#13): every clip&#39;s every metric</span>
+<span class="sd">is resolved onto ONE fixed-rate song-time grid (``t0=0``, ``hop_s≈0.1`` → ~10 Hz), so tracks</span>
+<span class="sd">stack into a tensor ``S[clip, frame, metric]`` that BOTH the auto composer (the Viterbi</span>
+<span class="sd">selector) and the Phase-2 multichannel editor read. Frame ``k`` ↔ song time ``t0 + k*hop_s``,</span>
+<span class="sd">identical across clips.</span>
+
+<span class="sd">Design decisions (see ``misc/docs/footage_scoring_design.md`` — LOCKED post-critique):</span>
+
+<span class="sd">- **Raw is the SSOT.** Extractors emit ``raw_values`` + a coverage ``mask`` (NaN where</span>
+<span class="sd">  masked). Normalization is **per-metric-global across all clips** (robust median/IQR,</span>
+<span class="sd">  percentile-clipped), so it can only be computed once every clip&#39;s raw track for a metric</span>
+<span class="sd">  is in hand — it is a tensor-assembly step, not a per-extractor one. The normalized</span>
+<span class="sd">  ``values`` are derived from ``raw`` + the stored ``norm`` params, so re-normalizing is free</span>
+<span class="sd">  and the editor can show raw *and* normalized.</span>
+<span class="sd">- **NaN never reaches a serializer.** The manifest stores ``null`` for an all-masked metric&#39;s</span>
+<span class="sd">  norm params; the MCP wire maps masked entries to ``null`` and relies on the ``mask`` array.</span>
+<span class="sd">- **The manifest is the SSOT for grid geometry** (``t0/hop_s/n``); a per-track geometry</span>
+<span class="sd">  mismatch is a load-time assertion, never a silent 2× misalignment.</span>
+<span class="sd">- **Persistence is crash-consistent**: each clip&#39;s ``.npz`` is written to a temp then</span>
+<span class="sd">  ``os.replace``\\ d; ``manifest.json`` is written LAST via tmp+rename, so a reader sees</span>
+<span class="sd">  either the whole prior state or the whole new one.</span>
+
+<span class="sd">Pure numpy — no cv2/torch/ffmpeg here. Imported only under the ``muvid[scoring]`` extra</span>
+<span class="sd">(never on the import-light ``muvid.genre_music_video`` path).</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Sequence</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="c1">#: Default grid step (seconds) → 10 Hz. Ample for a UI and beat-level selection.</span>
+<span class="n">DEFAULT_HOP_S</span> <span class="o">=</span> <span class="mf">0.1</span>
+<span class="c1">#: Percentile clip edges for robust normalization.</span>
+<span class="n">_P_LO</span><span class="p">,</span> <span class="n">_P_HI</span> <span class="o">=</span> <span class="mf">5.0</span><span class="p">,</span> <span class="mf">95.0</span>
+
+
+<div class="viewcode-block" id="grid_len">
+<a class="viewcode-back" href="../../../../module_docs/muvid/footage/scoring/grid.html#muvid.footage.scoring.grid.grid_len">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">grid_len</span><span class="p">(</span><span class="n">song_duration</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">hop_s</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">DEFAULT_HOP_S</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Number of grid frames spanning ``[0, song_duration]`` at ``hop_s``.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">song_duration</span><span class="p">)</span> <span class="o">/</span> <span class="n">hop_s</span><span class="p">))</span> <span class="o">+</span> <span class="mi">1</span></div>
+
+
+
+<div class="viewcode-block" id="align_fingerprint">
+<a class="viewcode-back" href="../../../../module_docs/muvid/footage/scoring/grid.html#muvid.footage.scoring.grid.align_fingerprint">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">align_fingerprint</span><span class="p">(</span><span class="n">alignments</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A stable, ORDER-INDEPENDENT fingerprint of a set of alignments (offsets + durations).</span>
+
+<span class="sd">    The SSOT (shared by the scoring job&#39;s idempotency key AND the read-time staleness guard):</span>
+<span class="sd">    a re-align that moves any offset changes this fingerprint, so persisted scores computed</span>
+<span class="sd">    against the old offsets are detected as stale. Sorting the full triples (not just by</span>
+<span class="sd">    clip_id) makes it independent of alignment order.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+
+    <span class="n">basis</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span>
+        <span class="nb">sorted</span><span class="p">(</span>
+            <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">clip_id</span><span class="p">),</span> <span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">offset_s</span><span class="p">),</span> <span class="mi">4</span><span class="p">),</span> <span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">duration_s</span><span class="p">),</span> <span class="mi">4</span><span class="p">)]</span>
+            <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">alignments</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span><span class="n">basis</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()[:</span><span class="mi">16</span><span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="ScoreTrack">
+<a class="viewcode-back" href="../../../../module_docs/muvid/footage/scoring/grid.html#muvid.footage.scoring.grid.ScoreTrack">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ScoreTrack</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;One ``(clip, metric)`` curve on the shared song-time grid.</span>
+
+<span class="sd">    Extractors produce ``raw_values`` (NaN where masked) + ``mask``; ``direction`` says</span>
+<span class="sd">    whether higher raw = better (``&quot;higher_better&quot;``) or lower = better</span>
+<span class="sd">    (``&quot;lower_better&quot;``, e.g. a distance like LSE-D — inverted at normalization). The</span>
+<span class="sd">    normalized ``values`` are NOT stored here; they are derived at tensor assembly from</span>
+<span class="sd">    ``raw_values`` + the per-metric global ``norm`` params (see :func:`apply_norm`).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">clip_id</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">metric</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">t0</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">hop_s</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">raw_values</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>  <span class="c1"># float32[n], NaN where masked</span>
+    <span class="n">mask</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>  <span class="c1"># bool[n], True = valid/covered</span>
+    <span class="n">direction</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;higher_better&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">raw_values</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;raw_values</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_values</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2"> and mask</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2"> &quot;</span>
+                <span class="s2">&quot;must have the same shape&quot;</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">direction</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;higher_better&quot;</span><span class="p">,</span> <span class="s2">&quot;lower_better&quot;</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;unknown direction </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">direction</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">n</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_values</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+<div class="viewcode-block" id="ScoreTrack.coverage_fraction">
+<a class="viewcode-back" href="../../../../module_docs/muvid/footage/scoring/grid.html#muvid.footage.scoring.grid.ScoreTrack.coverage_fraction">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">coverage_fraction</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fraction of frames that are valid — surfaced so an all-NA metric is visible.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">count_nonzero</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="p">))</span> <span class="o">/</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ScoreTrack.to_meta">
+<a class="viewcode-back" href="../../../../module_docs/muvid/footage/scoring/grid.html#muvid.footage.scoring.grid.ScoreTrack.to_meta">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_meta</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Everything except the arrays (arrays live in the ``.npz``).&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;clip_id&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">clip_id</span><span class="p">,</span>
+            <span class="s2">&quot;metric&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">metric</span><span class="p">,</span>
+            <span class="s2">&quot;t0&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">t0</span><span class="p">,</span>
+            <span class="s2">&quot;hop_s&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">hop_s</span><span class="p">,</span>
+            <span class="s2">&quot;direction&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">direction</span><span class="p">,</span>
+            <span class="s2">&quot;coverage&quot;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">coverage_fraction</span><span class="p">(),</span> <span class="mi">4</span><span class="p">),</span>
+        <span class="p">}</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="resample_to_grid">
+<a class="viewcode-back" href="../../../../module_docs/muvid/footage/scoring/grid.html#muvid.footage.scoring.grid.resample_to_grid">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">resample_to_grid</span><span class="p">(</span>
+    <span class="n">sample_times</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
+    <span class="n">sample_values</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">t0</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">hop_s</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">max_gap_s</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Resample irregular ``(song_time, value)`` samples onto the fixed grid.</span>
+
+<span class="sd">    Vectorized (O(n_samples + n)): samples are mean-binned onto the grid, then linearly</span>
+<span class="sd">    interpolated across bins that have no sample — but ONLY within the sampled span and</span>
+<span class="sd">    ONLY across gaps ≤ ``max_gap_s`` (so a real coverage gap stays masked, never invented).</span>
+<span class="sd">    Outside ``[first_sample, last_sample]`` the grid is masked (no extrapolation).</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        sample_times: song-time (s) of each sample (any order; NaN values dropped).</span>
+<span class="sd">        sample_values: the sample values (parallel to ``sample_times``).</span>
+<span class="sd">        t0/hop_s/n: the grid geometry (frame k ↔ ``t0 + k*hop_s``, k in ``[0, n)``).</span>
+<span class="sd">        max_gap_s: bridge gaps up to this many seconds (default ``4*hop_s``).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        ``(values, mask)`` — ``values`` float32[n] (NaN where masked), ``mask`` bool[n].</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">max_gap_s</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">max_gap_s</span> <span class="o">=</span> <span class="mf">4.0</span> <span class="o">*</span> <span class="n">hop_s</span>
+    <span class="n">values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+    <span class="n">mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
+
+    <span class="n">st</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">sample_times</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+    <span class="n">sv</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">sample_values</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">st</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">values</span><span class="p">,</span> <span class="n">mask</span>
+    <span class="n">good</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">st</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">sv</span><span class="p">)</span>
+    <span class="n">st</span><span class="p">,</span> <span class="n">sv</span> <span class="o">=</span> <span class="n">st</span><span class="p">[</span><span class="n">good</span><span class="p">],</span> <span class="n">sv</span><span class="p">[</span><span class="n">good</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">st</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">values</span><span class="p">,</span> <span class="n">mask</span>
+
+    <span class="c1"># Bin each sample to the nearest grid frame; mean-aggregate collisions.</span>
+    <span class="n">idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">rint</span><span class="p">((</span><span class="n">st</span> <span class="o">-</span> <span class="n">t0</span><span class="p">)</span> <span class="o">/</span> <span class="n">hop_s</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span>
+    <span class="n">inside</span> <span class="o">=</span> <span class="p">(</span><span class="n">idx</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">idx</span> <span class="o">&lt;</span> <span class="n">n</span><span class="p">)</span>
+    <span class="n">idx</span><span class="p">,</span> <span class="n">sv_in</span> <span class="o">=</span> <span class="n">idx</span><span class="p">[</span><span class="n">inside</span><span class="p">],</span> <span class="n">sv</span><span class="p">[</span><span class="n">inside</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">idx</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">values</span><span class="p">,</span> <span class="n">mask</span>
+    <span class="n">counts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">bincount</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="n">minlength</span><span class="o">=</span><span class="n">n</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+    <span class="n">sums</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">bincount</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="n">sv_in</span><span class="p">,</span> <span class="n">minlength</span><span class="o">=</span><span class="n">n</span><span class="p">)</span>
+    <span class="n">filled</span> <span class="o">=</span> <span class="n">counts</span> <span class="o">&gt;</span> <span class="mi">0</span>
+    <span class="n">binned</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+    <span class="n">binned</span><span class="p">[</span><span class="n">filled</span><span class="p">]</span> <span class="o">=</span> <span class="n">sums</span><span class="p">[</span><span class="n">filled</span><span class="p">]</span> <span class="o">/</span> <span class="n">counts</span><span class="p">[</span><span class="n">filled</span><span class="p">]</span>
+
+    <span class="n">valid_frames</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">flatnonzero</span><span class="p">(</span><span class="n">filled</span><span class="p">)</span>
+    <span class="n">first</span><span class="p">,</span> <span class="n">last</span> <span class="o">=</span> <span class="n">valid_frames</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">valid_frames</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">grid_frames</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+    <span class="c1"># Linear interpolation across the sampled span using the filled bins as knots.</span>
+    <span class="n">interp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">grid_frames</span><span class="p">,</span> <span class="n">valid_frames</span><span class="p">,</span> <span class="n">binned</span><span class="p">[</span><span class="n">valid_frames</span><span class="p">])</span>
+
+    <span class="c1"># Mask by the WHOLE enclosing knot-gap, not distance-to-nearest — so an oversized gap is</span>
+    <span class="c1"># masked end to end, never partially invented on its edges (a distance test would keep</span>
+    <span class="c1"># the ≤max_gap fringe of a huge gap). `filled` keeps real knots adjacent to a large gap.</span>
+    <span class="n">pos</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span><span class="n">valid_frames</span><span class="p">,</span> <span class="n">grid_frames</span><span class="p">)</span>
+    <span class="n">left</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">pos</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">valid_frames</span><span class="o">.</span><span class="n">size</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">right</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">pos</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">valid_frames</span><span class="o">.</span><span class="n">size</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">gap_span</span> <span class="o">=</span> <span class="n">valid_frames</span><span class="p">[</span><span class="n">right</span><span class="p">]</span> <span class="o">-</span> <span class="n">valid_frames</span><span class="p">[</span><span class="n">left</span><span class="p">]</span>
+    <span class="n">max_gap_frames</span> <span class="o">=</span> <span class="n">max_gap_s</span> <span class="o">/</span> <span class="n">hop_s</span>
+    <span class="n">keep</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="p">(</span><span class="n">grid_frames</span> <span class="o">&gt;=</span> <span class="n">first</span><span class="p">)</span>
+        <span class="o">&amp;</span> <span class="p">(</span><span class="n">grid_frames</span> <span class="o">&lt;=</span> <span class="n">last</span><span class="p">)</span>
+        <span class="o">&amp;</span> <span class="p">(</span><span class="n">filled</span> <span class="o">|</span> <span class="p">(</span><span class="n">gap_span</span> <span class="o">&lt;=</span> <span class="n">max_gap_frames</span><span class="p">))</span>
+    <span class="p">)</span>
+    <span class="n">values</span><span class="p">[</span><span class="n">keep</span><span class="p">]</span> <span class="o">=</span> <span class="n">interp</span><span class="p">[</span><span class="n">keep</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+    <span class="n">mask</span><span class="p">[</span><span class="n">keep</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="k">return</span> <span class="n">values</span><span class="p">,</span> <span class="n">mask</span></div>
+
+
+
+<div class="viewcode-block" id="compute_norm">
+<a class="viewcode-back" href="../../../../module_docs/muvid/footage/scoring/grid.html#muvid.footage.scoring.grid.compute_norm">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">compute_norm</span><span class="p">(</span>
+    <span class="n">raw_tracks</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>
+    <span class="n">masks</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">direction</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Per-metric-GLOBAL robust norm params from every clip&#39;s raw track for one metric.</span>
+
+<span class="sd">    Pools all valid (unmasked, finite) raw values across clips → ``{median, iqr, p5, p95}``.</span>
+<span class="sd">    Returns ``None`` if there are no valid values (an all-masked metric) — the caller stores</span>
+<span class="sd">    ``null`` and :func:`apply_norm` then yields all-NaN (never a divide-by-zero or a NaN in</span>
+<span class="sd">    the manifest).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">pooled</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">raw</span><span class="p">,</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">raw_tracks</span><span class="p">,</span> <span class="n">masks</span><span class="p">):</span>
+        <span class="n">vals</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)[</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)]</span>
+        <span class="n">vals</span> <span class="o">=</span> <span class="n">vals</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">vals</span><span class="p">)]</span>
+        <span class="k">if</span> <span class="n">vals</span><span class="o">.</span><span class="n">size</span><span class="p">:</span>
+            <span class="n">pooled</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">vals</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">pooled</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">allv</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">pooled</span><span class="p">)</span>
+    <span class="n">median</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">allv</span><span class="p">))</span>
+    <span class="n">q1</span><span class="p">,</span> <span class="n">q3</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">allv</span><span class="p">,</span> <span class="p">[</span><span class="mf">25.0</span><span class="p">,</span> <span class="mf">75.0</span><span class="p">])</span>
+    <span class="n">p5</span><span class="p">,</span> <span class="n">p95</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">allv</span><span class="p">,</span> <span class="p">[</span><span class="n">_P_LO</span><span class="p">,</span> <span class="n">_P_HI</span><span class="p">])</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">&quot;median&quot;</span><span class="p">:</span> <span class="n">median</span><span class="p">,</span>
+        <span class="s2">&quot;iqr&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">q3</span> <span class="o">-</span> <span class="n">q1</span><span class="p">),</span>
+        <span class="s2">&quot;p5&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">p5</span><span class="p">),</span>
+        <span class="s2">&quot;p95&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">p95</span><span class="p">),</span>
+        <span class="s2">&quot;direction&quot;</span><span class="p">:</span> <span class="n">direction</span><span class="p">,</span>
+    <span class="p">}</span></div>
+
+
+
+<div class="viewcode-block" id="apply_norm">
+<a class="viewcode-back" href="../../../../module_docs/muvid/footage/scoring/grid.html#muvid.footage.scoring.grid.apply_norm">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">apply_norm</span><span class="p">(</span><span class="n">raw</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">norm</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">direction</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Map raw values to a robust [0,1] score (higher = better), preserving NaN.</span>
+
+<span class="sd">    ``z = (raw − median)/IQR`` (IQR==0 → neutral 0.5), clipped to ``[p5,p95]`` mapped to</span>
+<span class="sd">    [0,1]; ``lower_better`` metrics are inverted so the output is always higher_better.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">raw</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">norm</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">out</span>
+    <span class="n">raw</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+    <span class="n">finite</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">finite</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+        <span class="k">return</span> <span class="n">out</span>
+    <span class="n">median</span><span class="p">,</span> <span class="n">iqr</span> <span class="o">=</span> <span class="n">norm</span><span class="p">[</span><span class="s2">&quot;median&quot;</span><span class="p">],</span> <span class="n">norm</span><span class="p">[</span><span class="s2">&quot;iqr&quot;</span><span class="p">]</span>
+    <span class="n">p5</span><span class="p">,</span> <span class="n">p95</span> <span class="o">=</span> <span class="n">norm</span><span class="p">[</span><span class="s2">&quot;p5&quot;</span><span class="p">],</span> <span class="n">norm</span><span class="p">[</span><span class="s2">&quot;p95&quot;</span><span class="p">]</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">raw</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">iqr</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">p95</span> <span class="o">&lt;=</span> <span class="n">p5</span><span class="p">:</span>
+        <span class="n">out</span><span class="p">[</span><span class="n">finite</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.5</span>  <span class="c1"># constant metric → neutral, comparable but non-decisive</span>
+        <span class="k">return</span> <span class="n">out</span>
+    <span class="c1"># Percentile-clip in raw space, then min-max to [0,1].</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">p5</span><span class="p">,</span> <span class="n">p95</span><span class="p">)</span>
+    <span class="n">scaled</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="n">p5</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">p95</span> <span class="o">-</span> <span class="n">p5</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">direction</span> <span class="o">==</span> <span class="s2">&quot;lower_better&quot;</span><span class="p">:</span>
+        <span class="n">scaled</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">scaled</span>
+    <span class="n">out</span><span class="p">[</span><span class="n">finite</span><span class="p">]</span> <span class="o">=</span> <span class="n">scaled</span><span class="p">[</span><span class="n">finite</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">out</span></div>
+
+
+
+<div class="viewcode-block" id="ScoreTensor">
+<a class="viewcode-back" href="../../../../module_docs/muvid/footage/scoring/grid.html#muvid.footage.scoring.grid.ScoreTensor">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ScoreTensor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The fused ``S[clip, frame, metric]`` (normalized) + ``M[clip, frame]`` mask.</span>
+
+<span class="sd">    ``S`` carries NaN where masked (never used for reward — the selector reads ``M``).</span>
+<span class="sd">    ``raw`` keeps the un-normalized values for the editor/tooltips. Geometry</span>
+<span class="sd">    (``t0/hop_s/n``) is authoritative here (validated against the manifest at load).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">clip_ids</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="n">metrics</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="n">t0</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">hop_s</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">n</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">S</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>  <span class="c1"># float32[n_clips, n, n_metrics] normalized (NaN where masked)</span>
+    <span class="n">M</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>  <span class="c1"># bool[n_clips, n, n_metrics] valid mask</span>
+    <span class="n">raw</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>  <span class="c1"># float32[n_clips, n, n_metrics] raw (NaN where masked)</span>
+    <span class="n">norms</span><span class="p">:</span> <span class="nb">dict</span>  <span class="c1"># metric -&gt; norm params (or None)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">metric_index</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">metric</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">metrics</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">metric</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">clip_index</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">clip_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">clip_ids</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">clip_id</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="build_tensor">
+<a class="viewcode-back" href="../../../../module_docs/muvid/footage/scoring/grid.html#muvid.footage.scoring.grid.build_tensor">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_tensor</span><span class="p">(</span>
+    <span class="n">tracks</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">ScoreTrack</span><span class="p">]],</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">t0</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">hop_s</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">metrics</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">clip_ids</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">norms</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ScoreTensor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Assemble per-clip :class:`ScoreTrack` lists into a normalized :class:`ScoreTensor`.</span>
+
+<span class="sd">    ``tracks`` maps ``clip_id -&gt; [ScoreTrack, ...]``. The metric axis is the union of metrics</span>
+<span class="sd">    present (or the explicit ``metrics`` order); a clip missing a listed metric contributes</span>
+<span class="sd">    an all-masked column (so the tensor is rectangular and a missing extractor never shifts</span>
+<span class="sd">    columns). Normalization is per-metric-global (computed here if ``norms`` is not supplied).</span>
+<span class="sd">    Every track&#39;s geometry must match ``(t0, hop_s, n)`` — a mismatch raises (the SSOT rule).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">clip_ids</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">clip_ids</span><span class="p">)</span> <span class="k">if</span> <span class="n">clip_ids</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">list</span><span class="p">(</span><span class="n">tracks</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+    <span class="n">by_clip</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ScoreTrack</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">all_metrics</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">cid</span> <span class="ow">in</span> <span class="n">clip_ids</span><span class="p">:</span>
+        <span class="n">by_clip</span><span class="p">[</span><span class="n">cid</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">tr</span> <span class="ow">in</span> <span class="n">tracks</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">cid</span><span class="p">,</span> <span class="p">[]):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">tr</span><span class="o">.</span><span class="n">t0</span> <span class="o">==</span> <span class="n">t0</span> <span class="ow">and</span> <span class="n">tr</span><span class="o">.</span><span class="n">hop_s</span> <span class="o">==</span> <span class="n">hop_s</span> <span class="ow">and</span> <span class="n">tr</span><span class="o">.</span><span class="n">n</span> <span class="o">==</span> <span class="n">n</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;track </span><span class="si">{</span><span class="n">cid</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">tr</span><span class="o">.</span><span class="n">metric</span><span class="si">}</span><span class="s2"> geometry (t0=</span><span class="si">{</span><span class="n">tr</span><span class="o">.</span><span class="n">t0</span><span class="si">}</span><span class="s2">,hop=</span><span class="si">{</span><span class="n">tr</span><span class="o">.</span><span class="n">hop_s</span><span class="si">}</span><span class="s2">,n=</span><span class="si">{</span><span class="n">tr</span><span class="o">.</span><span class="n">n</span><span class="si">}</span><span class="s2">) &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;!= grid (t0=</span><span class="si">{</span><span class="n">t0</span><span class="si">}</span><span class="s2">,hop=</span><span class="si">{</span><span class="n">hop_s</span><span class="si">}</span><span class="s2">,n=</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2">)&quot;</span>
+                <span class="p">)</span>
+            <span class="n">by_clip</span><span class="p">[</span><span class="n">cid</span><span class="p">][</span><span class="n">tr</span><span class="o">.</span><span class="n">metric</span><span class="p">]</span> <span class="o">=</span> <span class="n">tr</span>
+            <span class="k">if</span> <span class="n">tr</span><span class="o">.</span><span class="n">metric</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">all_metrics</span><span class="p">:</span>
+                <span class="n">all_metrics</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tr</span><span class="o">.</span><span class="n">metric</span><span class="p">)</span>
+    <span class="n">metrics</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">metrics</span><span class="p">)</span> <span class="k">if</span> <span class="n">metrics</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">all_metrics</span><span class="p">)</span>
+
+    <span class="n">nc</span><span class="p">,</span> <span class="n">nm</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">clip_ids</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">metrics</span><span class="p">)</span>
+    <span class="n">raw</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">((</span><span class="n">nc</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">nm</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+    <span class="n">M</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nc</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">nm</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">ci</span><span class="p">,</span> <span class="n">cid</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">clip_ids</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">mi</span><span class="p">,</span> <span class="n">metric</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">metrics</span><span class="p">):</span>
+            <span class="n">tr</span> <span class="o">=</span> <span class="n">by_clip</span><span class="p">[</span><span class="n">cid</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">metric</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">tr</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">raw</span><span class="p">[</span><span class="n">ci</span><span class="p">,</span> <span class="p">:,</span> <span class="n">mi</span><span class="p">]</span> <span class="o">=</span> <span class="n">tr</span><span class="o">.</span><span class="n">raw_values</span>
+                <span class="n">M</span><span class="p">[</span><span class="n">ci</span><span class="p">,</span> <span class="p">:,</span> <span class="n">mi</span><span class="p">]</span> <span class="o">=</span> <span class="n">tr</span><span class="o">.</span><span class="n">mask</span>
+
+    <span class="c1"># Per-metric-global norm (median/IQR over all clips&#39; valid raw for that metric).</span>
+    <span class="n">computed_norms</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">S</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">((</span><span class="n">nc</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">nm</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">mi</span><span class="p">,</span> <span class="n">metric</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">metrics</span><span class="p">):</span>
+        <span class="n">direction</span> <span class="o">=</span> <span class="n">_metric_direction</span><span class="p">(</span><span class="n">by_clip</span><span class="p">,</span> <span class="n">metric</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">norms</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">metric</span> <span class="ow">in</span> <span class="n">norms</span><span class="p">:</span>
+            <span class="n">nrm</span> <span class="o">=</span> <span class="n">norms</span><span class="p">[</span><span class="n">metric</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">nrm</span> <span class="o">=</span> <span class="n">compute_norm</span><span class="p">(</span>
+                <span class="p">[</span><span class="n">raw</span><span class="p">[</span><span class="n">ci</span><span class="p">,</span> <span class="p">:,</span> <span class="n">mi</span><span class="p">]</span> <span class="k">for</span> <span class="n">ci</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nc</span><span class="p">)],</span>
+                <span class="p">[</span><span class="n">M</span><span class="p">[</span><span class="n">ci</span><span class="p">,</span> <span class="p">:,</span> <span class="n">mi</span><span class="p">]</span> <span class="k">for</span> <span class="n">ci</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nc</span><span class="p">)],</span>
+                <span class="n">direction</span><span class="o">=</span><span class="n">direction</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="n">computed_norms</span><span class="p">[</span><span class="n">metric</span><span class="p">]</span> <span class="o">=</span> <span class="n">nrm</span>
+        <span class="k">for</span> <span class="n">ci</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nc</span><span class="p">):</span>
+            <span class="n">S</span><span class="p">[</span><span class="n">ci</span><span class="p">,</span> <span class="p">:,</span> <span class="n">mi</span><span class="p">]</span> <span class="o">=</span> <span class="n">apply_norm</span><span class="p">(</span><span class="n">raw</span><span class="p">[</span><span class="n">ci</span><span class="p">,</span> <span class="p">:,</span> <span class="n">mi</span><span class="p">],</span> <span class="n">nrm</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="n">direction</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">ScoreTensor</span><span class="p">(</span>
+        <span class="n">clip_ids</span><span class="o">=</span><span class="n">clip_ids</span><span class="p">,</span>
+        <span class="n">metrics</span><span class="o">=</span><span class="n">metrics</span><span class="p">,</span>
+        <span class="n">t0</span><span class="o">=</span><span class="n">t0</span><span class="p">,</span>
+        <span class="n">hop_s</span><span class="o">=</span><span class="n">hop_s</span><span class="p">,</span>
+        <span class="n">n</span><span class="o">=</span><span class="n">n</span><span class="p">,</span>
+        <span class="n">S</span><span class="o">=</span><span class="n">S</span><span class="p">,</span>
+        <span class="n">M</span><span class="o">=</span><span class="n">M</span><span class="p">,</span>
+        <span class="n">raw</span><span class="o">=</span><span class="n">raw</span><span class="p">,</span>
+        <span class="n">norms</span><span class="o">=</span><span class="n">computed_norms</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_metric_direction</span><span class="p">(</span><span class="n">by_clip</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ScoreTrack</span><span class="p">]],</span> <span class="n">metric</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">tracks</span> <span class="ow">in</span> <span class="n">by_clip</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">metric</span> <span class="ow">in</span> <span class="n">tracks</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">tracks</span><span class="p">[</span><span class="n">metric</span><span class="p">]</span><span class="o">.</span><span class="n">direction</span>
+    <span class="k">return</span> <span class="s2">&quot;higher_better&quot;</span>
+
+
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># Persistence — crash-consistent, NaN-safe, under {project_root}/scores/</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+
+<span class="n">SCORES_DIRNAME</span> <span class="o">=</span> <span class="s2">&quot;scores&quot;</span>
+<span class="n">MANIFEST_NAME</span> <span class="o">=</span> <span class="s2">&quot;manifest.json&quot;</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">scores_dir</span><span class="p">(</span><span class="n">project_root</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">Path</span><span class="p">(</span><span class="n">project_root</span><span class="p">)</span> <span class="o">/</span> <span class="n">SCORES_DIRNAME</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">scores_present</span><span class="p">(</span><span class="n">project_root</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">scores_dir</span><span class="p">(</span><span class="n">project_root</span><span class="p">)</span> <span class="o">/</span> <span class="n">MANIFEST_NAME</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_atomic_write_bytes</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">tmp</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">with_name</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="s2">&quot;.tmp&quot;</span><span class="p">)</span>
+    <span class="n">tmp</span><span class="o">.</span><span class="n">write_bytes</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">tmp</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="save_scores">
+<a class="viewcode-back" href="../../../../module_docs/muvid/footage/scoring/grid.html#muvid.footage.scoring.grid.save_scores">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">save_scores</span><span class="p">(</span>
+    <span class="n">project_root</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="n">tracks</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">ScoreTrack</span><span class="p">]],</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">t0</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">hop_s</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">metrics</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">song_hash</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">align_fingerprint</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="n">beat_times</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">(),</span>
+    <span class="n">downbeat_times</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">(),</span>
+    <span class="n">extra</span><span class="p">:</span> <span class="n">Mapping</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Persist per-clip raw arrays + a manifest, crash-consistently.</span>
+
+<span class="sd">    Each clip → ``scores/{clip_id}.npz`` (raw + mask per metric), written tmp+``os.replace``.</span>
+<span class="sd">    The per-metric global ``norm`` params + grid geometry + beats + ``song_hash`` go in</span>
+<span class="sd">    ``scores/manifest.json``, written LAST via tmp+rename — so a concurrent reader sees a</span>
+<span class="sd">    whole consistent state or the prior one, never a torn mix. NaN never enters the manifest</span>
+<span class="sd">    (all-masked metric → ``null`` norm).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="n">scores_dir</span><span class="p">(</span><span class="n">project_root</span><span class="p">)</span>
+    <span class="n">d</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># Compute per-metric-global norms once (shared by save + the manifest).</span>
+    <span class="n">tensor</span> <span class="o">=</span> <span class="n">build_tensor</span><span class="p">(</span>
+        <span class="n">tracks</span><span class="p">,</span> <span class="n">t0</span><span class="o">=</span><span class="n">t0</span><span class="p">,</span> <span class="n">hop_s</span><span class="o">=</span><span class="n">hop_s</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="n">n</span><span class="p">,</span> <span class="n">metrics</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">metrics</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">clip_ids</span> <span class="o">=</span> <span class="n">tensor</span><span class="o">.</span><span class="n">clip_ids</span>
+
+    <span class="n">written</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">ci</span><span class="p">,</span> <span class="n">cid</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">clip_ids</span><span class="p">):</span>
+        <span class="n">arrays</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">mi</span><span class="p">,</span> <span class="n">metric</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">metrics</span><span class="p">):</span>
+            <span class="n">arrays</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">metric</span><span class="si">}</span><span class="s2">__raw&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">tensor</span><span class="o">.</span><span class="n">raw</span><span class="p">[</span><span class="n">ci</span><span class="p">,</span> <span class="p">:,</span> <span class="n">mi</span><span class="p">]</span>
+            <span class="n">arrays</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">metric</span><span class="si">}</span><span class="s2">__mask&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">tensor</span><span class="o">.</span><span class="n">M</span><span class="p">[</span><span class="n">ci</span><span class="p">,</span> <span class="p">:,</span> <span class="n">mi</span><span class="p">]</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">io</span>
+
+        <span class="n">buf</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">BytesIO</span><span class="p">()</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">savez_compressed</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span> <span class="o">**</span><span class="n">arrays</span><span class="p">)</span>
+        <span class="n">_atomic_write_bytes</span><span class="p">(</span><span class="n">d</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">cid</span><span class="si">}</span><span class="s2">.npz&quot;</span><span class="p">,</span> <span class="n">buf</span><span class="o">.</span><span class="n">getvalue</span><span class="p">())</span>
+        <span class="n">written</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cid</span><span class="p">)</span>
+
+    <span class="n">manifest</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;song_hash&quot;</span><span class="p">:</span> <span class="n">song_hash</span><span class="p">,</span>
+        <span class="s2">&quot;align_fingerprint&quot;</span><span class="p">:</span> <span class="n">align_fingerprint</span><span class="p">,</span>
+        <span class="s2">&quot;t0&quot;</span><span class="p">:</span> <span class="n">t0</span><span class="p">,</span>
+        <span class="s2">&quot;hop_s&quot;</span><span class="p">:</span> <span class="n">hop_s</span><span class="p">,</span>
+        <span class="s2">&quot;n&quot;</span><span class="p">:</span> <span class="n">n</span><span class="p">,</span>
+        <span class="s2">&quot;clips&quot;</span><span class="p">:</span> <span class="n">clip_ids</span><span class="p">,</span>
+        <span class="s2">&quot;metrics&quot;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">metrics</span><span class="p">),</span>
+        <span class="s2">&quot;directions&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="n">m</span><span class="p">:</span> <span class="n">_metric_direction</span><span class="p">(</span>
+                <span class="p">{</span><span class="n">c</span><span class="p">:</span> <span class="p">{</span><span class="n">tr</span><span class="o">.</span><span class="n">metric</span><span class="p">:</span> <span class="n">tr</span> <span class="k">for</span> <span class="n">tr</span> <span class="ow">in</span> <span class="n">tracks</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="p">[])}</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">clip_ids</span><span class="p">},</span> <span class="n">m</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">metrics</span>
+        <span class="p">},</span>
+        <span class="s2">&quot;norms&quot;</span><span class="p">:</span> <span class="p">{</span><span class="n">m</span><span class="p">:</span> <span class="n">tensor</span><span class="o">.</span><span class="n">norms</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">m</span><span class="p">)</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">metrics</span><span class="p">},</span>  <span class="c1"># None → null (JSON-safe)</span>
+        <span class="s2">&quot;coverage&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="n">m</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span>
+                <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">count_nonzero</span><span class="p">(</span><span class="n">tensor</span><span class="o">.</span><span class="n">M</span><span class="p">[:,</span> <span class="p">:,</span> <span class="n">mi</span><span class="p">]))</span>
+                <span class="o">/</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">tensor</span><span class="o">.</span><span class="n">M</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">n</span><span class="p">),</span>
+                <span class="mi">4</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">mi</span><span class="p">,</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">metrics</span><span class="p">)</span>
+        <span class="p">},</span>
+        <span class="s2">&quot;beats&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;beat_times&quot;</span><span class="p">:</span> <span class="p">[</span><span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">t</span><span class="p">),</span> <span class="mi">4</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">beat_times</span><span class="p">],</span>
+            <span class="s2">&quot;downbeat_times&quot;</span><span class="p">:</span> <span class="p">[</span><span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">t</span><span class="p">),</span> <span class="mi">4</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">downbeat_times</span><span class="p">],</span>
+        <span class="p">},</span>
+        <span class="o">**</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">extra</span><span class="p">)</span> <span class="k">if</span> <span class="n">extra</span> <span class="k">else</span> <span class="p">{}),</span>
+    <span class="p">}</span>
+    <span class="c1"># manifest LAST — its presence signals a complete scores/ dir. allow_nan=False makes any</span>
+    <span class="c1"># stray NaN/Inf FAIL LOUD here rather than silently emit invalid JSON (the &quot;NaN never</span>
+    <span class="c1"># reaches a serializer&quot; invariant — norm params for an all-masked metric are already None).</span>
+    <span class="n">_atomic_write_bytes</span><span class="p">(</span>
+        <span class="n">d</span> <span class="o">/</span> <span class="n">MANIFEST_NAME</span><span class="p">,</span>
+        <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">manifest</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">allow_nan</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">),</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="manifest_is_current">
+<a class="viewcode-back" href="../../../../module_docs/muvid/footage/scoring/grid.html#muvid.footage.scoring.grid.manifest_is_current">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">manifest_is_current</span><span class="p">(</span>
+    <span class="n">manifest</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">song_hash</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">align_fingerprint</span><span class="p">:</span> <span class="nb">str</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Whether persisted scores match the CURRENT song + alignments (else they are stale).</span>
+
+<span class="sd">    Guards the read path: a re-align (or a new song) that raced the score job&#39;s rmtree, or a</span>
+<span class="sd">    manifest predating the fingerprint, is detected here so no stale/mislabeled scores are</span>
+<span class="sd">    served to the editor or the weighted selector.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">manifest</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="n">manifest</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;song_hash&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="n">song_hash</span>
+        <span class="ow">and</span> <span class="n">manifest</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;align_fingerprint&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="n">align_fingerprint</span>
+    <span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">load_manifest</span><span class="p">(</span><span class="n">project_root</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">scores_dir</span><span class="p">(</span><span class="n">project_root</span><span class="p">)</span> <span class="o">/</span> <span class="n">MANIFEST_NAME</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">p</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">read_text</span><span class="p">())</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">OSError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+
+<div class="viewcode-block" id="load_tensor">
+<a class="viewcode-back" href="../../../../module_docs/muvid/footage/scoring/grid.html#muvid.footage.scoring.grid.load_tensor">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">load_tensor</span><span class="p">(</span><span class="n">project_root</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ScoreTensor</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Reconstruct the :class:`ScoreTensor` from persisted arrays + manifest, or ``None``.</span>
+
+<span class="sd">    Geometry + norms come from the manifest (SSOT); each clip&#39;s ``.npz`` supplies raw+mask.</span>
+<span class="sd">    A clip/metric absent from a ``.npz`` is filled as an all-masked column.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">manifest</span> <span class="o">=</span> <span class="n">load_manifest</span><span class="p">(</span><span class="n">project_root</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">manifest</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="n">scores_dir</span><span class="p">(</span><span class="n">project_root</span><span class="p">)</span>
+    <span class="n">t0</span><span class="p">,</span> <span class="n">hop_s</span><span class="p">,</span> <span class="n">n</span> <span class="o">=</span> <span class="n">manifest</span><span class="p">[</span><span class="s2">&quot;t0&quot;</span><span class="p">],</span> <span class="n">manifest</span><span class="p">[</span><span class="s2">&quot;hop_s&quot;</span><span class="p">],</span> <span class="n">manifest</span><span class="p">[</span><span class="s2">&quot;n&quot;</span><span class="p">]</span>
+    <span class="n">clip_ids</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">manifest</span><span class="p">[</span><span class="s2">&quot;clips&quot;</span><span class="p">])</span>
+    <span class="n">metrics</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">manifest</span><span class="p">[</span><span class="s2">&quot;metrics&quot;</span><span class="p">])</span>
+    <span class="n">directions</span> <span class="o">=</span> <span class="n">manifest</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;directions&quot;</span><span class="p">,</span> <span class="p">{})</span>
+    <span class="n">norms</span> <span class="o">=</span> <span class="n">manifest</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;norms&quot;</span><span class="p">,</span> <span class="p">{})</span>
+
+    <span class="n">tracks</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">ScoreTrack</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">cid</span> <span class="ow">in</span> <span class="n">clip_ids</span><span class="p">:</span>
+        <span class="n">npz_path</span> <span class="o">=</span> <span class="n">d</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">cid</span><span class="si">}</span><span class="s2">.npz&quot;</span>
+        <span class="n">tracks</span><span class="p">[</span><span class="n">cid</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">npz_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="k">continue</span>
+        <span class="c1"># Wrap BOTH np.load and the lazy member reads: a corrupted-but-openable npz raises</span>
+        <span class="c1"># on member access, not at open. A bad clip → all-masked columns, not a crash.</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">npz_path</span><span class="p">)</span>
+            <span class="n">clip_tracks</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">metric</span> <span class="ow">in</span> <span class="n">metrics</span><span class="p">:</span>
+                <span class="n">rk</span><span class="p">,</span> <span class="n">mk</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">metric</span><span class="si">}</span><span class="s2">__raw&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">metric</span><span class="si">}</span><span class="s2">__mask&quot;</span>
+                <span class="k">if</span> <span class="n">rk</span> <span class="ow">in</span> <span class="n">data</span> <span class="ow">and</span> <span class="n">mk</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+                    <span class="n">clip_tracks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                        <span class="n">ScoreTrack</span><span class="p">(</span>
+                            <span class="n">clip_id</span><span class="o">=</span><span class="n">cid</span><span class="p">,</span>
+                            <span class="n">metric</span><span class="o">=</span><span class="n">metric</span><span class="p">,</span>
+                            <span class="n">t0</span><span class="o">=</span><span class="n">t0</span><span class="p">,</span>
+                            <span class="n">hop_s</span><span class="o">=</span><span class="n">hop_s</span><span class="p">,</span>
+                            <span class="n">raw_values</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">rk</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+                            <span class="n">mask</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">mk</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">),</span>
+                            <span class="n">direction</span><span class="o">=</span><span class="n">directions</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">metric</span><span class="p">,</span> <span class="s2">&quot;higher_better&quot;</span><span class="p">),</span>
+                        <span class="p">)</span>
+                    <span class="p">)</span>
+            <span class="n">tracks</span><span class="p">[</span><span class="n">cid</span><span class="p">]</span> <span class="o">=</span> <span class="n">clip_tracks</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="n">tracks</span><span class="p">[</span><span class="n">cid</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># corrupted npz → build_tensor fills all-masked columns</span>
+    <span class="k">return</span> <span class="n">build_tensor</span><span class="p">(</span>
+        <span class="n">tracks</span><span class="p">,</span>
+        <span class="n">t0</span><span class="o">=</span><span class="n">t0</span><span class="p">,</span>
+        <span class="n">hop_s</span><span class="o">=</span><span class="n">hop_s</span><span class="p">,</span>
+        <span class="n">n</span><span class="o">=</span><span class="n">n</span><span class="p">,</span>
+        <span class="n">metrics</span><span class="o">=</span><span class="n">metrics</span><span class="p">,</span>
+        <span class="n">clip_ids</span><span class="o">=</span><span class="n">clip_ids</span><span class="p">,</span>
+        <span class="n">norms</span><span class="o">=</span><span class="n">norms</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p></p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,218 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>muvid.footage.scoring.lipsync &mdash; muvid 0.0.12 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=3bbcec59"></script>
+      <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../../_static/toggleprompt.js?v=d7ede5d2"></script>
+      <script src="../../../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <link rel="next" title="muvid.footage.scoring.motionbeat" href="motionbeat.html" />
+    <link rel="prev" title="muvid.footage.scoring.grid" href="grid.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            muvid
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../muvid.html">muvid</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../__main__.html">muvid.__main__</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../align.html">muvid.align</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../characters.html">muvid.characters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../compose.html">muvid.compose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../contracts.html">muvid.contracts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cost.html">muvid.cost</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../environments.html">muvid.environments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../events.html">muvid.events</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../facade.html">muvid.facade</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../footage.html">muvid.footage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../align.html">muvid.footage.align</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../assemble.html">muvid.footage.assemble</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../edl.html">muvid.footage.edl</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scoring.html">muvid.footage.scoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="_frame_metrics.html">muvid.footage.scoring._frame_metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="frames.html">muvid.footage.scoring.frames</a></li>
+<li class="toctree-l1"><a class="reference internal" href="grid.html">muvid.footage.scoring.grid</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">muvid.footage.scoring.lipsync</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.footage.scoring.lipsync.lipsync_available"><code class="docutils literal notranslate"><span class="pre">lipsync_available()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.footage.scoring.lipsync.lipsync_tracks"><code class="docutils literal notranslate"><span class="pre">lipsync_tracks()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.footage.scoring.lipsync.separate_master_vocals"><code class="docutils literal notranslate"><span class="pre">separate_master_vocals()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="motionbeat.html">muvid.footage.scoring.motionbeat</a></li>
+<li class="toctree-l1"><a class="reference internal" href="orchestrator.html">muvid.footage.scoring.orchestrator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quality.html">muvid.footage.scoring.quality</a></li>
+<li class="toctree-l1"><a class="reference internal" href="segment.html">muvid.footage.scoring.segment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../select_score.html">muvid.footage.select_score</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../strategy.html">muvid.footage.strategy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../workspace.html">muvid.footage.workspace</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../genre.html">muvid.genre</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../genre_music_video.html">muvid.genre_music_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../lyrics.html">muvid.lyrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../mcp.html">muvid.mcp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../mcp/_fetch.html">muvid.mcp._fetch</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../mcp/_guide.html">muvid.mcp._guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../mcp/footage_tools.html">muvid.mcp.footage_tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../mcp/identity.html">muvid.mcp.identity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../mcp/scoring_tools.html">muvid.mcp.scoring_tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../mcp/tools.html">muvid.mcp.tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../mcp/workspace.html">muvid.mcp.workspace</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../project.html">muvid.project</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../renderers.html">muvid.renderers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../renderers/_common.html">muvid.renderers._common</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../renderers/animation.html">muvid.renderers.animation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../renderers/image_to_video.html">muvid.renderers.image_to_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../renderers/lipsync.html">muvid.renderers.lipsync</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../renderers/still.html">muvid.renderers.still</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../renderers/text_to_video.html">muvid.renderers.text_to_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../schema.html">muvid.schema</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../script.html">muvid.script</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../ui.html">muvid.ui</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../ui/app.html">muvid.ui.app</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../visualize.html">muvid.visualize</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../visualize/canvas.html">muvid.visualize.canvas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../visualize/ffmpeg.html">muvid.visualize.ffmpeg</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../visualize/verify.html">muvid.visualize.verify</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../visualize/video.html">muvid.visualize.video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../visualize/visuals.html">muvid.visualize.visuals</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">muvid</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">muvid.footage.scoring.lipsync</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../_sources/module_docs/muvid/footage/scoring/lipsync.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-muvid.footage.scoring.lipsync">
+<span id="muvid-footage-scoring-lipsync"></span><h1>muvid.footage.scoring.lipsync<a class="headerlink" href="#module-muvid.footage.scoring.lipsync" title="Link to this heading"></a></h1>
+<p>Lip-sync tier (OPT-IN, OFF BY DEFAULT): SyncNet LSE-C vs the master’s Demucs vocal stem.</p>
+<p><strong>Not on the prod path.</strong> The design’s LOCKED decision: this tier is behind the
+<code class="docutils literal notranslate"><span class="pre">muvid[scoring-lipsync]</span></code> extra and disabled by default because (a) Demucs + SyncNet on CPU
+peak ~2–3 GB and would OOM the memory-fragile connector, and (b) the htdemucs weights are
+<strong>CC-BY-NC (research-only)</strong> — not commercial-clean. So it runs only on a local/worker box the
+operator opts into, and it requires the operator to POINT AT weights via env vars (rather than
+this package downloading questionable weights at runtime):</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">MUVID_SYNCNET_S3FD_WEIGHTS</span></code> — the S3FD face-detector weights.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">MUVID_SYNCNET_WEIGHTS</span></code> — the SyncNet model weights.</p></li>
+</ul>
+<p>If either is unset, or <code class="docutils literal notranslate"><span class="pre">demucs</span></code>/<code class="docutils literal notranslate"><span class="pre">syncnet-python</span></code> is not installed, the extractor is
+<strong>skipped</strong> (returns <code class="docutils literal notranslate"><span class="pre">[]</span></code> + a reason) — never a crash, never a silent 0.</p>
+<p>Pipeline (design §3c): separate the master vocal stem ONCE (orchestrator), then per clip run
+SyncNet’s face-detect → track → mouth-crop → per-window LSE-C <strong>against the master vocal stem
+at the known offset</strong> (a validation, not a search). Emit <code class="docutils literal notranslate"><span class="pre">lip_sync_lse_c</span></code> + <code class="docutils literal notranslate"><span class="pre">lse_d_offset</span></code>,
+gated to NA where no singing face is present (never 0).</p>
+<p>⚠ This module’s heavy glue (Demucs + SyncNetPipeline) cannot run in CI or on the dev box
+(deps absent) — it needs a live validation pass on a machine with the extra + weights before
+first real use. It is structured to fail safe (skip) everywhere else.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.footage.scoring.lipsync.lipsync_available">
+<span class="sig-prename descclassname"><span class="pre">muvid.footage.scoring.lipsync.</span></span><span class="sig-name descname"><span class="pre">lipsync_available</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">bool</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../_modules/muvid/footage/scoring/lipsync.html#lipsync_available"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.scoring.lipsync.lipsync_available" title="Link to this definition"></a></dt>
+<dd><p><code class="docutils literal notranslate"><span class="pre">(ok,</span> <span class="pre">reason)</span></code> — whether the opt-in lip-sync tier can run here.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.footage.scoring.lipsync.lipsync_tracks">
+<span class="sig-prename descclassname"><span class="pre">muvid.footage.scoring.lipsync.</span></span><span class="sig-name descname"><span class="pre">lipsync_tracks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">clip_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">clip_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">offset_s</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">duration_s</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coverage</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vocal_stem_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t0</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hop_s</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'cpu'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="grid.html#muvid.footage.scoring.grid.ScoreTrack" title="muvid.footage.scoring.grid.ScoreTrack"><span class="pre">ScoreTrack</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../_modules/muvid/footage/scoring/lipsync.html#lipsync_tracks"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.scoring.lipsync.lipsync_tracks" title="Link to this definition"></a></dt>
+<dd><p>Per-clip LSE-C / LSE-D tracks vs the OFFSET-ALIGNED master vocal stem, or <code class="docutils literal notranslate"><span class="pre">[]</span></code>.</p>
+<p>Feeds SyncNet the co-temporal slice of the master vocals (<code class="docutils literal notranslate"><span class="pre">[offset_s,</span> <span class="pre">offset_s+dur]</span></code>) so
+the score is meaningful for clips whose offset exceeds SyncNet’s tiny internal search;
+holds the per-face-track LSE-C over that track’s span, clamped to the clip’s coverage
+(never fabricates lip-sync beyond the clip); spans with no detected face are NA.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.footage.scoring.lipsync.separate_master_vocals">
+<span class="sig-prename descclassname"><span class="pre">muvid.footage.scoring.lipsync.</span></span><span class="sig-name descname"><span class="pre">separate_master_vocals</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">song_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../../../../_modules/muvid/footage/scoring/lipsync.html#separate_master_vocals"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.scoring.lipsync.separate_master_vocals" title="Link to this definition"></a></dt>
+<dd><p>Demucs → the master vocal stem as a wav (<code class="docutils literal notranslate"><span class="pre">out_dir/vocals.wav</span></code>), or <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+<p>Computed ONCE on the clean master; the resulting stem is passed to every clip’s SyncNet
+call as the co-temporal reference audio. Returns <code class="docutils literal notranslate"><span class="pre">None</span></code> (never raises) if Demucs is
+absent — the caller then skips lip-sync.</p>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="grid.html" class="btn btn-neutral float-left" title="muvid.footage.scoring.grid" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="motionbeat.html" class="btn btn-neutral float-right" title="muvid.footage.scoring.motionbeat" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p></p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

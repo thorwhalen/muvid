@@ -1,0 +1,345 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>muvid.footage.scoring.grid &mdash; muvid 0.0.12 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=3bbcec59"></script>
+      <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../../_static/toggleprompt.js?v=d7ede5d2"></script>
+      <script src="../../../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <link rel="next" title="muvid.footage.scoring.lipsync" href="lipsync.html" />
+    <link rel="prev" title="muvid.footage.scoring.frames" href="frames.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            muvid
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../muvid.html">muvid</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../__main__.html">muvid.__main__</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../align.html">muvid.align</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../characters.html">muvid.characters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../compose.html">muvid.compose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../contracts.html">muvid.contracts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cost.html">muvid.cost</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../environments.html">muvid.environments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../events.html">muvid.events</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../facade.html">muvid.facade</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../footage.html">muvid.footage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../align.html">muvid.footage.align</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../assemble.html">muvid.footage.assemble</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../edl.html">muvid.footage.edl</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scoring.html">muvid.footage.scoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="_frame_metrics.html">muvid.footage.scoring._frame_metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="frames.html">muvid.footage.scoring.frames</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">muvid.footage.scoring.grid</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.footage.scoring.grid.DEFAULT_HOP_S"><code class="docutils literal notranslate"><span class="pre">DEFAULT_HOP_S</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.footage.scoring.grid.ScoreTensor"><code class="docutils literal notranslate"><span class="pre">ScoreTensor</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.footage.scoring.grid.ScoreTrack"><code class="docutils literal notranslate"><span class="pre">ScoreTrack</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#muvid.footage.scoring.grid.ScoreTrack.coverage_fraction"><code class="docutils literal notranslate"><span class="pre">ScoreTrack.coverage_fraction()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#muvid.footage.scoring.grid.ScoreTrack.to_meta"><code class="docutils literal notranslate"><span class="pre">ScoreTrack.to_meta()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.footage.scoring.grid.align_fingerprint"><code class="docutils literal notranslate"><span class="pre">align_fingerprint()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.footage.scoring.grid.apply_norm"><code class="docutils literal notranslate"><span class="pre">apply_norm()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.footage.scoring.grid.build_tensor"><code class="docutils literal notranslate"><span class="pre">build_tensor()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.footage.scoring.grid.compute_norm"><code class="docutils literal notranslate"><span class="pre">compute_norm()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.footage.scoring.grid.grid_len"><code class="docutils literal notranslate"><span class="pre">grid_len()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.footage.scoring.grid.load_tensor"><code class="docutils literal notranslate"><span class="pre">load_tensor()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.footage.scoring.grid.manifest_is_current"><code class="docutils literal notranslate"><span class="pre">manifest_is_current()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.footage.scoring.grid.resample_to_grid"><code class="docutils literal notranslate"><span class="pre">resample_to_grid()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.footage.scoring.grid.save_scores"><code class="docutils literal notranslate"><span class="pre">save_scores()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="lipsync.html">muvid.footage.scoring.lipsync</a></li>
+<li class="toctree-l1"><a class="reference internal" href="motionbeat.html">muvid.footage.scoring.motionbeat</a></li>
+<li class="toctree-l1"><a class="reference internal" href="orchestrator.html">muvid.footage.scoring.orchestrator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quality.html">muvid.footage.scoring.quality</a></li>
+<li class="toctree-l1"><a class="reference internal" href="segment.html">muvid.footage.scoring.segment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../select_score.html">muvid.footage.select_score</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../strategy.html">muvid.footage.strategy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../workspace.html">muvid.footage.workspace</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../genre.html">muvid.genre</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../genre_music_video.html">muvid.genre_music_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../lyrics.html">muvid.lyrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../mcp.html">muvid.mcp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../mcp/_fetch.html">muvid.mcp._fetch</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../mcp/_guide.html">muvid.mcp._guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../mcp/footage_tools.html">muvid.mcp.footage_tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../mcp/identity.html">muvid.mcp.identity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../mcp/scoring_tools.html">muvid.mcp.scoring_tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../mcp/tools.html">muvid.mcp.tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../mcp/workspace.html">muvid.mcp.workspace</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../project.html">muvid.project</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../renderers.html">muvid.renderers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../renderers/_common.html">muvid.renderers._common</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../renderers/animation.html">muvid.renderers.animation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../renderers/image_to_video.html">muvid.renderers.image_to_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../renderers/lipsync.html">muvid.renderers.lipsync</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../renderers/still.html">muvid.renderers.still</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../renderers/text_to_video.html">muvid.renderers.text_to_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../schema.html">muvid.schema</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../script.html">muvid.script</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../ui.html">muvid.ui</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../ui/app.html">muvid.ui.app</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../visualize.html">muvid.visualize</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../visualize/canvas.html">muvid.visualize.canvas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../visualize/ffmpeg.html">muvid.visualize.ffmpeg</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../visualize/verify.html">muvid.visualize.verify</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../visualize/video.html">muvid.visualize.video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../visualize/visuals.html">muvid.visualize.visuals</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">muvid</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">muvid.footage.scoring.grid</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../_sources/module_docs/muvid/footage/scoring/grid.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-muvid.footage.scoring.grid">
+<span id="muvid-footage-scoring-grid"></span><h1>muvid.footage.scoring.grid<a class="headerlink" href="#module-muvid.footage.scoring.grid" title="Link to this heading"></a></h1>
+<p>The song-time score grid: <code class="docutils literal notranslate"><span class="pre">ScoreTrack</span></code>, resample-to-grid, robust normalization,
+the fused <code class="docutils literal notranslate"><span class="pre">ScoreTensor</span></code>, and crash-consistent persistence.</p>
+<p>The keystone of the footage-scoring layer (thorwhalen/muvid#13): every clip’s every metric
+is resolved onto ONE fixed-rate song-time grid (<code class="docutils literal notranslate"><span class="pre">t0=0</span></code>, <code class="docutils literal notranslate"><span class="pre">hop_s≈0.1</span></code> → ~10 Hz), so tracks
+stack into a tensor <code class="docutils literal notranslate"><span class="pre">S[clip,</span> <span class="pre">frame,</span> <span class="pre">metric]</span></code> that BOTH the auto composer (the Viterbi
+selector) and the Phase-2 multichannel editor read. Frame <code class="docutils literal notranslate"><span class="pre">k</span></code> ↔ song time <code class="docutils literal notranslate"><span class="pre">t0</span> <span class="pre">+</span> <span class="pre">k*hop_s</span></code>,
+identical across clips.</p>
+<p>Design decisions (see <code class="docutils literal notranslate"><span class="pre">misc/docs/footage_scoring_design.md</span></code> — LOCKED post-critique):</p>
+<ul class="simple">
+<li><p><strong>Raw is the SSOT.</strong> Extractors emit <code class="docutils literal notranslate"><span class="pre">raw_values</span></code> + a coverage <code class="docutils literal notranslate"><span class="pre">mask</span></code> (NaN where
+masked). Normalization is <strong>per-metric-global across all clips</strong> (robust median/IQR,
+percentile-clipped), so it can only be computed once every clip’s raw track for a metric
+is in hand — it is a tensor-assembly step, not a per-extractor one. The normalized
+<code class="docutils literal notranslate"><span class="pre">values</span></code> are derived from <code class="docutils literal notranslate"><span class="pre">raw</span></code> + the stored <code class="docutils literal notranslate"><span class="pre">norm</span></code> params, so re-normalizing is free
+and the editor can show raw <em>and</em> normalized.</p></li>
+<li><p><strong>NaN never reaches a serializer.</strong> The manifest stores <code class="docutils literal notranslate"><span class="pre">null</span></code> for an all-masked metric’s
+norm params; the MCP wire maps masked entries to <code class="docutils literal notranslate"><span class="pre">null</span></code> and relies on the <code class="docutils literal notranslate"><span class="pre">mask</span></code> array.</p></li>
+<li><p><strong>The manifest is the SSOT for grid geometry</strong> (<code class="docutils literal notranslate"><span class="pre">t0/hop_s/n</span></code>); a per-track geometry
+mismatch is a load-time assertion, never a silent 2× misalignment.</p></li>
+<li><p><strong>Persistence is crash-consistent</strong>: each clip’s <code class="docutils literal notranslate"><span class="pre">.npz</span></code> is written to a temp then
+<code class="docutils literal notranslate"><span class="pre">os.replace</span></code>d; <code class="docutils literal notranslate"><span class="pre">manifest.json</span></code> is written LAST via tmp+rename, so a reader sees
+either the whole prior state or the whole new one.</p></li>
+</ul>
+<p>Pure numpy — no cv2/torch/ffmpeg here. Imported only under the <code class="docutils literal notranslate"><span class="pre">muvid[scoring]</span></code> extra
+(never on the import-light <code class="docutils literal notranslate"><span class="pre">muvid.genre_music_video</span></code> path).</p>
+<dl class="py data">
+<dt class="sig sig-object py" id="muvid.footage.scoring.grid.DEFAULT_HOP_S">
+<span class="sig-prename descclassname"><span class="pre">muvid.footage.scoring.grid.</span></span><span class="sig-name descname"><span class="pre">DEFAULT_HOP_S</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.1</span></span><a class="headerlink" href="#muvid.footage.scoring.grid.DEFAULT_HOP_S" title="Link to this definition"></a></dt>
+<dd><p>Default grid step (seconds) → 10 Hz. Ample for a UI and beat-level selection.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="muvid.footage.scoring.grid.ScoreTensor">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">muvid.footage.scoring.grid.</span></span><span class="sig-name descname"><span class="pre">ScoreTensor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">clip_ids</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metrics</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t0</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hop_s</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">S</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">M</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raw</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">norms</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/muvid/footage/scoring/grid.html#ScoreTensor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.scoring.grid.ScoreTensor" title="Link to this definition"></a></dt>
+<dd><p>The fused <code class="docutils literal notranslate"><span class="pre">S[clip,</span> <span class="pre">frame,</span> <span class="pre">metric]</span></code> (normalized) + <code class="docutils literal notranslate"><span class="pre">M[clip,</span> <span class="pre">frame]</span></code> mask.</p>
+<p><code class="docutils literal notranslate"><span class="pre">S</span></code> carries NaN where masked (never used for reward — the selector reads <code class="docutils literal notranslate"><span class="pre">M</span></code>).
+<code class="docutils literal notranslate"><span class="pre">raw</span></code> keeps the un-normalized values for the editor/tooltips. Geometry
+(<code class="docutils literal notranslate"><span class="pre">t0/hop_s/n</span></code>) is authoritative here (validated against the manifest at load).</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="muvid.footage.scoring.grid.ScoreTrack">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">muvid.footage.scoring.grid.</span></span><span class="sig-name descname"><span class="pre">ScoreTrack</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">clip_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metric</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t0</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hop_s</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raw_values</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">direction</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'higher_better'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/muvid/footage/scoring/grid.html#ScoreTrack"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.scoring.grid.ScoreTrack" title="Link to this definition"></a></dt>
+<dd><p>One <code class="docutils literal notranslate"><span class="pre">(clip,</span> <span class="pre">metric)</span></code> curve on the shared song-time grid.</p>
+<p>Extractors produce <code class="docutils literal notranslate"><span class="pre">raw_values</span></code> (NaN where masked) + <code class="docutils literal notranslate"><span class="pre">mask</span></code>; <code class="docutils literal notranslate"><span class="pre">direction</span></code> says
+whether higher raw = better (<code class="docutils literal notranslate"><span class="pre">&quot;higher_better&quot;</span></code>) or lower = better
+(<code class="docutils literal notranslate"><span class="pre">&quot;lower_better&quot;</span></code>, e.g. a distance like LSE-D — inverted at normalization). The
+normalized <code class="docutils literal notranslate"><span class="pre">values</span></code> are NOT stored here; they are derived at tensor assembly from
+<code class="docutils literal notranslate"><span class="pre">raw_values</span></code> + the per-metric global <code class="docutils literal notranslate"><span class="pre">norm</span></code> params (see <a class="reference internal" href="#muvid.footage.scoring.grid.apply_norm" title="muvid.footage.scoring.grid.apply_norm"><code class="xref py py-func docutils literal notranslate"><span class="pre">apply_norm()</span></code></a>).</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="muvid.footage.scoring.grid.ScoreTrack.coverage_fraction">
+<span class="sig-name descname"><span class="pre">coverage_fraction</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="reference internal" href="../../../../_modules/muvid/footage/scoring/grid.html#ScoreTrack.coverage_fraction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.scoring.grid.ScoreTrack.coverage_fraction" title="Link to this definition"></a></dt>
+<dd><p>Fraction of frames that are valid — surfaced so an all-NA metric is visible.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="muvid.footage.scoring.grid.ScoreTrack.to_meta">
+<span class="sig-name descname"><span class="pre">to_meta</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="../../../../_modules/muvid/footage/scoring/grid.html#ScoreTrack.to_meta"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.scoring.grid.ScoreTrack.to_meta" title="Link to this definition"></a></dt>
+<dd><p>Everything except the arrays (arrays live in the <code class="docutils literal notranslate"><span class="pre">.npz</span></code>).</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.footage.scoring.grid.align_fingerprint">
+<span class="sig-prename descclassname"><span class="pre">muvid.footage.scoring.grid.</span></span><span class="sig-name descname"><span class="pre">align_fingerprint</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alignments</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../../../_modules/muvid/footage/scoring/grid.html#align_fingerprint"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.scoring.grid.align_fingerprint" title="Link to this definition"></a></dt>
+<dd><p>A stable, ORDER-INDEPENDENT fingerprint of a set of alignments (offsets + durations).</p>
+<p>The SSOT (shared by the scoring job’s idempotency key AND the read-time staleness guard):
+a re-align that moves any offset changes this fingerprint, so persisted scores computed
+against the old offsets are detected as stale. Sorting the full triples (not just by
+clip_id) makes it independent of alignment order.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.footage.scoring.grid.apply_norm">
+<span class="sig-prename descclassname"><span class="pre">muvid.footage.scoring.grid.</span></span><span class="sig-name descname"><span class="pre">apply_norm</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">raw</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">norm</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">direction</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="../../../../_modules/muvid/footage/scoring/grid.html#apply_norm"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.scoring.grid.apply_norm" title="Link to this definition"></a></dt>
+<dd><p>Map raw values to a robust [0,1] score (higher = better), preserving NaN.</p>
+<p><code class="docutils literal notranslate"><span class="pre">z</span> <span class="pre">=</span> <span class="pre">(raw</span> <span class="pre">−</span> <span class="pre">median)/IQR</span></code> (IQR==0 → neutral 0.5), clipped to <code class="docutils literal notranslate"><span class="pre">[p5,p95]</span></code> mapped to
+[0,1]; <code class="docutils literal notranslate"><span class="pre">lower_better</span></code> metrics are inverted so the output is always higher_better.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.footage.scoring.grid.build_tensor">
+<span class="sig-prename descclassname"><span class="pre">muvid.footage.scoring.grid.</span></span><span class="sig-name descname"><span class="pre">build_tensor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tracks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Mapping</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#muvid.footage.scoring.grid.ScoreTrack" title="muvid.footage.scoring.grid.ScoreTrack"><span class="pre">ScoreTrack</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">t0</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hop_s</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metrics</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clip_ids</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">norms</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Mapping</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dict</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#muvid.footage.scoring.grid.ScoreTensor" title="muvid.footage.scoring.grid.ScoreTensor"><span class="pre">ScoreTensor</span></a></span></span><a class="reference internal" href="../../../../_modules/muvid/footage/scoring/grid.html#build_tensor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.scoring.grid.build_tensor" title="Link to this definition"></a></dt>
+<dd><p>Assemble per-clip <a class="reference internal" href="#muvid.footage.scoring.grid.ScoreTrack" title="muvid.footage.scoring.grid.ScoreTrack"><code class="xref py py-class docutils literal notranslate"><span class="pre">ScoreTrack</span></code></a> lists into a normalized <a class="reference internal" href="#muvid.footage.scoring.grid.ScoreTensor" title="muvid.footage.scoring.grid.ScoreTensor"><code class="xref py py-class docutils literal notranslate"><span class="pre">ScoreTensor</span></code></a>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">tracks</span></code> maps <code class="docutils literal notranslate"><span class="pre">clip_id</span> <span class="pre">-&gt;</span> <span class="pre">[ScoreTrack,</span> <span class="pre">...]</span></code>. The metric axis is the union of metrics
+present (or the explicit <code class="docutils literal notranslate"><span class="pre">metrics</span></code> order); a clip missing a listed metric contributes
+an all-masked column (so the tensor is rectangular and a missing extractor never shifts
+columns). Normalization is per-metric-global (computed here if <code class="docutils literal notranslate"><span class="pre">norms</span></code> is not supplied).
+Every track’s geometry must match <code class="docutils literal notranslate"><span class="pre">(t0,</span> <span class="pre">hop_s,</span> <span class="pre">n)</span></code> — a mismatch raises (the SSOT rule).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.footage.scoring.grid.compute_norm">
+<span class="sig-prename descclassname"><span class="pre">muvid.footage.scoring.grid.</span></span><span class="sig-name descname"><span class="pre">compute_norm</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">raw_tracks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">masks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">direction</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../../../../_modules/muvid/footage/scoring/grid.html#compute_norm"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.scoring.grid.compute_norm" title="Link to this definition"></a></dt>
+<dd><p>Per-metric-GLOBAL robust norm params from every clip’s raw track for one metric.</p>
+<p>Pools all valid (unmasked, finite) raw values across clips → <code class="docutils literal notranslate"><span class="pre">{median,</span> <span class="pre">iqr,</span> <span class="pre">p5,</span> <span class="pre">p95}</span></code>.
+Returns <code class="docutils literal notranslate"><span class="pre">None</span></code> if there are no valid values (an all-masked metric) — the caller stores
+<code class="docutils literal notranslate"><span class="pre">null</span></code> and <a class="reference internal" href="#muvid.footage.scoring.grid.apply_norm" title="muvid.footage.scoring.grid.apply_norm"><code class="xref py py-func docutils literal notranslate"><span class="pre">apply_norm()</span></code></a> then yields all-NaN (never a divide-by-zero or a NaN in
+the manifest).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.footage.scoring.grid.grid_len">
+<span class="sig-prename descclassname"><span class="pre">muvid.footage.scoring.grid.</span></span><span class="sig-name descname"><span class="pre">grid_len</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">song_duration</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hop_s</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.1</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="reference internal" href="../../../../_modules/muvid/footage/scoring/grid.html#grid_len"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.scoring.grid.grid_len" title="Link to this definition"></a></dt>
+<dd><p>Number of grid frames spanning <code class="docutils literal notranslate"><span class="pre">[0,</span> <span class="pre">song_duration]</span></code> at <code class="docutils literal notranslate"><span class="pre">hop_s</span></code>.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.footage.scoring.grid.load_tensor">
+<span class="sig-prename descclassname"><span class="pre">muvid.footage.scoring.grid.</span></span><span class="sig-name descname"><span class="pre">load_tensor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">project_root</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#muvid.footage.scoring.grid.ScoreTensor" title="muvid.footage.scoring.grid.ScoreTensor"><span class="pre">ScoreTensor</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../../../../_modules/muvid/footage/scoring/grid.html#load_tensor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.scoring.grid.load_tensor" title="Link to this definition"></a></dt>
+<dd><p>Reconstruct the <a class="reference internal" href="#muvid.footage.scoring.grid.ScoreTensor" title="muvid.footage.scoring.grid.ScoreTensor"><code class="xref py py-class docutils literal notranslate"><span class="pre">ScoreTensor</span></code></a> from persisted arrays + manifest, or <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+<p>Geometry + norms come from the manifest (SSOT); each clip’s <code class="docutils literal notranslate"><span class="pre">.npz</span></code> supplies raw+mask.
+A clip/metric absent from a <code class="docutils literal notranslate"><span class="pre">.npz</span></code> is filled as an all-masked column.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.footage.scoring.grid.manifest_is_current">
+<span class="sig-prename descclassname"><span class="pre">muvid.footage.scoring.grid.</span></span><span class="sig-name descname"><span class="pre">manifest_is_current</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">manifest</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">song_hash</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">align_fingerprint</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../../../../_modules/muvid/footage/scoring/grid.html#manifest_is_current"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.scoring.grid.manifest_is_current" title="Link to this definition"></a></dt>
+<dd><p>Whether persisted scores match the CURRENT song + alignments (else they are stale).</p>
+<p>Guards the read path: a re-align (or a new song) that raced the score job’s rmtree, or a
+manifest predating the fingerprint, is detected here so no stale/mislabeled scores are
+served to the editor or the weighted selector.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.footage.scoring.grid.resample_to_grid">
+<span class="sig-prename descclassname"><span class="pre">muvid.footage.scoring.grid.</span></span><span class="sig-name descname"><span class="pre">resample_to_grid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_times</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_values</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">t0</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hop_s</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_gap_s</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../_modules/muvid/footage/scoring/grid.html#resample_to_grid"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.scoring.grid.resample_to_grid" title="Link to this definition"></a></dt>
+<dd><p>Resample irregular <code class="docutils literal notranslate"><span class="pre">(song_time,</span> <span class="pre">value)</span></code> samples onto the fixed grid.</p>
+<p>Vectorized (O(n_samples + n)): samples are mean-binned onto the grid, then linearly
+interpolated across bins that have no sample — but ONLY within the sampled span and
+ONLY across gaps ≤ <code class="docutils literal notranslate"><span class="pre">max_gap_s</span></code> (so a real coverage gap stays masked, never invented).
+Outside <code class="docutils literal notranslate"><span class="pre">[first_sample,</span> <span class="pre">last_sample]</span></code> the grid is masked (no extrapolation).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sample_times</strong> – song-time (s) of each sample (any order; NaN values dropped).</p></li>
+<li><p><strong>sample_values</strong> – the sample values (parallel to <code class="docutils literal notranslate"><span class="pre">sample_times</span></code>).</p></li>
+<li><p><strong>t0/hop_s/n</strong> – the grid geometry (frame k ↔ <code class="docutils literal notranslate"><span class="pre">t0</span> <span class="pre">+</span> <span class="pre">k*hop_s</span></code>, k in <code class="docutils literal notranslate"><span class="pre">[0,</span> <span class="pre">n)</span></code>).</p></li>
+<li><p><strong>max_gap_s</strong> – bridge gaps up to this many seconds (default <code class="docutils literal notranslate"><span class="pre">4*hop_s</span></code>).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">(values,</span> <span class="pre">mask)</span></code> — <code class="docutils literal notranslate"><span class="pre">values</span></code> float32[n] (NaN where masked), <code class="docutils literal notranslate"><span class="pre">mask</span></code> bool[n].</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.footage.scoring.grid.save_scores">
+<span class="sig-prename descclassname"><span class="pre">muvid.footage.scoring.grid.</span></span><span class="sig-name descname"><span class="pre">save_scores</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">project_root</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tracks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Mapping</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#muvid.footage.scoring.grid.ScoreTrack" title="muvid.footage.scoring.grid.ScoreTrack"><span class="pre">ScoreTrack</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">t0</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hop_s</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metrics</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">song_hash</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">align_fingerprint</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beat_times</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">downbeat_times</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Mapping</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../../../_modules/muvid/footage/scoring/grid.html#save_scores"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.scoring.grid.save_scores" title="Link to this definition"></a></dt>
+<dd><p>Persist per-clip raw arrays + a manifest, crash-consistently.</p>
+<p>Each clip → <code class="docutils literal notranslate"><span class="pre">scores/{clip_id}.npz</span></code> (raw + mask per metric), written tmp+``os.replace``.
+The per-metric global <code class="docutils literal notranslate"><span class="pre">norm</span></code> params + grid geometry + beats + <code class="docutils literal notranslate"><span class="pre">song_hash</span></code> go in
+<code class="docutils literal notranslate"><span class="pre">scores/manifest.json</span></code>, written LAST via tmp+rename — so a concurrent reader sees a
+whole consistent state or the prior one, never a torn mix. NaN never enters the manifest
+(all-masked metric → <code class="docutils literal notranslate"><span class="pre">null</span></code> norm).</p>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="frames.html" class="btn btn-neutral float-left" title="muvid.footage.scoring.frames" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="lipsync.html" class="btn btn-neutral float-right" title="muvid.footage.scoring.lipsync" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p></p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

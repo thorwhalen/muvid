@@ -1,0 +1,234 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>muvid.footage.scoring.frames &mdash; muvid 0.0.12 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=3bbcec59"></script>
+      <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../../_static/toggleprompt.js?v=d7ede5d2"></script>
+      <script src="../../../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <link rel="next" title="muvid.footage.scoring.grid" href="grid.html" />
+    <link rel="prev" title="muvid.footage.scoring._frame_metrics" href="_frame_metrics.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            muvid
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../muvid.html">muvid</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../__main__.html">muvid.__main__</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../align.html">muvid.align</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../characters.html">muvid.characters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../compose.html">muvid.compose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../contracts.html">muvid.contracts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cost.html">muvid.cost</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../environments.html">muvid.environments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../events.html">muvid.events</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../facade.html">muvid.facade</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../footage.html">muvid.footage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../align.html">muvid.footage.align</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../assemble.html">muvid.footage.assemble</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../edl.html">muvid.footage.edl</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scoring.html">muvid.footage.scoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="_frame_metrics.html">muvid.footage.scoring._frame_metrics</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">muvid.footage.scoring.frames</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.footage.scoring.frames.DEFAULT_MAX_FRAMES"><code class="docutils literal notranslate"><span class="pre">DEFAULT_MAX_FRAMES</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.footage.scoring.frames.DEFAULT_SAMPLE_FPS"><code class="docutils literal notranslate"><span class="pre">DEFAULT_SAMPLE_FPS</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.footage.scoring.frames.FramePass"><code class="docutils literal notranslate"><span class="pre">FramePass</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.footage.scoring.frames.make_face_scorer"><code class="docutils literal notranslate"><span class="pre">make_face_scorer()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.footage.scoring.frames.sample_clip_frames"><code class="docutils literal notranslate"><span class="pre">sample_clip_frames()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="grid.html">muvid.footage.scoring.grid</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lipsync.html">muvid.footage.scoring.lipsync</a></li>
+<li class="toctree-l1"><a class="reference internal" href="motionbeat.html">muvid.footage.scoring.motionbeat</a></li>
+<li class="toctree-l1"><a class="reference internal" href="orchestrator.html">muvid.footage.scoring.orchestrator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quality.html">muvid.footage.scoring.quality</a></li>
+<li class="toctree-l1"><a class="reference internal" href="segment.html">muvid.footage.scoring.segment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../select_score.html">muvid.footage.select_score</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../strategy.html">muvid.footage.strategy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../workspace.html">muvid.footage.workspace</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../genre.html">muvid.genre</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../genre_music_video.html">muvid.genre_music_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../lyrics.html">muvid.lyrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../mcp.html">muvid.mcp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../mcp/_fetch.html">muvid.mcp._fetch</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../mcp/_guide.html">muvid.mcp._guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../mcp/footage_tools.html">muvid.mcp.footage_tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../mcp/identity.html">muvid.mcp.identity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../mcp/scoring_tools.html">muvid.mcp.scoring_tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../mcp/tools.html">muvid.mcp.tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../mcp/workspace.html">muvid.mcp.workspace</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../project.html">muvid.project</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../renderers.html">muvid.renderers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../renderers/_common.html">muvid.renderers._common</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../renderers/animation.html">muvid.renderers.animation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../renderers/image_to_video.html">muvid.renderers.image_to_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../renderers/lipsync.html">muvid.renderers.lipsync</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../renderers/still.html">muvid.renderers.still</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../renderers/text_to_video.html">muvid.renderers.text_to_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../schema.html">muvid.schema</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../script.html">muvid.script</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../ui.html">muvid.ui</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../ui/app.html">muvid.ui.app</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../visualize.html">muvid.visualize</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../visualize/canvas.html">muvid.visualize.canvas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../visualize/ffmpeg.html">muvid.visualize.ffmpeg</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../visualize/verify.html">muvid.visualize.verify</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../visualize/video.html">muvid.visualize.video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../visualize/visuals.html">muvid.visualize.visuals</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">muvid</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">muvid.footage.scoring.frames</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../_sources/module_docs/muvid/footage/scoring/frames.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-muvid.footage.scoring.frames">
+<span id="muvid-footage-scoring-frames"></span><h1>muvid.footage.scoring.frames<a class="headerlink" href="#module-muvid.footage.scoring.frames" title="Link to this heading"></a></h1>
+<p>One decode pass per clip → the shared per-frame artifacts the quality + motion extractors
+both consume.</p>
+<p>The design review flagged that quality.py and motionbeat.py must NOT each decode the clip and
+each estimate camera motion — that doubles IO/CPU on the memory-fragile box and makes the
+“camera-motion computed once” claim false. So a single sequential <a class="reference internal" href="#muvid.footage.scoring.frames.sample_clip_frames" title="muvid.footage.scoring.frames.sample_clip_frames"><code class="xref py py-func docutils literal notranslate"><span class="pre">sample_clip_frames()</span></code></a>
+pass computes, per sampled frame: sharpness, exposure, an (injected) face score, the
+camera-compensated motion residual, and the global-motion (shake) magnitude — in clip time.
+The orchestrator maps clip time → song time via the clip’s offset and hands this
+<a class="reference internal" href="#muvid.footage.scoring.frames.FramePass" title="muvid.footage.scoring.frames.FramePass"><code class="xref py py-class docutils literal notranslate"><span class="pre">FramePass</span></code></a> to both extractors.</p>
+<p>cv2 is lazy-imported (<code class="docutils literal notranslate"><span class="pre">muvid[scoring]</span></code> extra). Hard caps (<code class="docutils literal notranslate"><span class="pre">max_frames</span></code>) bound the work;
+<code class="docutils literal notranslate"><span class="pre">should_cancel</span></code> is polled so a cancel lands within a few frames.</p>
+<dl class="py data">
+<dt class="sig sig-object py" id="muvid.footage.scoring.frames.DEFAULT_MAX_FRAMES">
+<span class="sig-prename descclassname"><span class="pre">muvid.footage.scoring.frames.</span></span><span class="sig-name descname"><span class="pre">DEFAULT_MAX_FRAMES</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1200</span></span><a class="headerlink" href="#muvid.footage.scoring.frames.DEFAULT_MAX_FRAMES" title="Link to this definition"></a></dt>
+<dd><p>Default hard cap on sampled frames per clip (bounds CPU + memory regardless of duration).</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="muvid.footage.scoring.frames.DEFAULT_SAMPLE_FPS">
+<span class="sig-prename descclassname"><span class="pre">muvid.footage.scoring.frames.</span></span><span class="sig-name descname"><span class="pre">DEFAULT_SAMPLE_FPS</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">5.0</span></span><a class="headerlink" href="#muvid.footage.scoring.frames.DEFAULT_SAMPLE_FPS" title="Link to this definition"></a></dt>
+<dd><p>Default frame sample rate (Hz) — plenty for quality + a motion envelope onto a 10 Hz grid.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="muvid.footage.scoring.frames.FramePass">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">muvid.footage.scoring.frames.</span></span><span class="sig-name descname"><span class="pre">FramePass</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">clip_times</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sharpness</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exposure</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">face</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">motion_residual</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">global_dx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">global_dy</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_sampled</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/muvid/footage/scoring/frames.html#FramePass"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.scoring.frames.FramePass" title="Link to this definition"></a></dt>
+<dd><p>Per-sampled-frame metrics for one clip, in CLIP time (seconds from the clip start).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.footage.scoring.frames.make_face_scorer">
+<span class="sig-prename descclassname"><span class="pre">muvid.footage.scoring.frames.</span></span><span class="sig-name descname"><span class="pre">make_face_scorer</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/muvid/footage/scoring/frames.html#make_face_scorer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.scoring.frames.make_face_scorer" title="Link to this definition"></a></dt>
+<dd><p>Build a <code class="docutils literal notranslate"><span class="pre">bgr_frame</span> <span class="pre">-&gt;</span> <span class="pre">face_framing_score</span></code> (or <code class="docutils literal notranslate"><span class="pre">None</span></code> if unavailable).</p>
+<p>Best-effort and never fatal: face_framing is a soft metric (not one of the two named
+signals), so ANY failure → <code class="docutils literal notranslate"><span class="pre">None</span></code> and the orchestrator scores 0 (neutral). Tries the
+classic <code class="docutils literal notranslate"><span class="pre">mp.solutions.face_detection</span></code> (mediapipe 0.10 full build); falls back to the
+Tasks <code class="docutils literal notranslate"><span class="pre">FaceDetector</span></code> ONLY when the operator supplies a model via
+<code class="docutils literal notranslate"><span class="pre">MUVID_MEDIAPIPE_FACE_MODEL</span></code> (no auto-download). Score = best face’s area×centering.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.footage.scoring.frames.sample_clip_frames">
+<span class="sig-prename descclassname"><span class="pre">muvid.footage.scoring.frames.</span></span><span class="sig-name descname"><span class="pre">sample_clip_frames</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">clip_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_fps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">5.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_frames</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1200</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">face_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flow_downscale</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">should_cancel</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">bool</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#muvid.footage.scoring.frames.FramePass" title="muvid.footage.scoring.frames.FramePass"><span class="pre">FramePass</span></a></span></span><a class="reference internal" href="../../../../_modules/muvid/footage/scoring/frames.html#sample_clip_frames"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.scoring.frames.sample_clip_frames" title="Link to this definition"></a></dt>
+<dd><p>Decode <code class="docutils literal notranslate"><span class="pre">clip_path</span></code> ONCE, sampling ~``sample_fps`` frames → a <a class="reference internal" href="#muvid.footage.scoring.frames.FramePass" title="muvid.footage.scoring.frames.FramePass"><code class="xref py py-class docutils literal notranslate"><span class="pre">FramePass</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>clip_path</strong> – the video file.</p></li>
+<li><p><strong>sample_fps</strong> – target frames/second to analyze (strided over the native fps).</p></li>
+<li><p><strong>max_frames</strong> – hard cap on analyzed frames (bounds cost).</p></li>
+<li><p><strong>face_fn</strong> – optional <code class="docutils literal notranslate"><span class="pre">bgr_frame</span> <span class="pre">-&gt;</span> <span class="pre">face_score</span></code> (mediapipe, injected by the caller so
+this module stays cv2-only). <code class="docutils literal notranslate"><span class="pre">None</span></code> → face score is 0 everywhere.</p></li>
+<li><p><strong>flow_downscale</strong> – downscale factor for the Farneback flow (cost bound).</p></li>
+<li><p><strong>should_cancel</strong> – polled every frame; returns early (a partial pass) when it goes True.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="_frame_metrics.html" class="btn btn-neutral float-left" title="muvid.footage.scoring._frame_metrics" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="grid.html" class="btn btn-neutral float-right" title="muvid.footage.scoring.grid" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p></p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

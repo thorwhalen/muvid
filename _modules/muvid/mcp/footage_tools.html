@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.mcp.footage_tools &mdash; muvid 0.0.10 documentation</title>
+  <title>muvid.mcp.footage_tools &mdash; muvid 0.0.12 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=a83ce22a"></script>
+      <script src="../../../_static/documentation_options.js?v=3bbcec59"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -60,6 +60,16 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/align.html">muvid.footage.align</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/assemble.html">muvid.footage.assemble</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/edl.html">muvid.footage.edl</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring.html">muvid.footage.scoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring/_frame_metrics.html">muvid.footage.scoring._frame_metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring/frames.html">muvid.footage.scoring.frames</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring/grid.html">muvid.footage.scoring.grid</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring/lipsync.html">muvid.footage.scoring.lipsync</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring/motionbeat.html">muvid.footage.scoring.motionbeat</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring/orchestrator.html">muvid.footage.scoring.orchestrator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring/quality.html">muvid.footage.scoring.quality</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring/segment.html">muvid.footage.scoring.segment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/select_score.html">muvid.footage.select_score</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/strategy.html">muvid.footage.strategy</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/workspace.html">muvid.footage.workspace</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/genre.html">muvid.genre</a></li>
@@ -70,6 +80,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/_guide.html">muvid.mcp._guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/footage_tools.html">muvid.mcp.footage_tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/identity.html">muvid.mcp.identity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/scoring_tools.html">muvid.mcp.scoring_tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/tools.html">muvid.mcp.tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/workspace.html">muvid.mcp.workspace</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/project.html">muvid.project</a></li>
@@ -272,6 +283,8 @@
         <span class="k">raise</span> <span class="n">_tool_error</span><span class="p">(</span><span class="s2">&quot;no footage added — call add_footage first&quot;</span><span class="p">)</span>
     <span class="n">aligns</span> <span class="o">=</span> <span class="n">_align</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">proj</span><span class="o">.</span><span class="n">song_path</span><span class="p">()),</span> <span class="n">clips</span><span class="p">,</span> <span class="n">song_duration</span><span class="o">=</span><span class="n">proj</span><span class="o">.</span><span class="n">song_duration</span><span class="p">())</span>
     <span class="n">proj</span><span class="o">.</span><span class="n">save_alignments</span><span class="p">(</span><span class="n">aligns</span><span class="p">)</span>
+    <span class="c1"># New offsets invalidate every persisted score track (the song-time grid mapping moved).</span>
+    <span class="n">proj</span><span class="o">.</span><span class="n">invalidate_scores</span><span class="p">()</span>
     <span class="n">aligned_ids</span> <span class="o">=</span> <span class="p">{</span><span class="n">a</span><span class="o">.</span><span class="n">clip_id</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">aligns</span><span class="p">}</span>
     <span class="n">dropped</span> <span class="o">=</span> <span class="p">[</span><span class="n">cid</span> <span class="k">for</span> <span class="n">cid</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">clips</span> <span class="k">if</span> <span class="n">cid</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">aligned_ids</span><span class="p">]</span>
     <span class="k">return</span> <span class="p">{</span>
@@ -330,13 +343,21 @@
     <span class="o">*</span><span class="p">,</span>
     <span class="n">strategy</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
     <span class="n">edl</span><span class="p">:</span> <span class="nb">list</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">preset</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="n">weights</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">config</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Assemble the music video — auto (a selection ``strategy``) or an explicit ``edl``. Free.</span>
 
 <span class="sd">    - ``edl``: an explicit edit — a list of ``{song_start, song_end, clip_id}`` spans. Must</span>
 <span class="sd">      be in order, non-overlapping, contiguous, and each within its clip&#39;s coverage.</span>
-<span class="sd">    - otherwise **full-auto**: a registered ``strategy`` (see ``list_strategies``; default</span>
-<span class="sd">      ``best_confidence``) builds the edit from the alignments.</span>
+<span class="sd">    - ``strategy=&#39;weighted&#39;`` (score-driven): the beat-snapped Viterbi selector reads the</span>
+<span class="sd">      persisted score tracks (run ``score_footage`` first) and the selection config —</span>
+<span class="sd">      ``preset`` (&quot;energetic&quot;/&quot;contemplative&quot;) and/or ``weights`` (per-metric) and/or</span>
+<span class="sd">      ``config`` (``lambda_switch``/``l_min_s``/``l_max_s``/``boundary_mode``). Re-weighting</span>
+<span class="sd">      is cheap: it re-selects from the SAME scores without re-scoring.</span>
+<span class="sd">    - otherwise **full-auto**: a registered alignment-only ``strategy`` (see</span>
+<span class="sd">      ``list_strategies``; default ``best_confidence``) builds the edit from the alignments.</span>
 
 <span class="sd">    Each cut is trimmed at its aligned in-point, scaled onto the project canvas, and</span>
 <span class="sd">    concatenated; the CLEAN song audio for the covered span is used. Returns the render.</span>
@@ -354,14 +375,24 @@
         <span class="k">raise</span> <span class="n">_tool_error</span><span class="p">(</span><span class="s2">&quot;no alignment — call align_footage first&quot;</span><span class="p">)</span>
     <span class="n">song_dur</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">song_duration</span><span class="p">()</span>
 
+    <span class="n">has_selection_config</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">preset</span> <span class="ow">or</span> <span class="n">weights</span> <span class="ow">or</span> <span class="n">config</span><span class="p">)</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">edl</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">has_selection_config</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;selection config (preset/weights/config) can&#39;t accompany an explicit edl&quot;</span><span class="p">)</span>
             <span class="n">entries</span> <span class="o">=</span> <span class="n">validate_edl</span><span class="p">(</span><span class="n">edl</span><span class="p">,</span> <span class="n">aligns</span><span class="p">,</span> <span class="n">song_dur</span><span class="p">)</span>
             <span class="n">used_strategy</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">strat</span> <span class="o">=</span> <span class="n">strategy</span> <span class="ow">or</span> <span class="n">DEFAULT_STRATEGY</span>
+            <span class="n">strat</span> <span class="o">=</span> <span class="n">strategy</span> <span class="ow">or</span> <span class="p">(</span>
+                <span class="s2">&quot;weighted&quot;</span> <span class="k">if</span> <span class="n">has_selection_config</span> <span class="k">else</span> <span class="n">DEFAULT_STRATEGY</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">has_selection_config</span> <span class="ow">and</span> <span class="n">strat</span> <span class="o">!=</span> <span class="s2">&quot;weighted&quot;</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;selection config only applies to strategy=&#39;weighted&#39; (got </span><span class="si">{</span><span class="n">strat</span><span class="si">!r}</span><span class="s2">)&quot;</span>
+                <span class="p">)</span>
+            <span class="n">context</span> <span class="o">=</span> <span class="n">_selection_context</span><span class="p">(</span><span class="n">proj</span><span class="p">,</span> <span class="n">strat</span><span class="p">,</span> <span class="n">preset</span><span class="p">,</span> <span class="n">weights</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
             <span class="n">entries</span> <span class="o">=</span> <span class="n">validate_edl</span><span class="p">(</span>
-                <span class="n">select_edl</span><span class="p">(</span><span class="n">strat</span><span class="p">,</span> <span class="n">aligns</span><span class="p">,</span> <span class="n">song_dur</span><span class="p">),</span> <span class="n">aligns</span><span class="p">,</span> <span class="n">song_dur</span>
+                <span class="n">select_edl</span><span class="p">(</span><span class="n">strat</span><span class="p">,</span> <span class="n">aligns</span><span class="p">,</span> <span class="n">song_dur</span><span class="p">,</span> <span class="n">context</span><span class="o">=</span><span class="n">context</span><span class="p">),</span> <span class="n">aligns</span><span class="p">,</span> <span class="n">song_dur</span>
             <span class="p">)</span>
             <span class="n">used_strategy</span> <span class="o">=</span> <span class="n">strat</span>
     <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">KeyError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
@@ -411,6 +442,41 @@
     <span class="n">proj</span><span class="o">.</span><span class="n">write_render_meta</span><span class="p">(</span><span class="n">render_id</span><span class="p">,</span> <span class="n">meta</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">meta</span></div>
 
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_selection_context</span><span class="p">(</span><span class="n">proj</span><span class="p">,</span> <span class="n">strat</span><span class="p">,</span> <span class="n">preset</span><span class="p">,</span> <span class="n">weights</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a ``SelectionContext`` from persisted scores for the ``weighted`` strategy.</span>
+
+<span class="sd">    Returns ``None`` for alignment-only strategies (they ignore context). When scores are</span>
+<span class="sd">    absent, the tensor is ``None`` and ``weighted_selection`` raises a clear &quot;run scoring</span>
+<span class="sd">    first&quot; the caller surfaces — so no scores gives a helpful error, not a silent bad edit.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">strat</span> <span class="o">!=</span> <span class="s2">&quot;weighted&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.footage.scoring.grid</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+        <span class="n">align_fingerprint</span><span class="p">,</span>
+        <span class="n">load_manifest</span><span class="p">,</span>
+        <span class="n">load_tensor</span><span class="p">,</span>
+        <span class="n">manifest_is_current</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.footage.select_score</span><span class="w"> </span><span class="kn">import</span> <span class="n">SelectionContext</span><span class="p">,</span> <span class="n">resolve_config</span>
+
+    <span class="n">manifest</span> <span class="o">=</span> <span class="n">load_manifest</span><span class="p">(</span><span class="n">proj</span><span class="o">.</span><span class="n">root</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{}</span>
+    <span class="n">beats</span> <span class="o">=</span> <span class="n">manifest</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;beats&quot;</span><span class="p">,</span> <span class="p">{})</span>
+    <span class="c1"># Stale scores (a re-align since scoring) must NOT drive a weighted edit — treat the tensor</span>
+    <span class="c1"># as absent so weighted_selection raises the clear &quot;run scoring first&quot; the caller surfaces.</span>
+    <span class="n">fresh</span> <span class="o">=</span> <span class="n">manifest_is_current</span><span class="p">(</span>
+        <span class="n">manifest</span><span class="p">,</span>
+        <span class="n">song_hash</span><span class="o">=</span><span class="n">proj</span><span class="o">.</span><span class="n">song_hash</span><span class="p">()</span> <span class="k">if</span> <span class="n">proj</span><span class="o">.</span><span class="n">has_song</span><span class="p">()</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="n">align_fingerprint</span><span class="o">=</span><span class="n">align_fingerprint</span><span class="p">(</span><span class="n">proj</span><span class="o">.</span><span class="n">load_alignments</span><span class="p">()),</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">SelectionContext</span><span class="p">(</span>
+        <span class="n">tensor</span><span class="o">=</span><span class="n">load_tensor</span><span class="p">(</span><span class="n">proj</span><span class="o">.</span><span class="n">root</span><span class="p">)</span> <span class="k">if</span> <span class="n">fresh</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">beat_times</span><span class="o">=</span><span class="n">beats</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;beat_times&quot;</span><span class="p">,</span> <span class="p">[]),</span>
+        <span class="n">downbeat_times</span><span class="o">=</span><span class="n">beats</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;downbeat_times&quot;</span><span class="p">,</span> <span class="p">[]),</span>
+        <span class="n">shot_boundaries</span><span class="o">=</span><span class="n">manifest</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;shot_boundaries&quot;</span><span class="p">),</span>
+        <span class="n">config</span><span class="o">=</span><span class="n">resolve_config</span><span class="p">(</span><span class="n">preset</span><span class="o">=</span><span class="n">preset</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="n">weights</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">),</span>
+    <span class="p">)</span>
 
 
 <div class="viewcode-block" id="footage_status">

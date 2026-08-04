@@ -1,0 +1,709 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>muvid.footage.select_score &mdash; muvid 0.0.12 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=3bbcec59"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
+      <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            muvid
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid.html">muvid</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/__main__.html">muvid.__main__</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/align.html">muvid.align</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/characters.html">muvid.characters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/compose.html">muvid.compose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/contracts.html">muvid.contracts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/cost.html">muvid.cost</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/environments.html">muvid.environments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/events.html">muvid.events</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/facade.html">muvid.facade</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage.html">muvid.footage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/align.html">muvid.footage.align</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/assemble.html">muvid.footage.assemble</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/edl.html">muvid.footage.edl</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring.html">muvid.footage.scoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring/_frame_metrics.html">muvid.footage.scoring._frame_metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring/frames.html">muvid.footage.scoring.frames</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring/grid.html">muvid.footage.scoring.grid</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring/lipsync.html">muvid.footage.scoring.lipsync</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring/motionbeat.html">muvid.footage.scoring.motionbeat</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring/orchestrator.html">muvid.footage.scoring.orchestrator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring/quality.html">muvid.footage.scoring.quality</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring/segment.html">muvid.footage.scoring.segment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/select_score.html">muvid.footage.select_score</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/strategy.html">muvid.footage.strategy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/workspace.html">muvid.footage.workspace</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/genre.html">muvid.genre</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/genre_music_video.html">muvid.genre_music_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyrics.html">muvid.lyrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp.html">muvid.mcp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/_fetch.html">muvid.mcp._fetch</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/_guide.html">muvid.mcp._guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/footage_tools.html">muvid.mcp.footage_tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/identity.html">muvid.mcp.identity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/scoring_tools.html">muvid.mcp.scoring_tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/tools.html">muvid.mcp.tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/workspace.html">muvid.mcp.workspace</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/project.html">muvid.project</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers.html">muvid.renderers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers/_common.html">muvid.renderers._common</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers/animation.html">muvid.renderers.animation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers/image_to_video.html">muvid.renderers.image_to_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers/lipsync.html">muvid.renderers.lipsync</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers/still.html">muvid.renderers.still</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers/text_to_video.html">muvid.renderers.text_to_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/schema.html">muvid.schema</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/script.html">muvid.script</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/ui.html">muvid.ui</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/ui/app.html">muvid.ui.app</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize.html">muvid.visualize</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/canvas.html">muvid.visualize.canvas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/ffmpeg.html">muvid.visualize.ffmpeg</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/verify.html">muvid.visualize.verify</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/video.html">muvid.visualize.video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/visuals.html">muvid.visualize.visuals</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">muvid</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">muvid.footage.select_score</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for muvid.footage.select_score</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;The score-driven ``weighted`` selection strategy: a beat-snapped semi-Markov Viterbi DP.</span>
+
+<span class="sd">Given the fused score tensor ``S[clip, frame, metric]`` (from :mod:`muvid.footage.scoring.grid`)</span>
+<span class="sd">and the master beat grid, choose which clip is on-air over each span of the song so that the</span>
+<span class="sd">weighted composite reward is maximized, cuts land only on beat (or beat∪shot) boundaries,</span>
+<span class="sd">shot lengths obey ``[L_min, L_max]``, and each switch pays a Potts penalty ``λ_switch``. The</span>
+<span class="sd">same optimizer the Phase-2 editor steers (a manual pin becomes a hard constraint a re-solve</span>
+<span class="sd">fills around).</span>
+
+<span class="sd">The recurrence is the corrected form from the design&#39;s algorithm review</span>
+<span class="sd">(``misc/docs/footage_scoring_design.md`` §4c′) — the load-bearing details:</span>
+
+<span class="sd">- **Feasibility is CONTINUOUS containment** (``b_i ≥ offset_c − _EPS`` and</span>
+<span class="sd">  ``b_j ≤ offset_c + duration_c + _EPS``), the *exact* check ``validate_edl`` runs — NOT a</span>
+<span class="sd">  grid-frame mask (a sub-hop overhang would slip past a 10 Hz mask and make ``validate_edl``</span>
+<span class="sd">  raise). So the emitted EDL passes ``validate_edl`` by construction.</span>
+<span class="sd">- **Reward is a TIME integral of the normalized composite** ``ĝ = Σ_m w_m·S·M / W ∈ [0,1]``:</span>
+<span class="sd">  ``R(c,i,j) = hop_s·(P[c][κ(b_j)] − P[c][κ(b_i)])`` (prefix-summed → O(1) per segment,</span>
+<span class="sd">  hop/tempo-independent). A switch then costs ``λ_switch`` directly in those units</span>
+<span class="sd">  (&quot;a cut must earn ``λ_switch`` seconds of perfect-footage reward&quot;).</span>
+<span class="sd">- **L_min is relaxed on the first &amp; last segment**; an infeasible timeline is *classified*</span>
+<span class="sd">  (coverage gap vs dwell-infeasible) and retried with ``L_min→0`` before any fallback —</span>
+<span class="sd">  never a silent junk EDL.</span>
+<span class="sd">- The ``allowed(i,j)`` clip-domain hook + the injectable boundary set make the Phase-2</span>
+<span class="sd">  manual-pin re-solve a *pruning*, not a reformulation.</span>
+
+<span class="sd">numpy only (no cv2/torch): registered LAZILY in :mod:`muvid.footage.strategy` so</span>
+<span class="sd">``import muvid.footage`` never pulls numpy.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">replace</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Sequence</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">muvid.footage.edl</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">MAX_EDL_ENTRIES</span><span class="p">,</span>
+    <span class="n">EdlEntry</span><span class="p">,</span>
+    <span class="n">FootageAlignment</span><span class="p">,</span>
+    <span class="n">_EPS</span><span class="p">,</span>
+    <span class="n">validate_edl</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">_NEG_INF</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;-inf&quot;</span><span class="p">)</span>
+
+<span class="c1">#: Default per-metric weights. A metric absent from the tensor collapses to weight 0</span>
+<span class="c1">#: (its column simply doesn&#39;t exist), so a project scored without the lip-sync tier still</span>
+<span class="c1">#: selects cleanly on the metrics it has.</span>
+<span class="n">DEFAULT_WEIGHTS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;lip_sync_lse_c&quot;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span>
+    <span class="s2">&quot;motion_beat_bas&quot;</span><span class="p">:</span> <span class="mf">0.8</span><span class="p">,</span>
+    <span class="s2">&quot;motion_onset_xcorr&quot;</span><span class="p">:</span> <span class="mf">0.5</span><span class="p">,</span>
+    <span class="s2">&quot;sharpness&quot;</span><span class="p">:</span> <span class="mf">0.4</span><span class="p">,</span>
+    <span class="s2">&quot;exposure&quot;</span><span class="p">:</span> <span class="mf">0.3</span><span class="p">,</span>
+    <span class="s2">&quot;face_framing&quot;</span><span class="p">:</span> <span class="mf">0.4</span><span class="p">,</span>
+    <span class="s2">&quot;stability_shake&quot;</span><span class="p">:</span> <span class="mf">0.3</span><span class="p">,</span>
+<span class="p">}</span>
+
+
+<div class="viewcode-block" id="WeightedSelectionConfig">
+<a class="viewcode-back" href="../../../module_docs/muvid/footage/select_score.html#muvid.footage.select_score.WeightedSelectionConfig">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">WeightedSelectionConfig</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The score-driven &quot;strategy&quot; as a pure config object (open-closed).</span>
+
+<span class="sd">    Adding a metric = a tensor column + a weight; no new strategy code.</span>
+
+<span class="sd">    ``l_max_s`` is a SOFT target: a shot longer than it pays ``l_max_overrun_penalty`` per</span>
+<span class="sd">    second of overrun (in the same &quot;reward-seconds&quot; units as ``lambda_switch``), rather than</span>
+<span class="sd">    being forbidden. So a lone/best clip rolls past ``l_max_s`` when the only alternative is</span>
+<span class="sd">    materially worse (no forced cutaway to bad footage), yet comparable clips still cut around</span>
+<span class="sd">    ``l_max_s`` for variety. Segments are always different-clip (each = one shot).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">weights</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="n">DEFAULT_WEIGHTS</span><span class="p">))</span>
+    <span class="n">lambda_switch</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.35</span>  <span class="c1"># seconds of perfect-footage reward a cut must earn</span>
+    <span class="n">l_min_s</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.2</span>  <span class="c1"># min shot length (relaxed on the first &amp; last segment)</span>
+    <span class="n">l_max_s</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">8.0</span>  <span class="c1"># soft max shot length (overrun is penalized, not forbidden)</span>
+    <span class="n">l_max_overrun_penalty</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.15</span>  <span class="c1"># reward-seconds lost per second past l_max_s</span>
+    <span class="n">boundary_mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;beats&quot;</span>  <span class="c1"># &quot;beats&quot; | &quot;beats+shots&quot;</span>
+    <span class="n">beat_unit</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;beat&quot;</span>  <span class="c1"># &quot;beat&quot; | &quot;downbeat&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;weights&quot;</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">weights</span><span class="p">),</span>
+            <span class="s2">&quot;lambda_switch&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">lambda_switch</span><span class="p">,</span>
+            <span class="s2">&quot;l_min_s&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">l_min_s</span><span class="p">,</span>
+            <span class="s2">&quot;l_max_s&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">l_max_s</span><span class="p">,</span>
+            <span class="s2">&quot;l_max_overrun_penalty&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">l_max_overrun_penalty</span><span class="p">,</span>
+            <span class="s2">&quot;boundary_mode&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">boundary_mode</span><span class="p">,</span>
+            <span class="s2">&quot;beat_unit&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">beat_unit</span><span class="p">,</span>
+        <span class="p">}</span></div>
+
+
+
+<span class="c1">#: Named presets — a filled-in config. &quot;energetic&quot; = many short cuts; &quot;contemplative&quot; = long</span>
+<span class="c1">#: dwells, few cuts.</span>
+<span class="n">PRESETS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">WeightedSelectionConfig</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;energetic&quot;</span><span class="p">:</span> <span class="n">WeightedSelectionConfig</span><span class="p">(</span>
+        <span class="n">weights</span><span class="o">=</span><span class="p">{</span><span class="o">**</span><span class="n">DEFAULT_WEIGHTS</span><span class="p">,</span> <span class="s2">&quot;motion_beat_bas&quot;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span> <span class="s2">&quot;motion_onset_xcorr&quot;</span><span class="p">:</span> <span class="mf">0.8</span><span class="p">},</span>
+        <span class="n">lambda_switch</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span>
+        <span class="n">l_min_s</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span>
+        <span class="n">l_max_s</span><span class="o">=</span><span class="mf">4.0</span><span class="p">,</span>
+        <span class="n">l_max_overrun_penalty</span><span class="o">=</span><span class="mf">0.25</span><span class="p">,</span>  <span class="c1"># push cuts (short energetic shots)</span>
+    <span class="p">),</span>
+    <span class="s2">&quot;contemplative&quot;</span><span class="p">:</span> <span class="n">WeightedSelectionConfig</span><span class="p">(</span>
+        <span class="n">weights</span><span class="o">=</span><span class="p">{</span><span class="o">**</span><span class="n">DEFAULT_WEIGHTS</span><span class="p">,</span> <span class="s2">&quot;sharpness&quot;</span><span class="p">:</span> <span class="mf">0.6</span><span class="p">,</span> <span class="s2">&quot;face_framing&quot;</span><span class="p">:</span> <span class="mf">0.6</span><span class="p">},</span>
+        <span class="n">lambda_switch</span><span class="o">=</span><span class="mf">0.6</span><span class="p">,</span>
+        <span class="n">l_min_s</span><span class="o">=</span><span class="mf">3.0</span><span class="p">,</span>
+        <span class="n">l_max_s</span><span class="o">=</span><span class="mf">12.0</span><span class="p">,</span>
+        <span class="n">l_max_overrun_penalty</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span>  <span class="c1"># tolerate long dwells</span>
+    <span class="p">),</span>
+<span class="p">}</span>
+
+
+<div class="viewcode-block" id="resolve_config">
+<a class="viewcode-back" href="../../../module_docs/muvid/footage/select_score.html#muvid.footage.select_score.resolve_config">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">resolve_config</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">preset</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">weights</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">config</span><span class="p">:</span> <span class="n">Mapping</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">WeightedSelectionConfig</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a :class:`WeightedSelectionConfig` from an optional preset + overrides.</span>
+
+<span class="sd">    Precedence: preset (or the default) &lt; ``config`` dict fields &lt; explicit ``weights``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">base</span> <span class="o">=</span> <span class="n">PRESETS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">preset</span><span class="p">)</span> <span class="k">if</span> <span class="n">preset</span> <span class="k">else</span> <span class="kc">None</span>
+    <span class="n">cfg</span> <span class="o">=</span> <span class="n">base</span> <span class="ow">or</span> <span class="n">WeightedSelectionConfig</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">config</span><span class="p">:</span>
+        <span class="n">known</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">k</span><span class="p">:</span> <span class="n">config</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="p">(</span>
+                <span class="s2">&quot;lambda_switch&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;l_min_s&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;l_max_s&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;l_max_overrun_penalty&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;boundary_mode&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;beat_unit&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">config</span>
+        <span class="p">}</span>
+        <span class="k">if</span> <span class="s2">&quot;weights&quot;</span> <span class="ow">in</span> <span class="n">config</span> <span class="ow">and</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;weights&quot;</span><span class="p">]:</span>
+            <span class="n">known</span><span class="p">[</span><span class="s2">&quot;weights&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="n">cfg</span><span class="o">.</span><span class="n">weights</span><span class="p">,</span> <span class="o">**</span><span class="nb">dict</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;weights&quot;</span><span class="p">])}</span>
+        <span class="n">cfg</span> <span class="o">=</span> <span class="n">replace</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="o">**</span><span class="n">known</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">weights</span><span class="p">:</span>
+        <span class="n">cfg</span> <span class="o">=</span> <span class="n">replace</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="p">{</span><span class="o">**</span><span class="n">cfg</span><span class="o">.</span><span class="n">weights</span><span class="p">,</span> <span class="o">**</span><span class="nb">dict</span><span class="p">(</span><span class="n">weights</span><span class="p">)})</span>
+    <span class="k">return</span> <span class="n">cfg</span></div>
+
+
+
+<div class="viewcode-block" id="SelectionContext">
+<a class="viewcode-back" href="../../../module_docs/muvid/footage/select_score.html#muvid.footage.select_score.SelectionContext">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SelectionContext</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Everything the score-driven strategy needs beyond ``(alignments, song_duration)``.</span>
+
+<span class="sd">    ``tensor`` is the fused :class:`~muvid.footage.scoring.grid.ScoreTensor` (or ``None`` → the</span>
+<span class="sd">    strategy raises a clear &quot;run scoring first&quot;). ``shot_boundaries`` (clip_id → song-times)</span>
+<span class="sd">    is consumed only when ``config.boundary_mode == &quot;beats+shots&quot;``. ``pins`` (Phase 2) is a</span>
+<span class="sd">    list of ``(song_start, song_end, clip_id)`` hard constraints.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">tensor</span><span class="p">:</span> <span class="nb">object</span> <span class="o">|</span> <span class="kc">None</span>  <span class="c1"># ScoreTensor (typed loosely to avoid importing grid eagerly here)</span>
+    <span class="n">beat_times</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">()</span>
+    <span class="n">downbeat_times</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">()</span>
+    <span class="n">shot_boundaries</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">pins</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">tuple</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">config</span><span class="p">:</span> <span class="n">WeightedSelectionConfig</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">WeightedSelectionConfig</span><span class="p">)</span></div>
+
+
+
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># The registered strategy</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+
+
+<div class="viewcode-block" id="weighted_selection">
+<a class="viewcode-back" href="../../../module_docs/muvid/footage/select_score.html#muvid.footage.select_score.weighted_selection">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">weighted_selection</span><span class="p">(</span>
+    <span class="n">alignments</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">FootageAlignment</span><span class="p">],</span>
+    <span class="n">song_duration</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">context</span><span class="p">:</span> <span class="n">SelectionContext</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">EdlEntry</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The ``weighted`` :data:`~muvid.footage.strategy.SelectionStrategy` (score-driven DP).</span>
+
+<span class="sd">    Requires a :class:`SelectionContext` carrying a score tensor. Raises a clear error if</span>
+<span class="sd">    scores are absent so the MCP layer can say &quot;run muvid_score_footage first&quot;.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">context</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">context</span><span class="o">.</span><span class="n">tensor</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;the &#39;weighted&#39; strategy needs score tracks — run scoring first &quot;</span>
+            <span class="s2">&quot;(muvid_score_footage), then assemble with strategy=&#39;weighted&#39;&quot;</span>
+        <span class="p">)</span>
+    <span class="n">entries</span><span class="p">,</span> <span class="n">_meta</span> <span class="o">=</span> <span class="n">run_weighted</span><span class="p">(</span><span class="n">alignments</span><span class="p">,</span> <span class="n">song_duration</span><span class="p">,</span> <span class="n">context</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">entries</span></div>
+
+
+
+<div class="viewcode-block" id="run_weighted">
+<a class="viewcode-back" href="../../../module_docs/muvid/footage/select_score.html#muvid.footage.select_score.run_weighted">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">run_weighted</span><span class="p">(</span>
+    <span class="n">alignments</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">FootageAlignment</span><span class="p">],</span>
+    <span class="n">song_duration</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">context</span><span class="p">:</span> <span class="n">SelectionContext</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">EdlEntry</span><span class="p">],</span> <span class="nb">dict</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Run the DP and return ``(edl, meta)``; ``meta`` carries any fallback + its cause.&quot;&quot;&quot;</span>
+    <span class="n">tensor</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">tensor</span>
+    <span class="n">cfg</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">config</span>
+    <span class="n">aligns</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">alignments</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">aligns</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[],</span> <span class="p">{</span><span class="s2">&quot;fallback&quot;</span><span class="p">:</span> <span class="s2">&quot;empty&quot;</span><span class="p">,</span> <span class="s2">&quot;cause&quot;</span><span class="p">:</span> <span class="s2">&quot;no_alignments&quot;</span><span class="p">}</span>
+    <span class="c1"># v1 grids are t0=0 (the persistence + _kappa handle t0, but the boundary set and</span>
+    <span class="c1"># margins assume it); assert rather than silently mis-map a non-zero-origin grid.</span>
+    <span class="k">assert</span> <span class="n">tensor</span><span class="o">.</span><span class="n">t0</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">,</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;weighted selector assumes a t0=0 grid; got t0=</span><span class="si">{</span><span class="n">tensor</span><span class="o">.</span><span class="n">t0</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">boundaries</span> <span class="o">=</span> <span class="n">_boundary_set</span><span class="p">(</span><span class="n">aligns</span><span class="p">,</span> <span class="n">tensor</span><span class="p">,</span> <span class="n">context</span><span class="p">,</span> <span class="n">cfg</span><span class="p">)</span>
+    <span class="n">composite</span><span class="p">,</span> <span class="n">W</span> <span class="o">=</span> <span class="n">_composite</span><span class="p">(</span><span class="n">tensor</span><span class="p">,</span> <span class="n">cfg</span><span class="o">.</span><span class="n">weights</span><span class="p">,</span> <span class="n">aligns</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">W</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="c1"># No weighted metric present in the tensor → nothing to optimize; defer to the</span>
+        <span class="c1"># alignment-only default rather than emit an arbitrary path.</span>
+        <span class="k">return</span> <span class="n">_fallback</span><span class="p">(</span><span class="n">aligns</span><span class="p">,</span> <span class="n">song_duration</span><span class="p">,</span> <span class="n">cause</span><span class="o">=</span><span class="s2">&quot;no_weighted_metrics&quot;</span><span class="p">)</span>
+
+    <span class="n">entries</span><span class="p">,</span> <span class="n">cause</span> <span class="o">=</span> <span class="n">_viterbi</span><span class="p">(</span><span class="n">aligns</span><span class="p">,</span> <span class="n">boundaries</span><span class="p">,</span> <span class="n">composite</span><span class="p">,</span> <span class="n">tensor</span><span class="p">,</span> <span class="n">cfg</span><span class="p">)</span>
+    <span class="n">solved_cfg</span> <span class="o">=</span> <span class="n">cfg</span>  <span class="c1"># the config that actually produced `entries` (escalate on THIS)</span>
+    <span class="k">if</span> <span class="n">entries</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># Infeasible: classify, retry with the L_min floor dropped, then fall back.</span>
+        <span class="k">if</span> <span class="n">cause</span> <span class="o">==</span> <span class="s2">&quot;coverage_gap&quot;</span><span class="p">:</span>
+            <span class="c1"># best_confidence will surface the same gap via validate_edl — keep the UX identical.</span>
+            <span class="k">return</span> <span class="n">_fallback</span><span class="p">(</span><span class="n">aligns</span><span class="p">,</span> <span class="n">song_duration</span><span class="p">,</span> <span class="n">cause</span><span class="o">=</span><span class="s2">&quot;coverage_gap&quot;</span><span class="p">)</span>
+        <span class="c1"># Drop L_min (a required mid-song short segment can be &lt; L_min). L_max is already</span>
+        <span class="c1"># soft, so this is the only shot-length relaxation needed. Guaranteed feasible for a</span>
+        <span class="c1"># gapless timeline, so this is the real safety net — best_confidence is last resort.</span>
+        <span class="n">relaxed</span> <span class="o">=</span> <span class="n">replace</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">l_min_s</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
+        <span class="n">entries</span><span class="p">,</span> <span class="n">cause2</span> <span class="o">=</span> <span class="n">_viterbi</span><span class="p">(</span><span class="n">aligns</span><span class="p">,</span> <span class="n">boundaries</span><span class="p">,</span> <span class="n">composite</span><span class="p">,</span> <span class="n">tensor</span><span class="p">,</span> <span class="n">relaxed</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">entries</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">_fallback</span><span class="p">(</span><span class="n">aligns</span><span class="p">,</span> <span class="n">song_duration</span><span class="p">,</span> <span class="n">cause</span><span class="o">=</span><span class="n">cause2</span> <span class="ow">or</span> <span class="s2">&quot;infeasible&quot;</span><span class="p">)</span>
+        <span class="n">solved_cfg</span> <span class="o">=</span> <span class="n">relaxed</span>
+        <span class="n">cause</span> <span class="o">=</span> <span class="s2">&quot;dwell_relaxed&quot;</span>
+
+    <span class="c1"># Escalate lambda_switch (on the config that solved) if the cut count blows the cap.</span>
+    <span class="n">lam</span> <span class="o">=</span> <span class="n">solved_cfg</span><span class="o">.</span><span class="n">lambda_switch</span>
+    <span class="n">tries</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">entries</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">MAX_EDL_ENTRIES</span> <span class="ow">and</span> <span class="n">tries</span> <span class="o">&lt;</span> <span class="mi">6</span><span class="p">:</span>
+        <span class="n">lam</span> <span class="o">*=</span> <span class="mf">2.0</span>
+        <span class="n">escalated</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">_viterbi</span><span class="p">(</span>
+            <span class="n">aligns</span><span class="p">,</span> <span class="n">boundaries</span><span class="p">,</span> <span class="n">composite</span><span class="p">,</span> <span class="n">tensor</span><span class="p">,</span> <span class="n">replace</span><span class="p">(</span><span class="n">solved_cfg</span><span class="p">,</span> <span class="n">lambda_switch</span><span class="o">=</span><span class="n">lam</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">escalated</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># feasibility is λ-independent, so this shouldn&#39;t happen</span>
+            <span class="k">break</span>  <span class="c1"># keep the last good `entries`</span>
+        <span class="n">entries</span> <span class="o">=</span> <span class="n">escalated</span>
+        <span class="n">tries</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">entries</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">MAX_EDL_ENTRIES</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;the weighted edit needs </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">entries</span><span class="p">)</span><span class="si">}</span><span class="s2"> cuts (&gt; the </span><span class="si">{</span><span class="n">MAX_EDL_ENTRIES</span><span class="si">}</span><span class="s2"> cap); &quot;</span>
+            <span class="s2">&quot;raise lambda_switch or l_min_s&quot;</span>
+        <span class="p">)</span>
+
+    <span class="n">validated</span> <span class="o">=</span> <span class="n">validate_edl</span><span class="p">(</span><span class="n">entries</span><span class="p">,</span> <span class="n">aligns</span><span class="p">,</span> <span class="n">song_duration</span><span class="p">)</span>  <span class="c1"># tautology by construction</span>
+    <span class="n">meta</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;strategy&quot;</span><span class="p">:</span> <span class="s2">&quot;weighted&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;cuts&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">validated</span><span class="p">),</span>
+        <span class="s2">&quot;cause&quot;</span><span class="p">:</span> <span class="n">cause</span><span class="p">,</span>
+        <span class="s2">&quot;config&quot;</span><span class="p">:</span> <span class="n">cfg</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(),</span>
+        <span class="s2">&quot;lambda_effective&quot;</span><span class="p">:</span> <span class="n">lam</span><span class="p">,</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="n">validated</span><span class="p">,</span> <span class="n">meta</span></div>
+
+
+
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># Boundaries, composite, prefix sums</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_cover_span</span><span class="p">(</span><span class="n">aligns</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">FootageAlignment</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="nb">min</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">coverage</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">aligns</span><span class="p">),</span>
+        <span class="nb">max</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">coverage</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">aligns</span><span class="p">),</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_boundary_set</span><span class="p">(</span><span class="n">aligns</span><span class="p">,</span> <span class="n">tensor</span><span class="p">,</span> <span class="n">context</span><span class="p">:</span> <span class="n">SelectionContext</span><span class="p">,</span> <span class="n">cfg</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
+    <span class="n">cover_start</span><span class="p">,</span> <span class="n">cover_end</span> <span class="o">=</span> <span class="n">_cover_span</span><span class="p">(</span><span class="n">aligns</span><span class="p">)</span>
+    <span class="n">beats</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">beat_times</span>
+    <span class="k">if</span> <span class="n">cfg</span><span class="o">.</span><span class="n">beat_unit</span> <span class="o">==</span> <span class="s2">&quot;downbeat&quot;</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">downbeat_times</span><span class="p">):</span>
+        <span class="n">beats</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">downbeat_times</span>
+    <span class="n">pts</span> <span class="o">=</span> <span class="p">{</span><span class="nb">round</span><span class="p">(</span><span class="n">cover_start</span><span class="p">,</span> <span class="mi">6</span><span class="p">),</span> <span class="nb">round</span><span class="p">(</span><span class="n">cover_end</span><span class="p">,</span> <span class="mi">6</span><span class="p">)}</span>
+    <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">beats</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">cover_start</span> <span class="o">-</span> <span class="n">_EPS</span> <span class="o">&lt;=</span> <span class="n">b</span> <span class="o">&lt;=</span> <span class="n">cover_end</span> <span class="o">+</span> <span class="n">_EPS</span><span class="p">:</span>
+            <span class="n">pts</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">b</span><span class="p">),</span> <span class="mi">6</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">cfg</span><span class="o">.</span><span class="n">boundary_mode</span> <span class="o">==</span> <span class="s2">&quot;beats+shots&quot;</span> <span class="ow">and</span> <span class="n">context</span><span class="o">.</span><span class="n">shot_boundaries</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">_cid</span><span class="p">,</span> <span class="n">shots</span> <span class="ow">in</span> <span class="n">context</span><span class="o">.</span><span class="n">shot_boundaries</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">shots</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">cover_start</span> <span class="o">-</span> <span class="n">_EPS</span> <span class="o">&lt;=</span> <span class="n">s</span> <span class="o">&lt;=</span> <span class="n">cover_end</span> <span class="o">+</span> <span class="n">_EPS</span><span class="p">:</span>
+                    <span class="n">pts</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">s</span><span class="p">),</span> <span class="mi">6</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">context</span><span class="o">.</span><span class="n">pins</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">ps</span><span class="p">,</span> <span class="n">pe</span><span class="p">,</span> <span class="n">_cid</span> <span class="ow">in</span> <span class="n">context</span><span class="o">.</span><span class="n">pins</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="p">(</span><span class="n">ps</span><span class="p">,</span> <span class="n">pe</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">cover_start</span> <span class="o">-</span> <span class="n">_EPS</span> <span class="o">&lt;=</span> <span class="n">p</span> <span class="o">&lt;=</span> <span class="n">cover_end</span> <span class="o">+</span> <span class="n">_EPS</span><span class="p">:</span>
+                    <span class="n">pts</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">p</span><span class="p">),</span> <span class="mi">6</span><span class="p">))</span>
+    <span class="n">hop</span> <span class="o">=</span> <span class="n">tensor</span><span class="o">.</span><span class="n">hop_s</span>
+    <span class="n">B</span> <span class="o">=</span> <span class="n">_dedup</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">pts</span><span class="p">),</span> <span class="n">tol</span><span class="o">=</span><span class="n">hop</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">)</span>
+    <span class="c1"># Pin the exact endpoints (invariant: b_0=cover_start, b_m=cover_end). _dedup keeps the</span>
+    <span class="c1"># rightmost of a near-tie, so a beat just after cover_start would otherwise replace it and</span>
+    <span class="c1"># drop the head span; a beat just before cover_end would drop the tail.</span>
+    <span class="k">if</span> <span class="n">B</span><span class="p">:</span>
+        <span class="n">B</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">cover_start</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span>
+        <span class="n">B</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">cover_end</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">B</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_dedup</span><span class="p">(</span><span class="n">xs</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="o">*</span><span class="p">,</span> <span class="n">tol</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
+    <span class="n">out</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">xs</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">out</span> <span class="ow">or</span> <span class="n">x</span> <span class="o">-</span> <span class="n">out</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">tol</span><span class="p">:</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">out</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">x</span>  <span class="c1"># keep the later (rightmost) of a near-tie</span>
+    <span class="k">return</span> <span class="n">out</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_composite</span><span class="p">(</span>
+    <span class="n">tensor</span><span class="p">,</span> <span class="n">weights</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="n">aligns</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;``ĝ[clip_in_align_order, frame]`` = Σ_m w_m·S·M / W ∈ [0,1]; also returns W.</span>
+
+<span class="sd">    Rows are ordered to match ``aligns`` (the selector indexes clips by alignment order).</span>
+<span class="sd">    Metrics in ``weights`` but absent from the tensor contribute nothing (weight → 0).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">metrics</span> <span class="o">=</span> <span class="n">tensor</span><span class="o">.</span><span class="n">metrics</span>
+    <span class="n">w</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+        <span class="p">[</span><span class="nb">max</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">weights</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)))</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">metrics</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span>
+    <span class="p">)</span>
+    <span class="n">W</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="n">tensor</span><span class="o">.</span><span class="n">n</span>
+    <span class="n">g</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">aligns</span><span class="p">),</span> <span class="n">n</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">W</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">g</span><span class="p">,</span> <span class="mf">0.0</span>
+    <span class="n">S</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan_to_num</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">tensor</span><span class="o">.</span><span class="n">S</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">),</span> <span class="n">nan</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
+    <span class="n">M</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">tensor</span><span class="o">.</span><span class="n">M</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+    <span class="n">contrib</span> <span class="o">=</span> <span class="p">(</span><span class="n">S</span> <span class="o">*</span> <span class="n">M</span><span class="p">)</span> <span class="o">@</span> <span class="n">w</span>  <span class="c1"># [n_clips_tensor, n]</span>
+    <span class="n">contrib</span> <span class="o">/=</span> <span class="n">W</span>
+    <span class="k">for</span> <span class="n">ai</span><span class="p">,</span> <span class="n">a</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">aligns</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">a</span><span class="o">.</span><span class="n">clip_id</span> <span class="ow">in</span> <span class="n">tensor</span><span class="o">.</span><span class="n">clip_ids</span><span class="p">:</span>
+            <span class="n">g</span><span class="p">[</span><span class="n">ai</span><span class="p">]</span> <span class="o">=</span> <span class="n">contrib</span><span class="p">[</span><span class="n">tensor</span><span class="o">.</span><span class="n">clip_ids</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">clip_id</span><span class="p">)]</span>
+    <span class="k">return</span> <span class="n">g</span><span class="p">,</span> <span class="n">W</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_prefix</span><span class="p">(</span><span class="n">g_row</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;P[k] = Σ_{k&#39;&lt;k} g_row[k&#39;] with a leading 0 (length n+1).&quot;&quot;&quot;</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">g_row</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+    <span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">g_row</span><span class="p">,</span> <span class="n">out</span><span class="o">=</span><span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+    <span class="k">return</span> <span class="n">p</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_kappa</span><span class="p">(</span><span class="n">b</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">hop_s</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">t0</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;First grid index ≥ (b − t0)/hop_s, clamped to [0, n].&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">((</span><span class="n">b</span> <span class="o">-</span> <span class="n">t0</span><span class="p">)</span> <span class="o">/</span> <span class="n">hop_s</span> <span class="o">-</span> <span class="mf">1e-9</span><span class="p">))),</span> <span class="n">n</span><span class="p">))</span>
+
+
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># The DP</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_viterbi</span><span class="p">(</span><span class="n">aligns</span><span class="p">,</span> <span class="n">boundaries</span><span class="p">,</span> <span class="n">composite</span><span class="p">,</span> <span class="n">tensor</span><span class="p">,</span> <span class="n">cfg</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return ``(edl_entries | None, cause)``. ``None`` ⇒ infeasible (cause classifies why).</span>
+
+<span class="sd">    A *segment* is one shot on one clip spanning boundaries ``[B_i, B_j)``, length in</span>
+<span class="sd">    ``[L_min_eff, L_max]``. **Consecutive segments must be DIFFERENT clips** (same-clip</span>
+<span class="sd">    adjacency would just be one longer shot), so ``L_max`` is a true max-shot-length and</span>
+<span class="sd">    every segment boundary is a real cut costing ``λ_switch``. ``max_{c&#39;≠c}`` is O(1) via a</span>
+<span class="sd">    per-boundary top-2 of ``best[i][·]``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">B</span> <span class="o">=</span> <span class="n">boundaries</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">B</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>  <span class="c1"># intervals [B_0,B_1) .. [B_{m-1},B_m)</span>
+    <span class="k">if</span> <span class="n">m</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;empty_span&quot;</span>
+    <span class="n">K</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">aligns</span><span class="p">)</span>
+    <span class="n">hop</span><span class="p">,</span> <span class="n">n</span> <span class="o">=</span> <span class="n">tensor</span><span class="o">.</span><span class="n">hop_s</span><span class="p">,</span> <span class="n">tensor</span><span class="o">.</span><span class="n">n</span>
+    <span class="n">l_min</span><span class="p">,</span> <span class="n">l_max</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">l_min_s</span><span class="p">,</span> <span class="n">cfg</span><span class="o">.</span><span class="n">l_max_s</span>
+    <span class="n">lam</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">lambda_switch</span>
+    <span class="n">overrun</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">l_max_overrun_penalty</span>
+    <span class="c1"># Bound the transition window for performance; the base case (i=0) is uncapped so a</span>
+    <span class="c1"># lone clip can still cover the whole span as one (overrun-penalized) segment.</span>
+    <span class="n">max_seg_s</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mf">4.0</span> <span class="o">*</span> <span class="n">l_max</span><span class="p">,</span> <span class="n">l_max</span> <span class="o">+</span> <span class="mf">8.0</span><span class="p">)</span>
+
+    <span class="n">prefixes</span> <span class="o">=</span> <span class="p">[</span><span class="n">_prefix</span><span class="p">(</span><span class="n">composite</span><span class="p">[</span><span class="n">c</span><span class="p">])</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">K</span><span class="p">)]</span>
+    <span class="n">kap</span> <span class="o">=</span> <span class="p">[</span><span class="n">_kappa</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">hop</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">tensor</span><span class="o">.</span><span class="n">t0</span><span class="p">)</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">B</span><span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">seg_reward</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">):</span>
+        <span class="c1"># Time-integral of the composite MINUS a soft penalty for exceeding l_max.</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="n">hop</span> <span class="o">*</span> <span class="nb">float</span><span class="p">(</span><span class="n">prefixes</span><span class="p">[</span><span class="n">c</span><span class="p">][</span><span class="n">kap</span><span class="p">[</span><span class="n">j</span><span class="p">]]</span> <span class="o">-</span> <span class="n">prefixes</span><span class="p">[</span><span class="n">c</span><span class="p">][</span><span class="n">kap</span><span class="p">[</span><span class="n">i</span><span class="p">]])</span>
+        <span class="k">return</span> <span class="n">r</span> <span class="o">-</span> <span class="n">overrun</span> <span class="o">*</span> <span class="nb">max</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="p">(</span><span class="n">B</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">-</span> <span class="n">B</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">-</span> <span class="n">l_max</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">contains</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">):</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="n">aligns</span><span class="p">[</span><span class="n">c</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">B</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">a</span><span class="o">.</span><span class="n">offset_s</span> <span class="o">-</span> <span class="n">_EPS</span> <span class="ow">and</span> <span class="n">B</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">a</span><span class="o">.</span><span class="n">offset_s</span> <span class="o">+</span> <span class="n">a</span><span class="o">.</span><span class="n">duration_s</span> <span class="o">+</span> <span class="n">_EPS</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">feasible</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">):</span>
+        <span class="n">length</span> <span class="o">=</span> <span class="n">B</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">-</span> <span class="n">B</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">length</span> <span class="o">&lt;=</span> <span class="n">_EPS</span><span class="p">:</span>  <span class="c1"># l_max is SOFT (penalized in seg_reward), not a hard cap</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="n">l_min_eff</span> <span class="o">=</span> <span class="mf">0.0</span> <span class="k">if</span> <span class="p">(</span><span class="n">i</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">j</span> <span class="o">==</span> <span class="n">m</span><span class="p">)</span> <span class="k">else</span> <span class="n">l_min</span>
+        <span class="k">if</span> <span class="n">length</span> <span class="o">&lt;</span> <span class="n">l_min_eff</span> <span class="o">-</span> <span class="n">_EPS</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">return</span> <span class="n">contains</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">)</span>
+
+    <span class="c1"># coverage-gap classification: an interval no clip continuously contains.</span>
+    <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">m</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="n">contains</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">p</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">K</span><span class="p">)):</span>
+            <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;coverage_gap&quot;</span>
+
+    <span class="n">best</span> <span class="o">=</span> <span class="p">[[</span><span class="n">_NEG_INF</span><span class="p">]</span> <span class="o">*</span> <span class="n">K</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">m</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)]</span>
+    <span class="n">back</span> <span class="o">=</span> <span class="p">[[</span><span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">K</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">m</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)]</span>
+    <span class="c1"># Per-boundary top-2 of best[i][·]: (v1, a1, v2) → max over clips ≠ c is O(1).</span>
+    <span class="n">top</span> <span class="o">=</span> <span class="p">[(</span><span class="n">_NEG_INF</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">_NEG_INF</span><span class="p">)]</span> <span class="o">*</span> <span class="p">(</span><span class="n">m</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">best_other</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">c</span><span class="p">):</span>
+        <span class="n">v1</span><span class="p">,</span> <span class="n">a1</span><span class="p">,</span> <span class="n">v2</span> <span class="o">=</span> <span class="n">top</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">v2</span> <span class="k">if</span> <span class="n">a1</span> <span class="o">==</span> <span class="n">c</span> <span class="k">else</span> <span class="n">v1</span>
+
+    <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">m</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="c1"># Base case: the FIRST segment [B_0, B_j) — no cut, L_min relaxed via i==0.</span>
+        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">K</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">feasible</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">j</span><span class="p">):</span>
+                <span class="n">r</span> <span class="o">=</span> <span class="n">seg_reward</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">j</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">r</span> <span class="o">&gt;</span> <span class="n">best</span><span class="p">[</span><span class="n">j</span><span class="p">][</span><span class="n">c</span><span class="p">]:</span>
+                    <span class="n">best</span><span class="p">[</span><span class="n">j</span><span class="p">][</span><span class="n">c</span><span class="p">]</span> <span class="o">=</span> <span class="n">r</span>
+                    <span class="n">back</span><span class="p">[</span><span class="n">j</span><span class="p">][</span><span class="n">c</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="c1"># Transitions: a cut from a DIFFERENT clip&#39;s segment ending at boundary i (i≥1).</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="n">j</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="k">while</span> <span class="n">i</span> <span class="o">&gt;=</span> <span class="mi">1</span> <span class="ow">and</span> <span class="p">(</span><span class="n">B</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">-</span> <span class="n">B</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">&lt;=</span> <span class="n">max_seg_s</span> <span class="o">+</span> <span class="n">_EPS</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">K</span><span class="p">):</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">feasible</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">):</span>
+                    <span class="k">continue</span>
+                <span class="n">prev</span> <span class="o">=</span> <span class="n">best_other</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span>  <span class="c1"># best segment ending at i on a clip ≠ c</span>
+                <span class="k">if</span> <span class="n">prev</span> <span class="o">==</span> <span class="n">_NEG_INF</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="n">cand</span> <span class="o">=</span> <span class="n">prev</span> <span class="o">+</span> <span class="n">seg_reward</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">)</span> <span class="o">-</span> <span class="n">lam</span>
+                <span class="k">if</span> <span class="n">cand</span> <span class="o">&gt;</span> <span class="n">best</span><span class="p">[</span><span class="n">j</span><span class="p">][</span><span class="n">c</span><span class="p">]</span> <span class="o">+</span> <span class="mf">1e-12</span><span class="p">:</span>
+                    <span class="n">best</span><span class="p">[</span><span class="n">j</span><span class="p">][</span><span class="n">c</span><span class="p">]</span> <span class="o">=</span> <span class="n">cand</span>
+                    <span class="n">back</span><span class="p">[</span><span class="n">j</span><span class="p">][</span><span class="n">c</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">_arg_other</span><span class="p">(</span><span class="n">best</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">c</span><span class="p">))</span>
+            <span class="n">i</span> <span class="o">-=</span> <span class="mi">1</span>
+        <span class="n">top</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">_top2</span><span class="p">(</span><span class="n">best</span><span class="p">[</span><span class="n">j</span><span class="p">])</span>
+
+    <span class="n">v1</span><span class="p">,</span> <span class="n">a1</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">top</span><span class="p">[</span><span class="n">m</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">v1</span> <span class="o">==</span> <span class="n">_NEG_INF</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;dwell_infeasible&quot;</span>
+
+    <span class="c1"># Reconstruct segments (last → first) via back-pointers.</span>
+    <span class="n">segments</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">j</span><span class="p">,</span> <span class="n">c</span> <span class="o">=</span> <span class="n">m</span><span class="p">,</span> <span class="n">a1</span>
+    <span class="k">while</span> <span class="n">j</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">bp</span> <span class="o">=</span> <span class="n">back</span><span class="p">[</span><span class="n">j</span><span class="p">][</span><span class="n">c</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">bp</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;reconstruct_failed&quot;</span>
+        <span class="n">i</span><span class="p">,</span> <span class="n">prev_c</span> <span class="o">=</span> <span class="n">bp</span>
+        <span class="n">segments</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">B</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">B</span><span class="p">[</span><span class="n">j</span><span class="p">],</span> <span class="n">aligns</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">.</span><span class="n">clip_id</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">prev_c</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">break</span>
+        <span class="n">j</span><span class="p">,</span> <span class="n">c</span> <span class="o">=</span> <span class="n">i</span><span class="p">,</span> <span class="n">prev_c</span>
+    <span class="n">segments</span><span class="o">.</span><span class="n">reverse</span><span class="p">()</span>
+    <span class="n">entries</span> <span class="o">=</span> <span class="n">_coalesce</span><span class="p">([</span><span class="n">EdlEntry</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">cid</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">cid</span> <span class="ow">in</span> <span class="n">segments</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">entries</span><span class="p">,</span> <span class="s2">&quot;optimal&quot;</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_top2</span><span class="p">(</span><span class="n">row</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;(max, argmax_lowest_index, second_max) of a list (−inf-safe).&quot;&quot;&quot;</span>
+    <span class="n">v1</span><span class="p">,</span> <span class="n">a1</span><span class="p">,</span> <span class="n">v2</span> <span class="o">=</span> <span class="n">_NEG_INF</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">_NEG_INF</span>
+    <span class="k">for</span> <span class="n">c</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">row</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">v</span> <span class="o">&gt;</span> <span class="n">v1</span><span class="p">:</span>
+            <span class="n">v2</span><span class="p">,</span> <span class="n">v1</span><span class="p">,</span> <span class="n">a1</span> <span class="o">=</span> <span class="n">v1</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">c</span>
+        <span class="k">elif</span> <span class="n">v</span> <span class="o">&gt;</span> <span class="n">v2</span><span class="p">:</span>
+            <span class="n">v2</span> <span class="o">=</span> <span class="n">v</span>
+    <span class="k">return</span> <span class="n">v1</span><span class="p">,</span> <span class="n">a1</span><span class="p">,</span> <span class="n">v2</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_arg_other</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="n">c</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Lowest-index argmax of ``row`` over clips != c (the predecessor of a cut into c).&quot;&quot;&quot;</span>
+    <span class="n">best_c</span><span class="p">,</span> <span class="n">best_v</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">_NEG_INF</span>
+    <span class="k">for</span> <span class="n">cc</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">row</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">cc</span> <span class="o">!=</span> <span class="n">c</span> <span class="ow">and</span> <span class="n">v</span> <span class="o">&gt;</span> <span class="n">best_v</span><span class="p">:</span>
+            <span class="n">best_v</span><span class="p">,</span> <span class="n">best_c</span> <span class="o">=</span> <span class="n">v</span><span class="p">,</span> <span class="n">cc</span>
+    <span class="k">return</span> <span class="n">best_c</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_coalesce</span><span class="p">(</span><span class="n">entries</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">EdlEntry</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">EdlEntry</span><span class="p">]:</span>
+    <span class="n">out</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">EdlEntry</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">entries</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">out</span> <span class="ow">and</span> <span class="n">out</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">clip_id</span> <span class="o">==</span> <span class="n">e</span><span class="o">.</span><span class="n">clip_id</span> <span class="ow">and</span> <span class="nb">abs</span><span class="p">(</span><span class="n">out</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">song_end</span> <span class="o">-</span> <span class="n">e</span><span class="o">.</span><span class="n">song_start</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mf">1e-3</span><span class="p">:</span>
+            <span class="n">out</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">EdlEntry</span><span class="p">(</span><span class="n">out</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">song_start</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">song_end</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">clip_id</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">out</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_fallback</span><span class="p">(</span><span class="n">aligns</span><span class="p">,</span> <span class="n">song_duration</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">cause</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Defer to the alignment-only default, tagging the reason (never silent).&quot;&quot;&quot;</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.footage.strategy</span><span class="w"> </span><span class="kn">import</span> <span class="n">best_confidence</span>
+
+    <span class="n">entries</span> <span class="o">=</span> <span class="n">best_confidence</span><span class="p">(</span><span class="n">aligns</span><span class="p">,</span> <span class="n">song_duration</span><span class="p">)</span>
+    <span class="n">meta</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;strategy&quot;</span><span class="p">:</span> <span class="s2">&quot;weighted&quot;</span><span class="p">,</span> <span class="s2">&quot;fallback&quot;</span><span class="p">:</span> <span class="s2">&quot;best_confidence&quot;</span><span class="p">,</span> <span class="s2">&quot;cause&quot;</span><span class="p">:</span> <span class="n">cause</span><span class="p">}</span>
+    <span class="k">return</span> <span class="n">entries</span><span class="p">,</span> <span class="n">meta</span>
+
+
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># selection_margin — a separate O(n·K) per-frame diagnostic (NOT the DP path margin)</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+
+
+<div class="viewcode-block" id="selection_margin">
+<a class="viewcode-back" href="../../../module_docs/muvid/footage/select_score.html#muvid.footage.select_score.selection_margin">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">selection_margin</span><span class="p">(</span>
+    <span class="n">alignments</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">FootageAlignment</span><span class="p">],</span>
+    <span class="n">tensor</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">weights</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Per-frame ``best_composite − 2nd_best_composite`` over clips COVERING that frame.</span>
+
+<span class="sd">    A LOCAL &quot;where a human should decide&quot; proxy (small margin = a toss-up), distinct from the</span>
+<span class="sd">    DP&#39;s global path optimality. ``NaN`` where fewer than 2 clips cover the frame.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">aligns</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">alignments</span><span class="p">)</span>
+    <span class="n">g</span><span class="p">,</span> <span class="n">W</span> <span class="o">=</span> <span class="n">_composite</span><span class="p">(</span><span class="n">tensor</span><span class="p">,</span> <span class="n">weights</span> <span class="ow">or</span> <span class="n">DEFAULT_WEIGHTS</span><span class="p">,</span> <span class="n">aligns</span><span class="p">)</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="n">tensor</span><span class="o">.</span><span class="n">n</span>
+    <span class="n">hop</span> <span class="o">=</span> <span class="n">tensor</span><span class="o">.</span><span class="n">hop_s</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">W</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">aligns</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">out</span>
+    <span class="n">times</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="o">*</span> <span class="n">hop</span>
+    <span class="n">covered</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">aligns</span><span class="p">),</span> <span class="n">n</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">ai</span><span class="p">,</span> <span class="n">a</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">aligns</span><span class="p">):</span>
+        <span class="n">covered</span><span class="p">[</span><span class="n">ai</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">times</span> <span class="o">&gt;=</span> <span class="n">a</span><span class="o">.</span><span class="n">coverage</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">_EPS</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">times</span> <span class="o">&lt;</span> <span class="n">a</span><span class="o">.</span><span class="n">coverage</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">_EPS</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+        <span class="n">vals</span> <span class="o">=</span> <span class="n">g</span><span class="p">[</span><span class="n">covered</span><span class="p">[:,</span> <span class="n">k</span><span class="p">],</span> <span class="n">k</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">vals</span><span class="o">.</span><span class="n">size</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="n">top2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">partition</span><span class="p">(</span><span class="n">vals</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">)[</span><span class="o">-</span><span class="mi">2</span><span class="p">:]</span>
+            <span class="n">out</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">top2</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">top2</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">out</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p></p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
