@@ -118,16 +118,55 @@ def default_font() -> str | None:
     return next((f for f in _FONT_CANDIDATES if Path(f).exists()), None)
 
 
-def escape_filter_value(value: str) -> str:
-    """Escape ``value`` for use inside an ffmpeg filtergraph argument.
+#: Characters ffmpeg's *option* parser gives special meaning to inside a single
+#: filter's argument string: ``:`` separates one option from the next, and
+#: ``\`` / ``'`` do that parser's quoting.
+_OPTION_LEVEL_SPECIALS = ("\\", "'", ":")
 
-    A filtergraph is parsed before the filter sees its options, so the graph's
-    own punctuation (``\\ : , ; [ ] ' %``) has to be escaped or a title with a
-    colon in it silently becomes a syntax error.
+#: Characters ffmpeg's *filtergraph* parser gives special meaning to across the
+#: graph as a whole: ``,`` chains filters, ``;`` separates chains, ``[]`` delimit
+#: pad labels, and ``\`` / ``'`` do that parser's quoting.
+_GRAPH_LEVEL_SPECIALS = ("\\", "'", ",", ";", "[", "]")
+
+
+def _backslash_escape(value: str, specials: tuple[str, ...]) -> str:
+    """Prefix each character of ``specials`` found in ``value`` with a backslash.
+
+    ``specials`` must lead with ``\\``: the backslashes this introduces for the
+    later characters must not themselves be escaped again by the ``\\`` pass.
     """
-    for char in ("\\", "'", ":", ",", ";", "[", "]", "%"):
+    for char in specials:
         value = value.replace(char, "\\" + char)
     return value
+
+
+def escape_filter_value(value: str) -> str:
+    r"""Escape ``value`` for use as a filter option inside an ffmpeg filtergraph.
+
+    ffmpeg unescapes such a value **twice**, so escaping it once is not enough:
+
+    1. The *filtergraph* parser reads the whole graph first, splitting it on
+       ``_GRAPH_LEVEL_SPECIALS`` and consuming one layer of quoting.
+    2. Each surviving per-filter argument string is only then split into options
+       on ``_OPTION_LEVEL_SPECIALS``, consuming a second layer.
+
+    Escaping therefore runs in the mirror order — option level first, then graph
+    level over that result — so that each ffmpeg pass peels off exactly one
+    layer. A literal ``'`` comes out as ``\\\'`` and a literal ``:`` as ``\\:``.
+
+    Escaping only once is why a title like ``"Song: Part 1"`` used to become a
+    filtergraph syntax error, and why a workdir whose name contained ``'`` or
+    ``:`` broke every ``sendcmd=f=<path>`` render.
+
+    Note that ``%`` is deliberately *not* escaped: neither parser treats it as
+    special, so ``\%`` was simply unescaped back to ``%`` and escaping it never
+    did anything. drawtext's ``%{...}`` text expansion is a third level that
+    applies to that one filter's ``text`` option only, and is out of scope for a
+    general-purpose filtergraph escaper.
+    """
+    return _backslash_escape(
+        _backslash_escape(value, _OPTION_LEVEL_SPECIALS), _GRAPH_LEVEL_SPECIALS
+    )
 
 
 def title_chain(

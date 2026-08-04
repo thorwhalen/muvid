@@ -14,12 +14,15 @@ keywords = []
 authors = [
     { name = "Thor Whalen" },
 ]
-# Core: the CLI (argh) and the ffmpeg-based visualizer (mixing). The AI
+# Core: the CLI (argh), the ffmpeg-based visualizer (mixing), and numpy for the
+# beat-flash onset envelope (muvid.visualize.reactive). numpy arrives with
+# `mixing` too, but muvid imports it directly so it is declared directly. The AI
 # narrative pipeline's heavy dependencies are the optional `ai` extra, so
 # `muvid.visualize` (and downstreams like `yb`) stay lightweight.
 dependencies = [
     "argh",
     "mixing>=0.0.28",
+    "numpy",
 ]
 
 [project.scripts]
