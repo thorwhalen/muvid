@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "muvid"
-version = "0.0.11"
+version = "0.0.13"
 description = "Tools to make music videos"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -52,6 +52,29 @@ mcp = [
     "fastmcp",
     "py2mcp>=0.1.9",
     "nw>=0.0.15",
+]
+# The footage SCORING layer's TORCH-FREE core tier (thorwhalen/muvid#13): quality gates +
+# motion-to-beat + the Viterbi selector + editor score-tracks. This is what the prod
+# connector installs. `mediapipe` provides face detection AND opencv-contrib-python (the cv2
+# the CV kernels use — coexists with mixing's opencv-python; keep versions aligned).
+# `mixing[beats]` adds librosa (ISC) for the master beat/onset grid. No torch → OOM-safe +
+# commercial-clean. Heavy imports are lazy, so `import muvid` never pulls these.
+scoring = [
+    "mediapipe",
+    "mixing[beats]>=0.0.30",
+]
+# Optional: enables the selector's `boundary_mode="beats+shots"` (PySceneDetect shot cuts as
+# extra cut candidates). Absent → the mode degrades cleanly to beats-only.
+scoring-shots = [
+    "scenedetect",
+]
+# OPT-IN, OFF BY DEFAULT — the lip-sync tier (Demucs vocal separation + SyncNet LSE-C). NOT
+# on the prod connector: the htdemucs weights are CC-BY-NC (research-only, not commercial-
+# clean) and Demucs+SyncNet on CPU peak ~2-3 GB (OOM risk on the fragile box). Install only
+# on a local/worker box you opt into, and point at licensed weights via MUVID_SYNCNET_*.
+scoring-lipsync = [
+    "demucs",
+    "syncnet-python",
 ]
 ui = [
     "fastapi",

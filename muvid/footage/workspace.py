@@ -88,11 +88,32 @@ class MusicVideoFootageProject:
         m = self.manifest()
         m["song"] = dest.name
         m["song_duration"] = _probe_duration(dest)
+        # Compute the song hash ONCE here (chunked) and cache it — scoring/reads compare the
+        # stored hash rather than re-hashing a 100 MB file on every poll (persistence-lens).
+        m["song_hash"] = _hash_file(dest)
         self._write_manifest(m)
         # The song is the alignment reference — changing it invalidates every persisted
         # offset. Drop the alignment so footage_timeline/assemble demand a fresh
         # align_footage rather than silently cutting to a song the offsets no longer match.
         (self.root / "alignments.json").unlink(missing_ok=True)
+        # A new song also invalidates every persisted score track (the grid mapping moved).
+        self.invalidate_scores()
+
+    def song_hash(self) -> str:
+        """The clean song's content hash (cached in the manifest; computed if missing)."""
+        m = self.manifest()
+        h = m.get("song_hash")
+        if not h:
+            h = _hash_file(self.song_path())
+            m["song_hash"] = h
+            self._write_manifest(m)
+        return h
+
+    def invalidate_scores(self) -> None:
+        """Delete persisted score tracks — the primary invalidation on song/offset change."""
+        import shutil
+
+        shutil.rmtree(self.root / "scores", ignore_errors=True)
 
     def song_path(self) -> Path:
         name = self.manifest().get("song")
@@ -198,6 +219,17 @@ def _probe_duration(path: Path) -> float:
     from muvid.visualize.ffmpeg import media_duration  # lazy
 
     return float(media_duration(path))
+
+
+def _hash_file(path: Path, *, chunk: int = 1 << 20) -> str:
+    """sha256 of a file, read in ``chunk``-sized blocks (never load the whole file)."""
+    import hashlib
+
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        for block in iter(lambda: f.read(chunk), b""):
+            h.update(block)
+    return h.hexdigest()
 
 
 @dataclass(frozen=True)

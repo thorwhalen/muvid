@@ -144,6 +144,8 @@ def align_footage(project_id: str) -> dict:
         raise _tool_error("no footage added — call add_footage first")
     aligns = _align(str(proj.song_path()), clips, song_duration=proj.song_duration())
     proj.save_alignments(aligns)
+    # New offsets invalidate every persisted score track (the song-time grid mapping moved).
+    proj.invalidate_scores()
     aligned_ids = {a.clip_id for a in aligns}
     dropped = [cid for cid, _ in clips if cid not in aligned_ids]
     return {
@@ -196,13 +198,21 @@ def assemble_music_video(
     *,
     strategy: str = "",
     edl: list | None = None,
+    preset: str = "",
+    weights: dict | None = None,
+    config: dict | None = None,
 ) -> dict:
     """Assemble the music video — auto (a selection ``strategy``) or an explicit ``edl``. Free.
 
     - ``edl``: an explicit edit — a list of ``{song_start, song_end, clip_id}`` spans. Must
       be in order, non-overlapping, contiguous, and each within its clip's coverage.
-    - otherwise **full-auto**: a registered ``strategy`` (see ``list_strategies``; default
-      ``best_confidence``) builds the edit from the alignments.
+    - ``strategy='weighted'`` (score-driven): the beat-snapped Viterbi selector reads the
+      persisted score tracks (run ``score_footage`` first) and the selection config —
+      ``preset`` ("energetic"/"contemplative") and/or ``weights`` (per-metric) and/or
+      ``config`` (``lambda_switch``/``l_min_s``/``l_max_s``/``boundary_mode``). Re-weighting
+      is cheap: it re-selects from the SAME scores without re-scoring.
+    - otherwise **full-auto**: a registered alignment-only ``strategy`` (see
+      ``list_strategies``; default ``best_confidence``) builds the edit from the alignments.
 
     Each cut is trimmed at its aligned in-point, scaled onto the project canvas, and
     concatenated; the CLEAN song audio for the covered span is used. Returns the render.
@@ -220,14 +230,26 @@ def assemble_music_video(
         raise _tool_error("no alignment — call align_footage first")
     song_dur = proj.song_duration()
 
+    has_selection_config = bool(preset or weights or config)
     try:
         if edl is not None:
+            if has_selection_config:
+                raise ValueError(
+                    "selection config (preset/weights/config) can't accompany an explicit edl"
+                )
             entries = validate_edl(edl, aligns, song_dur)
             used_strategy = None
         else:
-            strat = strategy or DEFAULT_STRATEGY
+            strat = strategy or (
+                "weighted" if has_selection_config else DEFAULT_STRATEGY
+            )
+            if has_selection_config and strat != "weighted":
+                raise ValueError(
+                    f"selection config only applies to strategy='weighted' (got {strat!r})"
+                )
+            context = _selection_context(proj, strat, preset, weights, config)
             entries = validate_edl(
-                select_edl(strat, aligns, song_dur), aligns, song_dur
+                select_edl(strat, aligns, song_dur, context=context), aligns, song_dur
             )
             used_strategy = strat
     except (ValueError, KeyError) as e:
@@ -276,6 +298,41 @@ def assemble_music_video(
     }
     proj.write_render_meta(render_id, meta)
     return meta
+
+
+def _selection_context(proj, strat, preset, weights, config):
+    """Build a ``SelectionContext`` from persisted scores for the ``weighted`` strategy.
+
+    Returns ``None`` for alignment-only strategies (they ignore context). When scores are
+    absent, the tensor is ``None`` and ``weighted_selection`` raises a clear "run scoring
+    first" the caller surfaces — so no scores gives a helpful error, not a silent bad edit.
+    """
+    if strat != "weighted":
+        return None
+    from muvid.footage.scoring.grid import (
+        align_fingerprint,
+        load_manifest,
+        load_tensor,
+        manifest_is_current,
+    )
+    from muvid.footage.select_score import SelectionContext, resolve_config
+
+    manifest = load_manifest(proj.root) or {}
+    beats = manifest.get("beats", {})
+    # Stale scores (a re-align since scoring) must NOT drive a weighted edit — treat the tensor
+    # as absent so weighted_selection raises the clear "run scoring first" the caller surfaces.
+    fresh = manifest_is_current(
+        manifest,
+        song_hash=proj.song_hash() if proj.has_song() else "",
+        align_fingerprint=align_fingerprint(proj.load_alignments()),
+    )
+    return SelectionContext(
+        tensor=load_tensor(proj.root) if fresh else None,
+        beat_times=beats.get("beat_times", []),
+        downbeat_times=beats.get("downbeat_times", []),
+        shot_boundaries=manifest.get("shot_boundaries"),
+        config=resolve_config(preset=preset or None, weights=weights, config=config),
+    )
 
 
 def footage_status(project_id: str) -> dict:

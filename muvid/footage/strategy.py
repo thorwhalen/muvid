@@ -15,53 +15,116 @@ Register your own with :func:`register_selection_strategy`.
 
 from __future__ import annotations
 
+import importlib
+import inspect
 from typing import Callable, Sequence
 
 from muvid.footage.edl import EdlEntry, FootageAlignment
 
 #: A strategy: alignments + song duration → an EDL (built-ins ignore song_duration but it
 #: is passed so a strategy MAY reason about the full timeline).
-SelectionStrategy = Callable[[Sequence[FootageAlignment], float], "list[EdlEntry]"]
+#:
+#: **Score-driven opt-in (progressive disclosure).** A strategy that needs the score tensor
+#: + beats declares a keyword-only ``context`` parameter (or ``**kwargs``); :func:`select_edl`
+#: then passes a ``SelectionContext`` (defined in :mod:`muvid.footage.select_score`) as
+#: ``context=``. The built-ins take only ``(alignments, song_duration)`` and never see it —
+#: the exact same dispatch idiom as ``nw.jobs._call_dispatch``. The magic parameter name is
+#: literally ``context``.
+SelectionStrategy = Callable[..., "list[EdlEntry]"]
 
 _STRATEGIES: dict[str, SelectionStrategy] = {}
+#: Lazily-loaded strategies: slug -> ``"module:func"``. Resolved (imported) only on first
+#: use, so listing/registering the score-driven ``weighted`` strategy never pulls numpy onto
+#: the import-light path (thorwhalen/muvid#13; keeps ``import muvid.footage`` cv2/numpy-free).
+_LAZY_STRATEGIES: dict[str, str] = {}
 _EPS = 1e-6
 
 
 def register_selection_strategy(slug: str, fn: SelectionStrategy) -> SelectionStrategy:
     """Register a selection strategy under ``slug`` (returns it, for inline use)."""
-    if not isinstance(slug, str) or not slug.strip() or any(c.isspace() for c in slug):
-        raise ValueError(
-            f"strategy slug must be a non-empty whitespace-free string: {slug!r}"
-        )
+    _check_slug(slug)
     if not callable(fn):
         raise TypeError("a selection strategy must be callable")
     _STRATEGIES[slug] = fn
     return fn
 
 
+def register_lazy_strategy(slug: str, target_ref: str) -> None:
+    """Register a strategy by a ``"module:func"`` reference, imported only on first use.
+
+    Lets a heavy strategy (numpy DP, cv2, …) be *listed* and *named* without importing its
+    module at registration time — the import happens in :func:`resolve_strategy`.
+    """
+    _check_slug(slug)
+    if ":" not in target_ref:
+        raise ValueError(f"target_ref must be 'module:func', got {target_ref!r}")
+    _LAZY_STRATEGIES[slug] = target_ref
+
+
+def _check_slug(slug: str) -> None:
+    if not isinstance(slug, str) or not slug.strip() or any(c.isspace() for c in slug):
+        raise ValueError(
+            f"strategy slug must be a non-empty whitespace-free string: {slug!r}"
+        )
+
+
 def list_strategies() -> list[str]:
-    """The registered strategy slugs, sorted."""
-    return sorted(_STRATEGIES)
+    """All strategy slugs (eager + lazy), sorted. Lazy slugs are NOT imported to list them."""
+    return sorted(set(_STRATEGIES) | set(_LAZY_STRATEGIES))
 
 
 def resolve_strategy(strategy: "str | SelectionStrategy") -> SelectionStrategy:
-    """Resolve a strategy name OR a bare callable to a :data:`SelectionStrategy`."""
+    """Resolve a strategy name OR a bare callable to a :data:`SelectionStrategy`.
+
+    A lazy slug is imported here (and cached into the eager table) on first resolution.
+    """
     if callable(strategy):
         return strategy
-    if strategy not in _STRATEGIES:
-        raise KeyError(
-            f"unknown strategy {strategy!r}; registered: {list_strategies()}"
+    if strategy in _STRATEGIES:
+        return _STRATEGIES[strategy]
+    if strategy in _LAZY_STRATEGIES:
+        module_name, _, func_name = _LAZY_STRATEGIES[strategy].partition(":")
+        fn = getattr(importlib.import_module(module_name), func_name)
+        _STRATEGIES[strategy] = fn  # cache the resolved callable
+        return fn
+    raise KeyError(f"unknown strategy {strategy!r}; registered: {list_strategies()}")
+
+
+def _call_strategy(fn, alignments, song_duration, context):
+    """Call ``fn``, passing ``context=`` only if it declares ``context`` or ``**kwargs``.
+
+    Mirrors ``nw.jobs._call_dispatch`` exactly (try/except signature; VAR_KEYWORD → pass;
+    else pass only when a ``context`` parameter is present) so a 2-arg built-in is untouched
+    and a ``def s(a, d, **kw)`` strategy still receives the context.
+    """
+    accepts_context = False
+    try:
+        params = inspect.signature(fn).parameters.values()
+        accepts_context = any(p.kind is p.VAR_KEYWORD for p in params) or any(
+            p.name == "context" for p in params
         )
-    return _STRATEGIES[strategy]
+    except (ValueError, TypeError):
+        accepts_context = False
+    if accepts_context:
+        return fn(alignments, song_duration, context=context)
+    return fn(alignments, song_duration)
 
 
 def select_edl(
     strategy: "str | SelectionStrategy",
     alignments: Sequence[FootageAlignment],
     song_duration: float,
+    *,
+    context=None,
 ) -> list[EdlEntry]:
-    """Run ``strategy`` (name or callable) to produce an EDL from ``alignments``."""
-    return list(resolve_strategy(strategy)(alignments, song_duration))
+    """Run ``strategy`` (name or callable) to produce an EDL from ``alignments``.
+
+    ``context`` (a ``SelectionContext``) is passed to score-driven strategies that declare it;
+    the alignment-only built-ins ignore it. See :data:`SelectionStrategy`.
+    """
+    return list(
+        _call_strategy(resolve_strategy(strategy), alignments, song_duration, context)
+    )
 
 
 # --------------------------------------------------------------------------
@@ -159,6 +222,11 @@ for _slug, _fn in [
     ("fewest_cuts", fewest_cuts),
 ]:
     register_selection_strategy(_slug, _fn)
+
+# The score-driven beat-snapped semi-Markov Viterbi selector (thorwhalen/muvid#13). Lazy:
+# its module pulls numpy, so it is registered by reference and imported only when resolved —
+# keeping `import muvid.footage` numpy-free (and `list_strategies()` shows it regardless).
+register_lazy_strategy("weighted", "muvid.footage.select_score:weighted_selection")
 
 #: The default auto-strategy when none is chosen.
 DEFAULT_STRATEGY = "best_confidence"
