@@ -429,7 +429,10 @@ def test_set_song_duration_cap(tmp_path, monkeypatch):
     monkeypatch.setattr(
         _fetch,
         "fetch_to_file_streaming",
-        lambda url, dest, *, max_bytes: (Path(dest).write_bytes(b"x"), Path(dest))[1],
+        lambda url, dest, *, max_bytes, expect_kind="": (
+            Path(dest).write_bytes(b"x"),
+            Path(dest),
+        )[1],
     )
     monkeypatch.setattr(ft, "_duration", lambda p: 999.0)
     with use_email("u@x.com"), pytest.raises(ToolError, match="limit is exceeded"):
@@ -448,7 +451,10 @@ def test_add_footage_stores_the_clip_without_samefile_error(tmp_path, monkeypatc
 
     monkeypatch.setattr(
         _fetch, "fetch_to_file_streaming",
-        lambda url, dest, *, max_bytes: (Path(dest).write_bytes(b"video-bytes"), Path(dest))[1],
+        lambda url, dest, *, max_bytes, expect_kind="": (
+            Path(dest).write_bytes(b"video-bytes"),
+            Path(dest),
+        )[1],
     )
     monkeypatch.setattr(ft, "_duration", lambda p: 10.0)
     proj = FootageWorkspace.for_email("u@x.com").create_project("p")

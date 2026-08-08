@@ -27,7 +27,9 @@ VISUALIZER_TOOLS = [
 FOOTAGE_TOOLS = [
     "set_song",
     "add_footage",
+    "add_footage_folder",
     "align_footage",
+    "propose_edit",
     "footage_timeline",
     "assemble_music_video",
     "footage_status",

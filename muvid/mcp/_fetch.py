@@ -40,8 +40,26 @@ from urllib.parse import urlparse
 MAX_BYTES = int(os.environ.get("MUVID_FETCH_MAX_BYTES", str(60 * 1024 * 1024)))
 #: Redirect-hop cap (each hop is re-validated).
 MAX_REDIRECTS = 5
-#: Wall-clock deadline for the whole fetch, in seconds (env ``MUVID_FETCH_TIMEOUT_S``).
+#: Floor for the wall-clock deadline, in seconds (env ``MUVID_FETCH_TIMEOUT_S``).
+#:
+#: This is a FLOOR, not the deadline: see :func:`deadline_for`. A constant 60 s against a
+#: 400 MB byte cap demanded a sustained 6.7 MB/s or the fetch died — a byte cap and a time
+#: cap that contradict each other is a misconfiguration, not a policy (muvid#24 B1).
 TOTAL_TIMEOUT_S = float(os.environ.get("MUVID_FETCH_TIMEOUT_S", "60"))
+#: Slowest transfer rate a fetch is expected to sustain, in bytes/second
+#: (env ``MUVID_FETCH_MIN_RATE_BPS``; default 1 MB/s). The deadline for a given byte cap is
+#: derived from this, so raising the cap cannot silently make fetches unachievable.
+MIN_RATE_BPS = float(os.environ.get("MUVID_FETCH_MIN_RATE_BPS", str(1024 * 1024)))
+
+
+def deadline_for(max_bytes: int) -> float:
+    """Seconds allowed for a transfer of up to ``max_bytes``.
+
+    ``TOTAL_TIMEOUT_S`` as a floor, plus the time ``max_bytes`` needs at
+    :data:`MIN_RATE_BPS`. Keeps the time budget and the size budget consistent by
+    construction: a 400 MB clip gets ~460 s rather than the 60 s that used to kill it.
+    """
+    return TOTAL_TIMEOUT_S + max(0.0, max_bytes) / max(1.0, MIN_RATE_BPS)
 #: Chunk size for the bounded read.
 _CHUNK = 64 * 1024
 _ALLOWED_SCHEMES = ("http", "https")
@@ -166,24 +184,27 @@ def fetch_to_file(uri: str, dest: Path) -> Path:
     return dest
 
 
-def fetch_to_file_streaming(uri: str, dest: Path, *, max_bytes: int) -> Path:
+def fetch_to_file_streaming(
+    uri: str, dest: Path, *, max_bytes: int, expect_kind: str = ""
+) -> Path:
     """Stream a (large) ``uri`` straight to ``dest``, chunk by chunk (SSRF/size/time-bound).
 
     For video footage: the body is written to disk as it arrives and the running total is
     checked against ``max_bytes`` — never buffered whole in RAM. A partial file is removed
     on any failure. Returns ``dest``.
+
+    ``expect_kind`` (``'video'`` / ``'audio'`` / …) asserts the payload's magic bytes before
+    a single byte reaches the file. Without it, a share link that answers ``HTTP 200`` with
+    a sign-in page writes ~900 KB of HTML to ``dest``, and the caller discovers it only when
+    ffprobe fails with "Invalid data found when processing input" — technically loud,
+    practically unhelpful. See :mod:`graze.content_kind`.
     """
-    deadline = time.monotonic() + TOTAL_TIMEOUT_S
+    deadline = time.monotonic() + deadline_for(max_bytes)
     dest.parent.mkdir(parents=True, exist_ok=True)
     total = 0
     try:
         with _open_following_redirects(uri, deadline) as resp, open(dest, "wb") as f:
-            while True:
-                if time.monotonic() > deadline:
-                    raise FetchError("fetch exceeded the time budget")
-                chunk = resp.read(_CHUNK)
-                if not chunk:
-                    break
+            for chunk in _kind_guarded(_iter_chunks(resp, deadline), expect_kind, uri):
                 total += len(chunk)
                 if total > max_bytes:
                     raise FetchError(f"resource exceeds the {max_bytes}-byte limit")
@@ -192,3 +213,110 @@ def fetch_to_file_streaming(uri: str, dest: Path, *, max_bytes: int) -> Path:
         dest.unlink(missing_ok=True)
         raise
     return dest
+
+
+def _iter_chunks(resp, deadline: float):
+    """Yield the response body in chunks, enforcing the wall-clock deadline."""
+    while True:
+        if time.monotonic() > deadline:
+            raise FetchError("fetch exceeded the time budget")
+        chunk = resp.read(_CHUNK)
+        if not chunk:
+            return
+        yield chunk
+
+
+def _kind_guarded(chunks, expect_kind: str, uri: str):
+    """Assert the payload kind before any chunk escapes, when a kind was declared."""
+    if not expect_kind:
+        yield from chunks
+        return
+    from graze.content_kind import ContentKindMismatch, kind_checked
+
+    try:
+        yield from kind_checked(chunks, expect_kind=expect_kind, url=uri)
+    except ContentKindMismatch as e:
+        raise FetchError(str(e)) from e
+
+
+def extract_media_members(
+    archive: Path,
+    dest_dir: Path,
+    *,
+    extensions: "tuple[str, ...]",
+    max_members: int,
+    max_member_bytes: int,
+) -> "tuple[list[Path], list[dict]]":
+    """Extract media members of ``archive`` into ``dest_dir``: ``(paths, skipped)``.
+
+    A folder share link resolves to ONE zip of N files, so this is what turns a shoot into
+    clips. Returns the extracted paths in archive order, plus a ``skipped`` list of
+    ``{name, reason}`` — a member dropped for any reason is NAMED rather than silently
+    omitted, because a coverage decision made on quietly-truncated input is worse than one
+    made on a short list.
+
+    Members are filtered by extension, capped in count and in per-member size, and their
+    names are flattened to a basename — which also closes zip-slip (a member named
+    ``../../etc/x`` can never escape ``dest_dir``).
+    """
+    import zipfile
+
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    out: list[Path] = []
+    skipped: list[dict] = []
+    try:
+        zf = zipfile.ZipFile(archive)
+    except zipfile.BadZipFile as e:
+        raise FetchError(f"the downloaded archive is not a readable ZIP: {e}") from e
+    with zf:
+        for info in zf.infolist():
+            name = info.filename
+            base = Path(name).name  # flattens any path -> zip-slip cannot escape
+            if info.is_dir() or not base or base.startswith("."):
+                continue
+            if Path(base).suffix.lower().lstrip(".") not in extensions:
+                skipped.append({"name": name, "reason": "not a recognised media file"})
+                continue
+            if info.file_size > max_member_bytes:
+                skipped.append(
+                    {
+                        "name": name,
+                        "reason": f"{info.file_size} bytes exceeds the "
+                        f"{max_member_bytes}-byte per-clip limit",
+                    }
+                )
+                continue
+            if len(out) >= max_members:
+                skipped.append({"name": name, "reason": f"over the {max_members}-clip limit"})
+                continue
+            target = dest_dir / base
+            with zf.open(info) as src, open(target, "wb") as dst:
+                while chunk := src.read(_CHUNK):
+                    dst.write(chunk)
+            out.append(target)
+    return out, skipped
+
+
+def resolve_share_link(uri: str) -> "tuple[str, str]":
+    """Normalise a pasted share link: ``(direct_url, kind)``.
+
+    ``kind`` is :class:`graze.share_links.ShareLinkKind`'s value — ``'file'``, ``'archive'``
+    (a folder link, which downloads as ONE zip of many members), ``'folder'`` (needs a
+    provider API) or ``'unknown'``. A URL that is nobody's share link passes through
+    unchanged as ``'unknown'``.
+
+    muvid does not own any provider regexes; :mod:`graze.share_links` does, and it is pure
+    (no socket), so this stays deterministic and offline-testable.
+    """
+    from graze.share_links import ShareLinkResolutionError, resolve_share_url
+
+    try:
+        resolved = resolve_share_url(uri)
+    except ShareLinkResolutionError as e:
+        raise FetchError(str(e)) from e
+    if not resolved.resolved or not resolved.direct_url:
+        raise FetchError(
+            f"{resolved.provider} link cannot be turned into a direct download: "
+            f"{resolved.reason or 'no direct URL exists for this link form'}"
+        )
+    return resolved.direct_url, str(resolved.kind)
