@@ -21,8 +21,15 @@ authors = [
 # `muvid.visualize` (and downstreams like `yb`) stay lightweight.
 dependencies = [
     "argh",
-    "mixing>=0.0.28",
+    # 0.0.34 is where align_clips_to_reference scores on the onset envelope rather than
+    # the raw waveform. Below it, every clip of a real multi-device shoot scores under
+    # the confidence gate and the music-video path yields nothing (muvid#15).
+    "mixing>=0.0.34",
     "numpy",
+    # 0.1.44 is where `graze.content_kind` exists alongside `graze.share_links`. muvid
+    # needs both halves: normalise a pasted share link before fetching, then assert the
+    # bytes are media rather than a sign-in page (muvid#23).
+    "graze>=0.1.44",
 ]
 
 [project.scripts]
