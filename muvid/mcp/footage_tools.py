@@ -246,9 +246,7 @@ def add_footage_folder(project_id: str, *, url: str, name_prefix: str = "") -> d
             proj.add_clip(
                 clip_id, str(member), ext=member.suffix.lstrip(".").lower(), name=label
             )
-            added.append(
-                {"clip_id": clip_id, "name": label, "duration": round(dur, 2)}
-            )
+            added.append({"clip_id": clip_id, "name": label, "duration": round(dur, 2)})
     return {
         "project_id": project_id,
         "added": added,
@@ -317,7 +315,11 @@ def _offset_consensus(aligns) -> dict:
     return {
         "median_offset": round(median, 3),
         "outliers": [
-            {"clip_id": a.clip_id, "offset_s": round(a.offset_s, 2), "from_median": round(d, 2)}
+            {
+                "clip_id": a.clip_id,
+                "offset_s": round(a.offset_s, 2),
+                "from_median": round(d, 2),
+            }
             for a, d in zip(aligns, spread)
             if d > 5.0
         ],

@@ -60,6 +60,8 @@ def deadline_for(max_bytes: int) -> float:
     construction: a 400 MB clip gets ~460 s rather than the 60 s that used to kill it.
     """
     return TOTAL_TIMEOUT_S + max(0.0, max_bytes) / max(1.0, MIN_RATE_BPS)
+
+
 #: Chunk size for the bounded read.
 _CHUNK = 64 * 1024
 _ALLOWED_SCHEMES = ("http", "https")
@@ -287,7 +289,9 @@ def extract_media_members(
                 )
                 continue
             if len(out) >= max_members:
-                skipped.append({"name": name, "reason": f"over the {max_members}-clip limit"})
+                skipped.append(
+                    {"name": name, "reason": f"over the {max_members}-clip limit"}
+                )
                 continue
             target = dest_dir / base
             with zf.open(info) as src, open(target, "wb") as dst:
