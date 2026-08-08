@@ -35,6 +35,10 @@ class FootageAlignment:
     confidence: float
     duration_s: float
     coverage: tuple[float, float]  # clamped to [0, song_duration]
+    #: Whether the clip intersects the song timeline at all. A clip that does NOT is
+    #: still recorded — a source must never leave the addressable set as a side effect
+    #: of being measured. Selection filters on this; reporting shows it with a reason.
+    overlaps: bool = True
 
     def to_dict(self) -> dict:
         return {
@@ -43,6 +47,7 @@ class FootageAlignment:
             "confidence": self.confidence,
             "duration_s": self.duration_s,
             "coverage": list(self.coverage),
+            "overlaps": self.overlaps,
         }
 
     @classmethod
@@ -54,6 +59,9 @@ class FootageAlignment:
             confidence=float(d["confidence"]),
             duration_s=float(d["duration_s"]),
             coverage=(float(cov[0]), float(cov[1])),
+            # Records written before `overlaps` existed were only ever persisted when
+            # they overlapped, so absent means True.
+            overlaps=bool(d.get("overlaps", True)),
         )
 
 

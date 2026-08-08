@@ -276,8 +276,14 @@ def align_footage(project_id: str) -> dict:
     proj.save_alignments(aligns)
     # New offsets invalidate every persisted score track (the song-time grid mapping moved).
     proj.invalidate_scores()
+    # Every clip has a record now, so "did not overlap" is a REPORTED PROPERTY of a clip
+    # that is still there, not an inference from something missing. A clip is never removed
+    # from the project or from the alignment artifact by anything but an explicit request:
+    # choosing what goes into an edit is a matter of referencing sources and intervals, and
+    # a source must stay referenceable whatever its measurements say.
     aligned_ids = {a.clip_id for a in aligns}
-    dropped = [cid for cid, _ in clips if cid not in aligned_ids]
+    no_overlap = [a.clip_id for a in aligns if not a.overlaps]
+    missing = [cid for cid, _ in clips if cid not in aligned_ids]
     # A confidence is guidance, not a verdict — so say what produced it and what it is being
     # compared against. A bare list of rejected ids is undiagnosable: the caller cannot tell
     # a genuinely unrelated clip from a correctly-aligned one that the threshold happened to
@@ -293,7 +299,12 @@ def align_footage(project_id: str) -> dict:
         "confidence_metric": "onset-envelope correlation at the waveform's lag",
         "confidence_threshold": _MIN_CONFIDENCE,
         "offset_consensus": _offset_consensus(aligns),
-        "dropped_no_overlap": dropped,
+        # Usable-for-an-edit, not present-in-the-project: these clips are still here, still
+        # listed, still addressable — they just cover no part of the song.
+        "no_overlap_with_song": no_overlap,
+        # Should always be empty. Non-empty means a clip lost its record somewhere upstream,
+        # which is a bug, not a verdict about the footage.
+        "unrecorded": missing,
     }
 
 
