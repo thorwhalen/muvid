@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.footage.align &mdash; muvid 0.0.14 documentation</title>
+  <title>muvid.footage.align &mdash; muvid 0.0.15 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -15,7 +15,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=544df88d"></script>
+      <script src="../../../_static/documentation_options.js?v=f0357c94"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -152,8 +152,9 @@ returns offsets + a scale-invariant confidence + coverage clamped to the song ti
 <dt class="sig sig-object py" id="muvid.footage.align.align_footage">
 <span class="sig-prename descclassname"><span class="pre">muvid.footage.align.</span></span><span class="sig-name descname"><span class="pre">align_footage</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">song_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clips</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">song_duration</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_rate</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">16000</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="edl.html#muvid.footage.edl.FootageAlignment" title="muvid.footage.edl.FootageAlignment"><span class="pre">FootageAlignment</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../_modules/muvid/footage/align.html#align_footage"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.align.align_footage" title="Link to this definition"></a></dt>
 <dd><p>Align <code class="docutils literal notranslate"><span class="pre">clips</span></code> (<code class="docutils literal notranslate"><span class="pre">[(clip_id,</span> <span class="pre">clip_path),</span> <span class="pre">...]</span></code>) to the song at <code class="docutils literal notranslate"><span class="pre">song_path</span></code>.</p>
-<p>Returns a <a class="reference internal" href="edl.html#muvid.footage.edl.FootageAlignment" title="muvid.footage.edl.FootageAlignment"><code class="xref py py-class docutils literal notranslate"><span class="pre">FootageAlignment</span></code></a> per clip that overlaps the song
-(non-overlapping clips are dropped by the underlying primitive), keyed by <code class="docutils literal notranslate"><span class="pre">clip_id</span></code>.
+<p>Returns one <a class="reference internal" href="edl.html#muvid.footage.edl.FootageAlignment" title="muvid.footage.edl.FootageAlignment"><code class="xref py py-class docutils literal notranslate"><span class="pre">FootageAlignment</span></code></a> per clip, keyed by <code class="docutils literal notranslate"><span class="pre">clip_id</span></code>
+— including clips that do not overlap the song, which carry <code class="docutils literal notranslate"><span class="pre">overlaps=False</span></code> rather
+than being omitted. Nothing may vanish from the record just because it matched badly.
 Heavy deps (mixing.audio → numpy/scipy/pydub) are imported lazily here so importing the
 genre stays light.</p>
 </dd></dl>

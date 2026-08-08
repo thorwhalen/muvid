@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.mcp.footage_tools &mdash; muvid 0.0.14 documentation</title>
+  <title>muvid.mcp.footage_tools &mdash; muvid 0.0.15 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=544df88d"></script>
+      <script src="../../../_static/documentation_options.js?v=f0357c94"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -386,9 +386,7 @@
             <span class="n">proj</span><span class="o">.</span><span class="n">add_clip</span><span class="p">(</span>
                 <span class="n">clip_id</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">member</span><span class="p">),</span> <span class="n">ext</span><span class="o">=</span><span class="n">member</span><span class="o">.</span><span class="n">suffix</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="n">label</span>
             <span class="p">)</span>
-            <span class="n">added</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                <span class="p">{</span><span class="s2">&quot;clip_id&quot;</span><span class="p">:</span> <span class="n">clip_id</span><span class="p">,</span> <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">label</span><span class="p">,</span> <span class="s2">&quot;duration&quot;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">dur</span><span class="p">,</span> <span class="mi">2</span><span class="p">)}</span>
-            <span class="p">)</span>
+            <span class="n">added</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;clip_id&quot;</span><span class="p">:</span> <span class="n">clip_id</span><span class="p">,</span> <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">label</span><span class="p">,</span> <span class="s2">&quot;duration&quot;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">dur</span><span class="p">,</span> <span class="mi">2</span><span class="p">)})</span>
     <span class="k">return</span> <span class="p">{</span>
         <span class="s2">&quot;project_id&quot;</span><span class="p">:</span> <span class="n">project_id</span><span class="p">,</span>
         <span class="s2">&quot;added&quot;</span><span class="p">:</span> <span class="n">added</span><span class="p">,</span>
@@ -419,8 +417,14 @@
     <span class="n">proj</span><span class="o">.</span><span class="n">save_alignments</span><span class="p">(</span><span class="n">aligns</span><span class="p">)</span>
     <span class="c1"># New offsets invalidate every persisted score track (the song-time grid mapping moved).</span>
     <span class="n">proj</span><span class="o">.</span><span class="n">invalidate_scores</span><span class="p">()</span>
+    <span class="c1"># Every clip has a record now, so &quot;did not overlap&quot; is a REPORTED PROPERTY of a clip</span>
+    <span class="c1"># that is still there, not an inference from something missing. A clip is never removed</span>
+    <span class="c1"># from the project or from the alignment artifact by anything but an explicit request:</span>
+    <span class="c1"># choosing what goes into an edit is a matter of referencing sources and intervals, and</span>
+    <span class="c1"># a source must stay referenceable whatever its measurements say.</span>
     <span class="n">aligned_ids</span> <span class="o">=</span> <span class="p">{</span><span class="n">a</span><span class="o">.</span><span class="n">clip_id</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">aligns</span><span class="p">}</span>
-    <span class="n">dropped</span> <span class="o">=</span> <span class="p">[</span><span class="n">cid</span> <span class="k">for</span> <span class="n">cid</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">clips</span> <span class="k">if</span> <span class="n">cid</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">aligned_ids</span><span class="p">]</span>
+    <span class="n">no_overlap</span> <span class="o">=</span> <span class="p">[</span><span class="n">a</span><span class="o">.</span><span class="n">clip_id</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">aligns</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">a</span><span class="o">.</span><span class="n">overlaps</span><span class="p">]</span>
+    <span class="n">missing</span> <span class="o">=</span> <span class="p">[</span><span class="n">cid</span> <span class="k">for</span> <span class="n">cid</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">clips</span> <span class="k">if</span> <span class="n">cid</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">aligned_ids</span><span class="p">]</span>
     <span class="c1"># A confidence is guidance, not a verdict — so say what produced it and what it is being</span>
     <span class="c1"># compared against. A bare list of rejected ids is undiagnosable: the caller cannot tell</span>
     <span class="c1"># a genuinely unrelated clip from a correctly-aligned one that the threshold happened to</span>
@@ -436,7 +440,12 @@
         <span class="s2">&quot;confidence_metric&quot;</span><span class="p">:</span> <span class="s2">&quot;onset-envelope correlation at the waveform&#39;s lag&quot;</span><span class="p">,</span>
         <span class="s2">&quot;confidence_threshold&quot;</span><span class="p">:</span> <span class="n">_MIN_CONFIDENCE</span><span class="p">,</span>
         <span class="s2">&quot;offset_consensus&quot;</span><span class="p">:</span> <span class="n">_offset_consensus</span><span class="p">(</span><span class="n">aligns</span><span class="p">),</span>
-        <span class="s2">&quot;dropped_no_overlap&quot;</span><span class="p">:</span> <span class="n">dropped</span><span class="p">,</span>
+        <span class="c1"># Usable-for-an-edit, not present-in-the-project: these clips are still here, still</span>
+        <span class="c1"># listed, still addressable — they just cover no part of the song.</span>
+        <span class="s2">&quot;no_overlap_with_song&quot;</span><span class="p">:</span> <span class="n">no_overlap</span><span class="p">,</span>
+        <span class="c1"># Should always be empty. Non-empty means a clip lost its record somewhere upstream,</span>
+        <span class="c1"># which is a bug, not a verdict about the footage.</span>
+        <span class="s2">&quot;unrecorded&quot;</span><span class="p">:</span> <span class="n">missing</span><span class="p">,</span>
     <span class="p">}</span></div>
 
 
@@ -461,7 +470,11 @@
     <span class="k">return</span> <span class="p">{</span>
         <span class="s2">&quot;median_offset&quot;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">median</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
         <span class="s2">&quot;outliers&quot;</span><span class="p">:</span> <span class="p">[</span>
-            <span class="p">{</span><span class="s2">&quot;clip_id&quot;</span><span class="p">:</span> <span class="n">a</span><span class="o">.</span><span class="n">clip_id</span><span class="p">,</span> <span class="s2">&quot;offset_s&quot;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">offset_s</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="s2">&quot;from_median&quot;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="mi">2</span><span class="p">)}</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;clip_id&quot;</span><span class="p">:</span> <span class="n">a</span><span class="o">.</span><span class="n">clip_id</span><span class="p">,</span>
+                <span class="s2">&quot;offset_s&quot;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">offset_s</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>
+                <span class="s2">&quot;from_median&quot;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>
+            <span class="p">}</span>
             <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">d</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">aligns</span><span class="p">,</span> <span class="n">spread</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">d</span> <span class="o">&gt;</span> <span class="mf">5.0</span>
         <span class="p">],</span>

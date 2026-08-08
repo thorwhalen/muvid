@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.footage &mdash; muvid 0.0.14 documentation</title>
+  <title>muvid.footage &mdash; muvid 0.0.15 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -15,7 +15,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=544df88d"></script>
+      <script src="../../_static/documentation_options.js?v=f0357c94"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -61,7 +61,10 @@
 <li class="toctree-l1"><a class="reference internal" href="facade.html">muvid.facade</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">muvid.footage</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.footage.EdlEntry"><code class="docutils literal notranslate"><span class="pre">EdlEntry</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#muvid.footage.FootageAlignment"><code class="docutils literal notranslate"><span class="pre">FootageAlignment</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.footage.FootageAlignment"><code class="docutils literal notranslate"><span class="pre">FootageAlignment</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#muvid.footage.FootageAlignment.overlaps"><code class="docutils literal notranslate"><span class="pre">FootageAlignment.overlaps</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.footage.derive_cuts"><code class="docutils literal notranslate"><span class="pre">derive_cuts()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.footage.list_strategies"><code class="docutils literal notranslate"><span class="pre">list_strategies()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.footage.register_selection_strategy"><code class="docutils literal notranslate"><span class="pre">register_selection_strategy()</span></code></a></li>
@@ -166,10 +169,18 @@ alignments into an EDL (which clip covers which span of the song).</p></li>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="muvid.footage.FootageAlignment">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">muvid.footage.</span></span><span class="sig-name descname"><span class="pre">FootageAlignment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">clip_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">offset_s</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">confidence</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">duration_s</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coverage</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/muvid/footage/edl.html#FootageAlignment"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.FootageAlignment" title="Link to this definition"></a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">muvid.footage.</span></span><span class="sig-name descname"><span class="pre">FootageAlignment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">clip_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">offset_s</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">confidence</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">duration_s</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coverage</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overlaps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/muvid/footage/edl.html#FootageAlignment"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.FootageAlignment" title="Link to this definition"></a></dt>
 <dd><p>Where one uploaded clip sits on the song timeline (muvid’s per-clip record).</p>
 <p>Mirrors <code class="docutils literal notranslate"><span class="pre">mixing.audio.ClipAlignment</span></code> but keyed by the caller-facing <code class="docutils literal notranslate"><span class="pre">clip_id</span></code> and
 JSON-round-trippable (persisted in the project manifest).</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="muvid.footage.FootageAlignment.overlaps">
+<span class="sig-name descname"><span class="pre">overlaps</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></span><a class="headerlink" href="#muvid.footage.FootageAlignment.overlaps" title="Link to this definition"></a></dt>
+<dd><p>Whether the clip intersects the song timeline at all. A clip that does NOT is
+still recorded — a source must never leave the addressable set as a side effect
+of being measured. Selection filters on this; reporting shows it with a reason.</p>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="py function">
