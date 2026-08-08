@@ -25,8 +25,9 @@ def align_footage(
 ) -> list[FootageAlignment]:
     """Align ``clips`` (``[(clip_id, clip_path), ...]``) to the song at ``song_path``.
 
-    Returns a :class:`~muvid.footage.edl.FootageAlignment` per clip that overlaps the song
-    (non-overlapping clips are dropped by the underlying primitive), keyed by ``clip_id``.
+    Returns one :class:`~muvid.footage.edl.FootageAlignment` per clip, keyed by ``clip_id``
+    — including clips that do not overlap the song, which carry ``overlaps=False`` rather
+    than being omitted. Nothing may vanish from the record just because it matched badly.
     Heavy deps (mixing.audio → numpy/scipy/pydub) are imported lazily here so importing the
     genre stays light.
     """
@@ -47,6 +48,7 @@ def align_footage(
             confidence=a.confidence,
             duration_s=a.duration_s,
             coverage=a.coverage,
+            overlaps=a.overlaps,
         )
         for a in aligned
     ]

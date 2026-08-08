@@ -247,3 +247,42 @@ class TestContentKindGuard:
         dest = tmp_path / "clip.mp4"
         fetch_to_file_streaming("https://x/y.mp4", dest, max_bytes=10_000, expect_kind="video")
         assert dest.read_bytes() == FAKE_MP4
+
+
+class TestNoSourceLeavesTheAddressableSet:
+    """A source must stay referenceable whatever its measurements say.
+
+    Selection is expressed as references to (source, interval). A clip that is omitted from
+    the alignment artifact because it matched badly is still on disk, but nothing downstream
+    can point at it — it has effectively vanished from the project, without anyone asking for
+    that. Removal is a user's decision, never a measurement's side effect.
+    """
+
+    def test_the_alignment_record_round_trips_the_overlaps_flag(self):
+        from muvid.footage.edl import FootageAlignment
+
+        a = FootageAlignment(
+            clip_id="x", offset_s=1.0, confidence=0.4, duration_s=5.0,
+            coverage=(2.0, 2.0), overlaps=False,
+        )
+        assert FootageAlignment.from_dict(a.to_dict()) == a
+
+    def test_a_record_written_before_the_flag_existed_reads_as_overlapping(self):
+        """Older artifacts were only ever persisted WHEN they overlapped."""
+        from muvid.footage.edl import FootageAlignment
+
+        legacy = {
+            "clip_id": "x", "offset_s": 1.0, "confidence": 0.4,
+            "duration_s": 5.0, "coverage": [1.0, 6.0],
+        }
+        assert FootageAlignment.from_dict(legacy).overlaps is True
+
+    def test_a_non_overlapping_clip_is_never_selected_into_an_edit(self):
+        """Reported, but not usable — the two are different states, and both must exist."""
+        from muvid.footage.edl import FootageAlignment
+        from muvid.footage.strategy import select_edl
+
+        good = FootageAlignment("g", 0.0, 0.9, 10.0, (0.0, 10.0), True)
+        nope = FootageAlignment("n", 99.0, 0.9, 10.0, (10.0, 10.0), False)
+        entries = select_edl("best_confidence", [good, nope], 10.0)
+        assert {e.clip_id for e in entries} == {"g"}

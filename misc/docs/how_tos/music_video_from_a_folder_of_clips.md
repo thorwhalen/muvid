@@ -97,9 +97,15 @@ bcc2d2af  off=+76.65  conf=0.010   <- 79 s from the median: a different take
 per-clip score does: notice that four clips in the good cluster score *below* the same
 threshold that the outlier fails.
 
-**Confidence is guidance, not a verdict.** Nothing is dropped for a low score — every clip
-stays usable. A low number means "look at this one", not "this is unusable". Treat
-`low_confidence` as a list to review, not a list of rejects.
+**A low confidence never removes anything.** Every clip keeps its record and stays
+selectable; `low_confidence` is a list to review, not a list of rejects. Clips that cover no
+part of the song are reported under `no_overlap_with_song` — still present, still
+addressable, just not usable for *this* edit.
+
+Scores are there to be used, including by automation: if you want the cut made for you, they
+are what makes that possible. The guarantee is not that nothing is decided automatically —
+it is that a decision produces a *proposal referencing sources and intervals*, so it can be
+read, changed, or thrown away without anything having been lost.
 
 ## 5. Propose edits — the part you repeat
 
@@ -176,12 +182,19 @@ reference and picks among them:
 3. **Selection is separated from rendering.** The list of decisions is a first-class artifact
    you can read, diff, hand-edit, and re-render. If the only way to see a decision is to pay
    for the output, you cannot compare options — and comparing options is the actual work.
-4. **Scores guide; they never silently decide.** Surface sub-scores. Never drop the user's
-   material because a number fell below a constant — say the number, say the threshold, say
-   which metric produced it, and let them choose.
-5. **Report what is missing, in the units of the problem.** "84% covered" is not actionable.
+4. **Nothing leaves the addressable set.** Selection is expressed as references to
+   `(source, interval)`; the source set is immutable. A source is removed only when the user
+   asks for that — never as a side effect of measuring it, and never because a number fell
+   below a constant. "Not chosen for this edit" and "not present" are different states, and
+   only the first is a measurement's business.
+5. **Scores guide, and may also decide — when deciding is what was asked for.** Automated
+   selection is a legitimate use of a score: if someone wants the cut made for them, the
+   scores are what make that possible. What automation produces is a *proposal by reference*,
+   which is why it is safe. Surface the sub-scores either way, so a decision can be
+   inspected and overridden rather than merely accepted.
+6. **Report what is missing, in the units of the problem.** "84% covered" is not actionable.
    "no footage for 41.2–58.7 s" is.
-6. **Ingest is the boundary where lying happens.** A share link answers `HTTP 200` with a web
+7. **Ingest is the boundary where lying happens.** A share link answers `HTTP 200` with a web
    page. Normalise the link, then check the *bytes*, and fail with the cause. Never let a
    sign-in page become an asset.
 
