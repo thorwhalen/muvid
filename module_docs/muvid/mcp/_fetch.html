@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.mcp._fetch &mdash; muvid 0.0.13 documentation</title>
+  <title>muvid.mcp._fetch &mdash; muvid 0.0.14 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -15,7 +15,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=9fc46840"></script>
+      <script src="../../../_static/documentation_options.js?v=544df88d"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -83,10 +83,14 @@
 <li class="toctree-l2"><a class="reference internal" href="#muvid.mcp._fetch.FetchError"><code class="docutils literal notranslate"><span class="pre">FetchError</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.mcp._fetch.MAX_BYTES"><code class="docutils literal notranslate"><span class="pre">MAX_BYTES</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.mcp._fetch.MAX_REDIRECTS"><code class="docutils literal notranslate"><span class="pre">MAX_REDIRECTS</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.mcp._fetch.MIN_RATE_BPS"><code class="docutils literal notranslate"><span class="pre">MIN_RATE_BPS</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.mcp._fetch.TOTAL_TIMEOUT_S"><code class="docutils literal notranslate"><span class="pre">TOTAL_TIMEOUT_S</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.mcp._fetch.deadline_for"><code class="docutils literal notranslate"><span class="pre">deadline_for()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.mcp._fetch.extract_media_members"><code class="docutils literal notranslate"><span class="pre">extract_media_members()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.mcp._fetch.fetch_bytes"><code class="docutils literal notranslate"><span class="pre">fetch_bytes()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.mcp._fetch.fetch_to_file"><code class="docutils literal notranslate"><span class="pre">fetch_to_file()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.mcp._fetch.fetch_to_file_streaming"><code class="docutils literal notranslate"><span class="pre">fetch_to_file_streaming()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.mcp._fetch.resolve_share_link"><code class="docutils literal notranslate"><span class="pre">resolve_share_link()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="_guide.html">muvid.mcp._guide</a></li>
@@ -183,9 +187,43 @@ audio is legitimately large, matching braidio’s audio-download cap intent).</p
 </dd></dl>
 
 <dl class="py data">
+<dt class="sig sig-object py" id="muvid.mcp._fetch.MIN_RATE_BPS">
+<span class="sig-prename descclassname"><span class="pre">muvid.mcp._fetch.</span></span><span class="sig-name descname"><span class="pre">MIN_RATE_BPS</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1048576.0</span></span><a class="headerlink" href="#muvid.mcp._fetch.MIN_RATE_BPS" title="Link to this definition"></a></dt>
+<dd><p>Slowest transfer rate a fetch is expected to sustain, in bytes/second
+(env <code class="docutils literal notranslate"><span class="pre">MUVID_FETCH_MIN_RATE_BPS</span></code>; default 1 MB/s). The deadline for a given byte cap is
+derived from this, so raising the cap cannot silently make fetches unachievable.</p>
+</dd></dl>
+
+<dl class="py data">
 <dt class="sig sig-object py" id="muvid.mcp._fetch.TOTAL_TIMEOUT_S">
 <span class="sig-prename descclassname"><span class="pre">muvid.mcp._fetch.</span></span><span class="sig-name descname"><span class="pre">TOTAL_TIMEOUT_S</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">60.0</span></span><a class="headerlink" href="#muvid.mcp._fetch.TOTAL_TIMEOUT_S" title="Link to this definition"></a></dt>
-<dd><p>Wall-clock deadline for the whole fetch, in seconds (env <code class="docutils literal notranslate"><span class="pre">MUVID_FETCH_TIMEOUT_S</span></code>).</p>
+<dd><p>Floor for the wall-clock deadline, in seconds (env <code class="docutils literal notranslate"><span class="pre">MUVID_FETCH_TIMEOUT_S</span></code>).</p>
+<p>This is a FLOOR, not the deadline: see <a class="reference internal" href="#muvid.mcp._fetch.deadline_for" title="muvid.mcp._fetch.deadline_for"><code class="xref py py-func docutils literal notranslate"><span class="pre">deadline_for()</span></code></a>. A constant 60 s against a
+400 MB byte cap demanded a sustained 6.7 MB/s or the fetch died — a byte cap and a time
+cap that contradict each other is a misconfiguration, not a policy (muvid#24 B1).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.mcp._fetch.deadline_for">
+<span class="sig-prename descclassname"><span class="pre">muvid.mcp._fetch.</span></span><span class="sig-name descname"><span class="pre">deadline_for</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">max_bytes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="reference internal" href="../../../_modules/muvid/mcp/_fetch.html#deadline_for"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.mcp._fetch.deadline_for" title="Link to this definition"></a></dt>
+<dd><p>Seconds allowed for a transfer of up to <code class="docutils literal notranslate"><span class="pre">max_bytes</span></code>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">TOTAL_TIMEOUT_S</span></code> as a floor, plus the time <code class="docutils literal notranslate"><span class="pre">max_bytes</span></code> needs at
+<a class="reference internal" href="#muvid.mcp._fetch.MIN_RATE_BPS" title="muvid.mcp._fetch.MIN_RATE_BPS"><code class="xref py py-data docutils literal notranslate"><span class="pre">MIN_RATE_BPS</span></code></a>. Keeps the time budget and the size budget consistent by
+construction: a 400 MB clip gets ~460 s rather than the 60 s that used to kill it.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.mcp._fetch.extract_media_members">
+<span class="sig-prename descclassname"><span class="pre">muvid.mcp._fetch.</span></span><span class="sig-name descname"><span class="pre">extract_media_members</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">archive</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dest_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">extensions</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_members</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_member_bytes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Path</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../_modules/muvid/mcp/_fetch.html#extract_media_members"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.mcp._fetch.extract_media_members" title="Link to this definition"></a></dt>
+<dd><p>Extract media members of <code class="docutils literal notranslate"><span class="pre">archive</span></code> into <code class="docutils literal notranslate"><span class="pre">dest_dir</span></code>: <code class="docutils literal notranslate"><span class="pre">(paths,</span> <span class="pre">skipped)</span></code>.</p>
+<p>A folder share link resolves to ONE zip of N files, so this is what turns a shoot into
+clips. Returns the extracted paths in archive order, plus a <code class="docutils literal notranslate"><span class="pre">skipped</span></code> list of
+<code class="docutils literal notranslate"><span class="pre">{name,</span> <span class="pre">reason}</span></code> — a member dropped for any reason is NAMED rather than silently
+omitted, because a coverage decision made on quietly-truncated input is worse than one
+made on a short list.</p>
+<p>Members are filtered by extension, capped in count and in per-member size, and their
+names are flattened to a basename — which also closes zip-slip (a member named
+<code class="docutils literal notranslate"><span class="pre">../../etc/x</span></code> can never escape <code class="docutils literal notranslate"><span class="pre">dest_dir</span></code>).</p>
 </dd></dl>
 
 <dl class="py function">
@@ -205,11 +243,28 @@ straight to disk rather than materialized (~2x) in memory.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="muvid.mcp._fetch.fetch_to_file_streaming">
-<span class="sig-prename descclassname"><span class="pre">muvid.mcp._fetch.</span></span><span class="sig-name descname"><span class="pre">fetch_to_file_streaming</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">uri</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dest</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_bytes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Path</span></span></span><a class="reference internal" href="../../../_modules/muvid/mcp/_fetch.html#fetch_to_file_streaming"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.mcp._fetch.fetch_to_file_streaming" title="Link to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">muvid.mcp._fetch.</span></span><span class="sig-name descname"><span class="pre">fetch_to_file_streaming</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">uri</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dest</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_bytes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">expect_kind</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Path</span></span></span><a class="reference internal" href="../../../_modules/muvid/mcp/_fetch.html#fetch_to_file_streaming"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.mcp._fetch.fetch_to_file_streaming" title="Link to this definition"></a></dt>
 <dd><p>Stream a (large) <code class="docutils literal notranslate"><span class="pre">uri</span></code> straight to <code class="docutils literal notranslate"><span class="pre">dest</span></code>, chunk by chunk (SSRF/size/time-bound).</p>
 <p>For video footage: the body is written to disk as it arrives and the running total is
 checked against <code class="docutils literal notranslate"><span class="pre">max_bytes</span></code> — never buffered whole in RAM. A partial file is removed
 on any failure. Returns <code class="docutils literal notranslate"><span class="pre">dest</span></code>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">expect_kind</span></code> (<code class="docutils literal notranslate"><span class="pre">'video'</span></code> / <code class="docutils literal notranslate"><span class="pre">'audio'</span></code> / …) asserts the payload’s magic bytes before
+a single byte reaches the file. Without it, a share link that answers <code class="docutils literal notranslate"><span class="pre">HTTP</span> <span class="pre">200</span></code> with
+a sign-in page writes ~900 KB of HTML to <code class="docutils literal notranslate"><span class="pre">dest</span></code>, and the caller discovers it only when
+ffprobe fails with “Invalid data found when processing input” — technically loud,
+practically unhelpful. See <code class="xref py py-mod docutils literal notranslate"><span class="pre">graze.content_kind</span></code>.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.mcp._fetch.resolve_share_link">
+<span class="sig-prename descclassname"><span class="pre">muvid.mcp._fetch.</span></span><span class="sig-name descname"><span class="pre">resolve_share_link</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">uri</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../_modules/muvid/mcp/_fetch.html#resolve_share_link"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.mcp._fetch.resolve_share_link" title="Link to this definition"></a></dt>
+<dd><p>Normalise a pasted share link: <code class="docutils literal notranslate"><span class="pre">(direct_url,</span> <span class="pre">kind)</span></code>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">kind</span></code> is <code class="xref py py-class docutils literal notranslate"><span class="pre">graze.share_links.ShareLinkKind</span></code>’s value — <code class="docutils literal notranslate"><span class="pre">'file'</span></code>, <code class="docutils literal notranslate"><span class="pre">'archive'</span></code>
+(a folder link, which downloads as ONE zip of many members), <code class="docutils literal notranslate"><span class="pre">'folder'</span></code> (needs a
+provider API) or <code class="docutils literal notranslate"><span class="pre">'unknown'</span></code>. A URL that is nobody’s share link passes through
+unchanged as <code class="docutils literal notranslate"><span class="pre">'unknown'</span></code>.</p>
+<p>muvid does not own any provider regexes; <code class="xref py py-mod docutils literal notranslate"><span class="pre">graze.share_links</span></code> does, and it is pure
+(no socket), so this stays deterministic and offline-testable.</p>
 </dd></dl>
 
 </section>

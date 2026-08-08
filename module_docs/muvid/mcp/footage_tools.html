@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.mcp.footage_tools &mdash; muvid 0.0.13 documentation</title>
+  <title>muvid.mcp.footage_tools &mdash; muvid 0.0.14 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -15,7 +15,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=9fc46840"></script>
+      <script src="../../../_static/documentation_options.js?v=544df88d"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -83,11 +83,13 @@
 <li class="toctree-l1"><a class="reference internal" href="_guide.html">muvid.mcp._guide</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">muvid.mcp.footage_tools</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.mcp.footage_tools.add_footage"><code class="docutils literal notranslate"><span class="pre">add_footage()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.mcp.footage_tools.add_footage_folder"><code class="docutils literal notranslate"><span class="pre">add_footage_folder()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.mcp.footage_tools.align_footage"><code class="docutils literal notranslate"><span class="pre">align_footage()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.mcp.footage_tools.assemble_music_video"><code class="docutils literal notranslate"><span class="pre">assemble_music_video()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.mcp.footage_tools.footage_status"><code class="docutils literal notranslate"><span class="pre">footage_status()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.mcp.footage_tools.footage_timeline"><code class="docutils literal notranslate"><span class="pre">footage_timeline()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.mcp.footage_tools.list_strategies"><code class="docutils literal notranslate"><span class="pre">list_strategies()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.mcp.footage_tools.propose_edit"><code class="docutils literal notranslate"><span class="pre">propose_edit()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.mcp.footage_tools.set_song"><code class="docutils literal notranslate"><span class="pre">set_song()</span></code></a></li>
 </ul>
 </li>
@@ -156,8 +158,24 @@ disk); alignment + the single-ffmpeg-pass assembly are bounded by hard resource 
 <dt class="sig sig-object py" id="muvid.mcp.footage_tools.add_footage">
 <span class="sig-prename descclassname"><span class="pre">muvid.mcp.footage_tools.</span></span><span class="sig-name descname"><span class="pre">add_footage</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">project_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">url</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="../../../_modules/muvid/mcp/footage_tools.html#add_footage"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.mcp.footage_tools.add_footage" title="Link to this definition"></a></dt>
 <dd><p>Add a footage video clip from an http(s) URL (a recording of the song). Free.</p>
-<p>Fetched server-side (streamed to disk; SSRF-guarded, size/duration-capped). Returns
-the assigned <code class="docutils literal notranslate"><span class="pre">clip_id</span></code>. Re-run <code class="docutils literal notranslate"><span class="pre">align_footage</span></code> after adding clips.</p>
+<p>Accepts a <strong>share link</strong> as well as a direct media URL. Fetched server-side (streamed to
+disk; SSRF-guarded, size/duration-capped) and asserted to be media before anything is
+stored. Returns the assigned <code class="docutils literal notranslate"><span class="pre">clip_id</span></code>. Re-run <code class="docutils literal notranslate"><span class="pre">align_footage</span></code> after adding clips.</p>
+<p>For a whole shoot in one folder, use <a class="reference internal" href="#muvid.mcp.footage_tools.add_footage_folder" title="muvid.mcp.footage_tools.add_footage_folder"><code class="xref py py-func docutils literal notranslate"><span class="pre">add_footage_folder()</span></code></a> — a folder link holds
+many files and is refused here by name.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.mcp.footage_tools.add_footage_folder">
+<span class="sig-prename descclassname"><span class="pre">muvid.mcp.footage_tools.</span></span><span class="sig-name descname"><span class="pre">add_footage_folder</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">project_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">url</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name_prefix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="../../../_modules/muvid/mcp/footage_tools.html#add_footage_folder"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.mcp.footage_tools.add_footage_folder" title="Link to this definition"></a></dt>
+<dd><p>Add EVERY clip in a shared folder (Drive / Dropbox / OneDrive) in one call. Free.</p>
+<p>A shoot is a folder, not a file — this is the natural unit for music-video footage. The
+folder link is normalised and downloaded as a single archive server-side, then expanded
+into one clip per media member.</p>
+<p>Members that are skipped — wrong type, over the per-clip size limit, or past the project
+clip cap — are NAMED in <code class="docutils literal notranslate"><span class="pre">skipped</span></code> with the reason. Nothing is silently truncated: a
+coverage decision made on quietly-shortened input is worse than one made on a short list.</p>
+<p>Returns the added clips and the skipped members. Run <code class="docutils literal notranslate"><span class="pre">align_footage</span></code> afterwards.</p>
 </dd></dl>
 
 <dl class="py function">
@@ -209,9 +227,26 @@ the persisted alignment (run <code class="docutils literal notranslate"><span cl
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="muvid.mcp.footage_tools.propose_edit">
+<span class="sig-prename descclassname"><span class="pre">muvid.mcp.footage_tools.</span></span><span class="sig-name descname"><span class="pre">propose_edit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">project_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">strategy</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">preset</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="../../../_modules/muvid/mcp/footage_tools.html#propose_edit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.mcp.footage_tools.propose_edit" title="Link to this definition"></a></dt>
+<dd><p>Propose an EDL <strong>without rendering it</strong> — the cheap half of assembly. Free, seconds.</p>
+<p>Selection and rendering are separate concerns, and only one of them costs an encode.
+This returns the edit an <code class="docutils literal notranslate"><span class="pre">assemble_music_video</span></code> call <em>would</em> have produced, so a
+caller can compare several strategies/weightings, read the coverage report, edit the
+list by hand, and only then pay for a render — passing the chosen EDL straight back to
+<code class="docutils literal notranslate"><span class="pre">assemble_music_video(project_id,</span> <span class="pre">edl=...)</span></code>.</p>
+<p>Returns the <code class="docutils literal notranslate"><span class="pre">edl</span></code> (ready to feed back verbatim), the <code class="docutils literal notranslate"><span class="pre">strategy</span></code> actually used, and a
+<code class="docutils literal notranslate"><span class="pre">coverage</span></code> report naming every uncovered span of the song and every segment that made
+the cut despite weak alignment. Same arguments as <code class="docutils literal notranslate"><span class="pre">assemble_music_video</span></code>’s auto path.</p>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="muvid.mcp.footage_tools.set_song">
 <span class="sig-prename descclassname"><span class="pre">muvid.mcp.footage_tools.</span></span><span class="sig-name descname"><span class="pre">set_song</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">project_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">url</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="../../../_modules/muvid/mcp/footage_tools.html#set_song"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.mcp.footage_tools.set_song" title="Link to this definition"></a></dt>
-<dd><p>Set the project’s fixed clean song from an http(s) URL (a direct media link). Free.</p>
+<dd><p>Set the project’s fixed clean song from an http(s) URL. Free.</p>
+<p>Accepts a <strong>share link</strong> (Google Drive / Dropbox / OneDrive) as well as a direct media
+URL — the link is normalised before fetching, and the downloaded bytes are checked to be
+media, so a private-file sign-in page is refused with that diagnosis rather than stored.</p>
 <p>This is the reference every uploaded clip is aligned to and whose audio the final
 video uses. Replaces any previous song. Duration/size-capped.</p>
 </dd></dl>

@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.mcp._fetch &mdash; muvid 0.0.13 documentation</title>
+  <title>muvid.mcp._fetch &mdash; muvid 0.0.14 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=9fc46840"></script>
+      <script src="../../../_static/documentation_options.js?v=544df88d"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -172,8 +172,29 @@
 <span class="n">MAX_BYTES</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;MUVID_FETCH_MAX_BYTES&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="mi">60</span> <span class="o">*</span> <span class="mi">1024</span> <span class="o">*</span> <span class="mi">1024</span><span class="p">)))</span>
 <span class="c1">#: Redirect-hop cap (each hop is re-validated).</span>
 <span class="n">MAX_REDIRECTS</span> <span class="o">=</span> <span class="mi">5</span>
-<span class="c1">#: Wall-clock deadline for the whole fetch, in seconds (env ``MUVID_FETCH_TIMEOUT_S``).</span>
+<span class="c1">#: Floor for the wall-clock deadline, in seconds (env ``MUVID_FETCH_TIMEOUT_S``).</span>
+<span class="c1">#:</span>
+<span class="c1">#: This is a FLOOR, not the deadline: see :func:`deadline_for`. A constant 60 s against a</span>
+<span class="c1">#: 400 MB byte cap demanded a sustained 6.7 MB/s or the fetch died — a byte cap and a time</span>
+<span class="c1">#: cap that contradict each other is a misconfiguration, not a policy (muvid#24 B1).</span>
 <span class="n">TOTAL_TIMEOUT_S</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;MUVID_FETCH_TIMEOUT_S&quot;</span><span class="p">,</span> <span class="s2">&quot;60&quot;</span><span class="p">))</span>
+<span class="c1">#: Slowest transfer rate a fetch is expected to sustain, in bytes/second</span>
+<span class="c1">#: (env ``MUVID_FETCH_MIN_RATE_BPS``; default 1 MB/s). The deadline for a given byte cap is</span>
+<span class="c1">#: derived from this, so raising the cap cannot silently make fetches unachievable.</span>
+<span class="n">MIN_RATE_BPS</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;MUVID_FETCH_MIN_RATE_BPS&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="mi">1024</span> <span class="o">*</span> <span class="mi">1024</span><span class="p">)))</span>
+
+
+<div class="viewcode-block" id="deadline_for">
+<a class="viewcode-back" href="../../../module_docs/muvid/mcp/_fetch.html#muvid.mcp._fetch.deadline_for">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">deadline_for</span><span class="p">(</span><span class="n">max_bytes</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Seconds allowed for a transfer of up to ``max_bytes``.</span>
+
+<span class="sd">    ``TOTAL_TIMEOUT_S`` as a floor, plus the time ``max_bytes`` needs at</span>
+<span class="sd">    :data:`MIN_RATE_BPS`. Keeps the time budget and the size budget consistent by</span>
+<span class="sd">    construction: a 400 MB clip gets ~460 s rather than the 60 s that used to kill it.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">TOTAL_TIMEOUT_S</span> <span class="o">+</span> <span class="nb">max</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">max_bytes</span><span class="p">)</span> <span class="o">/</span> <span class="nb">max</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">MIN_RATE_BPS</span><span class="p">)</span></div>
+
 <span class="c1">#: Chunk size for the bounded read.</span>
 <span class="n">_CHUNK</span> <span class="o">=</span> <span class="mi">64</span> <span class="o">*</span> <span class="mi">1024</span>
 <span class="n">_ALLOWED_SCHEMES</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;http&quot;</span><span class="p">,</span> <span class="s2">&quot;https&quot;</span><span class="p">)</span>
@@ -309,24 +330,27 @@
 
 <div class="viewcode-block" id="fetch_to_file_streaming">
 <a class="viewcode-back" href="../../../module_docs/muvid/mcp/_fetch.html#muvid.mcp._fetch.fetch_to_file_streaming">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">fetch_to_file_streaming</span><span class="p">(</span><span class="n">uri</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">dest</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">max_bytes</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">fetch_to_file_streaming</span><span class="p">(</span>
+    <span class="n">uri</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">dest</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">max_bytes</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">expect_kind</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Stream a (large) ``uri`` straight to ``dest``, chunk by chunk (SSRF/size/time-bound).</span>
 
 <span class="sd">    For video footage: the body is written to disk as it arrives and the running total is</span>
 <span class="sd">    checked against ``max_bytes`` — never buffered whole in RAM. A partial file is removed</span>
 <span class="sd">    on any failure. Returns ``dest``.</span>
+
+<span class="sd">    ``expect_kind`` (``&#39;video&#39;`` / ``&#39;audio&#39;`` / …) asserts the payload&#39;s magic bytes before</span>
+<span class="sd">    a single byte reaches the file. Without it, a share link that answers ``HTTP 200`` with</span>
+<span class="sd">    a sign-in page writes ~900 KB of HTML to ``dest``, and the caller discovers it only when</span>
+<span class="sd">    ffprobe fails with &quot;Invalid data found when processing input&quot; — technically loud,</span>
+<span class="sd">    practically unhelpful. See :mod:`graze.content_kind`.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">deadline</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">monotonic</span><span class="p">()</span> <span class="o">+</span> <span class="n">TOTAL_TIMEOUT_S</span>
+    <span class="n">deadline</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">monotonic</span><span class="p">()</span> <span class="o">+</span> <span class="n">deadline_for</span><span class="p">(</span><span class="n">max_bytes</span><span class="p">)</span>
     <span class="n">dest</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">total</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="k">with</span> <span class="n">_open_following_redirects</span><span class="p">(</span><span class="n">uri</span><span class="p">,</span> <span class="n">deadline</span><span class="p">)</span> <span class="k">as</span> <span class="n">resp</span><span class="p">,</span> <span class="nb">open</span><span class="p">(</span><span class="n">dest</span><span class="p">,</span> <span class="s2">&quot;wb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-            <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">time</span><span class="o">.</span><span class="n">monotonic</span><span class="p">()</span> <span class="o">&gt;</span> <span class="n">deadline</span><span class="p">:</span>
-                    <span class="k">raise</span> <span class="n">FetchError</span><span class="p">(</span><span class="s2">&quot;fetch exceeded the time budget&quot;</span><span class="p">)</span>
-                <span class="n">chunk</span> <span class="o">=</span> <span class="n">resp</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">_CHUNK</span><span class="p">)</span>
-                <span class="k">if</span> <span class="ow">not</span> <span class="n">chunk</span><span class="p">:</span>
-                    <span class="k">break</span>
+            <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">_kind_guarded</span><span class="p">(</span><span class="n">_iter_chunks</span><span class="p">(</span><span class="n">resp</span><span class="p">,</span> <span class="n">deadline</span><span class="p">),</span> <span class="n">expect_kind</span><span class="p">,</span> <span class="n">uri</span><span class="p">):</span>
                 <span class="n">total</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">total</span> <span class="o">&gt;</span> <span class="n">max_bytes</span><span class="p">:</span>
                     <span class="k">raise</span> <span class="n">FetchError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;resource exceeds the </span><span class="si">{</span><span class="n">max_bytes</span><span class="si">}</span><span class="s2">-byte limit&quot;</span><span class="p">)</span>
@@ -335,6 +359,119 @@
         <span class="n">dest</span><span class="o">.</span><span class="n">unlink</span><span class="p">(</span><span class="n">missing_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="k">raise</span>
     <span class="k">return</span> <span class="n">dest</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_iter_chunks</span><span class="p">(</span><span class="n">resp</span><span class="p">,</span> <span class="n">deadline</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Yield the response body in chunks, enforcing the wall-clock deadline.&quot;&quot;&quot;</span>
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">time</span><span class="o">.</span><span class="n">monotonic</span><span class="p">()</span> <span class="o">&gt;</span> <span class="n">deadline</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">FetchError</span><span class="p">(</span><span class="s2">&quot;fetch exceeded the time budget&quot;</span><span class="p">)</span>
+        <span class="n">chunk</span> <span class="o">=</span> <span class="n">resp</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">_CHUNK</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">chunk</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="k">yield</span> <span class="n">chunk</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_kind_guarded</span><span class="p">(</span><span class="n">chunks</span><span class="p">,</span> <span class="n">expect_kind</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">uri</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Assert the payload kind before any chunk escapes, when a kind was declared.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">expect_kind</span><span class="p">:</span>
+        <span class="k">yield from</span> <span class="n">chunks</span>
+        <span class="k">return</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">graze.content_kind</span><span class="w"> </span><span class="kn">import</span> <span class="n">ContentKindMismatch</span><span class="p">,</span> <span class="n">kind_checked</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">yield from</span> <span class="n">kind_checked</span><span class="p">(</span><span class="n">chunks</span><span class="p">,</span> <span class="n">expect_kind</span><span class="o">=</span><span class="n">expect_kind</span><span class="p">,</span> <span class="n">url</span><span class="o">=</span><span class="n">uri</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">ContentKindMismatch</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">FetchError</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+
+
+<div class="viewcode-block" id="extract_media_members">
+<a class="viewcode-back" href="../../../module_docs/muvid/mcp/_fetch.html#muvid.mcp._fetch.extract_media_members">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">extract_media_members</span><span class="p">(</span>
+    <span class="n">archive</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="n">dest_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">extensions</span><span class="p">:</span> <span class="s2">&quot;tuple[str, ...]&quot;</span><span class="p">,</span>
+    <span class="n">max_members</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">max_member_bytes</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;tuple[list[Path], list[dict]]&quot;</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Extract media members of ``archive`` into ``dest_dir``: ``(paths, skipped)``.</span>
+
+<span class="sd">    A folder share link resolves to ONE zip of N files, so this is what turns a shoot into</span>
+<span class="sd">    clips. Returns the extracted paths in archive order, plus a ``skipped`` list of</span>
+<span class="sd">    ``{name, reason}`` — a member dropped for any reason is NAMED rather than silently</span>
+<span class="sd">    omitted, because a coverage decision made on quietly-truncated input is worse than one</span>
+<span class="sd">    made on a short list.</span>
+
+<span class="sd">    Members are filtered by extension, capped in count and in per-member size, and their</span>
+<span class="sd">    names are flattened to a basename — which also closes zip-slip (a member named</span>
+<span class="sd">    ``../../etc/x`` can never escape ``dest_dir``).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">zipfile</span>
+
+    <span class="n">dest_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">out</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">skipped</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">zf</span> <span class="o">=</span> <span class="n">zipfile</span><span class="o">.</span><span class="n">ZipFile</span><span class="p">(</span><span class="n">archive</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">zipfile</span><span class="o">.</span><span class="n">BadZipFile</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">FetchError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;the downloaded archive is not a readable ZIP: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+    <span class="k">with</span> <span class="n">zf</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">info</span> <span class="ow">in</span> <span class="n">zf</span><span class="o">.</span><span class="n">infolist</span><span class="p">():</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="n">info</span><span class="o">.</span><span class="n">filename</span>
+            <span class="n">base</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">name</span>  <span class="c1"># flattens any path -&gt; zip-slip cannot escape</span>
+            <span class="k">if</span> <span class="n">info</span><span class="o">.</span><span class="n">is_dir</span><span class="p">()</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">base</span> <span class="ow">or</span> <span class="n">base</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">):</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="n">Path</span><span class="p">(</span><span class="n">base</span><span class="p">)</span><span class="o">.</span><span class="n">suffix</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">extensions</span><span class="p">:</span>
+                <span class="n">skipped</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">name</span><span class="p">,</span> <span class="s2">&quot;reason&quot;</span><span class="p">:</span> <span class="s2">&quot;not a recognised media file&quot;</span><span class="p">})</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="n">info</span><span class="o">.</span><span class="n">file_size</span> <span class="o">&gt;</span> <span class="n">max_member_bytes</span><span class="p">:</span>
+                <span class="n">skipped</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="p">{</span>
+                        <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">name</span><span class="p">,</span>
+                        <span class="s2">&quot;reason&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">info</span><span class="o">.</span><span class="n">file_size</span><span class="si">}</span><span class="s2"> bytes exceeds the &quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">max_member_bytes</span><span class="si">}</span><span class="s2">-byte per-clip limit&quot;</span><span class="p">,</span>
+                    <span class="p">}</span>
+                <span class="p">)</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">out</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">max_members</span><span class="p">:</span>
+                <span class="n">skipped</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">name</span><span class="p">,</span> <span class="s2">&quot;reason&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;over the </span><span class="si">{</span><span class="n">max_members</span><span class="si">}</span><span class="s2">-clip limit&quot;</span><span class="p">})</span>
+                <span class="k">continue</span>
+            <span class="n">target</span> <span class="o">=</span> <span class="n">dest_dir</span> <span class="o">/</span> <span class="n">base</span>
+            <span class="k">with</span> <span class="n">zf</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">info</span><span class="p">)</span> <span class="k">as</span> <span class="n">src</span><span class="p">,</span> <span class="nb">open</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="s2">&quot;wb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">dst</span><span class="p">:</span>
+                <span class="k">while</span> <span class="n">chunk</span> <span class="o">:=</span> <span class="n">src</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">_CHUNK</span><span class="p">):</span>
+                    <span class="n">dst</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">target</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">out</span><span class="p">,</span> <span class="n">skipped</span></div>
+
+
+
+<div class="viewcode-block" id="resolve_share_link">
+<a class="viewcode-back" href="../../../module_docs/muvid/mcp/_fetch.html#muvid.mcp._fetch.resolve_share_link">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">resolve_share_link</span><span class="p">(</span><span class="n">uri</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;tuple[str, str]&quot;</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Normalise a pasted share link: ``(direct_url, kind)``.</span>
+
+<span class="sd">    ``kind`` is :class:`graze.share_links.ShareLinkKind`&#39;s value — ``&#39;file&#39;``, ``&#39;archive&#39;``</span>
+<span class="sd">    (a folder link, which downloads as ONE zip of many members), ``&#39;folder&#39;`` (needs a</span>
+<span class="sd">    provider API) or ``&#39;unknown&#39;``. A URL that is nobody&#39;s share link passes through</span>
+<span class="sd">    unchanged as ``&#39;unknown&#39;``.</span>
+
+<span class="sd">    muvid does not own any provider regexes; :mod:`graze.share_links` does, and it is pure</span>
+<span class="sd">    (no socket), so this stays deterministic and offline-testable.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">graze.share_links</span><span class="w"> </span><span class="kn">import</span> <span class="n">ShareLinkResolutionError</span><span class="p">,</span> <span class="n">resolve_share_url</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">resolved</span> <span class="o">=</span> <span class="n">resolve_share_url</span><span class="p">(</span><span class="n">uri</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">ShareLinkResolutionError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">FetchError</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">resolved</span><span class="o">.</span><span class="n">resolved</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">resolved</span><span class="o">.</span><span class="n">direct_url</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">FetchError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">resolved</span><span class="o">.</span><span class="n">provider</span><span class="si">}</span><span class="s2"> link cannot be turned into a direct download: &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">resolved</span><span class="o">.</span><span class="n">reason</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">&#39;no direct URL exists for this link form&#39;</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">resolved</span><span class="o">.</span><span class="n">direct_url</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">resolved</span><span class="o">.</span><span class="n">kind</span><span class="p">)</span></div>
 
 </pre></div>
 
