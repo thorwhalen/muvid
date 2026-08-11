@@ -706,3 +706,57 @@ def list_strategies() -> dict:
     from muvid.footage.strategy import DEFAULT_STRATEGY, list_strategies as _ls
 
     return {"strategies": _ls(), "default": DEFAULT_STRATEGY}
+
+
+def footage_editor_document(project_id: str) -> dict:
+    """The project as lacing-native standoff annotations, for a multitrack editor. Free.
+
+    One tier per clip (its ``clip-alignment/v1`` +, once scored, its
+    ``clip-score-track/v1`` curves) plus a ``DECISION`` tier holding the current default
+    proposal as ``music-video-edl/v1`` entries — everything referenced to the song by
+    content hash, on one shared song-time axis (thorwhalen/reelee-web#203). Needs the
+    ``editor`` extra (``lacing``); requires alignment (run ``align_footage`` first).
+
+    After a human edits the DECISION tier, feed its annotations back to
+    ``assemble_music_video`` via ``footage_edl_from_annotations``.
+    """
+    try:
+        from muvid.footage.lacing_bridge import editor_document
+    except ImportError as e:
+        raise _tool_error(
+            "the lacing-native editor bridge needs the 'editor' extra "
+            "(pip install 'muvid[editor]')"
+        ) from e
+
+    proj = _open(project_id)
+    if not proj.load_alignments():
+        raise _tool_error("no alignment yet — call align_footage first")
+    try:
+        return editor_document(proj)
+    except ValueError as e:
+        raise _tool_error(str(e)) from e
+
+
+def footage_edl_from_annotations(project_id: str, *, annotations: list[dict]) -> dict:
+    """The DECISION tier's annotations, turned back into an ``edl=`` argument. Free.
+
+    The timeline-to-EDL half: pass ``footage_editor_document``'s ``DECISION`` tier
+    (after whatever an editor did to it) and get back plain
+    ``{song_start, song_end, clip_id}`` dicts, ready for ``assemble_music_video(edl=...)``
+    or ``propose_edit`` — a faithful read, not a re-selection.
+    """
+    try:
+        from muvid.footage.lacing_bridge import edl_from_annotations
+        from lacing.model import Annotation
+    except ImportError as e:
+        raise _tool_error(
+            "the lacing-native editor bridge needs the 'editor' extra "
+            "(pip install 'muvid[editor]')"
+        ) from e
+
+    _open(project_id)  # authorizes the caller against this project
+    try:
+        parsed = [Annotation.model_validate(a) for a in annotations]
+    except Exception as e:  # noqa: BLE001 — surface a clean ToolError, not a raw pydantic one
+        raise _tool_error(f"could not read annotations: {e}") from e
+    return {"project_id": project_id, "edl": edl_from_annotations(parsed)}
