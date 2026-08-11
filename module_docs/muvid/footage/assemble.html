@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.footage.assemble &mdash; muvid 0.0.17 documentation</title>
+  <title>muvid.footage.assemble &mdash; muvid 0.0.18 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -15,7 +15,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=63b572e7"></script>
+      <script src="../../../_static/documentation_options.js?v=8bafd125"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -138,15 +138,38 @@
              
   <section id="module-muvid.footage.assemble">
 <span id="muvid-footage-assemble"></span><h1>muvid.footage.assemble<a class="headerlink" href="#module-muvid.footage.assemble" title="Link to this heading"></a></h1>
-<p>Assemble validated cuts into a music video — ONE bounded ffmpeg pass.</p>
+<p>Assemble validated cuts into a music video, in BOUNDED memory.</p>
+<p>The previous shape — one ffmpeg <code class="docutils literal notranslate"><span class="pre">-filter_complex</span></code> pass with one input per cut — held a
+decoder context and inter-filter queues for EVERY cut at once, so peak RSS grew roughly
+linearly with cut count: a real 30-cut weighted edit needed &gt;2.3 GB and was OOM-killed on
+the 3.7 GB production box, while 15 cuts only just fit (muvid#21/#24). Score-driven edits
+routinely produce 30-70 cuts, so that shape caps exactly the edits the scoring layer
+exists to make.</p>
+<p>Now three bounded stages, memory O(1) in cut count:</p>
+<ol class="arabic simple">
+<li><p><strong>One intermediate per cut</strong> — a single-input ffmpeg run per cut (input-side <code class="docutils literal notranslate"><span class="pre">-ss</span></code>,
+so a late cut no longer decodes the whole head of its clip), scaled+padded onto the
+fixed canvas at a constant <code class="docutils literal notranslate"><span class="pre">fps</span></code>. A gap entry (<code class="docutils literal notranslate"><span class="pre">clip_path</span> <span class="pre">==</span> <span class="pre">&quot;&quot;</span></code> — a span of the
+song with no footage) renders as black from a <code class="docutils literal notranslate"><span class="pre">color</span></code> source, which is what makes
+partial-coverage edits renderable at all. Each intermediate is cut to an EXACT frame
+count derived from the shared song-time grid (<code class="docutils literal notranslate"><span class="pre">round(end*fps)</span> <span class="pre">-</span> <span class="pre">round(start*fps)</span></code>);
+sub-frame cuts (0 grid frames) are dropped, an exhausted source clones its last frame
+up to the count (<code class="docutils literal notranslate"><span class="pre">tpad</span></code>), and a cut whose source yields no frames at all falls back
+to black — so total frames equals <code class="docutils literal notranslate"><span class="pre">round(song_duration*fps)</span></code> by construction,
+whatever the cut count, source rates, or a clip whose audio outlives its video.</p></li>
+<li><p><strong>Concat by stream copy</strong> (concat demuxer) — no re-encode, no filtergraph.</p></li>
+<li><p><strong>Mux the clean song</strong> in the same final pass. When the master already IS the delivery
+contract (aac, 48 kHz stereo), its packets are stream-copied bit-identically; anything
+else is encoded to the contract (aac 192k, 48 kHz stereo — verify_video’s audio check
+must be a property of the renderer, not of which song the user brought: muvid#24 B3).</p></li>
+</ol>
+<p>ffmpeg auto-applies each clip’s rotation metadata on decode (default <code class="docutils literal notranslate"><span class="pre">-autorotate</span> <span class="pre">1</span></code>),
+so a display-matrix portrait clip lands upright and pillarboxed, never stretched.</p>
 <p>Deliberately NOT moviepy (its <code class="docutils literal notranslate"><span class="pre">write_videofile</span></code> runs in-process and would escape the
-<code class="docutils literal notranslate"><span class="pre">$MUVID_FFMPEG_TIMEOUT_S</span></code> worker guard, and its dimension normalization is a per-frame
-Python blur). Instead a single <code class="docutils literal notranslate"><span class="pre">ffmpeg</span> <span class="pre">-filter_complex</span></code> invocation, run through
-<a class="reference internal" href="../visualize/ffmpeg.html#muvid.visualize.ffmpeg.run_ffmpeg" title="muvid.visualize.ffmpeg.run_ffmpeg"><code class="xref py py-func docutils literal notranslate"><span class="pre">muvid.visualize.ffmpeg.run_ffmpeg()</span></code></a> (wall-clock bounded): each cut is trimmed at its
-derived in-point, scaled+padded onto a FIXED canvas (from the genre, not clip-0), and
-concatenated; the <strong>clean song</strong> audio for the covered span is mapped as the sole audio
-track. ffmpeg auto-applies each clip’s rotation metadata on decode (default <code class="docutils literal notranslate"><span class="pre">-autorotate</span></code>
-1), so mixed-orientation phone clips land upright without extra handling.</p>
+<code class="docutils literal notranslate"><span class="pre">$MUVID_FFMPEG_TIMEOUT_S</span></code> worker guard). Every stage runs through
+<a class="reference internal" href="../visualize/ffmpeg.html#muvid.visualize.ffmpeg.run_ffmpeg" title="muvid.visualize.ffmpeg.run_ffmpeg"><code class="xref py py-func docutils literal notranslate"><span class="pre">muvid.visualize.ffmpeg.run_ffmpeg()</span></code></a>; note the guard is <strong>per invocation</strong> now, so a
+render’s wall-clock bound is <code class="docutils literal notranslate"><span class="pre">(cuts</span> <span class="pre">+</span> <span class="pre">1)</span> <span class="pre">*</span> <span class="pre">MUVID_FFMPEG_TIMEOUT_S</span></code> — the env var bounds
+a hang, not the total render.</p>
 <dl class="py data">
 <dt class="sig sig-object py" id="muvid.footage.assemble.DEFAULT_CANVAS">
 <span class="sig-prename descclassname"><span class="pre">muvid.footage.assemble.</span></span><span class="sig-name descname"><span class="pre">DEFAULT_CANVAS</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">(1920,</span> <span class="pre">1080)</span></span><a class="headerlink" href="#muvid.footage.assemble.DEFAULT_CANVAS" title="Link to this definition"></a></dt>
@@ -167,9 +190,11 @@ track. ffmpeg auto-applies each clip’s rotation metadata on decode (default <c
 <dl class="py function">
 <dt class="sig sig-object py" id="muvid.footage.assemble.assemble_music_video">
 <span class="sig-prename descclassname"><span class="pre">muvid.footage.assemble.</span></span><span class="sig-name descname"><span class="pre">assemble_music_video</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cuts</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="edl.html#muvid.footage.edl.AssemblyCut" title="muvid.footage.edl.AssemblyCut"><span class="pre">AssemblyCut</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">song_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">canvas</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">(1920,</span> <span class="pre">1080)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">30</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crf</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">preset</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'veryfast'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Path</span></span></span><a class="reference internal" href="../../../_modules/muvid/footage/assemble.html#assemble_music_video"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.assemble.assemble_music_video" title="Link to this definition"></a></dt>
-<dd><p>Render <code class="docutils literal notranslate"><span class="pre">cuts</span></code> (a validated, contiguous EDL) into <code class="docutils literal notranslate"><span class="pre">out_path</span></code>.</p>
-<p>One ffmpeg pass: trim+scale+pad each cut onto <code class="docutils literal notranslate"><span class="pre">canvas</span></code> → concat → mux the clean
-song audio for <code class="docutils literal notranslate"><span class="pre">[cuts[0].song_start,</span> <span class="pre">cuts[-1].song_end]</span></code>. Returns <code class="docutils literal notranslate"><span class="pre">out_path</span></code>.</p>
+<dd><p>Render <code class="docutils literal notranslate"><span class="pre">cuts</span></code> (a validated, contiguous, gap-filled EDL) into <code class="docutils literal notranslate"><span class="pre">out_path</span></code>.</p>
+<p>Bounded stages: one single-input ffmpeg run per cut (gaps render black), a stream-copy
+concat, and a final mux of the clean song for <code class="docutils literal notranslate"><span class="pre">[cuts[0].song_start,</span>
+<span class="pre">cuts[-1].song_end]</span></code> — which, for EDLs produced by <code class="docutils literal notranslate"><span class="pre">fill_gaps</span></code>, is the whole song.
+Returns <code class="docutils literal notranslate"><span class="pre">out_path</span></code>.</p>
 </dd></dl>
 
 </section>

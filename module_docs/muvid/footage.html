@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.footage &mdash; muvid 0.0.17 documentation</title>
+  <title>muvid.footage &mdash; muvid 0.0.18 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -15,7 +15,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=63b572e7"></script>
+      <script src="../../_static/documentation_options.js?v=8bafd125"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -165,6 +165,10 @@ alignments into an EDL (which clip covers which span of the song).</p></li>
 <dt class="sig sig-object py" id="muvid.footage.EdlEntry">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">muvid.footage.</span></span><span class="sig-name descname"><span class="pre">EdlEntry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">song_start</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">song_end</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clip_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/muvid/footage/edl.html#EdlEntry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.EdlEntry" title="Link to this definition"></a></dt>
 <dd><p>One cut: show <code class="docutils literal notranslate"><span class="pre">clip_id</span></code> over the song span <code class="docutils literal notranslate"><span class="pre">[song_start,</span> <span class="pre">song_end]</span></code>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">clip_id</span> <span class="pre">==</span> <span class="pre">&quot;&quot;</span></code> is a <strong>gap entry</strong> — no footage covers this span, and the renderer
+fills it (black in v1). Gaps are explicit entries rather than absences so that an EDL
+is always contiguous over its span, every span of the song is accounted for by
+exactly one entry, and “no clip here” survives a JSON round trip (<code class="docutils literal notranslate"><span class="pre">clip_id:</span> <span class="pre">null</span></code>).</p>
 </dd></dl>
 
 <dl class="py class">
@@ -224,12 +228,13 @@ the alignment-only built-ins ignore it. See <code class="xref py py-data docutil
 <dd><p>Validate an EDL (from a strategy OR a caller) — the ONE gate before any cutting.</p>
 <p>Enforces, raising <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> with a specific message otherwise:</p>
 <ul class="simple">
-<li><p>non-empty; every <code class="docutils literal notranslate"><span class="pre">clip_id</span></code> is a known alignment;</p></li>
+<li><p>non-empty; every non-gap <code class="docutils literal notranslate"><span class="pre">clip_id</span></code> is a known alignment;</p></li>
 <li><p>each span is positive and lies within <code class="docutils literal notranslate"><span class="pre">[0,</span> <span class="pre">song_duration]</span></code>;</p></li>
 <li><p>spans are in ascending order and <strong>non-overlapping</strong>;</p></li>
-<li><p>spans are <strong>contiguous</strong> (gapless) — consecutive spans meet (v1 requires a
-continuous edit; visualizer/black gap-fill is a deliberate follow-up);</p></li>
-<li><p>each span lies within its clip’s aligned coverage, AND the derived
+<li><p>spans are <strong>contiguous</strong> (gapless) — a hole must be an explicit gap entry
+(<code class="docutils literal notranslate"><span class="pre">clip_id</span></code> empty/null, rendered as fill), which <code class="xref py py-func docutils literal notranslate"><span class="pre">fill_gaps()</span></code> inserts; an
+<em>implicit</em> hole is still an error, so nothing goes missing silently;</p></li>
+<li><p>each non-gap span lies within its clip’s aligned coverage, AND the derived
 <code class="docutils literal notranslate"><span class="pre">clip_in</span> <span class="pre">=</span> <span class="pre">song_start</span> <span class="pre">-</span> <span class="pre">offset</span></code> satisfies <code class="docutils literal notranslate"><span class="pre">0</span> <span class="pre">&lt;=</span> <span class="pre">clip_in</span></code> and
 <code class="docutils literal notranslate"><span class="pre">clip_in</span> <span class="pre">+</span> <span class="pre">span_duration</span> <span class="pre">&lt;=</span> <span class="pre">clip_duration</span></code> (the clip actually contains that span).</p></li>
 </ul>

@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.footage.edl &mdash; muvid 0.0.17 documentation</title>
+  <title>muvid.footage.edl &mdash; muvid 0.0.18 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -15,7 +15,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=63b572e7"></script>
+      <script src="../../../_static/documentation_options.js?v=8bafd125"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -71,6 +71,7 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.footage.edl.MAX_EDL_ENTRIES"><code class="docutils literal notranslate"><span class="pre">MAX_EDL_ENTRIES</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.footage.edl.derive_cuts"><code class="docutils literal notranslate"><span class="pre">derive_cuts()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.footage.edl.fill_gaps"><code class="docutils literal notranslate"><span class="pre">fill_gaps()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.footage.edl.validate_edl"><code class="docutils literal notranslate"><span class="pre">validate_edl()</span></code></a></li>
 </ul>
 </li>
@@ -146,8 +147,10 @@
 <span id="muvid-footage-edl"></span><h1>muvid.footage.edl<a class="headerlink" href="#module-muvid.footage.edl" title="Link to this heading"></a></h1>
 <p>EDL data types + the <code class="docutils literal notranslate"><span class="pre">validate_edl</span></code> single-source-of-truth gate.</p>
 <p>An <strong>EDL</strong> (edit decision list) says which clip covers which span of the SONG timeline:
-an ordered list of <a class="reference internal" href="#muvid.footage.edl.EdlEntry" title="muvid.footage.edl.EdlEntry"><code class="xref py py-class docutils literal notranslate"><span class="pre">EdlEntry</span></code></a> <code class="docutils literal notranslate"><span class="pre">{song_start,</span> <span class="pre">song_end,</span> <span class="pre">clip_id}</span></code>. A strategy or a
-caller produces one; <a class="reference internal" href="#muvid.footage.edl.validate_edl" title="muvid.footage.edl.validate_edl"><code class="xref py py-func docutils literal notranslate"><span class="pre">validate_edl()</span></code></a> is the ONE gate every path (explicit and
+an ordered list of <a class="reference internal" href="#muvid.footage.edl.EdlEntry" title="muvid.footage.edl.EdlEntry"><code class="xref py py-class docutils literal notranslate"><span class="pre">EdlEntry</span></code></a> <code class="docutils literal notranslate"><span class="pre">{song_start,</span> <span class="pre">song_end,</span> <span class="pre">clip_id}</span></code>, where an empty/
+null <code class="docutils literal notranslate"><span class="pre">clip_id</span></code> is an explicit <strong>gap</strong> (no footage — rendered as fill). A strategy or a
+caller produces one; <a class="reference internal" href="#muvid.footage.edl.fill_gaps" title="muvid.footage.edl.fill_gaps"><code class="xref py py-func docutils literal notranslate"><span class="pre">fill_gaps()</span></code></a> pads it to the full song (head/tail/interior holes
+become gap entries); <a class="reference internal" href="#muvid.footage.edl.validate_edl" title="muvid.footage.edl.validate_edl"><code class="xref py py-func docutils literal notranslate"><span class="pre">validate_edl()</span></code></a> is the ONE gate every path (explicit and
 auto/strategy) passes before any cutting, and <a class="reference internal" href="#muvid.footage.edl.derive_cuts" title="muvid.footage.edl.derive_cuts"><code class="xref py py-func docutils literal notranslate"><span class="pre">derive_cuts()</span></code></a> centralizes the sign
 convention (<code class="docutils literal notranslate"><span class="pre">clip_in</span> <span class="pre">=</span> <span class="pre">song_start</span> <span class="pre">-</span> <span class="pre">offset_s</span></code>) so no third-party strategy can desync the
 result. Times are seconds (float).</p>
@@ -161,6 +164,10 @@ result. Times are seconds (float).</p>
 <dt class="sig sig-object py" id="muvid.footage.edl.EdlEntry">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">muvid.footage.edl.</span></span><span class="sig-name descname"><span class="pre">EdlEntry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">song_start</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">song_end</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clip_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/muvid/footage/edl.html#EdlEntry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.edl.EdlEntry" title="Link to this definition"></a></dt>
 <dd><p>One cut: show <code class="docutils literal notranslate"><span class="pre">clip_id</span></code> over the song span <code class="docutils literal notranslate"><span class="pre">[song_start,</span> <span class="pre">song_end]</span></code>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">clip_id</span> <span class="pre">==</span> <span class="pre">&quot;&quot;</span></code> is a <strong>gap entry</strong> — no footage covers this span, and the renderer
+fills it (black in v1). Gaps are explicit entries rather than absences so that an EDL
+is always contiguous over its span, every span of the song is accounted for by
+exactly one entry, and “no clip here” survives a JSON round trip (<code class="docutils literal notranslate"><span class="pre">clip_id:</span> <span class="pre">null</span></code>).</p>
 </dd></dl>
 
 <dl class="py class">
@@ -182,9 +189,9 @@ of being measured. Selection filters on this; reporting shows it with a reason.<
 <dl class="py data">
 <dt class="sig sig-object py" id="muvid.footage.edl.MAX_EDL_ENTRIES">
 <span class="sig-prename descclassname"><span class="pre">muvid.footage.edl.</span></span><span class="sig-name descname"><span class="pre">MAX_EDL_ENTRIES</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">500</span></span><a class="headerlink" href="#muvid.footage.edl.MAX_EDL_ENTRIES" title="Link to this definition"></a></dt>
-<dd><p>Cap on EDL entries (env-tunable). Bounds the assembler’s per-cut ffmpeg <code class="docutils literal notranslate"><span class="pre">-i</span></code> inputs +
-filtergraph size on BOTH the auto and the explicit-<code class="docutils literal notranslate"><span class="pre">edl</span></code> paths, so a caller can’t
-submit hundreds of thousands of 1 ms spans and exhaust fds / ARG_MAX on the shared box.</p>
+<dd><p>Cap on EDL entries (env-tunable), on BOTH the auto and the explicit-<code class="docutils literal notranslate"><span class="pre">edl</span></code> paths. The
+assembler runs one bounded ffmpeg per cut (memory O(1) in cut count), so this now caps
+total WORK (N encoder invocations on a shared box), not a single command’s inputs.</p>
 </dd></dl>
 
 <dl class="py function">
@@ -196,17 +203,31 @@ submit hundreds of thousands of 1 ms spans and exhaust fds / ARG_MAX on the shar
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="muvid.footage.edl.fill_gaps">
+<span class="sig-prename descclassname"><span class="pre">muvid.footage.edl.</span></span><span class="sig-name descname"><span class="pre">fill_gaps</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entries</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">song_duration</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#muvid.footage.edl.EdlEntry" title="muvid.footage.edl.EdlEntry"><span class="pre">EdlEntry</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../_modules/muvid/footage/edl.html#fill_gaps"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.edl.fill_gaps" title="Link to this definition"></a></dt>
+<dd><p>Make an edit span the WHOLE song by inserting explicit gap entries.</p>
+<p>Three holes become gap entries (muvid#21 items 1+2, one mechanism): the head
+(<code class="docutils literal notranslate"><span class="pre">[0,</span> <span class="pre">first.song_start]</span></code> — without this, footage starting at t=5 s silently loses
+the intro), interior holes between consecutive entries, and the tail
+(<code class="docutils literal notranslate"><span class="pre">[last.song_end,</span> <span class="pre">song_duration]</span></code>). Entries are sorted by start; overlap and
+containment stay <a class="reference internal" href="#muvid.footage.edl.validate_edl" title="muvid.footage.edl.validate_edl"><code class="xref py py-func docutils literal notranslate"><span class="pre">validate_edl()</span></code></a>’s business — call this BEFORE it, never after.</p>
+<p>An empty selection stays empty (an all-black video is not a first cut worth
+rendering silently — the caller decides what “no usable footage” means).</p>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="muvid.footage.edl.validate_edl">
 <span class="sig-prename descclassname"><span class="pre">muvid.footage.edl.</span></span><span class="sig-name descname"><span class="pre">validate_edl</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">edl</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alignments</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#muvid.footage.edl.FootageAlignment" title="muvid.footage.edl.FootageAlignment"><span class="pre">FootageAlignment</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">song_duration</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#muvid.footage.edl.EdlEntry" title="muvid.footage.edl.EdlEntry"><span class="pre">EdlEntry</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../_modules/muvid/footage/edl.html#validate_edl"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.edl.validate_edl" title="Link to this definition"></a></dt>
 <dd><p>Validate an EDL (from a strategy OR a caller) — the ONE gate before any cutting.</p>
 <p>Enforces, raising <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> with a specific message otherwise:</p>
 <ul class="simple">
-<li><p>non-empty; every <code class="docutils literal notranslate"><span class="pre">clip_id</span></code> is a known alignment;</p></li>
+<li><p>non-empty; every non-gap <code class="docutils literal notranslate"><span class="pre">clip_id</span></code> is a known alignment;</p></li>
 <li><p>each span is positive and lies within <code class="docutils literal notranslate"><span class="pre">[0,</span> <span class="pre">song_duration]</span></code>;</p></li>
 <li><p>spans are in ascending order and <strong>non-overlapping</strong>;</p></li>
-<li><p>spans are <strong>contiguous</strong> (gapless) — consecutive spans meet (v1 requires a
-continuous edit; visualizer/black gap-fill is a deliberate follow-up);</p></li>
-<li><p>each span lies within its clip’s aligned coverage, AND the derived
+<li><p>spans are <strong>contiguous</strong> (gapless) — a hole must be an explicit gap entry
+(<code class="docutils literal notranslate"><span class="pre">clip_id</span></code> empty/null, rendered as fill), which <a class="reference internal" href="#muvid.footage.edl.fill_gaps" title="muvid.footage.edl.fill_gaps"><code class="xref py py-func docutils literal notranslate"><span class="pre">fill_gaps()</span></code></a> inserts; an
+<em>implicit</em> hole is still an error, so nothing goes missing silently;</p></li>
+<li><p>each non-gap span lies within its clip’s aligned coverage, AND the derived
 <code class="docutils literal notranslate"><span class="pre">clip_in</span> <span class="pre">=</span> <span class="pre">song_start</span> <span class="pre">-</span> <span class="pre">offset</span></code> satisfies <code class="docutils literal notranslate"><span class="pre">0</span> <span class="pre">&lt;=</span> <span class="pre">clip_in</span></code> and
 <code class="docutils literal notranslate"><span class="pre">clip_in</span> <span class="pre">+</span> <span class="pre">span_duration</span> <span class="pre">&lt;=</span> <span class="pre">clip_duration</span></code> (the clip actually contains that span).</p></li>
 </ul>
