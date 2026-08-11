@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.events &mdash; muvid 0.0.19 documentation</title>
+  <title>muvid.downloads &mdash; muvid 0.0.19 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -120,7 +120,7 @@
   <ul class="wy-breadcrumbs">
       <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
           <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
-      <li class="breadcrumb-item active">muvid.events</li>
+      <li class="breadcrumb-item active">muvid.downloads</li>
       <li class="wy-breadcrumbs-aside">
       </li>
   </ul>
@@ -129,83 +129,98 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <h1>Source code for muvid.events</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Surface fal progress events into the muvid project.</span>
+  <h1>Source code for muvid.downloads</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Resolve a caller&#39;s rendered artifact to its file — muvid&#39;s half of downloads.</span>
 
-<span class="sd">Whenever muvid invokes fal (during ``render``, ``render_environment``,</span>
-<span class="sd">``transcribe`` for transcripts that arrive via fal, etc.), the</span>
-<span class="sd">``falaw.events`` stream is written to ``.muvid/fal_events.jsonl`` so:</span>
+<span class="sd">The music-video pipeline could render a 93 MB video the caller had no way to obtain:</span>
+<span class="sd">``meta[&#39;video&#39;]`` is a server-side path, unreadable from the other end of an MCP</span>
+<span class="sd">connection (muvid#24 B2). Retrieval is split along ownership lines, per the seam agreed</span>
+<span class="sd">with the connector redesign (reelee#252 §1 Option B):</span>
 
-<span class="sd">- ``muvid status`` can show &quot;currently running ...&quot; and recent</span>
-<span class="sd">  per-shot timings;</span>
-<span class="sd">- the local UI can stream the same events over SSE without setting</span>
-<span class="sd">  up its own subscriber;</span>
-<span class="sd">- post-mortem of long renders is just ``cat .muvid/fal_events.jsonl``.</span>
+<span class="sd">- **muvid owns resolution** (this module): claim → file, authorised by the same</span>
+<span class="sd">  per-email workspace scoping every tool uses. muvid never touches token or URL code.</span>
+<span class="sd">- **The connector owns transport**: ONE generic download route, mounted next to</span>
+<span class="sd">  ``/mcp``, turns claims into signed short-lived URLs via per-genre resolvers —</span>
+<span class="sd">  ``resolvers={&#39;muvid&#39;: muvid.downloads.resolve, ...}`` — shared by reelee&#39;s own</span>
+<span class="sd">  exports, so this is the first registration, not a parallel mechanism.</span>
 
-<span class="sd">The integration is opt-in via :func:`log_fal_events_to`, which yields a</span>
-<span class="sd">context manager that subscribes / unsubscribes around the ``with``</span>
-<span class="sd">block. ``muvid.facade.render`` wraps every render call in one.</span>
+<span class="sd">A tool therefore returns a **claim** — ``{genre, project_id, artifact_id}`` — and the</span>
+<span class="sd">connector-side wrapper (or the human operator, server-side) resolves it.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">contextlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">contextmanager</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">asdict</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterator</span>
+
+<span class="c1">#: The genre identifier the connector&#39;s resolver registry keys on.</span>
+<span class="n">GENRE</span> <span class="o">=</span> <span class="s2">&quot;muvid&quot;</span>
 
 
-<div class="viewcode-block" id="log_fal_events_to">
-<a class="viewcode-back" href="../../module_docs/muvid/events.html#muvid.events.log_fal_events_to">[docs]</a>
-<span class="nd">@contextmanager</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">log_fal_events_to</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="kc">None</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Subscribe a JSONL writer to falaw&#39;s event bus for the duration.</span>
+<div class="viewcode-block" id="ResolvedArtifact">
+<a class="viewcode-back" href="../../module_docs/muvid/downloads.html#muvid.downloads.ResolvedArtifact">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ResolvedArtifact</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A resolved claim: the file plus what the transport needs to serve it.&quot;&quot;&quot;</span>
 
-<span class="sd">    No-op (silent) if ``falaw`` isn&#39;t installed.</span>
+    <span class="n">path</span><span class="p">:</span> <span class="n">Path</span>
+    <span class="n">content_type</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span></div>
+
+
+
+<span class="c1">#: Extensions a render may legitimately carry, with their content types.</span>
+<span class="n">_CONTENT_TYPES</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;.mp4&quot;</span><span class="p">:</span> <span class="s2">&quot;video/mp4&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;.webm&quot;</span><span class="p">:</span> <span class="s2">&quot;video/webm&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;.mov&quot;</span><span class="p">:</span> <span class="s2">&quot;video/quicktime&quot;</span><span class="p">,</span>
+<span class="p">}</span>
+
+
+<div class="viewcode-block" id="claim">
+<a class="viewcode-back" href="../../module_docs/muvid/downloads.html#muvid.downloads.claim">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">claim</span><span class="p">(</span><span class="n">project_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">artifact_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The claim dict a tool returns — what the connector turns into a signed URL.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;genre&quot;</span><span class="p">:</span> <span class="n">GENRE</span><span class="p">,</span> <span class="s2">&quot;project_id&quot;</span><span class="p">:</span> <span class="n">project_id</span><span class="p">,</span> <span class="s2">&quot;artifact_id&quot;</span><span class="p">:</span> <span class="n">artifact_id</span><span class="p">}</span></div>
+
+
+
+<div class="viewcode-block" id="resolve">
+<a class="viewcode-back" href="../../module_docs/muvid/downloads.html#muvid.downloads.resolve">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">resolve</span><span class="p">(</span><span class="n">email</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">project_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">artifact_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ResolvedArtifact</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The caller&#39;s rendered artifact as a servable file — muvid&#39;s download authority.</span>
+
+<span class="sd">    ``artifact_id`` is a render id. Raises ``KeyError`` for anything that does not</span>
+<span class="sd">    resolve to an artifact of *this* caller — including ids shaped like an attack and</span>
+<span class="sd">    other users&#39; renders. (No ``PermissionError`` branch: workspaces are scoped by</span>
+<span class="sd">    email, so &quot;someone else&#39;s render&quot; and &quot;no such render&quot; are indistinguishable here,</span>
+<span class="sd">    and saying which would leak existence.)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.footage.workspace</span><span class="w"> </span><span class="kn">import</span> <span class="n">FootageWorkspace</span><span class="p">,</span> <span class="n">safe_component</span>
+
+    <span class="c1"># The same id rule the workspace itself applies — a second, stricter charset here</span>
+    <span class="c1"># would refuse artifacts the workspace happily created.</span>
     <span class="k">try</span><span class="p">:</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">falaw</span><span class="w"> </span><span class="kn">import</span> <span class="n">subscribe</span><span class="p">,</span> <span class="n">unsubscribe</span>
-    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-        <span class="k">yield</span>
-        <span class="k">return</span>
-
-    <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.contracts</span><span class="w"> </span><span class="kn">import</span> <span class="n">progress_event_to_dict</span>
-
-    <span class="n">target</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
-    <span class="n">target</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">_write</span><span class="p">(</span><span class="n">event</span><span class="p">):</span>
-        <span class="k">with</span> <span class="n">target</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">&quot;a&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">progress_event_to_dict</span><span class="p">(</span><span class="n">event</span><span class="p">))</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
-
-    <span class="n">subscribe</span><span class="p">(</span><span class="n">_write</span><span class="p">)</span>
+        <span class="n">pid</span> <span class="o">=</span> <span class="n">safe_component</span><span class="p">(</span><span class="n">project_id</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;project_id&quot;</span><span class="p">)</span>
+        <span class="n">aid</span> <span class="o">=</span> <span class="n">safe_component</span><span class="p">(</span><span class="n">artifact_id</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;artifact_id&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span> <span class="kn">from</span><span class="w"> </span><span class="kc">None</span>
     <span class="k">try</span><span class="p">:</span>
-        <span class="k">yield</span>
-    <span class="k">finally</span><span class="p">:</span>
-        <span class="n">unsubscribe</span><span class="p">(</span><span class="n">_write</span><span class="p">)</span></div>
-
-
-
-<div class="viewcode-block" id="read_recent_fal_events">
-<a class="viewcode-back" href="../../module_docs/muvid/events.html#muvid.events.read_recent_fal_events">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">read_recent_fal_events</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">limit</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Read the tail of the JSONL log. Returns empty list if absent.&quot;&quot;&quot;</span>
-    <span class="n">p</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">p</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
-        <span class="k">return</span> <span class="p">[]</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="k">with</span> <span class="n">p</span><span class="o">.</span><span class="n">open</span><span class="p">()</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-            <span class="n">lines</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">readlines</span><span class="p">()</span>
-    <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
-        <span class="k">return</span> <span class="p">[]</span>
-    <span class="n">out</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">[</span><span class="o">-</span><span class="n">limit</span><span class="p">:]:</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">line</span><span class="p">))</span>
-        <span class="k">except</span> <span class="n">json</span><span class="o">.</span><span class="n">JSONDecodeError</span><span class="p">:</span>
-            <span class="k">continue</span>
-    <span class="k">return</span> <span class="n">out</span></div>
+        <span class="n">proj</span> <span class="o">=</span> <span class="n">FootageWorkspace</span><span class="o">.</span><span class="n">for_email</span><span class="p">(</span><span class="n">email</span><span class="p">)</span><span class="o">.</span><span class="n">open_project</span><span class="p">(</span><span class="n">pid</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">FileNotFoundError</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;no such project </span><span class="si">{</span><span class="n">project_id</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="kc">None</span>
+    <span class="n">render_dir</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">root</span> <span class="o">/</span> <span class="s2">&quot;renders&quot;</span> <span class="o">/</span> <span class="n">aid</span>
+    <span class="n">candidates</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="p">(</span><span class="n">render_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;final</span><span class="si">{</span><span class="n">ext</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">ext</span> <span class="ow">in</span> <span class="n">_CONTENT_TYPES</span><span class="p">)</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+    <span class="p">]</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">candidates</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;no such render </span><span class="si">{</span><span class="n">artifact_id</span><span class="si">!r}</span><span class="s2"> in project </span><span class="si">{</span><span class="n">project_id</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="n">candidates</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">ResolvedArtifact</span><span class="p">(</span>
+        <span class="n">path</span><span class="o">=</span><span class="n">path</span><span class="p">,</span>
+        <span class="n">content_type</span><span class="o">=</span><span class="n">_CONTENT_TYPES</span><span class="p">[</span><span class="n">path</span><span class="o">.</span><span class="n">suffix</span><span class="p">],</span>
+        <span class="n">filename</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">project_id</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">artifact_id</span><span class="si">}{</span><span class="n">path</span><span class="o">.</span><span class="n">suffix</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+    <span class="p">)</span></div>
 
 </pre></div>
 
