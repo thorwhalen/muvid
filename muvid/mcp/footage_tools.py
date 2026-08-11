@@ -33,7 +33,13 @@ _SONG_MAX_BYTES = int(
 _SONG_MAX_DURATION_S = int(
     os.environ.get("MUVID_FOOTAGE_MAX_SONG_DURATION_S", str(12 * 60))
 )
-_MIN_CONFIDENCE = float(os.environ.get("MUVID_FOOTAGE_MIN_CONFIDENCE", "0.3"))
+#: Below this, an alignment is REPORTED as low-confidence (never dropped — see
+#: align_footage). Calibrated for the clean-master-vs-phone regime the connector actually
+#: sees, on the onset-envelope feature (muvid#15): measured against a studio master, four
+#: provably-correct clips scored 0.173–0.603 while the one genuinely unrelated clip scored
+#: 0.021 — so 0.1 separates them ~2x/5x, where the old 0.3 (a defensible number for the
+#: EASIER clip-to-clip regime) flagged five of six correct alignments as suspect.
+_MIN_CONFIDENCE = float(os.environ.get("MUVID_FOOTAGE_MIN_CONFIDENCE", "0.1"))
 #: Total-bytes cap for a folder archive (env ``MUVID_FOOTAGE_FOLDER_MAX_BYTES``). A shoot
 #: is several clips, so this is necessarily larger than the per-clip cap.
 _FOLDER_MAX_BYTES = int(
