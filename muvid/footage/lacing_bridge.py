@@ -170,12 +170,19 @@ def edl_from_annotations(annotations: Sequence) -> list[dict]:
     split, retargeted, deleted — exports as plain ``{song_start, song_end, clip_id}``
     dicts ready for ``assemble_music_video``. Sorting and validation stay the render
     path's business (``fill_gaps`` + ``validate_edl``); this is a faithful read.
+
+    Annotations are untrusted editor input, so anything shaped wrong is SKIPPED rather
+    than crashing the export: wrong schema/tier, or (an editor could in principle attach
+    a ``music-video-edl/v1`` body to an ``AnnotationRef``, whose ``interval`` is
+    optional) a reference with no interval to read a span from.
     """
     out = []
     for a in annotations:
         if a.body_schema_uri != MUSIC_VIDEO_EDL_SCHEMA or a.tier != DECISION_TIER:
             continue
         iv = a.reference.interval
+        if iv is None:
+            continue
         out.append(
             {
                 "song_start": iv.start.to_seconds(),
@@ -197,6 +204,8 @@ def editor_document(proj, *, attributed_to: str = "") -> dict:
     from muvid.footage.scoring.grid import load_tensor
     from muvid.footage.strategy import DEFAULT_STRATEGY, select_edl
 
+    if not proj.has_song():
+        raise ValueError("no song set — call set_song first")
     aligns = proj.load_alignments()
     song_dur = proj.song_duration()
     song_asset_id = proj.song_hash()
@@ -211,15 +220,25 @@ def editor_document(proj, *, attributed_to: str = "") -> dict:
             tensor, song_asset_id=song_asset_id, attributed_to=who
         )
     overlapping = [a for a in aligns if a.overlaps]
+    decision_error = None
     if overlapping:
-        entries = validate_edl(
-            fill_gaps(select_edl(DEFAULT_STRATEGY, aligns, song_dur), song_dur),
-            aligns,
-            song_dur,
-        )
-        annotations += edl_annotations(
-            entries, song_asset_id=song_asset_id, attributed_to=who
-        )
+        try:
+            entries = validate_edl(
+                fill_gaps(select_edl(DEFAULT_STRATEGY, aligns, song_dur), song_dur),
+                aligns,
+                song_dur,
+            )
+        except (ValueError, KeyError) as e:
+            # The alignment + score-track annotations below are independently good —
+            # only the DEFAULT proposal failed to build (e.g. a self-inconsistent
+            # persisted alignment, or a legitimate selection past MAX_EDL_ENTRIES). An
+            # editor can still open the document and place its own DECISION entries;
+            # losing the whole export over an unrelated failure would not.
+            decision_error = str(e)
+        else:
+            annotations += edl_annotations(
+                entries, song_asset_id=song_asset_id, attributed_to=who
+            )
 
     tiers = [{"name": DECISION_TIER, "stereotype": "NONE"}] + [
         {"name": f"clip:{a.clip_id}", "stereotype": "NONE"} for a in aligns
@@ -231,4 +250,8 @@ def editor_document(proj, *, attributed_to: str = "") -> dict:
         "time_rate": TIME_RATE,
         "tiers": tiers,
         "annotations": [a.model_dump(mode="json") for a in annotations],
+        # None on the healthy path. When set, the DECISION tier has no default proposal
+        # (everything else in the document is still good) — an editor should say so
+        # rather than silently show an empty lane.
+        "decision_error": decision_error,
     }

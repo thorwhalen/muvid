@@ -188,6 +188,69 @@ def test_edl_from_annotations_ignores_other_tiers_and_schemas():
     assert edl_from_annotations(decision + other) == edl_from_annotations(decision)
 
 
+def test_edl_from_annotations_skips_a_reference_with_no_interval():
+    # Adversarial-review finding 1: AnnotationRef legally has interval=None. A
+    # music-video-edl/v1 body attached to one (malformed/untrusted editor input) must
+    # be SKIPPED, not crash the whole export with an AttributeError.
+    import uuid
+
+    from lacing.model import Annotation, AnnotationRef, Provenance
+    from lacing.time import RationalTime
+
+    aligns = [FootageAlignment("A", 0.0, 0.9, 20.0, (0.0, 20.0))]
+    good = edl_annotations(
+        validate_edl([EdlEntry(0, 20, "A")], aligns, 20.0),
+        song_asset_id=SONG_HASH,
+        attributed_to="u:x",
+    )
+    bad = Annotation(
+        id=uuid.uuid4(),
+        tier=DECISION_TIER,
+        reference=AnnotationRef(target_id=uuid.uuid4()),  # interval=None
+        body={"clip_id": None},
+        body_schema_uri=MUSIC_VIDEO_EDL_SCHEMA,
+        provenance=Provenance(
+            was_generated_by="user:x",
+            was_attributed_to="user:x",
+            generated_at_time=RationalTime(0, 1),
+        ),
+    )
+    assert edl_from_annotations(good + [bad]) == edl_from_annotations(good)
+
+
+def test_editor_document_degrades_when_the_default_proposal_cant_build(
+    tmp_path, monkeypatch
+):
+    # Adversarial-review finding 2: a self-inconsistent persisted alignment (coverage
+    # wider than the clip actually is — exactly the shape proj.load_alignments()
+    # deserializes without re-checking) must not take down the WHOLE document. The
+    # alignment/score annotations are independently fine; only the DECISION proposal
+    # fails, and that must be reported, not raised.
+    proj = _fake_project(tmp_path, monkeypatch)
+    proj.save_alignments(
+        [FootageAlignment("A", 0.0, 0.9, 5.0, (0.0, 20.0))]  # coverage > duration_s
+    )
+    doc = editor_document(proj)
+    assert doc["decision_error"] is not None
+    assert not [a for a in doc["annotations"] if a["tier"] == DECISION_TIER]
+    # everything else in the document still built
+    assert any(a["body_schema_uri"] == CLIP_ALIGNMENT_SCHEMA for a in doc["annotations"])
+
+
+def test_editor_document_tool_degrades_when_the_default_proposal_cant_build(
+    tmp_path, monkeypatch
+):
+    pytest.importorskip("fastmcp")
+    import muvid.mcp.footage_tools as ft
+    from muvid.mcp.identity import use_email
+
+    proj = _fake_project(tmp_path, monkeypatch)
+    proj.save_alignments([FootageAlignment("A", 0.0, 0.9, 5.0, (0.0, 20.0))])
+    with use_email("u@x.com"):
+        doc = ft.footage_editor_document("p")
+    assert doc["decision_error"] is not None
+
+
 def test_edl_from_annotations_sorts_by_start():
     aligns = [FootageAlignment("A", 0.0, 0.9, 20.0, (0.0, 20.0))]
     entries = validate_edl(

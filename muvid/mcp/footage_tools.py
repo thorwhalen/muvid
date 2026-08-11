@@ -720,7 +720,10 @@ def footage_editor_document(project_id: str) -> dict:
     proj = _open(project_id)
     if not proj.load_alignments():
         raise _tool_error("no alignment yet — call align_footage first")
-    return editor_document(proj)
+    try:
+        return editor_document(proj)
+    except ValueError as e:
+        raise _tool_error(str(e)) from e
 
 
 def footage_edl_from_annotations(project_id: str, *, annotations: list[dict]) -> dict:
