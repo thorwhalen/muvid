@@ -41,7 +41,7 @@ def data_root() -> Path:
     return Path(override) if override else Path.home() / ".local" / "share" / "muvid"
 
 
-def _safe_component(value: str, *, label: str) -> str:
+def safe_component(value: str, *, label: str) -> str:
     v = (value or "").strip()
     if not v or v in (".", "..") or "/" in v or "\\" in v or "\x00" in v:
         raise ValueError(f"invalid {label}: {value!r}")
@@ -133,7 +133,7 @@ class MusicVideoFootageProject:
         """Store a footage clip from a local file; returns its ``clip_id``."""
         import shutil
 
-        cid = _safe_component(clip_id, label="clip_id")
+        cid = safe_component(clip_id, label="clip_id")
         clips_dir = self.root / "clips"
         clips_dir.mkdir(parents=True, exist_ok=True)
         # Remove any prior file for this clip_id (a re-add with a different extension would
@@ -178,13 +178,13 @@ class MusicVideoFootageProject:
 
     # -- renders -------------------------------------------------------------
     def new_render_dir(self, render_id: str) -> Path:
-        rid = _safe_component(render_id, label="render_id")
+        rid = safe_component(render_id, label="render_id")
         d = self.root / "renders" / rid
         d.mkdir(parents=True, exist_ok=True)
         return d
 
     def write_render_meta(self, render_id: str, meta: dict) -> None:
-        rid = _safe_component(render_id, label="render_id")
+        rid = safe_component(render_id, label="render_id")
         (self.root / "renders" / rid / "meta.json").write_text(
             json.dumps(meta, indent=2)
         )
@@ -249,11 +249,11 @@ class FootageWorkspace:
             self.root
             / "music_video"
             / "projects"
-            / _safe_component(self.email, label="email")
+            / safe_component(self.email, label="email")
         )
 
     def project_root(self, project_id: str) -> Path:
-        return self.projects_dir / _safe_component(project_id, label="project_id")
+        return self.projects_dir / safe_component(project_id, label="project_id")
 
     def create_project(
         self, project_id: str, *, title: str = "", canvas: str = DEFAULT_CANVAS_NAME

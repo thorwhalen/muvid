@@ -630,9 +630,14 @@ def assemble_music_video(
         ),
         "ok": not failures(checks),
         "checks": report(checks),
+        # The retrieval claim: what a host's generic download route (reelee#252) turns
+        # into a signed short-lived URL. `video` stays a server-side path — useful to an
+        # operator, unreadable to a remote caller; the claim is the caller's handle.
+        "download": _download_claim(project_id, render_id),
         "note": (
-            "Artifact stored server-side in your project; retrieve via footage_status. "
-            "A downloadable URL awaits the storage-backend migration."
+            "Artifact stored server-side in your project. Ask the host to sign the "
+            "`download` claim for a fetchable URL; a hosted connector exposes this as "
+            "its download route/tool."
         ),
     }
     proj.write_render_meta(render_id, meta)
@@ -672,6 +677,12 @@ def _selection_context(proj, strat, preset, weights, config):
         shot_boundaries=manifest.get("shot_boundaries"),
         config=resolve_config(preset=preset or None, weights=weights, config=config),
     )
+
+
+def _download_claim(project_id: str, render_id: str) -> dict:
+    from muvid.downloads import claim
+
+    return claim(project_id, render_id)
 
 
 def footage_status(project_id: str) -> dict:
