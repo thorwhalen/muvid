@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.mcp.footage_tools &mdash; muvid 0.0.15 documentation</title>
+  <title>muvid.mcp.footage_tools &mdash; muvid 0.0.16 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=f0357c94"></script>
+      <script src="../../../_static/documentation_options.js?v=c7cdf6fe"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -406,6 +406,7 @@
 <span class="sd">    Run this after adding/removing clips and before assembling.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.footage.align</span><span class="w"> </span><span class="kn">import</span> <span class="n">align_footage</span> <span class="k">as</span> <span class="n">_align</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.footage.scoring.grid</span><span class="w"> </span><span class="kn">import</span> <span class="n">align_fingerprint</span>
 
     <span class="n">proj</span> <span class="o">=</span> <span class="n">_open</span><span class="p">(</span><span class="n">project_id</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">proj</span><span class="o">.</span><span class="n">has_song</span><span class="p">():</span>
@@ -413,10 +414,16 @@
     <span class="n">clips</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">proj</span><span class="o">.</span><span class="n">clip_paths</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">clips</span><span class="p">:</span>
         <span class="k">raise</span> <span class="n">_tool_error</span><span class="p">(</span><span class="s2">&quot;no footage added — call add_footage first&quot;</span><span class="p">)</span>
+    <span class="n">old_fingerprint</span> <span class="o">=</span> <span class="n">align_fingerprint</span><span class="p">(</span><span class="n">proj</span><span class="o">.</span><span class="n">load_alignments</span><span class="p">())</span>
     <span class="n">aligns</span> <span class="o">=</span> <span class="n">_align</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">proj</span><span class="o">.</span><span class="n">song_path</span><span class="p">()),</span> <span class="n">clips</span><span class="p">,</span> <span class="n">song_duration</span><span class="o">=</span><span class="n">proj</span><span class="o">.</span><span class="n">song_duration</span><span class="p">())</span>
     <span class="n">proj</span><span class="o">.</span><span class="n">save_alignments</span><span class="p">(</span><span class="n">aligns</span><span class="p">)</span>
-    <span class="c1"># New offsets invalidate every persisted score track (the song-time grid mapping moved).</span>
-    <span class="n">proj</span><span class="o">.</span><span class="n">invalidate_scores</span><span class="p">()</span>
+    <span class="c1"># Scores are keyed to the offsets they were computed under (align_fingerprint is that</span>
+    <span class="c1"># key&#39;s SSOT), so a re-align that reproduces the same offsets must not throw away the</span>
+    <span class="c1"># most expensive artifact in the pipeline (muvid#24 B4). Correctness does not depend on</span>
+    <span class="c1"># deleting here — the read path refuses stale scores via manifest_is_current — this</span>
+    <span class="c1"># only reclaims storage the moment the scores are known to be stale.</span>
+    <span class="k">if</span> <span class="n">align_fingerprint</span><span class="p">(</span><span class="n">aligns</span><span class="p">)</span> <span class="o">!=</span> <span class="n">old_fingerprint</span><span class="p">:</span>
+        <span class="n">proj</span><span class="o">.</span><span class="n">invalidate_scores</span><span class="p">()</span>
     <span class="c1"># Every clip has a record now, so &quot;did not overlap&quot; is a REPORTED PROPERTY of a clip</span>
     <span class="c1"># that is still there, not an inference from something missing. A clip is never removed</span>
     <span class="c1"># from the project or from the alignment artifact by anything but an explicit request:</span>
@@ -706,10 +713,15 @@
             <span class="nb">round</span><span class="p">(</span><span class="n">entries</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">song_start</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>
             <span class="nb">round</span><span class="p">(</span><span class="n">entries</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">song_end</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>
         <span class="p">],</span>
+        <span class="c1"># Full precision, NOT rounded: this list must feed straight back as the edl=</span>
+        <span class="c1"># argument and reproduce the same render. round(x, 2) moved boundaries by up to</span>
+        <span class="c1"># 5 ms — past validate_edl&#39;s 1 ms tolerance, so the render → edit → re-render loop</span>
+        <span class="c1"># could fail outright, and even when it validated it re-rendered a different video</span>
+        <span class="c1"># (muvid#21 item 3). propose_edit already returns full precision; same contract.</span>
         <span class="s2">&quot;edl&quot;</span><span class="p">:</span> <span class="p">[</span>
             <span class="p">{</span>
-                <span class="s2">&quot;song_start&quot;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">song_start</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>
-                <span class="s2">&quot;song_end&quot;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">song_end</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>
+                <span class="s2">&quot;song_start&quot;</span><span class="p">:</span> <span class="n">e</span><span class="o">.</span><span class="n">song_start</span><span class="p">,</span>
+                <span class="s2">&quot;song_end&quot;</span><span class="p">:</span> <span class="n">e</span><span class="o">.</span><span class="n">song_end</span><span class="p">,</span>
                 <span class="s2">&quot;clip_id&quot;</span><span class="p">:</span> <span class="n">e</span><span class="o">.</span><span class="n">clip_id</span><span class="p">,</span>
             <span class="p">}</span>
             <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">entries</span>

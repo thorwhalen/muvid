@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.footage.assemble &mdash; muvid 0.0.15 documentation</title>
+  <title>muvid.footage.assemble &mdash; muvid 0.0.16 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=f0357c94"></script>
+      <script src="../../../_static/documentation_options.js?v=c7cdf6fe"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -232,6 +232,18 @@
         <span class="s2">&quot;aac&quot;</span><span class="p">,</span>
         <span class="s2">&quot;-b:a&quot;</span><span class="p">,</span>
         <span class="s2">&quot;192k&quot;</span><span class="p">,</span>
+        <span class="c1"># verify_video&#39;s delivery contract (2ch @ 48 kHz, no edit lists) must be a property</span>
+        <span class="c1"># of the renderer, not of the source: without these, the aac encoder inherits the</span>
+        <span class="c1"># master&#39;s rate/channels, so a 44.1 kHz or mono song fails every verify with nothing</span>
+        <span class="c1"># in the pipeline explaining why (muvid#24 B3).</span>
+        <span class="s2">&quot;-ar&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;48000&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;-ac&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;2&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;-use_editlist&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;0&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;-movflags&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;+faststart&quot;</span><span class="p">,</span>
         <span class="s2">&quot;-shortest&quot;</span><span class="p">,</span>
         <span class="nb">str</span><span class="p">(</span><span class="n">out</span><span class="p">),</span>
     <span class="p">]</span>
