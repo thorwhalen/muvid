@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.mcp.footage_tools &mdash; muvid 0.0.16 documentation</title>
+  <title>muvid.mcp.footage_tools &mdash; muvid 0.0.17 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=c7cdf6fe"></script>
+      <script src="../../../_static/documentation_options.js?v=63b572e7"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -165,7 +165,13 @@
 <span class="n">_SONG_MAX_DURATION_S</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span>
     <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;MUVID_FOOTAGE_MAX_SONG_DURATION_S&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="mi">12</span> <span class="o">*</span> <span class="mi">60</span><span class="p">))</span>
 <span class="p">)</span>
-<span class="n">_MIN_CONFIDENCE</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;MUVID_FOOTAGE_MIN_CONFIDENCE&quot;</span><span class="p">,</span> <span class="s2">&quot;0.3&quot;</span><span class="p">))</span>
+<span class="c1">#: Below this, an alignment is REPORTED as low-confidence (never dropped — see</span>
+<span class="c1">#: align_footage). Calibrated for the clean-master-vs-phone regime the connector actually</span>
+<span class="c1">#: sees, on the onset-envelope feature (muvid#15): measured against a studio master, four</span>
+<span class="c1">#: provably-correct clips scored 0.173–0.603 while the one genuinely unrelated clip scored</span>
+<span class="c1">#: 0.021 — so 0.1 separates them ~2x/5x, where the old 0.3 (a defensible number for the</span>
+<span class="c1">#: EASIER clip-to-clip regime) flagged five of six correct alignments as suspect.</span>
+<span class="n">_MIN_CONFIDENCE</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;MUVID_FOOTAGE_MIN_CONFIDENCE&quot;</span><span class="p">,</span> <span class="s2">&quot;0.1&quot;</span><span class="p">))</span>
 <span class="c1">#: Total-bytes cap for a folder archive (env ``MUVID_FOOTAGE_FOLDER_MAX_BYTES``). A shoot</span>
 <span class="c1">#: is several clips, so this is necessarily larger than the per-clip cap.</span>
 <span class="n">_FOLDER_MAX_BYTES</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span>
