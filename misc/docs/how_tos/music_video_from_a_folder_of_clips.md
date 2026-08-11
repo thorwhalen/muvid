@@ -217,4 +217,7 @@ reference and picks among them:
 - **The clip cap is 8 and the per-clip cap 400 MB** by default
   (`MUVID_FOOTAGE_MAX_CLIPS`, `MUVID_FOOTAGE_MAX_BYTES`). A bigger shoot needs them raised.
 - **Mixed frame rates are normal.** iPhones produce 30/1 and 359/12 in the same folder.
-- **The rendered file has no download URL yet** (muvid#24) — it lands on the server.
+- **The rendered file's URL comes from the host, not from muvid.** The render's meta
+  carries a `download` claim (`{genre, project_id, artifact_id}`); the hosting
+  connector's generic download route (reelee#252) signs it into a short-lived URL.
+  Until that route is deployed on your host, the file is server-side only (muvid#24).
