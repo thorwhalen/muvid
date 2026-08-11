@@ -595,9 +595,13 @@ def assemble_music_video(
             canvas=canvas_wh,
         )
         # audio= arms the duration-match check — the one that catches a mis-built
-        # filtergraph (muvid#24 B3). Correct now BECAUSE every EDL is gap-filled to the
-        # full song, so the output must be exactly the song's length.
-        checks = verify_video(out, audio=str(proj.song_path()))
+        # filtergraph (muvid#24 B3); correct now BECAUSE every EDL is gap-filled to the
+        # full song. expected_canvas keeps the aspect/resolution checks honest for a
+        # deliberate portrait/square render — without it, verify hard-fails every
+        # non-16:9 canvas the canvas= override exists to produce.
+        checks = verify_video(
+            out, audio=str(proj.song_path()), expected_canvas=canvas_wh
+        )
     except Exception:
         import shutil
 
@@ -609,7 +613,9 @@ def assemble_music_video(
         "video": str(out),
         "strategy": used_strategy,
         "canvas": list(canvas_wh),
-        "covered_span": [
+        # "rendered", not "covered": after gap-filling this is always the whole song —
+        # where the user actually HAS footage is the coverage report's business.
+        "rendered_span": [
             round(entries[0].song_start, 2),
             round(entries[-1].song_end, 2),
         ],

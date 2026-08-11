@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import shutil
 import subprocess
-import sys
 from pathlib import Path
 
 import numpy as np
@@ -65,6 +64,29 @@ def test_fill_gaps_on_an_empty_selection_stays_empty():
 def test_validate_still_rejects_an_implicit_hole():
     with pytest.raises(ValueError, match="gap"):
         validate_edl([EdlEntry(0, 5, "A"), EdlEntry(10, 20, "A")], [_A], SONG_DUR)
+
+
+def test_fill_gaps_names_the_callers_out_of_range_entry():
+    # An out-of-range CALLER entry must be reported as itself — not as the phantom gap
+    # inserted to reach it (adversarial-review finding 5).
+    with pytest.raises(ValueError, match=r"\[32\.000, 35\.000\] is outside"):
+        fill_gaps([EdlEntry(0, 10, "A"), EdlEntry(32, 35, "A")], 30.0)
+
+
+def test_edl_cap_counts_footage_cuts_not_inserted_gaps(monkeypatch):
+    # fill_gaps can double the entry count; the cap must bind on what the CALLER wrote
+    # (adversarial-review finding 4).
+    import muvid.footage.edl as E
+
+    monkeypatch.setattr(E, "MAX_EDL_ENTRIES", 3)
+    aligns = [_A]
+    three_with_holes = [EdlEntry(0, 2, "A"), EdlEntry(5, 7, "A"), EdlEntry(10, 12, "A")]
+    filled = E.fill_gaps(three_with_holes, SONG_DUR)
+    assert len(filled) == 6  # 3 footage + 3 gaps (two interior + tail)
+    E.validate_edl(filled, aligns, SONG_DUR)  # must NOT trip the cap
+    four = [EdlEntry(i * 2, i * 2 + 1, "A") for i in range(4)]
+    with pytest.raises(ValueError, match="footage cuts"):
+        E.validate_edl(E.fill_gaps(four, SONG_DUR), aligns, SONG_DUR)
 
 
 def test_gap_entries_round_trip_json_null():
@@ -131,6 +153,28 @@ def test_frame_counts_telescope_to_the_total():
     )
     counts = _frame_counts(cuts, 30)
     assert sum(counts) == round(204.501 * 30)
+
+
+def test_assemble_never_deletes_a_preexisting_parts_dir(monkeypatch, tmp_path):
+    # The parts dir is unique per call — a fixed "_parts" name would rmtree whatever
+    # already lived there (adversarial-review finding 3).
+    import muvid.visualize.ffmpeg as F
+    from muvid.footage.assemble import assemble_music_video
+
+    precious = tmp_path / "_parts" / "precious.txt"
+    precious.parent.mkdir()
+    precious.write_text("user data")
+    monkeypatch.setattr(F, "require_ffmpeg", lambda *a, **k: None)
+    monkeypatch.setattr(F, "probe", lambda *a, **k: {})
+    monkeypatch.setattr(F, "run_ffmpeg", lambda args, **k: None)
+    cuts = derive_cuts(
+        validate_edl(fill_gaps([EdlEntry(0, 20, "A")], SONG_DUR), [_A], SONG_DUR),
+        [_A],
+        {"A": "/tmp/a.mp4"},
+    )
+    assemble_music_video(cuts, "/tmp/song.wav", str(tmp_path / "final.mp4"))
+    assert precious.read_text() == "user data"
+    assert not list(tmp_path.glob(".parts-*")), "the call's own dir is cleaned up"
 
 
 # -- real renders (ffmpeg) ---------------------------------------------------
@@ -322,6 +366,81 @@ def test_full_coverage_stream_copies_a_contract_master_bit_identically(tmp_path)
 
 
 @needs_ffmpeg
+def test_a_portrait_render_passes_its_own_verify(tmp_path):
+    """Adversarial-review finding 1: verify_video hard-coded 16:9/720p, so every use of
+    the new canvas= override self-reported failure. With expected_canvas, a deliberate
+    portrait render must verify clean — through the REAL verifier, not a stub."""
+    from muvid.footage.assemble import assemble_music_video
+    from muvid.visualize import failures, verify_video
+
+    song = _wav_song(tmp_path, seconds=2.0)
+    clip = _testsrc_clip(tmp_path, "P", 2.5)
+    aligns = [FootageAlignment("P", 0.0, 0.9, 2.5, (0.0, 2.0))]
+    cuts = derive_cuts(
+        validate_edl(fill_gaps([EdlEntry(0.0, 2.0, "P")], 2.0), aligns, 2.0),
+        aligns,
+        {"P": str(clip)},
+    )
+    out = assemble_music_video(
+        cuts, str(song), str(tmp_path / "final.mp4"), canvas=(1080, 1920)
+    )
+    checks = verify_video(out, audio=str(song), expected_canvas=(1080, 1920))
+    assert not failures(checks), "\n".join(
+        f"{c.name}: {c.detail}" for c in failures(checks)
+    )
+    # …and the landscape expectation still fails it, so the check is not vacuous.
+    assert failures(verify_video(out))
+
+
+@needs_ffmpeg
+def test_a_source_exhausted_cut_cannot_shorten_or_desync_the_video(tmp_path):
+    """Adversarial-review finding 2: alignment durations come from the AUDIO track, so a
+    clip whose audio outlives its video validates spans past the last video frame.
+    -frames:v alone is a cap: the straddling cut came up short, the wholly-beyond cut
+    produced a STREAMLESS mp4 the concat demuxer swallowed, and everything after played
+    early. tpad (clone last frame) + the black fallback must keep the frame count exact.
+    """
+    from muvid.footage.assemble import assemble_music_video
+    from muvid.visualize import failures, verify_video
+
+    # A clip whose video is 4.0 s but whose audio runs 4.5 s.
+    clip = tmp_path / "short_video.mp4"
+    subprocess.run(
+        [
+            "ffmpeg", "-y", "-loglevel", "error",
+            "-f", "lavfi", "-i", "testsrc=size=1280x720:rate=30:duration=4.0",
+            "-f", "lavfi", "-i", "sine=frequency=330:duration=4.5",
+            "-pix_fmt", "yuv420p",
+            str(clip),
+        ],
+        check=True,
+    )  # fmt: skip
+    song = _wav_song(tmp_path, seconds=4.5)
+    aligns = [FootageAlignment("S", 0.0, 0.9, 4.5, (0.0, 4.5))]  # audio-derived length
+    edl = [EdlEntry(0.0, 3.8, "S"), EdlEntry(3.8, 4.3, "S"), EdlEntry(4.3, 4.5, "S")]
+    cuts = derive_cuts(
+        validate_edl(fill_gaps(edl, 4.5), aligns, 4.5), aligns, {"S": str(clip)}
+    )
+    out = assemble_music_video(
+        cuts, str(song), str(tmp_path / "final.mp4"), canvas=(1280, 720)
+    )
+
+    v = [s for s in _probe_json(out)["streams"] if s["codec_type"] == "video"][0]
+    assert int(v["nb_frames"]) == round(4.5 * 30), (
+        "the promised frame count, not what the source happened to contain"
+    )
+    # The armed verify must agree — it reads the VIDEO STREAM duration now, so a short
+    # video track can no longer hide behind the container (= audio) duration.
+    assert not failures(
+        verify_video(out, audio=str(song), expected_canvas=(1280, 720))
+    )
+    # The straddling cut clones its last frame (bright testsrc), the wholly-beyond cut
+    # falls back to black — visible properties, not implementation details.
+    assert _frame_pixels(out, 4.05).mean() > 40, "straddle: cloned last frame"
+    assert _frame_pixels(out, 4.42).mean() < 8, "beyond-video: black fallback"
+
+
+@needs_ffmpeg
 def test_rotation_side_data_is_padded_not_stretched(tmp_path):
     """muvid#21 item 10: a display-matrix portrait clip (the actual iPhone case — encoded
     landscape, rotated by side data) must land upright and pillarboxed on a landscape
@@ -427,7 +546,7 @@ def test_assemble_tool_gap_fills_a_partial_edl_and_reports_coverage(
             "p", edl=[{"song_start": 5, "song_end": 15, "clip_id": "A"}]
         )
     # The render spans the whole song; the holes are explicit null-clip entries…
-    assert meta["covered_span"] == [0.0, 30.0]
+    assert meta["rendered_span"] == [0.0, 30.0]
     assert [e["clip_id"] for e in meta["edl"]] == [None, "A", None]
     # …and the coverage report still says where the user has NO footage.
     assert meta["coverage"]["uncovered"] == [

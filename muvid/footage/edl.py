@@ -130,6 +130,16 @@ def fill_gaps(entries: Sequence, song_duration: float) -> list[EdlEntry]:
     ordered = sorted((_as_entry(e) for e in entries), key=lambda e: e.song_start)
     if not ordered:
         return []
+    # Range-check the CALLER's entries before inserting anything: a bogus span (say
+    # [32, 35] of a 30 s song) would otherwise make validate_edl report the failure on
+    # the phantom gap inserted to reach it — an entry the caller never wrote. Note the
+    # entries are also SORTED here: an out-of-order list is normalised, not rejected.
+    for e in ordered:
+        if e.song_start < -_EPS or e.song_end > song_duration + _EPS:
+            raise ValueError(
+                f"EDL entry [{e.song_start:.3f}, {e.song_end:.3f}] is outside the "
+                f"song [0, {song_duration:.3f}]"
+            )
     out: list[EdlEntry] = []
     cursor = 0.0
     for e in ordered:
@@ -166,9 +176,14 @@ def validate_edl(
     entries = [_as_entry(e) for e in edl]
     if not entries:
         raise ValueError("EDL is empty — nothing to assemble.")
-    if len(entries) > MAX_EDL_ENTRIES:
+    # Count FOOTAGE cuts only: fill_gaps can as much as double the entry count with gap
+    # entries the caller never wrote, and being told "502 entries" after submitting 251
+    # is undiagnosable. Gaps are structurally bounded by footage cuts + 1, so the total
+    # work stays bounded by ~2x the cap either way.
+    n_cuts = sum(1 for e in entries if not e.is_gap)
+    if n_cuts > MAX_EDL_ENTRIES:
         raise ValueError(
-            f"EDL has {len(entries)} entries; the {MAX_EDL_ENTRIES}-cut limit is exceeded"
+            f"EDL has {n_cuts} footage cuts; the {MAX_EDL_ENTRIES}-cut limit is exceeded"
         )
     by_id = {a.clip_id: a for a in alignments}
 

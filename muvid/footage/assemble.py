@@ -14,9 +14,11 @@ Now three bounded stages, memory O(1) in cut count:
    fixed canvas at a constant ``fps``. A gap entry (``clip_path == ""`` — a span of the
    song with no footage) renders as black from a ``color`` source, which is what makes
    partial-coverage edits renderable at all. Each intermediate is cut to an EXACT frame
-   count derived from the shared song-time grid (``round(end*fps) - round(start*fps)``),
-   so per-cut frame quantization cannot accumulate into drift: total frames equals
-   ``round(song_duration*fps)`` by construction, whatever the cut count or source rates.
+   count derived from the shared song-time grid (``round(end*fps) - round(start*fps)``);
+   sub-frame cuts (0 grid frames) are dropped, an exhausted source clones its last frame
+   up to the count (``tpad``), and a cut whose source yields no frames at all falls back
+   to black — so total frames equals ``round(song_duration*fps)`` by construction,
+   whatever the cut count, source rates, or a clip whose audio outlives its video.
 2. **Concat by stream copy** (concat demuxer) — no re-encode, no filtergraph.
 3. **Mux the clean song** in the same final pass. When the master already IS the delivery
    contract (aac, 48 kHz stereo), its packets are stream-copied bit-identically; anything
@@ -28,12 +30,16 @@ so a display-matrix portrait clip lands upright and pillarboxed, never stretched
 
 Deliberately NOT moviepy (its ``write_videofile`` runs in-process and would escape the
 ``$MUVID_FFMPEG_TIMEOUT_S`` worker guard). Every stage runs through
-:func:`muvid.visualize.ffmpeg.run_ffmpeg` (wall-clock bounded per invocation).
+:func:`muvid.visualize.ffmpeg.run_ffmpeg`; note the guard is **per invocation** now, so a
+render's wall-clock bound is ``(cuts + 1) * MUVID_FFMPEG_TIMEOUT_S`` — the env var bounds
+a hang, not the total render.
 """
 
 from __future__ import annotations
 
 import shutil
+import tempfile
+from dataclasses import replace
 from pathlib import Path
 from typing import Sequence
 
@@ -54,15 +60,12 @@ def _frame_counts(cuts: Sequence[AssemblyCut], fps: int) -> list[int]:
 
     Quantizing each cut's *boundaries* (not its duration) to the frame grid means the
     counts telescope: their sum is ``round(last_end*fps) - round(first_start*fps)``
-    regardless of how many cuts there are. A sub-frame span still gets one frame (the
-    EDL's 1 ms span floor is finer than a 30 fps frame), which can over-run the total by
-    a frame in pathological many-tiny-cuts edits — accepted, it cannot compound.
+    regardless of how many cuts there are. A cut that rounds to ZERO grid frames (the
+    EDL's 1 ms span floor is finer than a frame) gets count 0 and is skipped by the
+    renderer — flooring it at 1 would add a frame per tiny cut, and 500 hostile 1 ms
+    spans would push everything after them ~15 s late. Dropping keeps the sum exact.
     """
-    counts = []
-    for c in cuts:
-        n = round(c.song_end * fps) - round(c.song_start * fps)
-        counts.append(max(1, n))
-    return counts
+    return [round(c.song_end * fps) - round(c.song_start * fps) for c in cuts]
 
 
 def _video_codec_args(crf: int, preset: str) -> list[str]:
@@ -92,9 +95,15 @@ def _render_part(
     """Render ONE cut (footage or gap) to an intermediate — the single-decoder stage."""
     from muvid.visualize.ffmpeg import run_ffmpeg
 
+    # tpad at the tail: -frames:v alone is a CAP, not a guarantee — a clip whose audio
+    # outlives its video (alignment durations come from the AUDIO length) legitimately
+    # validates a span past the last video frame, and without tpad that part comes up
+    # short, silently desyncing every later cut. Cloning the last frame makes the frame
+    # count exact whenever the source yields at least one frame.
     vf = (
         f"scale={w}:{h}:force_original_aspect_ratio=decrease,"
-        f"pad={w}:{h}:(ow-iw)/2:(oh-ih)/2,setsar=1,fps={fps}"
+        f"pad={w}:{h}:(ow-iw)/2:(oh-ih)/2,setsar=1,fps={fps},"
+        f"tpad=stop=-1:stop_mode=clone"
     )
     if cut.clip_path:
         args = [
@@ -111,11 +120,14 @@ def _render_part(
             vf,
         ]
     else:  # a gap entry: no footage for this span — fill black on the same grid
+        vf = f"setsar=1,fps={fps}"
         args = [
             "-f",
             "lavfi",
             "-i",
             f"color=black:size={w}x{h}:rate={fps}:duration={cut.duration + 1.0 / fps:.6f}",
+            "-vf",
+            vf,
         ]
     args += [
         "-frames:v",
@@ -154,6 +166,23 @@ def _audio_args(song_path: str) -> list[str]:
     return ["-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-ac", "2"]
 
 
+def _has_video_frames(part: Path) -> bool:
+    """Whether a rendered part actually carries a video stream.
+
+    ffmpeg exits 0 even when an input-side ``-ss`` lands wholly past the source's last
+    video frame — the result is a streamless few-hundred-byte mp4 the concat demuxer
+    silently swallows, shortening the video and desyncing every later cut. This is the
+    check that turns that silence into the black-gap fallback.
+    """
+    from muvid.visualize.ffmpeg import probe
+
+    try:
+        streams = probe(part).get("streams", [])
+    except Exception:  # noqa: BLE001 — unreadable part: treat as frameless, fall back
+        return False
+    return any(s.get("codec_type") == "video" for s in streams)
+
+
 def assemble_music_video(
     cuts: Sequence[AssemblyCut],
     song_path: str,
@@ -181,26 +210,34 @@ def assemble_music_video(
     out = Path(out_path)
     out.parent.mkdir(parents=True, exist_ok=True)
 
-    parts_dir = out.parent / "_parts"
-    parts_dir.mkdir(exist_ok=True)
+    # A unique, per-call directory: a fixed name next to out_path would rmtree
+    # whatever already lived there, and two concurrent renders into one directory
+    # would interleave part files and delete each other's work.
+    parts_dir = Path(tempfile.mkdtemp(dir=out.parent, prefix=".parts-"))
     try:
         counts = _frame_counts(cuts, fps)
         names = []
         for i, (cut, n) in enumerate(zip(cuts, counts)):
+            if n == 0:  # a sub-frame cut owns no frame on the grid — see _frame_counts
+                continue
             name = f"part{i:04d}.mp4"
-            _render_part(
-                cut,
-                parts_dir / name,
-                w=w,
-                h=h,
-                fps=fps,
-                n_frames=n,
-                crf=crf,
-                preset=preset,
-            )
+            part = parts_dir / name
+            render_kwargs = dict(w=w, h=h, fps=fps, n_frames=n, crf=crf, preset=preset)
+            _render_part(cut, part, **render_kwargs)
+            if cut.clip_path and part.exists() and not _has_video_frames(part):
+                # The source yielded no frames at all for this span (audio outlived the
+                # video). The span still exists in song time — fill it black rather
+                # than silently shortening the render.
+                part.unlink()
+                _render_part(
+                    replace(cut, clip_path="", clip_in=0.0), part, **render_kwargs
+                )
             names.append(name)
+        if not names:
+            raise ValueError("no renderable cuts — every span rounds to zero frames")
         # Concat-demuxer entries resolve relative to the LIST file, and the names are
-        # ours (partNNNN.mp4), so no quoting/escaping surface exists here.
+        # ours (partNNNN.mp4) — plain relative names, so the demuxer's default "safe"
+        # mode is fine and no quoting/escaping surface exists here.
         concat_list = parts_dir / "parts.txt"
         concat_list.write_text("".join(f"file {n}\n" for n in names))
         song_start = cuts[0].song_start
@@ -215,15 +252,15 @@ def assemble_music_video(
             [
                 "-f",
                 "concat",
-                "-safe",
-                "0",
                 "-i",
                 str(concat_list),
                 *song_input,
                 "-map",
                 "0:v",
+                # :a:0, not :a — a multi-stream master would otherwise carry extra audio
+                # tracks past the contract decision, which probes only the first.
                 "-map",
-                "1:a",
+                "1:a:0",
                 "-t",
                 f"{total:.6f}",
                 "-c:v",
