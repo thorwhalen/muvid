@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>&lt;no title&gt; &mdash; muvid 0.0.19 documentation</title>
+  <title>&lt;no title&gt; &mdash; muvid 0.0.20 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
@@ -15,7 +15,7 @@
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=2fd7553c"></script>
+      <script src="_static/documentation_options.js?v=056c92e6"></script>
       <script src="_static/doctools.js?v=fd6eb6e6"></script>
       <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -62,6 +62,7 @@
 <li class="toctree-l1"><a class="reference internal" href="module_docs/muvid/footage/align.html">muvid.footage.align</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/muvid/footage/assemble.html">muvid.footage.assemble</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/muvid/footage/edl.html">muvid.footage.edl</a></li>
+<li class="toctree-l1"><a class="reference internal" href="module_docs/muvid/footage/lacing_bridge.html">muvid.footage.lacing_bridge</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/muvid/footage/scoring.html">muvid.footage.scoring</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/muvid/footage/scoring/_frame_metrics.html">muvid.footage.scoring._frame_metrics</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/muvid/footage/scoring/frames.html">muvid.footage.scoring.frames</a></li>
@@ -274,6 +275,17 @@
 <li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/footage/edl.html#muvid.footage.edl.validate_edl"><code class="docutils literal notranslate"><span class="pre">validate_edl()</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="module_docs/muvid/footage/lacing_bridge.html">muvid.footage.lacing_bridge</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/footage/lacing_bridge.html#muvid.footage.lacing_bridge.CLIP_ALIGNMENT_SCHEMA"><code class="docutils literal notranslate"><span class="pre">CLIP_ALIGNMENT_SCHEMA</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/footage/lacing_bridge.html#muvid.footage.lacing_bridge.DECISION_TIER"><code class="docutils literal notranslate"><span class="pre">DECISION_TIER</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/footage/lacing_bridge.html#muvid.footage.lacing_bridge.TIME_RATE"><code class="docutils literal notranslate"><span class="pre">TIME_RATE</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/footage/lacing_bridge.html#muvid.footage.lacing_bridge.alignment_annotations"><code class="docutils literal notranslate"><span class="pre">alignment_annotations()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/footage/lacing_bridge.html#muvid.footage.lacing_bridge.editor_document"><code class="docutils literal notranslate"><span class="pre">editor_document()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/footage/lacing_bridge.html#muvid.footage.lacing_bridge.edl_annotations"><code class="docutils literal notranslate"><span class="pre">edl_annotations()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/footage/lacing_bridge.html#muvid.footage.lacing_bridge.edl_from_annotations"><code class="docutils literal notranslate"><span class="pre">edl_from_annotations()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/footage/lacing_bridge.html#muvid.footage.lacing_bridge.score_track_annotations"><code class="docutils literal notranslate"><span class="pre">score_track_annotations()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/muvid/footage/scoring.html">muvid.footage.scoring</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/muvid/footage/scoring/_frame_metrics.html">muvid.footage.scoring._frame_metrics</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/footage/scoring/_frame_metrics.html#muvid.footage.scoring._frame_metrics.exposure_quality"><code class="docutils literal notranslate"><span class="pre">exposure_quality()</span></code></a></li>
@@ -408,6 +420,8 @@
 <li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/mcp/footage_tools.html#muvid.mcp.footage_tools.add_footage_folder"><code class="docutils literal notranslate"><span class="pre">add_footage_folder()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/mcp/footage_tools.html#muvid.mcp.footage_tools.align_footage"><code class="docutils literal notranslate"><span class="pre">align_footage()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/mcp/footage_tools.html#muvid.mcp.footage_tools.assemble_music_video"><code class="docutils literal notranslate"><span class="pre">assemble_music_video()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/mcp/footage_tools.html#muvid.mcp.footage_tools.footage_editor_document"><code class="docutils literal notranslate"><span class="pre">footage_editor_document()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/mcp/footage_tools.html#muvid.mcp.footage_tools.footage_edl_from_annotations"><code class="docutils literal notranslate"><span class="pre">footage_edl_from_annotations()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/mcp/footage_tools.html#muvid.mcp.footage_tools.footage_status"><code class="docutils literal notranslate"><span class="pre">footage_status()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/mcp/footage_tools.html#muvid.mcp.footage_tools.footage_timeline"><code class="docutils literal notranslate"><span class="pre">footage_timeline()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/mcp/footage_tools.html#muvid.mcp.footage_tools.list_strategies"><code class="docutils literal notranslate"><span class="pre">list_strategies()</span></code></a></li>

@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.mcp.footage_tools &mdash; muvid 0.0.19 documentation</title>
+  <title>muvid.mcp.footage_tools &mdash; muvid 0.0.20 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -15,7 +15,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=2fd7553c"></script>
+      <script src="../../../_static/documentation_options.js?v=056c92e6"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -64,6 +64,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../footage/align.html">muvid.footage.align</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../footage/assemble.html">muvid.footage.assemble</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../footage/edl.html">muvid.footage.edl</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../footage/lacing_bridge.html">muvid.footage.lacing_bridge</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../footage/scoring.html">muvid.footage.scoring</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../footage/scoring/_frame_metrics.html">muvid.footage.scoring._frame_metrics</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../footage/scoring/frames.html">muvid.footage.scoring.frames</a></li>
@@ -87,6 +88,8 @@
 <li class="toctree-l2"><a class="reference internal" href="#muvid.mcp.footage_tools.add_footage_folder"><code class="docutils literal notranslate"><span class="pre">add_footage_folder()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.mcp.footage_tools.align_footage"><code class="docutils literal notranslate"><span class="pre">align_footage()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.mcp.footage_tools.assemble_music_video"><code class="docutils literal notranslate"><span class="pre">assemble_music_video()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.mcp.footage_tools.footage_editor_document"><code class="docutils literal notranslate"><span class="pre">footage_editor_document()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.mcp.footage_tools.footage_edl_from_annotations"><code class="docutils literal notranslate"><span class="pre">footage_edl_from_annotations()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.mcp.footage_tools.footage_status"><code class="docutils literal notranslate"><span class="pre">footage_status()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.mcp.footage_tools.footage_timeline"><code class="docutils literal notranslate"><span class="pre">footage_timeline()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.mcp.footage_tools.list_strategies"><code class="docutils literal notranslate"><span class="pre">list_strategies()</span></code></a></li>
@@ -213,6 +216,29 @@ re-rendered in another shape, no new project needed. Default: the project’s ca
 scaled onto the canvas (padded, never stretched), gaps render black, and the CLEAN
 song audio runs under it all. Returns the render + the same coverage report
 <code class="docutils literal notranslate"><span class="pre">propose_edit</span></code> gives.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.mcp.footage_tools.footage_editor_document">
+<span class="sig-prename descclassname"><span class="pre">muvid.mcp.footage_tools.</span></span><span class="sig-name descname"><span class="pre">footage_editor_document</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">project_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="../../../_modules/muvid/mcp/footage_tools.html#footage_editor_document"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.mcp.footage_tools.footage_editor_document" title="Link to this definition"></a></dt>
+<dd><p>The project as lacing-native standoff annotations, for a multitrack editor. Free.</p>
+<p>One tier per clip (its <code class="docutils literal notranslate"><span class="pre">clip-alignment/v1</span></code> +, once scored, its
+<code class="docutils literal notranslate"><span class="pre">clip-score-track/v1</span></code> curves) plus a <code class="docutils literal notranslate"><span class="pre">DECISION</span></code> tier holding the current default
+proposal as <code class="docutils literal notranslate"><span class="pre">music-video-edl/v1</span></code> entries — everything referenced to the song by
+content hash, on one shared song-time axis (thorwhalen/reelee-web#203). Needs the
+<code class="docutils literal notranslate"><span class="pre">editor</span></code> extra (<code class="docutils literal notranslate"><span class="pre">lacing</span></code>); requires alignment (run <code class="docutils literal notranslate"><span class="pre">align_footage</span></code> first).</p>
+<p>After a human edits the DECISION tier, feed its annotations back to
+<code class="docutils literal notranslate"><span class="pre">assemble_music_video</span></code> via <code class="docutils literal notranslate"><span class="pre">footage_edl_from_annotations</span></code>.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.mcp.footage_tools.footage_edl_from_annotations">
+<span class="sig-prename descclassname"><span class="pre">muvid.mcp.footage_tools.</span></span><span class="sig-name descname"><span class="pre">footage_edl_from_annotations</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">project_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">annotations</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="../../../_modules/muvid/mcp/footage_tools.html#footage_edl_from_annotations"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.mcp.footage_tools.footage_edl_from_annotations" title="Link to this definition"></a></dt>
+<dd><p>The DECISION tier’s annotations, turned back into an <code class="docutils literal notranslate"><span class="pre">edl=</span></code> argument. Free.</p>
+<p>The timeline-to-EDL half: pass <code class="docutils literal notranslate"><span class="pre">footage_editor_document</span></code>’s <code class="docutils literal notranslate"><span class="pre">DECISION</span></code> tier
+(after whatever an editor did to it) and get back plain
+<code class="docutils literal notranslate"><span class="pre">{song_start,</span> <span class="pre">song_end,</span> <span class="pre">clip_id}</span></code> dicts, ready for <code class="docutils literal notranslate"><span class="pre">assemble_music_video(edl=...)</span></code>
+or <code class="docutils literal notranslate"><span class="pre">propose_edit</span></code> — a faithful read, not a re-selection.</p>
 </dd></dl>
 
 <dl class="py function">
