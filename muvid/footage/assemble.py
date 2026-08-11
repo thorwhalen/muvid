@@ -99,6 +99,18 @@ def assemble_music_video(
         "aac",
         "-b:a",
         "192k",
+        # verify_video's delivery contract (2ch @ 48 kHz, no edit lists) must be a property
+        # of the renderer, not of the source: without these, the aac encoder inherits the
+        # master's rate/channels, so a 44.1 kHz or mono song fails every verify with nothing
+        # in the pipeline explaining why (muvid#24 B3).
+        "-ar",
+        "48000",
+        "-ac",
+        "2",
+        "-use_editlist",
+        "0",
+        "-movflags",
+        "+faststart",
         "-shortest",
         str(out),
     ]

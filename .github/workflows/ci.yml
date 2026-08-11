@@ -71,7 +71,7 @@ jobs:
       - name: Install Dependencies
         uses: i2mint/wads/actions/install-deps-uv@master
         with:
-          extras: ai  # the narrative-pipeline tests need falaw/lacing/lookbook
+          extras: ai,mcp  # ai: the narrative-pipeline tests need falaw/lacing/lookbook; mcp: nw+fastmcp, without which tests/test_footage.py importorskips itself to 0% coverage (muvid#24 B5)
 
       - name: Format Source Code
         run: uvx ruff format .
@@ -132,7 +132,7 @@ jobs:
       - name: Install Dependencies
         uses: i2mint/wads/actions/install-deps-uv@master
         with:
-          extras: ai  # the narrative-pipeline tests need falaw/lacing/lookbook
+          extras: ai,mcp  # ai: the narrative-pipeline tests need falaw/lacing/lookbook; mcp: nw+fastmcp, without which tests/test_footage.py importorskips itself to 0% coverage (muvid#24 B5)
 
       - name: Run Tests
         uses: i2mint/wads/actions/run-tests-uv@master

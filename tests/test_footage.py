@@ -263,7 +263,7 @@ def test_full_assemble_from_a_strategy(tmp_path, monkeypatch):
             "-v",
             "error",
             "-show_entries",
-            "format=duration:stream=width,height",
+            "format=duration:stream=width,height,sample_rate,channels",
             "-of",
             "json",
             str(out),
@@ -282,6 +282,10 @@ def test_full_assemble_from_a_strategy(tmp_path, monkeypatch):
         1280,
         720,
     )  # fixed canvas, not the portrait clip
+    # muvid#24 B3: the delivery contract must hold even though the SOURCE song here is
+    # 44.1 kHz mono — 48 kHz stereo is the renderer's doing, not the input's.
+    audio = [s for s in d["streams"] if "sample_rate" in s][0]
+    assert (audio["sample_rate"], audio["channels"]) == ("48000", 2)
 
 
 # -- tool surface ------------------------------------------------------------
@@ -464,6 +468,84 @@ def test_add_footage_stores_the_clip_without_samefile_error(tmp_path, monkeypatc
     stored = proj.clip_paths()
     assert cid in stored and Path(stored[cid]).read_bytes() == b"video-bytes"
     assert Path(stored[cid]).suffix == ".mp4"
+
+
+def test_assemble_pins_the_delivery_audio_contract_in_its_args(monkeypatch):
+    # muvid#24 B3: 48 kHz / 2ch / no edit lists must be properties of the RENDERER.
+    # Without -ar/-ac the aac encoder inherits the master's rate/channels, so the verify
+    # verdict silently depends on which song the user brought.
+    import muvid.visualize.ffmpeg as F
+    from muvid.footage.assemble import assemble_music_video
+
+    captured = {}
+    monkeypatch.setattr(F, "require_ffmpeg", lambda *a, **k: None)
+    monkeypatch.setattr(F, "run_ffmpeg", lambda args, **k: captured.setdefault("args", args))
+    assemble_music_video(
+        [AssemblyCut(0.0, 5.0, "A", 0.0, "/tmp/a.mp4")],
+        "/tmp/song.wav",
+        "/tmp/out/final.mp4",
+    )
+    args = captured["args"]
+    for flag, value in [("-ar", "48000"), ("-ac", "2"), ("-use_editlist", "0")]:
+        i = args.index(flag)
+        assert args[i + 1] == value, (flag, args[i : i + 2])
+
+
+def test_realign_with_unchanged_offsets_keeps_the_scores(tmp_path, monkeypatch):
+    # muvid#24 B4: a no-op re-align must not destroy the most expensive artifact in the
+    # pipeline. Only an alignment whose fingerprint moved invalidates persisted scores.
+    pytest.importorskip("fastmcp")
+    import muvid.footage.align as AL
+    import muvid.mcp.footage_tools as ft
+    from muvid.mcp.identity import use_email
+
+    proj = _fake_state(tmp_path, monkeypatch)
+    scores = proj.root / "scores"
+    scores.mkdir()
+    sentinel = scores / "A.npz"
+    sentinel.write_bytes(b"expensive")
+
+    aligned = [FootageAlignment("A", 0.0, 0.9, 30.0, (0.0, 30.0))]
+    monkeypatch.setattr(AL, "align_footage", lambda *a, **k: aligned)
+    with use_email("u@x.com"):
+        ft.align_footage("p")
+    assert sentinel.exists(), "same offsets — scores must survive the re-align"
+
+    moved = [FootageAlignment("A", 1.5, 0.9, 30.0, (1.5, 30.0))]
+    monkeypatch.setattr(AL, "align_footage", lambda *a, **k: moved)
+    with use_email("u@x.com"):
+        ft.align_footage("p")
+    assert not sentinel.exists(), "offsets moved — stale scores must be invalidated"
+
+
+def test_assemble_meta_edl_round_trips_at_full_precision(tmp_path, monkeypatch):
+    # muvid#21 item 3: meta['edl'] must feed straight back as edl= and reproduce the same
+    # cut. round(x, 2) perturbed boundaries past validate_edl's 1 ms tolerance.
+    pytest.importorskip("fastmcp")
+    import muvid.footage.assemble as A
+    import muvid.mcp.footage_tools as ft
+    import muvid.visualize as V
+    from muvid.mcp.identity import use_email
+
+    _fake_state(tmp_path, monkeypatch)
+    monkeypatch.setattr(
+        A,
+        "assemble_music_video",
+        lambda cuts, song, out, canvas: (Path(out).write_bytes(b"v"), Path(out))[1],
+    )
+    monkeypatch.setattr(V, "verify_video", lambda *a, **k: [])
+    monkeypatch.setattr(V, "failures", lambda c: [])
+    monkeypatch.setattr(V, "report", lambda c: "ok")
+
+    edl = [
+        {"song_start": 0.0, "song_end": 10.123456789, "clip_id": "A"},
+        {"song_start": 10.123456789, "song_end": 30.0, "clip_id": "A"},
+    ]
+    with use_email("u@x.com"):
+        meta = ft.assemble_music_video("p", edl=edl)
+        assert meta["edl"] == edl  # byte-for-byte the caller's precision, not 2 dp
+        again = ft.assemble_music_video("p", edl=meta["edl"])  # must not raise
+    assert again["edl"] == edl
 
 
 def test_add_footage_enforces_the_clip_cap(tmp_path, monkeypatch):

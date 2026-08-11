@@ -164,10 +164,12 @@ install.macos = "brew install ffmpeg"
 [tool.wads.ci]
 project_name = ""
 
-# Install the `mcp` extra in CI so the muvid.genre / muvid.mcp tests (which import nw +
-# fastmcp) actually run instead of being silently skipped (thorwhalen/muvid#3).
+# Install `ai` (narrative-pipeline tests need falaw/lacing/lookbook) + `mcp` (nw + fastmcp,
+# without which tests/test_footage.py importorskips itself to 0% footage coverage — muvid#3,
+# muvid#24 B5) in CI. NOTE: .github/workflows/ci.yml hardcodes the same value in its two
+# install-deps-uv steps; keep the three sites in agreement.
 [tool.wads.ci.install]
-extras = "mcp"
+extras = "ai,mcp"
 
 [tool.wads.ci.commands]
 pre_test = []
