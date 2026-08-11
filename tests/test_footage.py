@@ -454,7 +454,8 @@ def test_add_footage_stores_the_clip_without_samefile_error(tmp_path, monkeypatc
     from muvid.mcp.identity import use_email
 
     monkeypatch.setattr(
-        _fetch, "fetch_to_file_streaming",
+        _fetch,
+        "fetch_to_file_streaming",
         lambda url, dest, *, max_bytes, expect_kind="": (
             Path(dest).write_bytes(b"video-bytes"),
             Path(dest),
@@ -479,7 +480,9 @@ def test_assemble_pins_the_delivery_audio_contract_in_its_args(monkeypatch):
 
     captured = {}
     monkeypatch.setattr(F, "require_ffmpeg", lambda *a, **k: None)
-    monkeypatch.setattr(F, "run_ffmpeg", lambda args, **k: captured.setdefault("args", args))
+    monkeypatch.setattr(
+        F, "run_ffmpeg", lambda args, **k: captured.setdefault("args", args)
+    )
     assemble_music_video(
         [AssemblyCut(0.0, 5.0, "A", 0.0, "/tmp/a.mp4")],
         "/tmp/song.wav",
@@ -546,6 +549,56 @@ def test_assemble_meta_edl_round_trips_at_full_precision(tmp_path, monkeypatch):
         assert meta["edl"] == edl  # byte-for-byte the caller's precision, not 2 dp
         again = ft.assemble_music_video("p", edl=meta["edl"])  # must not raise
     assert again["edl"] == edl
+
+
+def test_confidence_threshold_is_calibrated_for_the_clean_master_regime(
+    tmp_path, monkeypatch
+):
+    """muvid#15: the gate must separate real clips from unrelated ones on the numbers the
+    connector actually sees — a studio master vs one phone in a room.
+
+    The confidences below are the MEASURED values from the real 6-clip shoot (issue #15's
+    table, envelope feature, ffmpeg-decode path). Under the old 0.3 default, five of six
+    correct alignments were flagged suspect; the calibrated default must flag ONLY the
+    clip that is genuinely unrelated material.
+    """
+    pytest.importorskip("fastmcp")
+    import muvid.footage.align as AL
+    import muvid.mcp.footage_tools as ft
+    from muvid.mcp.identity import use_email
+
+    proj = _fake_state(tmp_path, monkeypatch)
+    m = proj.manifest()
+    measured = {  # clip_id -> (offset, confidence): the real shoot, muvid#15
+        "A": (-1.20, 0.603),
+        "B": (-2.41, 0.474),
+        "C": (-2.41, 0.341),
+        "D": (-2.75, 0.300),
+        "E": (
+            -2.34,
+            0.173,
+        ),  # correctly aligned (offset inside the cluster), weak score
+        "F": (+76.65, 0.021),  # a different take — the one genuine outlier
+    }
+    m["clips"] = [{"clip_id": c, "file": "A.mp4", "name": c} for c in measured]
+    proj._write_manifest(m)
+    aligned = [
+        FootageAlignment(c, off, conf, 30.0, (0.0, 30.0))
+        for c, (off, conf) in measured.items()
+    ]
+    monkeypatch.setattr(AL, "align_footage", lambda *a, **k: aligned)
+    with use_email("u@x.com"):
+        out = ft.align_footage("p")
+    flagged = {d["clip_id"] for d in out["low_confidence"]}
+    assert flagged == {"F"}, (
+        f"the gate flagged {sorted(flagged)} — it must flag exactly the unrelated clip, "
+        f"not correctly-aligned footage (threshold {out['confidence_threshold']})"
+    )
+    # And the response says what produced the number and what it was judged against.
+    assert out["confidence_metric"] and out["confidence_threshold"] == 0.1
+    # The outlier is ALSO named by offset consensus — the evidence a per-clip score
+    # cannot give (five clips within 1.6 s; F sits 79 s away).
+    assert [o["clip_id"] for o in out["offset_consensus"]["outliers"]] == ["F"]
 
 
 def test_add_footage_enforces_the_clip_cap(tmp_path, monkeypatch):
