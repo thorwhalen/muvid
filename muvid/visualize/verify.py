@@ -65,6 +65,7 @@ def verify_video(
     loudness: Loudness | None = None,
     check_loudness: bool = False,
     duration_tolerance: float = DURATION_TOLERANCE,
+    expected_canvas: tuple[int, int] | None = None,
 ) -> list[Check]:
     """Check ``video`` against YouTube's expectations; return one result per check.
 
@@ -77,6 +78,10 @@ def verify_video(
         check_loudness: Actually measure the output's loudness. This decodes the
             whole track, so it is off by default.
         duration_tolerance: Allowed audio/video duration difference, in seconds.
+        expected_canvas: The ``(width, height)`` the render was ASKED for. When
+            given, the aspect/resolution checks verify the output matches it —
+            a deliberate portrait render must not fail a hard-coded 16:9 check.
+            When ``None``, the classic YouTube-landscape expectations apply.
 
     Returns:
         A list of :class:`Check`. Falsy checks are the problems; :func:`report`
@@ -124,24 +129,46 @@ def verify_video(
     )
 
     width, height = int(vstream.get("width", 0)), int(vstream.get("height", 0))
-    ratio = width / height if height else 0
-    checks.append(
-        Check(
-            "aspect ratio",
-            abs(ratio - 16 / 9) < 0.02,
-            f"{width}x{height}"
-            + (
-                "" if abs(ratio - 16 / 9) < 0.02 else " — not 16:9, YouTube will bar it"
-            ),
+    if expected_canvas is not None:
+        ew, eh = expected_canvas
+        matches = (width, height) == (int(ew), int(eh))
+        checks.append(
+            Check(
+                "aspect ratio",
+                matches,
+                f"{width}x{height}"
+                + ("" if matches else f" — the requested canvas is {ew}x{eh}"),
+            )
         )
-    )
-    checks.append(
-        Check(
-            "resolution",
-            width >= 1280 and height >= 720,
-            f"{width}x{height}" + ("" if width >= 1280 else " — below 720p"),
+        checks.append(
+            Check(
+                "resolution",
+                matches,
+                f"{width}x{height}" + ("" if matches else f" — expected {ew}x{eh}"),
+            )
         )
-    )
+    else:
+        ratio = width / height if height else 0
+        checks.append(
+            Check(
+                "aspect ratio",
+                abs(ratio - 16 / 9) < 0.02,
+                f"{width}x{height}"
+                + (
+                    ""
+                    if abs(ratio - 16 / 9) < 0.02
+                    else " — not 16:9, YouTube will bar it"
+                ),
+            )
+        )
+        checks.append(
+            Check(
+                "resolution",
+                width >= 1280 and height >= 720,
+                f"{width}x{height}"
+                + ("" if width >= 1280 and height >= 720 else " — below 720p"),
+            )
+        )
 
     channels, rate = astream.get("channels"), astream.get("sample_rate")
     checks.append(
@@ -152,7 +179,12 @@ def verify_video(
     checks.append(_verify_no_edit_lists(video))
 
     if audio is not None:
-        song, rendered = media_duration(audio), media_duration(video)
+        song = media_duration(audio)
+        # The VIDEO STREAM's duration, not the container's: the container reports the
+        # longest stream, which is usually the audio — exactly the stream this check is
+        # comparing against. A render whose video track came up short (a source-exhausted
+        # cut) is invisible to a container-duration comparison.
+        rendered = float(vstream.get("duration") or media_duration(video))
         delta = rendered - song
         checks.append(
             Check(

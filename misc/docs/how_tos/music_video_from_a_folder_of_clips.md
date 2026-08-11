@@ -34,9 +34,9 @@ and render only the one you want.
 create_project(folder_name="we_ll_see", genre="music_video", template="landscape")
 ```
 
-`template` is the canvas: `landscape` (16:9), `portrait` (9:16), or `square`. Pick it now —
-it is fixed for the project's life, and re-rendering in another shape currently means a new
-project (muvid#21).
+`template` is the canvas: `landscape` (16:9), `portrait` (9:16), or `square`. This sets
+the project's *default*; any render can override it (`assemble_music_video(...,
+canvas="portrait")`) — the same edit in another shape costs an encode, not a new project.
 
 ## 2. Set the song
 
@@ -130,7 +130,10 @@ Each response carries a **coverage report**:
   are the compromises in the edit, so you can decide whether to keep them.
 
 Save the ones you like. An EDL is a plain list of `{song_start, song_end, clip_id}` and it
-is returned at full precision, so it feeds back verbatim.
+is returned at full precision, so it feeds back verbatim. It always spans the whole song:
+a span no footage covers appears as a **gap entry** (`clip_id: null`) and renders black —
+so a partial shoot still yields a complete first cut, and the gaps in it are exactly the
+`uncovered` spans of the coverage report.
 
 ## 6. Optional: score the footage for a real edit
 
@@ -161,8 +164,10 @@ where the options come from.
 muvid_assemble_music_video(project_id, edl=<the EDL you chose>)
 ```
 
-Each cut is trimmed at its aligned in-point, scaled and padded onto the canvas (never
-stretched), and concatenated over the clean song audio.
+The video is **exactly the song's duration**: each cut is trimmed at its aligned in-point,
+scaled and padded onto the canvas (never stretched), gaps render black, and the clean song
+audio runs under it all. A master that is already aac / 48 kHz / stereo is stream-copied
+bit-identically; anything else is encoded to that delivery contract.
 
 Omit `edl` and pass `strategy=` instead to select and render in one step — fine for a first
 look, but you lose the chance to read the coverage report before paying for the encode.

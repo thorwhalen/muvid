@@ -478,17 +478,16 @@ def test_assemble_pins_the_delivery_audio_contract_in_its_args(monkeypatch):
     import muvid.visualize.ffmpeg as F
     from muvid.footage.assemble import assemble_music_video
 
-    captured = {}
+    calls = []
     monkeypatch.setattr(F, "require_ffmpeg", lambda *a, **k: None)
-    monkeypatch.setattr(
-        F, "run_ffmpeg", lambda args, **k: captured.setdefault("args", args)
-    )
+    monkeypatch.setattr(F, "probe", lambda *a, **k: {})  # un-probeable song → encode path
+    monkeypatch.setattr(F, "run_ffmpeg", lambda args, **k: calls.append(args))
     assemble_music_video(
         [AssemblyCut(0.0, 5.0, "A", 0.0, "/tmp/a.mp4")],
         "/tmp/song.wav",
         "/tmp/out/final.mp4",
     )
-    args = captured["args"]
+    args = calls[-1]  # the mux pass — where audio + container flags live
     for flag, value in [("-ar", "48000"), ("-ac", "2"), ("-use_editlist", "0")]:
         i = args.index(flag)
         assert args[i + 1] == value, (flag, args[i : i + 2])

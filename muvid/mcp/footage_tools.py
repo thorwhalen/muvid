@@ -5,8 +5,9 @@ aggregates via :func:`muvid.mcp.register_tools`. All FREE (ffmpeg + numpy only, 
 The caller is resolved from the OAuth token; all work lands in that caller's stateful
 :class:`~muvid.footage.workspace.FootageWorkspace` project. Media URLs are fetched
 server-side through the SSRF-guarded, size/time-bounded fetch (video streams straight to
-disk); alignment + the single-ffmpeg-pass assembly are bounded by hard resource caps and
-``$MUVID_FFMPEG_TIMEOUT_S`` — the connector renders synchronously over HTTP.
+disk); alignment + assembly are bounded by hard resource caps and
+``$MUVID_FFMPEG_TIMEOUT_S`` (assembly runs one bounded single-input ffmpeg per cut, so
+memory does not grow with cut count) — the connector renders synchronously over HTTP.
 
 Workflow: ``create_project(genre='music_video')`` → ``set_song`` → ``add_footage`` ×N →
 ``align_footage`` → (``footage_timeline`` to inspect) → ``assemble_music_video``.
@@ -387,6 +388,15 @@ def footage_timeline(project_id: str) -> dict:
     }
 
 
+def _edl_json(e) -> dict:
+    """One EDL entry as JSON — full precision (it must feed back verbatim), gaps as null."""
+    return {
+        "song_start": e.song_start,
+        "song_end": e.song_end,
+        "clip_id": e.clip_id or None,
+    }
+
+
 def _coverage_report(entries, aligns, song_dur: float) -> dict:
     """What the song's timeline looks like under ``entries`` — covered, weak, and MISSING.
 
@@ -394,6 +404,9 @@ def _coverage_report(entries, aligns, song_dur: float) -> dict:
     directive requires: an aggregate percentage is not enough, so uncovered audio is named
     with explicit start and end times, and a span whose only footage is weakly aligned is
     listed separately with the confidence that makes it weak.
+
+    Pass only FOOTAGE entries: a gap entry renders fill, and filled is not covered — the
+    user still has no footage there, which is precisely what this report exists to say.
     """
     by_id = {a.clip_id: a for a in aligns}
     covered = sorted((e.song_start, e.song_end) for e in entries)
@@ -441,11 +454,13 @@ def propose_edit(
     list by hand, and only then pay for a render — passing the chosen EDL straight back to
     ``assemble_music_video(project_id, edl=...)``.
 
-    Returns the ``edl`` (ready to feed back verbatim), the ``strategy`` actually used, and a
-    ``coverage`` report naming every uncovered span of the song and every segment that made
-    the cut despite weak alignment. Same arguments as ``assemble_music_video``'s auto path.
+    Returns the ``edl`` (ready to feed back verbatim — spans the WHOLE song, with spans no
+    footage covers as explicit gap entries, ``clip_id: null``, rendered as black), the
+    ``strategy`` actually used, and a ``coverage`` report naming every uncovered span of
+    the song and every segment that made the cut despite weak alignment. Same arguments as
+    ``assemble_music_video``'s auto path.
     """
-    from muvid.footage.edl import validate_edl
+    from muvid.footage.edl import fill_gaps, validate_edl
     from muvid.footage.strategy import DEFAULT_STRATEGY, select_edl
 
     proj = _open(project_id)
@@ -460,23 +475,38 @@ def propose_edit(
     try:
         context = _selection_context(proj, strat, preset, weights, config)
         entries = validate_edl(
-            select_edl(strat, aligns, song_dur, context=context), aligns, song_dur
+            fill_gaps(select_edl(strat, aligns, song_dur, context=context), song_dur),
+            aligns,
+            song_dur,
         )
     except (ValueError, KeyError) as e:
         raise _tool_error(f"could not build a valid edit: {e}") from e
     return {
         "project_id": project_id,
         "strategy": strat,
-        "edl": [
-            {
-                "song_start": e.song_start,
-                "song_end": e.song_end,
-                "clip_id": e.clip_id,
-            }
-            for e in entries
-        ],
-        "coverage": _coverage_report(entries, aligns, song_dur),
+        "edl": [_edl_json(e) for e in entries],
+        "coverage": _coverage_report(
+            [e for e in entries if not e.is_gap], aligns, song_dur
+        ),
     }
+
+
+def _resolve_canvas(proj, canvas: str) -> tuple[int, int]:
+    """The render canvas: an explicit per-render override, else the project's.
+
+    The project canvas is fixed at create time, but re-rendering the same edit as portrait
+    must not require a new project and a re-upload of every asset (muvid#21 item 7) —
+    rendering is cheap and repeatable BY DESIGN, so the render call owns this knob.
+    """
+    from muvid.footage.workspace import CANVASES
+
+    if not canvas:
+        return proj.canvas()
+    if canvas not in CANVASES:
+        raise _tool_error(
+            f"unknown canvas {canvas!r}; choose one of {sorted(CANVASES)}"
+        )
+    return CANVASES[canvas]
 
 
 def assemble_music_video(
@@ -487,11 +517,15 @@ def assemble_music_video(
     preset: str = "",
     weights: dict | None = None,
     config: dict | None = None,
+    canvas: str = "",
 ) -> dict:
     """Assemble the music video — auto (a selection ``strategy``) or an explicit ``edl``. Free.
 
     - ``edl``: an explicit edit — a list of ``{song_start, song_end, clip_id}`` spans. Must
-      be in order, non-overlapping, contiguous, and each within its clip's coverage.
+      be in order, non-overlapping, and each within its clip's coverage. A span with no
+      footage is an explicit gap entry (``clip_id: null``); spans of the song your entries
+      do not reach (head, tail, interior holes) are gap-filled automatically and named in
+      the ``coverage`` report.
     - ``strategy='weighted'`` (score-driven): the beat-snapped Viterbi selector reads the
       persisted score tracks (run ``score_footage`` first) and the selection config —
       ``preset`` ("energetic"/"contemplative") and/or ``weights`` (per-metric) and/or
@@ -499,12 +533,16 @@ def assemble_music_video(
       is cheap: it re-selects from the SAME scores without re-scoring.
     - otherwise **full-auto**: a registered alignment-only ``strategy`` (see
       ``list_strategies``; default ``best_confidence``) builds the edit from the alignments.
+    - ``canvas``: render-time override ("landscape"/"portrait"/"square") — the same edit
+      re-rendered in another shape, no new project needed. Default: the project's canvas.
 
-    Each cut is trimmed at its aligned in-point, scaled onto the project canvas, and
-    concatenated; the CLEAN song audio for the covered span is used. Returns the render.
+    The video is EXACTLY the song's duration: each cut is trimmed at its aligned in-point,
+    scaled onto the canvas (padded, never stretched), gaps render black, and the CLEAN
+    song audio runs under it all. Returns the render + the same coverage report
+    ``propose_edit`` gives.
     """
     from muvid.footage.assemble import assemble_music_video as _assemble
-    from muvid.footage.edl import derive_cuts, validate_edl
+    from muvid.footage.edl import derive_cuts, fill_gaps, validate_edl
     from muvid.footage.strategy import DEFAULT_STRATEGY, select_edl
     from muvid.visualize import failures, report, verify_video
 
@@ -523,7 +561,7 @@ def assemble_music_video(
                 raise ValueError(
                     "selection config (preset/weights/config) can't accompany an explicit edl"
                 )
-            entries = validate_edl(edl, aligns, song_dur)
+            entries = validate_edl(fill_gaps(edl, song_dur), aligns, song_dur)
             used_strategy = None
         else:
             strat = strategy or (
@@ -535,12 +573,17 @@ def assemble_music_video(
                 )
             context = _selection_context(proj, strat, preset, weights, config)
             entries = validate_edl(
-                select_edl(strat, aligns, song_dur, context=context), aligns, song_dur
+                fill_gaps(
+                    select_edl(strat, aligns, song_dur, context=context), song_dur
+                ),
+                aligns,
+                song_dur,
             )
             used_strategy = strat
     except (ValueError, KeyError) as e:
         raise _tool_error(f"could not build a valid edit: {e}") from e
 
+    canvas_wh = _resolve_canvas(proj, canvas)
     cuts = derive_cuts(entries, aligns, proj.clip_paths())
     render_id = uuid.uuid4().hex[:12]
     render_dir = proj.new_render_dir(render_id)
@@ -549,9 +592,16 @@ def assemble_music_video(
             cuts,
             str(proj.song_path()),
             str(render_dir / "final.mp4"),
-            canvas=proj.canvas(),
+            canvas=canvas_wh,
         )
-        checks = verify_video(out)
+        # audio= arms the duration-match check — the one that catches a mis-built
+        # filtergraph (muvid#24 B3); correct now BECAUSE every EDL is gap-filled to the
+        # full song. expected_canvas keeps the aspect/resolution checks honest for a
+        # deliberate portrait/square render — without it, verify hard-fails every
+        # non-16:9 canvas the canvas= override exists to produce.
+        checks = verify_video(
+            out, audio=str(proj.song_path()), expected_canvas=canvas_wh
+        )
     except Exception:
         import shutil
 
@@ -562,8 +612,10 @@ def assemble_music_video(
         "render_id": render_id,
         "video": str(out),
         "strategy": used_strategy,
-        "canvas": list(proj.canvas()),
-        "covered_span": [
+        "canvas": list(canvas_wh),
+        # "rendered", not "covered": after gap-filling this is always the whole song —
+        # where the user actually HAS footage is the coverage report's business.
+        "rendered_span": [
             round(entries[0].song_start, 2),
             round(entries[-1].song_end, 2),
         ],
@@ -572,14 +624,10 @@ def assemble_music_video(
         # 5 ms — past validate_edl's 1 ms tolerance, so the render → edit → re-render loop
         # could fail outright, and even when it validated it re-rendered a different video
         # (muvid#21 item 3). propose_edit already returns full precision; same contract.
-        "edl": [
-            {
-                "song_start": e.song_start,
-                "song_end": e.song_end,
-                "clip_id": e.clip_id,
-            }
-            for e in entries
-        ],
+        "edl": [_edl_json(e) for e in entries],
+        "coverage": _coverage_report(
+            [e for e in entries if not e.is_gap], aligns, song_dur
+        ),
         "ok": not failures(checks),
         "checks": report(checks),
         "note": (
