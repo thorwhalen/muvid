@@ -75,6 +75,13 @@ scoring = [
 scoring-shots = [
     "scenedetect",
 ]
+# The lacing-native multichannel EDITOR bridge (muvid.footage.lacing_bridge,
+# thorwhalen/muvid#31): exports a project's alignments/score-tracks/EDL as lacing standoff
+# annotations for a multitrack editor (reelee-web#203), and reads a DECISION tier back into
+# an EDL. Heavy import is lazy, so `import muvid`/`muvid.mcp` never pulls lacing.
+editor = [
+    "lacing",
+]
 # OPT-IN, OFF BY DEFAULT — the lip-sync tier (Demucs vocal separation + SyncNet LSE-C). NOT
 # on the prod connector: the htdemucs weights are CC-BY-NC (research-only, not commercial-
 # clean) and Demucs+SyncNet on CPU peak ~2-3 GB (OOM risk on the fragile box). Install only
