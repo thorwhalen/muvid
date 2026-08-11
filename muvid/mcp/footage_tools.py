@@ -263,6 +263,7 @@ def align_footage(project_id: str) -> dict:
     Run this after adding/removing clips and before assembling.
     """
     from muvid.footage.align import align_footage as _align
+    from muvid.footage.scoring.grid import align_fingerprint
 
     proj = _open(project_id)
     if not proj.has_song():
@@ -270,10 +271,16 @@ def align_footage(project_id: str) -> dict:
     clips = list(proj.clip_paths().items())
     if not clips:
         raise _tool_error("no footage added — call add_footage first")
+    old_fingerprint = align_fingerprint(proj.load_alignments())
     aligns = _align(str(proj.song_path()), clips, song_duration=proj.song_duration())
     proj.save_alignments(aligns)
-    # New offsets invalidate every persisted score track (the song-time grid mapping moved).
-    proj.invalidate_scores()
+    # Scores are keyed to the offsets they were computed under (align_fingerprint is that
+    # key's SSOT), so a re-align that reproduces the same offsets must not throw away the
+    # most expensive artifact in the pipeline (muvid#24 B4). Correctness does not depend on
+    # deleting here — the read path refuses stale scores via manifest_is_current — this
+    # only reclaims storage the moment the scores are known to be stale.
+    if align_fingerprint(aligns) != old_fingerprint:
+        proj.invalidate_scores()
     # Every clip has a record now, so "did not overlap" is a REPORTED PROPERTY of a clip
     # that is still there, not an inference from something missing. A clip is never removed
     # from the project or from the alignment artifact by anything but an explicit request:
@@ -554,10 +561,15 @@ def assemble_music_video(
             round(entries[0].song_start, 2),
             round(entries[-1].song_end, 2),
         ],
+        # Full precision, NOT rounded: this list must feed straight back as the edl=
+        # argument and reproduce the same render. round(x, 2) moved boundaries by up to
+        # 5 ms — past validate_edl's 1 ms tolerance, so the render → edit → re-render loop
+        # could fail outright, and even when it validated it re-rendered a different video
+        # (muvid#21 item 3). propose_edit already returns full precision; same contract.
         "edl": [
             {
-                "song_start": round(e.song_start, 2),
-                "song_end": round(e.song_end, 2),
+                "song_start": e.song_start,
+                "song_end": e.song_end,
                 "clip_id": e.clip_id,
             }
             for e in entries
