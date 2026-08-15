@@ -743,7 +743,9 @@ def footage_edl_from_annotations(project_id: str, *, annotations: list[dict]) ->
     The timeline-to-EDL half: pass ``footage_editor_document``'s ``DECISION`` tier
     (after whatever an editor did to it) and get back plain
     ``{song_start, song_end, clip_id}`` dicts, ready for ``assemble_music_video(edl=...)``
-    or ``propose_edit`` — a faithful read, not a re-selection.
+    or ``propose_edit`` — a faithful read, not a re-selection. Annotations referencing a
+    song other than this project's are refused, not read (muvid#35), so a clipboard from
+    another project fails saying so instead of splicing in the wrong spans.
     """
     try:
         from muvid.footage.lacing_bridge import edl_from_annotations
@@ -754,9 +756,18 @@ def footage_edl_from_annotations(project_id: str, *, annotations: list[dict]) ->
             "(pip install 'muvid[editor]')"
         ) from e
 
-    _open(project_id)  # authorizes the caller against this project
+    proj = _open(project_id)  # authorizes the caller against this project
     try:
         parsed = [Annotation.model_validate(a) for a in annotations]
     except Exception as e:  # noqa: BLE001 — surface a clean ToolError, not a raw pydantic one
         raise _tool_error(f"could not read annotations: {e}") from e
-    return {"project_id": project_id, "edl": edl_from_annotations(parsed)}
+    try:
+        edl = edl_from_annotations(
+            parsed,
+            # No song set yet — nothing to cross-check against, so stay permissive
+            # (song_hash() would raise FileNotFoundError on a songless project).
+            expected_song_asset_id=proj.song_hash() if proj.has_song() else None,
+        )
+    except ValueError as e:
+        raise _tool_error(str(e)) from e
+    return {"project_id": project_id, "edl": edl}
