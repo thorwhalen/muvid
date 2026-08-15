@@ -20,7 +20,8 @@ def test_character_to_falaw_includes_voice(tmp_path):
 
     facade.init_project(tmp_path / "p")
     facade.add_character(
-        tmp_path / "p", "alice",
+        tmp_path / "p",
+        "alice",
         description="lead singer",
         voice_id="v1",
     )
@@ -75,7 +76,8 @@ def test_environment_to_falaw_round_trips_card_fields(tmp_path):
 
     facade.init_project(tmp_path / "p")
     facade.add_environment(
-        tmp_path / "p", "park",
+        tmp_path / "p",
+        "park",
         description="wooden bench at dusk",
         time_of_day="dusk",
         lighting="warm",
@@ -110,8 +112,11 @@ def _seed_alignment(project_root: Path):
         b = SubtitleBuilder(store, asset_id="song:audio")
         b.section("verse", 0.0, 30.0)
         b.line(
-            "hello world bye now", 12.5, 17.0,
-            section="verse", line_index=0,
+            "hello world bye now",
+            12.5,
+            17.0,
+            section="verse",
+            line_index=0,
             words=[
                 ("hello", 12.5, 13.0),
                 ("world", 13.2, 14.0),
@@ -181,14 +186,19 @@ def test_animation_renderers_helper_now_routes_via_contracts(tmp_path):
 
     p = MusicVideoProject(tmp_path / "p")
     shot = ShotSpec(
-        id="s01", start_s=12.5, end_s=15.0,
-        render_strategy="animation", characters=("alice",),
+        id="s01",
+        start_s=12.5,
+        end_s=15.0,
+        render_strategy="animation",
+        characters=("alice",),
     )
     ctx = RenderContext(
-        project=p, shot=shot,
+        project=p,
+        shot=shot,
         shot_dir=tmp_path / "p" / "shots" / "s01",
         audio_slice_path=tmp_path / "audio.wav",
-        character_image_paths={}, environment_image_path=None,
+        character_image_paths={},
+        environment_image_path=None,
         lyric_lines=[],
     )
     timings = list(_word_timings_for_shot(ctx))
@@ -208,8 +218,11 @@ def test_progress_event_to_dict_is_json_safe():
     from muvid.contracts import progress_event_to_dict
 
     event = ProgressEvent(
-        kind="done", application="fal-ai/test",
-        call_id="abc123", elapsed_s=1.5, message="finished",
+        kind="done",
+        application="fal-ai/test",
+        call_id="abc123",
+        elapsed_s=1.5,
+        message="finished",
     )
     payload = progress_event_to_dict(event)
     encoded = json.dumps(payload)
@@ -219,3 +232,66 @@ def test_progress_event_to_dict_is_json_safe():
     assert decoded["call_id"] == "abc123"
     assert decoded["elapsed_s"] == 1.5
     assert decoded["message"] == "finished"
+
+
+def _downgrade_annot_to_v1(path):
+    """Stamp an .annot file back to store schema v1.
+
+    lacing 0.0.31 took the store schema v1 -> v2. Files written by muvid before that
+    are on disk in users' project folders, and every read site here must still open
+    them. Restamping is enough to reproduce the refusal: the v1 -> v2 step is a
+    stamp, so a v2 file with a v1 stamp is exactly what an old file looks like.
+    """
+    import sqlite3
+
+    con = sqlite3.connect(path)
+    try:
+        con.execute("UPDATE meta SET value = '1' WHERE key = 'schema_version'")
+        con.commit()
+    finally:
+        con.close()
+
+
+def _annot_schema_version(path) -> int:
+    import sqlite3
+
+    con = sqlite3.connect(path)
+    try:
+        row = con.execute(
+            "SELECT value FROM meta WHERE key = 'schema_version'"
+        ).fetchone()
+    finally:
+        con.close()
+    return int(row[0])
+
+
+def test_reading_an_alignment_written_before_lacing_v2_still_works(tmp_path):
+    """A pre-v2 .annot must not break the render path.
+
+    Without `migrate=True` at the read site, lacing refuses a v1 file with
+    SchemaMismatchError — correctly, since silently rewriting a file on open is a
+    library-level anti-pattern (lacing#15). But muvid OWNS this file: align.py wrote
+    it, at a path muvid chose inside its own project folder. Upgrading it is muvid
+    maintaining its own artifact, which is the call the application gets to make.
+    """
+    pytest.importorskip("lacing")
+    from muvid import facade
+    from muvid.contracts import word_timings_for_window
+    from muvid.project import MusicVideoProject
+
+    facade.init_project(tmp_path / "p")
+    _seed_alignment(tmp_path / "p")
+    annot = tmp_path / "p" / "lyrics" / "alignment.annot"
+
+    if _annot_schema_version(annot) < 2:
+        pytest.skip("installed lacing predates the v2 store schema")
+
+    _downgrade_annot_to_v1(annot)
+    assert _annot_schema_version(annot) == 1
+
+    p = MusicVideoProject(tmp_path / "p")
+    out = word_timings_for_window(p, 12.0, 16.0)
+    assert [w[0] for w in out] == ["hello", "world", "bye", "now"]
+    # The read upgraded the file in place, so the next open is a plain v2 open.
+    assert _annot_schema_version(annot) == 2
+    assert word_timings_for_window(p, 12.0, 16.0) == out  # idempotent

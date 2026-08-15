@@ -497,7 +497,16 @@ def _alignment_stats(alignment_path: Path) -> dict | None:
         from lacing.tracks.subtitle import SubtitleTrack
     except Exception:
         return None
-    store = SqliteStore(str(alignment_path))
+    # migrate=True: muvid OWNS this file — align.py writes it, at a path muvid
+    # chooses inside its own project folder — so upgrading it on open is muvid
+    # maintaining its own artifact, not rewriting a user's document. lacing
+    # keeps migration opt-in precisely so a library never does that silently
+    # (lacing#15); this is the application making the call it is entitled to
+    # make, the same one nw and reelee made. Without it, a v1 .annot written
+    # before lacing 0.0.31 raises SchemaMismatchError here and the render dies.
+    # The v1->v2 step is a stamp, and lacing's runner re-reads the version under
+    # the write lock, so concurrent opens skip rather than double-apply.
+    store = SqliteStore(str(alignment_path), migrate=True)
     try:
         track = SubtitleTrack(store, asset_id=None)
         lines = track.all_lines()
