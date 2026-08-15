@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import shutil
 from pathlib import Path
 from typing import Iterable
 
@@ -72,38 +73,33 @@ def trim_video_to_duration(src: Path, target_s: float, dst: Path) -> Path:
       appending silence to the audio track. Done in a single ffmpeg call
       using the ``tpad`` (video) and ``apad`` (audio) filters.
 
-    On any failure, falls back to copying ``src`` to ``dst`` so the caller
-    always gets *some* file at ``dst`` — but the caller should treat a
-    failure as a soft warning (the video may not be the requested length).
+    Errors from ``mixing.video`` propagate. There is deliberately no soft
+    fallback, because there is nowhere for a soft failure to surface: nothing
+    downstream re-measures the rendered shot (``facade.status`` reports the
+    *spec's* ``duration_s``, and ``verify_video`` only ever sees the composed
+    master). A shot copied through at its original length is therefore
+    invisible until the whole video has drifted out of sync with the song —
+    which is exactly how an 8s clip stayed 5.87s for months.
     """
-    try:
-        from mixing.video import Video
+    from mixing.video import Video
 
-        v = Video(str(src))
-        delta = target_s - v.duration
+    v = Video(str(src))
+    delta = target_s - v.duration
 
-        if abs(delta) < 0.05:
-            if src.resolve() != dst.resolve():
-                import shutil
-
-                shutil.copy2(src, dst)
-            return dst
-
-        if delta < 0:
-            # src is longer than target — straight cut.
-            cut = v[0:target_s]
-            cut.save(str(dst))
-            return dst
-
-        # src is shorter than target — pad video via tpad (clone last frame)
-        # and pad audio via apad (silence). One ffmpeg call.
-        return _pad_video_to_duration(src, target_s, dst, pad_seconds=delta)
-
-    except Exception:
-        import shutil
-
-        shutil.copy2(src, dst)
+    if abs(delta) < 0.05:
+        if src.resolve() != dst.resolve():
+            shutil.copy2(src, dst)
         return dst
+
+    if delta < 0:
+        # src is longer than target — straight cut.
+        cut = v[0:target_s]
+        cut.save(str(dst))
+        return dst
+
+    # src is shorter than target — pad video via tpad (clone last frame)
+    # and pad audio via apad (silence). One ffmpeg call.
+    return _pad_video_to_duration(src, target_s, dst, pad_seconds=delta)
 
 
 def _pad_video_to_duration(
@@ -112,10 +108,10 @@ def _pad_video_to_duration(
     """Pad ``src`` to ``target_s`` by holding the last frame + silencing audio.
 
     Uses ffmpeg's ``tpad=stop_mode=clone`` (video) and ``apad`` (audio) filters
-    in a single call. Re-encodes (filter graph requires it). Falls through to
-    a simple copy on any subprocess failure.
+    in a single call. Re-encodes (filter graph requires it). Raises
+    ``subprocess.CalledProcessError`` / ``FileNotFoundError`` on an ffmpeg
+    failure rather than writing a short file to ``dst``.
     """
-    import shutil
     import subprocess
 
     if pad_seconds <= 0:
@@ -147,12 +143,10 @@ def _pad_video_to_duration(
         "+faststart",
         str(dst),
     ]
-    try:
-        subprocess.run(cmd, check=True, capture_output=True)
-        return dst
-    except (subprocess.CalledProcessError, FileNotFoundError):
-        # ffmpeg not on PATH or filter rejected — copy as a soft fallback so
-        # the caller still gets a file. The duration mismatch will be visible
-        # in any QA report (avp.inspect.shot_report).
-        shutil.copy2(src, dst)
-        return dst
+    # No soft fallback here either: a copy lands a video ``pad_seconds`` too
+    # short at a path that promises ``target_s``, and the QA report this used to
+    # defer to (avp.inspect.shot_report) is never run per-shot. Let ffmpeg's own
+    # error — missing binary, or a build without tpad/apad — reach the caller
+    # with its captured stderr attached.
+    subprocess.run(cmd, check=True, capture_output=True)
+    return dst
