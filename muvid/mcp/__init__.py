@@ -34,6 +34,11 @@ FOOTAGE_TOOLS = [
     "assemble_music_video",
     "footage_status",
     "list_strategies",
+    # The lacing-native editor bridge (muvid#31): the read half (project → the
+    # three body schemas a multitrack editor renders) and the write half (an
+    # edited DECISION lane → an ``edl=`` argument). Both free and read-only.
+    "footage_editor_document",
+    "footage_edl_from_annotations",
 ]
 
 #: The footage SCORING tools (muvid.mcp.scoring_tools) — the background scoring job + the

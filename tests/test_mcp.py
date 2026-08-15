@@ -342,3 +342,38 @@ def test_list_renders_is_newest_first(tmp_path, monkeypatch):
         meta = proj.renders_dir / rid / "meta.json"
         os.utime(meta, (base + dt, base + dt))
     assert [r["render_id"] for r in proj.list_renders()] == ["newer", "older"]
+
+
+def test_every_public_tool_function_is_registered():
+    """A tool module's public functions and its declared list must not drift apart.
+
+    muvid#37: the lacing editor bridge's two tools were implemented and tested but
+    listed nowhere, so ``register_tools`` never exposed them and no host could
+    call them. The tests reached them by direct import, which is exactly why the
+    gap was invisible — a feature shipped without a transport.
+
+    Each of the three tool modules holds only tool functions at public scope, so
+    "public function not in the declared list" is the whole invariant.
+    """
+    import inspect
+
+    import muvid.mcp.footage_tools as footage_tools
+    import muvid.mcp.scoring_tools as scoring_tools
+    import muvid.mcp.tools as visualizer_tools
+
+    for module, declared in (
+        (visualizer_tools, mcp.VISUALIZER_TOOLS),
+        (scoring_tools, mcp.SCORING_TOOLS),
+        (footage_tools, mcp.FOOTAGE_TOOLS),
+    ):
+        public = {
+            name
+            for name, obj in vars(module).items()
+            if inspect.isfunction(obj)
+            and not name.startswith("_")
+            and obj.__module__ == module.__name__
+        }
+        assert public == set(declared), (
+            f"{module.__name__}: unregistered {sorted(public - set(declared))}, "
+            f"declared-but-missing {sorted(set(declared) - public)}"
+        )
