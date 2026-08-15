@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.footage.scoring.frames &mdash; muvid 0.0.24 documentation</title>
+  <title>muvid.footage.scoring.frames &mdash; muvid 0.0.25 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../../_static/copybutton.css?v=76b2166b" />
@@ -15,7 +15,7 @@
   
       <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../../_static/documentation_options.js?v=f91d8841"></script>
+      <script src="../../../../_static/documentation_options.js?v=5d650c58"></script>
       <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -174,9 +174,10 @@ The orchestrator maps clip time → song time via the clip’s offset and hands 
 <dl class="py function">
 <dt class="sig sig-object py" id="muvid.footage.scoring.frames.make_face_scorer">
 <span class="sig-prename descclassname"><span class="pre">muvid.footage.scoring.frames.</span></span><span class="sig-name descname"><span class="pre">make_face_scorer</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/muvid/footage/scoring/frames.html#make_face_scorer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.scoring.frames.make_face_scorer" title="Link to this definition"></a></dt>
-<dd><p>Build a <code class="docutils literal notranslate"><span class="pre">bgr_frame</span> <span class="pre">-&gt;</span> <span class="pre">face_framing_score</span></code> (or <code class="docutils literal notranslate"><span class="pre">None</span></code> if unavailable).</p>
+<dd><p>Build a <code class="docutils literal notranslate"><span class="pre">bgr_frame</span> <span class="pre">-&gt;</span> <span class="pre">face_framing_score</span> <span class="pre">|</span> <span class="pre">None</span></code> (or <code class="docutils literal notranslate"><span class="pre">None</span></code> if unavailable).</p>
 <p>Best-effort and never fatal: face_framing is a soft metric (not one of the two named
-signals), so ANY failure → <code class="docutils literal notranslate"><span class="pre">None</span></code> and the orchestrator scores 0 (neutral). Tries the
+signals), so ANY failure → <code class="docutils literal notranslate"><span class="pre">None</span></code> and the metric reads as <em>unmeasured</em> (NaN →
+masked → not counted in the composite denominator), never as a zero score. Tries the
 classic <code class="docutils literal notranslate"><span class="pre">mp.solutions.face_detection</span></code> (mediapipe 0.10 full build); falls back to the
 Tasks <code class="docutils literal notranslate"><span class="pre">FaceDetector</span></code> ONLY when the operator supplies a model via
 <code class="docutils literal notranslate"><span class="pre">MUVID_MEDIAPIPE_FACE_MODEL</span></code> (no auto-download). Score = best face’s area×centering.</p>
@@ -192,8 +193,9 @@ Tasks <code class="docutils literal notranslate"><span class="pre">FaceDetector<
 <li><p><strong>clip_path</strong> – the video file.</p></li>
 <li><p><strong>sample_fps</strong> – target frames/second to analyze (strided over the native fps).</p></li>
 <li><p><strong>max_frames</strong> – hard cap on analyzed frames (bounds cost).</p></li>
-<li><p><strong>face_fn</strong> – optional <code class="docutils literal notranslate"><span class="pre">bgr_frame</span> <span class="pre">-&gt;</span> <span class="pre">face_score</span></code> (mediapipe, injected by the caller so
-this module stays cv2-only). <code class="docutils literal notranslate"><span class="pre">None</span></code> → face score is 0 everywhere.</p></li>
+<li><p><strong>face_fn</strong> – optional <code class="docutils literal notranslate"><span class="pre">bgr_frame</span> <span class="pre">-&gt;</span> <span class="pre">face_score</span> <span class="pre">|</span> <span class="pre">None</span></code> (mediapipe, injected by the
+caller so this module stays cv2-only). <code class="docutils literal notranslate"><span class="pre">None</span></code> → face score is NaN
+everywhere, i.e. <em>not measured</em> rather than <em>measured as worst</em>.</p></li>
 <li><p><strong>flow_downscale</strong> – downscale factor for the Farneback flow (cost bound).</p></li>
 <li><p><strong>should_cancel</strong> – polled every frame; returns early (a partial pass) when it goes True.</p></li>
 </ul>

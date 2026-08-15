@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.footage.select_score &mdash; muvid 0.0.24 documentation</title>
+  <title>muvid.footage.select_score &mdash; muvid 0.0.25 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=f91d8841"></script>
+      <script src="../../../_static/documentation_options.js?v=5d650c58"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -469,10 +469,22 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_composite</span><span class="p">(</span>
     <span class="n">tensor</span><span class="p">,</span> <span class="n">weights</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="n">aligns</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;``ĝ[clip_in_align_order, frame]`` = Σ_m w_m·S·M / W ∈ [0,1]; also returns W.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;``ĝ[clip_in_align_order, frame]`` = Σ_m w_m·S·M / Σ_m w_m·M ∈ [0,1]; also returns W.</span>
 
 <span class="sd">    Rows are ordered to match ``aligns`` (the selector indexes clips by alignment order).</span>
 <span class="sd">    Metrics in ``weights`` but absent from the tensor contribute nothing (weight → 0).</span>
+
+<span class="sd">    **The denominator is the weight actually AVAILABLE at that frame, not the fixed</span>
+<span class="sd">    total.** A masked metric contributes 0 to the numerator, so dividing by the total</span>
+<span class="sd">    would score &quot;we could not measure this&quot; identically to &quot;we measured it and it is</span>
+<span class="sd">    the worst possible&quot; — which is how an unavailable metric silently drags a clip</span>
+<span class="sd">    down. Renormalising over available weight makes an absent metric *not counted*</span>
+<span class="sd">    rather than *counted as zero* (muvid#19).</span>
+
+<span class="sd">    Where NO metric is available for a frame, ``g`` is 0 rather than NaN: ``_prefix``</span>
+<span class="sd">    takes a cumulative sum over this array, and a single NaN would poison every</span>
+<span class="sd">    downstream segment reward. A frame with nothing measured is genuinely unusable, so</span>
+<span class="sd">    0 is also the right ranking; the distinction that matters is the one above.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">metrics</span> <span class="o">=</span> <span class="n">tensor</span><span class="o">.</span><span class="n">metrics</span>
     <span class="n">w</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
@@ -485,8 +497,9 @@
         <span class="k">return</span> <span class="n">g</span><span class="p">,</span> <span class="mf">0.0</span>
     <span class="n">S</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan_to_num</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">tensor</span><span class="o">.</span><span class="n">S</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">),</span> <span class="n">nan</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
     <span class="n">M</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">tensor</span><span class="o">.</span><span class="n">M</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
-    <span class="n">contrib</span> <span class="o">=</span> <span class="p">(</span><span class="n">S</span> <span class="o">*</span> <span class="n">M</span><span class="p">)</span> <span class="o">@</span> <span class="n">w</span>  <span class="c1"># [n_clips_tensor, n]</span>
-    <span class="n">contrib</span> <span class="o">/=</span> <span class="n">W</span>
+    <span class="n">num</span> <span class="o">=</span> <span class="p">(</span><span class="n">S</span> <span class="o">*</span> <span class="n">M</span><span class="p">)</span> <span class="o">@</span> <span class="n">w</span>  <span class="c1"># [n_clips_tensor, n]</span>
+    <span class="n">den</span> <span class="o">=</span> <span class="n">M</span> <span class="o">@</span> <span class="n">w</span>  <span class="c1"># per-frame available weight</span>
+    <span class="n">contrib</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="n">num</span><span class="p">,</span> <span class="n">den</span><span class="p">,</span> <span class="n">out</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">num</span><span class="p">),</span> <span class="n">where</span><span class="o">=</span><span class="n">den</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">ai</span><span class="p">,</span> <span class="n">a</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">aligns</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">a</span><span class="o">.</span><span class="n">clip_id</span> <span class="ow">in</span> <span class="n">tensor</span><span class="o">.</span><span class="n">clip_ids</span><span class="p">:</span>
             <span class="n">g</span><span class="p">[</span><span class="n">ai</span><span class="p">]</span> <span class="o">=</span> <span class="n">contrib</span><span class="p">[</span><span class="n">tensor</span><span class="o">.</span><span class="n">clip_ids</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">clip_id</span><span class="p">)]</span>
