@@ -1,11 +1,14 @@
 # muvid
 
-Tools to make music videos. Orchestrates the local
-ecosystem (`falaw`, `lookbook`, `lacing`, `an`, `mixing`) into a
-song-to-video pipeline. The user is the director; an agent (Claude in
-the terminal, or the local web UI) drives the stages.
+Tools to make music videos — three ways, from a song and a cover, from a pile of
+phone recordings of one gig, or from an AI narrative pipeline. See the table
+below for which is which; the rest of this section describes the third.
 
-> **Status:** v0+. The pipeline (init → transcribe → align → cast →
+The AI pipeline orchestrates the local ecosystem (`falaw`, `lookbook`, `lacing`,
+`an`, `mixing`) into a song-to-video pipeline. The user is the director; an agent
+(Claude in the terminal, or the local web UI) drives the stages.
+
+> **Status (the AI pipeline):** v0+. The pipeline (init → transcribe → align → cast →
 > environments → script → render → compose) works end to end. Render
 > strategies: `lipsync`, `image_to_video`, `text_to_video`,
 > `animation`, `still`. CLI, Claude skill (`.claude/skills/muvid/`),
@@ -21,17 +24,27 @@ the terminal, or the local web UI) drives the stages.
 > [`misc/docs/alignment_references.md`](misc/docs/alignment_references.md)
 > for the lyric-alignment literature muvid builds on.
 
-muvid has **two independent halves**: the AI narrative pipeline above, and
-[`muvid.visualize`](#muvidvisualize--audio--cover--video) — a lightweight,
-deterministic, ffmpeg-only path that turns a song and a cover into an
-audio-reactive visualizer video (no AI, no network).
+muvid is **three independent parts**:
+
+| part | what it does | needs |
+|---|---|---|
+| [`muvid.visualize`](#muvidvisualize--audio--cover--video) | a song + a cover → a 16:9 audio-reactive visualizer video, deterministic and ffmpeg-only | `ffmpeg` |
+| [the `music_video` genre](#the-music_video-genre--footage-assembly) | N phone recordings of ONE song → aligned, scored, cut and assembled into a music video | `ffmpeg` |
+| the AI narrative pipeline (above) | a song → a cast, a script and generated shots | API keys, `muvid[ai]` |
+
+The first two are free, deterministic and key-free, and both are registered
+[`nw`](https://github.com/thorwhalen/nw) genres — so a host connector serves them
+directly. The third is the generative one, and is the only part that spends money.
 
 ## Install
 
 ```bash
-pip install muvid              # core: CLI + muvid.visualize (needs ffmpeg + mixing)
-pip install 'muvid[ai]'        # the narrative pipeline (falaw, lacing, lookbook)
-pip install 'muvid[ui]'        # FastAPI + uvicorn for the web UI
+pip install muvid                  # core: CLI + muvid.visualize + muvid.footage (needs ffmpeg)
+pip install 'muvid[scoring]'       # footage scoring: quality + motion-to-beat + the weighted selector
+pip install 'muvid[editor]'        # export a footage project as lacing annotations
+pip install 'muvid[mcp]'           # serve the two nw genres over MCP (fastmcp, py2mcp, nw)
+pip install 'muvid[ai]'            # the narrative pipeline (falaw, lacing, lookbook)
+pip install 'muvid[ui]'            # FastAPI + uvicorn for the web UI
 ```
 
 The narrative pipeline depends on local sibling packages (`falaw`, `lookbook`,
@@ -79,6 +92,89 @@ except Ken Burns (via `burns`, which comes with `mixing`).
 Publishing these to YouTube (single song or a whole folder as an album) is the
 [`yb`](https://github.com/thorwhalen/yb) package's job — it renders through
 `muvid.visualize` and uploads.
+
+## The `music_video` genre — footage assembly
+
+Several people filmed the same gig on their phones. Each recording caught the *same
+song* through a different mic, from a different seat, starting at a different moment.
+`muvid.footage` puts them all on the clean studio master's timeline and cuts a music
+video out of them — no AI, no keys, no cost, just `ffmpeg` and arithmetic.
+
+```python
+from muvid.footage import select_edl, validate_edl, derive_cuts
+from muvid.footage.align import align_footage
+from muvid.footage.edl import fill_gaps
+from muvid.footage.assemble import assemble_music_video
+
+song, dur = "master.wav", 205.0
+clips = [("c1", "phone_a.mov"), ("c2", "phone_b.mp4"), ("c3", "tripod.mov")]
+
+# 1. Where does each clip sit on the song? (audio cross-correlation, via mixing.audio)
+aligns = align_footage(song, clips, song_duration=dur)
+
+# 2. Who is on air over each span? A strategy turns alignments into an EDL,
+#    fill_gaps makes it span the whole song, validate_edl is the one gate.
+edl = validate_edl(fill_gaps(select_edl("best_confidence", aligns, dur), dur), aligns, dur)
+
+# 3. Cut it, over the clean master audio.
+cuts = derive_cuts(edl, aligns, dict(clips))
+assemble_music_video(cuts, song, "out.mp4", canvas=(1920, 1080))
+```
+
+**The five stages**
+
+| stage | module | what comes out |
+|---|---|---|
+| align | `muvid/footage/align.py` | per clip: `offset_s`, a confidence, its `coverage` of the song, `overlaps` |
+| score | `muvid/footage/scoring/` | a tensor `S[clip, frame, metric]` on ONE shared song-time grid (`hop≈0.1 s`) |
+| select | `muvid/footage/strategy.py`, `select_score.py` | an EDL — which clip covers which span |
+| validate | `muvid/footage/edl.py` | the one gate: ordered, non-overlapping, gapless, inside each clip's coverage |
+| assemble | `muvid/footage/assemble.py` | one ffmpeg pass per cut → concat by stream copy → mux the master |
+
+**What the design commits to**
+
+- **Nothing vanishes because it measured badly.** A clip that doesn't overlap the song
+  is still recorded, still listed, still addressable — it just carries `overlaps=False`.
+- **A hole is an explicit gap entry**, not an absence. `EdlEntry(clip_id="")` (`null` over
+  JSON) means "no footage here, fill it", so the render is always exactly the song's
+  length and every span is accounted for by exactly one entry.
+- **Bounded memory.** One ffmpeg invocation per cut, then a stream-copy concat — peak
+  memory is O(1) in the cut count, not O(n). A 70-cut score-driven edit renders on the
+  same box as a 3-cut one.
+- **Mixed phones are the normal case.** Clips are scaled and padded onto a fixed canvas
+  (`landscape` / `portrait` / `square`), rotation metadata is honoured, and mismatched
+  frame rates are unified — so a portrait iPhone clip and a 29.97 fps camera cut together
+  without drift.
+- **The strategy is a config object, not a branch.** `best_confidence` (default),
+  `longest_take` and `fewest_cuts` work from the alignments alone; `weighted` runs a
+  beat-snapped Viterbi over the score tensor. Add your own with
+  `register_selection_strategy`.
+
+**Scoring** (`pip install 'muvid[scoring]'`) resolves every clip's every metric onto that
+one song-time grid, so the same numbers drive both the automatic cut and a human editor's
+lanes. The **core tier** — sharpness, exposure, shake, face framing, motion-to-beat, the
+selector — is torch-free and MIT/BSD/Apache/ISC only, and is what a deployment installs.
+The **lip-sync tier** (`muvid[scoring-lipsync]`: Demucs + SyncNet) is **opt-in and off by
+default**: the htdemucs weights are CC-BY-NC (research-only, not commercial-clean), and
+it peaks at 2–3 GB on CPU. Turning it on takes the extra, `MUVID_SCORING_ENABLE_LIPSYNC=1`,
+*and* weights you point at yourself via `MUVID_SYNCNET_S3FD_WEIGHTS` /
+`MUVID_SYNCNET_WEIGHTS` — muvid never downloads model weights at runtime. Without all
+three it skips cleanly rather than scoring zero.
+
+**As a hosted genre.** `muvid.genre_music_video` registers `music_video` as an `nw.Genre`
+(canvas presets as its Templates) with a project factory backed by
+`muvid.footage.workspace.FootageWorkspace` — a stateful per-user project (one song, N
+clips, a persisted alignment, score tracks, renders) under `~/.local/share/muvid`
+(`MUVID_DATA_HOME` to relocate). `muvid.mcp.footage_tools` and `muvid.mcp.scoring_tools`
+expose it as MCP tools (`set_song`, `add_footage`, `align_footage`, `propose_edit`,
+`footage_timeline`, `score_footage`, `assemble_music_video`, …), all free.
+
+**As an editor document.** `pip install 'muvid[editor]'` adds
+`muvid.footage.lacing_bridge`, which exports a project as
+[`lacing`](https://github.com/thorwhalen/lacing) standoff annotations — three published
+body schemas, `clip-alignment/v1`, `clip-score-track/v1` and `music-video-edl/v1`, all in
+song time on one axis — and reads an edited `DECISION` tier back into an EDL. Annotate →
+edit → export → render round-trips to the same cuts.
 
 ## 30-second tour
 
@@ -155,8 +251,9 @@ muvid character-curate-interactive ~/muvid/park-bench maya \
 | Reference image curation (LoRA-style sets)         | `lookbook` |
 | Timeline / interval annotations (lyrics, sections) | `lacing` |
 | Structured 2D animation (cutout characters)        | `an` |
-| Audio/video editing + ElevenLabs Scribe            | `mixing` |
-| **Project, pipeline, dispatcher**                  | **`muvid`** |
+| Audio/video editing, alignment + ElevenLabs Scribe | `mixing` |
+| Genre / Template registry, durable async jobs      | `nw` |
+| **Visualizer, footage assembly, pipeline, dispatcher** | **`muvid`** |
 
 `muvid` is the orchestrator: a folder layout (`project.json` + `song/`,
 `lyrics/`, `characters/`, `environments/`, `script/`, `shots/`,
@@ -213,10 +310,22 @@ muvid/
     animation.py      handoff to `an.orchestrate` with lacing-driven lipsync
   compose.py          ffmpeg concat + overlay song audio
   facade.py           top-level verbs the CLI/skill/UI call
+  downloads.py        claim()/resolve() — muvid owns resolution, the host owns transport
+  visualize/          part 1: the ffmpeg-only audio visualizer (+ its visual registry)
+  footage/            part 2: align, edl, strategy, select_score, assemble, workspace
+    scoring/          the score tensor: grid, frames, quality, motionbeat, segment, lipsync
+    lacing_bridge.py  project ⇄ lacing standoff annotations (the editor document)
+  genre.py            registers the `music-visualizer` nw genre (and imports the next)
+  genre_music_video.py  registers the `music_video` footage genre
+  mcp/                the MCP tool surface: tools, footage_tools, scoring_tools
   ui/
     app.py            FastAPI app
     static/index.html single-page UI
-.claude/skills/muvid/SKILL.md
-misc/docs/design.md             full design rationale
+.claude/CLAUDE.md               agent & contributor guide (start here)
+.claude/skills/                 muvid, muvid-visualize, muvid-score-footage,
+                                muvid-choose-footage-segments
+misc/docs/design.md             part 3's design rationale
+misc/docs/footage_scoring_design.md    part 2's LOCKED design decisions
+misc/docs/footage_scoring_research.md  the citations behind them
 misc/docs/improvement_ideas.md  v0 audit + post-audit follow-through
 ```

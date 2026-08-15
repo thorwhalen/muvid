@@ -7,7 +7,8 @@ description: >
   loudness-normalized, plus a matching thumbnail. Use when the user wants to
   render an audio-visualizer or cover video from audio (no AI, no upload), pick
   or tune a visual, add a custom visualizer, or verify a rendered video. For
-  *publishing* the result to YouTube, see the `music2video` skill in `yb`.
+  *publishing* the result to YouTube, see `yb`'s `music2video` skill (it ships at
+  `yb/data/skills/music2video/`, so it may not appear in an enabled-skill list).
 ---
 
 # muvid-visualize
