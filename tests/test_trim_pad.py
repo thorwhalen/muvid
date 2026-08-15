@@ -75,6 +75,9 @@ def test_cut_shortens_long_video_to_target(tmp_path):
     assert out == dst
     duration = _video_duration(dst)
     assert 1.9 <= duration <= 2.1, f"expected ~2.0s, got {duration}"
+    # Names the invariant the old swallow could violate: a failed cut used to
+    # produce a byte-identical copy of the 5s source at this path.
+    assert dst.read_bytes() != src.read_bytes()
 
 
 @pytest.mark.skipif(not _ffmpeg_available(), reason="ffmpeg not on PATH")
@@ -89,3 +92,40 @@ def test_within_tolerance_copies_unchanged(tmp_path):
     assert dst.exists()
     # Should be byte-identical (we copy via shutil) when within tolerance.
     assert dst.read_bytes() == src.read_bytes()
+
+
+def test_mixing_failure_propagates_and_writes_nothing(tmp_path, monkeypatch):
+    """A broken mixing call must raise, not leave a wrong-length file behind.
+
+    This is the regression guard for the failure class the federation's standing
+    rule exists for: a defensive ``except Exception`` here once turned every
+    mixing failure into ``shutil.copy2(src, dst)``, so a shot kept its ORIGINAL
+    length under a filename promising ``target_s``. Nothing downstream
+    re-measures a shot, so the drift only surfaced as an out-of-sync master.
+    """
+    import mixing.video
+
+    def _raiser(*a, **kw):
+        raise RuntimeError("boom")
+
+    monkeypatch.setattr(mixing.video, "Video", _raiser)
+
+    src = tmp_path / "in.mp4"
+    dst = tmp_path / "out.mp4"
+    src.write_bytes(b"not really a video")
+
+    with pytest.raises(RuntimeError, match="boom"):
+        trim_video_to_duration(src, target_s=5.0, dst=dst)
+    assert not dst.exists()
+
+
+@pytest.mark.skipif(not _ffmpeg_available(), reason="ffmpeg not on PATH")
+def test_unreadable_source_raises_rather_than_copying(tmp_path):
+    """An undecodable source is an error, not a silent pass-through."""
+    src = tmp_path / "broken.mp4"
+    dst = tmp_path / "out.mp4"
+    src.write_text("this is not an mp4")
+
+    with pytest.raises(Exception):
+        trim_video_to_duration(src, target_s=4.0, dst=dst)
+    assert not dst.exists()
