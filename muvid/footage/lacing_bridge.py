@@ -163,7 +163,9 @@ def edl_annotations(entries, *, song_asset_id: str, attributed_to: str) -> list:
     ]
 
 
-def edl_from_annotations(annotations: Sequence) -> list[dict]:
+def edl_from_annotations(
+    annotations: Sequence, *, expected_song_asset_id: str | None = None
+) -> list[dict]:
     """DECISION-tier annotations → the ``edl=`` argument, verbatim.
 
     The timeline-to-EDL half: whatever the editor did to the DECISION lane — moved,
@@ -175,11 +177,31 @@ def edl_from_annotations(annotations: Sequence) -> list[dict]:
     than crashing the export: wrong schema/tier, or (an editor could in principle attach
     a ``music-video-edl/v1`` body to an ``AnnotationRef``, whose ``interval`` is
     optional) a reference with no interval to read a span from.
+
+    ``expected_song_asset_id`` is the one thing that RAISES instead (muvid#35). A
+    DECISION record pointing at a different song is not another record to filter past —
+    it is the whole export being about the wrong project (a stale clipboard, the easy
+    mistake in a copy-paste editor UI). Skipping it silently yields an empty or
+    half-empty EDL whose eventual ``validate_edl`` complaint names a symptom, never the
+    cause. The check is opt-in and evidence-based: no expected id, or a reference kind
+    carrying no ``asset_id`` at all (only ``MediaRef`` has one), is nothing to
+    contradict — it reports a WRONG song, it does not demand proof of the right one.
     """
     out = []
     for a in annotations:
         if a.body_schema_uri != MUSIC_VIDEO_EDL_SCHEMA or a.tier != DECISION_TIER:
             continue
+        # getattr, not isinstance(MediaRef): this function stays lacing-free (it
+        # duck-types already-parsed annotations), so importing the model here would
+        # newly bind the export path to the 'editor' extra.
+        asset_id = getattr(a.reference, "asset_id", None)
+        if expected_song_asset_id and asset_id and asset_id != expected_song_asset_id:
+            raise ValueError(
+                f"DECISION annotation {a.id} is about a different song: its reference "
+                f"asset_id is {asset_id!r}, this project's song is "
+                f"{expected_song_asset_id!r}. Exporting it would splice another "
+                "project's timeline into this one."
+            )
         iv = a.reference.interval
         if iv is None:
             continue

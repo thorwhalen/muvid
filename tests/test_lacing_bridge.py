@@ -218,6 +218,61 @@ def test_edl_from_annotations_skips_a_reference_with_no_interval():
     assert edl_from_annotations(good + [bad]) == edl_from_annotations(good)
 
 
+def test_edl_from_annotations_refuses_another_songs_decision_lane():
+    # muvid#35: a stale clipboard from ANOTHER project — same clip_id, similar song
+    # duration — passes schema/tier and can even pass validate_edl, silently splicing in
+    # the wrong spans. Given the project's own song, that must be an error that SAYS so,
+    # not a skip that leaves an empty lane to be misdiagnosed downstream.
+    aligns = [FootageAlignment("A", 0.0, 0.9, 20.0, (0.0, 20.0))]
+    stale = edl_annotations(
+        validate_edl([EdlEntry(0, 20, "A")], aligns, 20.0),
+        song_asset_id="b" * 64,  # a different song
+        attributed_to="u:x",
+    )
+    with pytest.raises(ValueError, match="different song"):
+        edl_from_annotations(stale, expected_song_asset_id=SONG_HASH)
+
+
+def test_edl_from_annotations_song_check_is_permissive_without_evidence():
+    # Two ways there is nothing to contradict, neither of which is an error: no
+    # expectation passed (the default — the check is opt-in), and a reference kind that
+    # carries no asset_id at all (only MediaRef has one; an editor may legally hang a
+    # DECISION body off an AnnotationRef sub-interval). The check reports a WRONG song;
+    # it does not demand proof of the right one.
+    import uuid
+
+    from lacing.model import Annotation, AnnotationRef, Provenance
+    from lacing.time import RationalTime
+
+    aligns = [FootageAlignment("A", 0.0, 0.9, 20.0, (0.0, 20.0))]
+    matching = edl_annotations(
+        validate_edl([EdlEntry(0, 20, "A")], aligns, 20.0),
+        song_asset_id=SONG_HASH,
+        attributed_to="u:x",
+    )
+    assert edl_from_annotations(matching, expected_song_asset_id=None) == (
+        edl_from_annotations(matching, expected_song_asset_id=SONG_HASH)
+    )
+
+    no_asset_id = Annotation(
+        id=uuid.uuid4(),
+        tier=DECISION_TIER,
+        reference=AnnotationRef(
+            target_id=matching[0].id, interval=matching[0].reference.interval
+        ),
+        body={"clip_id": "A"},
+        body_schema_uri=MUSIC_VIDEO_EDL_SCHEMA,
+        provenance=Provenance(
+            was_generated_by="user:x",
+            was_attributed_to="user:x",
+            generated_at_time=RationalTime(0, 1),
+        ),
+    )
+    assert edl_from_annotations([no_asset_id], expected_song_asset_id=SONG_HASH) == [
+        {"song_start": 0.0, "song_end": 20.0, "clip_id": "A"}
+    ]
+
+
 def test_editor_document_degrades_when_the_default_proposal_cant_build(
     tmp_path, monkeypatch
 ):
@@ -363,3 +418,26 @@ def test_edl_from_annotations_tool_scopes_to_the_caller(tmp_path, monkeypatch):
     with use_email("intruder@x.com"):
         with pytest.raises(ToolError, match="no such project"):
             ft.footage_edl_from_annotations("p", annotations=[])
+
+
+def test_edl_from_annotations_tool_refuses_another_projects_lane(tmp_path, monkeypatch):
+    # muvid#35 at the callsite: the tool must supply the project's OWN song id, and map
+    # the bridge's ValueError to a ToolError whose text still names the cause.
+    pytest.importorskip("fastmcp")
+    from fastmcp.exceptions import ToolError
+
+    import muvid.mcp.footage_tools as ft
+    from muvid.mcp.identity import use_email
+
+    _fake_project(tmp_path, monkeypatch)  # its song_hash() is SONG_HASH
+    aligns = [FootageAlignment("A", 0.0, 0.9, 20.0, (0.0, 20.0))]
+    stale = [
+        a.model_dump(mode="json")
+        for a in edl_annotations(
+            validate_edl([EdlEntry(0, 20, "A")], aligns, 20.0),
+            song_asset_id="b" * 64,
+            attributed_to="u:x",
+        )
+    ]
+    with use_email("u@x.com"), pytest.raises(ToolError, match="different song"):
+        ft.footage_edl_from_annotations("p", annotations=stale)
