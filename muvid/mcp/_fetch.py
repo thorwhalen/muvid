@@ -72,6 +72,15 @@ class FetchError(ValueError):
     """A media fetch was rejected (unsafe target) or failed (network/size/timeout)."""
 
 
+class PermissionDeniedError(FetchError):
+    """The link is private or not shared — no amount of retrying or re-normalising helps.
+
+    A *subclass* of :class:`FetchError` on purpose: every existing ``except FetchError``
+    keeps catching it, so no caller has to change. Callers that want to tell "fix your
+    sharing settings" apart from "the network hiccuped" now can.
+    """
+
+
 class _NoRedirect(urllib.request.HTTPRedirectHandler):
     """Never auto-follow a redirect — the caller re-validates every hop by hand."""
 
@@ -160,6 +169,13 @@ def _open_following_redirects(uri: str, deadline: float):
                     raise FetchError("redirect without a Location") from e
                 current = urllib.parse.urljoin(current, loc)
                 continue  # re-validate the redirect target on the next iteration
+            if e.code in (401, 403):
+                # Not transient, and not something a different URL form fixes.
+                raise PermissionDeniedError(
+                    f"the link is private or not shared (HTTP {e.code}). Set it to "
+                    "anyone-with-the-link in the provider's UI, or use a "
+                    "direct-download URL. Retrying will not help."
+                ) from e
             raise FetchError(f"fetch failed: HTTP {e.code}") from e
         except (urllib.error.URLError, OSError) as e:
             raise FetchError(f"fetch failed: {e}") from e
@@ -229,7 +245,15 @@ def _iter_chunks(resp, deadline: float):
 
 
 def _kind_guarded(chunks, expect_kind: str, uri: str):
-    """Assert the payload kind before any chunk escapes, when a kind was declared."""
+    """Assert the payload kind before any chunk escapes, when a kind was declared.
+
+    The other half of the permission story lives here, and it is graze's: when media
+    was asked for and markup arrived, ``ContentKindMismatch`` already says "the usual
+    cause is a share link that is not public: set it to anyone-with-the-link". That
+    message is passed through verbatim rather than reworded — it is the better
+    diagnosis, and a private share link answers ``HTTP 200``, so there is no status
+    code for :func:`_open_following_redirects` to classify.
+    """
     if not expect_kind:
         yield from chunks
         return

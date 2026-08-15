@@ -24,11 +24,16 @@ from muvid.mcp import _fetch  # noqa: E402
 class _FakeResp:
     """A minimal response: chunked ``read`` + context-manager, like urllib's."""
 
-    def __init__(self, body: bytes):
+    def __init__(self, body: bytes, url: str = "https://public.test/x"):
         self._buf = io.BytesIO(body)
+        self._url = url
 
     def read(self, n: int) -> bytes:
         return self._buf.read(n)
+
+    def geturl(self) -> str:
+        """The post-redirect URL, as urllib's response exposes it."""
+        return self._url
 
     def __enter__(self):
         return self
@@ -57,7 +62,11 @@ class _ScriptedOpener:
             if kind == "redirect":
                 hdrs["Location"] = payload
             raise urllib.error.HTTPError(url, 302, "Found", hdrs, None)
-        return _FakeResp(payload)
+        if kind == "status":
+            raise urllib.error.HTTPError(
+                url, payload, "Denied", email.message.Message(), None
+            )
+        return _FakeResp(payload, url=url)
 
 
 @pytest.fixture
@@ -156,3 +165,32 @@ def test_streaming_fetch_revalidates_a_redirect_to_internal(
     with pytest.raises(_fetch.FetchError):
         _fetch.fetch_to_file_streaming("http://public.test/v", dest, max_bytes=1024)
     assert not dest.exists()
+
+
+# -- honest permission errors (muvid#23, acceptance criterion 2) ---------------
+
+
+@pytest.mark.parametrize("code", [401, 403])
+def test_an_auth_status_names_the_permission_problem(
+    monkeypatch, allow_public_test, tmp_path, code
+):
+    # A 401/403 is not transient and no URL reformatting fixes it, so it must not
+    # collapse into the generic "fetch failed: HTTP {code}" that reads as retryable.
+    _use_opener(monkeypatch, _ScriptedOpener([("status", code)]))
+    dest = tmp_path / "clip.mp4"
+    with pytest.raises(_fetch.PermissionDeniedError) as excinfo:
+        _fetch.fetch_to_file_streaming("http://public.test/v", dest, max_bytes=1024)
+    message = str(excinfo.value)
+    assert "private or not shared" in message
+    # Same wording graze uses for the HTML-interstitial half, so the two paths
+    # tell the caller to do the same thing.
+    assert "anyone-with-the-link" in message  # the fix, not just the diagnosis
+    assert not dest.exists()
+
+
+
+
+def test_permission_errors_are_still_caught_as_fetch_errors():
+    # A subclass, deliberately: every existing `except FetchError` in the tool layer
+    # keeps working, so callers gain the distinction without needing to change.
+    assert issubclass(_fetch.PermissionDeniedError, _fetch.FetchError)
