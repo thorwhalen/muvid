@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.mcp._fetch &mdash; muvid 0.0.25 documentation</title>
+  <title>muvid.mcp._fetch &mdash; muvid 0.0.26 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -15,7 +15,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=5d650c58"></script>
+      <script src="../../../_static/documentation_options.js?v=6a9d8632"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -86,6 +86,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#muvid.mcp._fetch.MAX_BYTES"><code class="docutils literal notranslate"><span class="pre">MAX_BYTES</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.mcp._fetch.MAX_REDIRECTS"><code class="docutils literal notranslate"><span class="pre">MAX_REDIRECTS</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.mcp._fetch.MIN_RATE_BPS"><code class="docutils literal notranslate"><span class="pre">MIN_RATE_BPS</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.mcp._fetch.PermissionDeniedError"><code class="docutils literal notranslate"><span class="pre">PermissionDeniedError</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.mcp._fetch.TOTAL_TIMEOUT_S"><code class="docutils literal notranslate"><span class="pre">TOTAL_TIMEOUT_S</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.mcp._fetch.deadline_for"><code class="docutils literal notranslate"><span class="pre">deadline_for()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.mcp._fetch.extract_media_members"><code class="docutils literal notranslate"><span class="pre">extract_media_members()</span></code></a></li>
@@ -194,6 +195,15 @@ audio is legitimately large, matching braidio’s audio-download cap intent).</p
 <dd><p>Slowest transfer rate a fetch is expected to sustain, in bytes/second
 (env <code class="docutils literal notranslate"><span class="pre">MUVID_FETCH_MIN_RATE_BPS</span></code>; default 1 MB/s). The deadline for a given byte cap is
 derived from this, so raising the cap cannot silently make fetches unachievable.</p>
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="muvid.mcp._fetch.PermissionDeniedError">
+<span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">muvid.mcp._fetch.</span></span><span class="sig-name descname"><span class="pre">PermissionDeniedError</span></span><a class="reference internal" href="../../../_modules/muvid/mcp/_fetch.html#PermissionDeniedError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.mcp._fetch.PermissionDeniedError" title="Link to this definition"></a></dt>
+<dd><p>The link is private or not shared — no amount of retrying or re-normalising helps.</p>
+<p>A <em>subclass</em> of <a class="reference internal" href="#muvid.mcp._fetch.FetchError" title="muvid.mcp._fetch.FetchError"><code class="xref py py-class docutils literal notranslate"><span class="pre">FetchError</span></code></a> on purpose: every existing <code class="docutils literal notranslate"><span class="pre">except</span> <span class="pre">FetchError</span></code>
+keeps catching it, so no caller has to change. Callers that want to tell “fix your
+sharing settings” apart from “the network hiccuped” now can.</p>
 </dd></dl>
 
 <dl class="py data">
