@@ -586,6 +586,9 @@ def write_alignment_store(
     path = Path(path)
     if path.exists():
         path.unlink()
+    # No migrate= here, deliberately: the unlink above means this always creates a
+    # FRESH store, stamped at lacing's current SCHEMA_VERSION. Only the read sites
+    # (contracts.py, facade.py, renderers/__init__.py) can meet an older file.
     store = SqliteStore(str(path))
     try:
         b = SubtitleBuilder(

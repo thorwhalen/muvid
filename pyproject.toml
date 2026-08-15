@@ -48,7 +48,12 @@ Documentation = "https://thorwhalen.github.io/muvid"
 # generation, lyric alignment, character/environment assets.
 ai = [
     "falaw",
-    "lacing",
+    # lacing>=0.0.28: the alignment .annot read sites pass SqliteStore(migrate=True),
+    # which does not exist before 0.0.28 (verified against the published sdists, not
+    # the changelog). lacing 0.0.31 is where the store schema goes v1->v2 and an
+    # un-migrated open starts refusing; 0.0.28 is the floor that makes the remedy
+    # available, which is the thing this package actually needs.
+    "lacing>=0.0.28",
     "lookbook",
 ]
 # The MCP tool surface (muvid.mcp) + the nw genre registration (muvid.genre) that
@@ -97,7 +102,7 @@ ui = [
 ]
 dev = [
     "falaw",
-    "lacing",
+    "lacing>=0.0.28",  # see the `ai` extra
     "lookbook",
     "pytest>=7.0",
     "pytest-cov>=4.0",
