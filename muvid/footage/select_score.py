@@ -321,10 +321,22 @@ def _dedup(xs: Sequence[float], *, tol: float) -> list[float]:
 def _composite(
     tensor, weights: Mapping[str, float], aligns
 ) -> tuple[np.ndarray, float]:
-    """``ĝ[clip_in_align_order, frame]`` = Σ_m w_m·S·M / W ∈ [0,1]; also returns W.
+    """``ĝ[clip_in_align_order, frame]`` = Σ_m w_m·S·M / Σ_m w_m·M ∈ [0,1]; also returns W.
 
     Rows are ordered to match ``aligns`` (the selector indexes clips by alignment order).
     Metrics in ``weights`` but absent from the tensor contribute nothing (weight → 0).
+
+    **The denominator is the weight actually AVAILABLE at that frame, not the fixed
+    total.** A masked metric contributes 0 to the numerator, so dividing by the total
+    would score "we could not measure this" identically to "we measured it and it is
+    the worst possible" — which is how an unavailable metric silently drags a clip
+    down. Renormalising over available weight makes an absent metric *not counted*
+    rather than *counted as zero* (muvid#19).
+
+    Where NO metric is available for a frame, ``g`` is 0 rather than NaN: ``_prefix``
+    takes a cumulative sum over this array, and a single NaN would poison every
+    downstream segment reward. A frame with nothing measured is genuinely unusable, so
+    0 is also the right ranking; the distinction that matters is the one above.
     """
     metrics = tensor.metrics
     w = np.array(
@@ -337,8 +349,9 @@ def _composite(
         return g, 0.0
     S = np.nan_to_num(np.asarray(tensor.S, dtype=np.float64), nan=0.0)
     M = np.asarray(tensor.M, dtype=np.float64)
-    contrib = (S * M) @ w  # [n_clips_tensor, n]
-    contrib /= W
+    num = (S * M) @ w  # [n_clips_tensor, n]
+    den = M @ w  # per-frame available weight
+    contrib = np.divide(num, den, out=np.zeros_like(num), where=den > 0)
     for ai, a in enumerate(aligns):
         if a.clip_id in tensor.clip_ids:
             g[ai] = contrib[tensor.clip_ids.index(a.clip_id)]
