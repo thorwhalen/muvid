@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.renderers._common &mdash; muvid 0.0.20 documentation</title>
+  <title>muvid.renderers._common &mdash; muvid 0.0.21 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=056c92e6"></script>
+      <script src="../../../_static/documentation_options.js?v=a11416ff"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -136,6 +136,7 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterable</span>
 
@@ -214,38 +215,33 @@
 <span class="sd">      appending silence to the audio track. Done in a single ffmpeg call</span>
 <span class="sd">      using the ``tpad`` (video) and ``apad`` (audio) filters.</span>
 
-<span class="sd">    On any failure, falls back to copying ``src`` to ``dst`` so the caller</span>
-<span class="sd">    always gets *some* file at ``dst`` — but the caller should treat a</span>
-<span class="sd">    failure as a soft warning (the video may not be the requested length).</span>
+<span class="sd">    Errors from ``mixing.video`` propagate. There is deliberately no soft</span>
+<span class="sd">    fallback, because there is nowhere for a soft failure to surface: nothing</span>
+<span class="sd">    downstream re-measures the rendered shot (``facade.status`` reports the</span>
+<span class="sd">    *spec&#39;s* ``duration_s``, and ``verify_video`` only ever sees the composed</span>
+<span class="sd">    master). A shot copied through at its original length is therefore</span>
+<span class="sd">    invisible until the whole video has drifted out of sync with the song —</span>
+<span class="sd">    which is exactly how an 8s clip stayed 5.87s for months.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">mixing.video</span><span class="w"> </span><span class="kn">import</span> <span class="n">Video</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">mixing.video</span><span class="w"> </span><span class="kn">import</span> <span class="n">Video</span>
 
-        <span class="n">v</span> <span class="o">=</span> <span class="n">Video</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">src</span><span class="p">))</span>
-        <span class="n">delta</span> <span class="o">=</span> <span class="n">target_s</span> <span class="o">-</span> <span class="n">v</span><span class="o">.</span><span class="n">duration</span>
+    <span class="n">v</span> <span class="o">=</span> <span class="n">Video</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">src</span><span class="p">))</span>
+    <span class="n">delta</span> <span class="o">=</span> <span class="n">target_s</span> <span class="o">-</span> <span class="n">v</span><span class="o">.</span><span class="n">duration</span>
 
-        <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">delta</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">0.05</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">src</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span> <span class="o">!=</span> <span class="n">dst</span><span class="o">.</span><span class="n">resolve</span><span class="p">():</span>
-                <span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
+    <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">delta</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">0.05</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">src</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span> <span class="o">!=</span> <span class="n">dst</span><span class="o">.</span><span class="n">resolve</span><span class="p">():</span>
+            <span class="n">shutil</span><span class="o">.</span><span class="n">copy2</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">dst</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">dst</span>
 
-                <span class="n">shutil</span><span class="o">.</span><span class="n">copy2</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">dst</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">dst</span>
+    <span class="k">if</span> <span class="n">delta</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="c1"># src is longer than target — straight cut.</span>
+        <span class="n">cut</span> <span class="o">=</span> <span class="n">v</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">target_s</span><span class="p">]</span>
+        <span class="n">cut</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">dst</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">dst</span>
 
-        <span class="k">if</span> <span class="n">delta</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="c1"># src is longer than target — straight cut.</span>
-            <span class="n">cut</span> <span class="o">=</span> <span class="n">v</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">target_s</span><span class="p">]</span>
-            <span class="n">cut</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">dst</span><span class="p">))</span>
-            <span class="k">return</span> <span class="n">dst</span>
-
-        <span class="c1"># src is shorter than target — pad video via tpad (clone last frame)</span>
-        <span class="c1"># and pad audio via apad (silence). One ffmpeg call.</span>
-        <span class="k">return</span> <span class="n">_pad_video_to_duration</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">target_s</span><span class="p">,</span> <span class="n">dst</span><span class="p">,</span> <span class="n">pad_seconds</span><span class="o">=</span><span class="n">delta</span><span class="p">)</span>
-
-    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-        <span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
-
-        <span class="n">shutil</span><span class="o">.</span><span class="n">copy2</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">dst</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">dst</span></div>
+    <span class="c1"># src is shorter than target — pad video via tpad (clone last frame)</span>
+    <span class="c1"># and pad audio via apad (silence). One ffmpeg call.</span>
+    <span class="k">return</span> <span class="n">_pad_video_to_duration</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">target_s</span><span class="p">,</span> <span class="n">dst</span><span class="p">,</span> <span class="n">pad_seconds</span><span class="o">=</span><span class="n">delta</span><span class="p">)</span></div>
 
 
 
@@ -255,10 +251,10 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Pad ``src`` to ``target_s`` by holding the last frame + silencing audio.</span>
 
 <span class="sd">    Uses ffmpeg&#39;s ``tpad=stop_mode=clone`` (video) and ``apad`` (audio) filters</span>
-<span class="sd">    in a single call. Re-encodes (filter graph requires it). Falls through to</span>
-<span class="sd">    a simple copy on any subprocess failure.</span>
+<span class="sd">    in a single call. Re-encodes (filter graph requires it). Raises</span>
+<span class="sd">    ``subprocess.CalledProcessError`` / ``FileNotFoundError`` on an ffmpeg</span>
+<span class="sd">    failure rather than writing a short file to ``dst``.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
     <span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
 
     <span class="k">if</span> <span class="n">pad_seconds</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
@@ -290,15 +286,13 @@
         <span class="s2">&quot;+faststart&quot;</span><span class="p">,</span>
         <span class="nb">str</span><span class="p">(</span><span class="n">dst</span><span class="p">),</span>
     <span class="p">]</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span> <span class="n">check</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">capture_output</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">dst</span>
-    <span class="k">except</span> <span class="p">(</span><span class="n">subprocess</span><span class="o">.</span><span class="n">CalledProcessError</span><span class="p">,</span> <span class="ne">FileNotFoundError</span><span class="p">):</span>
-        <span class="c1"># ffmpeg not on PATH or filter rejected — copy as a soft fallback so</span>
-        <span class="c1"># the caller still gets a file. The duration mismatch will be visible</span>
-        <span class="c1"># in any QA report (avp.inspect.shot_report).</span>
-        <span class="n">shutil</span><span class="o">.</span><span class="n">copy2</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">dst</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">dst</span>
+    <span class="c1"># No soft fallback here either: a copy lands a video ``pad_seconds`` too</span>
+    <span class="c1"># short at a path that promises ``target_s``, and the QA report this used to</span>
+    <span class="c1"># defer to (avp.inspect.shot_report) is never run per-shot. Let ffmpeg&#39;s own</span>
+    <span class="c1"># error — missing binary, or a build without tpad/apad — reach the caller</span>
+    <span class="c1"># with its captured stderr attached.</span>
+    <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span> <span class="n">check</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">capture_output</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">dst</span>
 </pre></div>
 
            </div>

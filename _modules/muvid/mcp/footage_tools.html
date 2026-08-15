@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.mcp.footage_tools &mdash; muvid 0.0.20 documentation</title>
+  <title>muvid.mcp.footage_tools &mdash; muvid 0.0.21 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=056c92e6"></script>
+      <script src="../../../_static/documentation_options.js?v=a11416ff"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -909,7 +909,9 @@
 <span class="sd">    The timeline-to-EDL half: pass ``footage_editor_document``&#39;s ``DECISION`` tier</span>
 <span class="sd">    (after whatever an editor did to it) and get back plain</span>
 <span class="sd">    ``{song_start, song_end, clip_id}`` dicts, ready for ``assemble_music_video(edl=...)``</span>
-<span class="sd">    or ``propose_edit`` — a faithful read, not a re-selection.</span>
+<span class="sd">    or ``propose_edit`` — a faithful read, not a re-selection. Annotations referencing a</span>
+<span class="sd">    song other than this project&#39;s are refused, not read (muvid#35), so a clipboard from</span>
+<span class="sd">    another project fails saying so instead of splicing in the wrong spans.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.footage.lacing_bridge</span><span class="w"> </span><span class="kn">import</span> <span class="n">edl_from_annotations</span>
@@ -920,12 +922,21 @@
             <span class="s2">&quot;(pip install &#39;muvid[editor]&#39;)&quot;</span>
         <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
 
-    <span class="n">_open</span><span class="p">(</span><span class="n">project_id</span><span class="p">)</span>  <span class="c1"># authorizes the caller against this project</span>
+    <span class="n">proj</span> <span class="o">=</span> <span class="n">_open</span><span class="p">(</span><span class="n">project_id</span><span class="p">)</span>  <span class="c1"># authorizes the caller against this project</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">parsed</span> <span class="o">=</span> <span class="p">[</span><span class="n">Annotation</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">annotations</span><span class="p">]</span>
     <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>  <span class="c1"># noqa: BLE001 — surface a clean ToolError, not a raw pydantic one</span>
         <span class="k">raise</span> <span class="n">_tool_error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;could not read annotations: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
-    <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;project_id&quot;</span><span class="p">:</span> <span class="n">project_id</span><span class="p">,</span> <span class="s2">&quot;edl&quot;</span><span class="p">:</span> <span class="n">edl_from_annotations</span><span class="p">(</span><span class="n">parsed</span><span class="p">)}</span></div>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">edl</span> <span class="o">=</span> <span class="n">edl_from_annotations</span><span class="p">(</span>
+            <span class="n">parsed</span><span class="p">,</span>
+            <span class="c1"># No song set yet — nothing to cross-check against, so stay permissive</span>
+            <span class="c1"># (song_hash() would raise FileNotFoundError on a songless project).</span>
+            <span class="n">expected_song_asset_id</span><span class="o">=</span><span class="n">proj</span><span class="o">.</span><span class="n">song_hash</span><span class="p">()</span> <span class="k">if</span> <span class="n">proj</span><span class="o">.</span><span class="n">has_song</span><span class="p">()</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">_tool_error</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;project_id&quot;</span><span class="p">:</span> <span class="n">project_id</span><span class="p">,</span> <span class="s2">&quot;edl&quot;</span><span class="p">:</span> <span class="n">edl</span><span class="p">}</span></div>
 
 </pre></div>
 

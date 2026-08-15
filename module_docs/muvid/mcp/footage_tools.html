@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.mcp.footage_tools &mdash; muvid 0.0.20 documentation</title>
+  <title>muvid.mcp.footage_tools &mdash; muvid 0.0.21 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -15,7 +15,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=056c92e6"></script>
+      <script src="../../../_static/documentation_options.js?v=a11416ff"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -238,7 +238,9 @@ content hash, on one shared song-time axis (thorwhalen/reelee-web#203). Needs th
 <p>The timeline-to-EDL half: pass <code class="docutils literal notranslate"><span class="pre">footage_editor_document</span></code>’s <code class="docutils literal notranslate"><span class="pre">DECISION</span></code> tier
 (after whatever an editor did to it) and get back plain
 <code class="docutils literal notranslate"><span class="pre">{song_start,</span> <span class="pre">song_end,</span> <span class="pre">clip_id}</span></code> dicts, ready for <code class="docutils literal notranslate"><span class="pre">assemble_music_video(edl=...)</span></code>
-or <code class="docutils literal notranslate"><span class="pre">propose_edit</span></code> — a faithful read, not a re-selection.</p>
+or <code class="docutils literal notranslate"><span class="pre">propose_edit</span></code> — a faithful read, not a re-selection. Annotations referencing a
+song other than this project’s are refused, not read (muvid#35), so a clipboard from
+another project fails saying so instead of splicing in the wrong spans.</p>
 </dd></dl>
 
 <dl class="py function">

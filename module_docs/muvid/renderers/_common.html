@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.renderers._common &mdash; muvid 0.0.20 documentation</title>
+  <title>muvid.renderers._common &mdash; muvid 0.0.21 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -15,7 +15,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=056c92e6"></script>
+      <script src="../../../_static/documentation_options.js?v=a11416ff"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -161,9 +161,13 @@ being sung in this slice.</p>
 appending silence to the audio track. Done in a single ffmpeg call
 using the <code class="docutils literal notranslate"><span class="pre">tpad</span></code> (video) and <code class="docutils literal notranslate"><span class="pre">apad</span></code> (audio) filters.</p></li>
 </ul>
-<p>On any failure, falls back to copying <code class="docutils literal notranslate"><span class="pre">src</span></code> to <code class="docutils literal notranslate"><span class="pre">dst</span></code> so the caller
-always gets <em>some</em> file at <code class="docutils literal notranslate"><span class="pre">dst</span></code> — but the caller should treat a
-failure as a soft warning (the video may not be the requested length).</p>
+<p>Errors from <code class="docutils literal notranslate"><span class="pre">mixing.video</span></code> propagate. There is deliberately no soft
+fallback, because there is nowhere for a soft failure to surface: nothing
+downstream re-measures the rendered shot (<code class="docutils literal notranslate"><span class="pre">facade.status</span></code> reports the
+<em>spec’s</em> <code class="docutils literal notranslate"><span class="pre">duration_s</span></code>, and <code class="docutils literal notranslate"><span class="pre">verify_video</span></code> only ever sees the composed
+master). A shot copied through at its original length is therefore
+invisible until the whole video has drifted out of sync with the song —
+which is exactly how an 8s clip stayed 5.87s for months.</p>
 </dd></dl>
 
 <dl class="py function">
