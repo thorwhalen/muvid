@@ -114,7 +114,9 @@ aligns = align_footage(song, clips, song_duration=dur)
 
 # 2. Who is on air over each span? A strategy turns alignments into an EDL,
 #    fill_gaps makes it span the whole song, validate_edl is the one gate.
-edl = validate_edl(fill_gaps(select_edl("best_confidence", aligns, dur), dur), aligns, dur)
+edl = validate_edl(
+    fill_gaps(select_edl("best_confidence", aligns, dur), dur), aligns, dur
+)
 
 # 3. Cut it, over the clean master audio.
 cuts = derive_cuts(edl, aligns, dict(clips))
