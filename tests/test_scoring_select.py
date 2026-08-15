@@ -326,3 +326,101 @@ def test_kwargs_strategy_receives_context():
     aligns = [_align("A", 0.0, 5.0, 5.0)]
     S.select_edl(kw_strategy, aligns, 5.0, context="X")
     assert seen["context"] == "X"
+
+
+# -- composite renormalisation over AVAILABLE weight (muvid#19) ----------------
+
+
+def _two_metric_tensor(*, available):
+    """One clip, one frame, two metrics of equal weight; ``available`` masks metric 2.
+
+    Metric 1 scores a perfect 1.0. Metric 2 is either measured-and-perfect, or not
+    measured at all. The composite must read 1.0 in BOTH cases: an unmeasured metric
+    is not evidence of badness.
+    """
+    from muvid.footage.scoring.grid import ScoreTensor
+
+    S_arr = np.array([[[1.0, 1.0]]], dtype=np.float32)
+    M = np.array([[[True, available]]])
+    return ScoreTensor(
+        clip_ids=["A"],
+        metrics=["m1", "m2"],
+        t0=0.0,
+        hop_s=0.1,
+        n=1,
+        S=S_arr,
+        M=M,
+        raw=S_arr,
+        norms={"m1": None, "m2": None},
+    )
+
+
+def test_composite_does_not_count_an_unavailable_metric_as_zero():
+    # muvid#19: dividing by the FIXED total weight scores "could not measure this"
+    # identically to "measured it, it is the worst possible" — which silently drags a
+    # clip down for a metric that never ran. The denominator must be the weight
+    # actually available at that frame.
+    from muvid.footage.select_score import _composite
+
+    aligns = [_align("A", 0.0, 1.0)]
+    weights = {"m1": 1.0, "m2": 1.0}
+
+    g_both, _ = _composite(_two_metric_tensor(available=True), weights, aligns)
+    g_one, _ = _composite(_two_metric_tensor(available=False), weights, aligns)
+
+    assert g_both[0][0] == pytest.approx(1.0)
+    # Before the fix this was 0.5 — a perfect clip reading as half-bad because a
+    # metric was unavailable.
+    assert g_one[0][0] == pytest.approx(1.0)
+
+
+def test_composite_is_zero_when_nothing_is_available():
+    # A frame with no metric measured at all is genuinely unusable, and must be 0
+    # rather than NaN: _prefix takes a cumulative sum, so one NaN would poison every
+    # downstream segment reward.
+    from muvid.footage.select_score import _composite
+
+    aligns = [_align("A", 0.0, 1.0)]
+    tensor = _two_metric_tensor(available=False)
+    tensor.M[0, 0, 0] = False  # mask the other one too
+
+    g, _ = _composite(tensor, {"m1": 1.0, "m2": 1.0}, aligns)
+    assert g[0][0] == 0.0
+    assert np.isfinite(g).all()
+
+
+def test_composite_weights_the_available_metrics_proportionally():
+    # Two metrics, unequal weights, one unavailable → the answer is the surviving
+    # metric's own score, not a fraction of it.
+    from muvid.footage.scoring.grid import ScoreTensor
+    from muvid.footage.select_score import _composite
+
+    S_arr = np.array([[[0.8, 0.2]]], dtype=np.float32)
+    M = np.array([[[True, False]]])
+    tensor = ScoreTensor(
+        clip_ids=["A"], metrics=["m1", "m2"], t0=0.0, hop_s=0.1, n=1,
+        S=S_arr, M=M, raw=S_arr, norms={"m1": None, "m2": None},
+    )
+    g, _ = _composite(tensor, {"m1": 0.4, "m2": 1.6}, [_align("A", 0.0, 1.0)])
+    assert g[0][0] == pytest.approx(0.8)
+
+
+# -- NA rather than 0.0 at the face-scoring boundary (muvid#19) ----------------
+
+
+def test_face_sample_is_na_when_nothing_was_measured():
+    # Three ways to have not measured a face; all must be NaN, none 0.0. Scoring them
+    # 0.0 made them indistinguishable from a face that IS present and framed as badly
+    # as the metric allows.
+    from muvid.footage.scoring.frames import _face_sample
+
+    def raises(_frame):
+        raise RuntimeError("detector blew up")
+
+    assert np.isnan(_face_sample(None, object()))  # no detector installed
+    assert np.isnan(_face_sample(lambda _f: None, object()))  # detector found no face
+    assert np.isnan(_face_sample(raises, object()))  # detector failed
+
+    assert _face_sample(lambda _f: 0.75, object()) == pytest.approx(0.75)
+    # A real, measured zero is still a zero — only *absence* becomes NA.
+    assert _face_sample(lambda _f: 0.0, object()) == 0.0

@@ -160,11 +160,22 @@ def test_frame_pass_and_quality_tracks(tmp_path):
 
     n = grid_len(6.0, 0.1)
     tracks = quality_tracks(fp, clip_id="A", offset_s=0.0, t0=0.0, hop_s=0.1, n=n)
-    metrics = {t.metric for t in tracks}
-    assert metrics == {"sharpness", "exposure", "stability_shake", "face_framing"}
+    by_metric = {t.metric: t for t in tracks}
+    # The metric axis stays fixed whether or not a detector ran — it is persisted in
+    # the score manifest and indexes the tensor, so a column never disappears.
+    assert set(by_metric) == {"sharpness", "exposure", "stability_shake", "face_framing"}
     for t in tracks:
         assert t.raw_values.shape == (n,) and t.mask.shape == (n,)
-        assert t.mask[:50].any()  # covers the clip's span
+
+    for metric in ("sharpness", "exposure", "stability_shake"):
+        assert by_metric[metric].mask[:50].any()  # covers the clip's span
+
+    # muvid#19: no face detector was injected here, so face_framing measured NOTHING
+    # and must be fully MASKED rather than scored. It used to be 0.0 everywhere, which
+    # normalized to a flat 0.5 (constant metric → neutral) — a column carrying zero
+    # information while still consuming its weight in the composite denominator. The
+    # mask is what keeps it out of that denominator.
+    assert not by_metric["face_framing"].mask.any()
 
 
 @core

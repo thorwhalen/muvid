@@ -36,7 +36,7 @@ class FramePass:
     clip_times: np.ndarray  # float[k]
     sharpness: np.ndarray  # float[k]
     exposure: np.ndarray  # float[k] in [0,1]
-    face: np.ndarray  # float[k] (0 where no face / no detector)
+    face: np.ndarray  # float[k], NaN where no face was detected (muvid#19)
     motion_residual: (
         np.ndarray
     )  # float[k], camera-compensated subject motion (NaN @ frame 0)
@@ -61,8 +61,9 @@ def sample_clip_frames(
         clip_path: the video file.
         sample_fps: target frames/second to analyze (strided over the native fps).
         max_frames: hard cap on analyzed frames (bounds cost).
-        face_fn: optional ``bgr_frame -> face_score`` (mediapipe, injected by the caller so
-            this module stays cv2-only). ``None`` → face score is 0 everywhere.
+        face_fn: optional ``bgr_frame -> face_score | None`` (mediapipe, injected by the
+            caller so this module stays cv2-only). ``None`` → face score is NaN
+            everywhere, i.e. *not measured* rather than *measured as worst*.
         flow_downscale: downscale factor for the Farneback flow (cost bound).
         should_cancel: polled every frame; returns early (a partial pass) when it goes True.
     """
@@ -91,7 +92,7 @@ def sample_clip_frames(
                 times.append(frame_idx / fps)
                 sharp.append(fm.sharpness(gray))
                 expo.append(fm.exposure_quality(gray))
-                faces.append(float(face_fn(frame)) if face_fn is not None else 0.0)
+                faces.append(_face_sample(face_fn, frame))
                 if prev_gray is not None:
                     res, gdx, gdy = fm.flow_residual_and_global(
                         prev_gray, gray, downscale=flow_downscale
@@ -136,11 +137,30 @@ def _framing_score(width: float, height: float, xmin: float, ymin: float) -> flo
     return float(min(area, 0.5) / 0.5 * max(0.0, centering))
 
 
+def _face_sample(face_fn, frame) -> float:
+    """One frame's face score, or NaN when there is nothing to score.
+
+    The single place "we did not measure a face here" is encoded, and it is NaN
+    rather than 0.0 (muvid#19). Three ways to get NaN: no detector installed, the
+    detector found no face, or the detector raised. All three mean *not measured*;
+    scoring them 0.0 made them indistinguishable from a face that IS present and
+    framed as badly as possible, which is the worst value the metric can take.
+    """
+    if face_fn is None:
+        return float("nan")
+    try:
+        score = face_fn(frame)
+    except Exception:  # noqa: BLE001 — a soft metric must never fail a whole clip
+        return float("nan")
+    return float("nan") if score is None else float(score)
+
+
 def make_face_scorer():
-    """Build a ``bgr_frame -> face_framing_score`` (or ``None`` if unavailable).
+    """Build a ``bgr_frame -> face_framing_score | None`` (or ``None`` if unavailable).
 
     Best-effort and never fatal: face_framing is a soft metric (not one of the two named
-    signals), so ANY failure → ``None`` and the orchestrator scores 0 (neutral). Tries the
+    signals), so ANY failure → ``None`` and the metric reads as *unmeasured* (NaN →
+    masked → not counted in the composite denominator), never as a zero score. Tries the
     classic ``mp.solutions.face_detection`` (mediapipe 0.10 full build); falls back to the
     Tasks ``FaceDetector`` ONLY when the operator supplies a model via
     ``MUVID_MEDIAPIPE_FACE_MODEL`` (no auto-download). Score = best face's area×centering.
@@ -158,10 +178,10 @@ def make_face_scorer():
                 model_selection=1, min_detection_confidence=0.5
             )
 
-            def score_solutions(bgr: np.ndarray) -> float:
+            def score_solutions(bgr: np.ndarray) -> float | None:
                 res = detector.process(cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB))
                 if not res.detections:
-                    return 0.0
+                    return None  # no face here is NOT a badly-framed face
                 return max(
                     _framing_score(
                         d.location_data.relative_bounding_box.width,
@@ -184,11 +204,13 @@ def make_face_scorer():
             opts = mp.tasks.vision.FaceDetectorOptions(base_options=base)
             detector = mp.tasks.vision.FaceDetector.create_from_options(opts)
 
-            def score_tasks(bgr: np.ndarray) -> float:
+            def score_tasks(bgr: np.ndarray) -> float | None:
                 rgb = cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)
                 image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb)
                 res = detector.detect(image)
                 h, w = bgr.shape[:2]
+                if not res.detections:
+                    return None  # no face here is NOT a badly-framed face
                 best = 0.0
                 for d in res.detections or []:
                     bb = d.bounding_box
