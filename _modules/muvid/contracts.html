@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.contracts &mdash; muvid 0.0.26 documentation</title>
+  <title>muvid.contracts &mdash; muvid 0.0.27 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=6a9d8632"></script>
+      <script src="../../_static/documentation_options.js?v=cee5022b"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -273,7 +273,16 @@
     <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">[]</span>
 
-    <span class="n">store</span> <span class="o">=</span> <span class="n">SqliteStore</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">align_path</span><span class="p">))</span>
+    <span class="c1"># migrate=True: muvid OWNS this file — align.py writes it, at a path muvid</span>
+    <span class="c1"># chooses inside its own project folder — so upgrading it on open is muvid</span>
+    <span class="c1"># maintaining its own artifact, not rewriting a user&#39;s document. lacing</span>
+    <span class="c1"># keeps migration opt-in precisely so a library never does that silently</span>
+    <span class="c1"># (lacing#15); this is the application making the call it is entitled to</span>
+    <span class="c1"># make, the same one nw and reelee made. Without it, a v1 .annot written</span>
+    <span class="c1"># before lacing 0.0.31 raises SchemaMismatchError here and the render dies.</span>
+    <span class="c1"># The v1-&gt;v2 step is a stamp, and lacing&#39;s runner re-reads the version under</span>
+    <span class="c1"># the write lock, so concurrent opens skip rather than double-apply.</span>
+    <span class="n">store</span> <span class="o">=</span> <span class="n">SqliteStore</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">align_path</span><span class="p">),</span> <span class="n">migrate</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">track</span> <span class="o">=</span> <span class="n">SubtitleTrack</span><span class="p">(</span><span class="n">store</span><span class="p">,</span> <span class="n">asset_id</span><span class="o">=</span><span class="n">asset_id</span><span class="p">)</span>
         <span class="n">out</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">WordTimingTuple</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
