@@ -75,7 +75,12 @@ class ShotSpec:
     environment: str = ""  # name of an EnvironmentRef
     characters: tuple[str, ...] = ()  # names of CharacterRefs
     description: str = ""  # the prose direction for the shot
-    camera: str = ""  # "static" | "slow push-in" | ...
+    # Free prose: "static" | "slow push-in" | "pan left" | ... It reaches the
+    # image prompts verbatim (renderers/_common.py); the animation renderer
+    # TRANSLATES it into `an`'s closed move vocabulary at the boundary
+    # (renderers/animation.an_camera_move) — `an` refuses a name it does not
+    # implement, at validate and at compile (muvid#44).
+    camera: str = ""
     framing: str = "medium"
     notes: str = ""
 
