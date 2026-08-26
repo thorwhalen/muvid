@@ -10,6 +10,16 @@ Lipsync alignment: muvid already owns the SSOT for word timings (the
 into ``an.orchestrate`` so ``an`` does NOT re-transcribe the same
 audio with whisper. Falls back to ``an``'s default lipsync provider
 when no alignment store exists yet (e.g. user skipped ``muvid align``).
+
+Camera: muvid and ``an`` do not share a camera vocabulary and must not
+pretend to. :attr:`muvid.schema.ShotSpec.camera` is free prose a director
+writes into the script (``**camera**: slow push-in``); ``an``'s
+``camera.move`` is a closed set of named moves, and a name outside it is a
+hard refusal at both validate and compile — deliberately, because a camera
+move that silently no-ops is the failure it exists to prevent. So the prose
+is TRANSLATED here, at the boundary, and never passed through
+(muvid#44: this module emitted ``move: static``, which ``an`` has never
+implemented, so every animation render failed validate and fell back).
 """
 
 from __future__ import annotations
@@ -18,6 +28,73 @@ from pathlib import Path
 from typing import Sequence
 
 from muvid.renderers import RenderContext
+
+#: ``an``'s spelling of "the camera does not move", and what a direction ``an``
+#: cannot name resolves to. Not a guess dressed as a move: an uninterpretable
+#: direction is a reason to leave the camera alone, not to invent a push-in the
+#: director did not ask for. It is also what this module effectively meant by
+#: the invalid ``static`` it used to emit.
+DFLT_AN_CAMERA_MOVE = "hold"
+
+#: muvid prose → ``an`` move name. Scanned IN ORDER against the direction with
+#: punctuation flattened to spaces; the first phrase that occurs wins, so a
+#: direction naming two moves ("pan left, then push in") resolves to the one
+#: listed first here rather than to whichever the dict happened to yield first.
+#:
+#: The values are ``an``'s vocabulary and nothing else. They are pinned against
+#: ``an.ir.camera.CAMERA_MOVES`` by ``tests/test_animation_camera.py``, which
+#: imports that set rather than re-typing it — a hand-copied vocabulary is
+#: exactly how ``static`` survived here after ``an`` tightened the rule.
+#:
+#: ``an`` distinguishes a push (1.0→1.25) from a zoom (1.0→1.5), so the prose
+#: does too: a "push" is the gentler move, "zoom" the emphatic one.
+AN_CAMERA_MOVE_PHRASES: tuple[tuple[str, str], ...] = (
+    ("push in", "push_in"),
+    ("push into", "push_in"),
+    ("dolly in", "push_in"),
+    ("zoom in", "zoom_in"),
+    ("pull out", "pull_out"),
+    ("pull back", "pull_out"),
+    ("dolly out", "pull_out"),
+    ("zoom out", "zoom_out"),
+    ("pan left", "pan_left"),
+    ("pan right", "pan_right"),
+    ("tilt up", "tilt_up"),
+    ("tilt down", "tilt_down"),
+    ("crane up", "tilt_up"),
+    ("crane down", "tilt_down"),
+)
+
+#: Characters a director separates words with that carry no meaning here.
+_CAMERA_PHRASE_SEPARATORS = "-_/,.;:()[]"
+
+
+def an_camera_move(direction: str) -> str:
+    """Translate a muvid camera direction into an ``an`` ``camera.move`` name.
+
+    Never returns a name outside ``an``'s vocabulary: a direction this table
+    does not recognise (including the empty one) becomes
+    :data:`DFLT_AN_CAMERA_MOVE`.
+
+    >>> an_camera_move("slow push-in")
+    'push_in'
+    >>> an_camera_move("static")
+    'hold'
+    >>> an_camera_move("")
+    'hold'
+    >>> an_camera_move("handheld, drifting")   # nothing an can name
+    'hold'
+    >>> an_camera_move("Pan Left across the room")
+    'pan_left'
+    """
+    text = (direction or "").lower()
+    for sep in _CAMERA_PHRASE_SEPARATORS:
+        text = text.replace(sep, " ")
+    text = " ".join(text.split())
+    for phrase, move in AN_CAMERA_MOVE_PHRASES:
+        if phrase in text:
+            return move
+    return DFLT_AN_CAMERA_MOVE
 
 
 def render_animation(ctx: RenderContext, *, quality: str = "balanced") -> Path:
@@ -103,6 +180,7 @@ def _word_timings_for_shot(
 
 def _build_an_scene_md(ctx: RenderContext) -> str:
     duration = max(1.0, ctx.shot.duration_s)
+    camera_move = an_camera_move(ctx.shot.camera)
     lyrics = ctx.lyric_lines or [
         {
             "text": ctx.shot.description or "...",
@@ -138,7 +216,7 @@ resolution: {{ width: 640, height: 360 }}
 
 ```yaml shot
 duration: {duration}
-camera: {{ move: static }}
+camera: {{ move: {camera_move} }}
 ```
 
 ```yaml entities

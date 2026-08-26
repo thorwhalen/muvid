@@ -196,6 +196,25 @@ does **not** re-transcribe the same audio with whisper — muvid owns the word-t
 `an` is **not** a declared dependency in any extra; the import is soft and falls back to
 the `still` strategy when `an` is unusable.
 
+**The two packages do not share a camera vocabulary, and the boundary translates.**
+`ShotSpec.camera` is free prose a director writes into the script (`**camera**: slow
+push-in`); `an`'s `camera.move` is a closed set of named moves (`hold`, `push_in`,
+`pull_out`, `zoom_in`, `zoom_out`, `pan_left`, `pan_right`, `tilt_up`, `tilt_down` at
+`an` 0.1.58 — `an.ir.camera.CAMERA_MOVES` is the SSOT, and it grows), and a name outside
+it is a hard refusal at **both** validate and compile. So `animation.an_camera_move`
+maps prose → move at the boundary, and a direction it cannot name resolves to `hold`
+(`an`'s "the camera does not move") rather than to an invented move. Never pass the
+prose through: muvid#44 emitted `move: static`, which `an` has never implemented, so
+every animation render failed validate and fell back to `still` — silently, because
+nothing in the suite compiled the synthesized `scene.md`.
+
+`tests/test_animation_camera.py` now does, and it pins the table by **importing**
+`an.ir.camera.CAMERA_MOVES` rather than re-typing it — a hand-copied vocabulary is how
+`static` survived the day `an` tightened the rule. Those pins **skip in CI** (`an` is
+not installed there); they are verified on a developer machine. The half that needs no
+`an` — that the template emits the translated move and never the literal `static` —
+runs everywhere.
+
 ## Connector duty — `muvid_*` tools are live
 
 `muvid/mcp/__init__.py` declares the tool surface a host connector aggregates via
