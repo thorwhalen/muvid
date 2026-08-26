@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.renderers.animation &mdash; muvid 0.0.27 documentation</title>
+  <title>muvid.renderers.animation &mdash; muvid 0.0.28 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=cee5022b"></script>
+      <script src="../../../_static/documentation_options.js?v=26ffa1e9"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -132,36 +132,277 @@
            <div itemprop="articleBody">
              
   <h1>Source code for muvid.renderers.animation</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Render strategy: animation — handoff to the ``an`` package.</span>
+<span></span><span class="sd">"""Render strategy: animation — handoff to the ``an`` package.</span>
 
-<span class="sd">We synthesize a minimal ``an`` scene for this shot&#39;s interval: each</span>
-<span class="sd">lyric line becomes a dialogue beat for the singing character; the shot&#39;s</span>
+<span class="sd">We synthesize a minimal ``an`` scene for this shot's interval: each</span>
+<span class="sd">lyric line becomes a dialogue beat for the singing character; the shot's</span>
 <span class="sd">environment becomes the entity backdrop.</span>
 
 <span class="sd">Lipsync alignment: muvid already owns the SSOT for word timings (the</span>
 <span class="sd">``lacing`` alignment store written by ``muvid align``). We build a</span>
 <span class="sd">:class:`an.audio.WordTimingsLipSync` from those timings and pass it</span>
 <span class="sd">into ``an.orchestrate`` so ``an`` does NOT re-transcribe the same</span>
-<span class="sd">audio with whisper. Falls back to ``an``&#39;s default lipsync provider</span>
+<span class="sd">audio with whisper. Falls back to ``an``'s default lipsync provider</span>
 <span class="sd">when no alignment store exists yet (e.g. user skipped ``muvid align``).</span>
-<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">Camera: muvid and ``an`` do not share a camera vocabulary and must not</span>
+<span class="sd">pretend to. :attr:`muvid.schema.ShotSpec.camera` is free prose a director</span>
+<span class="sd">writes into the script (``**camera**: slow push-in``); ``an``'s</span>
+<span class="sd">``camera.move`` is a closed set of named moves, and a name outside it is a</span>
+<span class="sd">hard refusal at both validate and compile — deliberately, because a camera</span>
+<span class="sd">move that silently no-ops is the failure it exists to prevent. So the prose</span>
+<span class="sd">is TRANSLATED here, at the boundary, and never passed through</span>
+<span class="sd">(muvid#44: this module emitted ``move: static``, which ``an`` has never</span>
+<span class="sd">implemented, so every animation render failed validate and fell back).</span>
+
+<span class="sd">That closed set is not fixed, and muvid declares no ``an`` floor — ``an`` is</span>
+<span class="sd">in no extra, the import below is soft, and a user may have any version.</span>
+<span class="sd">``hold``/``push_in``/``pull_out``/``zoom_in``/``zoom_out`` have always been</span>
+<span class="sd">there; the four TRANSLATING moves (``pan_left``, ``pan_right``, ``tilt_up``,</span>
+<span class="sd">``tilt_down``) arrived with an#109 and shipped in ``an`` 0.1.65 — on 0.1.64</span>
+<span class="sd">and below, emitting one of them is muvid#44 again. So</span>
+<span class="sd">:func:`an_camera_move` checks the move against the vocabulary the INSTALLED</span>
+<span class="sd">``an`` reports (``an.ir.camera.CAMERA_MOVES``) and degrades to ``hold`` with</span>
+<span class="sd">a warning rather than emitting a move that will be refused. That is the floor,</span>
+<span class="sd">enforced at the only place that can see which ``an`` is actually there.</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Collection</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sequence</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.renderers</span><span class="w"> </span><span class="kn">import</span> <span class="n">RenderContext</span>
 
+<span class="c1">#: ``an``'s spelling of "the camera does not move", and what a direction this</span>
+<span class="c1">#: table cannot name resolves to. Not a guess dressed as a move: an</span>
+<span class="c1">#: uninterpretable direction is a reason to leave the camera alone, not to</span>
+<span class="c1">#: invent a push-in the director did not ask for. It is also what this module</span>
+<span class="c1">#: effectively meant by the invalid ``static`` it used to emit.</span>
+<span class="n">DFLT_AN_CAMERA_MOVE</span> <span class="o">=</span> <span class="s2">"hold"</span>
+
+<span class="c1">#: muvid prose -&gt; ``an`` move name — the WHOLE recognised vocabulary, including</span>
+<span class="c1">#: the several ways a director spells "don't move". A direction that matches</span>
+<span class="c1">#: nothing here is not silently translated: :func:`an_camera_move` warns, so a</span>
+<span class="c1">#: dropped direction is visible in the run rather than only in the render.</span>
+<span class="c1">#:</span>
+<span class="c1">#: Matching is by WORD, never by substring, and the move that occurs EARLIEST in</span>
+<span class="c1">#: the direction wins — the director's first-written move, not this table's</span>
+<span class="c1">#: declaration order. Ties (two phrases starting at the same word) go to the</span>
+<span class="c1">#: longer phrase, so ``push into`` beats ``push in`` on specificity rather than</span>
+<span class="c1">#: on which line happens to come first. Declaration order is the last</span>
+<span class="c1">#: tie-break and decides nothing today.</span>
+<span class="c1">#:</span>
+<span class="c1">#: The values are ``an``'s vocabulary and nothing else. They are pinned in CI</span>
+<span class="c1">#: against :mod:`tests.test_animation_camera`'s recorded snapshot of</span>
+<span class="c1">#: ``an.ir.camera.CAMERA_MOVES``, and — on a machine that has ``an`` — against</span>
+<span class="c1">#: the live set. A hand-copied vocabulary is exactly how ``static`` survived</span>
+<span class="c1">#: here after ``an`` tightened the rule.</span>
+<span class="c1">#:</span>
+<span class="c1">#: ``an`` distinguishes a push (1.0-&gt;1.25) from a zoom (1.0-&gt;1.5), so the prose</span>
+<span class="c1">#: does too: a "push" is the gentler move, "zoom" the emphatic one.</span>
+<span class="n">AN_CAMERA_MOVE_PHRASES</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="p">(</span><span class="s2">"push in"</span><span class="p">,</span> <span class="s2">"push_in"</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"push into"</span><span class="p">,</span> <span class="s2">"push_in"</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"dolly in"</span><span class="p">,</span> <span class="s2">"push_in"</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"zoom in"</span><span class="p">,</span> <span class="s2">"zoom_in"</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"pull out"</span><span class="p">,</span> <span class="s2">"pull_out"</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"pull back"</span><span class="p">,</span> <span class="s2">"pull_out"</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"dolly out"</span><span class="p">,</span> <span class="s2">"pull_out"</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"zoom out"</span><span class="p">,</span> <span class="s2">"zoom_out"</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"pan left"</span><span class="p">,</span> <span class="s2">"pan_left"</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"pan right"</span><span class="p">,</span> <span class="s2">"pan_right"</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"tilt up"</span><span class="p">,</span> <span class="s2">"tilt_up"</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"tilt down"</span><span class="p">,</span> <span class="s2">"tilt_down"</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"crane up"</span><span class="p">,</span> <span class="s2">"tilt_up"</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"crane down"</span><span class="p">,</span> <span class="s2">"tilt_down"</span><span class="p">),</span>
+    <span class="c1"># How a director spells "the camera does not move". These are matches, not</span>
+    <span class="c1"># fallbacks: the fallback warns, and "static" must not.</span>
+    <span class="p">(</span><span class="s2">"static"</span><span class="p">,</span> <span class="s2">"hold"</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"hold"</span><span class="p">,</span> <span class="s2">"hold"</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"locked"</span><span class="p">,</span> <span class="s2">"hold"</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"locked off"</span><span class="p">,</span> <span class="s2">"hold"</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"lock off"</span><span class="p">,</span> <span class="s2">"hold"</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"no movement"</span><span class="p">,</span> <span class="s2">"hold"</span><span class="p">),</span>
+<span class="p">)</span>
+
+<span class="c1">#: Punctuation that ends a clause. Kept as a boundary rather than flattened to</span>
+<span class="c1">#: a space because a clause is how far back a negator reaches: "no clouds, push</span>
+<span class="c1">#: in" asks for a push, "static, no push-in" does not.</span>
+<span class="n">_CAMERA_CLAUSE_SEPARATORS</span> <span class="o">=</span> <span class="s2">",.;:!?()[]</span><span class="si">{}</span><span class="s2">/|</span><span class="se">\n\u2014\u2013</span><span class="s2">"</span>
+
+<span class="c1">#: Punctuation INSIDE a word — "push-in" and "push in" are the same direction.</span>
+<span class="n">_CAMERA_WORD_SEPARATORS</span> <span class="o">=</span> <span class="s2">"-_"</span>
+
+<span class="c1">#: Deleted outright rather than split on, so "don't" stays one word ("dont")</span>
+<span class="c1">#: and stays recognisable as a negator.</span>
+<span class="n">_CAMERA_DROPPED_CHARS</span> <span class="o">=</span> <span class="s2">"'</span><span class="se">\u2019\"\u201c\u201d</span><span class="s2">"</span>
+
+<span class="c1">#: A word that, earlier in the same clause, means the director is REFUSING the</span>
+<span class="c1">#: move rather than asking for it. Without this, "static, no push-in" renders a</span>
+<span class="c1">#: push-in — the one move the direction explicitly forbids.</span>
+<span class="n">_CAMERA_NEGATORS</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">({</span><span class="s2">"no"</span><span class="p">,</span> <span class="s2">"not"</span><span class="p">,</span> <span class="s2">"dont"</span><span class="p">,</span> <span class="s2">"never"</span><span class="p">,</span> <span class="s2">"without"</span><span class="p">,</span> <span class="s2">"avoid"</span><span class="p">})</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_camera_clauses</span><span class="p">(</span><span class="n">direction</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">"""Normalize a direction into clauses of lowercase words.</span>
+
+<span class="sd">    &gt;&gt;&gt; _camera_clauses("Static, no PUSH-IN")</span>
+<span class="sd">    [['static'], ['no', 'push', 'in']]</span>
+<span class="sd">    """</span>
+    <span class="n">text</span> <span class="o">=</span> <span class="p">(</span><span class="n">direction</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">ch</span> <span class="ow">in</span> <span class="n">_CAMERA_DROPPED_CHARS</span><span class="p">:</span>
+        <span class="n">text</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">ch</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">ch</span> <span class="ow">in</span> <span class="n">_CAMERA_CLAUSE_SEPARATORS</span><span class="p">:</span>
+        <span class="n">text</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">ch</span><span class="p">,</span> <span class="s2">"</span><span class="se">\x00</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">ch</span> <span class="ow">in</span> <span class="n">_CAMERA_WORD_SEPARATORS</span><span class="p">:</span>
+        <span class="n">text</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">ch</span><span class="p">,</span> <span class="s2">" "</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">clause</span><span class="o">.</span><span class="n">split</span><span class="p">()</span> <span class="k">for</span> <span class="n">clause</span> <span class="ow">in</span> <span class="n">text</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"</span><span class="se">\x00</span><span class="s2">"</span><span class="p">)]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_camera_phrase_hits</span><span class="p">(</span><span class="n">direction</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Every phrase occurrence, as ``(position, -length, order, move, negated)``.</span>
+
+<span class="sd">    ``position`` is the index of the phrase's first word counted across the</span>
+<span class="sd">    whole direction, so sorting these tuples yields the director's first-written</span>
+<span class="sd">    move, longest (most specific) phrase first on a tie. ``negated`` is True when</span>
+<span class="sd">    a negator precedes the phrase in its own clause; those are reported rather</span>
+<span class="sd">    than dropped so the caller can tell "the director named no move" (warn) from</span>
+<span class="sd">    "the director refused one" (obey, silently).</span>
+<span class="sd">    """</span>
+    <span class="n">clauses</span> <span class="o">=</span> <span class="n">_camera_clauses</span><span class="p">(</span><span class="n">direction</span><span class="p">)</span>
+    <span class="n">offsets</span><span class="p">,</span> <span class="n">running</span> <span class="o">=</span> <span class="p">[],</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">clause</span> <span class="ow">in</span> <span class="n">clauses</span><span class="p">:</span>
+        <span class="n">offsets</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">running</span><span class="p">)</span>
+        <span class="n">running</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">clause</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">order</span><span class="p">,</span> <span class="p">(</span><span class="n">phrase</span><span class="p">,</span> <span class="n">move</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">AN_CAMERA_MOVE_PHRASES</span><span class="p">):</span>
+        <span class="n">words</span> <span class="o">=</span> <span class="n">phrase</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">clause</span><span class="p">,</span> <span class="n">offset</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">clauses</span><span class="p">,</span> <span class="n">offsets</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">clause</span><span class="p">)</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">words</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">clause</span><span class="p">[</span><span class="n">i</span> <span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">words</span><span class="p">)]</span> <span class="o">!=</span> <span class="n">words</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="n">negated</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">_CAMERA_NEGATORS</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">clause</span><span class="p">[:</span><span class="n">i</span><span class="p">]))</span>
+                <span class="k">yield</span> <span class="p">(</span><span class="n">offset</span> <span class="o">+</span> <span class="n">i</span><span class="p">,</span> <span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="n">words</span><span class="p">),</span> <span class="n">order</span><span class="p">,</span> <span class="n">move</span><span class="p">,</span> <span class="n">negated</span><span class="p">)</span>
+
+
+<span class="c1">#: Sentinel for "the installed `an` has not been consulted yet" — distinct</span>
+<span class="c1">#: from `None`, which is the real answer "`an` is not importable here".</span>
+<span class="n">_UNREAD</span> <span class="o">=</span> <span class="nb">object</span><span class="p">()</span>
+<span class="n">_AN_CAMERA_MOVES_CACHE</span><span class="p">:</span> <span class="nb">object</span> <span class="o">=</span> <span class="n">_UNREAD</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_installed_an_camera_moves</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">frozenset</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The move names the INSTALLED ``an`` implements, or ``None`` if absent.</span>
+
+<span class="sd">    ``an`` is a soft dependency with no declared floor (see the module</span>
+<span class="sd">    docstring), so the vocabulary muvid may emit is whatever the user happens</span>
+<span class="sd">    to have. Read once and cached — the answer cannot change within a process.</span>
+<span class="sd">    """</span>
+    <span class="k">global</span> <span class="n">_AN_CAMERA_MOVES_CACHE</span>
+    <span class="k">if</span> <span class="n">_AN_CAMERA_MOVES_CACHE</span> <span class="ow">is</span> <span class="n">_UNREAD</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">an.ir.camera</span><span class="w"> </span><span class="kn">import</span> <span class="n">CAMERA_MOVES</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>  <span class="c1"># pragma: no cover - depends on the environment</span>
+            <span class="n">_AN_CAMERA_MOVES_CACHE</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">_AN_CAMERA_MOVES_CACHE</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span><span class="n">CAMERA_MOVES</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_AN_CAMERA_MOVES_CACHE</span>
+
+
+<div class="viewcode-block" id="an_camera_move">
+<a class="viewcode-back" href="../../../module_docs/muvid/renderers/animation.html#muvid.renderers.animation.an_camera_move">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">an_camera_move</span><span class="p">(</span>
+    <span class="n">direction</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">known_moves</span><span class="p">:</span> <span class="n">Collection</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Translate a muvid camera direction into an ``an`` ``camera.move`` name.</span>
+
+<span class="sd">    Never returns a name the ``an`` in front of it cannot honour. Two</span>
+<span class="sd">    independent ways that can happen, and each one WARNS rather than passing</span>
+<span class="sd">    silently — a dropped camera direction is the failure muvid#44 was:</span>
+
+<span class="sd">    - the direction names no move this table knows ("handheld, drifting"), or</span>
+<span class="sd">    - it names one the *installed* ``an`` does not implement (``pan_left`` is</span>
+<span class="sd">      an#109, released in ``an`` 0.1.65; on 0.1.60 it is a hard refusal at</span>
+<span class="sd">      validate and at compile).</span>
+
+<span class="sd">    ``known_moves`` is the vocabulary to check against; ``None`` means "ask the</span>
+<span class="sd">    installed ``an``", and when ``an`` is absent nothing is narrowed.</span>
+
+<span class="sd">    &gt;&gt;&gt; an_camera_move("slow push-in")</span>
+<span class="sd">    'push_in'</span>
+<span class="sd">    &gt;&gt;&gt; an_camera_move("static")</span>
+<span class="sd">    'hold'</span>
+<span class="sd">    &gt;&gt;&gt; an_camera_move("")</span>
+<span class="sd">    'hold'</span>
+<span class="sd">    &gt;&gt;&gt; an_camera_move("Pan Left across the room")</span>
+<span class="sd">    'pan_left'</span>
+
+<span class="sd">    The director's first-written move wins, not this table's order, and a</span>
+<span class="sd">    negated move is refused rather than obeyed:</span>
+
+<span class="sd">    &gt;&gt;&gt; an_camera_move("pan left, then push in")</span>
+<span class="sd">    'pan_left'</span>
+<span class="sd">    &gt;&gt;&gt; an_camera_move("static, no push-in")</span>
+<span class="sd">    'hold'</span>
+
+<span class="sd">    An `an` that cannot do the move gets the no-op instead of a refusal:</span>
+
+<span class="sd">    &gt;&gt;&gt; an_camera_move("pan left", known_moves={"hold", "push_in"})</span>
+<span class="sd">    'hold'</span>
+
+<span class="sd">    A direction naming nothing is not silently dropped:</span>
+
+<span class="sd">    &gt;&gt;&gt; import warnings</span>
+<span class="sd">    &gt;&gt;&gt; with warnings.catch_warnings(record=True) as caught:</span>
+<span class="sd">    ...     warnings.simplefilter("always")</span>
+<span class="sd">    ...     an_camera_move("handheld, drifting")</span>
+<span class="sd">    'hold'</span>
+<span class="sd">    &gt;&gt;&gt; "handheld, drifting" in str(caught[0].message)</span>
+<span class="sd">    True</span>
+<span class="sd">    """</span>
+    <span class="n">all_hits</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">_camera_phrase_hits</span><span class="p">(</span><span class="n">direction</span><span class="p">))</span>
+    <span class="n">hits</span> <span class="o">=</span> <span class="p">[</span><span class="n">h</span> <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">all_hits</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">h</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">hits</span><span class="p">:</span>
+        <span class="c1"># An explicitly REFUSED move ("no push-in") is honoured, not warned</span>
+        <span class="c1"># about: the director named a move and said not to make it.</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">direction</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">all_hits</span><span class="p">:</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"camera direction </span><span class="si">{</span><span class="n">direction</span><span class="si">!r}</span><span class="s2"> names no move `an` implements; "</span>
+                <span class="sa">f</span><span class="s2">"rendering the shot with </span><span class="si">{</span><span class="n">DFLT_AN_CAMERA_MOVE</span><span class="si">!r}</span><span class="s2"> (no camera "</span>
+                <span class="s2">"move). Recognised phrases: "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">sorted</span><span class="p">({</span><span class="n">p</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="n">_</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">AN_CAMERA_MOVE_PHRASES</span><span class="p">})</span><span class="si">}</span><span class="s2">."</span><span class="p">,</span>
+                <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">DFLT_AN_CAMERA_MOVE</span>
+    <span class="n">move</span> <span class="o">=</span> <span class="n">hits</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">3</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">known_moves</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">known_moves</span> <span class="o">=</span> <span class="n">_installed_an_camera_moves</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">known_moves</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">move</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">known_moves</span><span class="p">:</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"camera direction </span><span class="si">{</span><span class="n">direction</span><span class="si">!r}</span><span class="s2"> translates to </span><span class="si">{</span><span class="n">move</span><span class="si">!r}</span><span class="s2">, which the "</span>
+            <span class="sa">f</span><span class="s2">"installed `an` does not implement (it has: </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">known_moves</span><span class="p">)</span><span class="si">}</span><span class="s2">); "</span>
+            <span class="sa">f</span><span class="s2">"rendering the shot with </span><span class="si">{</span><span class="n">DFLT_AN_CAMERA_MOVE</span><span class="si">!r}</span><span class="s2"> instead. "</span>
+            <span class="s2">"`pan_left`/`pan_right`/`tilt_up`/`tilt_down` need `an` &gt;= 0.1.65 "</span>
+            <span class="s2">"(an#109)."</span><span class="p">,</span>
+            <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">DFLT_AN_CAMERA_MOVE</span>
+    <span class="k">return</span> <span class="n">move</span></div>
+
+
 
 <div class="viewcode-block" id="render_animation">
 <a class="viewcode-back" href="../../../module_docs/muvid/renderers/animation.html#muvid.renderers.animation.render_animation">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">render_animation</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="n">RenderContext</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">quality</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;balanced&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Synthesize a tiny ``an`` scene for this shot and orchestrate it.</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">render_animation</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="n">RenderContext</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">quality</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"balanced"</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Synthesize a tiny ``an`` scene for this shot and orchestrate it.</span>
 
-<span class="sd">    Falls back to a &quot;still&quot; render if the ``an`` package isn&#39;t usable</span>
+<span class="sd">    Falls back to a "still" render if the ``an`` package isn't usable</span>
 <span class="sd">    (it currently has heavy native deps for the cutout backend).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">an.orchestrate</span><span class="w"> </span><span class="kn">import</span> <span class="n">orchestrate</span>
     <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
@@ -170,20 +411,20 @@
 
         <span class="k">return</span> <span class="n">render_still</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">quality</span><span class="o">=</span><span class="n">quality</span><span class="p">)</span>
 
-    <span class="n">scene_dir</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">shot_dir</span> <span class="o">/</span> <span class="s2">&quot;an_scene&quot;</span>
+    <span class="n">scene_dir</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">shot_dir</span> <span class="o">/</span> <span class="s2">"an_scene"</span>
     <span class="n">scene_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">md</span> <span class="o">=</span> <span class="n">_build_an_scene_md</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span>
-    <span class="p">(</span><span class="n">scene_dir</span> <span class="o">/</span> <span class="s2">&quot;scene.md&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">md</span><span class="p">)</span>
+    <span class="p">(</span><span class="n">scene_dir</span> <span class="o">/</span> <span class="s2">"scene.md"</span><span class="p">)</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">md</span><span class="p">)</span>
 
     <span class="n">lipsync</span> <span class="o">=</span> <span class="n">_make_lipsync_provider</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span>
-    <span class="n">orchestrate_kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;lipsync&quot;</span><span class="p">:</span> <span class="n">lipsync</span><span class="p">}</span> <span class="k">if</span> <span class="n">lipsync</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">{}</span>
+    <span class="n">orchestrate_kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"lipsync"</span><span class="p">:</span> <span class="n">lipsync</span><span class="p">}</span> <span class="k">if</span> <span class="n">lipsync</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">{}</span>
     <span class="n">report</span> <span class="o">=</span> <span class="n">orchestrate</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">scene_dir</span><span class="p">),</span> <span class="o">**</span><span class="n">orchestrate_kwargs</span><span class="p">)</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">report</span><span class="p">,</span> <span class="s2">&quot;success&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">report</span><span class="p">,</span> <span class="s2">"success"</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
         <span class="c1"># Fall back rather than throwing a wall of errors.</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.renderers.still</span><span class="w"> </span><span class="kn">import</span> <span class="n">render_still</span>
 
         <span class="k">return</span> <span class="n">render_still</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">quality</span><span class="o">=</span><span class="n">quality</span><span class="p">)</span>
-    <span class="n">out</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">shot_dir</span> <span class="o">/</span> <span class="s2">&quot;output.mp4&quot;</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">shot_dir</span> <span class="o">/</span> <span class="s2">"output.mp4"</span>
     <span class="n">src</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">report</span><span class="o">.</span><span class="n">output_path</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">src</span> <span class="o">!=</span> <span class="n">out</span><span class="p">:</span>
         <span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
@@ -194,17 +435,17 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_make_lipsync_provider</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="n">RenderContext</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a ``WordTimingsLipSync`` from this project&#39;s alignment store.</span>
+<span class="w">    </span><span class="sd">"""Build a ``WordTimingsLipSync`` from this project's alignment store.</span>
 
 <span class="sd">    Returns ``None`` if either:</span>
 
 <span class="sd">    - ``an.audio.WordTimingsLipSync`` is not available (older ``an``), or</span>
 <span class="sd">    - the project has no ``lyrics/alignment.annot`` yet, or</span>
-<span class="sd">    - no words fall in this shot&#39;s window.</span>
+<span class="sd">    - no words fall in this shot's window.</span>
 
 <span class="sd">    In those cases the caller skips the override and ``an`` falls back to</span>
 <span class="sd">    its default offline lipsync.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">an.audio</span><span class="w"> </span><span class="kn">import</span> <span class="n">StaticWordTimings</span><span class="p">,</span> <span class="n">WordTimingsLipSync</span>
     <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
@@ -214,20 +455,20 @@
     <span class="k">if</span> <span class="ow">not</span> <span class="n">timings</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">None</span>
 
-    <span class="n">provider</span> <span class="o">=</span> <span class="n">StaticWordTimings</span><span class="p">(</span><span class="n">timings</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;muvid:lacing&quot;</span><span class="p">)</span>
+    <span class="n">provider</span> <span class="o">=</span> <span class="n">StaticWordTimings</span><span class="p">(</span><span class="n">timings</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"muvid:lacing"</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">WordTimingsLipSync</span><span class="p">(</span><span class="n">provider</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_word_timings_for_shot</span><span class="p">(</span>
     <span class="n">ctx</span><span class="p">:</span> <span class="n">RenderContext</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Read this shot&#39;s word timings, relative to the slice&#39;s t=0.</span>
+<span class="w">    </span><span class="sd">"""Read this shot's word timings, relative to the slice's t=0.</span>
 
 <span class="sd">    Thin wrapper over :func:`muvid.contracts.word_timings_for_window`</span>
 <span class="sd">    + :func:`muvid.contracts.shifted_word_timings`. Kept here as a</span>
-<span class="sd">    private name so the existing tests in this module&#39;s neighbourhood</span>
-<span class="sd">    don&#39;t need to know about ``muvid.contracts``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    private name so the existing tests in this module's neighbourhood</span>
+<span class="sd">    don't need to know about ``muvid.contracts``.</span>
+<span class="sd">    """</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.contracts</span><span class="w"> </span><span class="kn">import</span> <span class="n">shifted_word_timings</span><span class="p">,</span> <span class="n">word_timings_for_window</span>
 
     <span class="n">absolute</span> <span class="o">=</span> <span class="n">word_timings_for_window</span><span class="p">(</span>
@@ -240,29 +481,37 @@
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_build_an_scene_md</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="n">RenderContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
     <span class="n">duration</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">ctx</span><span class="o">.</span><span class="n">shot</span><span class="o">.</span><span class="n">duration_s</span><span class="p">)</span>
+    <span class="n">camera_move</span> <span class="o">=</span> <span class="n">an_camera_move</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">shot</span><span class="o">.</span><span class="n">camera</span><span class="p">)</span>
     <span class="n">lyrics</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">lyric_lines</span> <span class="ow">or</span> <span class="p">[</span>
         <span class="p">{</span>
-            <span class="s2">&quot;text&quot;</span><span class="p">:</span> <span class="n">ctx</span><span class="o">.</span><span class="n">shot</span><span class="o">.</span><span class="n">description</span> <span class="ow">or</span> <span class="s2">&quot;...&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;start_s&quot;</span><span class="p">:</span> <span class="n">ctx</span><span class="o">.</span><span class="n">shot</span><span class="o">.</span><span class="n">start_s</span><span class="p">,</span>
-            <span class="s2">&quot;end_s&quot;</span><span class="p">:</span> <span class="n">ctx</span><span class="o">.</span><span class="n">shot</span><span class="o">.</span><span class="n">end_s</span><span class="p">,</span>
+            <span class="s2">"text"</span><span class="p">:</span> <span class="n">ctx</span><span class="o">.</span><span class="n">shot</span><span class="o">.</span><span class="n">description</span> <span class="ow">or</span> <span class="s2">"..."</span><span class="p">,</span>
+            <span class="s2">"start_s"</span><span class="p">:</span> <span class="n">ctx</span><span class="o">.</span><span class="n">shot</span><span class="o">.</span><span class="n">start_s</span><span class="p">,</span>
+            <span class="s2">"end_s"</span><span class="p">:</span> <span class="n">ctx</span><span class="o">.</span><span class="n">shot</span><span class="o">.</span><span class="n">end_s</span><span class="p">,</span>
         <span class="p">}</span>
     <span class="p">]</span>
-    <span class="n">speaker</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">shot</span><span class="o">.</span><span class="n">characters</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">ctx</span><span class="o">.</span><span class="n">shot</span><span class="o">.</span><span class="n">characters</span> <span class="k">else</span> <span class="s2">&quot;narrator&quot;</span>
-    <span class="n">chars_block</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">speaker</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">shot</span><span class="o">.</span><span class="n">characters</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">ctx</span><span class="o">.</span><span class="n">shot</span><span class="o">.</span><span class="n">characters</span> <span class="k">else</span> <span class="s2">"narrator"</span>
+    <span class="n">chars_block</span> <span class="o">=</span> <span class="s2">""</span>
     <span class="k">if</span> <span class="n">ctx</span><span class="o">.</span><span class="n">shot</span><span class="o">.</span><span class="n">characters</span><span class="p">:</span>
-        <span class="n">chars_block</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;- </span><span class="se">{{</span><span class="s2"> kind: character, id: </span><span class="si">{</span><span class="n">c</span><span class="si">}</span><span class="s2">, store: characters, ref: </span><span class="si">{</span><span class="n">c</span><span class="si">}</span><span class="s2">-v1 </span><span class="se">}}</span><span class="s2">&quot;</span>
+        <span class="n">chars_block</span> <span class="o">=</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"- </span><span class="se">{{</span><span class="s2"> kind: character, id: </span><span class="si">{</span><span class="n">c</span><span class="si">}</span><span class="s2">, store: characters, ref: </span><span class="si">{</span><span class="n">c</span><span class="si">}</span><span class="s2">-v1 </span><span class="se">}}</span><span class="s2">"</span>
             <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">ctx</span><span class="o">.</span><span class="n">shot</span><span class="o">.</span><span class="n">characters</span>
         <span class="p">)</span>
-    <span class="n">env_block</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">env_block</span> <span class="o">=</span> <span class="s2">""</span>
     <span class="k">if</span> <span class="n">ctx</span><span class="o">.</span><span class="n">shot</span><span class="o">.</span><span class="n">environment</span><span class="p">:</span>
         <span class="n">env_block</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;- </span><span class="se">{{</span><span class="s2"> kind: environment, id: </span><span class="si">{</span><span class="n">ctx</span><span class="o">.</span><span class="n">shot</span><span class="o">.</span><span class="n">environment</span><span class="si">}</span><span class="s2">, &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;store: environments, ref: </span><span class="si">{</span><span class="n">ctx</span><span class="o">.</span><span class="n">shot</span><span class="o">.</span><span class="n">environment</span><span class="si">}</span><span class="s2"> </span><span class="se">}}</span><span class="s2">&quot;</span>
+            <span class="sa">f</span><span class="s2">"- </span><span class="se">{{</span><span class="s2"> kind: environment, id: </span><span class="si">{</span><span class="n">ctx</span><span class="o">.</span><span class="n">shot</span><span class="o">.</span><span class="n">environment</span><span class="si">}</span><span class="s2">, "</span>
+            <span class="sa">f</span><span class="s2">"store: environments, ref: </span><span class="si">{</span><span class="n">ctx</span><span class="o">.</span><span class="n">shot</span><span class="o">.</span><span class="n">environment</span><span class="si">}</span><span class="s2"> </span><span class="se">}}</span><span class="s2">"</span>
         <span class="p">)</span>
-    <span class="n">entities</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">b</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="p">(</span><span class="n">env_block</span><span class="p">,</span> <span class="n">chars_block</span><span class="p">)</span> <span class="k">if</span> <span class="n">b</span><span class="p">)</span>
-    <span class="n">dialogue</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">speaker</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">L</span><span class="p">[</span><span class="s1">&#39;text&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">L</span> <span class="ow">in</span> <span class="n">lyrics</span><span class="p">)</span>
-    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;# </span><span class="si">{</span><span class="n">ctx</span><span class="o">.</span><span class="n">shot</span><span class="o">.</span><span class="n">id</span><span class="si">}</span>
+    <span class="n">entities</span> <span class="o">=</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">b</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="p">(</span><span class="n">env_block</span><span class="p">,</span> <span class="n">chars_block</span><span class="p">)</span> <span class="k">if</span> <span class="n">b</span><span class="p">)</span>
+    <span class="c1"># An EMPTY ```yaml entities``` block does not parse — `an`'s markdown reader</span>
+    <span class="c1"># fails on it with a bare `yaml.scanner.ScannerError`, which `orchestrate`</span>
+    <span class="c1"># swallows into `success=False` and this renderer turns into a silent</span>
+    <span class="c1"># fallback to `still`. Both `env` and `chars` are optional in a muvid script,</span>
+    <span class="c1"># so that shot is writable today. `an`'s own serializer omits the block when</span>
+    <span class="c1"># there are no entities; so do we.</span>
+    <span class="n">entities_block</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">```yaml entities</span><span class="se">\n</span><span class="si">{</span><span class="n">entities</span><span class="si">}</span><span class="se">\n</span><span class="s2">```</span><span class="se">\n</span><span class="s2">"</span> <span class="k">if</span> <span class="n">entities</span> <span class="k">else</span> <span class="s2">""</span>
+    <span class="n">dialogue</span> <span class="o">=</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">speaker</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">L</span><span class="p">[</span><span class="s1">'text'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">L</span> <span class="ow">in</span> <span class="n">lyrics</span><span class="p">)</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">"""# </span><span class="si">{</span><span class="n">ctx</span><span class="o">.</span><span class="n">shot</span><span class="o">.</span><span class="n">id</span><span class="si">}</span>
 
 <span class="s2">```yaml meta</span>
 <span class="s2">title: </span><span class="si">{</span><span class="n">ctx</span><span class="o">.</span><span class="n">shot</span><span class="o">.</span><span class="n">id</span><span class="si">}</span>
@@ -275,17 +524,13 @@
 
 <span class="s2">```yaml shot</span>
 <span class="s2">duration: </span><span class="si">{</span><span class="n">duration</span><span class="si">}</span>
-<span class="s2">camera: </span><span class="se">{{</span><span class="s2"> move: static </span><span class="se">}}</span>
+<span class="s2">camera: </span><span class="se">{{</span><span class="s2"> move: </span><span class="si">{</span><span class="n">camera_move</span><span class="si">}</span><span class="s2"> </span><span class="se">}}</span>
 <span class="s2">```</span>
-
-<span class="s2">```yaml entities</span>
-<span class="si">{</span><span class="n">entities</span><span class="si">}</span>
-<span class="s2">```</span>
-
+<span class="si">{</span><span class="n">entities_block</span><span class="si">}</span>
 <span class="s2">```dialogue</span>
 <span class="si">{</span><span class="n">dialogue</span><span class="si">}</span>
 <span class="s2">```</span>
-<span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">"""</span>
 </pre></div>
 
            </div>

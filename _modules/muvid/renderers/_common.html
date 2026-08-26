@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.renderers._common &mdash; muvid 0.0.27 documentation</title>
+  <title>muvid.renderers._common &mdash; muvid 0.0.28 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=cee5022b"></script>
+      <script src="../../../_static/documentation_options.js?v=26ffa1e9"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -132,7 +132,7 @@
            <div itemprop="articleBody">
              
   <h1>Source code for muvid.renderers._common</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Shared helpers for the render strategies.&quot;&quot;&quot;</span>
+<span></span><span class="sd">"""Shared helpers for the render strategies."""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -146,59 +146,59 @@
 <div class="viewcode-block" id="storyboard_prompt">
 <a class="viewcode-back" href="../../../module_docs/muvid/renderers/_common.html#muvid.renderers._common.storyboard_prompt">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">storyboard_prompt</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="n">RenderContext</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">include_lyrics</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compose a single prose prompt for image/video generation.</span>
+<span class="w">    </span><span class="sd">"""Compose a single prose prompt for image/video generation.</span>
 
-<span class="sd">    Combines: shot description, environment, characters&#39; descriptions,</span>
+<span class="sd">    Combines: shot description, environment, characters' descriptions,</span>
 <span class="sd">    framing/camera, the global style, and (optionally) the lyrics</span>
 <span class="sd">    being sung in this slice.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">shot</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">shot</span>
     <span class="n">parts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">if</span> <span class="n">shot</span><span class="o">.</span><span class="n">description</span><span class="p">:</span>
         <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">shot</span><span class="o">.</span><span class="n">description</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">shot</span><span class="o">.</span><span class="n">framing</span> <span class="ow">and</span> <span class="n">shot</span><span class="o">.</span><span class="n">framing</span> <span class="o">!=</span> <span class="s2">&quot;medium&quot;</span><span class="p">:</span>
-        <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;framing: </span><span class="si">{</span><span class="n">shot</span><span class="o">.</span><span class="n">framing</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">shot</span><span class="o">.</span><span class="n">framing</span> <span class="ow">and</span> <span class="n">shot</span><span class="o">.</span><span class="n">framing</span> <span class="o">!=</span> <span class="s2">"medium"</span><span class="p">:</span>
+        <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"framing: </span><span class="si">{</span><span class="n">shot</span><span class="o">.</span><span class="n">framing</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">shot</span><span class="o">.</span><span class="n">camera</span><span class="p">:</span>
-        <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;camera: </span><span class="si">{</span><span class="n">shot</span><span class="o">.</span><span class="n">camera</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"camera: </span><span class="si">{</span><span class="n">shot</span><span class="o">.</span><span class="n">camera</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">shot</span><span class="o">.</span><span class="n">environment</span><span class="p">:</span>
         <span class="n">env_card</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">project</span><span class="o">.</span><span class="n">read_environment_card</span><span class="p">(</span><span class="n">shot</span><span class="o">.</span><span class="n">environment</span><span class="p">)</span>
-        <span class="n">env_desc</span> <span class="o">=</span> <span class="n">env_card</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;description&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">shot</span><span class="o">.</span><span class="n">environment</span>
-        <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;location: </span><span class="si">{</span><span class="n">env_desc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">env_card</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;time_of_day&quot;</span><span class="p">):</span>
-            <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;time: </span><span class="si">{</span><span class="n">env_card</span><span class="p">[</span><span class="s1">&#39;time_of_day&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">env_card</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;lighting&quot;</span><span class="p">):</span>
-            <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;lighting: </span><span class="si">{</span><span class="n">env_card</span><span class="p">[</span><span class="s1">&#39;lighting&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">env_desc</span> <span class="o">=</span> <span class="n">env_card</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"description"</span><span class="p">)</span> <span class="ow">or</span> <span class="n">shot</span><span class="o">.</span><span class="n">environment</span>
+        <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"location: </span><span class="si">{</span><span class="n">env_desc</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">env_card</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"time_of_day"</span><span class="p">):</span>
+            <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"time: </span><span class="si">{</span><span class="n">env_card</span><span class="p">[</span><span class="s1">'time_of_day'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">env_card</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"lighting"</span><span class="p">):</span>
+            <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"lighting: </span><span class="si">{</span><span class="n">env_card</span><span class="p">[</span><span class="s1">'lighting'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">shot</span><span class="o">.</span><span class="n">characters</span><span class="p">:</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">card</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">project</span><span class="o">.</span><span class="n">read_character_card</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
-            <span class="n">desc</span> <span class="o">=</span> <span class="n">card</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;description&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">name</span>
-            <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">desc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">desc</span> <span class="o">=</span> <span class="n">card</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"description"</span><span class="p">)</span> <span class="ow">or</span> <span class="n">name</span>
+            <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">desc</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">FileNotFoundError</span><span class="p">:</span>
             <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">include_lyrics</span> <span class="ow">and</span> <span class="n">ctx</span><span class="o">.</span><span class="n">lyric_lines</span><span class="p">:</span>
-        <span class="n">snippet</span> <span class="o">=</span> <span class="s2">&quot; / &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">L</span><span class="p">[</span><span class="s2">&quot;text&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">L</span> <span class="ow">in</span> <span class="n">ctx</span><span class="o">.</span><span class="n">lyric_lines</span><span class="p">)</span>
-        <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;lyrics being sung: </span><span class="si">{</span><span class="n">snippet</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">snippet</span> <span class="o">=</span> <span class="s2">" / "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">L</span><span class="p">[</span><span class="s2">"text"</span><span class="p">]</span> <span class="k">for</span> <span class="n">L</span> <span class="ow">in</span> <span class="n">ctx</span><span class="o">.</span><span class="n">lyric_lines</span><span class="p">)</span>
+        <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"lyrics being sung: </span><span class="si">{</span><span class="n">snippet</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">ctx</span><span class="o">.</span><span class="n">global_style</span><span class="p">:</span>
-        <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;style: </span><span class="si">{</span><span class="n">ctx</span><span class="o">.</span><span class="n">global_style</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-    <span class="k">return</span> <span class="s2">&quot; | &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">parts</span> <span class="k">if</span> <span class="n">p</span><span class="p">)</span></div>
+        <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"style: </span><span class="si">{</span><span class="n">ctx</span><span class="o">.</span><span class="n">global_style</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="s2">" | "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">parts</span> <span class="k">if</span> <span class="n">p</span><span class="p">)</span></div>
 
 
 
 <div class="viewcode-block" id="upload_local_file_to_temp_url">
 <a class="viewcode-back" href="../../../module_docs/muvid/renderers/_common.html#muvid.renderers._common.upload_local_file_to_temp_url">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">upload_local_file_to_temp_url</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get a public URL for a local file via fal&#39;s storage.</span>
+<span class="w">    </span><span class="sd">"""Get a public URL for a local file via fal's storage.</span>
 
-<span class="sd">    fal.ai&#39;s image/video models all want URLs. We use ``fal_client.upload_file``</span>
-<span class="sd">    if available (which is what falaw&#39;s ``call_fal`` already uses for input</span>
+<span class="sd">    fal.ai's image/video models all want URLs. We use ``fal_client.upload_file``</span>
+<span class="sd">    if available (which is what falaw's ``call_fal`` already uses for input</span>
 <span class="sd">    files via its session helper).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="kn">import</span><span class="w"> </span><span class="nn">fal_client</span>  <span class="c1"># type: ignore</span>
     <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-            <span class="s2">&quot;fal_client not installed; needed to upload local files. &quot;</span>
-            <span class="s2">&quot;pip install fal-client&quot;</span>
+            <span class="s2">"fal_client not installed; needed to upload local files. "</span>
+            <span class="s2">"pip install fal-client"</span>
         <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
     <span class="k">return</span> <span class="n">fal_client</span><span class="o">.</span><span class="n">upload_file</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">))</span></div>
 
@@ -207,7 +207,7 @@
 <div class="viewcode-block" id="trim_video_to_duration">
 <a class="viewcode-back" href="../../../module_docs/muvid/renderers/_common.html#muvid.renderers._common.trim_video_to_duration">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">trim_video_to_duration</span><span class="p">(</span><span class="n">src</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">target_s</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">dst</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Cut/pad a video to exactly ``target_s`` seconds.</span>
+<span class="w">    </span><span class="sd">"""Cut/pad a video to exactly ``target_s`` seconds.</span>
 
 <span class="sd">    - Within 50ms of target → copy unchanged.</span>
 <span class="sd">    - Longer than target → cut to ``target_s`` via mixing.video.</span>
@@ -218,11 +218,11 @@
 <span class="sd">    Errors from ``mixing.video`` propagate. There is deliberately no soft</span>
 <span class="sd">    fallback, because there is nowhere for a soft failure to surface: nothing</span>
 <span class="sd">    downstream re-measures the rendered shot (``facade.status`` reports the</span>
-<span class="sd">    *spec&#39;s* ``duration_s``, and ``verify_video`` only ever sees the composed</span>
+<span class="sd">    *spec's* ``duration_s``, and ``verify_video`` only ever sees the composed</span>
 <span class="sd">    master). A shot copied through at its original length is therefore</span>
 <span class="sd">    invisible until the whole video has drifted out of sync with the song —</span>
 <span class="sd">    which is exactly how an 8s clip stayed 5.87s for months.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">mixing.video</span><span class="w"> </span><span class="kn">import</span> <span class="n">Video</span>
 
     <span class="n">v</span> <span class="o">=</span> <span class="n">Video</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">src</span><span class="p">))</span>
@@ -248,13 +248,13 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_pad_video_to_duration</span><span class="p">(</span>
     <span class="n">src</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">target_s</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">dst</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">pad_seconds</span><span class="p">:</span> <span class="nb">float</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Pad ``src`` to ``target_s`` by holding the last frame + silencing audio.</span>
+<span class="w">    </span><span class="sd">"""Pad ``src`` to ``target_s`` by holding the last frame + silencing audio.</span>
 
-<span class="sd">    Uses ffmpeg&#39;s ``tpad=stop_mode=clone`` (video) and ``apad`` (audio) filters</span>
+<span class="sd">    Uses ffmpeg's ``tpad=stop_mode=clone`` (video) and ``apad`` (audio) filters</span>
 <span class="sd">    in a single call. Re-encodes (filter graph requires it). Raises</span>
 <span class="sd">    ``subprocess.CalledProcessError`` / ``FileNotFoundError`` on an ffmpeg</span>
 <span class="sd">    failure rather than writing a short file to ``dst``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
 
     <span class="k">if</span> <span class="n">pad_seconds</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
@@ -264,31 +264,31 @@
 
     <span class="c1"># Whole-millisecond stop_duration is what tpad takes (in seconds, float).</span>
     <span class="n">cmd</span> <span class="o">=</span> <span class="p">[</span>
-        <span class="s2">&quot;ffmpeg&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;-y&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;-i&quot;</span><span class="p">,</span>
+        <span class="s2">"ffmpeg"</span><span class="p">,</span>
+        <span class="s2">"-y"</span><span class="p">,</span>
+        <span class="s2">"-i"</span><span class="p">,</span>
         <span class="nb">str</span><span class="p">(</span><span class="n">src</span><span class="p">),</span>
-        <span class="s2">&quot;-vf&quot;</span><span class="p">,</span>
-        <span class="sa">f</span><span class="s2">&quot;tpad=stop_mode=clone:stop_duration=</span><span class="si">{</span><span class="n">pad_seconds</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;-af&quot;</span><span class="p">,</span>
-        <span class="sa">f</span><span class="s2">&quot;apad=pad_dur=</span><span class="si">{</span><span class="n">pad_seconds</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
-        <span class="c1"># -t caps the output length so any rounding can&#39;t push past target.</span>
-        <span class="s2">&quot;-t&quot;</span><span class="p">,</span>
-        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">target_s</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="s2">"-vf"</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s2">"tpad=stop_mode=clone:stop_duration=</span><span class="si">{</span><span class="n">pad_seconds</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+        <span class="s2">"-af"</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s2">"apad=pad_dur=</span><span class="si">{</span><span class="n">pad_seconds</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+        <span class="c1"># -t caps the output length so any rounding can't push past target.</span>
+        <span class="s2">"-t"</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">target_s</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
         <span class="c1"># Sane defaults: H.264 + AAC, faststart for streaming.</span>
-        <span class="s2">&quot;-c:v&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;libx264&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;-pix_fmt&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;yuv420p&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;-c:a&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;aac&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;-movflags&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;+faststart&quot;</span><span class="p">,</span>
+        <span class="s2">"-c:v"</span><span class="p">,</span>
+        <span class="s2">"libx264"</span><span class="p">,</span>
+        <span class="s2">"-pix_fmt"</span><span class="p">,</span>
+        <span class="s2">"yuv420p"</span><span class="p">,</span>
+        <span class="s2">"-c:a"</span><span class="p">,</span>
+        <span class="s2">"aac"</span><span class="p">,</span>
+        <span class="s2">"-movflags"</span><span class="p">,</span>
+        <span class="s2">"+faststart"</span><span class="p">,</span>
         <span class="nb">str</span><span class="p">(</span><span class="n">dst</span><span class="p">),</span>
     <span class="p">]</span>
     <span class="c1"># No soft fallback here either: a copy lands a video ``pad_seconds`` too</span>
     <span class="c1"># short at a path that promises ``target_s``, and the QA report this used to</span>
-    <span class="c1"># defer to (avp.inspect.shot_report) is never run per-shot. Let ffmpeg&#39;s own</span>
+    <span class="c1"># defer to (avp.inspect.shot_report) is never run per-shot. Let ffmpeg's own</span>
     <span class="c1"># error — missing binary, or a build without tpad/apad — reach the caller</span>
     <span class="c1"># with its captured stderr attached.</span>
     <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span> <span class="n">check</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">capture_output</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>

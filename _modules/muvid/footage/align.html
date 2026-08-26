@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.footage.align &mdash; muvid 0.0.27 documentation</title>
+  <title>muvid.footage.align &mdash; muvid 0.0.28 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=cee5022b"></script>
+      <script src="../../../_static/documentation_options.js?v=26ffa1e9"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -131,13 +131,13 @@
            <div itemprop="articleBody">
              
   <h1>Source code for muvid.footage.align</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Align a set of footage clips to the song — a thin wrapper over ``mixing.audio``.</span>
+<span></span><span class="sd">"""Align a set of footage clips to the song — a thin wrapper over ``mixing.audio``.</span>
 
 <span class="sd">Each clip is a video file; its audio track (the different-device capture of the song) is</span>
-<span class="sd">what we align. ``mixing.audio.align_clips_to_reference`` loads each clip&#39;s audio via</span>
+<span class="sd">what we align. ``mixing.audio.align_clips_to_reference`` loads each clip's audio via</span>
 <span class="sd">pydub/ffmpeg (so a video path works directly — no separate extraction, no moviepy), and</span>
 <span class="sd">returns offsets + a scale-invariant confidence + coverage clamped to the song timeline.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -158,14 +158,14 @@
     <span class="n">song_duration</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">sample_rate</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">ALIGN_SAMPLE_RATE</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">FootageAlignment</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Align ``clips`` (``[(clip_id, clip_path), ...]``) to the song at ``song_path``.</span>
+<span class="w">    </span><span class="sd">"""Align ``clips`` (``[(clip_id, clip_path), ...]``) to the song at ``song_path``.</span>
 
 <span class="sd">    Returns one :class:`~muvid.footage.edl.FootageAlignment` per clip, keyed by ``clip_id``</span>
 <span class="sd">    — including clips that do not overlap the song, which carry ``overlaps=False`` rather</span>
 <span class="sd">    than being omitted. Nothing may vanish from the record just because it matched badly.</span>
 <span class="sd">    Heavy deps (mixing.audio → numpy/scipy/pydub) are imported lazily here so importing the</span>
 <span class="sd">    genre stays light.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">mixing.audio</span><span class="w"> </span><span class="kn">import</span> <span class="n">align_clips_to_reference</span>  <span class="c1"># lazy: heavy</span>
 
     <span class="n">clip_ids</span> <span class="o">=</span> <span class="p">[</span><span class="n">cid</span> <span class="k">for</span> <span class="n">cid</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">clips</span><span class="p">]</span>

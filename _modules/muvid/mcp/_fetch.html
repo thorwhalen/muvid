@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.mcp._fetch &mdash; muvid 0.0.27 documentation</title>
+  <title>muvid.mcp._fetch &mdash; muvid 0.0.28 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=cee5022b"></script>
+      <script src="../../../_static/documentation_options.js?v=26ffa1e9"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -132,30 +132,30 @@
            <div itemprop="articleBody">
              
   <h1>Source code for muvid.mcp._fetch</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;SSRF-hardened fetch of a caller-supplied media URL (server-side, shared prod box).</span>
+<span></span><span class="sd">"""SSRF-hardened fetch of a caller-supplied media URL (server-side, shared prod box).</span>
 
 <span class="sd">The ``music-visualizer`` tools fetch a user-given audio (and optional cover) URL on the</span>
 <span class="sd">server, so an unguarded fetch is a server-side request forgery hole: a URL could point</span>
 <span class="sd">at localhost, cloud metadata (169.254.169.254), or a private/link-local address. This</span>
-<span class="sd">module is the guard — a deliberately minimal, dependency-free mirror of braidio&#39;s</span>
+<span class="sd">module is the guard — a deliberately minimal, dependency-free mirror of braidio's</span>
 <span class="sd">``braidio.mcp._docs`` (which muvid must not import — wrong dependency direction). It is</span>
 <span class="sd">no weaker than that guard:</span>
 
 <span class="sd">- **scheme** must be ``http``/``https`` on ports {80, 443};</span>
 <span class="sd">- the **host must resolve to a public address** (:pyattr:`ipaddress.is_global`), which</span>
 <span class="sd">  rejects loopback/private/link-local/reserved/carrier-grade-NAT, IPv4-mapped IPv6 too;</span>
-<span class="sd">- **redirects are NOT auto-followed** — every hop&#39;s ``Location`` is re-validated, so a</span>
-<span class="sd">  public URL can&#39;t 302 into an internal one;</span>
+<span class="sd">- **redirects are NOT auto-followed** — every hop's ``Location`` is re-validated, so a</span>
+<span class="sd">  public URL can't 302 into an internal one;</span>
 <span class="sd">- the whole fetch is bounded by a wall-clock deadline, a redirect cap, and a total-bytes</span>
-<span class="sd">  cap (chunked read), so a slow-loris or redirect loop can&#39;t pin a worker.</span>
+<span class="sd">  cap (chunked read), so a slow-loris or redirect loop can't pin a worker.</span>
 
 <span class="sd">Because audio is legitimately tens of MB, the byte cap is larger than a document cap and</span>
 <span class="sd">env-tunable. A per-*duration* cap (a long song is cheap to download but expensive to</span>
 <span class="sd">render) is enforced separately, on the render path, via ``muvid.visualize.media_duration``.</span>
 
-<span class="sd">A shared, zero-dep safe-fetch util (folding braidio&#39;s and this one together) is a filed</span>
+<span class="sd">A shared, zero-dep safe-fetch util (folding braidio's and this one together) is a filed</span>
 <span class="sd">follow-up; until then each connector keeps its own guard rather than sharing a weaker one.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -170,8 +170,8 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">urllib.parse</span><span class="w"> </span><span class="kn">import</span> <span class="n">urlparse</span>
 
 <span class="c1">#: Total-bytes cap for a media fetch (env ``MUVID_FETCH_MAX_BYTES``; default 60 MB —</span>
-<span class="c1">#: audio is legitimately large, matching braidio&#39;s audio-download cap intent).</span>
-<span class="n">MAX_BYTES</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;MUVID_FETCH_MAX_BYTES&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="mi">60</span> <span class="o">*</span> <span class="mi">1024</span> <span class="o">*</span> <span class="mi">1024</span><span class="p">)))</span>
+<span class="c1">#: audio is legitimately large, matching braidio's audio-download cap intent).</span>
+<span class="n">MAX_BYTES</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"MUVID_FETCH_MAX_BYTES"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="mi">60</span> <span class="o">*</span> <span class="mi">1024</span> <span class="o">*</span> <span class="mi">1024</span><span class="p">)))</span>
 <span class="c1">#: Redirect-hop cap (each hop is re-validated).</span>
 <span class="n">MAX_REDIRECTS</span> <span class="o">=</span> <span class="mi">5</span>
 <span class="c1">#: Floor for the wall-clock deadline, in seconds (env ``MUVID_FETCH_TIMEOUT_S``).</span>
@@ -179,60 +179,60 @@
 <span class="c1">#: This is a FLOOR, not the deadline: see :func:`deadline_for`. A constant 60 s against a</span>
 <span class="c1">#: 400 MB byte cap demanded a sustained 6.7 MB/s or the fetch died — a byte cap and a time</span>
 <span class="c1">#: cap that contradict each other is a misconfiguration, not a policy (muvid#24 B1).</span>
-<span class="n">TOTAL_TIMEOUT_S</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;MUVID_FETCH_TIMEOUT_S&quot;</span><span class="p">,</span> <span class="s2">&quot;60&quot;</span><span class="p">))</span>
+<span class="n">TOTAL_TIMEOUT_S</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"MUVID_FETCH_TIMEOUT_S"</span><span class="p">,</span> <span class="s2">"60"</span><span class="p">))</span>
 <span class="c1">#: Slowest transfer rate a fetch is expected to sustain, in bytes/second</span>
 <span class="c1">#: (env ``MUVID_FETCH_MIN_RATE_BPS``; default 1 MB/s). The deadline for a given byte cap is</span>
 <span class="c1">#: derived from this, so raising the cap cannot silently make fetches unachievable.</span>
-<span class="n">MIN_RATE_BPS</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;MUVID_FETCH_MIN_RATE_BPS&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="mi">1024</span> <span class="o">*</span> <span class="mi">1024</span><span class="p">)))</span>
+<span class="n">MIN_RATE_BPS</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"MUVID_FETCH_MIN_RATE_BPS"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="mi">1024</span> <span class="o">*</span> <span class="mi">1024</span><span class="p">)))</span>
 
 
 <div class="viewcode-block" id="deadline_for">
 <a class="viewcode-back" href="../../../module_docs/muvid/mcp/_fetch.html#muvid.mcp._fetch.deadline_for">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">deadline_for</span><span class="p">(</span><span class="n">max_bytes</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Seconds allowed for a transfer of up to ``max_bytes``.</span>
+<span class="w">    </span><span class="sd">"""Seconds allowed for a transfer of up to ``max_bytes``.</span>
 
 <span class="sd">    ``TOTAL_TIMEOUT_S`` as a floor, plus the time ``max_bytes`` needs at</span>
 <span class="sd">    :data:`MIN_RATE_BPS`. Keeps the time budget and the size budget consistent by</span>
 <span class="sd">    construction: a 400 MB clip gets ~460 s rather than the 60 s that used to kill it.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">return</span> <span class="n">TOTAL_TIMEOUT_S</span> <span class="o">+</span> <span class="nb">max</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">max_bytes</span><span class="p">)</span> <span class="o">/</span> <span class="nb">max</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">MIN_RATE_BPS</span><span class="p">)</span></div>
 
 
 
 <span class="c1">#: Chunk size for the bounded read.</span>
 <span class="n">_CHUNK</span> <span class="o">=</span> <span class="mi">64</span> <span class="o">*</span> <span class="mi">1024</span>
-<span class="n">_ALLOWED_SCHEMES</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;http&quot;</span><span class="p">,</span> <span class="s2">&quot;https&quot;</span><span class="p">)</span>
+<span class="n">_ALLOWED_SCHEMES</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"http"</span><span class="p">,</span> <span class="s2">"https"</span><span class="p">)</span>
 <span class="n">_ALLOWED_PORTS</span> <span class="o">=</span> <span class="p">(</span><span class="mi">80</span><span class="p">,</span> <span class="mi">443</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="FetchError">
 <a class="viewcode-back" href="../../../module_docs/muvid/mcp/_fetch.html#muvid.mcp._fetch.FetchError">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">FetchError</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A media fetch was rejected (unsafe target) or failed (network/size/timeout).&quot;&quot;&quot;</span></div>
+<span class="w">    </span><span class="sd">"""A media fetch was rejected (unsafe target) or failed (network/size/timeout)."""</span></div>
 
 
 
 <div class="viewcode-block" id="PermissionDeniedError">
 <a class="viewcode-back" href="../../../module_docs/muvid/mcp/_fetch.html#muvid.mcp._fetch.PermissionDeniedError">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">PermissionDeniedError</span><span class="p">(</span><span class="n">FetchError</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The link is private or not shared — no amount of retrying or re-normalising helps.</span>
+<span class="w">    </span><span class="sd">"""The link is private or not shared — no amount of retrying or re-normalising helps.</span>
 
 <span class="sd">    A *subclass* of :class:`FetchError` on purpose: every existing ``except FetchError``</span>
-<span class="sd">    keeps catching it, so no caller has to change. Callers that want to tell &quot;fix your</span>
-<span class="sd">    sharing settings&quot; apart from &quot;the network hiccuped&quot; now can.</span>
-<span class="sd">    &quot;&quot;&quot;</span></div>
+<span class="sd">    keeps catching it, so no caller has to change. Callers that want to tell "fix your</span>
+<span class="sd">    sharing settings" apart from "the network hiccuped" now can.</span>
+<span class="sd">    """</span></div>
 
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">_NoRedirect</span><span class="p">(</span><span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">HTTPRedirectHandler</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Never auto-follow a redirect — the caller re-validates every hop by hand.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Never auto-follow a redirect — the caller re-validates every hop by hand."""</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">redirect_request</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>  <span class="c1"># noqa: D401, ARG002</span>
         <span class="k">return</span> <span class="kc">None</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_host_is_public</span><span class="p">(</span><span class="n">host</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;True iff EVERY address ``host`` resolves to is globally routable.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""True iff EVERY address ``host`` resolves to is globally routable."""</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">infos</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">getaddrinfo</span><span class="p">(</span><span class="n">host</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
     <span class="k">except</span> <span class="n">socket</span><span class="o">.</span><span class="n">gaierror</span><span class="p">:</span>
@@ -254,35 +254,35 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_validate_target</span><span class="p">(</span><span class="n">uri</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Raise :class:`FetchError` unless ``uri`` is a safe http(s) public target.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Raise :class:`FetchError` unless ``uri`` is a safe http(s) public target."""</span>
     <span class="n">parts</span> <span class="o">=</span> <span class="n">urlparse</span><span class="p">(</span><span class="n">uri</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">parts</span><span class="o">.</span><span class="n">scheme</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_ALLOWED_SCHEMES</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="n">FetchError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;unsupported URL scheme </span><span class="si">{</span><span class="n">parts</span><span class="o">.</span><span class="n">scheme</span><span class="si">!r}</span><span class="s2"> (http/https only)&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">FetchError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"unsupported URL scheme </span><span class="si">{</span><span class="n">parts</span><span class="o">.</span><span class="n">scheme</span><span class="si">!r}</span><span class="s2"> (http/https only)"</span><span class="p">)</span>
     <span class="n">host</span> <span class="o">=</span> <span class="n">parts</span><span class="o">.</span><span class="n">hostname</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">host</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="n">FetchError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;URL has no host: </span><span class="si">{</span><span class="n">uri</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
-    <span class="n">port</span> <span class="o">=</span> <span class="n">parts</span><span class="o">.</span><span class="n">port</span> <span class="ow">or</span> <span class="p">(</span><span class="mi">443</span> <span class="k">if</span> <span class="n">parts</span><span class="o">.</span><span class="n">scheme</span> <span class="o">==</span> <span class="s2">&quot;https&quot;</span> <span class="k">else</span> <span class="mi">80</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">FetchError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"URL has no host: </span><span class="si">{</span><span class="n">uri</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">port</span> <span class="o">=</span> <span class="n">parts</span><span class="o">.</span><span class="n">port</span> <span class="ow">or</span> <span class="p">(</span><span class="mi">443</span> <span class="k">if</span> <span class="n">parts</span><span class="o">.</span><span class="n">scheme</span> <span class="o">==</span> <span class="s2">"https"</span> <span class="k">else</span> <span class="mi">80</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">port</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_ALLOWED_PORTS</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="n">FetchError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;port </span><span class="si">{</span><span class="n">port</span><span class="si">}</span><span class="s2"> not allowed (80/443 only)&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">FetchError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"port </span><span class="si">{</span><span class="n">port</span><span class="si">}</span><span class="s2"> not allowed (80/443 only)"</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">_host_is_public</span><span class="p">(</span><span class="n">host</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="n">FetchError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;host </span><span class="si">{</span><span class="n">host</span><span class="si">!r}</span><span class="s2"> does not resolve to a public address&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">FetchError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"host </span><span class="si">{</span><span class="n">host</span><span class="si">!r}</span><span class="s2"> does not resolve to a public address"</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_read_bounded</span><span class="p">(</span><span class="n">resp</span><span class="p">,</span> <span class="n">deadline</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytes</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Read the body in chunks, enforcing the byte cap and the wall-clock deadline.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Read the body in chunks, enforcing the byte cap and the wall-clock deadline."""</span>
     <span class="n">chunks</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">bytes</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">total</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="k">while</span> <span class="n">total</span> <span class="o">&lt;=</span> <span class="n">MAX_BYTES</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">time</span><span class="o">.</span><span class="n">monotonic</span><span class="p">()</span> <span class="o">&gt;</span> <span class="n">deadline</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">FetchError</span><span class="p">(</span><span class="s2">&quot;fetch exceeded the time budget&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">FetchError</span><span class="p">(</span><span class="s2">"fetch exceeded the time budget"</span><span class="p">)</span>
         <span class="n">chunk</span> <span class="o">=</span> <span class="n">resp</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">_CHUNK</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">chunk</span><span class="p">:</span>
             <span class="k">break</span>
         <span class="n">total</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
         <span class="n">chunks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
-    <span class="n">data</span> <span class="o">=</span> <span class="sa">b</span><span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">chunks</span><span class="p">)</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="sa">b</span><span class="s2">""</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">chunks</span><span class="p">)</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">MAX_BYTES</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="n">FetchError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;resource exceeds the </span><span class="si">{</span><span class="n">MAX_BYTES</span><span class="si">}</span><span class="s2">-byte limit&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">FetchError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"resource exceeds the </span><span class="si">{</span><span class="n">MAX_BYTES</span><span class="si">}</span><span class="s2">-byte limit"</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">data</span>
 
 
@@ -291,49 +291,49 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_open_following_redirects</span><span class="p">(</span><span class="n">uri</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">deadline</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Open ``uri``, re-validating scheme/host/port at EVERY hop; return the response.</span>
+<span class="w">    </span><span class="sd">"""Open ``uri``, re-validating scheme/host/port at EVERY hop; return the response.</span>
 
 <span class="sd">    Redirects are not auto-followed (``_NoRedirect``); each ``Location`` is re-validated,</span>
-<span class="sd">    so a public URL can&#39;t 302 into an internal one. The caller consumes + closes the body.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    so a public URL can't 302 into an internal one. The caller consumes + closes the body.</span>
+<span class="sd">    """</span>
     <span class="n">current</span> <span class="o">=</span> <span class="n">uri</span>
     <span class="n">opener</span> <span class="o">=</span> <span class="n">_opener</span><span class="p">()</span>
     <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">MAX_REDIRECTS</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
         <span class="n">_validate_target</span><span class="p">(</span><span class="n">current</span><span class="p">)</span>
         <span class="n">remaining</span> <span class="o">=</span> <span class="n">deadline</span> <span class="o">-</span> <span class="n">time</span><span class="o">.</span><span class="n">monotonic</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">remaining</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">FetchError</span><span class="p">(</span><span class="s2">&quot;fetch exceeded the time budget&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">FetchError</span><span class="p">(</span><span class="s2">"fetch exceeded the time budget"</span><span class="p">)</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">opener</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">current</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">remaining</span><span class="p">)</span>
         <span class="k">except</span> <span class="n">urllib</span><span class="o">.</span><span class="n">error</span><span class="o">.</span><span class="n">HTTPError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">code</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">301</span><span class="p">,</span> <span class="mi">302</span><span class="p">,</span> <span class="mi">303</span><span class="p">,</span> <span class="mi">307</span><span class="p">,</span> <span class="mi">308</span><span class="p">):</span>  <span class="c1"># surfaced by _NoRedirect</span>
-                <span class="n">loc</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;Location&quot;</span><span class="p">)</span>
+                <span class="n">loc</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"Location"</span><span class="p">)</span>
                 <span class="k">if</span> <span class="ow">not</span> <span class="n">loc</span><span class="p">:</span>
-                    <span class="k">raise</span> <span class="n">FetchError</span><span class="p">(</span><span class="s2">&quot;redirect without a Location&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+                    <span class="k">raise</span> <span class="n">FetchError</span><span class="p">(</span><span class="s2">"redirect without a Location"</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
                 <span class="n">current</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">parse</span><span class="o">.</span><span class="n">urljoin</span><span class="p">(</span><span class="n">current</span><span class="p">,</span> <span class="n">loc</span><span class="p">)</span>
                 <span class="k">continue</span>  <span class="c1"># re-validate the redirect target on the next iteration</span>
             <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">code</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">401</span><span class="p">,</span> <span class="mi">403</span><span class="p">):</span>
                 <span class="c1"># Not transient, and not something a different URL form fixes.</span>
                 <span class="k">raise</span> <span class="n">PermissionDeniedError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;the link is private or not shared (HTTP </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">code</span><span class="si">}</span><span class="s2">). Set it to &quot;</span>
-                    <span class="s2">&quot;anyone-with-the-link in the provider&#39;s UI, or use a &quot;</span>
-                    <span class="s2">&quot;direct-download URL. Retrying will not help.&quot;</span>
+                    <span class="sa">f</span><span class="s2">"the link is private or not shared (HTTP </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">code</span><span class="si">}</span><span class="s2">). Set it to "</span>
+                    <span class="s2">"anyone-with-the-link in the provider's UI, or use a "</span>
+                    <span class="s2">"direct-download URL. Retrying will not help."</span>
                 <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
-            <span class="k">raise</span> <span class="n">FetchError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;fetch failed: HTTP </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">code</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+            <span class="k">raise</span> <span class="n">FetchError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"fetch failed: HTTP </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">code</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
         <span class="k">except</span> <span class="p">(</span><span class="n">urllib</span><span class="o">.</span><span class="n">error</span><span class="o">.</span><span class="n">URLError</span><span class="p">,</span> <span class="ne">OSError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">FetchError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;fetch failed: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
-    <span class="k">raise</span> <span class="n">FetchError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;too many redirects (&gt;</span><span class="si">{</span><span class="n">MAX_REDIRECTS</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">FetchError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"fetch failed: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+    <span class="k">raise</span> <span class="n">FetchError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"too many redirects (&gt;</span><span class="si">{</span><span class="n">MAX_REDIRECTS</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="fetch_bytes">
 <a class="viewcode-back" href="../../../module_docs/muvid/mcp/_fetch.html#muvid.mcp._fetch.fetch_bytes">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">fetch_bytes</span><span class="p">(</span><span class="n">uri</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytes</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Fetch ``uri``&#39;s body as bytes (SSRF-guarded, byte/time-capped, in-memory).</span>
+<span class="w">    </span><span class="sd">"""Fetch ``uri``'s body as bytes (SSRF-guarded, byte/time-capped, in-memory).</span>
 
 <span class="sd">    For SMALL resources (audio, images) — buffers the whole body in RAM. Use</span>
 <span class="sd">    :func:`fetch_to_file_streaming` for large media (video) so a big file is written</span>
 <span class="sd">    straight to disk rather than materialized (~2x) in memory.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">deadline</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">monotonic</span><span class="p">()</span> <span class="o">+</span> <span class="n">TOTAL_TIMEOUT_S</span>
     <span class="k">with</span> <span class="n">_open_following_redirects</span><span class="p">(</span><span class="n">uri</span><span class="p">,</span> <span class="n">deadline</span><span class="p">)</span> <span class="k">as</span> <span class="n">resp</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">_read_bounded</span><span class="p">(</span><span class="n">resp</span><span class="p">,</span> <span class="n">deadline</span><span class="p">)</span></div>
@@ -343,7 +343,7 @@
 <div class="viewcode-block" id="fetch_to_file">
 <a class="viewcode-back" href="../../../module_docs/muvid/mcp/_fetch.html#muvid.mcp._fetch.fetch_to_file">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">fetch_to_file</span><span class="p">(</span><span class="n">uri</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">dest</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Fetch a SMALL ``uri`` to ``dest`` (in-memory then written). Returns ``dest``.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Fetch a SMALL ``uri`` to ``dest`` (in-memory then written). Returns ``dest``."""</span>
     <span class="n">data</span> <span class="o">=</span> <span class="n">fetch_bytes</span><span class="p">(</span><span class="n">uri</span><span class="p">)</span>
     <span class="n">dest</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">dest</span><span class="o">.</span><span class="n">write_bytes</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
@@ -354,29 +354,29 @@
 <div class="viewcode-block" id="fetch_to_file_streaming">
 <a class="viewcode-back" href="../../../module_docs/muvid/mcp/_fetch.html#muvid.mcp._fetch.fetch_to_file_streaming">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">fetch_to_file_streaming</span><span class="p">(</span>
-    <span class="n">uri</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">dest</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">max_bytes</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">expect_kind</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">uri</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">dest</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">max_bytes</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">expect_kind</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Stream a (large) ``uri`` straight to ``dest``, chunk by chunk (SSRF/size/time-bound).</span>
+<span class="w">    </span><span class="sd">"""Stream a (large) ``uri`` straight to ``dest``, chunk by chunk (SSRF/size/time-bound).</span>
 
 <span class="sd">    For video footage: the body is written to disk as it arrives and the running total is</span>
 <span class="sd">    checked against ``max_bytes`` — never buffered whole in RAM. A partial file is removed</span>
 <span class="sd">    on any failure. Returns ``dest``.</span>
 
-<span class="sd">    ``expect_kind`` (``&#39;video&#39;`` / ``&#39;audio&#39;`` / …) asserts the payload&#39;s magic bytes before</span>
+<span class="sd">    ``expect_kind`` (``'video'`` / ``'audio'`` / …) asserts the payload's magic bytes before</span>
 <span class="sd">    a single byte reaches the file. Without it, a share link that answers ``HTTP 200`` with</span>
 <span class="sd">    a sign-in page writes ~900 KB of HTML to ``dest``, and the caller discovers it only when</span>
-<span class="sd">    ffprobe fails with &quot;Invalid data found when processing input&quot; — technically loud,</span>
+<span class="sd">    ffprobe fails with "Invalid data found when processing input" — technically loud,</span>
 <span class="sd">    practically unhelpful. See :mod:`graze.content_kind`.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">deadline</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">monotonic</span><span class="p">()</span> <span class="o">+</span> <span class="n">deadline_for</span><span class="p">(</span><span class="n">max_bytes</span><span class="p">)</span>
     <span class="n">dest</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">total</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="k">try</span><span class="p">:</span>
-        <span class="k">with</span> <span class="n">_open_following_redirects</span><span class="p">(</span><span class="n">uri</span><span class="p">,</span> <span class="n">deadline</span><span class="p">)</span> <span class="k">as</span> <span class="n">resp</span><span class="p">,</span> <span class="nb">open</span><span class="p">(</span><span class="n">dest</span><span class="p">,</span> <span class="s2">&quot;wb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">_open_following_redirects</span><span class="p">(</span><span class="n">uri</span><span class="p">,</span> <span class="n">deadline</span><span class="p">)</span> <span class="k">as</span> <span class="n">resp</span><span class="p">,</span> <span class="nb">open</span><span class="p">(</span><span class="n">dest</span><span class="p">,</span> <span class="s2">"wb"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">_kind_guarded</span><span class="p">(</span><span class="n">_iter_chunks</span><span class="p">(</span><span class="n">resp</span><span class="p">,</span> <span class="n">deadline</span><span class="p">),</span> <span class="n">expect_kind</span><span class="p">,</span> <span class="n">uri</span><span class="p">):</span>
                 <span class="n">total</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">total</span> <span class="o">&gt;</span> <span class="n">max_bytes</span><span class="p">:</span>
-                    <span class="k">raise</span> <span class="n">FetchError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;resource exceeds the </span><span class="si">{</span><span class="n">max_bytes</span><span class="si">}</span><span class="s2">-byte limit&quot;</span><span class="p">)</span>
+                    <span class="k">raise</span> <span class="n">FetchError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"resource exceeds the </span><span class="si">{</span><span class="n">max_bytes</span><span class="si">}</span><span class="s2">-byte limit"</span><span class="p">)</span>
                 <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
     <span class="k">except</span> <span class="ne">BaseException</span><span class="p">:</span>
         <span class="n">dest</span><span class="o">.</span><span class="n">unlink</span><span class="p">(</span><span class="n">missing_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -386,10 +386,10 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_iter_chunks</span><span class="p">(</span><span class="n">resp</span><span class="p">,</span> <span class="n">deadline</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Yield the response body in chunks, enforcing the wall-clock deadline.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Yield the response body in chunks, enforcing the wall-clock deadline."""</span>
     <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">time</span><span class="o">.</span><span class="n">monotonic</span><span class="p">()</span> <span class="o">&gt;</span> <span class="n">deadline</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">FetchError</span><span class="p">(</span><span class="s2">&quot;fetch exceeded the time budget&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">FetchError</span><span class="p">(</span><span class="s2">"fetch exceeded the time budget"</span><span class="p">)</span>
         <span class="n">chunk</span> <span class="o">=</span> <span class="n">resp</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">_CHUNK</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">chunk</span><span class="p">:</span>
             <span class="k">return</span>
@@ -397,15 +397,15 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_kind_guarded</span><span class="p">(</span><span class="n">chunks</span><span class="p">,</span> <span class="n">expect_kind</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">uri</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Assert the payload kind before any chunk escapes, when a kind was declared.</span>
+<span class="w">    </span><span class="sd">"""Assert the payload kind before any chunk escapes, when a kind was declared.</span>
 
-<span class="sd">    The other half of the permission story lives here, and it is graze&#39;s: when media</span>
-<span class="sd">    was asked for and markup arrived, ``ContentKindMismatch`` already says &quot;the usual</span>
-<span class="sd">    cause is a share link that is not public: set it to anyone-with-the-link&quot;. That</span>
+<span class="sd">    The other half of the permission story lives here, and it is graze's: when media</span>
+<span class="sd">    was asked for and markup arrived, ``ContentKindMismatch`` already says "the usual</span>
+<span class="sd">    cause is a share link that is not public: set it to anyone-with-the-link". That</span>
 <span class="sd">    message is passed through verbatim rather than reworded — it is the better</span>
 <span class="sd">    diagnosis, and a private share link answers ``HTTP 200``, so there is no status</span>
 <span class="sd">    code for :func:`_open_following_redirects` to classify.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">expect_kind</span><span class="p">:</span>
         <span class="k">yield from</span> <span class="n">chunks</span>
         <span class="k">return</span>
@@ -423,11 +423,11 @@
     <span class="n">archive</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
     <span class="n">dest_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
-    <span class="n">extensions</span><span class="p">:</span> <span class="s2">&quot;tuple[str, ...]&quot;</span><span class="p">,</span>
+    <span class="n">extensions</span><span class="p">:</span> <span class="s2">"tuple[str, ...]"</span><span class="p">,</span>
     <span class="n">max_members</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="n">max_member_bytes</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;tuple[list[Path], list[dict]]&quot;</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Extract media members of ``archive`` into ``dest_dir``: ``(paths, skipped)``.</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"tuple[list[Path], list[dict]]"</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Extract media members of ``archive`` into ``dest_dir``: ``(paths, skipped)``.</span>
 
 <span class="sd">    A folder share link resolves to ONE zip of N files, so this is what turns a shoot into</span>
 <span class="sd">    clips. Returns the extracted paths in archive order, plus a ``skipped`` list of</span>
@@ -438,7 +438,7 @@
 <span class="sd">    Members are filtered by extension, capped in count and in per-member size, and their</span>
 <span class="sd">    names are flattened to a basename — which also closes zip-slip (a member named</span>
 <span class="sd">    ``../../etc/x`` can never escape ``dest_dir``).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="kn">import</span><span class="w"> </span><span class="nn">zipfile</span>
 
     <span class="n">dest_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -447,32 +447,32 @@
     <span class="k">try</span><span class="p">:</span>
         <span class="n">zf</span> <span class="o">=</span> <span class="n">zipfile</span><span class="o">.</span><span class="n">ZipFile</span><span class="p">(</span><span class="n">archive</span><span class="p">)</span>
     <span class="k">except</span> <span class="n">zipfile</span><span class="o">.</span><span class="n">BadZipFile</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="n">FetchError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;the downloaded archive is not a readable ZIP: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+        <span class="k">raise</span> <span class="n">FetchError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"the downloaded archive is not a readable ZIP: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
     <span class="k">with</span> <span class="n">zf</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">info</span> <span class="ow">in</span> <span class="n">zf</span><span class="o">.</span><span class="n">infolist</span><span class="p">():</span>
             <span class="n">name</span> <span class="o">=</span> <span class="n">info</span><span class="o">.</span><span class="n">filename</span>
             <span class="n">base</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">name</span>  <span class="c1"># flattens any path -&gt; zip-slip cannot escape</span>
-            <span class="k">if</span> <span class="n">info</span><span class="o">.</span><span class="n">is_dir</span><span class="p">()</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">base</span> <span class="ow">or</span> <span class="n">base</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">info</span><span class="o">.</span><span class="n">is_dir</span><span class="p">()</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">base</span> <span class="ow">or</span> <span class="n">base</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"."</span><span class="p">):</span>
                 <span class="k">continue</span>
-            <span class="k">if</span> <span class="n">Path</span><span class="p">(</span><span class="n">base</span><span class="p">)</span><span class="o">.</span><span class="n">suffix</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">extensions</span><span class="p">:</span>
-                <span class="n">skipped</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">name</span><span class="p">,</span> <span class="s2">&quot;reason&quot;</span><span class="p">:</span> <span class="s2">&quot;not a recognised media file&quot;</span><span class="p">})</span>
+            <span class="k">if</span> <span class="n">Path</span><span class="p">(</span><span class="n">base</span><span class="p">)</span><span class="o">.</span><span class="n">suffix</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s2">"."</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">extensions</span><span class="p">:</span>
+                <span class="n">skipped</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">"name"</span><span class="p">:</span> <span class="n">name</span><span class="p">,</span> <span class="s2">"reason"</span><span class="p">:</span> <span class="s2">"not a recognised media file"</span><span class="p">})</span>
                 <span class="k">continue</span>
             <span class="k">if</span> <span class="n">info</span><span class="o">.</span><span class="n">file_size</span> <span class="o">&gt;</span> <span class="n">max_member_bytes</span><span class="p">:</span>
                 <span class="n">skipped</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                     <span class="p">{</span>
-                        <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">name</span><span class="p">,</span>
-                        <span class="s2">&quot;reason&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">info</span><span class="o">.</span><span class="n">file_size</span><span class="si">}</span><span class="s2"> bytes exceeds the &quot;</span>
-                        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">max_member_bytes</span><span class="si">}</span><span class="s2">-byte per-clip limit&quot;</span><span class="p">,</span>
+                        <span class="s2">"name"</span><span class="p">:</span> <span class="n">name</span><span class="p">,</span>
+                        <span class="s2">"reason"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">info</span><span class="o">.</span><span class="n">file_size</span><span class="si">}</span><span class="s2"> bytes exceeds the "</span>
+                        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">max_member_bytes</span><span class="si">}</span><span class="s2">-byte per-clip limit"</span><span class="p">,</span>
                     <span class="p">}</span>
                 <span class="p">)</span>
                 <span class="k">continue</span>
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">out</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">max_members</span><span class="p">:</span>
                 <span class="n">skipped</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                    <span class="p">{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">name</span><span class="p">,</span> <span class="s2">&quot;reason&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;over the </span><span class="si">{</span><span class="n">max_members</span><span class="si">}</span><span class="s2">-clip limit&quot;</span><span class="p">}</span>
+                    <span class="p">{</span><span class="s2">"name"</span><span class="p">:</span> <span class="n">name</span><span class="p">,</span> <span class="s2">"reason"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"over the </span><span class="si">{</span><span class="n">max_members</span><span class="si">}</span><span class="s2">-clip limit"</span><span class="p">}</span>
                 <span class="p">)</span>
                 <span class="k">continue</span>
             <span class="n">target</span> <span class="o">=</span> <span class="n">dest_dir</span> <span class="o">/</span> <span class="n">base</span>
-            <span class="k">with</span> <span class="n">zf</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">info</span><span class="p">)</span> <span class="k">as</span> <span class="n">src</span><span class="p">,</span> <span class="nb">open</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="s2">&quot;wb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">dst</span><span class="p">:</span>
+            <span class="k">with</span> <span class="n">zf</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">info</span><span class="p">)</span> <span class="k">as</span> <span class="n">src</span><span class="p">,</span> <span class="nb">open</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="s2">"wb"</span><span class="p">)</span> <span class="k">as</span> <span class="n">dst</span><span class="p">:</span>
                 <span class="k">while</span> <span class="n">chunk</span> <span class="o">:=</span> <span class="n">src</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">_CHUNK</span><span class="p">):</span>
                     <span class="n">dst</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
             <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">target</span><span class="p">)</span>
@@ -482,17 +482,17 @@
 
 <div class="viewcode-block" id="resolve_share_link">
 <a class="viewcode-back" href="../../../module_docs/muvid/mcp/_fetch.html#muvid.mcp._fetch.resolve_share_link">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">resolve_share_link</span><span class="p">(</span><span class="n">uri</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;tuple[str, str]&quot;</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Normalise a pasted share link: ``(direct_url, kind)``.</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">resolve_share_link</span><span class="p">(</span><span class="n">uri</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"tuple[str, str]"</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Normalise a pasted share link: ``(direct_url, kind)``.</span>
 
-<span class="sd">    ``kind`` is :class:`graze.share_links.ShareLinkKind`&#39;s value — ``&#39;file&#39;``, ``&#39;archive&#39;``</span>
-<span class="sd">    (a folder link, which downloads as ONE zip of many members), ``&#39;folder&#39;`` (needs a</span>
-<span class="sd">    provider API) or ``&#39;unknown&#39;``. A URL that is nobody&#39;s share link passes through</span>
-<span class="sd">    unchanged as ``&#39;unknown&#39;``.</span>
+<span class="sd">    ``kind`` is :class:`graze.share_links.ShareLinkKind`'s value — ``'file'``, ``'archive'``</span>
+<span class="sd">    (a folder link, which downloads as ONE zip of many members), ``'folder'`` (needs a</span>
+<span class="sd">    provider API) or ``'unknown'``. A URL that is nobody's share link passes through</span>
+<span class="sd">    unchanged as ``'unknown'``.</span>
 
 <span class="sd">    muvid does not own any provider regexes; :mod:`graze.share_links` does, and it is pure</span>
 <span class="sd">    (no socket), so this stays deterministic and offline-testable.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">graze.share_links</span><span class="w"> </span><span class="kn">import</span> <span class="n">ShareLinkResolutionError</span><span class="p">,</span> <span class="n">resolve_share_url</span>
 
     <span class="k">try</span><span class="p">:</span>
@@ -501,8 +501,8 @@
         <span class="k">raise</span> <span class="n">FetchError</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">resolved</span><span class="o">.</span><span class="n">resolved</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">resolved</span><span class="o">.</span><span class="n">direct_url</span><span class="p">:</span>
         <span class="k">raise</span> <span class="n">FetchError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">resolved</span><span class="o">.</span><span class="n">provider</span><span class="si">}</span><span class="s2"> link cannot be turned into a direct download: &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">resolved</span><span class="o">.</span><span class="n">reason</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">&#39;no direct URL exists for this link form&#39;</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">resolved</span><span class="o">.</span><span class="n">provider</span><span class="si">}</span><span class="s2"> link cannot be turned into a direct download: "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">resolved</span><span class="o">.</span><span class="n">reason</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">'no direct URL exists for this link form'</span><span class="si">}</span><span class="s2">"</span>
         <span class="p">)</span>
     <span class="k">return</span> <span class="n">resolved</span><span class="o">.</span><span class="n">direct_url</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">resolved</span><span class="o">.</span><span class="n">kind</span><span class="p">)</span></div>
 

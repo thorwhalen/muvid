@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.footage.strategy &mdash; muvid 0.0.27 documentation</title>
+  <title>muvid.footage.strategy &mdash; muvid 0.0.28 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=cee5022b"></script>
+      <script src="../../../_static/documentation_options.js?v=26ffa1e9"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -131,20 +131,20 @@
            <div itemprop="articleBody">
              
   <h1>Source code for muvid.footage.strategy</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;The pluggable ``SelectionStrategy`` registry — alignments → an EDL.</span>
+<span></span><span class="sd">"""The pluggable ``SelectionStrategy`` registry — alignments → an EDL.</span>
 
 <span class="sd">The user-extensible strategy pattern behind full-auto assembly: a strategy turns a set of</span>
 <span class="sd">:class:`~muvid.footage.edl.FootageAlignment`\\ s (which clip covers which span of the</span>
 <span class="sd">song, with a confidence) into an EDL (which clip to SHOW for each span). Strategies emit</span>
 <span class="sd">only ``{song_start, song_end, clip_id}`` — the ``clip_in`` sign convention lives in</span>
-<span class="sd">:func:`muvid.footage.edl.derive_cuts` (SSOT), so a third-party strategy can&#39;t desync the</span>
-<span class="sd">cut. Every strategy&#39;s output still passes :func:`~muvid.footage.edl.validate_edl` before</span>
+<span class="sd">:func:`muvid.footage.edl.derive_cuts` (SSOT), so a third-party strategy can't desync the</span>
+<span class="sd">cut. Every strategy's output still passes :func:`~muvid.footage.edl.validate_edl` before</span>
 <span class="sd">any cutting, so a strategy that leaves a gap fails loudly with the exact uncovered span.</span>
 
 <span class="sd">Registry idiom mirrors ``mixing.audio.segmentation`` (a ``strategy: str | callable`` param</span>
-<span class="sd">+ a ``_STRATEGIES`` dict + :func:`resolve_strategy`) — the federation&#39;s established shape.</span>
+<span class="sd">+ a ``_STRATEGIES`` dict + :func:`resolve_strategy`) — the federation's established shape.</span>
 <span class="sd">Register your own with :func:`register_selection_strategy`.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -163,10 +163,10 @@
 <span class="c1">#: ``context=``. The built-ins take only ``(alignments, song_duration)`` and never see it —</span>
 <span class="c1">#: the exact same dispatch idiom as ``nw.jobs._call_dispatch``. The magic parameter name is</span>
 <span class="c1">#: literally ``context``.</span>
-<span class="n">SelectionStrategy</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="s2">&quot;list[EdlEntry]&quot;</span><span class="p">]</span>
+<span class="n">SelectionStrategy</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="s2">"list[EdlEntry]"</span><span class="p">]</span>
 
 <span class="n">_STRATEGIES</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">SelectionStrategy</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-<span class="c1">#: Lazily-loaded strategies: slug -&gt; ``&quot;module:func&quot;``. Resolved (imported) only on first</span>
+<span class="c1">#: Lazily-loaded strategies: slug -&gt; ``"module:func"``. Resolved (imported) only on first</span>
 <span class="c1">#: use, so listing/registering the score-driven ``weighted`` strategy never pulls numpy onto</span>
 <span class="c1">#: the import-light path (thorwhalen/muvid#13; keeps ``import muvid.footage`` cv2/numpy-free).</span>
 <span class="n">_LAZY_STRATEGIES</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
@@ -176,10 +176,10 @@
 <div class="viewcode-block" id="register_selection_strategy">
 <a class="viewcode-back" href="../../../module_docs/muvid/footage/strategy.html#muvid.footage.register_selection_strategy">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">register_selection_strategy</span><span class="p">(</span><span class="n">slug</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">fn</span><span class="p">:</span> <span class="n">SelectionStrategy</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SelectionStrategy</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Register a selection strategy under ``slug`` (returns it, for inline use).&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Register a selection strategy under ``slug`` (returns it, for inline use)."""</span>
     <span class="n">_check_slug</span><span class="p">(</span><span class="n">slug</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">callable</span><span class="p">(</span><span class="n">fn</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;a selection strategy must be callable&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">"a selection strategy must be callable"</span><span class="p">)</span>
     <span class="n">_STRATEGIES</span><span class="p">[</span><span class="n">slug</span><span class="p">]</span> <span class="o">=</span> <span class="n">fn</span>
     <span class="k">return</span> <span class="n">fn</span></div>
 
@@ -188,14 +188,14 @@
 <div class="viewcode-block" id="register_lazy_strategy">
 <a class="viewcode-back" href="../../../module_docs/muvid/footage/strategy.html#muvid.footage.register_lazy_strategy">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">register_lazy_strategy</span><span class="p">(</span><span class="n">slug</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">target_ref</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Register a strategy by a ``&quot;module:func&quot;`` reference, imported only on first use.</span>
+<span class="w">    </span><span class="sd">"""Register a strategy by a ``"module:func"`` reference, imported only on first use.</span>
 
 <span class="sd">    Lets a heavy strategy (numpy DP, cv2, …) be *listed* and *named* without importing its</span>
 <span class="sd">    module at registration time — the import happens in :func:`resolve_strategy`.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">_check_slug</span><span class="p">(</span><span class="n">slug</span><span class="p">)</span>
-    <span class="k">if</span> <span class="s2">&quot;:&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">target_ref</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;target_ref must be &#39;module:func&#39;, got </span><span class="si">{</span><span class="n">target_ref</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="s2">":"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">target_ref</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"target_ref must be 'module:func', got </span><span class="si">{</span><span class="n">target_ref</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
     <span class="n">_LAZY_STRATEGIES</span><span class="p">[</span><span class="n">slug</span><span class="p">]</span> <span class="o">=</span> <span class="n">target_ref</span></div>
 
 
@@ -203,50 +203,50 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_check_slug</span><span class="p">(</span><span class="n">slug</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">slug</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">slug</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="ow">or</span> <span class="nb">any</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">isspace</span><span class="p">()</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">slug</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;strategy slug must be a non-empty whitespace-free string: </span><span class="si">{</span><span class="n">slug</span><span class="si">!r}</span><span class="s2">&quot;</span>
+            <span class="sa">f</span><span class="s2">"strategy slug must be a non-empty whitespace-free string: </span><span class="si">{</span><span class="n">slug</span><span class="si">!r}</span><span class="s2">"</span>
         <span class="p">)</span>
 
 
 <div class="viewcode-block" id="list_strategies">
 <a class="viewcode-back" href="../../../module_docs/muvid/footage/strategy.html#muvid.footage.list_strategies">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">list_strategies</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;All strategy slugs (eager + lazy), sorted. Lazy slugs are NOT imported to list them.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""All strategy slugs (eager + lazy), sorted. Lazy slugs are NOT imported to list them."""</span>
     <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">_STRATEGIES</span><span class="p">)</span> <span class="o">|</span> <span class="nb">set</span><span class="p">(</span><span class="n">_LAZY_STRATEGIES</span><span class="p">))</span></div>
 
 
 
 <div class="viewcode-block" id="resolve_strategy">
 <a class="viewcode-back" href="../../../module_docs/muvid/footage/strategy.html#muvid.footage.resolve_strategy">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">resolve_strategy</span><span class="p">(</span><span class="n">strategy</span><span class="p">:</span> <span class="s2">&quot;str | SelectionStrategy&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SelectionStrategy</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Resolve a strategy name OR a bare callable to a :data:`SelectionStrategy`.</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">resolve_strategy</span><span class="p">(</span><span class="n">strategy</span><span class="p">:</span> <span class="s2">"str | SelectionStrategy"</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SelectionStrategy</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Resolve a strategy name OR a bare callable to a :data:`SelectionStrategy`.</span>
 
 <span class="sd">    A lazy slug is imported here (and cached into the eager table) on first resolution.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="nb">callable</span><span class="p">(</span><span class="n">strategy</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">strategy</span>
     <span class="k">if</span> <span class="n">strategy</span> <span class="ow">in</span> <span class="n">_STRATEGIES</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">_STRATEGIES</span><span class="p">[</span><span class="n">strategy</span><span class="p">]</span>
     <span class="k">if</span> <span class="n">strategy</span> <span class="ow">in</span> <span class="n">_LAZY_STRATEGIES</span><span class="p">:</span>
-        <span class="n">module_name</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">func_name</span> <span class="o">=</span> <span class="n">_LAZY_STRATEGIES</span><span class="p">[</span><span class="n">strategy</span><span class="p">]</span><span class="o">.</span><span class="n">partition</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)</span>
+        <span class="n">module_name</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">func_name</span> <span class="o">=</span> <span class="n">_LAZY_STRATEGIES</span><span class="p">[</span><span class="n">strategy</span><span class="p">]</span><span class="o">.</span><span class="n">partition</span><span class="p">(</span><span class="s2">":"</span><span class="p">)</span>
         <span class="n">fn</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">importlib</span><span class="o">.</span><span class="n">import_module</span><span class="p">(</span><span class="n">module_name</span><span class="p">),</span> <span class="n">func_name</span><span class="p">)</span>
         <span class="n">_STRATEGIES</span><span class="p">[</span><span class="n">strategy</span><span class="p">]</span> <span class="o">=</span> <span class="n">fn</span>  <span class="c1"># cache the resolved callable</span>
         <span class="k">return</span> <span class="n">fn</span>
-    <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;unknown strategy </span><span class="si">{</span><span class="n">strategy</span><span class="si">!r}</span><span class="s2">; registered: </span><span class="si">{</span><span class="n">list_strategies</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+    <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"unknown strategy </span><span class="si">{</span><span class="n">strategy</span><span class="si">!r}</span><span class="s2">; registered: </span><span class="si">{</span><span class="n">list_strategies</span><span class="p">()</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span></div>
 
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_call_strategy</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">alignments</span><span class="p">,</span> <span class="n">song_duration</span><span class="p">,</span> <span class="n">context</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Call ``fn``, passing ``context=`` only if it declares ``context`` or ``**kwargs``.</span>
+<span class="w">    </span><span class="sd">"""Call ``fn``, passing ``context=`` only if it declares ``context`` or ``**kwargs``.</span>
 
 <span class="sd">    Mirrors ``nw.jobs._call_dispatch`` exactly (try/except signature; VAR_KEYWORD → pass;</span>
 <span class="sd">    else pass only when a ``context`` parameter is present) so a 2-arg built-in is untouched</span>
 <span class="sd">    and a ``def s(a, d, **kw)`` strategy still receives the context.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">accepts_context</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">params</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
         <span class="n">accepts_context</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">kind</span> <span class="ow">is</span> <span class="n">p</span><span class="o">.</span><span class="n">VAR_KEYWORD</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">params</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">any</span><span class="p">(</span>
-            <span class="n">p</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;context&quot;</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">params</span>
+            <span class="n">p</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">"context"</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">params</span>
         <span class="p">)</span>
     <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">):</span>
         <span class="n">accepts_context</span> <span class="o">=</span> <span class="kc">False</span>
@@ -258,17 +258,17 @@
 <div class="viewcode-block" id="select_edl">
 <a class="viewcode-back" href="../../../module_docs/muvid/footage/strategy.html#muvid.footage.select_edl">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">select_edl</span><span class="p">(</span>
-    <span class="n">strategy</span><span class="p">:</span> <span class="s2">&quot;str | SelectionStrategy&quot;</span><span class="p">,</span>
+    <span class="n">strategy</span><span class="p">:</span> <span class="s2">"str | SelectionStrategy"</span><span class="p">,</span>
     <span class="n">alignments</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">FootageAlignment</span><span class="p">],</span>
     <span class="n">song_duration</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">context</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">EdlEntry</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Run ``strategy`` (name or callable) to produce an EDL from ``alignments``.</span>
+<span class="w">    </span><span class="sd">"""Run ``strategy`` (name or callable) to produce an EDL from ``alignments``.</span>
 
 <span class="sd">    ``context`` (a ``SelectionContext``) is passed to score-driven strategies that declare it;</span>
 <span class="sd">    the alignment-only built-ins ignore it. See :data:`SelectionStrategy`.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">return</span> <span class="nb">list</span><span class="p">(</span>
         <span class="n">_call_strategy</span><span class="p">(</span><span class="n">resolve_strategy</span><span class="p">(</span><span class="n">strategy</span><span class="p">),</span> <span class="n">alignments</span><span class="p">,</span> <span class="n">song_duration</span><span class="p">,</span> <span class="n">context</span><span class="p">)</span>
     <span class="p">)</span></div>
@@ -281,7 +281,7 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_breakpoints</span><span class="p">(</span><span class="n">alignments</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">FootageAlignment</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Sorted unique coverage boundaries — the elementary-interval grid.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Sorted unique coverage boundaries — the elementary-interval grid."""</span>
     <span class="n">bs</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
     <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">alignments</span><span class="p">:</span>
         <span class="n">bs</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">coverage</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">6</span><span class="p">))</span>
@@ -292,12 +292,12 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_covering</span><span class="p">(</span>
     <span class="n">alignments</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">FootageAlignment</span><span class="p">],</span> <span class="n">mid</span><span class="p">:</span> <span class="nb">float</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">FootageAlignment</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Alignments whose coverage contains ``mid``.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Alignments whose coverage contains ``mid``."""</span>
     <span class="k">return</span> <span class="p">[</span><span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">alignments</span> <span class="k">if</span> <span class="n">a</span><span class="o">.</span><span class="n">coverage</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">_EPS</span> <span class="o">&lt;=</span> <span class="n">mid</span> <span class="o">&lt;</span> <span class="n">a</span><span class="o">.</span><span class="n">coverage</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">_EPS</span><span class="p">]</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_coalesce</span><span class="p">(</span><span class="n">spans</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">str</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">EdlEntry</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Merge consecutive same-clip elementary spans into one EDL entry.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Merge consecutive same-clip elementary spans into one EDL entry."""</span>
     <span class="n">out</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">EdlEntry</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">,</span> <span class="n">clip_id</span> <span class="ow">in</span> <span class="n">spans</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">out</span> <span class="ow">and</span> <span class="n">out</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">clip_id</span> <span class="o">==</span> <span class="n">clip_id</span> <span class="ow">and</span> <span class="nb">abs</span><span class="p">(</span><span class="n">out</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">song_end</span> <span class="o">-</span> <span class="n">start</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mf">1e-3</span><span class="p">:</span>
@@ -308,11 +308,11 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_build</span><span class="p">(</span><span class="n">alignments</span><span class="p">,</span> <span class="n">pick</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">EdlEntry</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Walk the elementary intervals, ``pick`` a clip for each covered one, coalesce.</span>
+<span class="w">    </span><span class="sd">"""Walk the elementary intervals, ``pick`` a clip for each covered one, coalesce.</span>
 
 <span class="sd">    ``pick(covering, prev_clip_id) -&gt; clip_id``. Intervals covered by no clip are left</span>
 <span class="sd">    out — the resulting gap is surfaced by validate_edl with the exact uncovered span.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">alignments</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">[]</span>
     <span class="n">bs</span> <span class="o">=</span> <span class="n">_breakpoints</span><span class="p">(</span><span class="n">alignments</span><span class="p">)</span>
@@ -334,7 +334,7 @@
 <div class="viewcode-block" id="best_confidence">
 <a class="viewcode-back" href="../../../module_docs/muvid/footage/strategy.html#muvid.footage.best_confidence">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">best_confidence</span><span class="p">(</span><span class="n">alignments</span><span class="p">,</span> <span class="n">song_duration</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">EdlEntry</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;For each covered span, show the highest-confidence clip (ties: longest coverage).&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""For each covered span, show the highest-confidence clip (ties: longest coverage)."""</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">pick</span><span class="p">(</span><span class="n">covering</span><span class="p">,</span> <span class="n">_prev</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">max</span><span class="p">(</span>
@@ -348,8 +348,8 @@
 <div class="viewcode-block" id="longest_take">
 <a class="viewcode-back" href="../../../module_docs/muvid/footage/strategy.html#muvid.footage.longest_take">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">longest_take</span><span class="p">(</span><span class="n">alignments</span><span class="p">,</span> <span class="n">song_duration</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">EdlEntry</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Prefer the clip that keeps rolling longest — pick the one whose coverage extends</span>
-<span class="sd">    furthest forward (ties: higher confidence). Yields long, continuous takes.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Prefer the clip that keeps rolling longest — pick the one whose coverage extends</span>
+<span class="sd">    furthest forward (ties: higher confidence). Yields long, continuous takes."""</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">pick</span><span class="p">(</span><span class="n">covering</span><span class="p">,</span> <span class="n">_prev</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="n">covering</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">a</span><span class="p">:</span> <span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">coverage</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">a</span><span class="o">.</span><span class="n">confidence</span><span class="p">))</span><span class="o">.</span><span class="n">clip_id</span>
@@ -361,8 +361,8 @@
 <div class="viewcode-block" id="fewest_cuts">
 <a class="viewcode-back" href="../../../module_docs/muvid/footage/strategy.html#muvid.footage.fewest_cuts">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">fewest_cuts</span><span class="p">(</span><span class="n">alignments</span><span class="p">,</span> <span class="n">song_duration</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">EdlEntry</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Stay on the current clip as long as it covers; only switch when it runs out</span>
-<span class="sd">    (then to the clip extending furthest). Minimizes the number of cuts.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Stay on the current clip as long as it covers; only switch when it runs out</span>
+<span class="sd">    (then to the clip extending furthest). Minimizes the number of cuts."""</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">pick</span><span class="p">(</span><span class="n">covering</span><span class="p">,</span> <span class="n">prev</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">prev</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">any</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">clip_id</span> <span class="o">==</span> <span class="n">prev</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">covering</span><span class="p">):</span>
@@ -374,19 +374,19 @@
 
 
 <span class="k">for</span> <span class="n">_slug</span><span class="p">,</span> <span class="n">_fn</span> <span class="ow">in</span> <span class="p">[</span>
-    <span class="p">(</span><span class="s2">&quot;best_confidence&quot;</span><span class="p">,</span> <span class="n">best_confidence</span><span class="p">),</span>
-    <span class="p">(</span><span class="s2">&quot;longest_take&quot;</span><span class="p">,</span> <span class="n">longest_take</span><span class="p">),</span>
-    <span class="p">(</span><span class="s2">&quot;fewest_cuts&quot;</span><span class="p">,</span> <span class="n">fewest_cuts</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"best_confidence"</span><span class="p">,</span> <span class="n">best_confidence</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"longest_take"</span><span class="p">,</span> <span class="n">longest_take</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"fewest_cuts"</span><span class="p">,</span> <span class="n">fewest_cuts</span><span class="p">),</span>
 <span class="p">]:</span>
     <span class="n">register_selection_strategy</span><span class="p">(</span><span class="n">_slug</span><span class="p">,</span> <span class="n">_fn</span><span class="p">)</span>
 
 <span class="c1"># The score-driven beat-snapped semi-Markov Viterbi selector (thorwhalen/muvid#13). Lazy:</span>
 <span class="c1"># its module pulls numpy, so it is registered by reference and imported only when resolved —</span>
 <span class="c1"># keeping `import muvid.footage` numpy-free (and `list_strategies()` shows it regardless).</span>
-<span class="n">register_lazy_strategy</span><span class="p">(</span><span class="s2">&quot;weighted&quot;</span><span class="p">,</span> <span class="s2">&quot;muvid.footage.select_score:weighted_selection&quot;</span><span class="p">)</span>
+<span class="n">register_lazy_strategy</span><span class="p">(</span><span class="s2">"weighted"</span><span class="p">,</span> <span class="s2">"muvid.footage.select_score:weighted_selection"</span><span class="p">)</span>
 
 <span class="c1">#: The default auto-strategy when none is chosen.</span>
-<span class="n">DEFAULT_STRATEGY</span> <span class="o">=</span> <span class="s2">&quot;best_confidence&quot;</span>
+<span class="n">DEFAULT_STRATEGY</span> <span class="o">=</span> <span class="s2">"best_confidence"</span>
 </pre></div>
 
            </div>

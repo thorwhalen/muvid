@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.renderers.animation &mdash; muvid 0.0.27 documentation</title>
+  <title>muvid.renderers.animation &mdash; muvid 0.0.28 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -15,7 +15,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=cee5022b"></script>
+      <script src="../../../_static/documentation_options.js?v=26ffa1e9"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -92,6 +92,9 @@
 <li class="toctree-l1"><a class="reference internal" href="../renderers.html">muvid.renderers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="_common.html">muvid.renderers._common</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">muvid.renderers.animation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.renderers.animation.AN_CAMERA_MOVE_PHRASES"><code class="docutils literal notranslate"><span class="pre">AN_CAMERA_MOVE_PHRASES</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.renderers.animation.DFLT_AN_CAMERA_MOVE"><code class="docutils literal notranslate"><span class="pre">DFLT_AN_CAMERA_MOVE</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.renderers.animation.an_camera_move"><code class="docutils literal notranslate"><span class="pre">an_camera_move()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.renderers.animation.render_animation"><code class="docutils literal notranslate"><span class="pre">render_animation()</span></code></a></li>
 </ul>
 </li>
@@ -148,6 +151,107 @@ environment becomes the entity backdrop.</p>
 into <code class="docutils literal notranslate"><span class="pre">an.orchestrate</span></code> so <code class="docutils literal notranslate"><span class="pre">an</span></code> does NOT re-transcribe the same
 audio with whisper. Falls back to <code class="docutils literal notranslate"><span class="pre">an</span></code>’s default lipsync provider
 when no alignment store exists yet (e.g. user skipped <code class="docutils literal notranslate"><span class="pre">muvid</span> <span class="pre">align</span></code>).</p>
+<p>Camera: muvid and <code class="docutils literal notranslate"><span class="pre">an</span></code> do not share a camera vocabulary and must not
+pretend to. <code class="xref py py-attr docutils literal notranslate"><span class="pre">muvid.schema.ShotSpec.camera</span></code> is free prose a director
+writes into the script (<code class="docutils literal notranslate"><span class="pre">**camera**:</span> <span class="pre">slow</span> <span class="pre">push-in</span></code>); <code class="docutils literal notranslate"><span class="pre">an</span></code>’s
+<code class="docutils literal notranslate"><span class="pre">camera.move</span></code> is a closed set of named moves, and a name outside it is a
+hard refusal at both validate and compile — deliberately, because a camera
+move that silently no-ops is the failure it exists to prevent. So the prose
+is TRANSLATED here, at the boundary, and never passed through
+(muvid#44: this module emitted <code class="docutils literal notranslate"><span class="pre">move:</span> <span class="pre">static</span></code>, which <code class="docutils literal notranslate"><span class="pre">an</span></code> has never
+implemented, so every animation render failed validate and fell back).</p>
+<p>That closed set is not fixed, and muvid declares no <code class="docutils literal notranslate"><span class="pre">an</span></code> floor — <code class="docutils literal notranslate"><span class="pre">an</span></code> is
+in no extra, the import below is soft, and a user may have any version.
+<code class="docutils literal notranslate"><span class="pre">hold</span></code>/<code class="docutils literal notranslate"><span class="pre">push_in</span></code>/<code class="docutils literal notranslate"><span class="pre">pull_out</span></code>/<code class="docutils literal notranslate"><span class="pre">zoom_in</span></code>/<code class="docutils literal notranslate"><span class="pre">zoom_out</span></code> have always been
+there; the four TRANSLATING moves (<code class="docutils literal notranslate"><span class="pre">pan_left</span></code>, <code class="docutils literal notranslate"><span class="pre">pan_right</span></code>, <code class="docutils literal notranslate"><span class="pre">tilt_up</span></code>,
+<code class="docutils literal notranslate"><span class="pre">tilt_down</span></code>) arrived with an#109 and shipped in <code class="docutils literal notranslate"><span class="pre">an</span></code> 0.1.65 — on 0.1.64
+and below, emitting one of them is muvid#44 again. So
+<a class="reference internal" href="#muvid.renderers.animation.an_camera_move" title="muvid.renderers.animation.an_camera_move"><code class="xref py py-func docutils literal notranslate"><span class="pre">an_camera_move()</span></code></a> checks the move against the vocabulary the INSTALLED
+<code class="docutils literal notranslate"><span class="pre">an</span></code> reports (<code class="docutils literal notranslate"><span class="pre">an.ir.camera.CAMERA_MOVES</span></code>) and degrades to <code class="docutils literal notranslate"><span class="pre">hold</span></code> with
+a warning rather than emitting a move that will be refused. That is the floor,
+enforced at the only place that can see which <code class="docutils literal notranslate"><span class="pre">an</span></code> is actually there.</p>
+<dl class="py data">
+<dt class="sig sig-object py" id="muvid.renderers.animation.AN_CAMERA_MOVE_PHRASES">
+<span class="sig-prename descclassname"><span class="pre">muvid.renderers.animation.</span></span><span class="sig-name descname"><span class="pre">AN_CAMERA_MOVE_PHRASES</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">(('push</span> <span class="pre">in',</span> <span class="pre">'push_in'),</span> <span class="pre">('push</span> <span class="pre">into',</span> <span class="pre">'push_in'),</span> <span class="pre">('dolly</span> <span class="pre">in',</span> <span class="pre">'push_in'),</span> <span class="pre">('zoom</span> <span class="pre">in',</span> <span class="pre">'zoom_in'),</span> <span class="pre">('pull</span> <span class="pre">out',</span> <span class="pre">'pull_out'),</span> <span class="pre">('pull</span> <span class="pre">back',</span> <span class="pre">'pull_out'),</span> <span class="pre">('dolly</span> <span class="pre">out',</span> <span class="pre">'pull_out'),</span> <span class="pre">('zoom</span> <span class="pre">out',</span> <span class="pre">'zoom_out'),</span> <span class="pre">('pan</span> <span class="pre">left',</span> <span class="pre">'pan_left'),</span> <span class="pre">('pan</span> <span class="pre">right',</span> <span class="pre">'pan_right'),</span> <span class="pre">('tilt</span> <span class="pre">up',</span> <span class="pre">'tilt_up'),</span> <span class="pre">('tilt</span> <span class="pre">down',</span> <span class="pre">'tilt_down'),</span> <span class="pre">('crane</span> <span class="pre">up',</span> <span class="pre">'tilt_up'),</span> <span class="pre">('crane</span> <span class="pre">down',</span> <span class="pre">'tilt_down'),</span> <span class="pre">('static',</span> <span class="pre">'hold'),</span> <span class="pre">('hold',</span> <span class="pre">'hold'),</span> <span class="pre">('locked',</span> <span class="pre">'hold'),</span> <span class="pre">('locked</span> <span class="pre">off',</span> <span class="pre">'hold'),</span> <span class="pre">('lock</span> <span class="pre">off',</span> <span class="pre">'hold'),</span> <span class="pre">('no</span> <span class="pre">movement',</span> <span class="pre">'hold'))</span></span><a class="headerlink" href="#muvid.renderers.animation.AN_CAMERA_MOVE_PHRASES" title="Link to this definition"></a></dt>
+<dd><p>muvid prose -&gt; <code class="docutils literal notranslate"><span class="pre">an</span></code> move name — the WHOLE recognised vocabulary, including
+the several ways a director spells “don’t move”. A direction that matches
+nothing here is not silently translated: <a class="reference internal" href="#muvid.renderers.animation.an_camera_move" title="muvid.renderers.animation.an_camera_move"><code class="xref py py-func docutils literal notranslate"><span class="pre">an_camera_move()</span></code></a> warns, so a
+dropped direction is visible in the run rather than only in the render.</p>
+<p>Matching is by WORD, never by substring, and the move that occurs EARLIEST in
+the direction wins — the director’s first-written move, not this table’s
+declaration order. Ties (two phrases starting at the same word) go to the
+longer phrase, so <code class="docutils literal notranslate"><span class="pre">push</span> <span class="pre">into</span></code> beats <code class="docutils literal notranslate"><span class="pre">push</span> <span class="pre">in</span></code> on specificity rather than
+on which line happens to come first. Declaration order is the last
+tie-break and decides nothing today.</p>
+<p>The values are <code class="docutils literal notranslate"><span class="pre">an</span></code>’s vocabulary and nothing else. They are pinned in CI
+against <code class="xref py py-mod docutils literal notranslate"><span class="pre">tests.test_animation_camera</span></code>’s recorded snapshot of
+<code class="docutils literal notranslate"><span class="pre">an.ir.camera.CAMERA_MOVES</span></code>, and — on a machine that has <code class="docutils literal notranslate"><span class="pre">an</span></code> — against
+the live set. A hand-copied vocabulary is exactly how <code class="docutils literal notranslate"><span class="pre">static</span></code> survived
+here after <code class="docutils literal notranslate"><span class="pre">an</span></code> tightened the rule.</p>
+<p><code class="docutils literal notranslate"><span class="pre">an</span></code> distinguishes a push (1.0-&gt;1.25) from a zoom (1.0-&gt;1.5), so the prose
+does too: a “push” is the gentler move, “zoom” the emphatic one.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="muvid.renderers.animation.DFLT_AN_CAMERA_MOVE">
+<span class="sig-prename descclassname"><span class="pre">muvid.renderers.animation.</span></span><span class="sig-name descname"><span class="pre">DFLT_AN_CAMERA_MOVE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'hold'</span></span><a class="headerlink" href="#muvid.renderers.animation.DFLT_AN_CAMERA_MOVE" title="Link to this definition"></a></dt>
+<dd><p><code class="docutils literal notranslate"><span class="pre">an</span></code>’s spelling of “the camera does not move”, and what a direction this
+table cannot name resolves to. Not a guess dressed as a move: an
+uninterpretable direction is a reason to leave the camera alone, not to
+invent a push-in the director did not ask for. It is also what this module
+effectively meant by the invalid <code class="docutils literal notranslate"><span class="pre">static</span></code> it used to emit.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.renderers.animation.an_camera_move">
+<span class="sig-prename descclassname"><span class="pre">muvid.renderers.animation.</span></span><span class="sig-name descname"><span class="pre">an_camera_move</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">direction</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">known_moves</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Collection</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../../_modules/muvid/renderers/animation.html#an_camera_move"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.renderers.animation.an_camera_move" title="Link to this definition"></a></dt>
+<dd><p>Translate a muvid camera direction into an <code class="docutils literal notranslate"><span class="pre">an</span></code> <code class="docutils literal notranslate"><span class="pre">camera.move</span></code> name.</p>
+<p>Never returns a name the <code class="docutils literal notranslate"><span class="pre">an</span></code> in front of it cannot honour. Two
+independent ways that can happen, and each one WARNS rather than passing
+silently — a dropped camera direction is the failure muvid#44 was:</p>
+<ul class="simple">
+<li><p>the direction names no move this table knows (“handheld, drifting”), or</p></li>
+<li><p>it names one the <em>installed</em> <code class="docutils literal notranslate"><span class="pre">an</span></code> does not implement (<code class="docutils literal notranslate"><span class="pre">pan_left</span></code> is
+an#109, released in <code class="docutils literal notranslate"><span class="pre">an</span></code> 0.1.65; on 0.1.60 it is a hard refusal at
+validate and at compile).</p></li>
+</ul>
+<p><code class="docutils literal notranslate"><span class="pre">known_moves</span></code> is the vocabulary to check against; <code class="docutils literal notranslate"><span class="pre">None</span></code> means “ask the
+installed <code class="docutils literal notranslate"><span class="pre">an</span></code>”, and when <code class="docutils literal notranslate"><span class="pre">an</span></code> is absent nothing is narrowed.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">an_camera_move</span><span class="p">(</span><span class="s2">"slow push-in"</span><span class="p">)</span>
+<span class="go">'push_in'</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">an_camera_move</span><span class="p">(</span><span class="s2">"static"</span><span class="p">)</span>
+<span class="go">'hold'</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">an_camera_move</span><span class="p">(</span><span class="s2">""</span><span class="p">)</span>
+<span class="go">'hold'</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">an_camera_move</span><span class="p">(</span><span class="s2">"Pan Left across the room"</span><span class="p">)</span>
+<span class="go">'pan_left'</span>
+</pre></div>
+</div>
+<p>The director’s first-written move wins, not this table’s order, and a
+negated move is refused rather than obeyed:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">an_camera_move</span><span class="p">(</span><span class="s2">"pan left, then push in"</span><span class="p">)</span>
+<span class="go">'pan_left'</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">an_camera_move</span><span class="p">(</span><span class="s2">"static, no push-in"</span><span class="p">)</span>
+<span class="go">'hold'</span>
+</pre></div>
+</div>
+<p>An <cite>an</cite> that cannot do the move gets the no-op instead of a refusal:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">an_camera_move</span><span class="p">(</span><span class="s2">"pan left"</span><span class="p">,</span> <span class="n">known_moves</span><span class="o">=</span><span class="p">{</span><span class="s2">"hold"</span><span class="p">,</span> <span class="s2">"push_in"</span><span class="p">})</span>
+<span class="go">'hold'</span>
+</pre></div>
+</div>
+<p>A direction naming nothing is not silently dropped:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">warnings</span><span class="o">.</span><span class="n">catch_warnings</span><span class="p">(</span><span class="n">record</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">caught</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="s2">"always"</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="n">an_camera_move</span><span class="p">(</span><span class="s2">"handheld, drifting"</span><span class="p">)</span>
+<span class="go">'hold'</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="s2">"handheld, drifting"</span> <span class="ow">in</span> <span class="nb">str</span><span class="p">(</span><span class="n">caught</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">message</span><span class="p">)</span>
+<span class="go">True</span>
+</pre></div>
+</div>
+</dd></dl>
+
 <dl class="py function">
 <dt class="sig sig-object py" id="muvid.renderers.animation.render_animation">
 <span class="sig-prename descclassname"><span class="pre">muvid.renderers.animation.</span></span><span class="sig-name descname"><span class="pre">render_animation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../renderers.html#muvid.renderers.RenderContext" title="muvid.renderers.RenderContext"><span class="pre">RenderContext</span></a></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">quality</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'balanced'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Path</span></span></span><a class="reference internal" href="../../../_modules/muvid/renderers/animation.html#render_animation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.renderers.animation.render_animation" title="Link to this definition"></a></dt>

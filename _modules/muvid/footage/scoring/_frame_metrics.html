@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.footage.scoring._frame_metrics &mdash; muvid 0.0.27 documentation</title>
+  <title>muvid.footage.scoring._frame_metrics &mdash; muvid 0.0.28 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../../_static/documentation_options.js?v=cee5022b"></script>
+      <script src="../../../../_static/documentation_options.js?v=26ffa1e9"></script>
       <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -131,18 +131,18 @@
            <div itemprop="articleBody">
              
   <h1>Source code for muvid.footage.scoring._frame_metrics</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Pure per-frame / per-frame-pair OpenCV kernels for footage scoring.</span>
+<span></span><span class="sd">"""Pure per-frame / per-frame-pair OpenCV kernels for footage scoring.</span>
 
 <span class="sd">Small, stateless functions on numpy frames — the cheap-CPU quality tier + the optical-flow</span>
 <span class="sd">motion primitive. They know nothing about the song grid, clips, or the selector: given a</span>
 <span class="sd">frame (or a pair) they return a scalar / small tuple. That makes them **promotion candidates</span>
-<span class="sd">for ``mixing.video``** the moment a second consumer appears (they&#39;d slot into mixing.video&#39;s</span>
+<span class="sd">for ``mixing.video``** the moment a second consumer appears (they'd slot into mixing.video's</span>
 <span class="sd">existing OpenCV footprint with no new dependency) — kept in muvid for v1 to hold the</span>
-<span class="sd">cross-repo surface to one clean audio PR (see the design doc&#39;s federation rule).</span>
+<span class="sd">cross-repo surface to one clean audio PR (see the design doc's federation rule).</span>
 
 <span class="sd">cv2 is lazy-imported (``muvid[scoring]`` extra). Frames are BGR or grayscale numpy arrays</span>
 <span class="sd">(as ``mixing.video.VideoFrames`` yields).</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -161,7 +161,7 @@
 <div class="viewcode-block" id="to_gray">
 <a class="viewcode-back" href="../../../../module_docs/muvid/footage/scoring/_frame_metrics.html#muvid.footage.scoring._frame_metrics.to_gray">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">to_gray</span><span class="p">(</span><span class="n">frame</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;BGR (or already-gray) frame → uint8 grayscale.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""BGR (or already-gray) frame → uint8 grayscale."""</span>
     <span class="k">if</span> <span class="n">frame</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">frame</span>
     <span class="k">return</span> <span class="n">_cv2</span><span class="p">()</span><span class="o">.</span><span class="n">cvtColor</span><span class="p">(</span><span class="n">frame</span><span class="p">,</span> <span class="n">_cv2</span><span class="p">()</span><span class="o">.</span><span class="n">COLOR_BGR2GRAY</span><span class="p">)</span></div>
@@ -171,7 +171,7 @@
 <div class="viewcode-block" id="sharpness">
 <a class="viewcode-back" href="../../../../module_docs/muvid/footage/scoring/_frame_metrics.html#muvid.footage.scoring._frame_metrics.sharpness">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">sharpness</span><span class="p">(</span><span class="n">gray</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Focus / motion-blur proxy = variance of the Laplacian (higher = sharper).&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Focus / motion-blur proxy = variance of the Laplacian (higher = sharper)."""</span>
     <span class="n">lap</span> <span class="o">=</span> <span class="n">_cv2</span><span class="p">()</span><span class="o">.</span><span class="n">Laplacian</span><span class="p">(</span><span class="n">gray</span><span class="p">,</span> <span class="n">_cv2</span><span class="p">()</span><span class="o">.</span><span class="n">CV_64F</span><span class="p">)</span>
     <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">lap</span><span class="o">.</span><span class="n">var</span><span class="p">())</span></div>
 
@@ -180,13 +180,13 @@
 <div class="viewcode-block" id="exposure_quality">
 <a class="viewcode-back" href="../../../../module_docs/muvid/footage/scoring/_frame_metrics.html#muvid.footage.scoring._frame_metrics.exposure_quality">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">exposure_quality</span><span class="p">(</span><span class="n">gray</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Exposure health in [0,1] (higher = better): clipping-free AND contrasty.</span>
+<span class="w">    </span><span class="sd">"""Exposure health in [0,1] (higher = better): clipping-free AND contrasty.</span>
 
 <span class="sd">    Two failure modes a luma histogram reveals: (a) crushed shadows (&lt; 16) / blown highlights</span>
 <span class="sd">    (&gt; 239) — the ``clip_ok`` term; (b) a flat, low-contrast frame (a wall of mid-gray) — the</span>
 <span class="sd">    ``contrast`` term (normalized luma std). A well-exposed, contrasty frame → ~1.0; a flat</span>
 <span class="sd">    mid-gray frame → ~0.0 even though it clips nothing.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">g</span> <span class="o">=</span> <span class="n">gray</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
     <span class="n">n</span> <span class="o">=</span> <span class="n">g</span><span class="o">.</span><span class="n">size</span>
     <span class="k">if</span> <span class="n">n</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
@@ -204,14 +204,14 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">flow_residual_and_global</span><span class="p">(</span>
     <span class="n">prev_gray</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">gray</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">downscale</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Dense Farneback flow → ``(residual_motion, global_dx, global_dy)``.</span>
+<span class="w">    </span><span class="sd">"""Dense Farneback flow → ``(residual_motion, global_dx, global_dy)``.</span>
 
 <span class="sd">    ``global_(dx,dy)`` is the median flow vector — the camera pan/tilt estimate.</span>
 <span class="sd">    ``residual_motion`` is the mean magnitude of the flow AFTER subtracting that global</span>
 <span class="sd">    motion — i.e. camera-compensated SUBJECT motion (what the motion-to-beat envelope wants).</span>
 <span class="sd">    ``|global|`` doubles as the shake signal (the quality tier). Frames are downscaled first</span>
 <span class="sd">    (``downscale``×) to bound cost — a hard per-frame budget on the memory-fragile box.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">cv2</span> <span class="o">=</span> <span class="n">_cv2</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">downscale</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
         <span class="n">h</span><span class="p">,</span> <span class="n">w</span> <span class="o">=</span> <span class="n">gray</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span>

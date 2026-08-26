@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.events &mdash; muvid 0.0.27 documentation</title>
+  <title>muvid.events &mdash; muvid 0.0.28 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=cee5022b"></script>
+      <script src="../../_static/documentation_options.js?v=26ffa1e9"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -131,13 +131,13 @@
            <div itemprop="articleBody">
              
   <h1>Source code for muvid.events</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Surface fal progress events into the muvid project.</span>
+<span></span><span class="sd">"""Surface fal progress events into the muvid project.</span>
 
 <span class="sd">Whenever muvid invokes fal (during ``render``, ``render_environment``,</span>
 <span class="sd">``transcribe`` for transcripts that arrive via fal, etc.), the</span>
 <span class="sd">``falaw.events`` stream is written to ``.muvid/fal_events.jsonl`` so:</span>
 
-<span class="sd">- ``muvid status`` can show &quot;currently running ...&quot; and recent</span>
+<span class="sd">- ``muvid status`` can show "currently running ..." and recent</span>
 <span class="sd">  per-shot timings;</span>
 <span class="sd">- the local UI can stream the same events over SSE without setting</span>
 <span class="sd">  up its own subscriber;</span>
@@ -146,7 +146,7 @@
 <span class="sd">The integration is opt-in via :func:`log_fal_events_to`, which yields a</span>
 <span class="sd">context manager that subscribes / unsubscribes around the ``with``</span>
 <span class="sd">block. ``muvid.facade.render`` wraps every render call in one.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -161,10 +161,10 @@
 <a class="viewcode-back" href="../../module_docs/muvid/events.html#muvid.events.log_fal_events_to">[docs]</a>
 <span class="nd">@contextmanager</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">log_fal_events_to</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="kc">None</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Subscribe a JSONL writer to falaw&#39;s event bus for the duration.</span>
+<span class="w">    </span><span class="sd">"""Subscribe a JSONL writer to falaw's event bus for the duration.</span>
 
-<span class="sd">    No-op (silent) if ``falaw`` isn&#39;t installed.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    No-op (silent) if ``falaw`` isn't installed.</span>
+<span class="sd">    """</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">falaw</span><span class="w"> </span><span class="kn">import</span> <span class="n">subscribe</span><span class="p">,</span> <span class="n">unsubscribe</span>
     <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
@@ -177,8 +177,8 @@
     <span class="n">target</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_write</span><span class="p">(</span><span class="n">event</span><span class="p">):</span>
-        <span class="k">with</span> <span class="n">target</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">&quot;a&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">progress_event_to_dict</span><span class="p">(</span><span class="n">event</span><span class="p">))</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">target</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">"a"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">progress_event_to_dict</span><span class="p">(</span><span class="n">event</span><span class="p">))</span> <span class="o">+</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
 
     <span class="n">subscribe</span><span class="p">(</span><span class="n">_write</span><span class="p">)</span>
     <span class="k">try</span><span class="p">:</span>
@@ -191,7 +191,7 @@
 <div class="viewcode-block" id="read_recent_fal_events">
 <a class="viewcode-back" href="../../module_docs/muvid/events.html#muvid.events.read_recent_fal_events">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">read_recent_fal_events</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">limit</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Read the tail of the JSONL log. Returns empty list if absent.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Read the tail of the JSONL log. Returns empty list if absent."""</span>
     <span class="n">p</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">p</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
         <span class="k">return</span> <span class="p">[]</span>

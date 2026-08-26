@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.renderers &mdash; muvid 0.0.27 documentation</title>
+  <title>muvid.renderers &mdash; muvid 0.0.28 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=cee5022b"></script>
+      <script src="../../_static/documentation_options.js?v=26ffa1e9"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -131,7 +131,7 @@
            <div itemprop="articleBody">
              
   <h1>Source code for muvid.renderers</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Render dispatch — turn a single ShotSpec into ``shots/&lt;id&gt;/output.mp4``.</span>
+<span></span><span class="sd">"""Render dispatch — turn a single ShotSpec into ``shots/&lt;id&gt;/output.mp4``.</span>
 
 <span class="sd">Each render strategy is a small function ``render_&lt;strategy&gt;(project,</span>
 <span class="sd">shot, *, audio_slice_path, ctx) -&gt; Path``. The dispatcher resolves</span>
@@ -139,10 +139,10 @@
 <span class="sd">character anchor image, environment anchor image) once and passes them</span>
 <span class="sd">in.</span>
 
-<span class="sd">Caching: each shot output&#39;s name is content-derived. If</span>
+<span class="sd">Caching: each shot output's name is content-derived. If</span>
 <span class="sd">``shots/&lt;id&gt;/output.mp4`` exists and the recorded ``shot.json`` hash</span>
 <span class="sd">matches the current ShotSpec, we skip.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -161,7 +161,7 @@
 <a class="viewcode-back" href="../../module_docs/muvid/renderers.html#muvid.renderers.RenderContext">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">RenderContext</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Shared resolved inputs for rendering a shot.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Shared resolved inputs for rendering a shot."""</span>
 
     <span class="n">project</span><span class="p">:</span> <span class="n">MusicVideoProject</span>
     <span class="n">shot</span><span class="p">:</span> <span class="n">ShotSpec</span>
@@ -170,7 +170,7 @@
     <span class="n">character_image_paths</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">]</span>
     <span class="n">environment_image_path</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span>
     <span class="n">lyric_lines</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span>  <span class="c1"># muvid.align.LineAlignment</span>
-    <span class="n">global_style</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span></div>
+    <span class="n">global_style</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span></div>
 
 
 
@@ -180,20 +180,20 @@
     <span class="n">project</span><span class="p">:</span> <span class="n">MusicVideoProject</span><span class="p">,</span>
     <span class="n">shot_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
-    <span class="n">quality</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;balanced&quot;</span><span class="p">,</span>
+    <span class="n">quality</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"balanced"</span><span class="p">,</span>
     <span class="n">force</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Render a single shot. Returns the path to the produced mp4.</span>
+<span class="w">    </span><span class="sd">"""Render a single shot. Returns the path to the produced mp4.</span>
 
 <span class="sd">    Skipped (returns the existing path) if a previously-rendered output</span>
-<span class="sd">    matches the current shot definition&#39;s hash, unless ``force=True``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    matches the current shot definition's hash, unless ``force=True``.</span>
+<span class="sd">    """</span>
     <span class="n">spec</span> <span class="o">=</span> <span class="n">project</span><span class="o">.</span><span class="n">read_spec</span><span class="p">()</span>
     <span class="n">shot</span> <span class="o">=</span> <span class="n">spec</span><span class="o">.</span><span class="n">shot</span><span class="p">(</span><span class="n">shot_id</span><span class="p">)</span>
     <span class="n">shot_dir</span> <span class="o">=</span> <span class="n">project</span><span class="o">.</span><span class="n">shot_dir</span><span class="p">(</span><span class="n">shot</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
     <span class="n">shot_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">out_path</span> <span class="o">=</span> <span class="n">shot_dir</span> <span class="o">/</span> <span class="s2">&quot;output.mp4&quot;</span>
-    <span class="n">hash_path</span> <span class="o">=</span> <span class="n">shot_dir</span> <span class="o">/</span> <span class="s2">&quot;output.hash&quot;</span>
+    <span class="n">out_path</span> <span class="o">=</span> <span class="n">shot_dir</span> <span class="o">/</span> <span class="s2">"output.mp4"</span>
+    <span class="n">hash_path</span> <span class="o">=</span> <span class="n">shot_dir</span> <span class="o">/</span> <span class="s2">"output.hash"</span>
     <span class="n">current_hash</span> <span class="o">=</span> <span class="n">_shot_hash</span><span class="p">(</span><span class="n">shot</span><span class="p">,</span> <span class="n">spec</span><span class="o">.</span><span class="n">global_style</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="ow">not</span> <span class="n">force</span> <span class="ow">and</span> <span class="n">out_path</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span> <span class="ow">and</span> <span class="n">hash_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
@@ -202,25 +202,25 @@
 
     <span class="n">ctx</span> <span class="o">=</span> <span class="n">_build_context</span><span class="p">(</span><span class="n">project</span><span class="p">,</span> <span class="n">shot</span><span class="p">,</span> <span class="n">spec</span><span class="o">.</span><span class="n">global_style</span><span class="p">)</span>
     <span class="n">strategy</span> <span class="o">=</span> <span class="n">shot</span><span class="o">.</span><span class="n">render_strategy</span>
-    <span class="k">if</span> <span class="n">strategy</span> <span class="o">==</span> <span class="s2">&quot;lipsync&quot;</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">strategy</span> <span class="o">==</span> <span class="s2">"lipsync"</span><span class="p">:</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.renderers.lipsync</span><span class="w"> </span><span class="kn">import</span> <span class="n">render_lipsync</span> <span class="k">as</span> <span class="n">_render</span>
-    <span class="k">elif</span> <span class="n">strategy</span> <span class="o">==</span> <span class="s2">&quot;image_to_video&quot;</span><span class="p">:</span>
+    <span class="k">elif</span> <span class="n">strategy</span> <span class="o">==</span> <span class="s2">"image_to_video"</span><span class="p">:</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.renderers.image_to_video</span><span class="w"> </span><span class="kn">import</span> <span class="n">render_image_to_video</span> <span class="k">as</span> <span class="n">_render</span>
-    <span class="k">elif</span> <span class="n">strategy</span> <span class="o">==</span> <span class="s2">&quot;text_to_video&quot;</span><span class="p">:</span>
+    <span class="k">elif</span> <span class="n">strategy</span> <span class="o">==</span> <span class="s2">"text_to_video"</span><span class="p">:</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.renderers.text_to_video</span><span class="w"> </span><span class="kn">import</span> <span class="n">render_text_to_video</span> <span class="k">as</span> <span class="n">_render</span>
-    <span class="k">elif</span> <span class="n">strategy</span> <span class="o">==</span> <span class="s2">&quot;still&quot;</span><span class="p">:</span>
+    <span class="k">elif</span> <span class="n">strategy</span> <span class="o">==</span> <span class="s2">"still"</span><span class="p">:</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.renderers.still</span><span class="w"> </span><span class="kn">import</span> <span class="n">render_still</span> <span class="k">as</span> <span class="n">_render</span>
-    <span class="k">elif</span> <span class="n">strategy</span> <span class="o">==</span> <span class="s2">&quot;animation&quot;</span><span class="p">:</span>
+    <span class="k">elif</span> <span class="n">strategy</span> <span class="o">==</span> <span class="s2">"animation"</span><span class="p">:</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.renderers.animation</span><span class="w"> </span><span class="kn">import</span> <span class="n">render_animation</span> <span class="k">as</span> <span class="n">_render</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown render_strategy: </span><span class="si">{</span><span class="n">strategy</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Unknown render_strategy: </span><span class="si">{</span><span class="n">strategy</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
 
     <span class="n">produced</span> <span class="o">=</span> <span class="n">_render</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">quality</span><span class="o">=</span><span class="n">quality</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">produced</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span> <span class="o">!=</span> <span class="n">out_path</span><span class="o">.</span><span class="n">resolve</span><span class="p">():</span>
         <span class="n">shutil</span><span class="o">.</span><span class="n">copy2</span><span class="p">(</span><span class="n">produced</span><span class="p">,</span> <span class="n">out_path</span><span class="p">)</span>
     <span class="n">hash_path</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">current_hash</span><span class="p">)</span>
     <span class="n">project</span><span class="o">.</span><span class="n">log_decision</span><span class="p">(</span>
-        <span class="s2">&quot;render_shot&quot;</span><span class="p">,</span>
+        <span class="s2">"render_shot"</span><span class="p">,</span>
         <span class="n">shot_id</span><span class="o">=</span><span class="n">shot</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
         <span class="n">strategy</span><span class="o">=</span><span class="n">strategy</span><span class="p">,</span>
         <span class="n">duration_s</span><span class="o">=</span><span class="n">shot</span><span class="o">.</span><span class="n">duration_s</span><span class="p">,</span>
@@ -231,7 +231,7 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">render_all</span><span class="p">(</span>
-    <span class="n">project</span><span class="p">:</span> <span class="n">MusicVideoProject</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">quality</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;balanced&quot;</span><span class="p">,</span> <span class="n">force</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">project</span><span class="p">:</span> <span class="n">MusicVideoProject</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">quality</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"balanced"</span><span class="p">,</span> <span class="n">force</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]:</span>
     <span class="n">spec</span> <span class="o">=</span> <span class="n">project</span><span class="o">.</span><span class="n">read_spec</span><span class="p">()</span>
     <span class="k">return</span> <span class="p">[</span>
@@ -244,7 +244,7 @@
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_shot_hash</span><span class="p">(</span><span class="n">shot</span><span class="p">:</span> <span class="n">ShotSpec</span><span class="p">,</span> <span class="n">global_style</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
     <span class="n">payload</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span>
-        <span class="p">{</span><span class="s2">&quot;shot&quot;</span><span class="p">:</span> <span class="n">_shot_dict</span><span class="p">(</span><span class="n">shot</span><span class="p">),</span> <span class="s2">&quot;style&quot;</span><span class="p">:</span> <span class="n">global_style</span><span class="p">},</span>
+        <span class="p">{</span><span class="s2">"shot"</span><span class="p">:</span> <span class="n">_shot_dict</span><span class="p">(</span><span class="n">shot</span><span class="p">),</span> <span class="s2">"style"</span><span class="p">:</span> <span class="n">global_style</span><span class="p">},</span>
         <span class="n">sort_keys</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">default</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span>
     <span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">()</span>
@@ -255,7 +255,7 @@
     <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">asdict</span>
 
     <span class="n">d</span> <span class="o">=</span> <span class="n">asdict</span><span class="p">(</span><span class="n">shot</span><span class="p">)</span>
-    <span class="n">d</span><span class="p">[</span><span class="s2">&quot;characters&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s2">&quot;characters&quot;</span><span class="p">])</span>
+    <span class="n">d</span><span class="p">[</span><span class="s2">"characters"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s2">"characters"</span><span class="p">])</span>
     <span class="k">return</span> <span class="n">d</span>
 
 
@@ -273,7 +273,7 @@
         <span class="k">try</span><span class="p">:</span>
             <span class="n">char_imgs</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">get_character_anchor_image</span><span class="p">(</span><span class="n">project</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">FileNotFoundError</span><span class="p">:</span>
-            <span class="c1"># render strategies that don&#39;t need an image will tolerate missing</span>
+            <span class="c1"># render strategies that don't need an image will tolerate missing</span>
             <span class="k">pass</span>
 
     <span class="n">env_img</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
@@ -295,10 +295,10 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_ensure_audio_slice</span><span class="p">(</span><span class="n">project</span><span class="p">:</span> <span class="n">MusicVideoProject</span><span class="p">,</span> <span class="n">shot</span><span class="p">:</span> <span class="n">ShotSpec</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Extract the song&#39;s audio over [start_s, end_s] for this shot.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Extract the song's audio over [start_s, end_s] for this shot."""</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">mixing.audio</span><span class="w"> </span><span class="kn">import</span> <span class="n">Audio</span>
 
-    <span class="n">out</span> <span class="o">=</span> <span class="n">project</span><span class="o">.</span><span class="n">shot_dir</span><span class="p">(</span><span class="n">shot</span><span class="o">.</span><span class="n">id</span><span class="p">)</span> <span class="o">/</span> <span class="s2">&quot;audio.wav&quot;</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">project</span><span class="o">.</span><span class="n">shot_dir</span><span class="p">(</span><span class="n">shot</span><span class="o">.</span><span class="n">id</span><span class="p">)</span> <span class="o">/</span> <span class="s2">"audio.wav"</span>
     <span class="k">if</span> <span class="n">out</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
         <span class="k">return</span> <span class="n">out</span>
     <span class="n">song</span> <span class="o">=</span> <span class="n">project</span><span class="o">.</span><span class="n">song_path</span><span class="p">()</span>
@@ -309,8 +309,8 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_lyric_lines_for_shot</span><span class="p">(</span><span class="n">project</span><span class="p">:</span> <span class="n">MusicVideoProject</span><span class="p">,</span> <span class="n">shot</span><span class="p">:</span> <span class="n">ShotSpec</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Read the alignment store and return lyric lines that fall in the shot.&quot;&quot;&quot;</span>
-    <span class="n">align_path</span> <span class="o">=</span> <span class="n">project</span><span class="o">.</span><span class="n">root</span> <span class="o">/</span> <span class="s2">&quot;lyrics&quot;</span> <span class="o">/</span> <span class="s2">&quot;alignment.annot&quot;</span>
+<span class="w">    </span><span class="sd">"""Read the alignment store and return lyric lines that fall in the shot."""</span>
+    <span class="n">align_path</span> <span class="o">=</span> <span class="n">project</span><span class="o">.</span><span class="n">root</span> <span class="o">/</span> <span class="s2">"lyrics"</span> <span class="o">/</span> <span class="s2">"alignment.annot"</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">align_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
         <span class="k">return</span> <span class="p">[]</span>
     <span class="k">try</span><span class="p">:</span>
@@ -320,23 +320,23 @@
         <span class="k">return</span> <span class="p">[]</span>
     <span class="c1"># migrate=True: muvid OWNS this file — align.py writes it, at a path muvid</span>
     <span class="c1"># chooses inside its own project folder — so upgrading it on open is muvid</span>
-    <span class="c1"># maintaining its own artifact, not rewriting a user&#39;s document. lacing</span>
+    <span class="c1"># maintaining its own artifact, not rewriting a user's document. lacing</span>
     <span class="c1"># keeps migration opt-in precisely so a library never does that silently</span>
     <span class="c1"># (lacing#15); this is the application making the call it is entitled to</span>
     <span class="c1"># make, the same one nw and reelee made. Without it, a v1 .annot written</span>
     <span class="c1"># before lacing 0.0.31 raises SchemaMismatchError here and the render dies.</span>
-    <span class="c1"># The v1-&gt;v2 step is a stamp, and lacing&#39;s runner re-reads the version under</span>
+    <span class="c1"># The v1-&gt;v2 step is a stamp, and lacing's runner re-reads the version under</span>
     <span class="c1"># the write lock, so concurrent opens skip rather than double-apply.</span>
     <span class="n">store</span> <span class="o">=</span> <span class="n">SqliteStore</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">align_path</span><span class="p">),</span> <span class="n">migrate</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">track</span> <span class="o">=</span> <span class="n">SubtitleTrack</span><span class="p">(</span><span class="n">store</span><span class="p">,</span> <span class="n">asset_id</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
         <span class="k">return</span> <span class="p">[</span>
             <span class="p">{</span>
-                <span class="s2">&quot;text&quot;</span><span class="p">:</span> <span class="n">ann</span><span class="o">.</span><span class="n">body</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;text&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">),</span>
-                <span class="s2">&quot;start_s&quot;</span><span class="p">:</span> <span class="n">ann</span><span class="o">.</span><span class="n">reference</span><span class="o">.</span><span class="n">interval</span><span class="o">.</span><span class="n">start</span><span class="o">.</span><span class="n">to_seconds</span><span class="p">(),</span>
-                <span class="s2">&quot;end_s&quot;</span><span class="p">:</span> <span class="n">ann</span><span class="o">.</span><span class="n">reference</span><span class="o">.</span><span class="n">interval</span><span class="o">.</span><span class="n">end</span><span class="o">.</span><span class="n">to_seconds</span><span class="p">(),</span>
-                <span class="s2">&quot;line_index&quot;</span><span class="p">:</span> <span class="n">ann</span><span class="o">.</span><span class="n">body</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;line_index&quot;</span><span class="p">),</span>
-                <span class="s2">&quot;section&quot;</span><span class="p">:</span> <span class="n">ann</span><span class="o">.</span><span class="n">body</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;section&quot;</span><span class="p">),</span>
+                <span class="s2">"text"</span><span class="p">:</span> <span class="n">ann</span><span class="o">.</span><span class="n">body</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"text"</span><span class="p">,</span> <span class="s2">""</span><span class="p">),</span>
+                <span class="s2">"start_s"</span><span class="p">:</span> <span class="n">ann</span><span class="o">.</span><span class="n">reference</span><span class="o">.</span><span class="n">interval</span><span class="o">.</span><span class="n">start</span><span class="o">.</span><span class="n">to_seconds</span><span class="p">(),</span>
+                <span class="s2">"end_s"</span><span class="p">:</span> <span class="n">ann</span><span class="o">.</span><span class="n">reference</span><span class="o">.</span><span class="n">interval</span><span class="o">.</span><span class="n">end</span><span class="o">.</span><span class="n">to_seconds</span><span class="p">(),</span>
+                <span class="s2">"line_index"</span><span class="p">:</span> <span class="n">ann</span><span class="o">.</span><span class="n">body</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"line_index"</span><span class="p">),</span>
+                <span class="s2">"section"</span><span class="p">:</span> <span class="n">ann</span><span class="o">.</span><span class="n">body</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"section"</span><span class="p">),</span>
             <span class="p">}</span>
             <span class="k">for</span> <span class="n">ann</span> <span class="ow">in</span> <span class="n">track</span><span class="o">.</span><span class="n">lines_in</span><span class="p">(</span><span class="n">shot</span><span class="o">.</span><span class="n">start_s</span><span class="p">,</span> <span class="n">shot</span><span class="o">.</span><span class="n">end_s</span><span class="p">)</span>
         <span class="p">]</span>

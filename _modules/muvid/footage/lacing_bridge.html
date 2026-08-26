@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.footage.lacing_bridge &mdash; muvid 0.0.27 documentation</title>
+  <title>muvid.footage.lacing_bridge &mdash; muvid 0.0.28 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=cee5022b"></script>
+      <script src="../../../_static/documentation_options.js?v=26ffa1e9"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -131,7 +131,7 @@
            <div itemprop="articleBody">
              
   <h1>Source code for muvid.footage.lacing_bridge</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;muvid project → lacing standoff records, and the DECISION tier back to an EDL.</span>
+<span></span><span class="sd">"""muvid project → lacing standoff records, and the DECISION tier back to an EDL.</span>
 
 <span class="sd">The multichannel editor (thorwhalen/reelee-web#203) renders three record kinds that</span>
 <span class="sd">until now existed only as prose in the design docs (muvid#31): ``clip-alignment/v1``</span>
@@ -140,19 +140,19 @@
 <span class="sd">per cut, gaps included). This module is the bridge, both directions:</span>
 
 <span class="sd">- :func:`editor_document` — a muvid project as ``{tiers, annotations}``, everything in</span>
-<span class="sd">  SONG TIME on one shared axis, referenced to the song&#39;s content hash (``MediaRef``), so</span>
-<span class="sd">  any lacing-native surface (lacing-ui&#39;s multitrack Timeline first) renders it without</span>
+<span class="sd">  SONG TIME on one shared axis, referenced to the song's content hash (``MediaRef``), so</span>
+<span class="sd">  any lacing-native surface (lacing-ui's multitrack Timeline first) renders it without</span>
 <span class="sd">  knowing muvid exists.</span>
 <span class="sd">- :func:`edl_from_annotations` — the timeline-to-EDL half: a DECISION tier, after human</span>
 <span class="sd">  edits, exports verbatim as ``assemble_music_video(edl=...)`` input.</span>
 
-<span class="sd">Times quantize to lacing&#39;s rational grid at ``TIME_RATE`` (μs): far finer than</span>
-<span class="sd">``validate_edl``&#39;s 1 ms tolerance and the frame grid, so annotate → edit → export →</span>
+<span class="sd">Times quantize to lacing's rational grid at ``TIME_RATE`` (μs): far finer than</span>
+<span class="sd">``validate_edl``'s 1 ms tolerance and the frame grid, so annotate → edit → export →</span>
 <span class="sd">render reproduces the same cuts.</span>
 
 <span class="sd">Score arrays are inlined (a 205 s song at the current hop is ~2k floats per metric);</span>
 <span class="sd">they move behind a ContentRef when they outgrow JSON — a body-schema major bump.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -164,21 +164,21 @@
 <span class="n">TIME_RATE</span> <span class="o">=</span> <span class="mi">1_000_000</span>
 
 <span class="c1">#: Body-schema URIs this bridge emits (single source of truth for the names).</span>
-<span class="n">CLIP_ALIGNMENT_SCHEMA</span> <span class="o">=</span> <span class="s2">&quot;annot://schema/clip-alignment/v1&quot;</span>
-<span class="n">CLIP_SCORE_TRACK_SCHEMA</span> <span class="o">=</span> <span class="s2">&quot;annot://schema/clip-score-track/v1&quot;</span>
-<span class="n">MUSIC_VIDEO_EDL_SCHEMA</span> <span class="o">=</span> <span class="s2">&quot;annot://schema/music-video-edl/v1&quot;</span>
+<span class="n">CLIP_ALIGNMENT_SCHEMA</span> <span class="o">=</span> <span class="s2">"annot://schema/clip-alignment/v1"</span>
+<span class="n">CLIP_SCORE_TRACK_SCHEMA</span> <span class="o">=</span> <span class="s2">"annot://schema/clip-score-track/v1"</span>
+<span class="n">MUSIC_VIDEO_EDL_SCHEMA</span> <span class="o">=</span> <span class="s2">"annot://schema/music-video-edl/v1"</span>
 
 <span class="c1">#: Tier names. Clip lanes are per-clip (``clip:&lt;id&gt;``); these are the shared ones.</span>
-<span class="n">DECISION_TIER</span> <span class="o">=</span> <span class="s2">&quot;DECISION&quot;</span>
-<span class="n">_PROVENANCE_AGENT</span> <span class="o">=</span> <span class="s2">&quot;processor:muvid.footage.lacing_bridge&quot;</span>
+<span class="n">DECISION_TIER</span> <span class="o">=</span> <span class="s2">"DECISION"</span>
+<span class="n">_PROVENANCE_AGENT</span> <span class="o">=</span> <span class="s2">"processor:muvid.footage.lacing_bridge"</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_interval</span><span class="p">(</span><span class="n">start_s</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">end_s</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">lacing.time</span><span class="w"> </span><span class="kn">import</span> <span class="n">RationalTime</span><span class="p">,</span> <span class="n">TimeInterval</span>
 
     <span class="k">return</span> <span class="n">TimeInterval</span><span class="p">(</span>
-        <span class="n">start</span><span class="o">=</span><span class="n">RationalTime</span><span class="o">.</span><span class="n">from_seconds_lossy</span><span class="p">(</span><span class="n">start_s</span><span class="p">,</span> <span class="n">rate</span><span class="o">=</span><span class="n">TIME_RATE</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;round&quot;</span><span class="p">),</span>
-        <span class="n">end</span><span class="o">=</span><span class="n">RationalTime</span><span class="o">.</span><span class="n">from_seconds_lossy</span><span class="p">(</span><span class="n">end_s</span><span class="p">,</span> <span class="n">rate</span><span class="o">=</span><span class="n">TIME_RATE</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;round&quot;</span><span class="p">),</span>
+        <span class="n">start</span><span class="o">=</span><span class="n">RationalTime</span><span class="o">.</span><span class="n">from_seconds_lossy</span><span class="p">(</span><span class="n">start_s</span><span class="p">,</span> <span class="n">rate</span><span class="o">=</span><span class="n">TIME_RATE</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"round"</span><span class="p">),</span>
+        <span class="n">end</span><span class="o">=</span><span class="n">RationalTime</span><span class="o">.</span><span class="n">from_seconds_lossy</span><span class="p">(</span><span class="n">end_s</span><span class="p">,</span> <span class="n">rate</span><span class="o">=</span><span class="n">TIME_RATE</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"round"</span><span class="p">),</span>
     <span class="p">)</span>
 
 
@@ -206,9 +206,9 @@
             <span class="n">was_generated_by</span><span class="o">=</span><span class="n">_PROVENANCE_AGENT</span><span class="p">,</span>
             <span class="n">was_attributed_to</span><span class="o">=</span><span class="n">attributed_to</span><span class="p">,</span>
             <span class="n">generated_at_time</span><span class="o">=</span><span class="n">RationalTime</span><span class="o">.</span><span class="n">from_seconds_lossy</span><span class="p">(</span>
-                <span class="n">_time</span><span class="o">.</span><span class="n">time</span><span class="p">(),</span> <span class="n">rate</span><span class="o">=</span><span class="n">TIME_RATE</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;round&quot;</span>
+                <span class="n">_time</span><span class="o">.</span><span class="n">time</span><span class="p">(),</span> <span class="n">rate</span><span class="o">=</span><span class="n">TIME_RATE</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"round"</span>
             <span class="p">),</span>
-            <span class="n">activity</span><span class="o">=</span><span class="s2">&quot;import&quot;</span><span class="p">,</span>
+            <span class="n">activity</span><span class="o">=</span><span class="s2">"import"</span><span class="p">,</span>
         <span class="p">),</span>
         <span class="n">confidence</span><span class="o">=</span><span class="n">confidence</span><span class="p">,</span>
     <span class="p">)</span>
@@ -217,7 +217,7 @@
 <div class="viewcode-block" id="alignment_annotations">
 <a class="viewcode-back" href="../../../module_docs/muvid/footage/lacing_bridge.html#muvid.footage.lacing_bridge.alignment_annotations">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">alignment_annotations</span><span class="p">(</span><span class="n">aligns</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">song_asset_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">attributed_to</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;One ``clip-alignment/v1`` per clip, spanning the clip&#39;s coverage of the song.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""One ``clip-alignment/v1`` per clip, spanning the clip's coverage of the song."""</span>
     <span class="n">out</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">aligns</span><span class="p">:</span>
         <span class="n">lo</span><span class="p">,</span> <span class="n">hi</span> <span class="o">=</span> <span class="n">a</span><span class="o">.</span><span class="n">coverage</span>
@@ -227,15 +227,15 @@
             <span class="n">lo</span> <span class="o">=</span> <span class="n">hi</span> <span class="o">=</span> <span class="mf">0.0</span>
         <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
             <span class="n">_annotation</span><span class="p">(</span>
-                <span class="n">tier</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;clip:</span><span class="si">{</span><span class="n">a</span><span class="o">.</span><span class="n">clip_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">tier</span><span class="o">=</span><span class="sa">f</span><span class="s2">"clip:</span><span class="si">{</span><span class="n">a</span><span class="o">.</span><span class="n">clip_id</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
                 <span class="n">song_asset_id</span><span class="o">=</span><span class="n">song_asset_id</span><span class="p">,</span>
                 <span class="n">start_s</span><span class="o">=</span><span class="n">lo</span><span class="p">,</span>
                 <span class="n">end_s</span><span class="o">=</span><span class="n">hi</span><span class="p">,</span>
                 <span class="n">body</span><span class="o">=</span><span class="p">{</span>
-                    <span class="s2">&quot;clip_id&quot;</span><span class="p">:</span> <span class="n">a</span><span class="o">.</span><span class="n">clip_id</span><span class="p">,</span>
-                    <span class="s2">&quot;offset_s&quot;</span><span class="p">:</span> <span class="n">a</span><span class="o">.</span><span class="n">offset_s</span><span class="p">,</span>
-                    <span class="s2">&quot;duration_s&quot;</span><span class="p">:</span> <span class="n">a</span><span class="o">.</span><span class="n">duration_s</span><span class="p">,</span>
-                    <span class="s2">&quot;overlaps&quot;</span><span class="p">:</span> <span class="n">a</span><span class="o">.</span><span class="n">overlaps</span><span class="p">,</span>
+                    <span class="s2">"clip_id"</span><span class="p">:</span> <span class="n">a</span><span class="o">.</span><span class="n">clip_id</span><span class="p">,</span>
+                    <span class="s2">"offset_s"</span><span class="p">:</span> <span class="n">a</span><span class="o">.</span><span class="n">offset_s</span><span class="p">,</span>
+                    <span class="s2">"duration_s"</span><span class="p">:</span> <span class="n">a</span><span class="o">.</span><span class="n">duration_s</span><span class="p">,</span>
+                    <span class="s2">"overlaps"</span><span class="p">:</span> <span class="n">a</span><span class="o">.</span><span class="n">overlaps</span><span class="p">,</span>
                 <span class="p">},</span>
                 <span class="n">schema</span><span class="o">=</span><span class="n">CLIP_ALIGNMENT_SCHEMA</span><span class="p">,</span>
                 <span class="n">attributed_to</span><span class="o">=</span><span class="n">attributed_to</span><span class="p">,</span>
@@ -249,11 +249,11 @@
 <div class="viewcode-block" id="score_track_annotations">
 <a class="viewcode-back" href="../../../module_docs/muvid/footage/lacing_bridge.html#muvid.footage.lacing_bridge.score_track_annotations">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">score_track_annotations</span><span class="p">(</span><span class="n">tensor</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">song_asset_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">attributed_to</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;One ``clip-score-track/v1`` per (clip, metric): the whole curve as one record.</span>
+<span class="w">    </span><span class="sd">"""One ``clip-score-track/v1`` per (clip, metric): the whole curve as one record.</span>
 
 <span class="sd">    Dense JAMS-style arrays on the shared grid — values normalized to [0,1], ``mask``</span>
 <span class="sd">    saying where the clip actually covers the song (blank, never flat-zero, in the UI).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">out</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">n</span> <span class="o">=</span> <span class="n">tensor</span><span class="o">.</span><span class="n">n</span>
     <span class="n">t0</span><span class="p">,</span> <span class="n">hop</span> <span class="o">=</span> <span class="n">tensor</span><span class="o">.</span><span class="n">t0</span><span class="p">,</span> <span class="n">tensor</span><span class="o">.</span><span class="n">hop_s</span>
@@ -264,16 +264,16 @@
             <span class="n">mask</span> <span class="o">=</span> <span class="n">tensor</span><span class="o">.</span><span class="n">M</span><span class="p">[</span><span class="n">ci</span><span class="p">,</span> <span class="p">:,</span> <span class="n">mi</span><span class="p">]</span>
             <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                 <span class="n">_annotation</span><span class="p">(</span>
-                    <span class="n">tier</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;clip:</span><span class="si">{</span><span class="n">clip_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                    <span class="n">tier</span><span class="o">=</span><span class="sa">f</span><span class="s2">"clip:</span><span class="si">{</span><span class="n">clip_id</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
                     <span class="n">song_asset_id</span><span class="o">=</span><span class="n">song_asset_id</span><span class="p">,</span>
                     <span class="n">start_s</span><span class="o">=</span><span class="n">t0</span><span class="p">,</span>
                     <span class="n">end_s</span><span class="o">=</span><span class="n">t0</span> <span class="o">+</span> <span class="n">n</span> <span class="o">*</span> <span class="n">hop</span><span class="p">,</span>
                     <span class="n">body</span><span class="o">=</span><span class="p">{</span>
-                        <span class="s2">&quot;clip_id&quot;</span><span class="p">:</span> <span class="n">clip_id</span><span class="p">,</span>
-                        <span class="s2">&quot;metric&quot;</span><span class="p">:</span> <span class="n">metric</span><span class="p">,</span>
-                        <span class="s2">&quot;t0&quot;</span><span class="p">:</span> <span class="n">t0</span><span class="p">,</span>
-                        <span class="s2">&quot;hop_s&quot;</span><span class="p">:</span> <span class="n">hop</span><span class="p">,</span>
-                        <span class="s2">&quot;values&quot;</span><span class="p">:</span> <span class="p">[</span>
+                        <span class="s2">"clip_id"</span><span class="p">:</span> <span class="n">clip_id</span><span class="p">,</span>
+                        <span class="s2">"metric"</span><span class="p">:</span> <span class="n">metric</span><span class="p">,</span>
+                        <span class="s2">"t0"</span><span class="p">:</span> <span class="n">t0</span><span class="p">,</span>
+                        <span class="s2">"hop_s"</span><span class="p">:</span> <span class="n">hop</span><span class="p">,</span>
+                        <span class="s2">"values"</span><span class="p">:</span> <span class="p">[</span>
                             <span class="kc">None</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">m</span> <span class="k">else</span> <span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">v</span><span class="p">),</span> <span class="mi">6</span><span class="p">)</span>
                             <span class="k">for</span> <span class="n">v</span><span class="p">,</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">mask</span><span class="p">)</span>
                         <span class="p">],</span>
@@ -289,14 +289,14 @@
 <div class="viewcode-block" id="edl_annotations">
 <a class="viewcode-back" href="../../../module_docs/muvid/footage/lacing_bridge.html#muvid.footage.lacing_bridge.edl_annotations">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">edl_annotations</span><span class="p">(</span><span class="n">entries</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">song_asset_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">attributed_to</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The DECISION lane: one ``music-video-edl/v1`` per EDL entry, gaps included.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""The DECISION lane: one ``music-video-edl/v1`` per EDL entry, gaps included."""</span>
     <span class="k">return</span> <span class="p">[</span>
         <span class="n">_annotation</span><span class="p">(</span>
             <span class="n">tier</span><span class="o">=</span><span class="n">DECISION_TIER</span><span class="p">,</span>
             <span class="n">song_asset_id</span><span class="o">=</span><span class="n">song_asset_id</span><span class="p">,</span>
             <span class="n">start_s</span><span class="o">=</span><span class="n">e</span><span class="o">.</span><span class="n">song_start</span><span class="p">,</span>
             <span class="n">end_s</span><span class="o">=</span><span class="n">e</span><span class="o">.</span><span class="n">song_end</span><span class="p">,</span>
-            <span class="n">body</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;clip_id&quot;</span><span class="p">:</span> <span class="n">e</span><span class="o">.</span><span class="n">clip_id</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">},</span>
+            <span class="n">body</span><span class="o">=</span><span class="p">{</span><span class="s2">"clip_id"</span><span class="p">:</span> <span class="n">e</span><span class="o">.</span><span class="n">clip_id</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">},</span>
             <span class="n">schema</span><span class="o">=</span><span class="n">MUSIC_VIDEO_EDL_SCHEMA</span><span class="p">,</span>
             <span class="n">attributed_to</span><span class="o">=</span><span class="n">attributed_to</span><span class="p">,</span>
         <span class="p">)</span>
@@ -310,12 +310,12 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">edl_from_annotations</span><span class="p">(</span>
     <span class="n">annotations</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">expected_song_asset_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;DECISION-tier annotations → the ``edl=`` argument, verbatim.</span>
+<span class="w">    </span><span class="sd">"""DECISION-tier annotations → the ``edl=`` argument, verbatim.</span>
 
 <span class="sd">    The timeline-to-EDL half: whatever the editor did to the DECISION lane — moved,</span>
 <span class="sd">    split, retargeted, deleted — exports as plain ``{song_start, song_end, clip_id}``</span>
 <span class="sd">    dicts ready for ``assemble_music_video``. Sorting and validation stay the render</span>
-<span class="sd">    path&#39;s business (``fill_gaps`` + ``validate_edl``); this is a faithful read.</span>
+<span class="sd">    path's business (``fill_gaps`` + ``validate_edl``); this is a faithful read.</span>
 
 <span class="sd">    Annotations are untrusted editor input, so anything shaped wrong is SKIPPED rather</span>
 <span class="sd">    than crashing the export: wrong schema/tier, or (an editor could in principle attach</span>
@@ -330,55 +330,55 @@
 <span class="sd">    cause. The check is opt-in and evidence-based: no expected id, or a reference kind</span>
 <span class="sd">    carrying no ``asset_id`` at all (only ``MediaRef`` has one), is nothing to</span>
 <span class="sd">    contradict — it reports a WRONG song, it does not demand proof of the right one.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">out</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">annotations</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">a</span><span class="o">.</span><span class="n">body_schema_uri</span> <span class="o">!=</span> <span class="n">MUSIC_VIDEO_EDL_SCHEMA</span> <span class="ow">or</span> <span class="n">a</span><span class="o">.</span><span class="n">tier</span> <span class="o">!=</span> <span class="n">DECISION_TIER</span><span class="p">:</span>
             <span class="k">continue</span>
         <span class="c1"># getattr, not isinstance(MediaRef): this function stays lacing-free (it</span>
         <span class="c1"># duck-types already-parsed annotations), so importing the model here would</span>
-        <span class="c1"># newly bind the export path to the &#39;editor&#39; extra.</span>
-        <span class="n">asset_id</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">reference</span><span class="p">,</span> <span class="s2">&quot;asset_id&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="c1"># newly bind the export path to the 'editor' extra.</span>
+        <span class="n">asset_id</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">reference</span><span class="p">,</span> <span class="s2">"asset_id"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">expected_song_asset_id</span> <span class="ow">and</span> <span class="n">asset_id</span> <span class="ow">and</span> <span class="n">asset_id</span> <span class="o">!=</span> <span class="n">expected_song_asset_id</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;DECISION annotation </span><span class="si">{</span><span class="n">a</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2"> is about a different song: its reference &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;asset_id is </span><span class="si">{</span><span class="n">asset_id</span><span class="si">!r}</span><span class="s2">, this project&#39;s song is &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">expected_song_asset_id</span><span class="si">!r}</span><span class="s2">. Exporting it would splice another &quot;</span>
-                <span class="s2">&quot;project&#39;s timeline into this one.&quot;</span>
+                <span class="sa">f</span><span class="s2">"DECISION annotation </span><span class="si">{</span><span class="n">a</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2"> is about a different song: its reference "</span>
+                <span class="sa">f</span><span class="s2">"asset_id is </span><span class="si">{</span><span class="n">asset_id</span><span class="si">!r}</span><span class="s2">, this project's song is "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">expected_song_asset_id</span><span class="si">!r}</span><span class="s2">. Exporting it would splice another "</span>
+                <span class="s2">"project's timeline into this one."</span>
             <span class="p">)</span>
         <span class="n">iv</span> <span class="o">=</span> <span class="n">a</span><span class="o">.</span><span class="n">reference</span><span class="o">.</span><span class="n">interval</span>
         <span class="k">if</span> <span class="n">iv</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">continue</span>
         <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
             <span class="p">{</span>
-                <span class="s2">&quot;song_start&quot;</span><span class="p">:</span> <span class="n">iv</span><span class="o">.</span><span class="n">start</span><span class="o">.</span><span class="n">to_seconds</span><span class="p">(),</span>
-                <span class="s2">&quot;song_end&quot;</span><span class="p">:</span> <span class="n">iv</span><span class="o">.</span><span class="n">end</span><span class="o">.</span><span class="n">to_seconds</span><span class="p">(),</span>
-                <span class="s2">&quot;clip_id&quot;</span><span class="p">:</span> <span class="n">a</span><span class="o">.</span><span class="n">body</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;clip_id&quot;</span><span class="p">),</span>
+                <span class="s2">"song_start"</span><span class="p">:</span> <span class="n">iv</span><span class="o">.</span><span class="n">start</span><span class="o">.</span><span class="n">to_seconds</span><span class="p">(),</span>
+                <span class="s2">"song_end"</span><span class="p">:</span> <span class="n">iv</span><span class="o">.</span><span class="n">end</span><span class="o">.</span><span class="n">to_seconds</span><span class="p">(),</span>
+                <span class="s2">"clip_id"</span><span class="p">:</span> <span class="n">a</span><span class="o">.</span><span class="n">body</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"clip_id"</span><span class="p">),</span>
             <span class="p">}</span>
         <span class="p">)</span>
-    <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">e</span><span class="p">:</span> <span class="n">e</span><span class="p">[</span><span class="s2">&quot;song_start&quot;</span><span class="p">])</span></div>
+    <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">e</span><span class="p">:</span> <span class="n">e</span><span class="p">[</span><span class="s2">"song_start"</span><span class="p">])</span></div>
 
 
 
 <div class="viewcode-block" id="editor_document">
 <a class="viewcode-back" href="../../../module_docs/muvid/footage/lacing_bridge.html#muvid.footage.lacing_bridge.editor_document">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">editor_document</span><span class="p">(</span><span class="n">proj</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">attributed_to</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The whole project as one lacing-native document for a multitrack editor.</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">editor_document</span><span class="p">(</span><span class="n">proj</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">attributed_to</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The whole project as one lacing-native document for a multitrack editor.</span>
 
 <span class="sd">    Tiers: one lane group per clip (alignment + its score sub-tracks) + the DECISION</span>
 <span class="sd">    lane. The EDL rendered into DECISION is the current default proposal; an editor</span>
 <span class="sd">    mutates that tier and exports it back through :func:`edl_from_annotations`.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.footage.edl</span><span class="w"> </span><span class="kn">import</span> <span class="n">fill_gaps</span><span class="p">,</span> <span class="n">validate_edl</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.footage.scoring.grid</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_tensor</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.footage.strategy</span><span class="w"> </span><span class="kn">import</span> <span class="n">DEFAULT_STRATEGY</span><span class="p">,</span> <span class="n">select_edl</span>
 
     <span class="k">if</span> <span class="ow">not</span> <span class="n">proj</span><span class="o">.</span><span class="n">has_song</span><span class="p">():</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;no song set — call set_song first&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"no song set — call set_song first"</span><span class="p">)</span>
     <span class="n">aligns</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">load_alignments</span><span class="p">()</span>
     <span class="n">song_dur</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">song_duration</span><span class="p">()</span>
     <span class="n">song_asset_id</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">song_hash</span><span class="p">()</span>
-    <span class="n">who</span> <span class="o">=</span> <span class="n">attributed_to</span> <span class="ow">or</span> <span class="sa">f</span><span class="s2">&quot;user:</span><span class="si">{</span><span class="n">proj</span><span class="o">.</span><span class="n">email</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="n">who</span> <span class="o">=</span> <span class="n">attributed_to</span> <span class="ow">or</span> <span class="sa">f</span><span class="s2">"user:</span><span class="si">{</span><span class="n">proj</span><span class="o">.</span><span class="n">email</span><span class="si">}</span><span class="s2">"</span>
 
     <span class="n">annotations</span> <span class="o">=</span> <span class="n">alignment_annotations</span><span class="p">(</span>
         <span class="n">aligns</span><span class="p">,</span> <span class="n">song_asset_id</span><span class="o">=</span><span class="n">song_asset_id</span><span class="p">,</span> <span class="n">attributed_to</span><span class="o">=</span><span class="n">who</span>
@@ -409,20 +409,20 @@
                 <span class="n">entries</span><span class="p">,</span> <span class="n">song_asset_id</span><span class="o">=</span><span class="n">song_asset_id</span><span class="p">,</span> <span class="n">attributed_to</span><span class="o">=</span><span class="n">who</span>
             <span class="p">)</span>
 
-    <span class="n">tiers</span> <span class="o">=</span> <span class="p">[{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">DECISION_TIER</span><span class="p">,</span> <span class="s2">&quot;stereotype&quot;</span><span class="p">:</span> <span class="s2">&quot;NONE&quot;</span><span class="p">}]</span> <span class="o">+</span> <span class="p">[</span>
-        <span class="p">{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;clip:</span><span class="si">{</span><span class="n">a</span><span class="o">.</span><span class="n">clip_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;stereotype&quot;</span><span class="p">:</span> <span class="s2">&quot;NONE&quot;</span><span class="p">}</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">aligns</span>
+    <span class="n">tiers</span> <span class="o">=</span> <span class="p">[{</span><span class="s2">"name"</span><span class="p">:</span> <span class="n">DECISION_TIER</span><span class="p">,</span> <span class="s2">"stereotype"</span><span class="p">:</span> <span class="s2">"NONE"</span><span class="p">}]</span> <span class="o">+</span> <span class="p">[</span>
+        <span class="p">{</span><span class="s2">"name"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"clip:</span><span class="si">{</span><span class="n">a</span><span class="o">.</span><span class="n">clip_id</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="s2">"stereotype"</span><span class="p">:</span> <span class="s2">"NONE"</span><span class="p">}</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">aligns</span>
     <span class="p">]</span>
     <span class="k">return</span> <span class="p">{</span>
-        <span class="s2">&quot;project_id&quot;</span><span class="p">:</span> <span class="n">proj</span><span class="o">.</span><span class="n">project_id</span><span class="p">,</span>
-        <span class="s2">&quot;song_asset_id&quot;</span><span class="p">:</span> <span class="n">song_asset_id</span><span class="p">,</span>
-        <span class="s2">&quot;song_duration&quot;</span><span class="p">:</span> <span class="n">song_dur</span><span class="p">,</span>
-        <span class="s2">&quot;time_rate&quot;</span><span class="p">:</span> <span class="n">TIME_RATE</span><span class="p">,</span>
-        <span class="s2">&quot;tiers&quot;</span><span class="p">:</span> <span class="n">tiers</span><span class="p">,</span>
-        <span class="s2">&quot;annotations&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">a</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">&quot;json&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">annotations</span><span class="p">],</span>
+        <span class="s2">"project_id"</span><span class="p">:</span> <span class="n">proj</span><span class="o">.</span><span class="n">project_id</span><span class="p">,</span>
+        <span class="s2">"song_asset_id"</span><span class="p">:</span> <span class="n">song_asset_id</span><span class="p">,</span>
+        <span class="s2">"song_duration"</span><span class="p">:</span> <span class="n">song_dur</span><span class="p">,</span>
+        <span class="s2">"time_rate"</span><span class="p">:</span> <span class="n">TIME_RATE</span><span class="p">,</span>
+        <span class="s2">"tiers"</span><span class="p">:</span> <span class="n">tiers</span><span class="p">,</span>
+        <span class="s2">"annotations"</span><span class="p">:</span> <span class="p">[</span><span class="n">a</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"json"</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">annotations</span><span class="p">],</span>
         <span class="c1"># None on the healthy path. When set, the DECISION tier has no default proposal</span>
         <span class="c1"># (everything else in the document is still good) — an editor should say so</span>
         <span class="c1"># rather than silently show an empty lane.</span>
-        <span class="s2">&quot;decision_error&quot;</span><span class="p">:</span> <span class="n">decision_error</span><span class="p">,</span>
+        <span class="s2">"decision_error"</span><span class="p">:</span> <span class="n">decision_error</span><span class="p">,</span>
     <span class="p">}</span></div>
 
 </pre></div>

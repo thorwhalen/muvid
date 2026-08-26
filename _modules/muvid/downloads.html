@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.downloads &mdash; muvid 0.0.27 documentation</title>
+  <title>muvid.downloads &mdash; muvid 0.0.28 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=cee5022b"></script>
+      <script src="../../_static/documentation_options.js?v=26ffa1e9"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -131,10 +131,10 @@
            <div itemprop="articleBody">
              
   <h1>Source code for muvid.downloads</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Resolve a caller&#39;s rendered artifact to its file — muvid&#39;s half of downloads.</span>
+<span></span><span class="sd">"""Resolve a caller's rendered artifact to its file — muvid's half of downloads.</span>
 
 <span class="sd">The music-video pipeline could render a 93 MB video the caller had no way to obtain:</span>
-<span class="sd">``meta[&#39;video&#39;]`` is a server-side path, unreadable from the other end of an MCP</span>
+<span class="sd">``meta['video']`` is a server-side path, unreadable from the other end of an MCP</span>
 <span class="sd">connection (muvid#24 B2). Retrieval is split along ownership lines, per the seam agreed</span>
 <span class="sd">with the connector redesign (reelee#252 §1 Option B):</span>
 
@@ -142,27 +142,27 @@
 <span class="sd">  per-email workspace scoping every tool uses. muvid never touches token or URL code.</span>
 <span class="sd">- **The connector owns transport**: ONE generic download route, mounted next to</span>
 <span class="sd">  ``/mcp``, turns claims into signed short-lived URLs via per-genre resolvers —</span>
-<span class="sd">  ``resolvers={&#39;muvid&#39;: muvid.downloads.resolve, ...}`` — shared by reelee&#39;s own</span>
+<span class="sd">  ``resolvers={'muvid': muvid.downloads.resolve, ...}`` — shared by reelee's own</span>
 <span class="sd">  exports, so this is the first registration, not a parallel mechanism.</span>
 
 <span class="sd">A tool therefore returns a **claim** — ``{genre, project_id, artifact_id}`` — and the</span>
 <span class="sd">connector-side wrapper (or the human operator, server-side) resolves it.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 
-<span class="c1">#: The genre identifier the connector&#39;s resolver registry keys on.</span>
-<span class="n">GENRE</span> <span class="o">=</span> <span class="s2">&quot;muvid&quot;</span>
+<span class="c1">#: The genre identifier the connector's resolver registry keys on.</span>
+<span class="n">GENRE</span> <span class="o">=</span> <span class="s2">"muvid"</span>
 
 
 <div class="viewcode-block" id="ResolvedArtifact">
 <a class="viewcode-back" href="../../module_docs/muvid/downloads.html#muvid.downloads.ResolvedArtifact">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">ResolvedArtifact</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A resolved claim: the file plus what the transport needs to serve it.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""A resolved claim: the file plus what the transport needs to serve it."""</span>
 
     <span class="n">path</span><span class="p">:</span> <span class="n">Path</span>
     <span class="n">content_type</span><span class="p">:</span> <span class="nb">str</span>
@@ -172,55 +172,55 @@
 
 <span class="c1">#: Extensions a render may legitimately carry, with their content types.</span>
 <span class="n">_CONTENT_TYPES</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">&quot;.mp4&quot;</span><span class="p">:</span> <span class="s2">&quot;video/mp4&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;.webm&quot;</span><span class="p">:</span> <span class="s2">&quot;video/webm&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;.mov&quot;</span><span class="p">:</span> <span class="s2">&quot;video/quicktime&quot;</span><span class="p">,</span>
+    <span class="s2">".mp4"</span><span class="p">:</span> <span class="s2">"video/mp4"</span><span class="p">,</span>
+    <span class="s2">".webm"</span><span class="p">:</span> <span class="s2">"video/webm"</span><span class="p">,</span>
+    <span class="s2">".mov"</span><span class="p">:</span> <span class="s2">"video/quicktime"</span><span class="p">,</span>
 <span class="p">}</span>
 
 
 <div class="viewcode-block" id="claim">
 <a class="viewcode-back" href="../../module_docs/muvid/downloads.html#muvid.downloads.claim">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">claim</span><span class="p">(</span><span class="n">project_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">artifact_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The claim dict a tool returns — what the connector turns into a signed URL.&quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;genre&quot;</span><span class="p">:</span> <span class="n">GENRE</span><span class="p">,</span> <span class="s2">&quot;project_id&quot;</span><span class="p">:</span> <span class="n">project_id</span><span class="p">,</span> <span class="s2">&quot;artifact_id&quot;</span><span class="p">:</span> <span class="n">artifact_id</span><span class="p">}</span></div>
+<span class="w">    </span><span class="sd">"""The claim dict a tool returns — what the connector turns into a signed URL."""</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s2">"genre"</span><span class="p">:</span> <span class="n">GENRE</span><span class="p">,</span> <span class="s2">"project_id"</span><span class="p">:</span> <span class="n">project_id</span><span class="p">,</span> <span class="s2">"artifact_id"</span><span class="p">:</span> <span class="n">artifact_id</span><span class="p">}</span></div>
 
 
 
 <div class="viewcode-block" id="resolve">
 <a class="viewcode-back" href="../../module_docs/muvid/downloads.html#muvid.downloads.resolve">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">resolve</span><span class="p">(</span><span class="n">email</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">project_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">artifact_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ResolvedArtifact</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The caller&#39;s rendered artifact as a servable file — muvid&#39;s download authority.</span>
+<span class="w">    </span><span class="sd">"""The caller's rendered artifact as a servable file — muvid's download authority.</span>
 
 <span class="sd">    ``artifact_id`` is a render id. Raises ``KeyError`` for anything that does not</span>
 <span class="sd">    resolve to an artifact of *this* caller — including ids shaped like an attack and</span>
-<span class="sd">    other users&#39; renders. (No ``PermissionError`` branch: workspaces are scoped by</span>
-<span class="sd">    email, so &quot;someone else&#39;s render&quot; and &quot;no such render&quot; are indistinguishable here,</span>
+<span class="sd">    other users' renders. (No ``PermissionError`` branch: workspaces are scoped by</span>
+<span class="sd">    email, so "someone else's render" and "no such render" are indistinguishable here,</span>
 <span class="sd">    and saying which would leak existence.)</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.footage.workspace</span><span class="w"> </span><span class="kn">import</span> <span class="n">FootageWorkspace</span><span class="p">,</span> <span class="n">safe_component</span>
 
     <span class="c1"># The same id rule the workspace itself applies — a second, stricter charset here</span>
     <span class="c1"># would refuse artifacts the workspace happily created.</span>
     <span class="k">try</span><span class="p">:</span>
-        <span class="n">pid</span> <span class="o">=</span> <span class="n">safe_component</span><span class="p">(</span><span class="n">project_id</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;project_id&quot;</span><span class="p">)</span>
-        <span class="n">aid</span> <span class="o">=</span> <span class="n">safe_component</span><span class="p">(</span><span class="n">artifact_id</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;artifact_id&quot;</span><span class="p">)</span>
+        <span class="n">pid</span> <span class="o">=</span> <span class="n">safe_component</span><span class="p">(</span><span class="n">project_id</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"project_id"</span><span class="p">)</span>
+        <span class="n">aid</span> <span class="o">=</span> <span class="n">safe_component</span><span class="p">(</span><span class="n">artifact_id</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"artifact_id"</span><span class="p">)</span>
     <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span> <span class="kn">from</span><span class="w"> </span><span class="kc">None</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">proj</span> <span class="o">=</span> <span class="n">FootageWorkspace</span><span class="o">.</span><span class="n">for_email</span><span class="p">(</span><span class="n">email</span><span class="p">)</span><span class="o">.</span><span class="n">open_project</span><span class="p">(</span><span class="n">pid</span><span class="p">)</span>
     <span class="k">except</span> <span class="ne">FileNotFoundError</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;no such project </span><span class="si">{</span><span class="n">project_id</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="kc">None</span>
-    <span class="n">render_dir</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">root</span> <span class="o">/</span> <span class="s2">&quot;renders&quot;</span> <span class="o">/</span> <span class="n">aid</span>
+        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"no such project </span><span class="si">{</span><span class="n">project_id</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="kc">None</span>
+    <span class="n">render_dir</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">root</span> <span class="o">/</span> <span class="s2">"renders"</span> <span class="o">/</span> <span class="n">aid</span>
     <span class="n">candidates</span> <span class="o">=</span> <span class="p">[</span>
-        <span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="p">(</span><span class="n">render_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;final</span><span class="si">{</span><span class="n">ext</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">ext</span> <span class="ow">in</span> <span class="n">_CONTENT_TYPES</span><span class="p">)</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+        <span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="p">(</span><span class="n">render_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">"final</span><span class="si">{</span><span class="n">ext</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">ext</span> <span class="ow">in</span> <span class="n">_CONTENT_TYPES</span><span class="p">)</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
     <span class="p">]</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">candidates</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;no such render </span><span class="si">{</span><span class="n">artifact_id</span><span class="si">!r}</span><span class="s2"> in project </span><span class="si">{</span><span class="n">project_id</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"no such render </span><span class="si">{</span><span class="n">artifact_id</span><span class="si">!r}</span><span class="s2"> in project </span><span class="si">{</span><span class="n">project_id</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
     <span class="n">path</span> <span class="o">=</span> <span class="n">candidates</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
     <span class="k">return</span> <span class="n">ResolvedArtifact</span><span class="p">(</span>
         <span class="n">path</span><span class="o">=</span><span class="n">path</span><span class="p">,</span>
         <span class="n">content_type</span><span class="o">=</span><span class="n">_CONTENT_TYPES</span><span class="p">[</span><span class="n">path</span><span class="o">.</span><span class="n">suffix</span><span class="p">],</span>
-        <span class="n">filename</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">project_id</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">artifact_id</span><span class="si">}{</span><span class="n">path</span><span class="o">.</span><span class="n">suffix</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="n">filename</span><span class="o">=</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">project_id</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">artifact_id</span><span class="si">}{</span><span class="n">path</span><span class="o">.</span><span class="n">suffix</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
     <span class="p">)</span></div>
 
 </pre></div>

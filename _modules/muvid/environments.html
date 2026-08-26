@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.environments &mdash; muvid 0.0.27 documentation</title>
+  <title>muvid.environments &mdash; muvid 0.0.28 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=cee5022b"></script>
+      <script src="../../_static/documentation_options.js?v=26ffa1e9"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -131,7 +131,7 @@
            <div itemprop="articleBody">
              
   <h1>Source code for muvid.environments</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Environment cards + canonical establishing image generation.&quot;&quot;&quot;</span>
+<span></span><span class="sd">"""Environment cards + canonical establishing image generation."""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -148,18 +148,18 @@
     <span class="n">project</span><span class="p">:</span> <span class="n">MusicVideoProject</span><span class="p">,</span>
     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
-    <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
-    <span class="n">time_of_day</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
-    <span class="n">lighting</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">,</span>
+    <span class="n">time_of_day</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">,</span>
+    <span class="n">lighting</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create or update an environment card.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Create or update an environment card."""</span>
     <span class="n">project</span><span class="o">.</span><span class="n">add_environment</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="n">description</span><span class="p">)</span>
     <span class="n">card</span> <span class="o">=</span> <span class="n">project</span><span class="o">.</span><span class="n">read_environment_card</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
-    <span class="n">card</span><span class="p">[</span><span class="s2">&quot;description&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">description</span> <span class="ow">or</span> <span class="n">card</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;description&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+    <span class="n">card</span><span class="p">[</span><span class="s2">"description"</span><span class="p">]</span> <span class="o">=</span> <span class="n">description</span> <span class="ow">or</span> <span class="n">card</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"description"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">time_of_day</span><span class="p">:</span>
-        <span class="n">card</span><span class="p">[</span><span class="s2">&quot;time_of_day&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">time_of_day</span>
+        <span class="n">card</span><span class="p">[</span><span class="s2">"time_of_day"</span><span class="p">]</span> <span class="o">=</span> <span class="n">time_of_day</span>
     <span class="k">if</span> <span class="n">lighting</span><span class="p">:</span>
-        <span class="n">card</span><span class="p">[</span><span class="s2">&quot;lighting&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">lighting</span>
+        <span class="n">card</span><span class="p">[</span><span class="s2">"lighting"</span><span class="p">]</span> <span class="o">=</span> <span class="n">lighting</span>
     <span class="n">project</span><span class="o">.</span><span class="n">write_environment_card</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">card</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">card</span></div>
 
@@ -171,31 +171,31 @@
     <span class="n">project</span><span class="p">:</span> <span class="n">MusicVideoProject</span><span class="p">,</span>
     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
-    <span class="n">quality</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;high&quot;</span><span class="p">,</span>
+    <span class="n">quality</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"high"</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Generate the canonical establishing image for the environment.</span>
+<span class="w">    </span><span class="sd">"""Generate the canonical establishing image for the environment.</span>
 
 <span class="sd">    Saves to ``environments/&lt;name&gt;/establishing.png`` and stores the</span>
 <span class="sd">    relative path on the card as ``reference_image_path``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">falaw</span><span class="w"> </span><span class="kn">import</span> <span class="n">generate_image</span>
 
     <span class="n">card</span> <span class="o">=</span> <span class="n">project</span><span class="o">.</span><span class="n">read_environment_card</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
-    <span class="n">desc</span> <span class="o">=</span> <span class="n">card</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;description&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">name</span>
+    <span class="n">desc</span> <span class="o">=</span> <span class="n">card</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"description"</span><span class="p">)</span> <span class="ow">or</span> <span class="n">name</span>
     <span class="n">parts</span> <span class="o">=</span> <span class="p">[</span><span class="n">desc</span><span class="p">]</span>
-    <span class="k">if</span> <span class="n">card</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;time_of_day&quot;</span><span class="p">):</span>
-        <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;time of day: </span><span class="si">{</span><span class="n">card</span><span class="p">[</span><span class="s1">&#39;time_of_day&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">card</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;lighting&quot;</span><span class="p">):</span>
-        <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;lighting: </span><span class="si">{</span><span class="n">card</span><span class="p">[</span><span class="s1">&#39;lighting&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-    <span class="n">prompt</span> <span class="o">=</span> <span class="s2">&quot; | &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span>
-    <span class="n">result</span> <span class="o">=</span> <span class="n">generate_image</span><span class="p">(</span><span class="n">prompt</span><span class="p">,</span> <span class="n">quality</span><span class="o">=</span><span class="n">quality</span><span class="p">,</span> <span class="n">image_size</span><span class="o">=</span><span class="s2">&quot;landscape_16_9&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">card</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"time_of_day"</span><span class="p">):</span>
+        <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"time of day: </span><span class="si">{</span><span class="n">card</span><span class="p">[</span><span class="s1">'time_of_day'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">card</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"lighting"</span><span class="p">):</span>
+        <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"lighting: </span><span class="si">{</span><span class="n">card</span><span class="p">[</span><span class="s1">'lighting'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">prompt</span> <span class="o">=</span> <span class="s2">" | "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">generate_image</span><span class="p">(</span><span class="n">prompt</span><span class="p">,</span> <span class="n">quality</span><span class="o">=</span><span class="n">quality</span><span class="p">,</span> <span class="n">image_size</span><span class="o">=</span><span class="s2">"landscape_16_9"</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">result</span><span class="o">.</span><span class="n">first</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;render_environment: no asset returned for </span><span class="si">{</span><span class="n">name</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
-    <span class="n">target</span> <span class="o">=</span> <span class="n">project</span><span class="o">.</span><span class="n">environment_dir</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="o">/</span> <span class="s2">&quot;establishing.png&quot;</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"render_environment: no asset returned for </span><span class="si">{</span><span class="n">name</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">target</span> <span class="o">=</span> <span class="n">project</span><span class="o">.</span><span class="n">environment_dir</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="o">/</span> <span class="s2">"establishing.png"</span>
     <span class="n">result</span><span class="o">.</span><span class="n">first</span><span class="o">.</span><span class="n">download</span><span class="p">(</span><span class="n">to</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">target</span><span class="p">))</span>
-    <span class="n">card</span><span class="p">[</span><span class="s2">&quot;reference_image_path&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">target</span><span class="o">.</span><span class="n">relative_to</span><span class="p">(</span><span class="n">project</span><span class="o">.</span><span class="n">root</span><span class="p">)</span><span class="o">.</span><span class="n">as_posix</span><span class="p">()</span>
+    <span class="n">card</span><span class="p">[</span><span class="s2">"reference_image_path"</span><span class="p">]</span> <span class="o">=</span> <span class="n">target</span><span class="o">.</span><span class="n">relative_to</span><span class="p">(</span><span class="n">project</span><span class="o">.</span><span class="n">root</span><span class="p">)</span><span class="o">.</span><span class="n">as_posix</span><span class="p">()</span>
     <span class="n">project</span><span class="o">.</span><span class="n">write_environment_card</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">card</span><span class="p">)</span>
-    <span class="n">project</span><span class="o">.</span><span class="n">log_decision</span><span class="p">(</span><span class="s2">&quot;render_environment&quot;</span><span class="p">,</span> <span class="n">environment</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">prompt</span><span class="o">=</span><span class="n">prompt</span><span class="p">)</span>
+    <span class="n">project</span><span class="o">.</span><span class="n">log_decision</span><span class="p">(</span><span class="s2">"render_environment"</span><span class="p">,</span> <span class="n">environment</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">prompt</span><span class="o">=</span><span class="n">prompt</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">target</span></div>
 
 
@@ -203,9 +203,9 @@
 <div class="viewcode-block" id="get_environment_anchor_image">
 <a class="viewcode-back" href="../../module_docs/muvid/environments.html#muvid.environments.get_environment_anchor_image">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">get_environment_anchor_image</span><span class="p">(</span><span class="n">project</span><span class="p">:</span> <span class="n">MusicVideoProject</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the canonical environment image, or None if not yet rendered.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Return the canonical environment image, or None if not yet rendered."""</span>
     <span class="n">card</span> <span class="o">=</span> <span class="n">project</span><span class="o">.</span><span class="n">read_environment_card</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
-    <span class="n">rel</span> <span class="o">=</span> <span class="n">card</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;reference_image_path&quot;</span><span class="p">)</span>
+    <span class="n">rel</span> <span class="o">=</span> <span class="n">card</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"reference_image_path"</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">rel</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">None</span>
     <span class="n">p</span> <span class="o">=</span> <span class="p">(</span><span class="n">project</span><span class="o">.</span><span class="n">root</span> <span class="o">/</span> <span class="n">rel</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>

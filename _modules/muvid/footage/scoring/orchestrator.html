@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.footage.scoring.orchestrator &mdash; muvid 0.0.27 documentation</title>
+  <title>muvid.footage.scoring.orchestrator &mdash; muvid 0.0.28 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../../_static/documentation_options.js?v=cee5022b"></script>
+      <script src="../../../../_static/documentation_options.js?v=26ffa1e9"></script>
       <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -131,10 +131,10 @@
            <div itemprop="articleBody">
              
   <h1>Source code for muvid.footage.scoring.orchestrator</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;The scoring orchestrator: a project (song + aligned clips) → the persisted score tensor.</span>
+<span></span><span class="sd">"""The scoring orchestrator: a project (song + aligned clips) → the persisted score tensor.</span>
 
 <span class="sd">Owns the shared, compute-once artifacts and the single decode pass per clip (the design</span>
-<span class="sd">review&#39;s fix for the double-decode / camera-motion-sharing problem):</span>
+<span class="sd">review's fix for the double-decode / camera-motion-sharing problem):</span>
 
 <span class="sd">1. **Master beat grid** (``mixing.audio.beat_grid``) — computed ONCE; every clip maps to it</span>
 <span class="sd">   via its offset.</span>
@@ -148,11 +148,11 @@
 <span class="sd">Resource safety (LOCKED decisions): a **process-wide concurrency=1 semaphore**</span>
 <span class="sd">(``MUVID_SCORING_MAX_CONCURRENT``) serializes scoring runs; the lip-sync tier is **off by</span>
 <span class="sd">default** (``MUVID_SCORING_ENABLE_LIPSYNC``); ``should_cancel`` is polled between every clip</span>
-<span class="sd">and stage (cancel latency ≈ one clip); progress is emitted as ``{&#39;kind&#39;:&#39;progress&#39;,</span>
-<span class="sd">&#39;stage_index&#39;,&#39;stage_count&#39;,&#39;current_transform&#39;}`` dicts (the nw.jobs mirror contract).</span>
+<span class="sd">and stage (cancel latency ≈ one clip); progress is emitted as ``{'kind':'progress',</span>
+<span class="sd">'stage_index','stage_count','current_transform'}`` dicts (the nw.jobs mirror contract).</span>
 
 <span class="sd">Import-safe: every heavy import (cv2/mediapipe/librosa/torch) is inside a function body.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -165,35 +165,35 @@
 <span class="c1">#: The torch-free CORE metric set (prod-safe). Lip-sync metrics are added only when the</span>
 <span class="c1">#: opt-in tier is enabled.</span>
 <span class="n">DEFAULT_METRICS</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="s2">&quot;sharpness&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;exposure&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;stability_shake&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;face_framing&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;motion_beat_bas&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;motion_onset_xcorr&quot;</span><span class="p">,</span>
+    <span class="s2">"sharpness"</span><span class="p">,</span>
+    <span class="s2">"exposure"</span><span class="p">,</span>
+    <span class="s2">"stability_shake"</span><span class="p">,</span>
+    <span class="s2">"face_framing"</span><span class="p">,</span>
+    <span class="s2">"motion_beat_bas"</span><span class="p">,</span>
+    <span class="s2">"motion_onset_xcorr"</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="n">_LIPSYNC_METRICS</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;lip_sync_lse_c&quot;</span><span class="p">,</span> <span class="s2">&quot;lse_d_offset&quot;</span><span class="p">)</span>
+<span class="n">_LIPSYNC_METRICS</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"lip_sync_lse_c"</span><span class="p">,</span> <span class="s2">"lse_d_offset"</span><span class="p">)</span>
 
 <span class="c1">#: Process-wide serialization of scoring runs (bounds peak memory on the fragile box).</span>
-<span class="n">_MAX_CONCURRENT</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;MUVID_SCORING_MAX_CONCURRENT&quot;</span><span class="p">,</span> <span class="s2">&quot;1&quot;</span><span class="p">)))</span>
+<span class="n">_MAX_CONCURRENT</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"MUVID_SCORING_MAX_CONCURRENT"</span><span class="p">,</span> <span class="s2">"1"</span><span class="p">)))</span>
 <span class="n">_SCORING_SEMAPHORE</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">BoundedSemaphore</span><span class="p">(</span><span class="n">_MAX_CONCURRENT</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_lipsync_enabled</span><span class="p">(</span><span class="n">explicit</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
     <span class="k">if</span> <span class="n">explicit</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">explicit</span>
-    <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;MUVID_SCORING_ENABLE_LIPSYNC&quot;</span><span class="p">,</span> <span class="s2">&quot;0&quot;</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span>
-        <span class="s2">&quot;0&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;false&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;False&quot;</span><span class="p">,</span>
+    <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"MUVID_SCORING_ENABLE_LIPSYNC"</span><span class="p">,</span> <span class="s2">"0"</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span>
+        <span class="s2">"0"</span><span class="p">,</span>
+        <span class="s2">""</span><span class="p">,</span>
+        <span class="s2">"false"</span><span class="p">,</span>
+        <span class="s2">"False"</span><span class="p">,</span>
     <span class="p">)</span>
 
 
 <div class="viewcode-block" id="list_available_extractors">
 <a class="viewcode-back" href="../../../../module_docs/muvid/footage/scoring/orchestrator.html#muvid.footage.scoring.orchestrator.list_available_extractors">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">list_available_extractors</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Which tiers can run here (import + weight availability) — for diagnostics / the tool.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Which tiers can run here (import + weight availability) — for diagnostics / the tool."""</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_has</span><span class="p">(</span><span class="n">mod</span><span class="p">):</span>
         <span class="kn">import</span><span class="w"> </span><span class="nn">importlib.util</span>
@@ -204,11 +204,11 @@
 
     <span class="n">ok</span><span class="p">,</span> <span class="n">reason</span> <span class="o">=</span> <span class="n">lipsync_available</span><span class="p">()</span>
     <span class="k">return</span> <span class="p">{</span>
-        <span class="s2">&quot;quality&quot;</span><span class="p">:</span> <span class="n">_has</span><span class="p">(</span><span class="s2">&quot;cv2&quot;</span><span class="p">),</span>
-        <span class="s2">&quot;face_framing&quot;</span><span class="p">:</span> <span class="n">_has</span><span class="p">(</span><span class="s2">&quot;mediapipe&quot;</span><span class="p">),</span>
-        <span class="s2">&quot;motion_beat&quot;</span><span class="p">:</span> <span class="n">_has</span><span class="p">(</span><span class="s2">&quot;cv2&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">_has</span><span class="p">(</span><span class="s2">&quot;librosa&quot;</span><span class="p">),</span>
-        <span class="s2">&quot;segment&quot;</span><span class="p">:</span> <span class="n">_has</span><span class="p">(</span><span class="s2">&quot;scenedetect&quot;</span><span class="p">),</span>
-        <span class="s2">&quot;lipsync&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;available&quot;</span><span class="p">:</span> <span class="n">ok</span><span class="p">,</span> <span class="s2">&quot;reason&quot;</span><span class="p">:</span> <span class="n">reason</span><span class="p">},</span>
+        <span class="s2">"quality"</span><span class="p">:</span> <span class="n">_has</span><span class="p">(</span><span class="s2">"cv2"</span><span class="p">),</span>
+        <span class="s2">"face_framing"</span><span class="p">:</span> <span class="n">_has</span><span class="p">(</span><span class="s2">"mediapipe"</span><span class="p">),</span>
+        <span class="s2">"motion_beat"</span><span class="p">:</span> <span class="n">_has</span><span class="p">(</span><span class="s2">"cv2"</span><span class="p">)</span> <span class="ow">and</span> <span class="n">_has</span><span class="p">(</span><span class="s2">"librosa"</span><span class="p">),</span>
+        <span class="s2">"segment"</span><span class="p">:</span> <span class="n">_has</span><span class="p">(</span><span class="s2">"scenedetect"</span><span class="p">),</span>
+        <span class="s2">"lipsync"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"available"</span><span class="p">:</span> <span class="n">ok</span><span class="p">,</span> <span class="s2">"reason"</span><span class="p">:</span> <span class="n">reason</span><span class="p">},</span>
     <span class="p">}</span></div>
 
 
@@ -225,7 +225,7 @@
     <span class="n">progress_cb</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">dict</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">should_cancel</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="nb">bool</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Score every aligned clip of ``project`` → persist the tensor; return a summary dict.</span>
+<span class="w">    </span><span class="sd">"""Score every aligned clip of ``project`` → persist the tensor; return a summary dict.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        project: a ``MusicVideoFootageProject`` (needs ``song_path``/``song_duration``/</span>
@@ -234,9 +234,9 @@
 <span class="sd">        hop_s: grid step (default 10 Hz).</span>
 <span class="sd">        sample_fps: frame analysis rate (default from ``frames.DEFAULT_SAMPLE_FPS``).</span>
 <span class="sd">        enable_lipsync: force the opt-in tier on/off (default: the env flag).</span>
-<span class="sd">        progress_cb: sink for ``{&#39;kind&#39;:&#39;progress&#39;, ...}`` dict events (nw.jobs mirror shape).</span>
+<span class="sd">        progress_cb: sink for ``{'kind':'progress', ...}`` dict events (nw.jobs mirror shape).</span>
 <span class="sd">        should_cancel: polled between clips/stages; a True short-circuits to a clean cancel.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">with</span> <span class="n">_SCORING_SEMAPHORE</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">_score</span><span class="p">(</span>
             <span class="n">project</span><span class="p">,</span>
@@ -254,10 +254,10 @@
     <span class="k">if</span> <span class="n">progress_cb</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">progress_cb</span><span class="p">(</span>
             <span class="p">{</span>
-                <span class="s2">&quot;kind&quot;</span><span class="p">:</span> <span class="s2">&quot;progress&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;stage_index&quot;</span><span class="p">:</span> <span class="n">idx</span><span class="p">,</span>
-                <span class="s2">&quot;stage_count&quot;</span><span class="p">:</span> <span class="n">total</span><span class="p">,</span>
-                <span class="s2">&quot;current_transform&quot;</span><span class="p">:</span> <span class="n">name</span><span class="p">,</span>
+                <span class="s2">"kind"</span><span class="p">:</span> <span class="s2">"progress"</span><span class="p">,</span>
+                <span class="s2">"stage_index"</span><span class="p">:</span> <span class="n">idx</span><span class="p">,</span>
+                <span class="s2">"stage_count"</span><span class="p">:</span> <span class="n">total</span><span class="p">,</span>
+                <span class="s2">"current_transform"</span><span class="p">:</span> <span class="n">name</span><span class="p">,</span>
             <span class="p">}</span>
         <span class="p">)</span>
 
@@ -276,7 +276,7 @@
 
     <span class="n">aligns</span> <span class="o">=</span> <span class="n">project</span><span class="o">.</span><span class="n">load_alignments</span><span class="p">()</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">aligns</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;no alignments — run align_footage first&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"no alignments — run align_footage first"</span><span class="p">)</span>
     <span class="n">song_dur</span> <span class="o">=</span> <span class="n">project</span><span class="o">.</span><span class="n">song_duration</span><span class="p">()</span>
     <span class="n">n</span> <span class="o">=</span> <span class="n">grid_len</span><span class="p">(</span><span class="n">song_dur</span><span class="p">,</span> <span class="n">hop_s</span><span class="p">)</span>
     <span class="n">t0</span> <span class="o">=</span> <span class="mf">0.0</span>
@@ -292,8 +292,8 @@
         <span class="n">ok</span><span class="p">,</span> <span class="n">reason</span> <span class="o">=</span> <span class="n">lipsync_available</span><span class="p">()</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">ok</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;lip-sync metrics </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">requested_lipsync</span><span class="p">)</span><span class="si">}</span><span class="s2"> requested but the tier is &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;unavailable: </span><span class="si">{</span><span class="n">reason</span><span class="si">}</span><span class="s2"> (install muvid[scoring-lipsync] + set weights)&quot;</span>
+                <span class="sa">f</span><span class="s2">"lip-sync metrics </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">requested_lipsync</span><span class="p">)</span><span class="si">}</span><span class="s2"> requested but the tier is "</span>
+                <span class="sa">f</span><span class="s2">"unavailable: </span><span class="si">{</span><span class="n">reason</span><span class="si">}</span><span class="s2"> (install muvid[scoring-lipsync] + set weights)"</span>
             <span class="p">)</span>
         <span class="n">want_lipsync</span> <span class="o">=</span> <span class="kc">True</span>
     <span class="n">wanted</span> <span class="o">=</span> <span class="p">(</span>
@@ -306,18 +306,18 @@
     <span class="n">stage</span> <span class="o">=</span> <span class="mi">0</span>
 
     <span class="c1"># 1. Master beat grid (once).</span>
-    <span class="n">_emit</span><span class="p">(</span><span class="n">progress_cb</span><span class="p">,</span> <span class="n">stage</span><span class="p">,</span> <span class="n">total_stages</span><span class="p">,</span> <span class="s2">&quot;beat_grid&quot;</span><span class="p">)</span>
+    <span class="n">_emit</span><span class="p">(</span><span class="n">progress_cb</span><span class="p">,</span> <span class="n">stage</span><span class="p">,</span> <span class="n">total_stages</span><span class="p">,</span> <span class="s2">"beat_grid"</span><span class="p">)</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">mixing.audio</span><span class="w"> </span><span class="kn">import</span> <span class="n">beat_grid</span>
 
     <span class="n">bg</span> <span class="o">=</span> <span class="n">beat_grid</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">project</span><span class="o">.</span><span class="n">song_path</span><span class="p">()))</span>
     <span class="n">stage</span> <span class="o">+=</span> <span class="mi">1</span>
     <span class="k">if</span> <span class="n">_cancelled</span><span class="p">(</span><span class="n">should_cancel</span><span class="p">):</span>
-        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="s2">&quot;cancelled&quot;</span><span class="p">,</span> <span class="s2">&quot;stage&quot;</span><span class="p">:</span> <span class="s2">&quot;beat_grid&quot;</span><span class="p">}</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">"status"</span><span class="p">:</span> <span class="s2">"cancelled"</span><span class="p">,</span> <span class="s2">"stage"</span><span class="p">:</span> <span class="s2">"beat_grid"</span><span class="p">}</span>
 
     <span class="c1"># 2. (opt-in) master vocal stem (once).</span>
     <span class="n">vocal_stem</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="k">if</span> <span class="n">want_lipsync</span><span class="p">:</span>
-        <span class="n">_emit</span><span class="p">(</span><span class="n">progress_cb</span><span class="p">,</span> <span class="n">stage</span><span class="p">,</span> <span class="n">total_stages</span><span class="p">,</span> <span class="s2">&quot;separate_vocals&quot;</span><span class="p">)</span>
+        <span class="n">_emit</span><span class="p">(</span><span class="n">progress_cb</span><span class="p">,</span> <span class="n">stage</span><span class="p">,</span> <span class="n">total_stages</span><span class="p">,</span> <span class="s2">"separate_vocals"</span><span class="p">)</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.footage.scoring.lipsync</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
             <span class="n">lipsync_available</span><span class="p">,</span>
             <span class="n">separate_master_vocals</span><span class="p">,</span>
@@ -327,27 +327,27 @@
         <span class="k">if</span> <span class="n">ok</span><span class="p">:</span>
             <span class="n">vocal_stem</span> <span class="o">=</span> <span class="n">separate_master_vocals</span><span class="p">(</span>
                 <span class="nb">str</span><span class="p">(</span><span class="n">project</span><span class="o">.</span><span class="n">song_path</span><span class="p">()),</span>
-                <span class="n">out_dir</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">project</span><span class="o">.</span><span class="n">root</span> <span class="o">/</span> <span class="s2">&quot;scores&quot;</span> <span class="o">/</span> <span class="s2">&quot;_stems&quot;</span><span class="p">),</span>
+                <span class="n">out_dir</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">project</span><span class="o">.</span><span class="n">root</span> <span class="o">/</span> <span class="s2">"scores"</span> <span class="o">/</span> <span class="s2">"_stems"</span><span class="p">),</span>
             <span class="p">)</span>
         <span class="n">stage</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="k">if</span> <span class="n">_cancelled</span><span class="p">(</span><span class="n">should_cancel</span><span class="p">):</span>
-            <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="s2">&quot;cancelled&quot;</span><span class="p">,</span> <span class="s2">&quot;stage&quot;</span><span class="p">:</span> <span class="s2">&quot;separate_vocals&quot;</span><span class="p">}</span>
+            <span class="k">return</span> <span class="p">{</span><span class="s2">"status"</span><span class="p">:</span> <span class="s2">"cancelled"</span><span class="p">,</span> <span class="s2">"stage"</span><span class="p">:</span> <span class="s2">"separate_vocals"</span><span class="p">}</span>
 
     <span class="n">face_fn</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">make_face_scorer</span><span class="p">()</span>
-    <span class="n">fps_kw</span> <span class="o">=</span> <span class="p">{}</span> <span class="k">if</span> <span class="n">sample_fps</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">{</span><span class="s2">&quot;sample_fps&quot;</span><span class="p">:</span> <span class="n">sample_fps</span><span class="p">}</span>
+    <span class="n">fps_kw</span> <span class="o">=</span> <span class="p">{}</span> <span class="k">if</span> <span class="n">sample_fps</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">{</span><span class="s2">"sample_fps"</span><span class="p">:</span> <span class="n">sample_fps</span><span class="p">}</span>
 
     <span class="n">tracks_by_clip</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="n">shots_by_clip</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="n">skipped</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
 
     <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">aligns</span><span class="p">:</span>
-        <span class="n">_emit</span><span class="p">(</span><span class="n">progress_cb</span><span class="p">,</span> <span class="n">stage</span><span class="p">,</span> <span class="n">total_stages</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;clip:</span><span class="si">{</span><span class="n">a</span><span class="o">.</span><span class="n">clip_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">_emit</span><span class="p">(</span><span class="n">progress_cb</span><span class="p">,</span> <span class="n">stage</span><span class="p">,</span> <span class="n">total_stages</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"clip:</span><span class="si">{</span><span class="n">a</span><span class="o">.</span><span class="n">clip_id</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
         <span class="n">stage</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="k">if</span> <span class="n">_cancelled</span><span class="p">(</span><span class="n">should_cancel</span><span class="p">):</span>
-            <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="s2">&quot;cancelled&quot;</span><span class="p">,</span> <span class="s2">&quot;stage&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;clip:</span><span class="si">{</span><span class="n">a</span><span class="o">.</span><span class="n">clip_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">}</span>
+            <span class="k">return</span> <span class="p">{</span><span class="s2">"status"</span><span class="p">:</span> <span class="s2">"cancelled"</span><span class="p">,</span> <span class="s2">"stage"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"clip:</span><span class="si">{</span><span class="n">a</span><span class="o">.</span><span class="n">clip_id</span><span class="si">}</span><span class="s2">"</span><span class="p">}</span>
         <span class="n">path</span> <span class="o">=</span> <span class="n">clip_paths</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">clip_id</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">path</span><span class="p">:</span>
-            <span class="n">skipped</span><span class="p">[</span><span class="n">a</span><span class="o">.</span><span class="n">clip_id</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;no file&quot;</span>
+            <span class="n">skipped</span><span class="p">[</span><span class="n">a</span><span class="o">.</span><span class="n">clip_id</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"no file"</span>
             <span class="k">continue</span>
         <span class="n">clip_tracks</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">try</span><span class="p">:</span>
@@ -355,7 +355,7 @@
                 <span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">),</span> <span class="n">face_fn</span><span class="o">=</span><span class="n">face_fn</span><span class="p">,</span> <span class="n">should_cancel</span><span class="o">=</span><span class="n">should_cancel</span><span class="p">,</span> <span class="o">**</span><span class="n">fps_kw</span>
             <span class="p">)</span>
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>  <span class="c1"># a bad clip must not sink the whole job</span>
-            <span class="n">skipped</span><span class="p">[</span><span class="n">a</span><span class="o">.</span><span class="n">clip_id</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;decode failed: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="n">skipped</span><span class="p">[</span><span class="n">a</span><span class="o">.</span><span class="n">clip_id</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"decode failed: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span>
             <span class="k">continue</span>
 
         <span class="n">qt</span> <span class="o">=</span> <span class="n">quality_tracks</span><span class="p">(</span>
@@ -375,12 +375,12 @@
         <span class="n">clip_tracks</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">qt</span><span class="p">)</span>
         <span class="n">clip_tracks</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">mt</span><span class="p">)</span>
 
-        <span class="c1"># Optional hard quality gate → AND into every metric&#39;s mask for this clip.</span>
+        <span class="c1"># Optional hard quality gate → AND into every metric's mask for this clip.</span>
         <span class="n">gate</span> <span class="o">=</span> <span class="n">quality_gate_mask</span><span class="p">(</span><span class="n">fp</span><span class="p">,</span> <span class="n">offset_s</span><span class="o">=</span><span class="n">a</span><span class="o">.</span><span class="n">offset_s</span><span class="p">,</span> <span class="n">t0</span><span class="o">=</span><span class="n">t0</span><span class="p">,</span> <span class="n">hop_s</span><span class="o">=</span><span class="n">hop_s</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="n">n</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">gate</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
             <span class="n">clip_tracks</span> <span class="o">=</span> <span class="p">[</span><span class="n">_and_mask</span><span class="p">(</span><span class="n">tr</span><span class="p">,</span> <span class="n">gate</span><span class="p">)</span> <span class="k">for</span> <span class="n">tr</span> <span class="ow">in</span> <span class="n">clip_tracks</span><span class="p">]</span>
 
-        <span class="c1"># Shot boundaries (for the selector&#39;s beats+shots mode).</span>
+        <span class="c1"># Shot boundaries (for the selector's beats+shots mode).</span>
         <span class="n">shots_by_clip</span><span class="p">[</span><span class="n">a</span><span class="o">.</span><span class="n">clip_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">shot_boundaries</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">),</span> <span class="n">offset_s</span><span class="o">=</span><span class="n">a</span><span class="o">.</span><span class="n">offset_s</span><span class="p">)</span>
 
         <span class="c1"># Opt-in lip-sync tier.</span>
@@ -426,22 +426,22 @@
         <span class="n">beat_times</span><span class="o">=</span><span class="n">bg</span><span class="o">.</span><span class="n">beat_times</span><span class="p">,</span>
         <span class="n">downbeat_times</span><span class="o">=</span><span class="n">bg</span><span class="o">.</span><span class="n">downbeat_times</span><span class="p">,</span>
         <span class="n">extra</span><span class="o">=</span><span class="p">{</span>
-            <span class="s2">&quot;shot_boundaries&quot;</span><span class="p">:</span> <span class="n">shots_by_clip</span><span class="p">,</span>
-            <span class="s2">&quot;tempo_bpm&quot;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">tempo</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span> <span class="k">if</span> <span class="n">math</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">tempo</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
-            <span class="s2">&quot;sample_fps&quot;</span><span class="p">:</span> <span class="n">sample_fps</span> <span class="ow">or</span> <span class="n">F</span><span class="o">.</span><span class="n">DEFAULT_SAMPLE_FPS</span><span class="p">,</span>
-            <span class="s2">&quot;lipsync_enabled&quot;</span><span class="p">:</span> <span class="n">want_lipsync</span><span class="p">,</span>
-            <span class="s2">&quot;skipped&quot;</span><span class="p">:</span> <span class="n">skipped</span><span class="p">,</span>
+            <span class="s2">"shot_boundaries"</span><span class="p">:</span> <span class="n">shots_by_clip</span><span class="p">,</span>
+            <span class="s2">"tempo_bpm"</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">tempo</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span> <span class="k">if</span> <span class="n">math</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">tempo</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="s2">"sample_fps"</span><span class="p">:</span> <span class="n">sample_fps</span> <span class="ow">or</span> <span class="n">F</span><span class="o">.</span><span class="n">DEFAULT_SAMPLE_FPS</span><span class="p">,</span>
+            <span class="s2">"lipsync_enabled"</span><span class="p">:</span> <span class="n">want_lipsync</span><span class="p">,</span>
+            <span class="s2">"skipped"</span><span class="p">:</span> <span class="n">skipped</span><span class="p">,</span>
         <span class="p">},</span>
     <span class="p">)</span>
     <span class="k">return</span> <span class="p">{</span>
-        <span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="s2">&quot;ok&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;metrics&quot;</span><span class="p">:</span> <span class="n">metric_axis</span><span class="p">,</span>
-        <span class="s2">&quot;clips_scored&quot;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">tracks_by_clip</span><span class="o">.</span><span class="n">keys</span><span class="p">()),</span>
-        <span class="s2">&quot;skipped&quot;</span><span class="p">:</span> <span class="n">skipped</span><span class="p">,</span>
-        <span class="s2">&quot;n_frames&quot;</span><span class="p">:</span> <span class="n">n</span><span class="p">,</span>
-        <span class="s2">&quot;hop_s&quot;</span><span class="p">:</span> <span class="n">hop_s</span><span class="p">,</span>
-        <span class="s2">&quot;beats&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">bg</span><span class="o">.</span><span class="n">beat_times</span><span class="p">)),</span>
-        <span class="s2">&quot;lipsync_enabled&quot;</span><span class="p">:</span> <span class="n">want_lipsync</span><span class="p">,</span>
+        <span class="s2">"status"</span><span class="p">:</span> <span class="s2">"ok"</span><span class="p">,</span>
+        <span class="s2">"metrics"</span><span class="p">:</span> <span class="n">metric_axis</span><span class="p">,</span>
+        <span class="s2">"clips_scored"</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">tracks_by_clip</span><span class="o">.</span><span class="n">keys</span><span class="p">()),</span>
+        <span class="s2">"skipped"</span><span class="p">:</span> <span class="n">skipped</span><span class="p">,</span>
+        <span class="s2">"n_frames"</span><span class="p">:</span> <span class="n">n</span><span class="p">,</span>
+        <span class="s2">"hop_s"</span><span class="p">:</span> <span class="n">hop_s</span><span class="p">,</span>
+        <span class="s2">"beats"</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">bg</span><span class="o">.</span><span class="n">beat_times</span><span class="p">)),</span>
+        <span class="s2">"lipsync_enabled"</span><span class="p">:</span> <span class="n">want_lipsync</span><span class="p">,</span>
     <span class="p">}</span>
 
 
@@ -458,7 +458,7 @@
     <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.footage.scoring.grid</span><span class="w"> </span><span class="kn">import</span> <span class="n">ScoreTrack</span>
 
     <span class="n">new_mask</span> <span class="o">=</span> <span class="n">track</span><span class="o">.</span><span class="n">mask</span> <span class="o">&amp;</span> <span class="n">gate</span>
-    <span class="n">new_vals</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">new_mask</span><span class="p">,</span> <span class="n">track</span><span class="o">.</span><span class="n">raw_values</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s2">&quot;float32&quot;</span><span class="p">)</span>
+    <span class="n">new_vals</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">new_mask</span><span class="p">,</span> <span class="n">track</span><span class="o">.</span><span class="n">raw_values</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s2">"float32"</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">ScoreTrack</span><span class="p">(</span>
         <span class="n">track</span><span class="o">.</span><span class="n">clip_id</span><span class="p">,</span>
         <span class="n">track</span><span class="o">.</span><span class="n">metric</span><span class="p">,</span>

@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.visualize &mdash; muvid 0.0.27 documentation</title>
+  <title>muvid.visualize &mdash; muvid 0.0.28 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -15,7 +15,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=cee5022b"></script>
+      <script src="../../_static/documentation_options.js?v=26ffa1e9"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -223,7 +223,7 @@ narrative pipeline (<a class="reference internal" href="facade.html#module-muvid
 concern and this subpackage stands on its own.</p>
 <p>The one call most people need:</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">muvid.visualize</span><span class="w"> </span><span class="kn">import</span> <span class="n">render_audio_video</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">render_audio_video</span><span class="p">(</span><span class="s2">&quot;song.wav&quot;</span><span class="p">,</span> <span class="n">image</span><span class="o">=</span><span class="s2">&quot;cover.png&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">render_audio_video</span><span class="p">(</span><span class="s2">"song.wav"</span><span class="p">,</span> <span class="n">image</span><span class="o">=</span><span class="s2">"cover.png"</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Everything else is a knob on that: <a class="reference internal" href="visualize/visuals.html#muvid.visualize.visuals.list_visuals" title="muvid.visualize.visuals.list_visuals"><code class="xref py py-func docutils literal notranslate"><span class="pre">list_visuals()</span></code></a>
@@ -891,13 +891,13 @@ afterglow).</p></li>
 <span class="sig-prename descclassname"><span class="pre">muvid.visualize.</span></span><span class="sig-name descname"><span class="pre">register_visual</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="visualize/visuals.html#muvid.visualize.visuals.VisualContext" title="muvid.visualize.visuals.VisualContext"><span class="pre">VisualContext</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="visualize/visuals.html#muvid.visualize.visuals.VisualPlan" title="muvid.visualize.visuals.VisualPlan"><span class="pre">VisualPlan</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="visualize/visuals.html#muvid.visualize.visuals.VisualContext" title="muvid.visualize.visuals.VisualContext"><span class="pre">VisualContext</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="visualize/visuals.html#muvid.visualize.visuals.VisualPlan" title="muvid.visualize.visuals.VisualPlan"><span class="pre">VisualPlan</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/muvid/visualize/visuals.html#register_visual"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.visualize.register_visual" title="Link to this definition"></a></dt>
 <dd><p>Register a visual strategy under <code class="docutils literal notranslate"><span class="pre">name</span></code> (the open-closed seam).</p>
 <p class="rubric">Examples</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nd">@register_visual</span><span class="p">(</span><span class="s2">&quot;black&quot;</span><span class="p">)</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nd">@register_visual</span><span class="p">(</span><span class="s2">"black"</span><span class="p">)</span>
 <span class="gp">... </span><span class="k">def</span><span class="w"> </span><span class="nf">_black</span><span class="p">(</span><span class="n">ctx</span><span class="p">):</span>
 <span class="gp">... </span>    <span class="n">w</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">size</span>
-<span class="gp">... </span>    <span class="k">return</span> <span class="n">VisualPlan</span><span class="p">(</span><span class="n">filters</span><span class="o">=</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;color=c=black:s=</span><span class="si">{</span><span class="n">w</span><span class="si">}</span><span class="s2">x</span><span class="si">{</span><span class="n">h</span><span class="si">}</span><span class="s2">[vbg]&quot;</span><span class="p">])</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="s2">&quot;black&quot;</span> <span class="ow">in</span> <span class="n">list_visuals</span><span class="p">()</span>
+<span class="gp">... </span>    <span class="k">return</span> <span class="n">VisualPlan</span><span class="p">(</span><span class="n">filters</span><span class="o">=</span><span class="p">[</span><span class="sa">f</span><span class="s2">"color=c=black:s=</span><span class="si">{</span><span class="n">w</span><span class="si">}</span><span class="s2">x</span><span class="si">{</span><span class="n">h</span><span class="si">}</span><span class="s2">[vbg]"</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="s2">"black"</span> <span class="ow">in</span> <span class="n">list_visuals</span><span class="p">()</span>
 <span class="go">True</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">_</span> <span class="o">=</span> <span class="n">_VISUALS</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;black&quot;</span><span class="p">)</span>  <span class="c1"># (keep the registry tidy for the next doctest)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">_</span> <span class="o">=</span> <span class="n">_VISUALS</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"black"</span><span class="p">)</span>  <span class="c1"># (keep the registry tidy for the next doctest)</span>
 </pre></div>
 </div>
 </dd></dl>

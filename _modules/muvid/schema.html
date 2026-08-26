@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.schema &mdash; muvid 0.0.27 documentation</title>
+  <title>muvid.schema &mdash; muvid 0.0.28 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=cee5022b"></script>
+      <script src="../../_static/documentation_options.js?v=26ffa1e9"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -131,7 +131,7 @@
            <div itemprop="articleBody">
              
   <h1>Source code for muvid.schema</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Schema for an muvid project — the SSOT data shapes.</span>
+<span></span><span class="sd">"""Schema for an muvid project — the SSOT data shapes.</span>
 
 <span class="sd">A music video project is a folder. ``project.json`` at the root holds the</span>
 <span class="sd">plan: song metadata, named characters/environments, song sections, and</span>
@@ -142,7 +142,7 @@
 <span class="sd">Schemas are dataclasses (frozen=True) so equality/hash are structural</span>
 <span class="sd">and edits create new instances. ``to_dict`` / ``from_dict`` are</span>
 <span class="sd">mechanical (asdict / kwargs); ``schema_version`` lets us migrate later.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -155,11 +155,11 @@
 <span class="c1">#: Render strategies a single shot can use. The ``render`` subpackage</span>
 <span class="c1">#: dispatches on this string.</span>
 <span class="n">RenderStrategy</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">[</span>
-    <span class="s2">&quot;lipsync&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;image_to_video&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;text_to_video&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;animation&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;still&quot;</span><span class="p">,</span>
+    <span class="s2">"lipsync"</span><span class="p">,</span>
+    <span class="s2">"image_to_video"</span><span class="p">,</span>
+    <span class="s2">"text_to_video"</span><span class="p">,</span>
+    <span class="s2">"animation"</span><span class="p">,</span>
+    <span class="s2">"still"</span><span class="p">,</span>
 <span class="p">]</span>
 
 
@@ -167,7 +167,7 @@
 <a class="viewcode-back" href="../../module_docs/muvid/schema.html#muvid.SongInfo">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">SongInfo</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Metadata for the master audio file.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Metadata for the master audio file."""</span>
 
     <span class="n">audio_path</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># relative to project root</span>
     <span class="n">duration_s</span><span class="p">:</span> <span class="nb">float</span>
@@ -181,18 +181,18 @@
 <a class="viewcode-back" href="../../module_docs/muvid/schema.html#muvid.SectionSpec">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">SectionSpec</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A non-overlapping span of the song with a label.</span>
+<span class="w">    </span><span class="sd">"""A non-overlapping span of the song with a label.</span>
 
-<span class="sd">    ``label`` is free-form (&quot;intro&quot;, &quot;verse&quot;, &quot;chorus&quot;, &quot;bridge&quot;,</span>
-<span class="sd">    &quot;outro&quot;) so users can use whatever taxonomy fits their song.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    ``label`` is free-form ("intro", "verse", "chorus", "bridge",</span>
+<span class="sd">    "outro") so users can use whatever taxonomy fits their song.</span>
+<span class="sd">    """</span>
 
     <span class="nb">id</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">start_s</span><span class="p">:</span> <span class="nb">float</span>
     <span class="n">end_s</span><span class="p">:</span> <span class="nb">float</span>
-    <span class="n">label</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
-    <span class="n">energy</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>  <span class="c1"># &quot;low&quot; | &quot;medium&quot; | &quot;high&quot; | free-form</span>
-    <span class="n">mood</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span></div>
+    <span class="n">label</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>
+    <span class="n">energy</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>  <span class="c1"># "low" | "medium" | "high" | free-form</span>
+    <span class="n">mood</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span></div>
 
 
 
@@ -200,25 +200,30 @@
 <a class="viewcode-back" href="../../module_docs/muvid/schema.html#muvid.ShotSpec">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">ShotSpec</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A timeline-locked visual unit of the music video.</span>
+<span class="w">    </span><span class="sd">"""A timeline-locked visual unit of the music video.</span>
 
 <span class="sd">    ``[start_s, end_s)`` is half-open. Shots within a project are</span>
 <span class="sd">    sorted by ``start_s`` and should be non-overlapping (the validator</span>
 <span class="sd">    warns otherwise — overlap can be intentional for transitions but</span>
-<span class="sd">    isn&#39;t supported by the basic compositor).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    isn't supported by the basic compositor).</span>
+<span class="sd">    """</span>
 
     <span class="nb">id</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">start_s</span><span class="p">:</span> <span class="nb">float</span>
     <span class="n">end_s</span><span class="p">:</span> <span class="nb">float</span>
-    <span class="n">section_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
-    <span class="n">render_strategy</span><span class="p">:</span> <span class="n">RenderStrategy</span> <span class="o">=</span> <span class="s2">&quot;image_to_video&quot;</span>
-    <span class="n">environment</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>  <span class="c1"># name of an EnvironmentRef</span>
+    <span class="n">section_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>
+    <span class="n">render_strategy</span><span class="p">:</span> <span class="n">RenderStrategy</span> <span class="o">=</span> <span class="s2">"image_to_video"</span>
+    <span class="n">environment</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>  <span class="c1"># name of an EnvironmentRef</span>
     <span class="n">characters</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">()</span>  <span class="c1"># names of CharacterRefs</span>
-    <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>  <span class="c1"># the prose direction for the shot</span>
-    <span class="n">camera</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>  <span class="c1"># &quot;static&quot; | &quot;slow push-in&quot; | ...</span>
-    <span class="n">framing</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;medium&quot;</span>
-    <span class="n">notes</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>  <span class="c1"># the prose direction for the shot</span>
+    <span class="c1"># Free prose: "static" | "slow push-in" | "pan left" | ... It reaches the</span>
+    <span class="c1"># image prompts verbatim (renderers/_common.py); the animation renderer</span>
+    <span class="c1"># TRANSLATES it into `an`'s closed move vocabulary at the boundary</span>
+    <span class="c1"># (renderers/animation.an_camera_move) — `an` refuses a name it does not</span>
+    <span class="c1"># implement, at validate and at compile (muvid#44).</span>
+    <span class="n">camera</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>
+    <span class="n">framing</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"medium"</span>
+    <span class="n">notes</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">duration_s</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
@@ -230,15 +235,15 @@
 <a class="viewcode-back" href="../../module_docs/muvid/schema.html#muvid.CharacterRef">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">CharacterRef</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Pointer to a character folder under ``characters/&lt;name&gt;/``.</span>
+<span class="w">    </span><span class="sd">"""Pointer to a character folder under ``characters/&lt;name&gt;/``.</span>
 
 <span class="sd">    The folder contains the canonical card.json + curated reference</span>
 <span class="sd">    images. We only carry the name + a quick description here so the</span>
 <span class="sd">    project SSOT stays small.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span></div>
+    <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span></div>
 
 
 
@@ -246,10 +251,10 @@
 <a class="viewcode-back" href="../../module_docs/muvid/schema.html#muvid.EnvironmentRef">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">EnvironmentRef</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Pointer to an environment folder under ``environments/&lt;name&gt;/``.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Pointer to an environment folder under ``environments/&lt;name&gt;/``."""</span>
 
     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span></div>
+    <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span></div>
 
 
 
@@ -257,56 +262,56 @@
 <a class="viewcode-back" href="../../module_docs/muvid/schema.html#muvid.ProjectSpec">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">ProjectSpec</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The top-level project SSOT, persisted as ``project.json``.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""The top-level project SSOT, persisted as ``project.json``."""</span>
 
     <span class="n">schema_version</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">SCHEMA_VERSION</span>
-    <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>
     <span class="n">song</span><span class="p">:</span> <span class="n">SongInfo</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">characters</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">CharacterRef</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">()</span>
     <span class="n">environments</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">EnvironmentRef</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">()</span>
     <span class="n">sections</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">SectionSpec</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">()</span>
     <span class="n">shots</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">ShotSpec</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">()</span>
-    <span class="n">global_style</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
-    <span class="n">notes</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">global_style</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>
+    <span class="n">notes</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>
 
     <span class="c1"># --- helpers ---</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">with_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">changes</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;ProjectSpec&quot;</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">with_</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">changes</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"ProjectSpec"</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">replace</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">changes</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">section</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">section_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SectionSpec</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sections</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="n">section_id</span><span class="p">:</span>
                 <span class="k">return</span> <span class="n">s</span>
-        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;No section named </span><span class="si">{</span><span class="n">section_id</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"No section named </span><span class="si">{</span><span class="n">section_id</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">shot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">shot_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ShotSpec</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">shots</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="n">shot_id</span><span class="p">:</span>
                 <span class="k">return</span> <span class="n">s</span>
-        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;No shot named </span><span class="si">{</span><span class="n">shot_id</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"No shot named </span><span class="si">{</span><span class="n">shot_id</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">character</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CharacterRef</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">characters</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">name</span><span class="p">:</span>
                 <span class="k">return</span> <span class="n">c</span>
-        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;No character named </span><span class="si">{</span><span class="n">name</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"No character named </span><span class="si">{</span><span class="n">name</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">environment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EnvironmentRef</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">environments</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">name</span><span class="p">:</span>
                 <span class="k">return</span> <span class="n">e</span>
-        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;No environment named </span><span class="si">{</span><span class="n">name</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"No environment named </span><span class="si">{</span><span class="n">name</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
         <span class="n">d</span> <span class="o">=</span> <span class="n">asdict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
         <span class="c1"># Convert tuples to lists for JSON friendliness.</span>
-        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;characters&quot;</span><span class="p">,</span> <span class="s2">&quot;environments&quot;</span><span class="p">,</span> <span class="s2">&quot;sections&quot;</span><span class="p">,</span> <span class="s2">&quot;shots&quot;</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"characters"</span><span class="p">,</span> <span class="s2">"environments"</span><span class="p">,</span> <span class="s2">"sections"</span><span class="p">,</span> <span class="s2">"shots"</span><span class="p">):</span>
             <span class="n">d</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="n">k</span><span class="p">])</span>
         <span class="k">return</span> <span class="n">d</span>
 
     <span class="nd">@classmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">from_dict</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="s2">&quot;ProjectSpec&quot;</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_dict</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="s2">"ProjectSpec"</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">_project_from_dict</span><span class="p">(</span><span class="n">data</span><span class="p">)</span></div>
 
 
@@ -315,37 +320,37 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_project_from_dict</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">ProjectSpec</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a ProjectSpec from a (json-loaded) dict.</span>
+<span class="w">    </span><span class="sd">"""Build a ProjectSpec from a (json-loaded) dict.</span>
 
 <span class="sd">    Forward-compatible: unknown keys at any level are silently dropped.</span>
 <span class="sd">    Missing keys fall back to the dataclass default.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">song</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;song&quot;</span><span class="p">)</span>
+<span class="sd">    """</span>
+    <span class="n">song</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"song"</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">ProjectSpec</span><span class="p">(</span>
-        <span class="n">schema_version</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;schema_version&quot;</span><span class="p">,</span> <span class="n">SCHEMA_VERSION</span><span class="p">)),</span>
-        <span class="n">title</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;title&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">),</span>
+        <span class="n">schema_version</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"schema_version"</span><span class="p">,</span> <span class="n">SCHEMA_VERSION</span><span class="p">)),</span>
+        <span class="n">title</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"title"</span><span class="p">,</span> <span class="s2">""</span><span class="p">),</span>
         <span class="n">song</span><span class="o">=</span><span class="n">SongInfo</span><span class="p">(</span><span class="o">**</span><span class="n">_only_known</span><span class="p">(</span><span class="n">SongInfo</span><span class="p">,</span> <span class="n">song</span><span class="p">))</span> <span class="k">if</span> <span class="n">song</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">characters</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span>
             <span class="n">CharacterRef</span><span class="p">(</span><span class="o">**</span><span class="n">_only_known</span><span class="p">(</span><span class="n">CharacterRef</span><span class="p">,</span> <span class="n">c</span><span class="p">))</span>
-            <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;characters&quot;</span><span class="p">,</span> <span class="p">())</span>
+            <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"characters"</span><span class="p">,</span> <span class="p">())</span>
         <span class="p">),</span>
         <span class="n">environments</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span>
             <span class="n">EnvironmentRef</span><span class="p">(</span><span class="o">**</span><span class="n">_only_known</span><span class="p">(</span><span class="n">EnvironmentRef</span><span class="p">,</span> <span class="n">e</span><span class="p">))</span>
-            <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;environments&quot;</span><span class="p">,</span> <span class="p">())</span>
+            <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"environments"</span><span class="p">,</span> <span class="p">())</span>
         <span class="p">),</span>
         <span class="n">sections</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span>
-            <span class="n">SectionSpec</span><span class="p">(</span><span class="o">**</span><span class="n">_only_known</span><span class="p">(</span><span class="n">SectionSpec</span><span class="p">,</span> <span class="n">s</span><span class="p">))</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;sections&quot;</span><span class="p">,</span> <span class="p">())</span>
+            <span class="n">SectionSpec</span><span class="p">(</span><span class="o">**</span><span class="n">_only_known</span><span class="p">(</span><span class="n">SectionSpec</span><span class="p">,</span> <span class="n">s</span><span class="p">))</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"sections"</span><span class="p">,</span> <span class="p">())</span>
         <span class="p">),</span>
         <span class="n">shots</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span>
-            <span class="n">ShotSpec</span><span class="p">(</span><span class="o">**</span><span class="n">_only_known</span><span class="p">(</span><span class="n">ShotSpec</span><span class="p">,</span> <span class="n">s</span><span class="p">))</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;shots&quot;</span><span class="p">,</span> <span class="p">())</span>
+            <span class="n">ShotSpec</span><span class="p">(</span><span class="o">**</span><span class="n">_only_known</span><span class="p">(</span><span class="n">ShotSpec</span><span class="p">,</span> <span class="n">s</span><span class="p">))</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"shots"</span><span class="p">,</span> <span class="p">())</span>
         <span class="p">),</span>
-        <span class="n">global_style</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;global_style&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">),</span>
-        <span class="n">notes</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;notes&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">),</span>
+        <span class="n">global_style</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"global_style"</span><span class="p">,</span> <span class="s2">""</span><span class="p">),</span>
+        <span class="n">notes</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"notes"</span><span class="p">,</span> <span class="s2">""</span><span class="p">),</span>
     <span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_only_known</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">payload</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Strip unknown keys before passing to a dataclass constructor.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Strip unknown keys before passing to a dataclass constructor."""</span>
     <span class="k">if</span> <span class="n">payload</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">{}</span>
     <span class="n">fields</span> <span class="o">=</span> <span class="p">{</span><span class="n">f</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">__dataclass_fields__</span><span class="o">.</span><span class="n">values</span><span class="p">()}</span>  <span class="c1"># type: ignore[attr-defined]</span>

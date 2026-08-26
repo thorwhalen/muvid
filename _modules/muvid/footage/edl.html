@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.footage.edl &mdash; muvid 0.0.27 documentation</title>
+  <title>muvid.footage.edl &mdash; muvid 0.0.28 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=cee5022b"></script>
+      <script src="../../../_static/documentation_options.js?v=26ffa1e9"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -131,7 +131,7 @@
            <div itemprop="articleBody">
              
   <h1>Source code for muvid.footage.edl</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;EDL data types + the ``validate_edl`` single-source-of-truth gate.</span>
+<span></span><span class="sd">"""EDL data types + the ``validate_edl`` single-source-of-truth gate.</span>
 
 <span class="sd">An **EDL** (edit decision list) says which clip covers which span of the SONG timeline:</span>
 <span class="sd">an ordered list of :class:`EdlEntry` ``{song_start, song_end, clip_id}``, where an empty/</span>
@@ -141,7 +141,7 @@
 <span class="sd">auto/strategy) passes before any cutting, and :func:`derive_cuts` centralizes the sign</span>
 <span class="sd">convention (``clip_in = song_start - offset_s``) so no third-party strategy can desync the</span>
 <span class="sd">result. Times are seconds (float).</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -153,19 +153,19 @@
 <span class="n">_EPS</span> <span class="o">=</span> <span class="mf">1e-3</span>
 <span class="c1">#: Cap on EDL entries (env-tunable), on BOTH the auto and the explicit-``edl`` paths. The</span>
 <span class="c1">#: assembler runs one bounded ffmpeg per cut (memory O(1) in cut count), so this now caps</span>
-<span class="c1">#: total WORK (N encoder invocations on a shared box), not a single command&#39;s inputs.</span>
-<span class="n">MAX_EDL_ENTRIES</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;MUVID_FOOTAGE_MAX_EDL_ENTRIES&quot;</span><span class="p">,</span> <span class="s2">&quot;500&quot;</span><span class="p">))</span>
+<span class="c1">#: total WORK (N encoder invocations on a shared box), not a single command's inputs.</span>
+<span class="n">MAX_EDL_ENTRIES</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"MUVID_FOOTAGE_MAX_EDL_ENTRIES"</span><span class="p">,</span> <span class="s2">"500"</span><span class="p">))</span>
 
 
 <div class="viewcode-block" id="FootageAlignment">
 <a class="viewcode-back" href="../../../module_docs/muvid/footage/edl.html#muvid.footage.FootageAlignment">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">FootageAlignment</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Where one uploaded clip sits on the song timeline (muvid&#39;s per-clip record).</span>
+<span class="w">    </span><span class="sd">"""Where one uploaded clip sits on the song timeline (muvid's per-clip record).</span>
 
 <span class="sd">    Mirrors ``mixing.audio.ClipAlignment`` but keyed by the caller-facing ``clip_id`` and</span>
 <span class="sd">    JSON-round-trippable (persisted in the project manifest).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">clip_id</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">offset_s</span><span class="p">:</span> <span class="nb">float</span>
@@ -179,26 +179,26 @@
 
     <span class="k">def</span><span class="w"> </span><span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">{</span>
-            <span class="s2">&quot;clip_id&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">clip_id</span><span class="p">,</span>
-            <span class="s2">&quot;offset_s&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">offset_s</span><span class="p">,</span>
-            <span class="s2">&quot;confidence&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">confidence</span><span class="p">,</span>
-            <span class="s2">&quot;duration_s&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">duration_s</span><span class="p">,</span>
-            <span class="s2">&quot;coverage&quot;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">coverage</span><span class="p">),</span>
-            <span class="s2">&quot;overlaps&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">overlaps</span><span class="p">,</span>
+            <span class="s2">"clip_id"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">clip_id</span><span class="p">,</span>
+            <span class="s2">"offset_s"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">offset_s</span><span class="p">,</span>
+            <span class="s2">"confidence"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">confidence</span><span class="p">,</span>
+            <span class="s2">"duration_s"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">duration_s</span><span class="p">,</span>
+            <span class="s2">"coverage"</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">coverage</span><span class="p">),</span>
+            <span class="s2">"overlaps"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">overlaps</span><span class="p">,</span>
         <span class="p">}</span>
 
     <span class="nd">@classmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">from_dict</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">d</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;FootageAlignment&quot;</span><span class="p">:</span>
-        <span class="n">cov</span> <span class="o">=</span> <span class="n">d</span><span class="p">[</span><span class="s2">&quot;coverage&quot;</span><span class="p">]</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_dict</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">d</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"FootageAlignment"</span><span class="p">:</span>
+        <span class="n">cov</span> <span class="o">=</span> <span class="n">d</span><span class="p">[</span><span class="s2">"coverage"</span><span class="p">]</span>
         <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span>
-            <span class="n">clip_id</span><span class="o">=</span><span class="n">d</span><span class="p">[</span><span class="s2">&quot;clip_id&quot;</span><span class="p">],</span>
-            <span class="n">offset_s</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s2">&quot;offset_s&quot;</span><span class="p">]),</span>
-            <span class="n">confidence</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s2">&quot;confidence&quot;</span><span class="p">]),</span>
-            <span class="n">duration_s</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s2">&quot;duration_s&quot;</span><span class="p">]),</span>
+            <span class="n">clip_id</span><span class="o">=</span><span class="n">d</span><span class="p">[</span><span class="s2">"clip_id"</span><span class="p">],</span>
+            <span class="n">offset_s</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s2">"offset_s"</span><span class="p">]),</span>
+            <span class="n">confidence</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s2">"confidence"</span><span class="p">]),</span>
+            <span class="n">duration_s</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s2">"duration_s"</span><span class="p">]),</span>
             <span class="n">coverage</span><span class="o">=</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">cov</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="nb">float</span><span class="p">(</span><span class="n">cov</span><span class="p">[</span><span class="mi">1</span><span class="p">])),</span>
             <span class="c1"># Records written before `overlaps` existed were only ever persisted when</span>
             <span class="c1"># they overlapped, so absent means True.</span>
-            <span class="n">overlaps</span><span class="o">=</span><span class="nb">bool</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;overlaps&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)),</span>
+            <span class="n">overlaps</span><span class="o">=</span><span class="nb">bool</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"overlaps"</span><span class="p">,</span> <span class="kc">True</span><span class="p">)),</span>
         <span class="p">)</span></div>
 
 
@@ -207,13 +207,13 @@
 <a class="viewcode-back" href="../../../module_docs/muvid/footage/edl.html#muvid.footage.EdlEntry">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">EdlEntry</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;One cut: show ``clip_id`` over the song span ``[song_start, song_end]``.</span>
+<span class="w">    </span><span class="sd">"""One cut: show ``clip_id`` over the song span ``[song_start, song_end]``.</span>
 
-<span class="sd">    ``clip_id == &quot;&quot;`` is a **gap entry** — no footage covers this span, and the renderer</span>
+<span class="sd">    ``clip_id == ""`` is a **gap entry** — no footage covers this span, and the renderer</span>
 <span class="sd">    fills it (black in v1). Gaps are explicit entries rather than absences so that an EDL</span>
 <span class="sd">    is always contiguous over its span, every span of the song is accounted for by</span>
-<span class="sd">    exactly one entry, and &quot;no clip here&quot; survives a JSON round trip (``clip_id: null``).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    exactly one entry, and "no clip here" survives a JSON round trip (``clip_id: null``).</span>
+<span class="sd">    """</span>
 
     <span class="n">song_start</span><span class="p">:</span> <span class="nb">float</span>
     <span class="n">song_end</span><span class="p">:</span> <span class="nb">float</span>
@@ -229,7 +229,7 @@
 <a class="viewcode-back" href="../../../module_docs/muvid/footage/edl.html#muvid.footage.AssemblyCut">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">AssemblyCut</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A validated cut ready to render: the EDL span + the derived in-point + clip path.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""A validated cut ready to render: the EDL span + the derived in-point + clip path."""</span>
 
     <span class="n">song_start</span><span class="p">:</span> <span class="nb">float</span>
     <span class="n">song_end</span><span class="p">:</span> <span class="nb">float</span>
@@ -248,51 +248,51 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_as_entry</span><span class="p">(</span><span class="n">e</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EdlEntry</span><span class="p">:</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">EdlEntry</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">e</span>
-    <span class="n">clip_id</span> <span class="o">=</span> <span class="n">e</span><span class="p">[</span><span class="s2">&quot;clip_id&quot;</span><span class="p">]</span>
+    <span class="n">clip_id</span> <span class="o">=</span> <span class="n">e</span><span class="p">[</span><span class="s2">"clip_id"</span><span class="p">]</span>
     <span class="k">return</span> <span class="n">EdlEntry</span><span class="p">(</span>
-        <span class="n">song_start</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">e</span><span class="p">[</span><span class="s2">&quot;song_start&quot;</span><span class="p">]),</span>
-        <span class="n">song_end</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">e</span><span class="p">[</span><span class="s2">&quot;song_end&quot;</span><span class="p">]),</span>
-        <span class="c1"># JSON callers write a gap as clip_id: null; internally it is &quot;&quot;.</span>
-        <span class="n">clip_id</span><span class="o">=</span><span class="s2">&quot;&quot;</span> <span class="k">if</span> <span class="n">clip_id</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">str</span><span class="p">(</span><span class="n">clip_id</span><span class="p">),</span>
+        <span class="n">song_start</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">e</span><span class="p">[</span><span class="s2">"song_start"</span><span class="p">]),</span>
+        <span class="n">song_end</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">e</span><span class="p">[</span><span class="s2">"song_end"</span><span class="p">]),</span>
+        <span class="c1"># JSON callers write a gap as clip_id: null; internally it is "".</span>
+        <span class="n">clip_id</span><span class="o">=</span><span class="s2">""</span> <span class="k">if</span> <span class="n">clip_id</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">str</span><span class="p">(</span><span class="n">clip_id</span><span class="p">),</span>
     <span class="p">)</span>
 
 
 <div class="viewcode-block" id="fill_gaps">
 <a class="viewcode-back" href="../../../module_docs/muvid/footage/edl.html#muvid.footage.fill_gaps">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">fill_gaps</span><span class="p">(</span><span class="n">entries</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">song_duration</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">EdlEntry</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Make an edit span the WHOLE song by inserting explicit gap entries.</span>
+<span class="w">    </span><span class="sd">"""Make an edit span the WHOLE song by inserting explicit gap entries.</span>
 
 <span class="sd">    Three holes become gap entries (muvid#21 items 1+2, one mechanism): the head</span>
 <span class="sd">    (``[0, first.song_start]`` — without this, footage starting at t=5 s silently loses</span>
 <span class="sd">    the intro), interior holes between consecutive entries, and the tail</span>
 <span class="sd">    (``[last.song_end, song_duration]``). Entries are sorted by start; overlap and</span>
-<span class="sd">    containment stay :func:`validate_edl`&#39;s business — call this BEFORE it, never after.</span>
+<span class="sd">    containment stay :func:`validate_edl`'s business — call this BEFORE it, never after.</span>
 
 <span class="sd">    An empty selection stays empty (an all-black video is not a first cut worth</span>
-<span class="sd">    rendering silently — the caller decides what &quot;no usable footage&quot; means).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    rendering silently — the caller decides what "no usable footage" means).</span>
+<span class="sd">    """</span>
     <span class="n">ordered</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">((</span><span class="n">_as_entry</span><span class="p">(</span><span class="n">e</span><span class="p">)</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">entries</span><span class="p">),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">e</span><span class="p">:</span> <span class="n">e</span><span class="o">.</span><span class="n">song_start</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">ordered</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">[]</span>
-    <span class="c1"># Range-check the CALLER&#39;s entries before inserting anything: a bogus span (say</span>
+    <span class="c1"># Range-check the CALLER's entries before inserting anything: a bogus span (say</span>
     <span class="c1"># [32, 35] of a 30 s song) would otherwise make validate_edl report the failure on</span>
     <span class="c1"># the phantom gap inserted to reach it — an entry the caller never wrote. Note the</span>
     <span class="c1"># entries are also SORTED here: an out-of-order list is normalised, not rejected.</span>
     <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">ordered</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">song_start</span> <span class="o">&lt;</span> <span class="o">-</span><span class="n">_EPS</span> <span class="ow">or</span> <span class="n">e</span><span class="o">.</span><span class="n">song_end</span> <span class="o">&gt;</span> <span class="n">song_duration</span> <span class="o">+</span> <span class="n">_EPS</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;EDL entry [</span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">song_start</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">song_end</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">] is outside the &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;song [0, </span><span class="si">{</span><span class="n">song_duration</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">]&quot;</span>
+                <span class="sa">f</span><span class="s2">"EDL entry [</span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">song_start</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">song_end</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">] is outside the "</span>
+                <span class="sa">f</span><span class="s2">"song [0, </span><span class="si">{</span><span class="n">song_duration</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">]"</span>
             <span class="p">)</span>
     <span class="n">out</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">EdlEntry</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">cursor</span> <span class="o">=</span> <span class="mf">0.0</span>
     <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">ordered</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">song_start</span> <span class="o">-</span> <span class="n">cursor</span> <span class="o">&gt;</span> <span class="n">_EPS</span><span class="p">:</span>
-            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">EdlEntry</span><span class="p">(</span><span class="n">cursor</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">song_start</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">))</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">EdlEntry</span><span class="p">(</span><span class="n">cursor</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">song_start</span><span class="p">,</span> <span class="s2">""</span><span class="p">))</span>
         <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
         <span class="n">cursor</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">cursor</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">song_end</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">song_duration</span> <span class="o">-</span> <span class="n">cursor</span> <span class="o">&gt;</span> <span class="n">_EPS</span><span class="p">:</span>
-        <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">EdlEntry</span><span class="p">(</span><span class="n">cursor</span><span class="p">,</span> <span class="n">song_duration</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">))</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">EdlEntry</span><span class="p">(</span><span class="n">cursor</span><span class="p">,</span> <span class="n">song_duration</span><span class="p">,</span> <span class="s2">""</span><span class="p">))</span>
     <span class="k">return</span> <span class="n">out</span></div>
 
 
@@ -304,7 +304,7 @@
     <span class="n">alignments</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">FootageAlignment</span><span class="p">],</span>
     <span class="n">song_duration</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">EdlEntry</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate an EDL (from a strategy OR a caller) — the ONE gate before any cutting.</span>
+<span class="w">    </span><span class="sd">"""Validate an EDL (from a strategy OR a caller) — the ONE gate before any cutting.</span>
 
 <span class="sd">    Enforces, raising ``ValueError`` with a specific message otherwise:</span>
 
@@ -314,23 +314,23 @@
 <span class="sd">    - spans are **contiguous** (gapless) — a hole must be an explicit gap entry</span>
 <span class="sd">      (``clip_id`` empty/null, rendered as fill), which :func:`fill_gaps` inserts; an</span>
 <span class="sd">      *implicit* hole is still an error, so nothing goes missing silently;</span>
-<span class="sd">    - each non-gap span lies within its clip&#39;s aligned coverage, AND the derived</span>
+<span class="sd">    - each non-gap span lies within its clip's aligned coverage, AND the derived</span>
 <span class="sd">      ``clip_in = song_start - offset`` satisfies ``0 &lt;= clip_in`` and</span>
 <span class="sd">      ``clip_in + span_duration &lt;= clip_duration`` (the clip actually contains that span).</span>
 
 <span class="sd">    Returns the normalized list of :class:`EdlEntry`.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">entries</span> <span class="o">=</span> <span class="p">[</span><span class="n">_as_entry</span><span class="p">(</span><span class="n">e</span><span class="p">)</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">edl</span><span class="p">]</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">entries</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;EDL is empty — nothing to assemble.&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"EDL is empty — nothing to assemble."</span><span class="p">)</span>
     <span class="c1"># Count FOOTAGE cuts only: fill_gaps can as much as double the entry count with gap</span>
-    <span class="c1"># entries the caller never wrote, and being told &quot;502 entries&quot; after submitting 251</span>
+    <span class="c1"># entries the caller never wrote, and being told "502 entries" after submitting 251</span>
     <span class="c1"># is undiagnosable. Gaps are structurally bounded by footage cuts + 1, so the total</span>
     <span class="c1"># work stays bounded by ~2x the cap either way.</span>
     <span class="n">n_cuts</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">entries</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">e</span><span class="o">.</span><span class="n">is_gap</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">n_cuts</span> <span class="o">&gt;</span> <span class="n">MAX_EDL_ENTRIES</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;EDL has </span><span class="si">{</span><span class="n">n_cuts</span><span class="si">}</span><span class="s2"> footage cuts; the </span><span class="si">{</span><span class="n">MAX_EDL_ENTRIES</span><span class="si">}</span><span class="s2">-cut limit is exceeded&quot;</span>
+            <span class="sa">f</span><span class="s2">"EDL has </span><span class="si">{</span><span class="n">n_cuts</span><span class="si">}</span><span class="s2"> footage cuts; the </span><span class="si">{</span><span class="n">MAX_EDL_ENTRIES</span><span class="si">}</span><span class="s2">-cut limit is exceeded"</span>
         <span class="p">)</span>
     <span class="n">by_id</span> <span class="o">=</span> <span class="p">{</span><span class="n">a</span><span class="o">.</span><span class="n">clip_id</span><span class="p">:</span> <span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">alignments</span><span class="p">}</span>
 
@@ -338,29 +338,29 @@
     <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">e</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">entries</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">e</span><span class="o">.</span><span class="n">is_gap</span> <span class="ow">and</span> <span class="n">e</span><span class="o">.</span><span class="n">clip_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">by_id</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;EDL entry </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2"> references unknown clip </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">clip_id</span><span class="si">!r}</span><span class="s2">; &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;known: </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">by_id</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="sa">f</span><span class="s2">"EDL entry </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2"> references unknown clip </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">clip_id</span><span class="si">!r}</span><span class="s2">; "</span>
+                <span class="sa">f</span><span class="s2">"known: </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">by_id</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
             <span class="p">)</span>
         <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">song_end</span> <span class="o">-</span> <span class="n">e</span><span class="o">.</span><span class="n">song_start</span> <span class="o">&lt;=</span> <span class="n">_EPS</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;EDL entry </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2"> has a non-positive span [</span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">song_start</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">song_end</span><span class="si">}</span><span class="s2">]&quot;</span>
+                <span class="sa">f</span><span class="s2">"EDL entry </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2"> has a non-positive span [</span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">song_start</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">song_end</span><span class="si">}</span><span class="s2">]"</span>
             <span class="p">)</span>
         <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">song_start</span> <span class="o">&lt;</span> <span class="o">-</span><span class="n">_EPS</span> <span class="ow">or</span> <span class="n">e</span><span class="o">.</span><span class="n">song_end</span> <span class="o">&gt;</span> <span class="n">song_duration</span> <span class="o">+</span> <span class="n">_EPS</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;EDL entry </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2"> span [</span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">song_start</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">song_end</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">] is outside &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;the song [0, </span><span class="si">{</span><span class="n">song_duration</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">]&quot;</span>
+                <span class="sa">f</span><span class="s2">"EDL entry </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2"> span [</span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">song_start</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">song_end</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">] is outside "</span>
+                <span class="sa">f</span><span class="s2">"the song [0, </span><span class="si">{</span><span class="n">song_duration</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">]"</span>
             <span class="p">)</span>
         <span class="k">if</span> <span class="n">prev_end</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">song_start</span> <span class="o">&lt;</span> <span class="n">prev_end</span> <span class="o">-</span> <span class="n">_EPS</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;EDL entry </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2"> overlaps the previous span (starts </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">song_start</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> &quot;</span>
-                    <span class="sa">f</span><span class="s2">&quot;&lt; </span><span class="si">{</span><span class="n">prev_end</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">)&quot;</span>
+                    <span class="sa">f</span><span class="s2">"EDL entry </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2"> overlaps the previous span (starts </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">song_start</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> "</span>
+                    <span class="sa">f</span><span class="s2">"&lt; </span><span class="si">{</span><span class="n">prev_end</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">)"</span>
                 <span class="p">)</span>
             <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">song_start</span> <span class="o">&gt;</span> <span class="n">prev_end</span> <span class="o">+</span> <span class="n">_EPS</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;EDL has a gap before entry </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">: [</span><span class="si">{</span><span class="n">prev_end</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">song_start</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">] &quot;</span>
-                    <span class="s2">&quot;is covered by no entry. A span with no footage must be an explicit &quot;</span>
-                    <span class="s2">&quot;gap entry (clip_id null) — fill_gaps() inserts them.&quot;</span>
+                    <span class="sa">f</span><span class="s2">"EDL has a gap before entry </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">: [</span><span class="si">{</span><span class="n">prev_end</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">song_start</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">] "</span>
+                    <span class="s2">"is covered by no entry. A span with no footage must be an explicit "</span>
+                    <span class="s2">"gap entry (clip_id null) — fill_gaps() inserts them."</span>
                 <span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">e</span><span class="o">.</span><span class="n">is_gap</span><span class="p">:</span>
             <span class="n">a</span> <span class="o">=</span> <span class="n">by_id</span><span class="p">[</span><span class="n">e</span><span class="o">.</span><span class="n">clip_id</span><span class="p">]</span>
@@ -370,9 +370,9 @@
                 <span class="ow">or</span> <span class="n">clip_in</span> <span class="o">+</span> <span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">song_end</span> <span class="o">-</span> <span class="n">e</span><span class="o">.</span><span class="n">song_start</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">a</span><span class="o">.</span><span class="n">duration_s</span> <span class="o">+</span> <span class="n">_EPS</span>
             <span class="p">):</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;EDL entry </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">: clip </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">clip_id</span><span class="si">!r}</span><span class="s2"> does not contain song span &quot;</span>
-                    <span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">song_start</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">song_end</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">] (its coverage is &quot;</span>
-                    <span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="n">a</span><span class="o">.</span><span class="n">coverage</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">a</span><span class="o">.</span><span class="n">coverage</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">]).&quot;</span>
+                    <span class="sa">f</span><span class="s2">"EDL entry </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">: clip </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">clip_id</span><span class="si">!r}</span><span class="s2"> does not contain song span "</span>
+                    <span class="sa">f</span><span class="s2">"[</span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">song_start</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">song_end</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">] (its coverage is "</span>
+                    <span class="sa">f</span><span class="s2">"[</span><span class="si">{</span><span class="n">a</span><span class="o">.</span><span class="n">coverage</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">a</span><span class="o">.</span><span class="n">coverage</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">])."</span>
                 <span class="p">)</span>
         <span class="n">prev_end</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">song_end</span>
     <span class="k">return</span> <span class="n">entries</span></div>
@@ -386,11 +386,11 @@
     <span class="n">alignments</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">FootageAlignment</span><span class="p">],</span>
     <span class="n">clip_paths</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">AssemblyCut</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Turn a *validated* EDL into render-ready cuts — the ONE place ``clip_in`` is derived.</span>
+<span class="w">    </span><span class="sd">"""Turn a *validated* EDL into render-ready cuts — the ONE place ``clip_in`` is derived.</span>
 
 <span class="sd">    Strategies emit only ``{song_start, song_end, clip_id}``; the sign convention</span>
 <span class="sd">    ``clip_in = song_start - offset`` lives here (SSOT), so no strategy can desync the cut.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">by_id</span> <span class="o">=</span> <span class="p">{</span><span class="n">a</span><span class="o">.</span><span class="n">clip_id</span><span class="p">:</span> <span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">alignments</span><span class="p">}</span>
     <span class="n">cuts</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">edl</span><span class="p">:</span>
@@ -400,15 +400,15 @@
                 <span class="n">AssemblyCut</span><span class="p">(</span>
                     <span class="n">song_start</span><span class="o">=</span><span class="n">e</span><span class="o">.</span><span class="n">song_start</span><span class="p">,</span>
                     <span class="n">song_end</span><span class="o">=</span><span class="n">e</span><span class="o">.</span><span class="n">song_end</span><span class="p">,</span>
-                    <span class="n">clip_id</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+                    <span class="n">clip_id</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span>
                     <span class="n">clip_in</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
-                    <span class="n">clip_path</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+                    <span class="n">clip_path</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span>
                 <span class="p">)</span>
             <span class="p">)</span>
             <span class="k">continue</span>
         <span class="n">a</span> <span class="o">=</span> <span class="n">by_id</span><span class="p">[</span><span class="n">e</span><span class="o">.</span><span class="n">clip_id</span><span class="p">]</span>
         <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">clip_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">clip_paths</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;no stored file for clip </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">clip_id</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"no stored file for clip </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">clip_id</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
         <span class="n">cuts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
             <span class="n">AssemblyCut</span><span class="p">(</span>
                 <span class="n">song_start</span><span class="o">=</span><span class="n">e</span><span class="o">.</span><span class="n">song_start</span><span class="p">,</span>

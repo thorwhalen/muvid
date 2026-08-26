@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.footage.scoring.lipsync &mdash; muvid 0.0.27 documentation</title>
+  <title>muvid.footage.scoring.lipsync &mdash; muvid 0.0.28 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../../_static/documentation_options.js?v=cee5022b"></script>
+      <script src="../../../../_static/documentation_options.js?v=26ffa1e9"></script>
       <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -131,9 +131,9 @@
            <div itemprop="articleBody">
              
   <h1>Source code for muvid.footage.scoring.lipsync</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Lip-sync tier (OPT-IN, OFF BY DEFAULT): SyncNet LSE-C vs the master&#39;s Demucs vocal stem.</span>
+<span></span><span class="sd">"""Lip-sync tier (OPT-IN, OFF BY DEFAULT): SyncNet LSE-C vs the master's Demucs vocal stem.</span>
 
-<span class="sd">**Not on the prod path.** The design&#39;s LOCKED decision: this tier is behind the</span>
+<span class="sd">**Not on the prod path.** The design's LOCKED decision: this tier is behind the</span>
 <span class="sd">``muvid[scoring-lipsync]`` extra and disabled by default because (a) Demucs + SyncNet on CPU</span>
 <span class="sd">peak ~2–3 GB and would OOM the memory-fragile connector, and (b) the htdemucs weights are</span>
 <span class="sd">**CC-BY-NC (research-only)** — not commercial-clean. So it runs only on a local/worker box the</span>
@@ -147,14 +147,14 @@
 <span class="sd">**skipped** (returns ``[]`` + a reason) — never a crash, never a silent 0.</span>
 
 <span class="sd">Pipeline (design §3c): separate the master vocal stem ONCE (orchestrator), then per clip run</span>
-<span class="sd">SyncNet&#39;s face-detect → track → mouth-crop → per-window LSE-C **against the master vocal stem</span>
+<span class="sd">SyncNet's face-detect → track → mouth-crop → per-window LSE-C **against the master vocal stem</span>
 <span class="sd">at the known offset** (a validation, not a search). Emit ``lip_sync_lse_c`` + ``lse_d_offset``,</span>
 <span class="sd">gated to NA where no singing face is present (never 0).</span>
 
-<span class="sd">⚠ This module&#39;s heavy glue (Demucs + SyncNetPipeline) cannot run in CI or on the dev box</span>
+<span class="sd">⚠ This module's heavy glue (Demucs + SyncNetPipeline) cannot run in CI or on the dev box</span>
 <span class="sd">(deps absent) — it needs a live validation pass on a machine with the extra + weights before</span>
 <span class="sd">first real use. It is structured to fail safe (skip) everywhere else.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -168,52 +168,52 @@
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
-<span class="n">LIPSYNC_METRICS</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;lip_sync_lse_c&quot;</span><span class="p">,</span> <span class="s2">&quot;lse_d_offset&quot;</span><span class="p">)</span>
+<span class="n">LIPSYNC_METRICS</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"lip_sync_lse_c"</span><span class="p">,</span> <span class="s2">"lse_d_offset"</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="lipsync_available">
 <a class="viewcode-back" href="../../../../module_docs/muvid/footage/scoring/lipsync.html#muvid.footage.scoring.lipsync.lipsync_available">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">lipsync_available</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;``(ok, reason)`` — whether the opt-in lip-sync tier can run here.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""``(ok, reason)`` — whether the opt-in lip-sync tier can run here."""</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="kn">import</span><span class="w"> </span><span class="nn">demucs</span>  <span class="c1"># noqa: F401</span>
     <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-        <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="s2">&quot;demucs not installed (muvid[scoring-lipsync])&quot;</span>
+        <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="s2">"demucs not installed (muvid[scoring-lipsync])"</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="kn">import</span><span class="w"> </span><span class="nn">syncnet_python</span>  <span class="c1"># noqa: F401</span>
     <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-        <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="s2">&quot;syncnet-python not installed (muvid[scoring-lipsync])&quot;</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;MUVID_SYNCNET_S3FD_WEIGHTS&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
-        <span class="s2">&quot;MUVID_SYNCNET_WEIGHTS&quot;</span>
+        <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="s2">"syncnet-python not installed (muvid[scoring-lipsync])"</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"MUVID_SYNCNET_S3FD_WEIGHTS"</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+        <span class="s2">"MUVID_SYNCNET_WEIGHTS"</span>
     <span class="p">):</span>
-        <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="s2">&quot;SyncNet weights not configured (MUVID_SYNCNET_*_WEIGHTS)&quot;</span>
-    <span class="k">return</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;ok&quot;</span></div>
+        <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="s2">"SyncNet weights not configured (MUVID_SYNCNET_*_WEIGHTS)"</span>
+    <span class="k">return</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">"ok"</span></div>
 
 
 
 <div class="viewcode-block" id="separate_master_vocals">
 <a class="viewcode-back" href="../../../../module_docs/muvid/footage/scoring/lipsync.html#muvid.footage.scoring.lipsync.separate_master_vocals">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">separate_master_vocals</span><span class="p">(</span><span class="n">song_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">out_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Demucs → the master vocal stem as a wav (``out_dir/vocals.wav``), or ``None``.</span>
+<span class="w">    </span><span class="sd">"""Demucs → the master vocal stem as a wav (``out_dir/vocals.wav``), or ``None``.</span>
 
-<span class="sd">    Computed ONCE on the clean master; the resulting stem is passed to every clip&#39;s SyncNet</span>
+<span class="sd">    Computed ONCE on the clean master; the resulting stem is passed to every clip's SyncNet</span>
 <span class="sd">    call as the co-temporal reference audio. Returns ``None`` (never raises) if Demucs is</span>
 <span class="sd">    absent — the caller then skips lip-sync.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">demucs.api</span><span class="w"> </span><span class="kn">import</span> <span class="n">Separator</span><span class="p">,</span> <span class="n">save_audio</span>  <span class="c1"># lazy, heavy (torch)</span>
     <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">None</span>
     <span class="k">try</span><span class="p">:</span>
-        <span class="n">model</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;MUVID_DEMUCS_MODEL&quot;</span><span class="p">,</span> <span class="s2">&quot;htdemucs&quot;</span><span class="p">)</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"MUVID_DEMUCS_MODEL"</span><span class="p">,</span> <span class="s2">"htdemucs"</span><span class="p">)</span>
         <span class="n">separator</span> <span class="o">=</span> <span class="n">Separator</span><span class="p">(</span>
-            <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">segment</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;MUVID_DEMUCS_SEGMENT&quot;</span><span class="p">,</span> <span class="s2">&quot;7&quot;</span><span class="p">))</span>
+            <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">segment</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"MUVID_DEMUCS_SEGMENT"</span><span class="p">,</span> <span class="s2">"7"</span><span class="p">))</span>
         <span class="p">)</span>
         <span class="n">_origin</span><span class="p">,</span> <span class="n">stems</span> <span class="o">=</span> <span class="n">separator</span><span class="o">.</span><span class="n">separate_audio_file</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">song_path</span><span class="p">))</span>
-        <span class="n">vocals</span> <span class="o">=</span> <span class="n">stems</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;vocals&quot;</span><span class="p">)</span>
+        <span class="n">vocals</span> <span class="o">=</span> <span class="n">stems</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"vocals"</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">vocals</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">None</span>
-        <span class="n">out</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">out_dir</span><span class="p">)</span> <span class="o">/</span> <span class="s2">&quot;vocals.wav&quot;</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">out_dir</span><span class="p">)</span> <span class="o">/</span> <span class="s2">"vocals.wav"</span>
         <span class="n">out</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">save_audio</span><span class="p">(</span><span class="n">vocals</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">out</span><span class="p">),</span> <span class="n">samplerate</span><span class="o">=</span><span class="n">separator</span><span class="o">.</span><span class="n">samplerate</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">out</span>
@@ -225,11 +225,11 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_slice_stem</span><span class="p">(</span>
     <span class="n">vocal_stem_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">start_s</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">dur_s</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">out_dir</span><span class="p">:</span> <span class="nb">str</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Write the ``[start_s, start_s+dur_s]`` slice of the master vocal stem to a temp wav.</span>
+<span class="w">    </span><span class="sd">"""Write the ``[start_s, start_s+dur_s]`` slice of the master vocal stem to a temp wav.</span>
 
-<span class="sd">    So SyncNet&#39;s audio-frame-0 lines up with the clip&#39;s video-frame-0 (the clip is aligned to</span>
+<span class="sd">    So SyncNet's audio-frame-0 lines up with the clip's video-frame-0 (the clip is aligned to</span>
 <span class="sd">    the master at ``offset_s``). Falls back to the whole stem if soundfile is unavailable.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="kn">import</span><span class="w"> </span><span class="nn">soundfile</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">sf</span>  <span class="c1"># lazy</span>
     <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
@@ -239,8 +239,8 @@
         <span class="n">sr</span> <span class="o">=</span> <span class="n">info</span><span class="o">.</span><span class="n">samplerate</span>
         <span class="n">a</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">start_s</span> <span class="o">*</span> <span class="n">sr</span><span class="p">)))</span>
         <span class="n">b</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">a</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">((</span><span class="n">start_s</span> <span class="o">+</span> <span class="n">dur_s</span><span class="p">)</span> <span class="o">*</span> <span class="n">sr</span><span class="p">)))</span>
-        <span class="n">data</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">vocal_stem_path</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="n">a</span><span class="p">,</span> <span class="n">stop</span><span class="o">=</span><span class="n">b</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;float32&quot;</span><span class="p">)</span>
-        <span class="n">out</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">out_dir</span><span class="p">)</span> <span class="o">/</span> <span class="s2">&quot;vocals_slice.wav&quot;</span>
+        <span class="n">data</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">vocal_stem_path</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="n">a</span><span class="p">,</span> <span class="n">stop</span><span class="o">=</span><span class="n">b</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">"float32"</span><span class="p">)</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">out_dir</span><span class="p">)</span> <span class="o">/</span> <span class="s2">"vocals_slice.wav"</span>
         <span class="n">out</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">sf</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">out</span><span class="p">),</span> <span class="n">data</span><span class="p">,</span> <span class="n">sr</span><span class="p">)</span>
         <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
@@ -261,15 +261,15 @@
     <span class="n">t0</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
     <span class="n">hop_s</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
     <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-    <span class="n">device</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;cpu&quot;</span><span class="p">,</span>
+    <span class="n">device</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"cpu"</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ScoreTrack</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Per-clip LSE-C / LSE-D tracks vs the OFFSET-ALIGNED master vocal stem, or ``[]``.</span>
+<span class="w">    </span><span class="sd">"""Per-clip LSE-C / LSE-D tracks vs the OFFSET-ALIGNED master vocal stem, or ``[]``.</span>
 
 <span class="sd">    Feeds SyncNet the co-temporal slice of the master vocals (``[offset_s, offset_s+dur]``) so</span>
-<span class="sd">    the score is meaningful for clips whose offset exceeds SyncNet&#39;s tiny internal search;</span>
-<span class="sd">    holds the per-face-track LSE-C over that track&#39;s span, clamped to the clip&#39;s coverage</span>
+<span class="sd">    the score is meaningful for clips whose offset exceeds SyncNet's tiny internal search;</span>
+<span class="sd">    holds the per-face-track LSE-C over that track's span, clamped to the clip's coverage</span>
 <span class="sd">    (never fabricates lip-sync beyond the clip); spans with no detected face are NA.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">ok</span><span class="p">,</span> <span class="n">_reason</span> <span class="o">=</span> <span class="n">lipsync_available</span><span class="p">()</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">ok</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">[]</span>
@@ -285,8 +285,8 @@
         <span class="p">)</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">pipeline</span> <span class="o">=</span> <span class="n">SyncNetPipeline</span><span class="p">(</span>
-                <span class="n">s3fd_weights</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;MUVID_SYNCNET_S3FD_WEIGHTS&quot;</span><span class="p">],</span>
-                <span class="n">syncnet_weights</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;MUVID_SYNCNET_WEIGHTS&quot;</span><span class="p">],</span>
+                <span class="n">s3fd_weights</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"MUVID_SYNCNET_S3FD_WEIGHTS"</span><span class="p">],</span>
+                <span class="n">syncnet_weights</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"MUVID_SYNCNET_WEIGHTS"</span><span class="p">],</span>
                 <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="p">(</span>
@@ -302,9 +302,9 @@
             <span class="p">)</span>
         <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
             <span class="c1"># Fail safe (skip lip-sync) BUT log — a misconfigured worker must be</span>
-            <span class="c1"># distinguishable from a genuine &quot;no singing face&quot; skip.</span>
+            <span class="c1"># distinguishable from a genuine "no singing face" skip.</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-                <span class="s2">&quot;SyncNet lip-sync failed for clip </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">clip_id</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="kc">True</span>
+                <span class="s2">"SyncNet lip-sync failed for clip </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="n">clip_id</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="kc">True</span>
             <span class="p">)</span>
             <span class="k">return</span> <span class="p">[]</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">success</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">confidence_list</span><span class="p">:</span>
@@ -328,7 +328,7 @@
         <span class="p">)</span>
         <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">f0</span><span class="p">,</span> <span class="n">f1</span><span class="p">):</span>
             <span class="n">st</span> <span class="o">=</span> <span class="n">f</span> <span class="o">/</span> <span class="n">fps</span> <span class="o">+</span> <span class="n">offset_s</span>
-            <span class="k">if</span> <span class="n">st</span> <span class="o">&lt;</span> <span class="n">lo</span> <span class="o">-</span> <span class="n">hop_s</span> <span class="ow">or</span> <span class="n">st</span> <span class="o">&gt;</span> <span class="n">hi</span> <span class="o">+</span> <span class="n">hop_s</span><span class="p">:</span>  <span class="c1"># never beyond the clip&#39;s coverage</span>
+            <span class="k">if</span> <span class="n">st</span> <span class="o">&lt;</span> <span class="n">lo</span> <span class="o">-</span> <span class="n">hop_s</span> <span class="ow">or</span> <span class="n">st</span> <span class="o">&gt;</span> <span class="n">hi</span> <span class="o">+</span> <span class="n">hop_s</span><span class="p">:</span>  <span class="c1"># never beyond the clip's coverage</span>
                 <span class="k">continue</span>
             <span class="n">lse_c_times</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">st</span><span class="p">)</span>
             <span class="n">lse_c_vals</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">conf</span><span class="p">)</span>
@@ -341,9 +341,9 @@
     <span class="n">d_vals</span><span class="p">,</span> <span class="n">d_mask</span> <span class="o">=</span> <span class="n">resample_to_grid</span><span class="p">(</span><span class="n">lse_d_times</span><span class="p">,</span> <span class="n">lse_d_vals</span><span class="p">,</span> <span class="n">t0</span><span class="o">=</span><span class="n">t0</span><span class="p">,</span> <span class="n">hop_s</span><span class="o">=</span><span class="n">hop_s</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="n">n</span><span class="p">)</span>
     <span class="k">return</span> <span class="p">[</span>
         <span class="n">ScoreTrack</span><span class="p">(</span>
-            <span class="n">clip_id</span><span class="p">,</span> <span class="s2">&quot;lip_sync_lse_c&quot;</span><span class="p">,</span> <span class="n">t0</span><span class="p">,</span> <span class="n">hop_s</span><span class="p">,</span> <span class="n">c_vals</span><span class="p">,</span> <span class="n">c_mask</span><span class="p">,</span> <span class="s2">&quot;higher_better&quot;</span>
+            <span class="n">clip_id</span><span class="p">,</span> <span class="s2">"lip_sync_lse_c"</span><span class="p">,</span> <span class="n">t0</span><span class="p">,</span> <span class="n">hop_s</span><span class="p">,</span> <span class="n">c_vals</span><span class="p">,</span> <span class="n">c_mask</span><span class="p">,</span> <span class="s2">"higher_better"</span>
         <span class="p">),</span>
-        <span class="n">ScoreTrack</span><span class="p">(</span><span class="n">clip_id</span><span class="p">,</span> <span class="s2">&quot;lse_d_offset&quot;</span><span class="p">,</span> <span class="n">t0</span><span class="p">,</span> <span class="n">hop_s</span><span class="p">,</span> <span class="n">d_vals</span><span class="p">,</span> <span class="n">d_mask</span><span class="p">,</span> <span class="s2">&quot;lower_better&quot;</span><span class="p">),</span>
+        <span class="n">ScoreTrack</span><span class="p">(</span><span class="n">clip_id</span><span class="p">,</span> <span class="s2">"lse_d_offset"</span><span class="p">,</span> <span class="n">t0</span><span class="p">,</span> <span class="n">hop_s</span><span class="p">,</span> <span class="n">d_vals</span><span class="p">,</span> <span class="n">d_mask</span><span class="p">,</span> <span class="s2">"lower_better"</span><span class="p">),</span>
     <span class="p">]</span></div>
 
 
@@ -351,22 +351,22 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_detection_spans</span><span class="p">(</span>
     <span class="n">detections_json</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">duration_s</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">fps</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">25.0</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Best-effort (start_frame, end_frame) per face track from SyncNet&#39;s detections JSON.</span>
+<span class="w">    </span><span class="sd">"""Best-effort (start_frame, end_frame) per face track from SyncNet's detections JSON.</span>
 
-<span class="sd">    Defensive: SyncNet&#39;s detections shape varies by version; on a parse miss return ONE span</span>
-<span class="sd">    bounded by the clip&#39;s own duration (never the old fabricated 10_000 frames, which invented</span>
-<span class="sd">    ~400 s of &quot;valid&quot; lip-sync far beyond the clip). The caller also clamps to coverage.</span>
+<span class="sd">    Defensive: SyncNet's detections shape varies by version; on a parse miss return ONE span</span>
+<span class="sd">    bounded by the clip's own duration (never the old fabricated 10_000 frames, which invented</span>
+<span class="sd">    ~400 s of "valid" lip-sync far beyond the clip). The caller also clamps to coverage.</span>
 <span class="sd">    This glue needs live validation (see the module docstring).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">tracks</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">detections_json</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;tracks&quot;</span><span class="p">)</span>
+            <span class="n">detections_json</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"tracks"</span><span class="p">)</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">detections_json</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span>
             <span class="k">else</span> <span class="n">detections_json</span>
         <span class="p">)</span>
         <span class="n">spans</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">tr</span> <span class="ow">in</span> <span class="n">tracks</span> <span class="ow">or</span> <span class="p">[]:</span>
-            <span class="n">frames</span> <span class="o">=</span> <span class="n">tr</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;frame&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tr</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
+            <span class="n">frames</span> <span class="o">=</span> <span class="n">tr</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"frame"</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tr</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
             <span class="k">if</span> <span class="n">frames</span><span class="p">:</span>
                 <span class="n">spans</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="nb">int</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">frames</span><span class="p">)),</span> <span class="nb">int</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">frames</span><span class="p">))</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
         <span class="k">if</span> <span class="n">spans</span><span class="p">:</span>
@@ -380,8 +380,8 @@
     <span class="k">try</span><span class="p">:</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">detections_json</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
             <span class="k">return</span> <span class="p">(</span>
-                <span class="nb">float</span><span class="p">(</span><span class="n">detections_json</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;fps&quot;</span><span class="p">))</span>
-                <span class="k">if</span> <span class="n">detections_json</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;fps&quot;</span><span class="p">)</span>
+                <span class="nb">float</span><span class="p">(</span><span class="n">detections_json</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"fps"</span><span class="p">))</span>
+                <span class="k">if</span> <span class="n">detections_json</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"fps"</span><span class="p">)</span>
                 <span class="k">else</span> <span class="kc">None</span>
             <span class="p">)</span>
     <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>

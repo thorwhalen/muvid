@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.footage.scoring.segment &mdash; muvid 0.0.27 documentation</title>
+  <title>muvid.footage.scoring.segment &mdash; muvid 0.0.28 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../../_static/documentation_options.js?v=cee5022b"></script>
+      <script src="../../../../_static/documentation_options.js?v=26ffa1e9"></script>
       <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -131,17 +131,17 @@
            <div itemprop="articleBody">
              
   <h1>Source code for muvid.footage.scoring.segment</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Shot boundaries (PySceneDetect) + the per-clip coverage mask.</span>
+<span></span><span class="sd">"""Shot boundaries (PySceneDetect) + the per-clip coverage mask.</span>
 
 <span class="sd">- ``coverage_mask`` is dependency-free: the boolean of song-grid frames a clip actually</span>
 <span class="sd">  covers (from its offset + duration). It is the base mask every metric ANDs with, and the</span>
-<span class="sd">  authority for &quot;does this clip exist at song time t&quot;.</span>
+<span class="sd">  authority for "does this clip exist at song time t".</span>
 <span class="sd">- ``shot_boundaries`` returns song-times of within-clip scene cuts (PySceneDetect, BSD-3).</span>
-<span class="sd">  Consumed by the selector ONLY when ``boundary_mode=&quot;beats+shots&quot;`` (they become *inter-clip*</span>
+<span class="sd">  Consumed by the selector ONLY when ``boundary_mode="beats+shots"`` (they become *inter-clip*</span>
 <span class="sd">  cut candidates at shot-boundary times — a within-clip jump cut is unrepresentable in the</span>
 <span class="sd">  single-offset EDL model). Optional dep: absent → ``[]`` and the mode silently degrades to</span>
 <span class="sd">  beats-only.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -161,7 +161,7 @@
     <span class="n">hop_s</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
     <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Grid frames (bool[n]) the clip covers — using its clamped ``coverage`` span.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Grid frames (bool[n]) the clip covers — using its clamped ``coverage`` span."""</span>
     <span class="n">lo</span><span class="p">,</span> <span class="n">hi</span> <span class="o">=</span> <span class="n">coverage</span>
     <span class="n">times</span> <span class="o">=</span> <span class="n">t0</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="o">*</span> <span class="n">hop_s</span>
     <span class="k">return</span> <span class="p">(</span><span class="n">times</span> <span class="o">&gt;=</span> <span class="n">lo</span> <span class="o">-</span> <span class="n">_EPS</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">times</span> <span class="o">&lt;</span> <span class="n">hi</span> <span class="o">+</span> <span class="n">_EPS</span><span class="p">)</span></div>
@@ -171,11 +171,11 @@
 <div class="viewcode-block" id="shot_boundaries">
 <a class="viewcode-back" href="../../../../module_docs/muvid/footage/scoring/segment.html#muvid.footage.scoring.segment.shot_boundaries">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">shot_boundaries</span><span class="p">(</span><span class="n">clip_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">offset_s</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Song-times of within-clip scene cuts (PySceneDetect ContentDetector), or ``[]``.</span>
+<span class="w">    </span><span class="sd">"""Song-times of within-clip scene cuts (PySceneDetect ContentDetector), or ``[]``.</span>
 
-<span class="sd">    Returns ``[]`` (never raises) if PySceneDetect is not installed, so the selector&#39;s</span>
+<span class="sd">    Returns ``[]`` (never raises) if PySceneDetect is not installed, so the selector's</span>
 <span class="sd">    ``beats+shots`` mode degrades cleanly to beats-only.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">scenedetect</span><span class="w"> </span><span class="kn">import</span> <span class="n">ContentDetector</span><span class="p">,</span> <span class="n">SceneManager</span><span class="p">,</span> <span class="n">open_video</span>  <span class="c1"># lazy</span>
     <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>

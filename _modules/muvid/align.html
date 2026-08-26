@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.align &mdash; muvid 0.0.27 documentation</title>
+  <title>muvid.align &mdash; muvid 0.0.28 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=cee5022b"></script>
+      <script src="../../_static/documentation_options.js?v=26ffa1e9"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -131,7 +131,7 @@
            <div itemprop="articleBody">
              
   <h1>Source code for muvid.align</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Lyric → audio alignment.</span>
+<span></span><span class="sd">"""Lyric → audio alignment.</span>
 
 <span class="sd">We have:</span>
 <span class="sd">- a transcript (Scribe / faster-whisper) with word-level (text, start, end)</span>
@@ -139,7 +139,7 @@
 <span class="sd">  manual line-start anchors</span>
 
 <span class="sd">We want a ``lacing`` store with three tiers (sections, lines, words) so</span>
-<span class="sd">the rest of the system can ask &quot;which lines fall in shot X&quot; without</span>
+<span class="sd">the rest of the system can ask "which lines fall in shot X" without</span>
 <span class="sd">re-implementing interval math.</span>
 
 <span class="sd">Strategy (greedy token-match):</span>
@@ -151,7 +151,7 @@
 <span class="sd">   word missing in lyrics, vice versa) with a small lookahead window.</span>
 <span class="sd">3. From the matched words, derive line ``[start, end]`` as</span>
 <span class="sd">   ``(first_matched_word.start, last_matched_word.end)``. If a line has</span>
-<span class="sd">   *no* matched words, fall back to the user&#39;s manual anchor (if any),</span>
+<span class="sd">   *no* matched words, fall back to the user's manual anchor (if any),</span>
 <span class="sd">   then to a linear interpolation between neighboring anchored lines.</span>
 <span class="sd">4. Sections inherit ``[start, end]`` from the union of their lines;</span>
 <span class="sd">   if the user provided explicit ``start_s`` / ``end_s`` on a section,</span>
@@ -159,7 +159,7 @@
 
 <span class="sd">The result is written as a ``lacing.SqliteStore`` so it round-trips and</span>
 <span class="sd">can be edited by other tools.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -171,15 +171,15 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.lyrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">LyricsDoc</span><span class="p">,</span> <span class="n">words_from_transcript</span>
 
 
-<span class="n">_WORD_TOKEN_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;[a-z0-9&#39;]+&quot;</span><span class="p">)</span>
+<span class="n">_WORD_TOKEN_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"[a-z0-9']+"</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_normalize</span><span class="p">(</span><span class="n">token</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-    <span class="k">return</span> <span class="n">token</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">&quot;&#39;-&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">token</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">"'-"</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_tokenize</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Cheap normalization: lowercase, strip punctuation.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Cheap normalization: lowercase, strip punctuation."""</span>
     <span class="k">return</span> <span class="p">[</span><span class="n">_normalize</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">_WORD_TOKEN_RE</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="n">text</span><span class="o">.</span><span class="n">lower</span><span class="p">())]</span>
 
 
@@ -187,7 +187,7 @@
 <a class="viewcode-back" href="../../module_docs/muvid/align.html#muvid.align.WordAlignment">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">WordAlignment</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;One alignment between a lyric token and a transcript word.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""One alignment between a lyric token and a transcript word."""</span>
 
     <span class="n">line_index</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">token_index</span><span class="p">:</span> <span class="nb">int</span>  <span class="c1"># within the line</span>
@@ -240,7 +240,7 @@
 <div class="viewcode-block" id="AlignmentResult.lines_in">
 <a class="viewcode-back" href="../../module_docs/muvid/align.html#muvid.align.AlignmentResult.lines_in">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">lines_in</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start_s</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">end_s</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">LineAlignment</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Lines that fall (at least partially) inside ``[start_s, end_s]``.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Lines that fall (at least partially) inside ``[start_s, end_s]``."""</span>
         <span class="n">out</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">LineAlignment</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">L</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">lines</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">L</span><span class="o">.</span><span class="n">start_s</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">L</span><span class="o">.</span><span class="n">end_s</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -266,18 +266,18 @@
 <span class="c1">#: plus any name added later via :func:`register_aligner`.</span>
 <span class="n">AlignerName</span> <span class="o">=</span> <span class="nb">str</span>  <span class="c1"># kept loose so user-registered names work too</span>
 
-<span class="n">_ALIGNERS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="s2">&quot;AlignerSpec&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="n">_ALIGNERS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="s2">"AlignerSpec"</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
 
 
 <div class="viewcode-block" id="AlignerSpec">
 <a class="viewcode-back" href="../../module_docs/muvid/align.html#muvid.align.AlignerSpec">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">AlignerSpec</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;One row in the aligner registry.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""One row in the aligner registry."""</span>
 
     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">description</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">fn</span><span class="p">:</span> <span class="s2">&quot;object&quot;</span>  <span class="c1"># Callable[..., AlignmentResult]</span>
+    <span class="n">fn</span><span class="p">:</span> <span class="s2">"object"</span>  <span class="c1"># Callable[..., AlignmentResult]</span>
     <span class="n">requires</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">()</span></div>
 
 
@@ -291,12 +291,12 @@
     <span class="n">description</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">requires</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(),</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Register an aligner under ``name``.</span>
+<span class="w">    </span><span class="sd">"""Register an aligner under ``name``.</span>
 
 <span class="sd">    The function should accept ``(lyrics, transcript, *, duration_s,</span>
 <span class="sd">    **kw) -&gt; AlignmentResult``. Extra keyword arguments forwarded by</span>
 <span class="sd">    :func:`align_lyrics` are passed through.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">_ALIGNERS</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">AlignerSpec</span><span class="p">(</span>
         <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="n">description</span><span class="p">,</span> <span class="n">fn</span><span class="o">=</span><span class="n">fn</span><span class="p">,</span> <span class="n">requires</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="n">requires</span><span class="p">)</span>
     <span class="p">)</span></div>
@@ -306,14 +306,14 @@
 <div class="viewcode-block" id="list_aligners">
 <a class="viewcode-back" href="../../module_docs/muvid/align.html#muvid.align.list_aligners">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">list_aligners</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return all registered aligner names, sorted.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Return all registered aligner names, sorted."""</span>
     <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">_ALIGNERS</span><span class="p">)</span></div>
 
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">aligner_info</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AlignerSpec</span><span class="p">:</span>
     <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_ALIGNERS</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown aligner </span><span class="si">{</span><span class="n">name</span><span class="si">!r}</span><span class="s2">. Registered: </span><span class="si">{</span><span class="n">list_aligners</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Unknown aligner </span><span class="si">{</span><span class="n">name</span><span class="si">!r}</span><span class="s2">. Registered: </span><span class="si">{</span><span class="n">list_aligners</span><span class="p">()</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">_ALIGNERS</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
 
 
@@ -327,17 +327,17 @@
     <span class="n">transcript</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">duration_s</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
-    <span class="n">aligner</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;scribe-greedy&quot;</span><span class="p">,</span>
+    <span class="n">aligner</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"scribe-greedy"</span><span class="p">,</span>
     <span class="o">**</span><span class="n">aligner_kwargs</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AlignmentResult</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Align a ``LyricsDoc`` to a transcript.</span>
+<span class="w">    </span><span class="sd">"""Align a ``LyricsDoc`` to a transcript.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        lyrics: User-edited lyrics document (the ground-truth text).</span>
-<span class="sd">        transcript: Aligner-specific input. For ``&quot;scribe-greedy&quot;``</span>
+<span class="sd">        transcript: Aligner-specific input. For ``"scribe-greedy"``</span>
 <span class="sd">            this is a Scribe / faster-whisper response with</span>
-<span class="sd">            ``words: [...]``. For ``&quot;user&quot;`` this can be empty if you</span>
-<span class="sd">            pass ``user_line_timings=...``. For ``&quot;whisperx-lite&quot;`` the</span>
+<span class="sd">            ``words: [...]``. For ``"user"`` this can be empty if you</span>
+<span class="sd">            pass ``user_line_timings=...``. For ``"whisperx-lite"`` the</span>
 <span class="sd">            transcript is ignored — the aligner runs on the audio</span>
 <span class="sd">            directly (path passed via ``audio_path=``).</span>
 <span class="sd">        duration_s: Used to extrapolate end times for lines with no</span>
@@ -347,15 +347,15 @@
 
 <span class="sd">    Returns:</span>
 <span class="sd">        :class:`AlignmentResult`.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">spec</span> <span class="o">=</span> <span class="n">aligner_info</span><span class="p">(</span><span class="n">aligner</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">pkg</span> <span class="ow">in</span> <span class="n">spec</span><span class="o">.</span><span class="n">requires</span><span class="p">:</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="nb">__import__</span><span class="p">(</span><span class="n">pkg</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;aligner </span><span class="si">{</span><span class="n">aligner</span><span class="si">!r}</span><span class="s2"> requires </span><span class="si">{</span><span class="n">pkg</span><span class="si">!r}</span><span class="s2">; install it first &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;(pip install </span><span class="si">{</span><span class="n">pkg</span><span class="si">}</span><span class="s2">)&quot;</span>
+                <span class="sa">f</span><span class="s2">"aligner </span><span class="si">{</span><span class="n">aligner</span><span class="si">!r}</span><span class="s2"> requires </span><span class="si">{</span><span class="n">pkg</span><span class="si">!r}</span><span class="s2">; install it first "</span>
+                <span class="sa">f</span><span class="s2">"(pip install </span><span class="si">{</span><span class="n">pkg</span><span class="si">}</span><span class="s2">)"</span>
             <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
     <span class="k">return</span> <span class="n">spec</span><span class="o">.</span><span class="n">fn</span><span class="p">(</span><span class="n">lyrics</span><span class="p">,</span> <span class="n">transcript</span><span class="p">,</span> <span class="n">duration_s</span><span class="o">=</span><span class="n">duration_s</span><span class="p">,</span> <span class="o">**</span><span class="n">aligner_kwargs</span><span class="p">)</span></div>
 
@@ -373,15 +373,15 @@
     <span class="n">duration_s</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
     <span class="n">lookahead</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">6</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AlignmentResult</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Greedy token-match against a word-timestamped transcript.</span>
+<span class="w">    </span><span class="sd">"""Greedy token-match against a word-timestamped transcript.</span>
 
 <span class="sd">    Cheap, network-only (assumes the transcript came from Scribe or</span>
 <span class="sd">    similar). Tolerates 1-character mishears between sung and written</span>
 <span class="sd">    text. ``duration_s`` is used only when extrapolating end times.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">transcript_words</span> <span class="o">=</span> <span class="n">words_from_transcript</span><span class="p">(</span><span class="n">transcript</span><span class="p">)</span>
     <span class="n">transcript_tokens</span> <span class="o">=</span> <span class="p">[</span>
-        <span class="n">_normalize</span><span class="p">(</span><span class="n">w</span><span class="p">[</span><span class="s2">&quot;text&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s1">&#39;()[],.?!&quot;&#39;</span><span class="p">))</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">transcript_words</span>
+        <span class="n">_normalize</span><span class="p">(</span><span class="n">w</span><span class="p">[</span><span class="s2">"text"</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s1">'()[],.?!"'</span><span class="p">))</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">transcript_words</span>
     <span class="p">]</span>
 
     <span class="c1"># Build a single flat list of (line_index, token_index, normalized) for</span>
@@ -417,9 +417,9 @@
             <span class="n">WordAlignment</span><span class="p">(</span>
                 <span class="n">line_index</span><span class="o">=</span><span class="n">line_idx</span><span class="p">,</span>
                 <span class="n">token_index</span><span class="o">=</span><span class="n">tok_idx</span><span class="p">,</span>
-                <span class="n">text</span><span class="o">=</span><span class="n">w</span><span class="p">[</span><span class="s2">&quot;text&quot;</span><span class="p">],</span>
-                <span class="n">start_s</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">w</span><span class="p">[</span><span class="s2">&quot;start&quot;</span><span class="p">]),</span>
-                <span class="n">end_s</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">w</span><span class="p">[</span><span class="s2">&quot;end&quot;</span><span class="p">]),</span>
+                <span class="n">text</span><span class="o">=</span><span class="n">w</span><span class="p">[</span><span class="s2">"text"</span><span class="p">],</span>
+                <span class="n">start_s</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">w</span><span class="p">[</span><span class="s2">"start"</span><span class="p">]),</span>
+                <span class="n">end_s</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">w</span><span class="p">[</span><span class="s2">"end"</span><span class="p">]),</span>
                 <span class="n">confidence</span><span class="o">=</span><span class="mf">0.9</span> <span class="k">if</span> <span class="n">transcript_tokens</span><span class="p">[</span><span class="n">match_at</span><span class="p">]</span> <span class="o">==</span> <span class="n">lyric_tok</span> <span class="k">else</span> <span class="mf">0.6</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="p">)</span>
@@ -480,8 +480,8 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_close_enough</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Tolerate trivial sung-vs-said variants — same first/last char and</span>
-<span class="sd">    differ by at most one internal char.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Tolerate trivial sung-vs-said variants — same first/last char and</span>
+<span class="sd">    differ by at most one internal char."""</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">a</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">b</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">False</span>
     <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">b</span><span class="p">))</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
@@ -511,17 +511,17 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_interpolate_line_times</span><span class="p">(</span>
     <span class="n">lines</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">LineAlignment</span><span class="p">],</span> <span class="n">duration_s</span><span class="p">:</span> <span class="nb">float</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">LineAlignment</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Fill missing line times by linear interpolation between anchors.</span>
+<span class="w">    </span><span class="sd">"""Fill missing line times by linear interpolation between anchors.</span>
 
 <span class="sd">    Lines that still have no end after this are given a tiny</span>
 <span class="sd">    ``end = start + 0.5s`` placeholder; lines with no start at all are</span>
 <span class="sd">    left as-is.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">lines</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">lines</span>
     <span class="n">starts</span> <span class="o">=</span> <span class="p">[</span><span class="n">L</span><span class="o">.</span><span class="n">start_s</span> <span class="k">for</span> <span class="n">L</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">]</span>
     <span class="c1"># Forward-fill ends within each line: if a line has start but no end,</span>
-    <span class="c1"># use the next line&#39;s start (or duration_s).</span>
+    <span class="c1"># use the next line's start (or duration_s).</span>
     <span class="n">out</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">LineAlignment</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">L</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">lines</span><span class="p">):</span>
         <span class="n">start</span> <span class="o">=</span> <span class="n">L</span><span class="o">.</span><span class="n">start_s</span>
@@ -569,26 +569,26 @@
     <span class="n">duration_s</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
     <span class="n">user_line_timings</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AlignmentResult</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Use line-level timings the caller has already determined.</span>
+<span class="w">    </span><span class="sd">"""Use line-level timings the caller has already determined.</span>
 
 <span class="sd">    Useful when the user has hand-anchored every line, or when an</span>
 <span class="sd">    external aligner has produced ``line_index → (start, end)``</span>
-<span class="sd">    timings and you don&#39;t want any token-matching.</span>
+<span class="sd">    timings and you don't want any token-matching.</span>
 
-<span class="sd">    ``user_line_timings`` is a list of ``{&quot;line_index&quot;: int,</span>
-<span class="sd">    &quot;start_s&quot;: float, &quot;end_s&quot;: float}``. If omitted, this aligner</span>
+<span class="sd">    ``user_line_timings`` is a list of ``{"line_index": int,</span>
+<span class="sd">    "start_s": float, "end_s": float}``. If omitted, this aligner</span>
 <span class="sd">    falls back to the manual anchors already on ``lyrics`` (the</span>
 <span class="sd">    ``// 12.5`` end-of-line markers in ``lyrics.md``).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">user_line_timings</span> <span class="o">=</span> <span class="n">user_line_timings</span> <span class="ow">or</span> <span class="p">[]</span>
-    <span class="n">timings_by_line</span> <span class="o">=</span> <span class="p">{</span><span class="nb">int</span><span class="p">(</span><span class="n">t</span><span class="p">[</span><span class="s2">&quot;line_index&quot;</span><span class="p">]):</span> <span class="n">t</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">user_line_timings</span><span class="p">}</span>
+    <span class="n">timings_by_line</span> <span class="o">=</span> <span class="p">{</span><span class="nb">int</span><span class="p">(</span><span class="n">t</span><span class="p">[</span><span class="s2">"line_index"</span><span class="p">]):</span> <span class="n">t</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">user_line_timings</span><span class="p">}</span>
 
     <span class="n">line_alignments</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">LineAlignment</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">L</span> <span class="ow">in</span> <span class="n">lyrics</span><span class="o">.</span><span class="n">lines</span><span class="p">:</span>
         <span class="n">t</span> <span class="o">=</span> <span class="n">timings_by_line</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">L</span><span class="o">.</span><span class="n">line_index</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">t</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">start</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">t</span><span class="p">[</span><span class="s2">&quot;start_s&quot;</span><span class="p">])</span>
-            <span class="n">end</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">t</span><span class="p">[</span><span class="s2">&quot;end_s&quot;</span><span class="p">])</span>
+            <span class="n">start</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">t</span><span class="p">[</span><span class="s2">"start_s"</span><span class="p">])</span>
+            <span class="n">end</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">t</span><span class="p">[</span><span class="s2">"end_s"</span><span class="p">])</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">start</span> <span class="o">=</span> <span class="n">L</span><span class="o">.</span><span class="n">start_s</span>
             <span class="n">end</span> <span class="o">=</span> <span class="kc">None</span>
@@ -642,10 +642,10 @@
     <span class="o">*</span><span class="p">,</span>
     <span class="n">duration_s</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
     <span class="n">audio_path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">model_size</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;tiny&quot;</span><span class="p">,</span>
+    <span class="n">model_size</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"tiny"</span><span class="p">,</span>
     <span class="n">lookahead</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">6</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AlignmentResult</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Local-only aligner that re-uses ``faster-whisper`` (no API).</span>
+<span class="w">    </span><span class="sd">"""Local-only aligner that re-uses ``faster-whisper`` (no API).</span>
 
 <span class="sd">    The ``transcript`` argument is ignored when ``audio_path`` is given:</span>
 <span class="sd">    we re-transcribe locally with faster-whisper and then run the same</span>
@@ -654,7 +654,7 @@
 
 <span class="sd">    Trade-offs vs ``scribe-greedy``: free + offline; slower; less</span>
 <span class="sd">    accurate on singing; needs torch + faster-whisper installed.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="n">audio_path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">align_scribe_greedy</span><span class="p">(</span>
             <span class="n">lyrics</span><span class="p">,</span> <span class="n">transcript</span><span class="p">,</span> <span class="n">duration_s</span><span class="o">=</span><span class="n">duration_s</span><span class="p">,</span> <span class="n">lookahead</span><span class="o">=</span><span class="n">lookahead</span>
@@ -664,24 +664,24 @@
         <span class="kn">from</span><span class="w"> </span><span class="nn">faster_whisper</span><span class="w"> </span><span class="kn">import</span> <span class="n">WhisperModel</span>  <span class="c1"># type: ignore</span>
     <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>  <span class="c1"># pragma: no cover — exercised only when installed</span>
         <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-            <span class="s2">&quot;whisperx-lite requires faster-whisper. pip install faster-whisper&quot;</span>
+            <span class="s2">"whisperx-lite requires faster-whisper. pip install faster-whisper"</span>
         <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
 
-    <span class="n">model</span> <span class="o">=</span> <span class="n">WhisperModel</span><span class="p">(</span><span class="n">model_size</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="s2">&quot;cpu&quot;</span><span class="p">,</span> <span class="n">compute_type</span><span class="o">=</span><span class="s2">&quot;int8&quot;</span><span class="p">)</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">WhisperModel</span><span class="p">(</span><span class="n">model_size</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="s2">"cpu"</span><span class="p">,</span> <span class="n">compute_type</span><span class="o">=</span><span class="s2">"int8"</span><span class="p">)</span>
     <span class="n">segments</span><span class="p">,</span> <span class="n">_info</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">transcribe</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">audio_path</span><span class="p">),</span> <span class="n">word_timestamps</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">words</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">seg</span> <span class="ow">in</span> <span class="n">segments</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">seg</span><span class="o">.</span><span class="n">words</span> <span class="ow">or</span> <span class="p">():</span>
             <span class="n">words</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                 <span class="p">{</span>
-                    <span class="s2">&quot;text&quot;</span><span class="p">:</span> <span class="n">w</span><span class="o">.</span><span class="n">word</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span>
-                    <span class="s2">&quot;start&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">start</span><span class="p">),</span>
-                    <span class="s2">&quot;end&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">end</span><span class="p">),</span>
-                    <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;word&quot;</span><span class="p">,</span>
-                    <span class="s2">&quot;confidence&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="s2">&quot;probability&quot;</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span> <span class="ow">or</span> <span class="mf">1.0</span><span class="p">),</span>
+                    <span class="s2">"text"</span><span class="p">:</span> <span class="n">w</span><span class="o">.</span><span class="n">word</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span>
+                    <span class="s2">"start"</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">start</span><span class="p">),</span>
+                    <span class="s2">"end"</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">end</span><span class="p">),</span>
+                    <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"word"</span><span class="p">,</span>
+                    <span class="s2">"confidence"</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="s2">"probability"</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span> <span class="ow">or</span> <span class="mf">1.0</span><span class="p">),</span>
                 <span class="p">}</span>
             <span class="p">)</span>
-    <span class="n">transcript</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;words&quot;</span><span class="p">:</span> <span class="n">words</span><span class="p">}</span>
+    <span class="n">transcript</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"words"</span><span class="p">:</span> <span class="n">words</span><span class="p">}</span>
     <span class="k">return</span> <span class="n">align_scribe_greedy</span><span class="p">(</span>
         <span class="n">lyrics</span><span class="p">,</span> <span class="n">transcript</span><span class="p">,</span> <span class="n">duration_s</span><span class="o">=</span><span class="n">duration_s</span><span class="p">,</span> <span class="n">lookahead</span><span class="o">=</span><span class="n">lookahead</span>
     <span class="p">)</span></div>
@@ -700,40 +700,40 @@
     <span class="n">duration_s</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
     <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AlignmentResult</span><span class="p">:</span>  <span class="c1"># pragma: no cover — not implemented</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Singing-specific alignment (STARS / similar). Not yet implemented.</span>
+<span class="w">    </span><span class="sd">"""Singing-specific alignment (STARS / similar). Not yet implemented.</span>
 
 <span class="sd">    See ``misc/docs/alignment_references.md`` for the literature</span>
 <span class="sd">    motivating this aligner. The slot exists so callers can already</span>
-<span class="sd">    write ``aligner=&quot;stars&quot;`` and get a clear NotImplementedError.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    write ``aligner="stars"`` and get a clear NotImplementedError.</span>
+<span class="sd">    """</span>
     <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
-        <span class="s2">&quot;stars-style joint singing alignment is not implemented yet. &quot;</span>
-        <span class="s2">&quot;Use aligner=&#39;scribe-greedy&#39; (default) or &#39;whisperx-lite&#39;.&quot;</span>
+        <span class="s2">"stars-style joint singing alignment is not implemented yet. "</span>
+        <span class="s2">"Use aligner='scribe-greedy' (default) or 'whisperx-lite'."</span>
     <span class="p">)</span></div>
 
 
 
 <span class="c1"># Register built-in aligners.</span>
 <span class="n">register_aligner</span><span class="p">(</span>
-    <span class="s2">&quot;scribe-greedy&quot;</span><span class="p">,</span>
+    <span class="s2">"scribe-greedy"</span><span class="p">,</span>
     <span class="n">align_scribe_greedy</span><span class="p">,</span>
-    <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Greedy token-match against a Scribe / faster-whisper transcript.&quot;</span><span class="p">,</span>
+    <span class="n">description</span><span class="o">=</span><span class="s2">"Greedy token-match against a Scribe / faster-whisper transcript."</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="n">register_aligner</span><span class="p">(</span>
-    <span class="s2">&quot;user&quot;</span><span class="p">,</span>
+    <span class="s2">"user"</span><span class="p">,</span>
     <span class="n">align_user_provided</span><span class="p">,</span>
-    <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Caller-provided line-level timings (line_index → start, end).&quot;</span><span class="p">,</span>
+    <span class="n">description</span><span class="o">=</span><span class="s2">"Caller-provided line-level timings (line_index → start, end)."</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="n">register_aligner</span><span class="p">(</span>
-    <span class="s2">&quot;whisperx-lite&quot;</span><span class="p">,</span>
+    <span class="s2">"whisperx-lite"</span><span class="p">,</span>
     <span class="n">align_whisperx_lite</span><span class="p">,</span>
-    <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Offline: faster-whisper transcribe + greedy match.&quot;</span><span class="p">,</span>
-    <span class="n">requires</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;faster_whisper&quot;</span><span class="p">,),</span>
+    <span class="n">description</span><span class="o">=</span><span class="s2">"Offline: faster-whisper transcribe + greedy match."</span><span class="p">,</span>
+    <span class="n">requires</span><span class="o">=</span><span class="p">(</span><span class="s2">"faster_whisper"</span><span class="p">,),</span>
 <span class="p">)</span>
 <span class="n">register_aligner</span><span class="p">(</span>
-    <span class="s2">&quot;stars&quot;</span><span class="p">,</span>
+    <span class="s2">"stars"</span><span class="p">,</span>
     <span class="n">align_stars</span><span class="p">,</span>
-    <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Singing-grade joint alignment (not yet implemented).&quot;</span><span class="p">,</span>
+    <span class="n">description</span><span class="o">=</span><span class="s2">"Singing-grade joint alignment (not yet implemented)."</span><span class="p">,</span>
 <span class="p">)</span>
 
 
@@ -746,14 +746,14 @@
     <span class="n">alignment</span><span class="p">:</span> <span class="n">AlignmentResult</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span>
-    <span class="n">asset_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;song:audio&quot;</span><span class="p">,</span>
+    <span class="n">asset_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"song:audio"</span><span class="p">,</span>
     <span class="n">rate</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Write alignment to a ``lacing.SqliteStore`` file (.annot).</span>
+<span class="w">    </span><span class="sd">"""Write alignment to a ``lacing.SqliteStore`` file (.annot).</span>
 
 <span class="sd">    Uses :class:`lacing.tracks.subtitle.SubtitleBuilder` for the</span>
 <span class="sd">    standard ``(sections, lines, words)`` tier set.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">lacing</span><span class="w"> </span><span class="kn">import</span> <span class="n">SqliteStore</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">lacing.tracks.subtitle</span><span class="w"> </span><span class="kn">import</span> <span class="n">SubtitleBuilder</span>
 
@@ -761,7 +761,7 @@
     <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
         <span class="n">path</span><span class="o">.</span><span class="n">unlink</span><span class="p">()</span>
     <span class="c1"># No migrate= here, deliberately: the unlink above means this always creates a</span>
-    <span class="c1"># FRESH store, stamped at lacing&#39;s current SCHEMA_VERSION. Only the read sites</span>
+    <span class="c1"># FRESH store, stamped at lacing's current SCHEMA_VERSION. Only the read sites</span>
     <span class="c1"># (contracts.py, facade.py, renderers/__init__.py) can meet an older file.</span>
     <span class="n">store</span> <span class="o">=</span> <span class="n">SqliteStore</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">))</span>
     <span class="k">try</span><span class="p">:</span>
@@ -769,8 +769,8 @@
             <span class="n">store</span><span class="p">,</span>
             <span class="n">asset_id</span><span class="o">=</span><span class="n">asset_id</span><span class="p">,</span>
             <span class="n">rate</span><span class="o">=</span><span class="n">rate</span><span class="p">,</span>
-            <span class="n">was_generated_by</span><span class="o">=</span><span class="s2">&quot;muvid:align&quot;</span><span class="p">,</span>
-            <span class="n">was_attributed_to</span><span class="o">=</span><span class="s2">&quot;muvid&quot;</span><span class="p">,</span>
+            <span class="n">was_generated_by</span><span class="o">=</span><span class="s2">"muvid:align"</span><span class="p">,</span>
+            <span class="n">was_attributed_to</span><span class="o">=</span><span class="s2">"muvid"</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">alignment</span><span class="o">.</span><span class="n">sections</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">start_s</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">s</span><span class="o">.</span><span class="n">end_s</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>

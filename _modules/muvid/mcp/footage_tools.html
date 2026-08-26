@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.mcp.footage_tools &mdash; muvid 0.0.27 documentation</title>
+  <title>muvid.mcp.footage_tools &mdash; muvid 0.0.28 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=cee5022b"></script>
+      <script src="../../../_static/documentation_options.js?v=26ffa1e9"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -132,20 +132,20 @@
            <div itemprop="articleBody">
              
   <h1>Source code for muvid.mcp.footage_tools</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;MCP tools for the footage-aligned ``music_video`` genre (thorwhalen/reelee#229).</span>
+<span></span><span class="sd">"""MCP tools for the footage-aligned ``music_video`` genre (thorwhalen/reelee#229).</span>
 
 <span class="sd">Module-level tool functions (referenced ``muvid.mcp.footage_tools:&lt;name&gt;``) a host</span>
 <span class="sd">aggregates via :func:`muvid.mcp.register_tools`. All FREE (ffmpeg + numpy only, no AI/keys).</span>
-<span class="sd">The caller is resolved from the OAuth token; all work lands in that caller&#39;s stateful</span>
+<span class="sd">The caller is resolved from the OAuth token; all work lands in that caller's stateful</span>
 <span class="sd">:class:`~muvid.footage.workspace.FootageWorkspace` project. Media URLs are fetched</span>
 <span class="sd">server-side through the SSRF-guarded, size/time-bounded fetch (video streams straight to</span>
 <span class="sd">disk); alignment + assembly are bounded by hard resource caps and</span>
 <span class="sd">``$MUVID_FFMPEG_TIMEOUT_S`` (assembly runs one bounded single-input ffmpeg per cut, so</span>
 <span class="sd">memory does not grow with cut count) — the connector renders synchronously over HTTP.</span>
 
-<span class="sd">Workflow: ``create_project(genre=&#39;music_video&#39;)`` → ``set_song`` → ``add_footage`` ×N →</span>
+<span class="sd">Workflow: ``create_project(genre='music_video')`` → ``set_song`` → ``add_footage`` ×N →</span>
 <span class="sd">``align_footage`` → (``footage_timeline`` to inspect) → ``assemble_music_video``.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -157,16 +157,16 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.mcp.identity</span><span class="w"> </span><span class="kn">import</span> <span class="n">current_email</span>
 
 <span class="c1"># -- resource caps (env-tunable) --------------------------------------------</span>
-<span class="n">_MAX_CLIPS</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;MUVID_FOOTAGE_MAX_CLIPS&quot;</span><span class="p">,</span> <span class="s2">&quot;8&quot;</span><span class="p">))</span>
-<span class="n">_CLIP_MAX_BYTES</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;MUVID_FOOTAGE_MAX_BYTES&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="mi">400</span> <span class="o">*</span> <span class="mi">1024</span> <span class="o">*</span> <span class="mi">1024</span><span class="p">)))</span>
+<span class="n">_MAX_CLIPS</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"MUVID_FOOTAGE_MAX_CLIPS"</span><span class="p">,</span> <span class="s2">"8"</span><span class="p">))</span>
+<span class="n">_CLIP_MAX_BYTES</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"MUVID_FOOTAGE_MAX_BYTES"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="mi">400</span> <span class="o">*</span> <span class="mi">1024</span> <span class="o">*</span> <span class="mi">1024</span><span class="p">)))</span>
 <span class="n">_CLIP_MAX_DURATION_S</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span>
-    <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;MUVID_FOOTAGE_MAX_CLIP_DURATION_S&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="mi">12</span> <span class="o">*</span> <span class="mi">60</span><span class="p">))</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"MUVID_FOOTAGE_MAX_CLIP_DURATION_S"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="mi">12</span> <span class="o">*</span> <span class="mi">60</span><span class="p">))</span>
 <span class="p">)</span>
 <span class="n">_SONG_MAX_BYTES</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span>
-    <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;MUVID_FOOTAGE_SONG_MAX_BYTES&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="mi">100</span> <span class="o">*</span> <span class="mi">1024</span> <span class="o">*</span> <span class="mi">1024</span><span class="p">))</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"MUVID_FOOTAGE_SONG_MAX_BYTES"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="mi">100</span> <span class="o">*</span> <span class="mi">1024</span> <span class="o">*</span> <span class="mi">1024</span><span class="p">))</span>
 <span class="p">)</span>
 <span class="n">_SONG_MAX_DURATION_S</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span>
-    <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;MUVID_FOOTAGE_MAX_SONG_DURATION_S&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="mi">12</span> <span class="o">*</span> <span class="mi">60</span><span class="p">))</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"MUVID_FOOTAGE_MAX_SONG_DURATION_S"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="mi">12</span> <span class="o">*</span> <span class="mi">60</span><span class="p">))</span>
 <span class="p">)</span>
 <span class="c1">#: Below this, an alignment is REPORTED as low-confidence (never dropped — see</span>
 <span class="c1">#: align_footage). Calibrated for the clean-master-vs-phone regime the connector actually</span>
@@ -174,11 +174,11 @@
 <span class="c1">#: provably-correct clips scored 0.173–0.603 while the one genuinely unrelated clip scored</span>
 <span class="c1">#: 0.021 — so 0.1 separates them ~2x/5x, where the old 0.3 (a defensible number for the</span>
 <span class="c1">#: EASIER clip-to-clip regime) flagged five of six correct alignments as suspect.</span>
-<span class="n">_MIN_CONFIDENCE</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;MUVID_FOOTAGE_MIN_CONFIDENCE&quot;</span><span class="p">,</span> <span class="s2">&quot;0.1&quot;</span><span class="p">))</span>
+<span class="n">_MIN_CONFIDENCE</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"MUVID_FOOTAGE_MIN_CONFIDENCE"</span><span class="p">,</span> <span class="s2">"0.1"</span><span class="p">))</span>
 <span class="c1">#: Total-bytes cap for a folder archive (env ``MUVID_FOOTAGE_FOLDER_MAX_BYTES``). A shoot</span>
 <span class="c1">#: is several clips, so this is necessarily larger than the per-clip cap.</span>
 <span class="n">_FOLDER_MAX_BYTES</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span>
-    <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;MUVID_FOOTAGE_FOLDER_MAX_BYTES&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="mi">3</span> <span class="o">*</span> <span class="mi">1024</span> <span class="o">*</span> <span class="mi">1024</span> <span class="o">*</span> <span class="mi">1024</span><span class="p">))</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"MUVID_FOOTAGE_FOLDER_MAX_BYTES"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="mi">3</span> <span class="o">*</span> <span class="mi">1024</span> <span class="o">*</span> <span class="mi">1024</span> <span class="o">*</span> <span class="mi">1024</span><span class="p">))</span>
 <span class="p">)</span>
 
 
@@ -195,15 +195,15 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_open</span><span class="p">(</span><span class="n">project_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Open the caller&#39;s project, surfacing a missing project as a clean ToolError.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Open the caller's project, surfacing a missing project as a clean ToolError."""</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">_workspace</span><span class="p">()</span><span class="o">.</span><span class="n">open_project</span><span class="p">(</span><span class="n">project_id</span><span class="p">)</span>
     <span class="k">except</span> <span class="ne">FileNotFoundError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="n">_tool_error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;no such project </span><span class="si">{</span><span class="n">project_id</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+        <span class="k">raise</span> <span class="n">_tool_error</span><span class="p">(</span><span class="sa">f</span><span class="s2">"no such project </span><span class="si">{</span><span class="n">project_id</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_url_ext</span><span class="p">(</span><span class="n">url</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">default</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-    <span class="n">suffix</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">urlparse</span><span class="p">(</span><span class="n">url</span><span class="p">)</span><span class="o">.</span><span class="n">path</span><span class="p">)</span><span class="o">.</span><span class="n">suffix</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+    <span class="n">suffix</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">urlparse</span><span class="p">(</span><span class="n">url</span><span class="p">)</span><span class="o">.</span><span class="n">path</span><span class="p">)</span><span class="o">.</span><span class="n">suffix</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s2">"."</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
     <span class="k">return</span> <span class="n">suffix</span> <span class="ow">or</span> <span class="n">default</span>
 
 
@@ -214,28 +214,28 @@
 
 
 <span class="c1">#: Media extensions an archive member must carry to be treated as footage.</span>
-<span class="n">_VIDEO_EXTENSIONS</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;mp4&quot;</span><span class="p">,</span> <span class="s2">&quot;mov&quot;</span><span class="p">,</span> <span class="s2">&quot;m4v&quot;</span><span class="p">,</span> <span class="s2">&quot;webm&quot;</span><span class="p">,</span> <span class="s2">&quot;avi&quot;</span><span class="p">,</span> <span class="s2">&quot;mkv&quot;</span><span class="p">,</span> <span class="s2">&quot;mpg&quot;</span><span class="p">,</span> <span class="s2">&quot;mpeg&quot;</span><span class="p">,</span> <span class="s2">&quot;3gp&quot;</span><span class="p">)</span>
+<span class="n">_VIDEO_EXTENSIONS</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"mp4"</span><span class="p">,</span> <span class="s2">"mov"</span><span class="p">,</span> <span class="s2">"m4v"</span><span class="p">,</span> <span class="s2">"webm"</span><span class="p">,</span> <span class="s2">"avi"</span><span class="p">,</span> <span class="s2">"mkv"</span><span class="p">,</span> <span class="s2">"mpg"</span><span class="p">,</span> <span class="s2">"mpeg"</span><span class="p">,</span> <span class="s2">"3gp"</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_media_url</span><span class="p">(</span><span class="n">url</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">what</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Normalise a pasted share link to a direct-download URL, refusing folder links.</span>
+<span class="w">    </span><span class="sd">"""Normalise a pasted share link to a direct-download URL, refusing folder links.</span>
 
 <span class="sd">    A user pastes what their cloud drive gave them, which is a *page*, not a download. This</span>
 <span class="sd">    is where that becomes a fetchable URL — and where a folder link is turned away with the</span>
 <span class="sd">    name of the tool that does handle it, rather than being fetched and failing later as an</span>
-<span class="sd">    unreadable &#39;media&#39; file.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    unreadable 'media' file.</span>
+<span class="sd">    """</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.mcp._fetch</span><span class="w"> </span><span class="kn">import</span> <span class="n">FetchError</span><span class="p">,</span> <span class="n">resolve_share_link</span>
 
     <span class="k">try</span><span class="p">:</span>
         <span class="n">direct</span><span class="p">,</span> <span class="n">kind</span> <span class="o">=</span> <span class="n">resolve_share_link</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
     <span class="k">except</span> <span class="n">FetchError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="n">_tool_error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;could not resolve the </span><span class="si">{</span><span class="n">what</span><span class="si">}</span><span class="s2"> link: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
-    <span class="k">if</span> <span class="n">kind</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;archive&quot;</span><span class="p">,</span> <span class="s2">&quot;folder&quot;</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="n">_tool_error</span><span class="p">(</span><span class="sa">f</span><span class="s2">"could not resolve the </span><span class="si">{</span><span class="n">what</span><span class="si">}</span><span class="s2"> link: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+    <span class="k">if</span> <span class="n">kind</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"archive"</span><span class="p">,</span> <span class="s2">"folder"</span><span class="p">):</span>
         <span class="k">raise</span> <span class="n">_tool_error</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;that is a FOLDER link, not a single </span><span class="si">{</span><span class="n">what</span><span class="si">}</span><span class="s2"> — one such link holds many files. &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;Use add_footage_folder(project_id, url=...) to add every clip in it, or share &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;the individual file and pass its link here.&quot;</span>
+            <span class="sa">f</span><span class="s2">"that is a FOLDER link, not a single </span><span class="si">{</span><span class="n">what</span><span class="si">}</span><span class="s2"> — one such link holds many files. "</span>
+            <span class="sa">f</span><span class="s2">"Use add_footage_folder(project_id, url=...) to add every clip in it, or share "</span>
+            <span class="sa">f</span><span class="s2">"the individual file and pass its link here."</span>
         <span class="p">)</span>
     <span class="k">return</span> <span class="n">direct</span>
 
@@ -243,7 +243,7 @@
 <div class="viewcode-block" id="set_song">
 <a class="viewcode-back" href="../../../module_docs/muvid/mcp/footage_tools.html#muvid.mcp.footage_tools.set_song">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">set_song</span><span class="p">(</span><span class="n">project_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">url</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Set the project&#39;s fixed clean song from an http(s) URL. Free.</span>
+<span class="w">    </span><span class="sd">"""Set the project's fixed clean song from an http(s) URL. Free.</span>
 
 <span class="sd">    Accepts a **share link** (Google Drive / Dropbox / OneDrive) as well as a direct media</span>
 <span class="sd">    URL — the link is normalised before fetching, and the downloaded bytes are checked to be</span>
@@ -251,36 +251,36 @@
 
 <span class="sd">    This is the reference every uploaded clip is aligned to and whose audio the final</span>
 <span class="sd">    video uses. Replaces any previous song. Duration/size-capped.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.mcp._fetch</span><span class="w"> </span><span class="kn">import</span> <span class="n">FetchError</span><span class="p">,</span> <span class="n">fetch_to_file_streaming</span>
 
     <span class="n">proj</span> <span class="o">=</span> <span class="n">_open</span><span class="p">(</span><span class="n">project_id</span><span class="p">)</span>
     <span class="kn">import</span><span class="w"> </span><span class="nn">tempfile</span>
 
-    <span class="n">direct</span> <span class="o">=</span> <span class="n">_resolve_media_url</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">what</span><span class="o">=</span><span class="s2">&quot;song&quot;</span><span class="p">)</span>
+    <span class="n">direct</span> <span class="o">=</span> <span class="n">_resolve_media_url</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">what</span><span class="o">=</span><span class="s2">"song"</span><span class="p">)</span>
     <span class="k">with</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">TemporaryDirectory</span><span class="p">()</span> <span class="k">as</span> <span class="n">tmp</span><span class="p">:</span>
-        <span class="n">ext</span> <span class="o">=</span> <span class="n">_url_ext</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">_url_ext</span><span class="p">(</span><span class="n">direct</span><span class="p">,</span> <span class="s2">&quot;mp3&quot;</span><span class="p">)</span>
-        <span class="n">tmp_song</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">tmp</span><span class="p">)</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;song.</span><span class="si">{</span><span class="n">ext</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="n">ext</span> <span class="o">=</span> <span class="n">_url_ext</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span> <span class="ow">or</span> <span class="n">_url_ext</span><span class="p">(</span><span class="n">direct</span><span class="p">,</span> <span class="s2">"mp3"</span><span class="p">)</span>
+        <span class="n">tmp_song</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">tmp</span><span class="p">)</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">"song.</span><span class="si">{</span><span class="n">ext</span><span class="si">}</span><span class="s2">"</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">fetch_to_file_streaming</span><span class="p">(</span>
-                <span class="n">direct</span><span class="p">,</span> <span class="n">tmp_song</span><span class="p">,</span> <span class="n">max_bytes</span><span class="o">=</span><span class="n">_SONG_MAX_BYTES</span><span class="p">,</span> <span class="n">expect_kind</span><span class="o">=</span><span class="s2">&quot;audio&quot;</span>
+                <span class="n">direct</span><span class="p">,</span> <span class="n">tmp_song</span><span class="p">,</span> <span class="n">max_bytes</span><span class="o">=</span><span class="n">_SONG_MAX_BYTES</span><span class="p">,</span> <span class="n">expect_kind</span><span class="o">=</span><span class="s2">"audio"</span>
             <span class="p">)</span>
         <span class="k">except</span> <span class="n">FetchError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">_tool_error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;could not fetch the song: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+            <span class="k">raise</span> <span class="n">_tool_error</span><span class="p">(</span><span class="sa">f</span><span class="s2">"could not fetch the song: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
         <span class="n">dur</span> <span class="o">=</span> <span class="n">_duration</span><span class="p">(</span><span class="n">tmp_song</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">dur</span> <span class="o">&gt;</span> <span class="n">_SONG_MAX_DURATION_S</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">_tool_error</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;song is </span><span class="si">{</span><span class="n">dur</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2">s; the </span><span class="si">{</span><span class="n">_SONG_MAX_DURATION_S</span><span class="si">}</span><span class="s2">s limit is exceeded&quot;</span>
+                <span class="sa">f</span><span class="s2">"song is </span><span class="si">{</span><span class="n">dur</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2">s; the </span><span class="si">{</span><span class="n">_SONG_MAX_DURATION_S</span><span class="si">}</span><span class="s2">s limit is exceeded"</span>
             <span class="p">)</span>
         <span class="n">proj</span><span class="o">.</span><span class="n">set_song</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">tmp_song</span><span class="p">),</span> <span class="n">ext</span><span class="o">=</span><span class="n">ext</span><span class="p">)</span>
-    <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;project_id&quot;</span><span class="p">:</span> <span class="n">project_id</span><span class="p">,</span> <span class="s2">&quot;song_duration&quot;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">dur</span><span class="p">,</span> <span class="mi">2</span><span class="p">)}</span></div>
+    <span class="k">return</span> <span class="p">{</span><span class="s2">"project_id"</span><span class="p">:</span> <span class="n">project_id</span><span class="p">,</span> <span class="s2">"song_duration"</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">dur</span><span class="p">,</span> <span class="mi">2</span><span class="p">)}</span></div>
 
 
 
 <div class="viewcode-block" id="add_footage">
 <a class="viewcode-back" href="../../../module_docs/muvid/mcp/footage_tools.html#muvid.mcp.footage_tools.add_footage">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">add_footage</span><span class="p">(</span><span class="n">project_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">url</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Add a footage video clip from an http(s) URL (a recording of the song). Free.</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">add_footage</span><span class="p">(</span><span class="n">project_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">url</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Add a footage video clip from an http(s) URL (a recording of the song). Free.</span>
 
 <span class="sd">    Accepts a **share link** as well as a direct media URL. Fetched server-side (streamed to</span>
 <span class="sd">    disk; SSRF-guarded, size/duration-capped) and asserted to be media before anything is</span>
@@ -288,42 +288,42 @@
 
 <span class="sd">    For a whole shoot in one folder, use :func:`add_footage_folder` — a folder link holds</span>
 <span class="sd">    many files and is refused here by name.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.mcp._fetch</span><span class="w"> </span><span class="kn">import</span> <span class="n">FetchError</span><span class="p">,</span> <span class="n">fetch_to_file_streaming</span>
 
     <span class="kn">import</span><span class="w"> </span><span class="nn">tempfile</span>
 
     <span class="n">proj</span> <span class="o">=</span> <span class="n">_open</span><span class="p">(</span><span class="n">project_id</span><span class="p">)</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">proj</span><span class="o">.</span><span class="n">list_clips</span><span class="p">())</span> <span class="o">&gt;=</span> <span class="n">_MAX_CLIPS</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="n">_tool_error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;clip limit reached (</span><span class="si">{</span><span class="n">_MAX_CLIPS</span><span class="si">}</span><span class="s2">); this is a bounded v1&quot;</span><span class="p">)</span>
-    <span class="n">direct</span> <span class="o">=</span> <span class="n">_resolve_media_url</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">what</span><span class="o">=</span><span class="s2">&quot;clip&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">_tool_error</span><span class="p">(</span><span class="sa">f</span><span class="s2">"clip limit reached (</span><span class="si">{</span><span class="n">_MAX_CLIPS</span><span class="si">}</span><span class="s2">); this is a bounded v1"</span><span class="p">)</span>
+    <span class="n">direct</span> <span class="o">=</span> <span class="n">_resolve_media_url</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">what</span><span class="o">=</span><span class="s2">"clip"</span><span class="p">)</span>
     <span class="n">clip_id</span> <span class="o">=</span> <span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span><span class="o">.</span><span class="n">hex</span><span class="p">[:</span><span class="mi">8</span><span class="p">]</span>
-    <span class="n">ext</span> <span class="o">=</span> <span class="n">_url_ext</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">_url_ext</span><span class="p">(</span><span class="n">direct</span><span class="p">,</span> <span class="s2">&quot;mp4&quot;</span><span class="p">)</span>
+    <span class="n">ext</span> <span class="o">=</span> <span class="n">_url_ext</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span> <span class="ow">or</span> <span class="n">_url_ext</span><span class="p">(</span><span class="n">direct</span><span class="p">,</span> <span class="s2">"mp4"</span><span class="p">)</span>
     <span class="c1"># Fetch into a tempdir, then hand off to add_clip (which copies into clips/ under the</span>
     <span class="c1"># sanitized name) — so the download path and the stored path are distinct + sanitized,</span>
     <span class="c1"># and a failed/oversized fetch leaves no orphan in the project.</span>
     <span class="k">with</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">TemporaryDirectory</span><span class="p">()</span> <span class="k">as</span> <span class="n">tmp</span><span class="p">:</span>
-        <span class="n">tmp_clip</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">tmp</span><span class="p">)</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;clip.</span><span class="si">{</span><span class="n">ext</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="n">tmp_clip</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">tmp</span><span class="p">)</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">"clip.</span><span class="si">{</span><span class="n">ext</span><span class="si">}</span><span class="s2">"</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">fetch_to_file_streaming</span><span class="p">(</span>
-                <span class="n">direct</span><span class="p">,</span> <span class="n">tmp_clip</span><span class="p">,</span> <span class="n">max_bytes</span><span class="o">=</span><span class="n">_CLIP_MAX_BYTES</span><span class="p">,</span> <span class="n">expect_kind</span><span class="o">=</span><span class="s2">&quot;video&quot;</span>
+                <span class="n">direct</span><span class="p">,</span> <span class="n">tmp_clip</span><span class="p">,</span> <span class="n">max_bytes</span><span class="o">=</span><span class="n">_CLIP_MAX_BYTES</span><span class="p">,</span> <span class="n">expect_kind</span><span class="o">=</span><span class="s2">"video"</span>
             <span class="p">)</span>
         <span class="k">except</span> <span class="n">FetchError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">_tool_error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;could not fetch the clip: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+            <span class="k">raise</span> <span class="n">_tool_error</span><span class="p">(</span><span class="sa">f</span><span class="s2">"could not fetch the clip: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
         <span class="n">dur</span> <span class="o">=</span> <span class="n">_duration</span><span class="p">(</span><span class="n">tmp_clip</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">dur</span> <span class="o">&gt;</span> <span class="n">_CLIP_MAX_DURATION_S</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">_tool_error</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;clip is </span><span class="si">{</span><span class="n">dur</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2">s; the </span><span class="si">{</span><span class="n">_CLIP_MAX_DURATION_S</span><span class="si">}</span><span class="s2">s limit is exceeded&quot;</span>
+                <span class="sa">f</span><span class="s2">"clip is </span><span class="si">{</span><span class="n">dur</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2">s; the </span><span class="si">{</span><span class="n">_CLIP_MAX_DURATION_S</span><span class="si">}</span><span class="s2">s limit is exceeded"</span>
             <span class="p">)</span>
         <span class="n">proj</span><span class="o">.</span><span class="n">add_clip</span><span class="p">(</span><span class="n">clip_id</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">tmp_clip</span><span class="p">),</span> <span class="n">ext</span><span class="o">=</span><span class="n">ext</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
-    <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;project_id&quot;</span><span class="p">:</span> <span class="n">project_id</span><span class="p">,</span> <span class="s2">&quot;clip_id&quot;</span><span class="p">:</span> <span class="n">clip_id</span><span class="p">,</span> <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">name</span> <span class="ow">or</span> <span class="n">clip_id</span><span class="p">}</span></div>
+    <span class="k">return</span> <span class="p">{</span><span class="s2">"project_id"</span><span class="p">:</span> <span class="n">project_id</span><span class="p">,</span> <span class="s2">"clip_id"</span><span class="p">:</span> <span class="n">clip_id</span><span class="p">,</span> <span class="s2">"name"</span><span class="p">:</span> <span class="n">name</span> <span class="ow">or</span> <span class="n">clip_id</span><span class="p">}</span></div>
 
 
 
 <div class="viewcode-block" id="add_footage_folder">
 <a class="viewcode-back" href="../../../module_docs/muvid/mcp/footage_tools.html#muvid.mcp.footage_tools.add_footage_folder">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">add_footage_folder</span><span class="p">(</span><span class="n">project_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">url</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">name_prefix</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Add EVERY clip in a shared folder (Drive / Dropbox / OneDrive) in one call. Free.</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">add_footage_folder</span><span class="p">(</span><span class="n">project_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">url</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">name_prefix</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Add EVERY clip in a shared folder (Drive / Dropbox / OneDrive) in one call. Free.</span>
 
 <span class="sd">    A shoot is a folder, not a file — this is the natural unit for music-video footage. The</span>
 <span class="sd">    folder link is normalised and downloaded as a single archive server-side, then expanded</span>
@@ -334,7 +334,7 @@
 <span class="sd">    coverage decision made on quietly-shortened input is worse than one made on a short list.</span>
 
 <span class="sd">    Returns the added clips and the skipped members. Run ``align_footage`` afterwards.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="kn">import</span><span class="w"> </span><span class="nn">tempfile</span>
 
     <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.mcp._fetch</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
@@ -348,34 +348,34 @@
     <span class="n">existing</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">proj</span><span class="o">.</span><span class="n">list_clips</span><span class="p">())</span>
     <span class="n">room</span> <span class="o">=</span> <span class="n">_MAX_CLIPS</span> <span class="o">-</span> <span class="n">existing</span>
     <span class="k">if</span> <span class="n">room</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="n">_tool_error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;clip limit reached (</span><span class="si">{</span><span class="n">_MAX_CLIPS</span><span class="si">}</span><span class="s2">); this is a bounded v1&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">_tool_error</span><span class="p">(</span><span class="sa">f</span><span class="s2">"clip limit reached (</span><span class="si">{</span><span class="n">_MAX_CLIPS</span><span class="si">}</span><span class="s2">); this is a bounded v1"</span><span class="p">)</span>
 
     <span class="k">try</span><span class="p">:</span>
         <span class="n">direct</span><span class="p">,</span> <span class="n">kind</span> <span class="o">=</span> <span class="n">resolve_share_link</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
     <span class="k">except</span> <span class="n">FetchError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="n">_tool_error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;could not resolve the folder link: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
-    <span class="k">if</span> <span class="n">kind</span> <span class="o">==</span> <span class="s2">&quot;folder&quot;</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">_tool_error</span><span class="p">(</span><span class="sa">f</span><span class="s2">"could not resolve the folder link: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+    <span class="k">if</span> <span class="n">kind</span> <span class="o">==</span> <span class="s2">"folder"</span><span class="p">:</span>
         <span class="k">raise</span> <span class="n">_tool_error</span><span class="p">(</span>
-            <span class="s2">&quot;this provider offers no downloadable URL for a folder — listing it needs an &quot;</span>
-            <span class="s2">&quot;API credential. Share the files individually and add them with add_footage.&quot;</span>
+            <span class="s2">"this provider offers no downloadable URL for a folder — listing it needs an "</span>
+            <span class="s2">"API credential. Share the files individually and add them with add_footage."</span>
         <span class="p">)</span>
-    <span class="k">if</span> <span class="n">kind</span> <span class="o">!=</span> <span class="s2">&quot;archive&quot;</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">kind</span> <span class="o">!=</span> <span class="s2">"archive"</span><span class="p">:</span>
         <span class="k">raise</span> <span class="n">_tool_error</span><span class="p">(</span>
-            <span class="s2">&quot;that link points at a single file, not a folder — use add_footage for it.&quot;</span>
+            <span class="s2">"that link points at a single file, not a folder — use add_footage for it."</span>
         <span class="p">)</span>
 
     <span class="n">added</span><span class="p">,</span> <span class="n">skipped</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[]</span>
     <span class="k">with</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">TemporaryDirectory</span><span class="p">()</span> <span class="k">as</span> <span class="n">tmp</span><span class="p">:</span>
-        <span class="n">archive</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">tmp</span><span class="p">)</span> <span class="o">/</span> <span class="s2">&quot;folder.zip&quot;</span>
+        <span class="n">archive</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">tmp</span><span class="p">)</span> <span class="o">/</span> <span class="s2">"folder.zip"</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">fetch_to_file_streaming</span><span class="p">(</span>
-                <span class="n">direct</span><span class="p">,</span> <span class="n">archive</span><span class="p">,</span> <span class="n">max_bytes</span><span class="o">=</span><span class="n">_FOLDER_MAX_BYTES</span><span class="p">,</span> <span class="n">expect_kind</span><span class="o">=</span><span class="s2">&quot;archive&quot;</span>
+                <span class="n">direct</span><span class="p">,</span> <span class="n">archive</span><span class="p">,</span> <span class="n">max_bytes</span><span class="o">=</span><span class="n">_FOLDER_MAX_BYTES</span><span class="p">,</span> <span class="n">expect_kind</span><span class="o">=</span><span class="s2">"archive"</span>
             <span class="p">)</span>
         <span class="k">except</span> <span class="n">FetchError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">_tool_error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;could not fetch the folder: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+            <span class="k">raise</span> <span class="n">_tool_error</span><span class="p">(</span><span class="sa">f</span><span class="s2">"could not fetch the folder: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
         <span class="n">members</span><span class="p">,</span> <span class="n">skipped</span> <span class="o">=</span> <span class="n">extract_media_members</span><span class="p">(</span>
             <span class="n">archive</span><span class="p">,</span>
-            <span class="n">Path</span><span class="p">(</span><span class="n">tmp</span><span class="p">)</span> <span class="o">/</span> <span class="s2">&quot;members&quot;</span><span class="p">,</span>
+            <span class="n">Path</span><span class="p">(</span><span class="n">tmp</span><span class="p">)</span> <span class="o">/</span> <span class="s2">"members"</span><span class="p">,</span>
             <span class="n">extensions</span><span class="o">=</span><span class="n">_VIDEO_EXTENSIONS</span><span class="p">,</span>
             <span class="n">max_members</span><span class="o">=</span><span class="n">room</span><span class="p">,</span>
             <span class="n">max_member_bytes</span><span class="o">=</span><span class="n">_CLIP_MAX_BYTES</span><span class="p">,</span>
@@ -385,22 +385,22 @@
             <span class="k">if</span> <span class="n">dur</span> <span class="o">&gt;</span> <span class="n">_CLIP_MAX_DURATION_S</span><span class="p">:</span>
                 <span class="n">skipped</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                     <span class="p">{</span>
-                        <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">member</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
-                        <span class="s2">&quot;reason&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">dur</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2">s exceeds the </span><span class="si">{</span><span class="n">_CLIP_MAX_DURATION_S</span><span class="si">}</span><span class="s2">s limit&quot;</span><span class="p">,</span>
+                        <span class="s2">"name"</span><span class="p">:</span> <span class="n">member</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                        <span class="s2">"reason"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">dur</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2">s exceeds the </span><span class="si">{</span><span class="n">_CLIP_MAX_DURATION_S</span><span class="si">}</span><span class="s2">s limit"</span><span class="p">,</span>
                     <span class="p">}</span>
                 <span class="p">)</span>
                 <span class="k">continue</span>
             <span class="n">clip_id</span> <span class="o">=</span> <span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span><span class="o">.</span><span class="n">hex</span><span class="p">[:</span><span class="mi">8</span><span class="p">]</span>
-            <span class="n">label</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name_prefix</span><span class="si">}{</span><span class="n">member</span><span class="o">.</span><span class="n">stem</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="n">name_prefix</span> <span class="k">else</span> <span class="n">member</span><span class="o">.</span><span class="n">stem</span>
+            <span class="n">label</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name_prefix</span><span class="si">}{</span><span class="n">member</span><span class="o">.</span><span class="n">stem</span><span class="si">}</span><span class="s2">"</span> <span class="k">if</span> <span class="n">name_prefix</span> <span class="k">else</span> <span class="n">member</span><span class="o">.</span><span class="n">stem</span>
             <span class="n">proj</span><span class="o">.</span><span class="n">add_clip</span><span class="p">(</span>
-                <span class="n">clip_id</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">member</span><span class="p">),</span> <span class="n">ext</span><span class="o">=</span><span class="n">member</span><span class="o">.</span><span class="n">suffix</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="n">label</span>
+                <span class="n">clip_id</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">member</span><span class="p">),</span> <span class="n">ext</span><span class="o">=</span><span class="n">member</span><span class="o">.</span><span class="n">suffix</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s2">"."</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="n">label</span>
             <span class="p">)</span>
-            <span class="n">added</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;clip_id&quot;</span><span class="p">:</span> <span class="n">clip_id</span><span class="p">,</span> <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">label</span><span class="p">,</span> <span class="s2">&quot;duration&quot;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">dur</span><span class="p">,</span> <span class="mi">2</span><span class="p">)})</span>
+            <span class="n">added</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">"clip_id"</span><span class="p">:</span> <span class="n">clip_id</span><span class="p">,</span> <span class="s2">"name"</span><span class="p">:</span> <span class="n">label</span><span class="p">,</span> <span class="s2">"duration"</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">dur</span><span class="p">,</span> <span class="mi">2</span><span class="p">)})</span>
     <span class="k">return</span> <span class="p">{</span>
-        <span class="s2">&quot;project_id&quot;</span><span class="p">:</span> <span class="n">project_id</span><span class="p">,</span>
-        <span class="s2">&quot;added&quot;</span><span class="p">:</span> <span class="n">added</span><span class="p">,</span>
-        <span class="s2">&quot;skipped&quot;</span><span class="p">:</span> <span class="n">skipped</span><span class="p">,</span>
-        <span class="s2">&quot;clip_count&quot;</span><span class="p">:</span> <span class="n">existing</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">added</span><span class="p">),</span>
+        <span class="s2">"project_id"</span><span class="p">:</span> <span class="n">project_id</span><span class="p">,</span>
+        <span class="s2">"added"</span><span class="p">:</span> <span class="n">added</span><span class="p">,</span>
+        <span class="s2">"skipped"</span><span class="p">:</span> <span class="n">skipped</span><span class="p">,</span>
+        <span class="s2">"clip_count"</span><span class="p">:</span> <span class="n">existing</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">added</span><span class="p">),</span>
     <span class="p">}</span></div>
 
 
@@ -408,32 +408,32 @@
 <div class="viewcode-block" id="align_footage">
 <a class="viewcode-back" href="../../../module_docs/muvid/mcp/footage_tools.html#muvid.mcp.footage_tools.align_footage">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">align_footage</span><span class="p">(</span><span class="n">project_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Align every uploaded clip to the song by audio, and persist the result. Free.</span>
+<span class="w">    </span><span class="sd">"""Align every uploaded clip to the song by audio, and persist the result. Free.</span>
 
-<span class="sd">    Returns each clip&#39;s offset, a confidence in [0,1], and its coverage of the song, plus a</span>
+<span class="sd">    Returns each clip's offset, a confidence in [0,1], and its coverage of the song, plus a</span>
 <span class="sd">    ``low_confidence`` list (clips that matched weakly — likely wrong; re-shoot or drop).</span>
 <span class="sd">    Run this after adding/removing clips and before assembling.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.footage.align</span><span class="w"> </span><span class="kn">import</span> <span class="n">align_footage</span> <span class="k">as</span> <span class="n">_align</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.footage.scoring.grid</span><span class="w"> </span><span class="kn">import</span> <span class="n">align_fingerprint</span>
 
     <span class="n">proj</span> <span class="o">=</span> <span class="n">_open</span><span class="p">(</span><span class="n">project_id</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">proj</span><span class="o">.</span><span class="n">has_song</span><span class="p">():</span>
-        <span class="k">raise</span> <span class="n">_tool_error</span><span class="p">(</span><span class="s2">&quot;no song set — call set_song first&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">_tool_error</span><span class="p">(</span><span class="s2">"no song set — call set_song first"</span><span class="p">)</span>
     <span class="n">clips</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">proj</span><span class="o">.</span><span class="n">clip_paths</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">clips</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="n">_tool_error</span><span class="p">(</span><span class="s2">&quot;no footage added — call add_footage first&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">_tool_error</span><span class="p">(</span><span class="s2">"no footage added — call add_footage first"</span><span class="p">)</span>
     <span class="n">old_fingerprint</span> <span class="o">=</span> <span class="n">align_fingerprint</span><span class="p">(</span><span class="n">proj</span><span class="o">.</span><span class="n">load_alignments</span><span class="p">())</span>
     <span class="n">aligns</span> <span class="o">=</span> <span class="n">_align</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">proj</span><span class="o">.</span><span class="n">song_path</span><span class="p">()),</span> <span class="n">clips</span><span class="p">,</span> <span class="n">song_duration</span><span class="o">=</span><span class="n">proj</span><span class="o">.</span><span class="n">song_duration</span><span class="p">())</span>
     <span class="n">proj</span><span class="o">.</span><span class="n">save_alignments</span><span class="p">(</span><span class="n">aligns</span><span class="p">)</span>
     <span class="c1"># Scores are keyed to the offsets they were computed under (align_fingerprint is that</span>
-    <span class="c1"># key&#39;s SSOT), so a re-align that reproduces the same offsets must not throw away the</span>
+    <span class="c1"># key's SSOT), so a re-align that reproduces the same offsets must not throw away the</span>
     <span class="c1"># most expensive artifact in the pipeline (muvid#24 B4). Correctness does not depend on</span>
     <span class="c1"># deleting here — the read path refuses stale scores via manifest_is_current — this</span>
     <span class="c1"># only reclaims storage the moment the scores are known to be stale.</span>
     <span class="k">if</span> <span class="n">align_fingerprint</span><span class="p">(</span><span class="n">aligns</span><span class="p">)</span> <span class="o">!=</span> <span class="n">old_fingerprint</span><span class="p">:</span>
         <span class="n">proj</span><span class="o">.</span><span class="n">invalidate_scores</span><span class="p">()</span>
-    <span class="c1"># Every clip has a record now, so &quot;did not overlap&quot; is a REPORTED PROPERTY of a clip</span>
+    <span class="c1"># Every clip has a record now, so "did not overlap" is a REPORTED PROPERTY of a clip</span>
     <span class="c1"># that is still there, not an inference from something missing. A clip is never removed</span>
     <span class="c1"># from the project or from the alignment artifact by anything but an explicit request:</span>
     <span class="c1"># choosing what goes into an edit is a matter of referencing sources and intervals, and</span>
@@ -446,28 +446,28 @@
     <span class="c1"># a genuinely unrelated clip from a correctly-aligned one that the threshold happened to</span>
     <span class="c1"># miss (muvid#15).</span>
     <span class="k">return</span> <span class="p">{</span>
-        <span class="s2">&quot;project_id&quot;</span><span class="p">:</span> <span class="n">project_id</span><span class="p">,</span>
-        <span class="s2">&quot;alignments&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">a</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">aligns</span><span class="p">],</span>
-        <span class="s2">&quot;low_confidence&quot;</span><span class="p">:</span> <span class="p">[</span>
-            <span class="p">{</span><span class="s2">&quot;clip_id&quot;</span><span class="p">:</span> <span class="n">a</span><span class="o">.</span><span class="n">clip_id</span><span class="p">,</span> <span class="s2">&quot;confidence&quot;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">confidence</span><span class="p">,</span> <span class="mi">3</span><span class="p">)}</span>
+        <span class="s2">"project_id"</span><span class="p">:</span> <span class="n">project_id</span><span class="p">,</span>
+        <span class="s2">"alignments"</span><span class="p">:</span> <span class="p">[</span><span class="n">a</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">aligns</span><span class="p">],</span>
+        <span class="s2">"low_confidence"</span><span class="p">:</span> <span class="p">[</span>
+            <span class="p">{</span><span class="s2">"clip_id"</span><span class="p">:</span> <span class="n">a</span><span class="o">.</span><span class="n">clip_id</span><span class="p">,</span> <span class="s2">"confidence"</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">confidence</span><span class="p">,</span> <span class="mi">3</span><span class="p">)}</span>
             <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">aligns</span>
             <span class="k">if</span> <span class="n">a</span><span class="o">.</span><span class="n">confidence</span> <span class="o">&lt;</span> <span class="n">_MIN_CONFIDENCE</span>
         <span class="p">],</span>
-        <span class="s2">&quot;confidence_metric&quot;</span><span class="p">:</span> <span class="s2">&quot;onset-envelope correlation at the waveform&#39;s lag&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;confidence_threshold&quot;</span><span class="p">:</span> <span class="n">_MIN_CONFIDENCE</span><span class="p">,</span>
-        <span class="s2">&quot;offset_consensus&quot;</span><span class="p">:</span> <span class="n">_offset_consensus</span><span class="p">(</span><span class="n">aligns</span><span class="p">),</span>
+        <span class="s2">"confidence_metric"</span><span class="p">:</span> <span class="s2">"onset-envelope correlation at the waveform's lag"</span><span class="p">,</span>
+        <span class="s2">"confidence_threshold"</span><span class="p">:</span> <span class="n">_MIN_CONFIDENCE</span><span class="p">,</span>
+        <span class="s2">"offset_consensus"</span><span class="p">:</span> <span class="n">_offset_consensus</span><span class="p">(</span><span class="n">aligns</span><span class="p">),</span>
         <span class="c1"># Usable-for-an-edit, not present-in-the-project: these clips are still here, still</span>
         <span class="c1"># listed, still addressable — they just cover no part of the song.</span>
-        <span class="s2">&quot;no_overlap_with_song&quot;</span><span class="p">:</span> <span class="n">no_overlap</span><span class="p">,</span>
+        <span class="s2">"no_overlap_with_song"</span><span class="p">:</span> <span class="n">no_overlap</span><span class="p">,</span>
         <span class="c1"># Should always be empty. Non-empty means a clip lost its record somewhere upstream,</span>
         <span class="c1"># which is a bug, not a verdict about the footage.</span>
-        <span class="s2">&quot;unrecorded&quot;</span><span class="p">:</span> <span class="n">missing</span><span class="p">,</span>
+        <span class="s2">"unrecorded"</span><span class="p">:</span> <span class="n">missing</span><span class="p">,</span>
     <span class="p">}</span></div>
 
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_offset_consensus</span><span class="p">(</span><span class="n">aligns</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;How well the clips AGREE on their offsets — evidence a per-clip score cannot give.</span>
+<span class="w">    </span><span class="sd">"""How well the clips AGREE on their offsets — evidence a per-clip score cannot give.</span>
 
 <span class="sd">    Several devices recording one performance land at nearly the same offset, so a clip far</span>
 <span class="sd">    from the cluster is the suspect one regardless of its confidence. This separates real</span>
@@ -476,20 +476,20 @@
 <span class="sd">    scored *below* the confidence threshold and one of them scored barely above it.</span>
 
 <span class="sd">    Reported, never enforced: it is a signal for the caller, not another silent gate.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">aligns</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
-        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;median_offset&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;outliers&quot;</span><span class="p">:</span> <span class="p">[]}</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">"median_offset"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">"outliers"</span><span class="p">:</span> <span class="p">[]}</span>
     <span class="n">offsets</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">offset_s</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">aligns</span><span class="p">)</span>
     <span class="n">median</span> <span class="o">=</span> <span class="n">offsets</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">offsets</span><span class="p">)</span> <span class="o">//</span> <span class="mi">2</span><span class="p">]</span>
     <span class="n">spread</span> <span class="o">=</span> <span class="p">[</span><span class="nb">abs</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">offset_s</span> <span class="o">-</span> <span class="n">median</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">aligns</span><span class="p">]</span>
     <span class="c1"># Anything more than 5 s from the median is not the same take.</span>
     <span class="k">return</span> <span class="p">{</span>
-        <span class="s2">&quot;median_offset&quot;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">median</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
-        <span class="s2">&quot;outliers&quot;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="s2">"median_offset"</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">median</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+        <span class="s2">"outliers"</span><span class="p">:</span> <span class="p">[</span>
             <span class="p">{</span>
-                <span class="s2">&quot;clip_id&quot;</span><span class="p">:</span> <span class="n">a</span><span class="o">.</span><span class="n">clip_id</span><span class="p">,</span>
-                <span class="s2">&quot;offset_s&quot;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">offset_s</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>
-                <span class="s2">&quot;from_median&quot;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>
+                <span class="s2">"clip_id"</span><span class="p">:</span> <span class="n">a</span><span class="o">.</span><span class="n">clip_id</span><span class="p">,</span>
+                <span class="s2">"offset_s"</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">offset_s</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>
+                <span class="s2">"from_median"</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>
             <span class="p">}</span>
             <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">d</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">aligns</span><span class="p">,</span> <span class="n">spread</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">d</span> <span class="o">&gt;</span> <span class="mf">5.0</span>
@@ -500,15 +500,15 @@
 <div class="viewcode-block" id="footage_timeline">
 <a class="viewcode-back" href="../../../module_docs/muvid/mcp/footage_tools.html#muvid.mcp.footage_tools.footage_timeline">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">footage_timeline</span><span class="p">(</span><span class="n">project_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The coverage map: which clips cover which spans of the song (overlaps shown). Free.</span>
+<span class="w">    </span><span class="sd">"""The coverage map: which clips cover which spans of the song (overlaps shown). Free.</span>
 
 <span class="sd">    The surface for choosing which parts to use before ``assemble_music_video``. Built from</span>
 <span class="sd">    the persisted alignment (run ``align_footage`` first).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">proj</span> <span class="o">=</span> <span class="n">_open</span><span class="p">(</span><span class="n">project_id</span><span class="p">)</span>
     <span class="n">aligns</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">load_alignments</span><span class="p">()</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">aligns</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="n">_tool_error</span><span class="p">(</span><span class="s2">&quot;no alignment yet — call align_footage first&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">_tool_error</span><span class="p">(</span><span class="s2">"no alignment yet — call align_footage first"</span><span class="p">)</span>
     <span class="n">song_dur</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">song_duration</span><span class="p">()</span>
     <span class="n">boundaries</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">({</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">song_dur</span><span class="p">}</span> <span class="o">|</span> <span class="p">{</span><span class="n">b</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">aligns</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">a</span><span class="o">.</span><span class="n">coverage</span><span class="p">})</span>
     <span class="n">spans</span> <span class="o">=</span> <span class="p">[]</span>
@@ -517,37 +517,37 @@
             <span class="k">continue</span>
         <span class="n">mid</span> <span class="o">=</span> <span class="p">(</span><span class="n">lo</span> <span class="o">+</span> <span class="n">hi</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
         <span class="n">covering</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="p">{</span><span class="s2">&quot;clip_id&quot;</span><span class="p">:</span> <span class="n">a</span><span class="o">.</span><span class="n">clip_id</span><span class="p">,</span> <span class="s2">&quot;confidence&quot;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">confidence</span><span class="p">,</span> <span class="mi">3</span><span class="p">)}</span>
+            <span class="p">{</span><span class="s2">"clip_id"</span><span class="p">:</span> <span class="n">a</span><span class="o">.</span><span class="n">clip_id</span><span class="p">,</span> <span class="s2">"confidence"</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">confidence</span><span class="p">,</span> <span class="mi">3</span><span class="p">)}</span>
             <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">aligns</span>
             <span class="k">if</span> <span class="n">a</span><span class="o">.</span><span class="n">coverage</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mf">1e-6</span> <span class="o">&lt;=</span> <span class="n">mid</span> <span class="o">&lt;</span> <span class="n">a</span><span class="o">.</span><span class="n">coverage</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mf">1e-6</span>
         <span class="p">]</span>
         <span class="n">spans</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
             <span class="p">{</span>
-                <span class="s2">&quot;song_start&quot;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">lo</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>
-                <span class="s2">&quot;song_end&quot;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">hi</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>
-                <span class="s2">&quot;covered_by&quot;</span><span class="p">:</span> <span class="n">covering</span><span class="p">,</span>
+                <span class="s2">"song_start"</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">lo</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>
+                <span class="s2">"song_end"</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">hi</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>
+                <span class="s2">"covered_by"</span><span class="p">:</span> <span class="n">covering</span><span class="p">,</span>
             <span class="p">}</span>
         <span class="p">)</span>
     <span class="k">return</span> <span class="p">{</span>
-        <span class="s2">&quot;project_id&quot;</span><span class="p">:</span> <span class="n">project_id</span><span class="p">,</span>
-        <span class="s2">&quot;song_duration&quot;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">song_dur</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>
-        <span class="s2">&quot;spans&quot;</span><span class="p">:</span> <span class="n">spans</span><span class="p">,</span>
-        <span class="s2">&quot;uncovered&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">s</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">spans</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">s</span><span class="p">[</span><span class="s2">&quot;covered_by&quot;</span><span class="p">]],</span>
+        <span class="s2">"project_id"</span><span class="p">:</span> <span class="n">project_id</span><span class="p">,</span>
+        <span class="s2">"song_duration"</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">song_dur</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>
+        <span class="s2">"spans"</span><span class="p">:</span> <span class="n">spans</span><span class="p">,</span>
+        <span class="s2">"uncovered"</span><span class="p">:</span> <span class="p">[</span><span class="n">s</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">spans</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">s</span><span class="p">[</span><span class="s2">"covered_by"</span><span class="p">]],</span>
     <span class="p">}</span></div>
 
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_edl_json</span><span class="p">(</span><span class="n">e</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;One EDL entry as JSON — full precision (it must feed back verbatim), gaps as null.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""One EDL entry as JSON — full precision (it must feed back verbatim), gaps as null."""</span>
     <span class="k">return</span> <span class="p">{</span>
-        <span class="s2">&quot;song_start&quot;</span><span class="p">:</span> <span class="n">e</span><span class="o">.</span><span class="n">song_start</span><span class="p">,</span>
-        <span class="s2">&quot;song_end&quot;</span><span class="p">:</span> <span class="n">e</span><span class="o">.</span><span class="n">song_end</span><span class="p">,</span>
-        <span class="s2">&quot;clip_id&quot;</span><span class="p">:</span> <span class="n">e</span><span class="o">.</span><span class="n">clip_id</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="s2">"song_start"</span><span class="p">:</span> <span class="n">e</span><span class="o">.</span><span class="n">song_start</span><span class="p">,</span>
+        <span class="s2">"song_end"</span><span class="p">:</span> <span class="n">e</span><span class="o">.</span><span class="n">song_end</span><span class="p">,</span>
+        <span class="s2">"clip_id"</span><span class="p">:</span> <span class="n">e</span><span class="o">.</span><span class="n">clip_id</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">}</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_coverage_report</span><span class="p">(</span><span class="n">entries</span><span class="p">,</span> <span class="n">aligns</span><span class="p">,</span> <span class="n">song_dur</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;What the song&#39;s timeline looks like under ``entries`` — covered, weak, and MISSING.</span>
+<span class="w">    </span><span class="sd">"""What the song's timeline looks like under ``entries`` — covered, weak, and MISSING.</span>
 
 <span class="sd">    Answers the three questions a person actually has about a proposed edit, in the form the</span>
 <span class="sd">    directive requires: an aggregate percentage is not enough, so uncovered audio is named</span>
@@ -556,34 +556,34 @@
 
 <span class="sd">    Pass only FOOTAGE entries: a gap entry renders fill, and filled is not covered — the</span>
 <span class="sd">    user still has no footage there, which is precisely what this report exists to say.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">by_id</span> <span class="o">=</span> <span class="p">{</span><span class="n">a</span><span class="o">.</span><span class="n">clip_id</span><span class="p">:</span> <span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">aligns</span><span class="p">}</span>
     <span class="n">covered</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">((</span><span class="n">e</span><span class="o">.</span><span class="n">song_start</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">song_end</span><span class="p">)</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">entries</span><span class="p">)</span>
     <span class="n">gaps</span><span class="p">,</span> <span class="n">cursor</span> <span class="o">=</span> <span class="p">[],</span> <span class="mf">0.0</span>
     <span class="k">for</span> <span class="n">lo</span><span class="p">,</span> <span class="n">hi</span> <span class="ow">in</span> <span class="n">covered</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">lo</span> <span class="o">-</span> <span class="n">cursor</span> <span class="o">&gt;</span> <span class="mf">1e-3</span><span class="p">:</span>
-            <span class="n">gaps</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;song_start&quot;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">cursor</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="s2">&quot;song_end&quot;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">lo</span><span class="p">,</span> <span class="mi">2</span><span class="p">)})</span>
+            <span class="n">gaps</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">"song_start"</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">cursor</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="s2">"song_end"</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">lo</span><span class="p">,</span> <span class="mi">2</span><span class="p">)})</span>
         <span class="n">cursor</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">cursor</span><span class="p">,</span> <span class="n">hi</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">song_dur</span> <span class="o">-</span> <span class="n">cursor</span> <span class="o">&gt;</span> <span class="mf">1e-3</span><span class="p">:</span>
-        <span class="n">gaps</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;song_start&quot;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">cursor</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="s2">&quot;song_end&quot;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">song_dur</span><span class="p">,</span> <span class="mi">2</span><span class="p">)})</span>
+        <span class="n">gaps</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">"song_start"</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">cursor</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="s2">"song_end"</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">song_dur</span><span class="p">,</span> <span class="mi">2</span><span class="p">)})</span>
     <span class="n">weak</span> <span class="o">=</span> <span class="p">[</span>
         <span class="p">{</span>
-            <span class="s2">&quot;song_start&quot;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">song_start</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>
-            <span class="s2">&quot;song_end&quot;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">song_end</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>
-            <span class="s2">&quot;clip_id&quot;</span><span class="p">:</span> <span class="n">e</span><span class="o">.</span><span class="n">clip_id</span><span class="p">,</span>
-            <span class="s2">&quot;confidence&quot;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">by_id</span><span class="p">[</span><span class="n">e</span><span class="o">.</span><span class="n">clip_id</span><span class="p">]</span><span class="o">.</span><span class="n">confidence</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+            <span class="s2">"song_start"</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">song_start</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>
+            <span class="s2">"song_end"</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">song_end</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>
+            <span class="s2">"clip_id"</span><span class="p">:</span> <span class="n">e</span><span class="o">.</span><span class="n">clip_id</span><span class="p">,</span>
+            <span class="s2">"confidence"</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">by_id</span><span class="p">[</span><span class="n">e</span><span class="o">.</span><span class="n">clip_id</span><span class="p">]</span><span class="o">.</span><span class="n">confidence</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
         <span class="p">}</span>
         <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">entries</span>
         <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">clip_id</span> <span class="ow">in</span> <span class="n">by_id</span> <span class="ow">and</span> <span class="n">by_id</span><span class="p">[</span><span class="n">e</span><span class="o">.</span><span class="n">clip_id</span><span class="p">]</span><span class="o">.</span><span class="n">confidence</span> <span class="o">&lt;</span> <span class="n">_MIN_CONFIDENCE</span>
     <span class="p">]</span>
     <span class="n">covered_s</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">hi</span> <span class="o">-</span> <span class="n">lo</span> <span class="k">for</span> <span class="n">lo</span><span class="p">,</span> <span class="n">hi</span> <span class="ow">in</span> <span class="n">covered</span><span class="p">)</span>
     <span class="k">return</span> <span class="p">{</span>
-        <span class="s2">&quot;song_duration&quot;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">song_dur</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>
-        <span class="s2">&quot;covered_seconds&quot;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">covered_s</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>
-        <span class="s2">&quot;coverage_fraction&quot;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">covered_s</span> <span class="o">/</span> <span class="n">song_dur</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span> <span class="k">if</span> <span class="n">song_dur</span> <span class="k">else</span> <span class="mf">0.0</span><span class="p">,</span>
-        <span class="s2">&quot;uncovered&quot;</span><span class="p">:</span> <span class="n">gaps</span><span class="p">,</span>
-        <span class="s2">&quot;weak_segments&quot;</span><span class="p">:</span> <span class="n">weak</span><span class="p">,</span>
-        <span class="s2">&quot;confidence_threshold&quot;</span><span class="p">:</span> <span class="n">_MIN_CONFIDENCE</span><span class="p">,</span>
+        <span class="s2">"song_duration"</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">song_dur</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>
+        <span class="s2">"covered_seconds"</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">covered_s</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>
+        <span class="s2">"coverage_fraction"</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">covered_s</span> <span class="o">/</span> <span class="n">song_dur</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span> <span class="k">if</span> <span class="n">song_dur</span> <span class="k">else</span> <span class="mf">0.0</span><span class="p">,</span>
+        <span class="s2">"uncovered"</span><span class="p">:</span> <span class="n">gaps</span><span class="p">,</span>
+        <span class="s2">"weak_segments"</span><span class="p">:</span> <span class="n">weak</span><span class="p">,</span>
+        <span class="s2">"confidence_threshold"</span><span class="p">:</span> <span class="n">_MIN_CONFIDENCE</span><span class="p">,</span>
     <span class="p">}</span>
 
 
@@ -592,12 +592,12 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">propose_edit</span><span class="p">(</span>
     <span class="n">project_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
-    <span class="n">strategy</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
-    <span class="n">preset</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="n">strategy</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">,</span>
+    <span class="n">preset</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">,</span>
     <span class="n">weights</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">config</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Propose an EDL **without rendering it** — the cheap half of assembly. Free, seconds.</span>
+<span class="w">    </span><span class="sd">"""Propose an EDL **without rendering it** — the cheap half of assembly. Free, seconds.</span>
 
 <span class="sd">    Selection and rendering are separate concerns, and only one of them costs an encode.</span>
 <span class="sd">    This returns the edit an ``assemble_music_video`` call *would* have produced, so a</span>
@@ -609,20 +609,20 @@
 <span class="sd">    footage covers as explicit gap entries, ``clip_id: null``, rendered as black), the</span>
 <span class="sd">    ``strategy`` actually used, and a ``coverage`` report naming every uncovered span of</span>
 <span class="sd">    the song and every segment that made the cut despite weak alignment. Same arguments as</span>
-<span class="sd">    ``assemble_music_video``&#39;s auto path.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    ``assemble_music_video``'s auto path.</span>
+<span class="sd">    """</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.footage.edl</span><span class="w"> </span><span class="kn">import</span> <span class="n">fill_gaps</span><span class="p">,</span> <span class="n">validate_edl</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.footage.strategy</span><span class="w"> </span><span class="kn">import</span> <span class="n">DEFAULT_STRATEGY</span><span class="p">,</span> <span class="n">select_edl</span>
 
     <span class="n">proj</span> <span class="o">=</span> <span class="n">_open</span><span class="p">(</span><span class="n">project_id</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">proj</span><span class="o">.</span><span class="n">has_song</span><span class="p">():</span>
-        <span class="k">raise</span> <span class="n">_tool_error</span><span class="p">(</span><span class="s2">&quot;no song set — call set_song first&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">_tool_error</span><span class="p">(</span><span class="s2">"no song set — call set_song first"</span><span class="p">)</span>
     <span class="n">aligns</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">load_alignments</span><span class="p">()</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">aligns</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="n">_tool_error</span><span class="p">(</span><span class="s2">&quot;no alignment — call align_footage first&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">_tool_error</span><span class="p">(</span><span class="s2">"no alignment — call align_footage first"</span><span class="p">)</span>
     <span class="n">song_dur</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">song_duration</span><span class="p">()</span>
     <span class="n">has_selection_config</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">preset</span> <span class="ow">or</span> <span class="n">weights</span> <span class="ow">or</span> <span class="n">config</span><span class="p">)</span>
-    <span class="n">strat</span> <span class="o">=</span> <span class="n">strategy</span> <span class="ow">or</span> <span class="p">(</span><span class="s2">&quot;weighted&quot;</span> <span class="k">if</span> <span class="n">has_selection_config</span> <span class="k">else</span> <span class="n">DEFAULT_STRATEGY</span><span class="p">)</span>
+    <span class="n">strat</span> <span class="o">=</span> <span class="n">strategy</span> <span class="ow">or</span> <span class="p">(</span><span class="s2">"weighted"</span> <span class="k">if</span> <span class="n">has_selection_config</span> <span class="k">else</span> <span class="n">DEFAULT_STRATEGY</span><span class="p">)</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">context</span> <span class="o">=</span> <span class="n">_selection_context</span><span class="p">(</span><span class="n">proj</span><span class="p">,</span> <span class="n">strat</span><span class="p">,</span> <span class="n">preset</span><span class="p">,</span> <span class="n">weights</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
         <span class="n">entries</span> <span class="o">=</span> <span class="n">validate_edl</span><span class="p">(</span>
@@ -631,12 +631,12 @@
             <span class="n">song_dur</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">KeyError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="n">_tool_error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;could not build a valid edit: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+        <span class="k">raise</span> <span class="n">_tool_error</span><span class="p">(</span><span class="sa">f</span><span class="s2">"could not build a valid edit: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
     <span class="k">return</span> <span class="p">{</span>
-        <span class="s2">&quot;project_id&quot;</span><span class="p">:</span> <span class="n">project_id</span><span class="p">,</span>
-        <span class="s2">&quot;strategy&quot;</span><span class="p">:</span> <span class="n">strat</span><span class="p">,</span>
-        <span class="s2">&quot;edl&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">_edl_json</span><span class="p">(</span><span class="n">e</span><span class="p">)</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">entries</span><span class="p">],</span>
-        <span class="s2">&quot;coverage&quot;</span><span class="p">:</span> <span class="n">_coverage_report</span><span class="p">(</span>
+        <span class="s2">"project_id"</span><span class="p">:</span> <span class="n">project_id</span><span class="p">,</span>
+        <span class="s2">"strategy"</span><span class="p">:</span> <span class="n">strat</span><span class="p">,</span>
+        <span class="s2">"edl"</span><span class="p">:</span> <span class="p">[</span><span class="n">_edl_json</span><span class="p">(</span><span class="n">e</span><span class="p">)</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">entries</span><span class="p">],</span>
+        <span class="s2">"coverage"</span><span class="p">:</span> <span class="n">_coverage_report</span><span class="p">(</span>
             <span class="p">[</span><span class="n">e</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">entries</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">e</span><span class="o">.</span><span class="n">is_gap</span><span class="p">],</span> <span class="n">aligns</span><span class="p">,</span> <span class="n">song_dur</span>
         <span class="p">),</span>
     <span class="p">}</span></div>
@@ -644,19 +644,19 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_canvas</span><span class="p">(</span><span class="n">proj</span><span class="p">,</span> <span class="n">canvas</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The render canvas: an explicit per-render override, else the project&#39;s.</span>
+<span class="w">    </span><span class="sd">"""The render canvas: an explicit per-render override, else the project's.</span>
 
 <span class="sd">    The project canvas is fixed at create time, but re-rendering the same edit as portrait</span>
 <span class="sd">    must not require a new project and a re-upload of every asset (muvid#21 item 7) —</span>
 <span class="sd">    rendering is cheap and repeatable BY DESIGN, so the render call owns this knob.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.footage.workspace</span><span class="w"> </span><span class="kn">import</span> <span class="n">CANVASES</span>
 
     <span class="k">if</span> <span class="ow">not</span> <span class="n">canvas</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">proj</span><span class="o">.</span><span class="n">canvas</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">canvas</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">CANVASES</span><span class="p">:</span>
         <span class="k">raise</span> <span class="n">_tool_error</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;unknown canvas </span><span class="si">{</span><span class="n">canvas</span><span class="si">!r}</span><span class="s2">; choose one of </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">CANVASES</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="sa">f</span><span class="s2">"unknown canvas </span><span class="si">{</span><span class="n">canvas</span><span class="si">!r}</span><span class="s2">; choose one of </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">CANVASES</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
         <span class="p">)</span>
     <span class="k">return</span> <span class="n">CANVASES</span><span class="p">[</span><span class="n">canvas</span><span class="p">]</span>
 
@@ -666,35 +666,35 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">assemble_music_video</span><span class="p">(</span>
     <span class="n">project_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
-    <span class="n">strategy</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="n">strategy</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">,</span>
     <span class="n">edl</span><span class="p">:</span> <span class="nb">list</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">preset</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="n">preset</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">,</span>
     <span class="n">weights</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">config</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">canvas</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="n">canvas</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Assemble the music video — auto (a selection ``strategy``) or an explicit ``edl``. Free.</span>
+<span class="w">    </span><span class="sd">"""Assemble the music video — auto (a selection ``strategy``) or an explicit ``edl``. Free.</span>
 
 <span class="sd">    - ``edl``: an explicit edit — a list of ``{song_start, song_end, clip_id}`` spans. Must</span>
-<span class="sd">      be in order, non-overlapping, and each within its clip&#39;s coverage. A span with no</span>
+<span class="sd">      be in order, non-overlapping, and each within its clip's coverage. A span with no</span>
 <span class="sd">      footage is an explicit gap entry (``clip_id: null``); spans of the song your entries</span>
 <span class="sd">      do not reach (head, tail, interior holes) are gap-filled automatically and named in</span>
 <span class="sd">      the ``coverage`` report.</span>
-<span class="sd">    - ``strategy=&#39;weighted&#39;`` (score-driven): the beat-snapped Viterbi selector reads the</span>
+<span class="sd">    - ``strategy='weighted'`` (score-driven): the beat-snapped Viterbi selector reads the</span>
 <span class="sd">      persisted score tracks (run ``score_footage`` first) and the selection config —</span>
-<span class="sd">      ``preset`` (&quot;energetic&quot;/&quot;contemplative&quot;) and/or ``weights`` (per-metric) and/or</span>
+<span class="sd">      ``preset`` ("energetic"/"contemplative") and/or ``weights`` (per-metric) and/or</span>
 <span class="sd">      ``config`` (``lambda_switch``/``l_min_s``/``l_max_s``/``boundary_mode``). Re-weighting</span>
 <span class="sd">      is cheap: it re-selects from the SAME scores without re-scoring.</span>
 <span class="sd">    - otherwise **full-auto**: a registered alignment-only ``strategy`` (see</span>
 <span class="sd">      ``list_strategies``; default ``best_confidence``) builds the edit from the alignments.</span>
-<span class="sd">    - ``canvas``: render-time override (&quot;landscape&quot;/&quot;portrait&quot;/&quot;square&quot;) — the same edit</span>
-<span class="sd">      re-rendered in another shape, no new project needed. Default: the project&#39;s canvas.</span>
+<span class="sd">    - ``canvas``: render-time override ("landscape"/"portrait"/"square") — the same edit</span>
+<span class="sd">      re-rendered in another shape, no new project needed. Default: the project's canvas.</span>
 
-<span class="sd">    The video is EXACTLY the song&#39;s duration: each cut is trimmed at its aligned in-point,</span>
+<span class="sd">    The video is EXACTLY the song's duration: each cut is trimmed at its aligned in-point,</span>
 <span class="sd">    scaled onto the canvas (padded, never stretched), gaps render black, and the CLEAN</span>
 <span class="sd">    song audio runs under it all. Returns the render + the same coverage report</span>
 <span class="sd">    ``propose_edit`` gives.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.footage.assemble</span><span class="w"> </span><span class="kn">import</span> <span class="n">assemble_music_video</span> <span class="k">as</span> <span class="n">_assemble</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.footage.edl</span><span class="w"> </span><span class="kn">import</span> <span class="n">derive_cuts</span><span class="p">,</span> <span class="n">fill_gaps</span><span class="p">,</span> <span class="n">validate_edl</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.footage.strategy</span><span class="w"> </span><span class="kn">import</span> <span class="n">DEFAULT_STRATEGY</span><span class="p">,</span> <span class="n">select_edl</span>
@@ -702,10 +702,10 @@
 
     <span class="n">proj</span> <span class="o">=</span> <span class="n">_open</span><span class="p">(</span><span class="n">project_id</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">proj</span><span class="o">.</span><span class="n">has_song</span><span class="p">():</span>
-        <span class="k">raise</span> <span class="n">_tool_error</span><span class="p">(</span><span class="s2">&quot;no song set — call set_song first&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">_tool_error</span><span class="p">(</span><span class="s2">"no song set — call set_song first"</span><span class="p">)</span>
     <span class="n">aligns</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">load_alignments</span><span class="p">()</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">aligns</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="n">_tool_error</span><span class="p">(</span><span class="s2">&quot;no alignment — call align_footage first&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">_tool_error</span><span class="p">(</span><span class="s2">"no alignment — call align_footage first"</span><span class="p">)</span>
     <span class="n">song_dur</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">song_duration</span><span class="p">()</span>
 
     <span class="n">has_selection_config</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">preset</span> <span class="ow">or</span> <span class="n">weights</span> <span class="ow">or</span> <span class="n">config</span><span class="p">)</span>
@@ -713,17 +713,17 @@
         <span class="k">if</span> <span class="n">edl</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">has_selection_config</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                    <span class="s2">&quot;selection config (preset/weights/config) can&#39;t accompany an explicit edl&quot;</span>
+                    <span class="s2">"selection config (preset/weights/config) can't accompany an explicit edl"</span>
                 <span class="p">)</span>
             <span class="n">entries</span> <span class="o">=</span> <span class="n">validate_edl</span><span class="p">(</span><span class="n">fill_gaps</span><span class="p">(</span><span class="n">edl</span><span class="p">,</span> <span class="n">song_dur</span><span class="p">),</span> <span class="n">aligns</span><span class="p">,</span> <span class="n">song_dur</span><span class="p">)</span>
             <span class="n">used_strategy</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">strat</span> <span class="o">=</span> <span class="n">strategy</span> <span class="ow">or</span> <span class="p">(</span>
-                <span class="s2">&quot;weighted&quot;</span> <span class="k">if</span> <span class="n">has_selection_config</span> <span class="k">else</span> <span class="n">DEFAULT_STRATEGY</span>
+                <span class="s2">"weighted"</span> <span class="k">if</span> <span class="n">has_selection_config</span> <span class="k">else</span> <span class="n">DEFAULT_STRATEGY</span>
             <span class="p">)</span>
-            <span class="k">if</span> <span class="n">has_selection_config</span> <span class="ow">and</span> <span class="n">strat</span> <span class="o">!=</span> <span class="s2">&quot;weighted&quot;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">has_selection_config</span> <span class="ow">and</span> <span class="n">strat</span> <span class="o">!=</span> <span class="s2">"weighted"</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;selection config only applies to strategy=&#39;weighted&#39; (got </span><span class="si">{</span><span class="n">strat</span><span class="si">!r}</span><span class="s2">)&quot;</span>
+                    <span class="sa">f</span><span class="s2">"selection config only applies to strategy='weighted' (got </span><span class="si">{</span><span class="n">strat</span><span class="si">!r}</span><span class="s2">)"</span>
                 <span class="p">)</span>
             <span class="n">context</span> <span class="o">=</span> <span class="n">_selection_context</span><span class="p">(</span><span class="n">proj</span><span class="p">,</span> <span class="n">strat</span><span class="p">,</span> <span class="n">preset</span><span class="p">,</span> <span class="n">weights</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
             <span class="n">entries</span> <span class="o">=</span> <span class="n">validate_edl</span><span class="p">(</span>
@@ -735,7 +735,7 @@
             <span class="p">)</span>
             <span class="n">used_strategy</span> <span class="o">=</span> <span class="n">strat</span>
     <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">KeyError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="n">_tool_error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;could not build a valid edit: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+        <span class="k">raise</span> <span class="n">_tool_error</span><span class="p">(</span><span class="sa">f</span><span class="s2">"could not build a valid edit: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
 
     <span class="n">canvas_wh</span> <span class="o">=</span> <span class="n">_resolve_canvas</span><span class="p">(</span><span class="n">proj</span><span class="p">,</span> <span class="n">canvas</span><span class="p">)</span>
     <span class="n">cuts</span> <span class="o">=</span> <span class="n">derive_cuts</span><span class="p">(</span><span class="n">entries</span><span class="p">,</span> <span class="n">aligns</span><span class="p">,</span> <span class="n">proj</span><span class="o">.</span><span class="n">clip_paths</span><span class="p">())</span>
@@ -745,7 +745,7 @@
         <span class="n">out</span> <span class="o">=</span> <span class="n">_assemble</span><span class="p">(</span>
             <span class="n">cuts</span><span class="p">,</span>
             <span class="nb">str</span><span class="p">(</span><span class="n">proj</span><span class="o">.</span><span class="n">song_path</span><span class="p">()),</span>
-            <span class="nb">str</span><span class="p">(</span><span class="n">render_dir</span> <span class="o">/</span> <span class="s2">&quot;final.mp4&quot;</span><span class="p">),</span>
+            <span class="nb">str</span><span class="p">(</span><span class="n">render_dir</span> <span class="o">/</span> <span class="s2">"final.mp4"</span><span class="p">),</span>
             <span class="n">canvas</span><span class="o">=</span><span class="n">canvas_wh</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="c1"># audio= arms the duration-match check — the one that catches a mis-built</span>
@@ -763,35 +763,35 @@
         <span class="k">raise</span>
 
     <span class="n">meta</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s2">&quot;render_id&quot;</span><span class="p">:</span> <span class="n">render_id</span><span class="p">,</span>
-        <span class="s2">&quot;video&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">out</span><span class="p">),</span>
-        <span class="s2">&quot;strategy&quot;</span><span class="p">:</span> <span class="n">used_strategy</span><span class="p">,</span>
-        <span class="s2">&quot;canvas&quot;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">canvas_wh</span><span class="p">),</span>
-        <span class="c1"># &quot;rendered&quot;, not &quot;covered&quot;: after gap-filling this is always the whole song —</span>
-        <span class="c1"># where the user actually HAS footage is the coverage report&#39;s business.</span>
-        <span class="s2">&quot;rendered_span&quot;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="s2">"render_id"</span><span class="p">:</span> <span class="n">render_id</span><span class="p">,</span>
+        <span class="s2">"video"</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">out</span><span class="p">),</span>
+        <span class="s2">"strategy"</span><span class="p">:</span> <span class="n">used_strategy</span><span class="p">,</span>
+        <span class="s2">"canvas"</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">canvas_wh</span><span class="p">),</span>
+        <span class="c1"># "rendered", not "covered": after gap-filling this is always the whole song —</span>
+        <span class="c1"># where the user actually HAS footage is the coverage report's business.</span>
+        <span class="s2">"rendered_span"</span><span class="p">:</span> <span class="p">[</span>
             <span class="nb">round</span><span class="p">(</span><span class="n">entries</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">song_start</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>
             <span class="nb">round</span><span class="p">(</span><span class="n">entries</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">song_end</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>
         <span class="p">],</span>
         <span class="c1"># Full precision, NOT rounded: this list must feed straight back as the edl=</span>
         <span class="c1"># argument and reproduce the same render. round(x, 2) moved boundaries by up to</span>
-        <span class="c1"># 5 ms — past validate_edl&#39;s 1 ms tolerance, so the render → edit → re-render loop</span>
+        <span class="c1"># 5 ms — past validate_edl's 1 ms tolerance, so the render → edit → re-render loop</span>
         <span class="c1"># could fail outright, and even when it validated it re-rendered a different video</span>
         <span class="c1"># (muvid#21 item 3). propose_edit already returns full precision; same contract.</span>
-        <span class="s2">&quot;edl&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">_edl_json</span><span class="p">(</span><span class="n">e</span><span class="p">)</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">entries</span><span class="p">],</span>
-        <span class="s2">&quot;coverage&quot;</span><span class="p">:</span> <span class="n">_coverage_report</span><span class="p">(</span>
+        <span class="s2">"edl"</span><span class="p">:</span> <span class="p">[</span><span class="n">_edl_json</span><span class="p">(</span><span class="n">e</span><span class="p">)</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">entries</span><span class="p">],</span>
+        <span class="s2">"coverage"</span><span class="p">:</span> <span class="n">_coverage_report</span><span class="p">(</span>
             <span class="p">[</span><span class="n">e</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">entries</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">e</span><span class="o">.</span><span class="n">is_gap</span><span class="p">],</span> <span class="n">aligns</span><span class="p">,</span> <span class="n">song_dur</span>
         <span class="p">),</span>
-        <span class="s2">&quot;ok&quot;</span><span class="p">:</span> <span class="ow">not</span> <span class="n">failures</span><span class="p">(</span><span class="n">checks</span><span class="p">),</span>
-        <span class="s2">&quot;checks&quot;</span><span class="p">:</span> <span class="n">report</span><span class="p">(</span><span class="n">checks</span><span class="p">),</span>
-        <span class="c1"># The retrieval claim: what a host&#39;s generic download route (reelee#252) turns</span>
+        <span class="s2">"ok"</span><span class="p">:</span> <span class="ow">not</span> <span class="n">failures</span><span class="p">(</span><span class="n">checks</span><span class="p">),</span>
+        <span class="s2">"checks"</span><span class="p">:</span> <span class="n">report</span><span class="p">(</span><span class="n">checks</span><span class="p">),</span>
+        <span class="c1"># The retrieval claim: what a host's generic download route (reelee#252) turns</span>
         <span class="c1"># into a signed short-lived URL. `video` stays a server-side path — useful to an</span>
-        <span class="c1"># operator, unreadable to a remote caller; the claim is the caller&#39;s handle.</span>
-        <span class="s2">&quot;download&quot;</span><span class="p">:</span> <span class="n">_download_claim</span><span class="p">(</span><span class="n">project_id</span><span class="p">,</span> <span class="n">render_id</span><span class="p">),</span>
-        <span class="s2">&quot;note&quot;</span><span class="p">:</span> <span class="p">(</span>
-            <span class="s2">&quot;Artifact stored server-side in your project. Ask the host to sign the &quot;</span>
-            <span class="s2">&quot;`download` claim for a fetchable URL; a hosted connector exposes this as &quot;</span>
-            <span class="s2">&quot;its download route/tool.&quot;</span>
+        <span class="c1"># operator, unreadable to a remote caller; the claim is the caller's handle.</span>
+        <span class="s2">"download"</span><span class="p">:</span> <span class="n">_download_claim</span><span class="p">(</span><span class="n">project_id</span><span class="p">,</span> <span class="n">render_id</span><span class="p">),</span>
+        <span class="s2">"note"</span><span class="p">:</span> <span class="p">(</span>
+            <span class="s2">"Artifact stored server-side in your project. Ask the host to sign the "</span>
+            <span class="s2">"`download` claim for a fetchable URL; a hosted connector exposes this as "</span>
+            <span class="s2">"its download route/tool."</span>
         <span class="p">),</span>
     <span class="p">}</span>
     <span class="n">proj</span><span class="o">.</span><span class="n">write_render_meta</span><span class="p">(</span><span class="n">render_id</span><span class="p">,</span> <span class="n">meta</span><span class="p">)</span>
@@ -800,13 +800,13 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_selection_context</span><span class="p">(</span><span class="n">proj</span><span class="p">,</span> <span class="n">strat</span><span class="p">,</span> <span class="n">preset</span><span class="p">,</span> <span class="n">weights</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a ``SelectionContext`` from persisted scores for the ``weighted`` strategy.</span>
+<span class="w">    </span><span class="sd">"""Build a ``SelectionContext`` from persisted scores for the ``weighted`` strategy.</span>
 
 <span class="sd">    Returns ``None`` for alignment-only strategies (they ignore context). When scores are</span>
-<span class="sd">    absent, the tensor is ``None`` and ``weighted_selection`` raises a clear &quot;run scoring</span>
-<span class="sd">    first&quot; the caller surfaces — so no scores gives a helpful error, not a silent bad edit.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">strat</span> <span class="o">!=</span> <span class="s2">&quot;weighted&quot;</span><span class="p">:</span>
+<span class="sd">    absent, the tensor is ``None`` and ``weighted_selection`` raises a clear "run scoring</span>
+<span class="sd">    first" the caller surfaces — so no scores gives a helpful error, not a silent bad edit.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">strat</span> <span class="o">!=</span> <span class="s2">"weighted"</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">None</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.footage.scoring.grid</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
         <span class="n">align_fingerprint</span><span class="p">,</span>
@@ -817,19 +817,19 @@
     <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.footage.select_score</span><span class="w"> </span><span class="kn">import</span> <span class="n">SelectionContext</span><span class="p">,</span> <span class="n">resolve_config</span>
 
     <span class="n">manifest</span> <span class="o">=</span> <span class="n">load_manifest</span><span class="p">(</span><span class="n">proj</span><span class="o">.</span><span class="n">root</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{}</span>
-    <span class="n">beats</span> <span class="o">=</span> <span class="n">manifest</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;beats&quot;</span><span class="p">,</span> <span class="p">{})</span>
+    <span class="n">beats</span> <span class="o">=</span> <span class="n">manifest</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"beats"</span><span class="p">,</span> <span class="p">{})</span>
     <span class="c1"># Stale scores (a re-align since scoring) must NOT drive a weighted edit — treat the tensor</span>
-    <span class="c1"># as absent so weighted_selection raises the clear &quot;run scoring first&quot; the caller surfaces.</span>
+    <span class="c1"># as absent so weighted_selection raises the clear "run scoring first" the caller surfaces.</span>
     <span class="n">fresh</span> <span class="o">=</span> <span class="n">manifest_is_current</span><span class="p">(</span>
         <span class="n">manifest</span><span class="p">,</span>
-        <span class="n">song_hash</span><span class="o">=</span><span class="n">proj</span><span class="o">.</span><span class="n">song_hash</span><span class="p">()</span> <span class="k">if</span> <span class="n">proj</span><span class="o">.</span><span class="n">has_song</span><span class="p">()</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="n">song_hash</span><span class="o">=</span><span class="n">proj</span><span class="o">.</span><span class="n">song_hash</span><span class="p">()</span> <span class="k">if</span> <span class="n">proj</span><span class="o">.</span><span class="n">has_song</span><span class="p">()</span> <span class="k">else</span> <span class="s2">""</span><span class="p">,</span>
         <span class="n">align_fingerprint</span><span class="o">=</span><span class="n">align_fingerprint</span><span class="p">(</span><span class="n">proj</span><span class="o">.</span><span class="n">load_alignments</span><span class="p">()),</span>
     <span class="p">)</span>
     <span class="k">return</span> <span class="n">SelectionContext</span><span class="p">(</span>
         <span class="n">tensor</span><span class="o">=</span><span class="n">load_tensor</span><span class="p">(</span><span class="n">proj</span><span class="o">.</span><span class="n">root</span><span class="p">)</span> <span class="k">if</span> <span class="n">fresh</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">beat_times</span><span class="o">=</span><span class="n">beats</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;beat_times&quot;</span><span class="p">,</span> <span class="p">[]),</span>
-        <span class="n">downbeat_times</span><span class="o">=</span><span class="n">beats</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;downbeat_times&quot;</span><span class="p">,</span> <span class="p">[]),</span>
-        <span class="n">shot_boundaries</span><span class="o">=</span><span class="n">manifest</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;shot_boundaries&quot;</span><span class="p">),</span>
+        <span class="n">beat_times</span><span class="o">=</span><span class="n">beats</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"beat_times"</span><span class="p">,</span> <span class="p">[]),</span>
+        <span class="n">downbeat_times</span><span class="o">=</span><span class="n">beats</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"downbeat_times"</span><span class="p">,</span> <span class="p">[]),</span>
+        <span class="n">shot_boundaries</span><span class="o">=</span><span class="n">manifest</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"shot_boundaries"</span><span class="p">),</span>
         <span class="n">config</span><span class="o">=</span><span class="n">resolve_config</span><span class="p">(</span><span class="n">preset</span><span class="o">=</span><span class="n">preset</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="n">weights</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">),</span>
     <span class="p">)</span>
 
@@ -843,18 +843,18 @@
 <div class="viewcode-block" id="footage_status">
 <a class="viewcode-back" href="../../../module_docs/muvid/mcp/footage_tools.html#muvid.mcp.footage_tools.footage_status">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">footage_status</span><span class="p">(</span><span class="n">project_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Your project&#39;s song, clips, alignment summary, and renders. Free.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Your project's song, clips, alignment summary, and renders. Free."""</span>
     <span class="n">proj</span> <span class="o">=</span> <span class="n">_open</span><span class="p">(</span><span class="n">project_id</span><span class="p">)</span>
     <span class="n">m</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">manifest</span><span class="p">()</span>
     <span class="k">return</span> <span class="p">{</span>
-        <span class="s2">&quot;project_id&quot;</span><span class="p">:</span> <span class="n">project_id</span><span class="p">,</span>
-        <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;title&quot;</span><span class="p">,</span> <span class="n">project_id</span><span class="p">),</span>
-        <span class="s2">&quot;canvas&quot;</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;canvas&quot;</span><span class="p">),</span>
-        <span class="s2">&quot;has_song&quot;</span><span class="p">:</span> <span class="n">proj</span><span class="o">.</span><span class="n">has_song</span><span class="p">(),</span>
-        <span class="s2">&quot;song_duration&quot;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">proj</span><span class="o">.</span><span class="n">song_duration</span><span class="p">(),</span> <span class="mi">2</span><span class="p">)</span> <span class="k">if</span> <span class="n">proj</span><span class="o">.</span><span class="n">has_song</span><span class="p">()</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="s2">&quot;clips&quot;</span><span class="p">:</span> <span class="n">proj</span><span class="o">.</span><span class="n">list_clips</span><span class="p">(),</span>
-        <span class="s2">&quot;aligned&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">a</span><span class="o">.</span><span class="n">clip_id</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">proj</span><span class="o">.</span><span class="n">load_alignments</span><span class="p">()],</span>
-        <span class="s2">&quot;renders&quot;</span><span class="p">:</span> <span class="n">proj</span><span class="o">.</span><span class="n">list_renders</span><span class="p">(),</span>
+        <span class="s2">"project_id"</span><span class="p">:</span> <span class="n">project_id</span><span class="p">,</span>
+        <span class="s2">"title"</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"title"</span><span class="p">,</span> <span class="n">project_id</span><span class="p">),</span>
+        <span class="s2">"canvas"</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"canvas"</span><span class="p">),</span>
+        <span class="s2">"has_song"</span><span class="p">:</span> <span class="n">proj</span><span class="o">.</span><span class="n">has_song</span><span class="p">(),</span>
+        <span class="s2">"song_duration"</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">proj</span><span class="o">.</span><span class="n">song_duration</span><span class="p">(),</span> <span class="mi">2</span><span class="p">)</span> <span class="k">if</span> <span class="n">proj</span><span class="o">.</span><span class="n">has_song</span><span class="p">()</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="s2">"clips"</span><span class="p">:</span> <span class="n">proj</span><span class="o">.</span><span class="n">list_clips</span><span class="p">(),</span>
+        <span class="s2">"aligned"</span><span class="p">:</span> <span class="p">[</span><span class="n">a</span><span class="o">.</span><span class="n">clip_id</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">proj</span><span class="o">.</span><span class="n">load_alignments</span><span class="p">()],</span>
+        <span class="s2">"renders"</span><span class="p">:</span> <span class="n">proj</span><span class="o">.</span><span class="n">list_renders</span><span class="p">(),</span>
     <span class="p">}</span></div>
 
 
@@ -862,17 +862,17 @@
 <div class="viewcode-block" id="list_strategies">
 <a class="viewcode-back" href="../../../module_docs/muvid/mcp/footage_tools.html#muvid.mcp.footage_tools.list_strategies">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">list_strategies</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The selection strategies available for full-auto assembly. Free.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""The selection strategies available for full-auto assembly. Free."""</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.footage.strategy</span><span class="w"> </span><span class="kn">import</span> <span class="n">DEFAULT_STRATEGY</span><span class="p">,</span> <span class="n">list_strategies</span> <span class="k">as</span> <span class="n">_ls</span>
 
-    <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;strategies&quot;</span><span class="p">:</span> <span class="n">_ls</span><span class="p">(),</span> <span class="s2">&quot;default&quot;</span><span class="p">:</span> <span class="n">DEFAULT_STRATEGY</span><span class="p">}</span></div>
+    <span class="k">return</span> <span class="p">{</span><span class="s2">"strategies"</span><span class="p">:</span> <span class="n">_ls</span><span class="p">(),</span> <span class="s2">"default"</span><span class="p">:</span> <span class="n">DEFAULT_STRATEGY</span><span class="p">}</span></div>
 
 
 
 <div class="viewcode-block" id="footage_editor_document">
 <a class="viewcode-back" href="../../../module_docs/muvid/mcp/footage_tools.html#muvid.mcp.footage_tools.footage_editor_document">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">footage_editor_document</span><span class="p">(</span><span class="n">project_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The project as lacing-native standoff annotations, for a multitrack editor. Free.</span>
+<span class="w">    </span><span class="sd">"""The project as lacing-native standoff annotations, for a multitrack editor. Free.</span>
 
 <span class="sd">    One tier per clip (its ``clip-alignment/v1`` +, once scored, its</span>
 <span class="sd">    ``clip-score-track/v1`` curves) plus a ``DECISION`` tier holding the current default</span>
@@ -882,18 +882,18 @@
 
 <span class="sd">    After a human edits the DECISION tier, feed its annotations back to</span>
 <span class="sd">    ``assemble_music_video`` via ``footage_edl_from_annotations``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.footage.lacing_bridge</span><span class="w"> </span><span class="kn">import</span> <span class="n">editor_document</span>
     <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
         <span class="k">raise</span> <span class="n">_tool_error</span><span class="p">(</span>
-            <span class="s2">&quot;the lacing-native editor bridge needs the &#39;editor&#39; extra &quot;</span>
-            <span class="s2">&quot;(pip install &#39;muvid[editor]&#39;)&quot;</span>
+            <span class="s2">"the lacing-native editor bridge needs the 'editor' extra "</span>
+            <span class="s2">"(pip install 'muvid[editor]')"</span>
         <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
 
     <span class="n">proj</span> <span class="o">=</span> <span class="n">_open</span><span class="p">(</span><span class="n">project_id</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">proj</span><span class="o">.</span><span class="n">load_alignments</span><span class="p">():</span>
-        <span class="k">raise</span> <span class="n">_tool_error</span><span class="p">(</span><span class="s2">&quot;no alignment yet — call align_footage first&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">_tool_error</span><span class="p">(</span><span class="s2">"no alignment yet — call align_footage first"</span><span class="p">)</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">editor_document</span><span class="p">(</span><span class="n">proj</span><span class="p">)</span>
     <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
@@ -904,29 +904,29 @@
 <div class="viewcode-block" id="footage_edl_from_annotations">
 <a class="viewcode-back" href="../../../module_docs/muvid/mcp/footage_tools.html#muvid.mcp.footage_tools.footage_edl_from_annotations">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">footage_edl_from_annotations</span><span class="p">(</span><span class="n">project_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">annotations</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The DECISION tier&#39;s annotations, turned back into an ``edl=`` argument. Free.</span>
+<span class="w">    </span><span class="sd">"""The DECISION tier's annotations, turned back into an ``edl=`` argument. Free.</span>
 
-<span class="sd">    The timeline-to-EDL half: pass ``footage_editor_document``&#39;s ``DECISION`` tier</span>
+<span class="sd">    The timeline-to-EDL half: pass ``footage_editor_document``'s ``DECISION`` tier</span>
 <span class="sd">    (after whatever an editor did to it) and get back plain</span>
 <span class="sd">    ``{song_start, song_end, clip_id}`` dicts, ready for ``assemble_music_video(edl=...)``</span>
 <span class="sd">    or ``propose_edit`` — a faithful read, not a re-selection. Annotations referencing a</span>
-<span class="sd">    song other than this project&#39;s are refused, not read (muvid#35), so a clipboard from</span>
+<span class="sd">    song other than this project's are refused, not read (muvid#35), so a clipboard from</span>
 <span class="sd">    another project fails saying so instead of splicing in the wrong spans.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.footage.lacing_bridge</span><span class="w"> </span><span class="kn">import</span> <span class="n">edl_from_annotations</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">lacing.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">Annotation</span>
     <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
         <span class="k">raise</span> <span class="n">_tool_error</span><span class="p">(</span>
-            <span class="s2">&quot;the lacing-native editor bridge needs the &#39;editor&#39; extra &quot;</span>
-            <span class="s2">&quot;(pip install &#39;muvid[editor]&#39;)&quot;</span>
+            <span class="s2">"the lacing-native editor bridge needs the 'editor' extra "</span>
+            <span class="s2">"(pip install 'muvid[editor]')"</span>
         <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
 
     <span class="n">proj</span> <span class="o">=</span> <span class="n">_open</span><span class="p">(</span><span class="n">project_id</span><span class="p">)</span>  <span class="c1"># authorizes the caller against this project</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">parsed</span> <span class="o">=</span> <span class="p">[</span><span class="n">Annotation</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">annotations</span><span class="p">]</span>
     <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>  <span class="c1"># noqa: BLE001 — surface a clean ToolError, not a raw pydantic one</span>
-        <span class="k">raise</span> <span class="n">_tool_error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;could not read annotations: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+        <span class="k">raise</span> <span class="n">_tool_error</span><span class="p">(</span><span class="sa">f</span><span class="s2">"could not read annotations: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">edl</span> <span class="o">=</span> <span class="n">edl_from_annotations</span><span class="p">(</span>
             <span class="n">parsed</span><span class="p">,</span>
@@ -936,7 +936,7 @@
         <span class="p">)</span>
     <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
         <span class="k">raise</span> <span class="n">_tool_error</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
-    <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;project_id&quot;</span><span class="p">:</span> <span class="n">project_id</span><span class="p">,</span> <span class="s2">&quot;edl&quot;</span><span class="p">:</span> <span class="n">edl</span><span class="p">}</span></div>
+    <span class="k">return</span> <span class="p">{</span><span class="s2">"project_id"</span><span class="p">:</span> <span class="n">project_id</span><span class="p">,</span> <span class="s2">"edl"</span><span class="p">:</span> <span class="n">edl</span><span class="p">}</span></div>
 
 </pre></div>
 

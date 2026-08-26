@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.visualize.canvas &mdash; muvid 0.0.27 documentation</title>
+  <title>muvid.visualize.canvas &mdash; muvid 0.0.28 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=cee5022b"></script>
+      <script src="../../../_static/documentation_options.js?v=26ffa1e9"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -131,7 +131,7 @@
            <div itemprop="articleBody">
              
   <h1>Source code for muvid.visualize.canvas</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Lay a cover image out on a 16:9 canvas, and derive a thumbnail from it.</span>
+<span></span><span class="sd">"""Lay a cover image out on a 16:9 canvas, and derive a thumbnail from it.</span>
 
 <span class="sd">Cover art is usually square (or, worse, portrait) while video platforms are</span>
 <span class="sd">16:9. Letting the platform pillarbox the art leaves black bars; instead we fill</span>
@@ -143,7 +143,7 @@
 <span class="sd">Every filter chain here is built as a *string* rather than executed, so the</span>
 <span class="sd">same chains compose into the bigger filtergraph that :mod:`muvid.visualize.video`</span>
 <span class="sd">assembles for audio-reactive visuals.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -155,7 +155,7 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.visualize.ffmpeg</span><span class="w"> </span><span class="kn">import</span> <span class="n">FfmpegError</span><span class="p">,</span> <span class="n">PathLike</span><span class="p">,</span> <span class="n">require_filter</span><span class="p">,</span> <span class="n">run_ffmpeg</span>
 
-<span class="c1">#: Default 16:9 canvas: 1080p is YouTube&#39;s sweet spot for a static music video.</span>
+<span class="c1">#: Default 16:9 canvas: 1080p is YouTube's sweet spot for a static music video.</span>
 <span class="n">DEFAULT_SIZE</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1920</span><span class="p">,</span> <span class="mi">1080</span><span class="p">)</span>
 
 <span class="c1">#: YouTube rejects thumbnails over 2 MiB, and wants at least 1280x720.</span>
@@ -164,11 +164,11 @@
 
 <span class="c1">#: Fonts we fall back through when the system has no fontconfig.</span>
 <span class="n">_FONT_CANDIDATES</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="s2">&quot;/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;/System/Library/Fonts/Helvetica.ttc&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;/Library/Fonts/Arial.ttf&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;C:/Windows/Fonts/arial.ttf&quot;</span><span class="p">,</span>
+    <span class="s2">"/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"</span><span class="p">,</span>
+    <span class="s2">"/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"</span><span class="p">,</span>
+    <span class="s2">"/System/Library/Fonts/Helvetica.ttc"</span><span class="p">,</span>
+    <span class="s2">"/Library/Fonts/Arial.ttf"</span><span class="p">,</span>
+    <span class="s2">"C:/Windows/Fonts/arial.ttf"</span><span class="p">,</span>
 <span class="p">)</span>
 
 
@@ -176,12 +176,12 @@
 <a class="viewcode-back" href="../../../module_docs/muvid/visualize/canvas.html#muvid.visualize.CoverLayout">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">CoverLayout</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;How a cover image is placed on the canvas.</span>
+<span class="w">    </span><span class="sd">"""How a cover image is placed on the canvas.</span>
 
 <span class="sd">    Attributes:</span>
-<span class="sd">        background: ``&quot;blur&quot;`` (a blurred, darkened copy of the cover fills the</span>
-<span class="sd">            frame) or ``&quot;color&quot;`` (a flat :attr:`background_color`).</span>
-<span class="sd">        blur_sigma: Gaussian blur strength for the ``&quot;blur&quot;`` background.</span>
+<span class="sd">        background: ``"blur"`` (a blurred, darkened copy of the cover fills the</span>
+<span class="sd">            frame) or ``"color"`` (a flat :attr:`background_color`).</span>
+<span class="sd">        blur_sigma: Gaussian blur strength for the ``"blur"`` background.</span>
 <span class="sd">        dim: How much to darken the background, 0 (unchanged) to 1 (black).</span>
 <span class="sd">        saturation: Background saturation (&lt; 1 desaturates, so the sharp cover</span>
 <span class="sd">            stays the focal point).</span>
@@ -193,16 +193,16 @@
 <span class="sd">        cover_alpha: Opacity of the sharp cover, 0 (invisible) to 1 (opaque).</span>
 <span class="sd">            Below 1 lets whatever is behind the cover — a reactive visualizer,</span>
 <span class="sd">            the blurred background — show through it.</span>
-<span class="sd">        background_color: Fill colour when ``background=&quot;color&quot;``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">        background_color: Fill colour when ``background="color"``.</span>
+<span class="sd">    """</span>
 
-    <span class="n">background</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;blur&quot;</span>
+    <span class="n">background</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"blur"</span>
     <span class="n">blur_sigma</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">30.0</span>
     <span class="n">dim</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.25</span>
     <span class="n">saturation</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.8</span>
     <span class="n">cover_fraction</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.92</span>
     <span class="n">cover_alpha</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span>
-    <span class="n">background_color</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;black&quot;</span></div>
+    <span class="n">background_color</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"black"</span></div>
 
 
 
@@ -210,7 +210,7 @@
 <a class="viewcode-back" href="../../../module_docs/muvid/visualize/canvas.html#muvid.visualize.TitleStyle">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">TitleStyle</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;How a burnt-in title is drawn (ffmpeg ``drawtext``).</span>
+<span class="w">    </span><span class="sd">"""How a burnt-in title is drawn (ffmpeg ``drawtext``).</span>
 
 <span class="sd">    Attributes:</span>
 <span class="sd">        size_fraction: Font size as a fraction of canvas height.</span>
@@ -220,26 +220,26 @@
 <span class="sd">        box: Draw a translucent plate behind the text (keeps it legible over</span>
 <span class="sd">            busy artwork).</span>
 <span class="sd">        box_color: Colour (with alpha) of that plate.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">size_fraction</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.045</span>
-    <span class="n">color</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;white&quot;</span>
+    <span class="n">color</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"white"</span>
     <span class="n">font</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">margin_fraction</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.06</span>
     <span class="n">box</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
-    <span class="n">box_color</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;black@0.45&quot;</span></div>
+    <span class="n">box_color</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"black@0.45"</span></div>
 
 
 
 <div class="viewcode-block" id="cover_box">
 <a class="viewcode-back" href="../../../module_docs/muvid/visualize/canvas.html#muvid.visualize.cover_box">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">cover_box</span><span class="p">(</span><span class="n">size</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">layout</span><span class="p">:</span> <span class="n">CoverLayout</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The bounding box the sharp cover is fitted into, for ``size``/``layout``.</span>
+<span class="w">    </span><span class="sd">"""The bounding box the sharp cover is fitted into, for ``size``/``layout``.</span>
 
 <span class="sd">    Scales with *both* frame dimensions, so a cover fitted into it with</span>
 <span class="sd">    ``force_original_aspect_ratio=decrease`` grows until it meets whichever edge</span>
 <span class="sd">    comes first — filling the frame up to ``cover_fraction``, minus padding.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">width</span><span class="p">,</span> <span class="n">height</span> <span class="o">=</span> <span class="n">size</span>
     <span class="k">return</span> <span class="nb">round</span><span class="p">(</span><span class="n">width</span> <span class="o">*</span> <span class="n">layout</span><span class="o">.</span><span class="n">cover_fraction</span><span class="p">),</span> <span class="nb">round</span><span class="p">(</span><span class="n">height</span> <span class="o">*</span> <span class="n">layout</span><span class="o">.</span><span class="n">cover_fraction</span><span class="p">)</span></div>
 
@@ -249,10 +249,10 @@
 <a class="viewcode-back" href="../../../module_docs/muvid/visualize/canvas.html#muvid.visualize.default_font">[docs]</a>
 <span class="nd">@lru_cache</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">default_font</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Path to a usable TrueType font, or ``None`` if none was found.&quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">shutil</span><span class="o">.</span><span class="n">which</span><span class="p">(</span><span class="s2">&quot;fc-match&quot;</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Path to a usable TrueType font, or ``None`` if none was found."""</span>
+    <span class="k">if</span> <span class="n">shutil</span><span class="o">.</span><span class="n">which</span><span class="p">(</span><span class="s2">"fc-match"</span><span class="p">):</span>
         <span class="n">proc</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
-            <span class="p">[</span><span class="s2">&quot;fc-match&quot;</span><span class="p">,</span> <span class="s2">&quot;-f&quot;</span><span class="p">,</span> <span class="s2">&quot;%</span><span class="si">{file}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;sans-serif&quot;</span><span class="p">],</span>
+            <span class="p">[</span><span class="s2">"fc-match"</span><span class="p">,</span> <span class="s2">"-f"</span><span class="p">,</span> <span class="s2">"%</span><span class="si">{file}</span><span class="s2">"</span><span class="p">,</span> <span class="s2">"sans-serif"</span><span class="p">],</span>
             <span class="n">capture_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
             <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="p">)</span>
@@ -263,32 +263,32 @@
 
 
 
-<span class="c1">#: Characters ffmpeg&#39;s *option* parser gives special meaning to inside a single</span>
-<span class="c1">#: filter&#39;s argument string: ``:`` separates one option from the next, and</span>
-<span class="c1">#: ``\`` / ``&#39;`` do that parser&#39;s quoting.</span>
-<span class="n">_OPTION_LEVEL_SPECIALS</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;</span><span class="se">\\</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;&#39;&quot;</span><span class="p">,</span> <span class="s2">&quot;:&quot;</span><span class="p">)</span>
+<span class="c1">#: Characters ffmpeg's *option* parser gives special meaning to inside a single</span>
+<span class="c1">#: filter's argument string: ``:`` separates one option from the next, and</span>
+<span class="c1">#: ``\`` / ``'`` do that parser's quoting.</span>
+<span class="n">_OPTION_LEVEL_SPECIALS</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"</span><span class="se">\\</span><span class="s2">"</span><span class="p">,</span> <span class="s2">"'"</span><span class="p">,</span> <span class="s2">":"</span><span class="p">)</span>
 
-<span class="c1">#: Characters ffmpeg&#39;s *filtergraph* parser gives special meaning to across the</span>
+<span class="c1">#: Characters ffmpeg's *filtergraph* parser gives special meaning to across the</span>
 <span class="c1">#: graph as a whole: ``,`` chains filters, ``;`` separates chains, ``[]`` delimit</span>
-<span class="c1">#: pad labels, and ``\`` / ``&#39;`` do that parser&#39;s quoting.</span>
-<span class="n">_GRAPH_LEVEL_SPECIALS</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;</span><span class="se">\\</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;&#39;&quot;</span><span class="p">,</span> <span class="s2">&quot;,&quot;</span><span class="p">,</span> <span class="s2">&quot;;&quot;</span><span class="p">,</span> <span class="s2">&quot;[&quot;</span><span class="p">,</span> <span class="s2">&quot;]&quot;</span><span class="p">)</span>
+<span class="c1">#: pad labels, and ``\`` / ``'`` do that parser's quoting.</span>
+<span class="n">_GRAPH_LEVEL_SPECIALS</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"</span><span class="se">\\</span><span class="s2">"</span><span class="p">,</span> <span class="s2">"'"</span><span class="p">,</span> <span class="s2">","</span><span class="p">,</span> <span class="s2">";"</span><span class="p">,</span> <span class="s2">"["</span><span class="p">,</span> <span class="s2">"]"</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_backslash_escape</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">specials</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Prefix each character of ``specials`` found in ``value`` with a backslash.</span>
+<span class="w">    </span><span class="sd">"""Prefix each character of ``specials`` found in ``value`` with a backslash.</span>
 
 <span class="sd">    ``specials`` must lead with ``\\``: the backslashes this introduces for the</span>
 <span class="sd">    later characters must not themselves be escaped again by the ``\\`` pass.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">for</span> <span class="n">char</span> <span class="ow">in</span> <span class="n">specials</span><span class="p">:</span>
-        <span class="n">value</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">char</span><span class="p">,</span> <span class="s2">&quot;</span><span class="se">\\</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="n">char</span><span class="p">)</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">char</span><span class="p">,</span> <span class="s2">"</span><span class="se">\\</span><span class="s2">"</span> <span class="o">+</span> <span class="n">char</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">value</span>
 
 
 <div class="viewcode-block" id="escape_filter_value">
 <a class="viewcode-back" href="../../../module_docs/muvid/visualize/canvas.html#muvid.visualize.escape_filter_value">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">escape_filter_value</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Escape ``value`` for use as a filter option inside an ffmpeg filtergraph.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Escape ``value`` for use as a filter option inside an ffmpeg filtergraph.</span>
 
 <span class="sd">    ffmpeg unescapes such a value **twice**, so escaping it once is not enough:</span>
 
@@ -299,18 +299,18 @@
 
 <span class="sd">    Escaping therefore runs in the mirror order — option level first, then graph</span>
 <span class="sd">    level over that result — so that each ffmpeg pass peels off exactly one</span>
-<span class="sd">    layer. A literal ``&#39;`` comes out as ``\\\&#39;`` and a literal ``:`` as ``\\:``.</span>
+<span class="sd">    layer. A literal ``'`` comes out as ``\\\'`` and a literal ``:`` as ``\\:``.</span>
 
-<span class="sd">    Escaping only once is why a title like ``&quot;Song: Part 1&quot;`` used to become a</span>
-<span class="sd">    filtergraph syntax error, and why a workdir whose name contained ``&#39;`` or</span>
+<span class="sd">    Escaping only once is why a title like ``"Song: Part 1"`` used to become a</span>
+<span class="sd">    filtergraph syntax error, and why a workdir whose name contained ``'`` or</span>
 <span class="sd">    ``:`` broke every ``sendcmd=f=&lt;path&gt;`` render.</span>
 
 <span class="sd">    Note that ``%`` is deliberately *not* escaped: neither parser treats it as</span>
 <span class="sd">    special, so ``\%`` was simply unescaped back to ``%`` and escaping it never</span>
-<span class="sd">    did anything. drawtext&#39;s ``%{...}`` text expansion is a third level that</span>
-<span class="sd">    applies to that one filter&#39;s ``text`` option only, and is out of scope for a</span>
+<span class="sd">    did anything. drawtext's ``%{...}`` text expansion is a third level that</span>
+<span class="sd">    applies to that one filter's ``text`` option only, and is out of scope for a</span>
 <span class="sd">    general-purpose filtergraph escaper.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">return</span> <span class="n">_backslash_escape</span><span class="p">(</span>
         <span class="n">_backslash_escape</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">_OPTION_LEVEL_SPECIALS</span><span class="p">),</span> <span class="n">_GRAPH_LEVEL_SPECIALS</span>
     <span class="p">)</span></div>
@@ -327,34 +327,34 @@
     <span class="n">src</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">out</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Filter chain burning ``title`` into the bottom of stream ``src``.</span>
+<span class="w">    </span><span class="sd">"""Filter chain burning ``title`` into the bottom of stream ``src``.</span>
 
 <span class="sd">    Raises:</span>
 <span class="sd">        FfmpegError: This ffmpeg has no ``drawtext``, or no font was found.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">style</span> <span class="o">=</span> <span class="n">style</span> <span class="ow">or</span> <span class="n">TitleStyle</span><span class="p">()</span>
-    <span class="n">require_filter</span><span class="p">(</span><span class="s2">&quot;drawtext&quot;</span><span class="p">,</span> <span class="n">needed_for</span><span class="o">=</span><span class="s2">&quot;burning in a title&quot;</span><span class="p">)</span>
+    <span class="n">require_filter</span><span class="p">(</span><span class="s2">"drawtext"</span><span class="p">,</span> <span class="n">needed_for</span><span class="o">=</span><span class="s2">"burning in a title"</span><span class="p">)</span>
     <span class="n">font</span> <span class="o">=</span> <span class="n">style</span><span class="o">.</span><span class="n">font</span> <span class="ow">or</span> <span class="n">default_font</span><span class="p">()</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">font</span><span class="p">:</span>
         <span class="k">raise</span> <span class="n">FfmpegError</span><span class="p">(</span>
-            <span class="s2">&quot;No font found for the burnt-in title. Install one (Debian/Ubuntu: &quot;</span>
-            <span class="s2">&quot;&#39;sudo apt-get install fonts-dejavu-core&#39;), or pass &quot;</span>
-            <span class="s2">&quot;TitleStyle(font=&#39;/path/to/font.ttf&#39;), or render without a title.&quot;</span>
+            <span class="s2">"No font found for the burnt-in title. Install one (Debian/Ubuntu: "</span>
+            <span class="s2">"'sudo apt-get install fonts-dejavu-core'), or pass "</span>
+            <span class="s2">"TitleStyle(font='/path/to/font.ttf'), or render without a title."</span>
         <span class="p">)</span>
     <span class="n">_</span><span class="p">,</span> <span class="n">height</span> <span class="o">=</span> <span class="n">size</span>
     <span class="n">fontsize</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">height</span> <span class="o">*</span> <span class="n">style</span><span class="o">.</span><span class="n">size_fraction</span><span class="p">)))</span>
     <span class="n">margin</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">height</span> <span class="o">*</span> <span class="n">style</span><span class="o">.</span><span class="n">margin_fraction</span><span class="p">))</span>
     <span class="n">opts</span> <span class="o">=</span> <span class="p">[</span>
-        <span class="sa">f</span><span class="s2">&quot;fontfile=</span><span class="si">{</span><span class="n">escape_filter_value</span><span class="p">(</span><span class="n">font</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
-        <span class="sa">f</span><span class="s2">&quot;text=</span><span class="si">{</span><span class="n">escape_filter_value</span><span class="p">(</span><span class="n">title</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
-        <span class="sa">f</span><span class="s2">&quot;fontsize=</span><span class="si">{</span><span class="n">fontsize</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
-        <span class="sa">f</span><span class="s2">&quot;fontcolor=</span><span class="si">{</span><span class="n">style</span><span class="o">.</span><span class="n">color</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;x=(w-text_w)/2&quot;</span><span class="p">,</span>
-        <span class="sa">f</span><span class="s2">&quot;y=h-text_h-</span><span class="si">{</span><span class="n">margin</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s2">"fontfile=</span><span class="si">{</span><span class="n">escape_filter_value</span><span class="p">(</span><span class="n">font</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s2">"text=</span><span class="si">{</span><span class="n">escape_filter_value</span><span class="p">(</span><span class="n">title</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s2">"fontsize=</span><span class="si">{</span><span class="n">fontsize</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s2">"fontcolor=</span><span class="si">{</span><span class="n">style</span><span class="o">.</span><span class="n">color</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+        <span class="s2">"x=(w-text_w)/2"</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s2">"y=h-text_h-</span><span class="si">{</span><span class="n">margin</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
     <span class="p">]</span>
     <span class="k">if</span> <span class="n">style</span><span class="o">.</span><span class="n">box</span><span class="p">:</span>
-        <span class="n">opts</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;box=1&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;boxcolor=</span><span class="si">{</span><span class="n">style</span><span class="o">.</span><span class="n">box_color</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;boxborderw=20&quot;</span><span class="p">]</span>
-    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="n">src</span><span class="si">}</span><span class="s2">]drawtext=</span><span class="si">{</span><span class="s1">&#39;:&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">opts</span><span class="p">)</span><span class="si">}</span><span class="s2">[</span><span class="si">{</span><span class="n">out</span><span class="si">}</span><span class="s2">]&quot;</span></div>
+        <span class="n">opts</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">"box=1"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"boxcolor=</span><span class="si">{</span><span class="n">style</span><span class="o">.</span><span class="n">box_color</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="s2">"boxborderw=20"</span><span class="p">]</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">"[</span><span class="si">{</span><span class="n">src</span><span class="si">}</span><span class="s2">]drawtext=</span><span class="si">{</span><span class="s1">':'</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">opts</span><span class="p">)</span><span class="si">}</span><span class="s2">[</span><span class="si">{</span><span class="n">out</span><span class="si">}</span><span class="s2">]"</span></div>
 
 
 
@@ -363,18 +363,18 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">background_chain</span><span class="p">(</span>
     <span class="n">size</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">layout</span><span class="p">:</span> <span class="n">CoverLayout</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">src</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">out</span><span class="p">:</span> <span class="nb">str</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Filter chain turning cover stream ``src`` into a full-frame background.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Filter chain turning cover stream ``src`` into a full-frame background."""</span>
     <span class="n">width</span><span class="p">,</span> <span class="n">height</span> <span class="o">=</span> <span class="n">size</span>
-    <span class="k">if</span> <span class="n">layout</span><span class="o">.</span><span class="n">background</span> <span class="o">==</span> <span class="s2">&quot;color&quot;</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">layout</span><span class="o">.</span><span class="n">background</span> <span class="o">==</span> <span class="s2">"color"</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="n">src</span><span class="si">}</span><span class="s2">]scale=</span><span class="si">{</span><span class="n">width</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">height</span><span class="si">}</span><span class="s2">,&quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;drawbox=x=0:y=0:w=</span><span class="si">{</span><span class="n">width</span><span class="si">}</span><span class="s2">:h=</span><span class="si">{</span><span class="n">height</span><span class="si">}</span><span class="s2">:&quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;color=</span><span class="si">{</span><span class="n">layout</span><span class="o">.</span><span class="n">background_color</span><span class="si">}</span><span class="s2">:t=fill[</span><span class="si">{</span><span class="n">out</span><span class="si">}</span><span class="s2">]&quot;</span>
+            <span class="sa">f</span><span class="s2">"[</span><span class="si">{</span><span class="n">src</span><span class="si">}</span><span class="s2">]scale=</span><span class="si">{</span><span class="n">width</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">height</span><span class="si">}</span><span class="s2">,"</span>
+            <span class="sa">f</span><span class="s2">"drawbox=x=0:y=0:w=</span><span class="si">{</span><span class="n">width</span><span class="si">}</span><span class="s2">:h=</span><span class="si">{</span><span class="n">height</span><span class="si">}</span><span class="s2">:"</span>
+            <span class="sa">f</span><span class="s2">"color=</span><span class="si">{</span><span class="n">layout</span><span class="o">.</span><span class="n">background_color</span><span class="si">}</span><span class="s2">:t=fill[</span><span class="si">{</span><span class="n">out</span><span class="si">}</span><span class="s2">]"</span>
         <span class="p">)</span>
     <span class="k">return</span> <span class="p">(</span>
-        <span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="n">src</span><span class="si">}</span><span class="s2">]scale=</span><span class="si">{</span><span class="n">width</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">height</span><span class="si">}</span><span class="s2">:force_original_aspect_ratio=increase,&quot;</span>
-        <span class="sa">f</span><span class="s2">&quot;crop=</span><span class="si">{</span><span class="n">width</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">height</span><span class="si">}</span><span class="s2">,gblur=sigma=</span><span class="si">{</span><span class="n">layout</span><span class="o">.</span><span class="n">blur_sigma</span><span class="si">}</span><span class="s2">,&quot;</span>
-        <span class="sa">f</span><span class="s2">&quot;eq=brightness=-</span><span class="si">{</span><span class="n">layout</span><span class="o">.</span><span class="n">dim</span><span class="si">}</span><span class="s2">:saturation=</span><span class="si">{</span><span class="n">layout</span><span class="o">.</span><span class="n">saturation</span><span class="si">}</span><span class="s2">[</span><span class="si">{</span><span class="n">out</span><span class="si">}</span><span class="s2">]&quot;</span>
+        <span class="sa">f</span><span class="s2">"[</span><span class="si">{</span><span class="n">src</span><span class="si">}</span><span class="s2">]scale=</span><span class="si">{</span><span class="n">width</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">height</span><span class="si">}</span><span class="s2">:force_original_aspect_ratio=increase,"</span>
+        <span class="sa">f</span><span class="s2">"crop=</span><span class="si">{</span><span class="n">width</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">height</span><span class="si">}</span><span class="s2">,gblur=sigma=</span><span class="si">{</span><span class="n">layout</span><span class="o">.</span><span class="n">blur_sigma</span><span class="si">}</span><span class="s2">,"</span>
+        <span class="sa">f</span><span class="s2">"eq=brightness=-</span><span class="si">{</span><span class="n">layout</span><span class="o">.</span><span class="n">dim</span><span class="si">}</span><span class="s2">:saturation=</span><span class="si">{</span><span class="n">layout</span><span class="o">.</span><span class="n">saturation</span><span class="si">}</span><span class="s2">[</span><span class="si">{</span><span class="n">out</span><span class="si">}</span><span class="s2">]"</span>
     <span class="p">)</span></div>
 
 
@@ -384,18 +384,18 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">cover_chain</span><span class="p">(</span>
     <span class="n">size</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">layout</span><span class="p">:</span> <span class="n">CoverLayout</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">src</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">out</span><span class="p">:</span> <span class="nb">str</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Filter chain scaling cover stream ``src`` to the centred sharp cover.</span>
+<span class="w">    </span><span class="sd">"""Filter chain scaling cover stream ``src`` to the centred sharp cover.</span>
 
 <span class="sd">    When ``layout.cover_alpha &lt; 1`` the scaled cover is made semi-transparent</span>
 <span class="sd">    (``colorchannelmixer=aa=…``, over an ``rgba`` copy so an opaque source gains</span>
 <span class="sd">    an alpha channel), so a following :func:`overlay_chain` lets the background</span>
 <span class="sd">    show through it.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">box_w</span><span class="p">,</span> <span class="n">box_h</span> <span class="o">=</span> <span class="n">cover_box</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="n">layout</span><span class="p">)</span>
-    <span class="n">scale</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="n">src</span><span class="si">}</span><span class="s2">]scale=</span><span class="si">{</span><span class="n">box_w</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">box_h</span><span class="si">}</span><span class="s2">:force_original_aspect_ratio=decrease&quot;</span>
+    <span class="n">scale</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"[</span><span class="si">{</span><span class="n">src</span><span class="si">}</span><span class="s2">]scale=</span><span class="si">{</span><span class="n">box_w</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">box_h</span><span class="si">}</span><span class="s2">:force_original_aspect_ratio=decrease"</span>
     <span class="k">if</span> <span class="n">layout</span><span class="o">.</span><span class="n">cover_alpha</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">:</span>
-        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">scale</span><span class="si">}</span><span class="s2">[</span><span class="si">{</span><span class="n">out</span><span class="si">}</span><span class="s2">]&quot;</span>
-    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">scale</span><span class="si">}</span><span class="s2">,format=rgba,colorchannelmixer=aa=</span><span class="si">{</span><span class="n">layout</span><span class="o">.</span><span class="n">cover_alpha</span><span class="si">}</span><span class="s2">[</span><span class="si">{</span><span class="n">out</span><span class="si">}</span><span class="s2">]&quot;</span></div>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">scale</span><span class="si">}</span><span class="s2">[</span><span class="si">{</span><span class="n">out</span><span class="si">}</span><span class="s2">]"</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">scale</span><span class="si">}</span><span class="s2">,format=rgba,colorchannelmixer=aa=</span><span class="si">{</span><span class="n">layout</span><span class="o">.</span><span class="n">cover_alpha</span><span class="si">}</span><span class="s2">[</span><span class="si">{</span><span class="n">out</span><span class="si">}</span><span class="s2">]"</span></div>
 
 
 
@@ -404,7 +404,7 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">overlay_chain</span><span class="p">(</span>
     <span class="o">*</span><span class="p">,</span> <span class="n">background</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">cover</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">out</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">shortest</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Filter chain centring the ``cover`` stream over the ``background`` stream.</span>
+<span class="w">    </span><span class="sd">"""Filter chain centring the ``cover`` stream over the ``background`` stream.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        background: Label of the background video stream.</span>
@@ -413,9 +413,9 @@
 <span class="sd">        shortest: End the overlay when the shortest input ends — required when a</span>
 <span class="sd">            finite, audio-driven background is overlaid with an endlessly</span>
 <span class="sd">            looping still cover, or the render would never terminate.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">opts</span> <span class="o">=</span> <span class="s2">&quot;:shortest=1&quot;</span> <span class="k">if</span> <span class="n">shortest</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
-    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="n">background</span><span class="si">}</span><span class="s2">][</span><span class="si">{</span><span class="n">cover</span><span class="si">}</span><span class="s2">]overlay=(W-w)/2:(H-h)/2</span><span class="si">{</span><span class="n">opts</span><span class="si">}</span><span class="s2">,setsar=1[</span><span class="si">{</span><span class="n">out</span><span class="si">}</span><span class="s2">]&quot;</span></div>
+<span class="sd">    """</span>
+    <span class="n">opts</span> <span class="o">=</span> <span class="s2">":shortest=1"</span> <span class="k">if</span> <span class="n">shortest</span> <span class="k">else</span> <span class="s2">""</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">"[</span><span class="si">{</span><span class="n">background</span><span class="si">}</span><span class="s2">][</span><span class="si">{</span><span class="n">cover</span><span class="si">}</span><span class="s2">]overlay=(W-w)/2:(H-h)/2</span><span class="si">{</span><span class="n">opts</span><span class="si">}</span><span class="s2">,setsar=1[</span><span class="si">{</span><span class="n">out</span><span class="si">}</span><span class="s2">]"</span></div>
 
 
 
@@ -430,21 +430,21 @@
     <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">title_style</span><span class="p">:</span> <span class="n">TitleStyle</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The whole cover-on-canvas filtergraph: background, centred cover, title.</span>
+<span class="w">    </span><span class="sd">"""The whole cover-on-canvas filtergraph: background, centred cover, title.</span>
 
 <span class="sd">    ``src`` is a single cover-image stream; it is split so the same image feeds</span>
 <span class="sd">    both the blurred background and the sharp foreground.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">composed</span> <span class="o">=</span> <span class="n">out</span> <span class="k">if</span> <span class="n">title</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="s2">&quot;_composed&quot;</span>
+<span class="sd">    """</span>
+    <span class="n">composed</span> <span class="o">=</span> <span class="n">out</span> <span class="k">if</span> <span class="n">title</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="s2">"_composed"</span>
     <span class="n">chains</span> <span class="o">=</span> <span class="p">[</span>
-        <span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="n">src</span><span class="si">}</span><span class="s2">]split=2[_bgsrc][_fgsrc]&quot;</span><span class="p">,</span>
-        <span class="n">background_chain</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="n">layout</span><span class="p">,</span> <span class="n">src</span><span class="o">=</span><span class="s2">&quot;_bgsrc&quot;</span><span class="p">,</span> <span class="n">out</span><span class="o">=</span><span class="s2">&quot;_bg&quot;</span><span class="p">),</span>
-        <span class="n">cover_chain</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="n">layout</span><span class="p">,</span> <span class="n">src</span><span class="o">=</span><span class="s2">&quot;_fgsrc&quot;</span><span class="p">,</span> <span class="n">out</span><span class="o">=</span><span class="s2">&quot;_fg&quot;</span><span class="p">),</span>
-        <span class="n">overlay_chain</span><span class="p">(</span><span class="n">background</span><span class="o">=</span><span class="s2">&quot;_bg&quot;</span><span class="p">,</span> <span class="n">cover</span><span class="o">=</span><span class="s2">&quot;_fg&quot;</span><span class="p">,</span> <span class="n">out</span><span class="o">=</span><span class="n">composed</span><span class="p">),</span>
+        <span class="sa">f</span><span class="s2">"[</span><span class="si">{</span><span class="n">src</span><span class="si">}</span><span class="s2">]split=2[_bgsrc][_fgsrc]"</span><span class="p">,</span>
+        <span class="n">background_chain</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="n">layout</span><span class="p">,</span> <span class="n">src</span><span class="o">=</span><span class="s2">"_bgsrc"</span><span class="p">,</span> <span class="n">out</span><span class="o">=</span><span class="s2">"_bg"</span><span class="p">),</span>
+        <span class="n">cover_chain</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="n">layout</span><span class="p">,</span> <span class="n">src</span><span class="o">=</span><span class="s2">"_fgsrc"</span><span class="p">,</span> <span class="n">out</span><span class="o">=</span><span class="s2">"_fg"</span><span class="p">),</span>
+        <span class="n">overlay_chain</span><span class="p">(</span><span class="n">background</span><span class="o">=</span><span class="s2">"_bg"</span><span class="p">,</span> <span class="n">cover</span><span class="o">=</span><span class="s2">"_fg"</span><span class="p">,</span> <span class="n">out</span><span class="o">=</span><span class="n">composed</span><span class="p">),</span>
     <span class="p">]</span>
     <span class="k">if</span> <span class="n">title</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">chains</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">title_chain</span><span class="p">(</span><span class="n">title</span><span class="p">,</span> <span class="n">size</span><span class="p">,</span> <span class="n">title_style</span><span class="p">,</span> <span class="n">src</span><span class="o">=</span><span class="n">composed</span><span class="p">,</span> <span class="n">out</span><span class="o">=</span><span class="n">out</span><span class="p">))</span>
-    <span class="k">return</span> <span class="s2">&quot;;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">chains</span><span class="p">)</span></div>
+    <span class="k">return</span> <span class="s2">";"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">chains</span><span class="p">)</span></div>
 
 
 
@@ -459,11 +459,11 @@
     <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">title_style</span><span class="p">:</span> <span class="n">TitleStyle</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Render the composed canvas (background + centred cover + title) as a PNG.</span>
+<span class="w">    </span><span class="sd">"""Render the composed canvas (background + centred cover + title) as a PNG.</span>
 
 <span class="sd">    Composing once into an image — rather than re-running a 1080p blur on every</span>
 <span class="sd">    frame — is what makes a still-image music video cheap to render, and it</span>
-<span class="sd">    gives the thumbnail and the video&#39;s first frame a single source of truth.</span>
+<span class="sd">    gives the thumbnail and the video's first frame a single source of truth.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        image: The cover art.</span>
@@ -475,22 +475,22 @@
 
 <span class="sd">    Returns:</span>
 <span class="sd">        Path to the rendered PNG.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">image</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
     <span class="n">layout</span> <span class="o">=</span> <span class="n">layout</span> <span class="ow">or</span> <span class="n">CoverLayout</span><span class="p">()</span>
-    <span class="n">out</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">saveas</span><span class="p">)</span> <span class="k">if</span> <span class="n">saveas</span> <span class="k">else</span> <span class="n">image</span><span class="o">.</span><span class="n">with_suffix</span><span class="p">(</span><span class="s2">&quot;.canvas.png&quot;</span><span class="p">)</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">saveas</span><span class="p">)</span> <span class="k">if</span> <span class="n">saveas</span> <span class="k">else</span> <span class="n">image</span><span class="o">.</span><span class="n">with_suffix</span><span class="p">(</span><span class="s2">".canvas.png"</span><span class="p">)</span>
     <span class="n">run_ffmpeg</span><span class="p">(</span>
         <span class="p">[</span>
-            <span class="s2">&quot;-i&quot;</span><span class="p">,</span>
+            <span class="s2">"-i"</span><span class="p">,</span>
             <span class="nb">str</span><span class="p">(</span><span class="n">image</span><span class="p">),</span>
-            <span class="s2">&quot;-filter_complex&quot;</span><span class="p">,</span>
+            <span class="s2">"-filter_complex"</span><span class="p">,</span>
             <span class="n">compose_chain</span><span class="p">(</span>
-                <span class="n">size</span><span class="p">,</span> <span class="n">layout</span><span class="p">,</span> <span class="n">src</span><span class="o">=</span><span class="s2">&quot;0:v&quot;</span><span class="p">,</span> <span class="n">out</span><span class="o">=</span><span class="s2">&quot;v&quot;</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">,</span> <span class="n">title_style</span><span class="o">=</span><span class="n">title_style</span>
+                <span class="n">size</span><span class="p">,</span> <span class="n">layout</span><span class="p">,</span> <span class="n">src</span><span class="o">=</span><span class="s2">"0:v"</span><span class="p">,</span> <span class="n">out</span><span class="o">=</span><span class="s2">"v"</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">,</span> <span class="n">title_style</span><span class="o">=</span><span class="n">title_style</span>
             <span class="p">),</span>
-            <span class="s2">&quot;-map&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;[v]&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;-frames:v&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;1&quot;</span><span class="p">,</span>
+            <span class="s2">"-map"</span><span class="p">,</span>
+            <span class="s2">"[v]"</span><span class="p">,</span>
+            <span class="s2">"-frames:v"</span><span class="p">,</span>
+            <span class="s2">"1"</span><span class="p">,</span>
             <span class="nb">str</span><span class="p">(</span><span class="n">out</span><span class="p">),</span>
         <span class="p">]</span>
     <span class="p">)</span>
@@ -510,11 +510,11 @@
     <span class="n">title_style</span><span class="p">:</span> <span class="n">TitleStyle</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">max_bytes</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">THUMBNAIL_MAX_BYTES</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Render ``image`` as a 16:9 JPEG thumbnail that YouTube will accept.</span>
+<span class="w">    </span><span class="sd">"""Render ``image`` as a 16:9 JPEG thumbnail that YouTube will accept.</span>
 
 <span class="sd">    Same composition as the video canvas, so the thumbnail matches what the</span>
 <span class="sd">    viewer sees when they press play. JPEG quality is stepped down until the</span>
-<span class="sd">    file fits ``max_bytes`` (YouTube&#39;s hard limit).</span>
+<span class="sd">    file fits ``max_bytes`` (YouTube's hard limit).</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        image: The cover art.</span>
@@ -527,25 +527,25 @@
 
 <span class="sd">    Returns:</span>
 <span class="sd">        Path to the rendered JPEG.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">image</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
     <span class="n">layout</span> <span class="o">=</span> <span class="n">layout</span> <span class="ow">or</span> <span class="n">CoverLayout</span><span class="p">()</span>
-    <span class="n">out</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">saveas</span><span class="p">)</span> <span class="k">if</span> <span class="n">saveas</span> <span class="k">else</span> <span class="n">image</span><span class="o">.</span><span class="n">with_suffix</span><span class="p">(</span><span class="s2">&quot;.thumb.jpg&quot;</span><span class="p">)</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">saveas</span><span class="p">)</span> <span class="k">if</span> <span class="n">saveas</span> <span class="k">else</span> <span class="n">image</span><span class="o">.</span><span class="n">with_suffix</span><span class="p">(</span><span class="s2">".thumb.jpg"</span><span class="p">)</span>
     <span class="n">chain</span> <span class="o">=</span> <span class="n">compose_chain</span><span class="p">(</span>
-        <span class="n">size</span><span class="p">,</span> <span class="n">layout</span><span class="p">,</span> <span class="n">src</span><span class="o">=</span><span class="s2">&quot;0:v&quot;</span><span class="p">,</span> <span class="n">out</span><span class="o">=</span><span class="s2">&quot;v&quot;</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">,</span> <span class="n">title_style</span><span class="o">=</span><span class="n">title_style</span>
+        <span class="n">size</span><span class="p">,</span> <span class="n">layout</span><span class="p">,</span> <span class="n">src</span><span class="o">=</span><span class="s2">"0:v"</span><span class="p">,</span> <span class="n">out</span><span class="o">=</span><span class="s2">"v"</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">,</span> <span class="n">title_style</span><span class="o">=</span><span class="n">title_style</span>
     <span class="p">)</span>
     <span class="k">for</span> <span class="n">quality</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">16</span><span class="p">,</span> <span class="mi">20</span><span class="p">):</span>  <span class="c1"># ffmpeg mjpeg: 2 = best, 31 = worst</span>
         <span class="n">run_ffmpeg</span><span class="p">(</span>
             <span class="p">[</span>
-                <span class="s2">&quot;-i&quot;</span><span class="p">,</span>
+                <span class="s2">"-i"</span><span class="p">,</span>
                 <span class="nb">str</span><span class="p">(</span><span class="n">image</span><span class="p">),</span>
-                <span class="s2">&quot;-filter_complex&quot;</span><span class="p">,</span>
+                <span class="s2">"-filter_complex"</span><span class="p">,</span>
                 <span class="n">chain</span><span class="p">,</span>
-                <span class="s2">&quot;-map&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;[v]&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;-frames:v&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;1&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;-q:v&quot;</span><span class="p">,</span>
+                <span class="s2">"-map"</span><span class="p">,</span>
+                <span class="s2">"[v]"</span><span class="p">,</span>
+                <span class="s2">"-frames:v"</span><span class="p">,</span>
+                <span class="s2">"1"</span><span class="p">,</span>
+                <span class="s2">"-q:v"</span><span class="p">,</span>
                 <span class="nb">str</span><span class="p">(</span><span class="n">quality</span><span class="p">),</span>
                 <span class="nb">str</span><span class="p">(</span><span class="n">out</span><span class="p">),</span>
             <span class="p">]</span>

@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.footage.workspace &mdash; muvid 0.0.27 documentation</title>
+  <title>muvid.footage.workspace &mdash; muvid 0.0.28 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=cee5022b"></script>
+      <script src="../../../_static/documentation_options.js?v=26ffa1e9"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -131,7 +131,7 @@
            <div itemprop="articleBody">
              
   <h1>Source code for muvid.footage.workspace</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Per-user, STATEFUL project for the footage-aligned ``music_video`` genre.</span>
+<span></span><span class="sd">"""Per-user, STATEFUL project for the footage-aligned ``music_video`` genre.</span>
 
 <span class="sd">Unlike the visualizer (a pure function of audio+cover), a music-video project accumulates</span>
 <span class="sd">state across calls: one fixed song, several uploaded clips, a persisted alignment</span>
@@ -139,14 +139,14 @@
 <span class="sd">``VisualizerWorkspace``), reusing only the identity + fetch + tool-aggregation seams.</span>
 
 <span class="sd">Layout (default root ``~/.local/share/muvid``; override via ``MUVID_DATA_HOME`` — shared</span>
-<span class="sd">with the visualizer&#39;s root, different subtree). **Never** inside the app/deploy tree:</span>
+<span class="sd">with the visualizer's root, different subtree). **Never** inside the app/deploy tree:</span>
 
 <span class="sd">- ``{root}/music_video/projects/{email}/{project_id}/manifest.json`` — title, canvas, song</span>
 <span class="sd">- ``.../song/song.&lt;ext&gt;`` — the one fixed clean song</span>
 <span class="sd">- ``.../clips/{clip_id}.&lt;ext&gt;`` — an uploaded footage clip</span>
 <span class="sd">- ``.../alignments.json`` — the persisted per-clip alignment</span>
 <span class="sd">- ``.../renders/{render_id}/`` — an assembled music video</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -158,26 +158,26 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.footage.edl</span><span class="w"> </span><span class="kn">import</span> <span class="n">FootageAlignment</span>
 
-<span class="n">DATA_HOME_ENV_VAR</span> <span class="o">=</span> <span class="s2">&quot;MUVID_DATA_HOME&quot;</span>
+<span class="n">DATA_HOME_ENV_VAR</span> <span class="o">=</span> <span class="s2">"MUVID_DATA_HOME"</span>
 
 <span class="c1">#: Named output canvases a project may choose at create (the genre Templates).</span>
 <span class="n">CANVASES</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">&quot;landscape&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">1920</span><span class="p">,</span> <span class="mi">1080</span><span class="p">),</span>
-    <span class="s2">&quot;portrait&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">1080</span><span class="p">,</span> <span class="mi">1920</span><span class="p">),</span>
-    <span class="s2">&quot;square&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">1080</span><span class="p">,</span> <span class="mi">1080</span><span class="p">),</span>
+    <span class="s2">"landscape"</span><span class="p">:</span> <span class="p">(</span><span class="mi">1920</span><span class="p">,</span> <span class="mi">1080</span><span class="p">),</span>
+    <span class="s2">"portrait"</span><span class="p">:</span> <span class="p">(</span><span class="mi">1080</span><span class="p">,</span> <span class="mi">1920</span><span class="p">),</span>
+    <span class="s2">"square"</span><span class="p">:</span> <span class="p">(</span><span class="mi">1080</span><span class="p">,</span> <span class="mi">1080</span><span class="p">),</span>
 <span class="p">}</span>
-<span class="n">DEFAULT_CANVAS_NAME</span> <span class="o">=</span> <span class="s2">&quot;landscape&quot;</span>
+<span class="n">DEFAULT_CANVAS_NAME</span> <span class="o">=</span> <span class="s2">"landscape"</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">data_root</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
     <span class="n">override</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">DATA_HOME_ENV_VAR</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">Path</span><span class="p">(</span><span class="n">override</span><span class="p">)</span> <span class="k">if</span> <span class="n">override</span> <span class="k">else</span> <span class="n">Path</span><span class="o">.</span><span class="n">home</span><span class="p">()</span> <span class="o">/</span> <span class="s2">&quot;.local&quot;</span> <span class="o">/</span> <span class="s2">&quot;share&quot;</span> <span class="o">/</span> <span class="s2">&quot;muvid&quot;</span>
+    <span class="k">return</span> <span class="n">Path</span><span class="p">(</span><span class="n">override</span><span class="p">)</span> <span class="k">if</span> <span class="n">override</span> <span class="k">else</span> <span class="n">Path</span><span class="o">.</span><span class="n">home</span><span class="p">()</span> <span class="o">/</span> <span class="s2">".local"</span> <span class="o">/</span> <span class="s2">"share"</span> <span class="o">/</span> <span class="s2">"muvid"</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">safe_component</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">label</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-    <span class="n">v</span> <span class="o">=</span> <span class="p">(</span><span class="n">value</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">v</span> <span class="ow">or</span> <span class="n">v</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">,</span> <span class="s2">&quot;..&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;/&quot;</span> <span class="ow">in</span> <span class="n">v</span> <span class="ow">or</span> <span class="s2">&quot;</span><span class="se">\\</span><span class="s2">&quot;</span> <span class="ow">in</span> <span class="n">v</span> <span class="ow">or</span> <span class="s2">&quot;</span><span class="se">\x00</span><span class="s2">&quot;</span> <span class="ow">in</span> <span class="n">v</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;invalid </span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">value</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">v</span> <span class="o">=</span> <span class="p">(</span><span class="n">value</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">v</span> <span class="ow">or</span> <span class="n">v</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"."</span><span class="p">,</span> <span class="s2">".."</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">"/"</span> <span class="ow">in</span> <span class="n">v</span> <span class="ow">or</span> <span class="s2">"</span><span class="se">\\</span><span class="s2">"</span> <span class="ow">in</span> <span class="n">v</span> <span class="ow">or</span> <span class="s2">"</span><span class="se">\x00</span><span class="s2">"</span> <span class="ow">in</span> <span class="n">v</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"invalid </span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">value</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">v</span>
 
 
@@ -185,7 +185,7 @@
 <a class="viewcode-back" href="../../../module_docs/muvid/footage/workspace.html#muvid.footage.workspace.MusicVideoFootageProject">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">MusicVideoFootageProject</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;One caller&#39;s stateful music-video project (song + clips + alignments + renders).&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""One caller's stateful music-video project (song + clips + alignments + renders)."""</span>
 
     <span class="n">email</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">project_id</span><span class="p">:</span> <span class="nb">str</span>
@@ -193,46 +193,46 @@
 
     <span class="c1"># -- manifest ------------------------------------------------------------</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_manifest_path</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">root</span> <span class="o">/</span> <span class="s2">&quot;manifest.json&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">root</span> <span class="o">/</span> <span class="s2">"manifest.json"</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">manifest</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_manifest_path</span><span class="p">()</span><span class="o">.</span><span class="n">read_text</span><span class="p">())</span>
         <span class="k">except</span> <span class="p">(</span><span class="ne">OSError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
-            <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">project_id</span><span class="p">,</span> <span class="s2">&quot;canvas&quot;</span><span class="p">:</span> <span class="n">DEFAULT_CANVAS_NAME</span><span class="p">}</span>
+            <span class="k">return</span> <span class="p">{</span><span class="s2">"title"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">project_id</span><span class="p">,</span> <span class="s2">"canvas"</span><span class="p">:</span> <span class="n">DEFAULT_CANVAS_NAME</span><span class="p">}</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_write_manifest</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">m</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_manifest_path</span><span class="p">()</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">canvas</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
         <span class="k">return</span> <span class="n">CANVASES</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">manifest</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;canvas&quot;</span><span class="p">),</span> <span class="n">CANVASES</span><span class="p">[</span><span class="n">DEFAULT_CANVAS_NAME</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">manifest</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"canvas"</span><span class="p">),</span> <span class="n">CANVASES</span><span class="p">[</span><span class="n">DEFAULT_CANVAS_NAME</span><span class="p">]</span>
         <span class="p">)</span>
 
     <span class="c1"># -- the fixed song ------------------------------------------------------</span>
 <div class="viewcode-block" id="MusicVideoFootageProject.set_song">
 <a class="viewcode-back" href="../../../module_docs/muvid/footage/workspace.html#muvid.footage.workspace.MusicVideoFootageProject.set_song">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">set_song</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">src_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">ext</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Store (replacing) the project&#39;s one clean song from a local file.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Store (replacing) the project's one clean song from a local file."""</span>
         <span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
 
-        <span class="n">song_dir</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">root</span> <span class="o">/</span> <span class="s2">&quot;song&quot;</span>
+        <span class="n">song_dir</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">root</span> <span class="o">/</span> <span class="s2">"song"</span>
         <span class="k">if</span> <span class="n">song_dir</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
             <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">song_dir</span><span class="p">)</span>
         <span class="n">song_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="n">dest</span> <span class="o">=</span> <span class="n">song_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;song</span><span class="si">{</span><span class="n">_safe_ext</span><span class="p">(</span><span class="n">ext</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="n">dest</span> <span class="o">=</span> <span class="n">song_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">"song</span><span class="si">{</span><span class="n">_safe_ext</span><span class="p">(</span><span class="n">ext</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
         <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">src_path</span><span class="p">,</span> <span class="n">dest</span><span class="p">)</span>
         <span class="n">m</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">manifest</span><span class="p">()</span>
-        <span class="n">m</span><span class="p">[</span><span class="s2">&quot;song&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">dest</span><span class="o">.</span><span class="n">name</span>
-        <span class="n">m</span><span class="p">[</span><span class="s2">&quot;song_duration&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">_probe_duration</span><span class="p">(</span><span class="n">dest</span><span class="p">)</span>
+        <span class="n">m</span><span class="p">[</span><span class="s2">"song"</span><span class="p">]</span> <span class="o">=</span> <span class="n">dest</span><span class="o">.</span><span class="n">name</span>
+        <span class="n">m</span><span class="p">[</span><span class="s2">"song_duration"</span><span class="p">]</span> <span class="o">=</span> <span class="n">_probe_duration</span><span class="p">(</span><span class="n">dest</span><span class="p">)</span>
         <span class="c1"># Compute the song hash ONCE here (chunked) and cache it — scoring/reads compare the</span>
         <span class="c1"># stored hash rather than re-hashing a 100 MB file on every poll (persistence-lens).</span>
-        <span class="n">m</span><span class="p">[</span><span class="s2">&quot;song_hash&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">_hash_file</span><span class="p">(</span><span class="n">dest</span><span class="p">)</span>
+        <span class="n">m</span><span class="p">[</span><span class="s2">"song_hash"</span><span class="p">]</span> <span class="o">=</span> <span class="n">_hash_file</span><span class="p">(</span><span class="n">dest</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_write_manifest</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
         <span class="c1"># The song is the alignment reference — changing it invalidates every persisted</span>
         <span class="c1"># offset. Drop the alignment so footage_timeline/assemble demand a fresh</span>
         <span class="c1"># align_footage rather than silently cutting to a song the offsets no longer match.</span>
-        <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span> <span class="o">/</span> <span class="s2">&quot;alignments.json&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">unlink</span><span class="p">(</span><span class="n">missing_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span> <span class="o">/</span> <span class="s2">"alignments.json"</span><span class="p">)</span><span class="o">.</span><span class="n">unlink</span><span class="p">(</span><span class="n">missing_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="c1"># A new song also invalidates every persisted score track (the grid mapping moved).</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">invalidate_scores</span><span class="p">()</span></div>
 
@@ -240,12 +240,12 @@
 <div class="viewcode-block" id="MusicVideoFootageProject.song_hash">
 <a class="viewcode-back" href="../../../module_docs/muvid/footage/workspace.html#muvid.footage.workspace.MusicVideoFootageProject.song_hash">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">song_hash</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;The clean song&#39;s content hash (cached in the manifest; computed if missing).&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""The clean song's content hash (cached in the manifest; computed if missing)."""</span>
         <span class="n">m</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">manifest</span><span class="p">()</span>
-        <span class="n">h</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;song_hash&quot;</span><span class="p">)</span>
+        <span class="n">h</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"song_hash"</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">h</span><span class="p">:</span>
             <span class="n">h</span> <span class="o">=</span> <span class="n">_hash_file</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">song_path</span><span class="p">())</span>
-            <span class="n">m</span><span class="p">[</span><span class="s2">&quot;song_hash&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">h</span>
+            <span class="n">m</span><span class="p">[</span><span class="s2">"song_hash"</span><span class="p">]</span> <span class="o">=</span> <span class="n">h</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_write_manifest</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">h</span></div>
 
@@ -253,69 +253,69 @@
 <div class="viewcode-block" id="MusicVideoFootageProject.invalidate_scores">
 <a class="viewcode-back" href="../../../module_docs/muvid/footage/workspace.html#muvid.footage.workspace.MusicVideoFootageProject.invalidate_scores">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">invalidate_scores</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Delete persisted score tracks — the primary invalidation on song/offset change.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Delete persisted score tracks — the primary invalidation on song/offset change."""</span>
         <span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
 
-        <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span> <span class="o">/</span> <span class="s2">&quot;scores&quot;</span><span class="p">,</span> <span class="n">ignore_errors</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span> <span class="o">/</span> <span class="s2">"scores"</span><span class="p">,</span> <span class="n">ignore_errors</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
 
 
     <span class="k">def</span><span class="w"> </span><span class="nf">song_path</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
-        <span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">manifest</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;song&quot;</span><span class="p">)</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">manifest</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"song"</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">name</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="s2">&quot;no song set — call set_song first&quot;</span><span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">root</span> <span class="o">/</span> <span class="s2">&quot;song&quot;</span> <span class="o">/</span> <span class="n">name</span>
+            <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="s2">"no song set — call set_song first"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">root</span> <span class="o">/</span> <span class="s2">"song"</span> <span class="o">/</span> <span class="n">name</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">song_duration</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-        <span class="n">d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">manifest</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;song_duration&quot;</span><span class="p">)</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">manifest</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"song_duration"</span><span class="p">)</span>
         <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">d</span><span class="p">)</span> <span class="k">if</span> <span class="n">d</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">_probe_duration</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">song_path</span><span class="p">())</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">has_song</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-        <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">manifest</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;song&quot;</span><span class="p">))</span>
+        <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">manifest</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"song"</span><span class="p">))</span>
 
     <span class="c1"># -- footage clips -------------------------------------------------------</span>
 <div class="viewcode-block" id="MusicVideoFootageProject.add_clip">
 <a class="viewcode-back" href="../../../module_docs/muvid/footage/workspace.html#muvid.footage.workspace.MusicVideoFootageProject.add_clip">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">add_clip</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">clip_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">src_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">ext</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Store a footage clip from a local file; returns its ``clip_id``.&quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_clip</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">clip_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">src_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">ext</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Store a footage clip from a local file; returns its ``clip_id``."""</span>
         <span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
 
-        <span class="n">cid</span> <span class="o">=</span> <span class="n">safe_component</span><span class="p">(</span><span class="n">clip_id</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;clip_id&quot;</span><span class="p">)</span>
-        <span class="n">clips_dir</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">root</span> <span class="o">/</span> <span class="s2">&quot;clips&quot;</span>
+        <span class="n">cid</span> <span class="o">=</span> <span class="n">safe_component</span><span class="p">(</span><span class="n">clip_id</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"clip_id"</span><span class="p">)</span>
+        <span class="n">clips_dir</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">root</span> <span class="o">/</span> <span class="s2">"clips"</span>
         <span class="n">clips_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="c1"># Remove any prior file for this clip_id (a re-add with a different extension would</span>
         <span class="c1"># otherwise orphan the old one) before writing the new one.</span>
-        <span class="k">for</span> <span class="n">old</span> <span class="ow">in</span> <span class="n">clips_dir</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">cid</span><span class="si">}</span><span class="s2">.*&quot;</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">old</span> <span class="ow">in</span> <span class="n">clips_dir</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">cid</span><span class="si">}</span><span class="s2">.*"</span><span class="p">):</span>
             <span class="n">old</span><span class="o">.</span><span class="n">unlink</span><span class="p">()</span>
-        <span class="n">dest</span> <span class="o">=</span> <span class="n">clips_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">cid</span><span class="si">}{</span><span class="n">_safe_ext</span><span class="p">(</span><span class="n">ext</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="n">dest</span> <span class="o">=</span> <span class="n">clips_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">cid</span><span class="si">}{</span><span class="n">_safe_ext</span><span class="p">(</span><span class="n">ext</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
         <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">src_path</span><span class="p">,</span> <span class="n">dest</span><span class="p">)</span>
         <span class="n">m</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">manifest</span><span class="p">()</span>
-        <span class="n">clips</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;clips&quot;</span><span class="p">,</span> <span class="p">[])</span>
-        <span class="n">clips</span><span class="p">[:]</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">clips</span> <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;clip_id&quot;</span><span class="p">)</span> <span class="o">!=</span> <span class="n">cid</span><span class="p">]</span>
-        <span class="n">clips</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;clip_id&quot;</span><span class="p">:</span> <span class="n">cid</span><span class="p">,</span> <span class="s2">&quot;file&quot;</span><span class="p">:</span> <span class="n">dest</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">name</span> <span class="ow">or</span> <span class="n">cid</span><span class="p">})</span>
+        <span class="n">clips</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">"clips"</span><span class="p">,</span> <span class="p">[])</span>
+        <span class="n">clips</span><span class="p">[:]</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">clips</span> <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"clip_id"</span><span class="p">)</span> <span class="o">!=</span> <span class="n">cid</span><span class="p">]</span>
+        <span class="n">clips</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">"clip_id"</span><span class="p">:</span> <span class="n">cid</span><span class="p">,</span> <span class="s2">"file"</span><span class="p">:</span> <span class="n">dest</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="s2">"name"</span><span class="p">:</span> <span class="n">name</span> <span class="ow">or</span> <span class="n">cid</span><span class="p">})</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_write_manifest</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">cid</span></div>
 
 
     <span class="k">def</span><span class="w"> </span><span class="nf">clip_paths</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
         <span class="n">out</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">manifest</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;clips&quot;</span><span class="p">,</span> <span class="p">[]):</span>
-            <span class="n">out</span><span class="p">[</span><span class="n">c</span><span class="p">[</span><span class="s2">&quot;clip_id&quot;</span><span class="p">]]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span> <span class="o">/</span> <span class="s2">&quot;clips&quot;</span> <span class="o">/</span> <span class="n">c</span><span class="p">[</span><span class="s2">&quot;file&quot;</span><span class="p">])</span>
+        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">manifest</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"clips"</span><span class="p">,</span> <span class="p">[]):</span>
+            <span class="n">out</span><span class="p">[</span><span class="n">c</span><span class="p">[</span><span class="s2">"clip_id"</span><span class="p">]]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span> <span class="o">/</span> <span class="s2">"clips"</span> <span class="o">/</span> <span class="n">c</span><span class="p">[</span><span class="s2">"file"</span><span class="p">])</span>
         <span class="k">return</span> <span class="n">out</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">list_clips</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]:</span>
         <span class="k">return</span> <span class="p">[</span>
-            <span class="p">{</span><span class="s2">&quot;clip_id&quot;</span><span class="p">:</span> <span class="n">c</span><span class="p">[</span><span class="s2">&quot;clip_id&quot;</span><span class="p">],</span> <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">c</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="n">c</span><span class="p">[</span><span class="s2">&quot;clip_id&quot;</span><span class="p">])}</span>
-            <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">manifest</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;clips&quot;</span><span class="p">,</span> <span class="p">[])</span>
+            <span class="p">{</span><span class="s2">"clip_id"</span><span class="p">:</span> <span class="n">c</span><span class="p">[</span><span class="s2">"clip_id"</span><span class="p">],</span> <span class="s2">"name"</span><span class="p">:</span> <span class="n">c</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"name"</span><span class="p">,</span> <span class="n">c</span><span class="p">[</span><span class="s2">"clip_id"</span><span class="p">])}</span>
+            <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">manifest</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"clips"</span><span class="p">,</span> <span class="p">[])</span>
         <span class="p">]</span>
 
     <span class="c1"># -- alignments ----------------------------------------------------------</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">save_alignments</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">aligns</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">FootageAlignment</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span> <span class="o">/</span> <span class="s2">&quot;alignments.json&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span>
+        <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span> <span class="o">/</span> <span class="s2">"alignments.json"</span><span class="p">)</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span>
             <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">([</span><span class="n">a</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">aligns</span><span class="p">],</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
         <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">load_alignments</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">FootageAlignment</span><span class="p">]:</span>
-        <span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">root</span> <span class="o">/</span> <span class="s2">&quot;alignments.json&quot;</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">root</span> <span class="o">/</span> <span class="s2">"alignments.json"</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">p</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
             <span class="k">return</span> <span class="p">[]</span>
         <span class="k">try</span><span class="p">:</span>
@@ -325,42 +325,42 @@
 
     <span class="c1"># -- renders -------------------------------------------------------------</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">new_render_dir</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">render_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
-        <span class="n">rid</span> <span class="o">=</span> <span class="n">safe_component</span><span class="p">(</span><span class="n">render_id</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;render_id&quot;</span><span class="p">)</span>
-        <span class="n">d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">root</span> <span class="o">/</span> <span class="s2">&quot;renders&quot;</span> <span class="o">/</span> <span class="n">rid</span>
+        <span class="n">rid</span> <span class="o">=</span> <span class="n">safe_component</span><span class="p">(</span><span class="n">render_id</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"render_id"</span><span class="p">)</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">root</span> <span class="o">/</span> <span class="s2">"renders"</span> <span class="o">/</span> <span class="n">rid</span>
         <span class="n">d</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">d</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">write_render_meta</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">render_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">meta</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">rid</span> <span class="o">=</span> <span class="n">safe_component</span><span class="p">(</span><span class="n">render_id</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;render_id&quot;</span><span class="p">)</span>
-        <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span> <span class="o">/</span> <span class="s2">&quot;renders&quot;</span> <span class="o">/</span> <span class="n">rid</span> <span class="o">/</span> <span class="s2">&quot;meta.json&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span>
+        <span class="n">rid</span> <span class="o">=</span> <span class="n">safe_component</span><span class="p">(</span><span class="n">render_id</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"render_id"</span><span class="p">)</span>
+        <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span> <span class="o">/</span> <span class="s2">"renders"</span> <span class="o">/</span> <span class="n">rid</span> <span class="o">/</span> <span class="s2">"meta.json"</span><span class="p">)</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span>
             <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">meta</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
         <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">list_renders</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]:</span>
-        <span class="n">rdir</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">root</span> <span class="o">/</span> <span class="s2">&quot;renders&quot;</span>
+        <span class="n">rdir</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">root</span> <span class="o">/</span> <span class="s2">"renders"</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">rdir</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
             <span class="k">return</span> <span class="p">[]</span>
         <span class="n">rows</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">rdir</span><span class="o">.</span><span class="n">iterdir</span><span class="p">()):</span>
-            <span class="n">meta</span> <span class="o">=</span> <span class="n">child</span> <span class="o">/</span> <span class="s2">&quot;meta.json&quot;</span>
+            <span class="n">meta</span> <span class="o">=</span> <span class="n">child</span> <span class="o">/</span> <span class="s2">"meta.json"</span>
             <span class="k">if</span> <span class="n">child</span><span class="o">.</span><span class="n">is_dir</span><span class="p">()</span> <span class="ow">and</span> <span class="n">meta</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
                 <span class="k">try</span><span class="p">:</span>
                     <span class="n">row</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">meta</span><span class="o">.</span><span class="n">read_text</span><span class="p">())</span>
                 <span class="k">except</span> <span class="p">(</span><span class="ne">OSError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
-                    <span class="n">row</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;render_id&quot;</span><span class="p">:</span> <span class="n">child</span><span class="o">.</span><span class="n">name</span><span class="p">}</span>
-                <span class="n">row</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;render_id&quot;</span><span class="p">,</span> <span class="n">child</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
-                <span class="n">row</span><span class="p">[</span><span class="s2">&quot;_mtime&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">meta</span><span class="o">.</span><span class="n">stat</span><span class="p">()</span><span class="o">.</span><span class="n">st_mtime</span>
+                    <span class="n">row</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"render_id"</span><span class="p">:</span> <span class="n">child</span><span class="o">.</span><span class="n">name</span><span class="p">}</span>
+                <span class="n">row</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">"render_id"</span><span class="p">,</span> <span class="n">child</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+                <span class="n">row</span><span class="p">[</span><span class="s2">"_mtime"</span><span class="p">]</span> <span class="o">=</span> <span class="n">meta</span><span class="o">.</span><span class="n">stat</span><span class="p">()</span><span class="o">.</span><span class="n">st_mtime</span>
                 <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
-        <span class="n">rows</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">r</span><span class="p">:</span> <span class="n">r</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;_mtime&quot;</span><span class="p">),</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">rows</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">r</span><span class="p">:</span> <span class="n">r</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"_mtime"</span><span class="p">),</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">rows</span></div>
 
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_safe_ext</span><span class="p">(</span><span class="n">ext</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-    <span class="n">e</span> <span class="o">=</span> <span class="p">(</span><span class="n">ext</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)</span>
+    <span class="n">e</span> <span class="o">=</span> <span class="p">(</span><span class="n">ext</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s2">"."</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">e</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">e</span><span class="o">.</span><span class="n">isalnum</span><span class="p">()</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">e</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">5</span><span class="p">:</span>
-        <span class="k">return</span> <span class="s2">&quot;.bin&quot;</span>
-    <span class="k">return</span> <span class="s2">&quot;.&quot;</span> <span class="o">+</span> <span class="n">e</span>
+        <span class="k">return</span> <span class="s2">".bin"</span>
+    <span class="k">return</span> <span class="s2">"."</span> <span class="o">+</span> <span class="n">e</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_probe_duration</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
@@ -370,12 +370,12 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_hash_file</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">chunk</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="mi">20</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;sha256 of a file, read in ``chunk``-sized blocks (never load the whole file).&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""sha256 of a file, read in ``chunk``-sized blocks (never load the whole file)."""</span>
     <span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
 
     <span class="n">h</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">()</span>
-    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;rb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-        <span class="k">for</span> <span class="n">block</span> <span class="ow">in</span> <span class="nb">iter</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">chunk</span><span class="p">),</span> <span class="sa">b</span><span class="s2">&quot;&quot;</span><span class="p">):</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">"rb"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">block</span> <span class="ow">in</span> <span class="nb">iter</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">chunk</span><span class="p">),</span> <span class="sa">b</span><span class="s2">""</span><span class="p">):</span>
             <span class="n">h</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">block</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">h</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
 
@@ -384,43 +384,43 @@
 <a class="viewcode-back" href="../../../module_docs/muvid/footage/workspace.html#muvid.footage.workspace.FootageWorkspace">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">FootageWorkspace</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A caller&#39;s private music-video area, addressed by ``email``.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""A caller's private music-video area, addressed by ``email``."""</span>
 
     <span class="n">email</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">root</span><span class="p">:</span> <span class="n">Path</span>
 
     <span class="nd">@classmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">for_email</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">email</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">root</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;FootageWorkspace&quot;</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">for_email</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">email</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">root</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"FootageWorkspace"</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">email</span><span class="o">=</span><span class="n">email</span><span class="p">,</span> <span class="n">root</span><span class="o">=</span><span class="n">root</span> <span class="ow">or</span> <span class="n">data_root</span><span class="p">())</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">projects_dir</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">root</span>
-            <span class="o">/</span> <span class="s2">&quot;music_video&quot;</span>
-            <span class="o">/</span> <span class="s2">&quot;projects&quot;</span>
-            <span class="o">/</span> <span class="n">safe_component</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">email</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;email&quot;</span><span class="p">)</span>
+            <span class="o">/</span> <span class="s2">"music_video"</span>
+            <span class="o">/</span> <span class="s2">"projects"</span>
+            <span class="o">/</span> <span class="n">safe_component</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">email</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"email"</span><span class="p">)</span>
         <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">project_root</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">project_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">projects_dir</span> <span class="o">/</span> <span class="n">safe_component</span><span class="p">(</span><span class="n">project_id</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;project_id&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">projects_dir</span> <span class="o">/</span> <span class="n">safe_component</span><span class="p">(</span><span class="n">project_id</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"project_id"</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">create_project</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">project_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">canvas</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">DEFAULT_CANVAS_NAME</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">project_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">,</span> <span class="n">canvas</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">DEFAULT_CANVAS_NAME</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MusicVideoFootageProject</span><span class="p">:</span>
         <span class="n">root</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">project_root</span><span class="p">(</span><span class="n">project_id</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">root</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
             <span class="k">raise</span> <span class="ne">FileExistsError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;project </span><span class="si">{</span><span class="n">project_id</span><span class="si">!r}</span><span class="s2"> already exists for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">email</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="sa">f</span><span class="s2">"project </span><span class="si">{</span><span class="n">project_id</span><span class="si">!r}</span><span class="s2"> already exists for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">email</span><span class="si">}</span><span class="s2">"</span>
             <span class="p">)</span>
         <span class="n">root</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">canvas_name</span> <span class="o">=</span> <span class="n">canvas</span> <span class="k">if</span> <span class="n">canvas</span> <span class="ow">in</span> <span class="n">CANVASES</span> <span class="k">else</span> <span class="n">DEFAULT_CANVAS_NAME</span>
-        <span class="p">(</span><span class="n">root</span> <span class="o">/</span> <span class="s2">&quot;manifest.json&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span>
+        <span class="p">(</span><span class="n">root</span> <span class="o">/</span> <span class="s2">"manifest.json"</span><span class="p">)</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span>
             <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span>
                 <span class="p">{</span>
-                    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="n">title</span> <span class="ow">or</span> <span class="n">project_id</span><span class="p">,</span>
-                    <span class="s2">&quot;canvas&quot;</span><span class="p">:</span> <span class="n">canvas_name</span><span class="p">,</span>
-                    <span class="s2">&quot;created&quot;</span><span class="p">:</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">(),</span>
+                    <span class="s2">"title"</span><span class="p">:</span> <span class="n">title</span> <span class="ow">or</span> <span class="n">project_id</span><span class="p">,</span>
+                    <span class="s2">"canvas"</span><span class="p">:</span> <span class="n">canvas_name</span><span class="p">,</span>
+                    <span class="s2">"created"</span><span class="p">:</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">(),</span>
                 <span class="p">},</span>
                 <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
             <span class="p">)</span>
@@ -429,8 +429,8 @@
 
     <span class="k">def</span><span class="w"> </span><span class="nf">open_project</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">project_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MusicVideoFootageProject</span><span class="p">:</span>
         <span class="n">root</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">project_root</span><span class="p">(</span><span class="n">project_id</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">root</span> <span class="o">/</span> <span class="s2">&quot;manifest.json&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
-            <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;no project </span><span class="si">{</span><span class="n">project_id</span><span class="si">!r}</span><span class="s2"> for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">email</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">root</span> <span class="o">/</span> <span class="s2">"manifest.json"</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"no project </span><span class="si">{</span><span class="n">project_id</span><span class="si">!r}</span><span class="s2"> for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">email</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">MusicVideoFootageProject</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">email</span><span class="p">,</span> <span class="n">project_id</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">list_projects</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]:</span>
@@ -439,20 +439,20 @@
             <span class="k">return</span> <span class="p">[]</span>
         <span class="n">rows</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">pdir</span><span class="o">.</span><span class="n">iterdir</span><span class="p">():</span>
-            <span class="n">spec</span> <span class="o">=</span> <span class="n">child</span> <span class="o">/</span> <span class="s2">&quot;manifest.json&quot;</span>
+            <span class="n">spec</span> <span class="o">=</span> <span class="n">child</span> <span class="o">/</span> <span class="s2">"manifest.json"</span>
             <span class="k">if</span> <span class="n">child</span><span class="o">.</span><span class="n">is_dir</span><span class="p">()</span> <span class="ow">and</span> <span class="n">spec</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
                 <span class="k">try</span><span class="p">:</span>
-                    <span class="n">title</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">read_text</span><span class="p">())</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;title&quot;</span><span class="p">,</span> <span class="n">child</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+                    <span class="n">title</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">read_text</span><span class="p">())</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"title"</span><span class="p">,</span> <span class="n">child</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
                 <span class="k">except</span> <span class="p">(</span><span class="ne">OSError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
                     <span class="n">title</span> <span class="o">=</span> <span class="n">child</span><span class="o">.</span><span class="n">name</span>
                 <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                     <span class="p">{</span>
-                        <span class="s2">&quot;project_id&quot;</span><span class="p">:</span> <span class="n">child</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
-                        <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="n">title</span><span class="p">,</span>
-                        <span class="s2">&quot;_mtime&quot;</span><span class="p">:</span> <span class="n">spec</span><span class="o">.</span><span class="n">stat</span><span class="p">()</span><span class="o">.</span><span class="n">st_mtime</span><span class="p">,</span>
+                        <span class="s2">"project_id"</span><span class="p">:</span> <span class="n">child</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                        <span class="s2">"title"</span><span class="p">:</span> <span class="n">title</span><span class="p">,</span>
+                        <span class="s2">"_mtime"</span><span class="p">:</span> <span class="n">spec</span><span class="o">.</span><span class="n">stat</span><span class="p">()</span><span class="o">.</span><span class="n">st_mtime</span><span class="p">,</span>
                     <span class="p">}</span>
                 <span class="p">)</span>
-        <span class="n">rows</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">r</span><span class="p">:</span> <span class="n">r</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;_mtime&quot;</span><span class="p">),</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">rows</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">r</span><span class="p">:</span> <span class="n">r</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"_mtime"</span><span class="p">),</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">rows</span></div>
 
 </pre></div>
