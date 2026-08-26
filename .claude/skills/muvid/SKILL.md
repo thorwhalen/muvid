@@ -165,6 +165,21 @@ Rules:
   overlap (or there will be silent / black gaps in the final video).
 - Never propose a `lipsync` shot that doesn't reference a character
   with at least one curated image — check before suggesting it.
+- `**camera**` is free prose and reaches the image prompts verbatim, but the
+  `animation` strategy has to translate it into `an`'s closed move vocabulary,
+  and a direction it cannot name renders the shot **locked off**. The phrases
+  it recognises (case- and hyphen-insensitive; combine them with anything):
+
+    `static` · `hold` · `locked` / `locked off` / `lock off` · `no movement`
+    · `push in` / `push into` / `dolly in` · `pull out` / `pull back` /
+    `dolly out` · `zoom in` · `zoom out` · `pan left` · `pan right` ·
+    `tilt up` / `crane up` · `tilt down` / `crane down`
+
+  The first move you write wins ("pan left, then push in" pans), and a move you
+  negate is refused ("static, no push-in" holds). Anything else — "handheld",
+  "truck left", "dolly zoom" — holds the camera and emits a warning; write one
+  of the phrases above if the move matters. The list is
+  `muvid.renderers.animation.AN_CAMERA_MOVE_PHRASES`.
 
 After writing the markdown, **show the user the diff** (or just the
 content) and ask "edit anything before I apply this?" before running

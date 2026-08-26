@@ -198,22 +198,38 @@ the `still` strategy when `an` is unusable.
 
 **The two packages do not share a camera vocabulary, and the boundary translates.**
 `ShotSpec.camera` is free prose a director writes into the script (`**camera**: slow
-push-in`); `an`'s `camera.move` is a closed set of named moves (`hold`, `push_in`,
-`pull_out`, `zoom_in`, `zoom_out`, `pan_left`, `pan_right`, `tilt_up`, `tilt_down` at
-`an` 0.1.58 — `an.ir.camera.CAMERA_MOVES` is the SSOT, and it grows), and a name outside
-it is a hard refusal at **both** validate and compile. So `animation.an_camera_move`
-maps prose → move at the boundary, and a direction it cannot name resolves to `hold`
-(`an`'s "the camera does not move") rather than to an invented move. Never pass the
-prose through: muvid#44 emitted `move: static`, which `an` has never implemented, so
-every animation render failed validate and fell back to `still` — silently, because
-nothing in the suite compiled the synthesized `scene.md`.
+push-in`); `an`'s `camera.move` is a closed set of named moves, and a name outside it is
+a hard refusal at **both** validate and compile. So `animation.an_camera_move` maps
+prose → move at the boundary. Never pass the prose through: muvid#44 emitted
+`move: static`, which `an` has never implemented, so every animation render failed
+validate and fell back to `still` — silently, because nothing in the suite compiled the
+synthesized `scene.md`.
 
-`tests/test_animation_camera.py` now does, and it pins the table by **importing**
-`an.ir.camera.CAMERA_MOVES` rather than re-typing it — a hand-copied vocabulary is how
-`static` survived the day `an` tightened the rule. Those pins **skip in CI** (`an` is
-not installed there); they are verified on a developer machine. The half that needs no
-`an` — that the template emits the translated move and never the literal `static` —
-runs everywhere.
+**That closed set has two eras, and muvid pins neither.** `hold`, `push_in`, `pull_out`,
+`zoom_in` and `zoom_out` have always been there. The four *translating* moves —
+`pan_left`, `pan_right`, `tilt_up`, `tilt_down` — arrived with **an#109** and shipped in
+**`an` 0.1.65**; on 0.1.64 and below `an` refuses them exactly as it refused `static`.
+muvid declares `an` in no extra and no floor (the import is soft by design), so
+`an_camera_move` reads the vocabulary the **installed** `an` reports
+(`an.ir.camera.CAMERA_MOVES`, the SSOT) and degrades an unavailable move to `hold` with
+a warning. That is the floor, enforced where the answer is actually knowable. Do not
+write a version number into a doc without checking `git log -S<move> ` in `an` — an
+earlier draft of this paragraph said 0.1.58, which is the issue's five-move era.
+
+**A direction the table cannot name warns.** `an`'s strictness exists because a camera
+move that silently no-ops is a bug; the translation boundary must not commit that bug on
+the way in. `an_camera_move("truck left")` returns `hold` **and** warns. A move the
+director explicitly *refused* ("static, no push-in") is obeyed silently — matching is by
+word, clause-scoped, and the director's first-written move wins over table order.
+
+**The vocabulary guard runs in CI, and had to be made to.** A guard that imports `an`
+skips on every runner (CI installs `ai,mcp`; `an` is in neither), which left the exact
+drift muvid#44 was un-gated in the only environment that blocks a merge — measured:
+adding a bogus phrase→move pair kept the suite green. So `tests/data/an_camera_moves.json`
+**records** `an.ir.camera.CAMERA_MOVES` (generated, never hand-typed), the table is pinned
+against the recording in CI, and the imported-`an` tests are the recording's *freshness*
+check on a developer machine. Same shape as reelee-web's `schemas/destructive-tools.json`.
+Refresh with `tests.test_animation_camera._refresh_snapshot()`.
 
 ## Connector duty — `muvid_*` tools are live
 
