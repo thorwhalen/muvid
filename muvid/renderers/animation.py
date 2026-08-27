@@ -21,6 +21,21 @@ is TRANSLATED here, at the boundary, and never passed through
 (muvid#44: this module emitted ``move: static``, which ``an`` has never
 implemented, so every animation render failed validate and fell back).
 
+Failure handling: an engine that never ran is not an engine that ran and
+refused, and muvid#46 was filed because this module collapsed the two. ``an``
+states a refusal as *data* (``OrchestratorReport.success is False``), so the old
+handling was one ``if`` that discarded ``report.error``, ``report.validation``
+and ``report.verifications`` and returned a still image under the shot's own
+filename. The output was wrong rather than absent (a freeze frame reads as a
+creative choice), the provenance line recorded the REQUESTED strategy so the
+affected shots could not be found afterwards, and ``still`` can reach
+``falaw.generate_image`` — a silent degradation that bills, under a gate that
+``cost.py`` had already told the shot was free. Now: a missing ``an`` raises
+:class:`~muvid.renderers._errors.RendererUnavailable` and the DISPATCHER
+degrades and journals it, because the dispatcher is where the provenance line is
+written; an ``an`` that refuses raises
+:class:`~muvid.renderers._errors.AnimationRenderError` carrying every finding.
+
 That closed set is not fixed, and muvid declares no ``an`` floor — ``an`` is
 in no extra, the import below is soft, and a user may have any version.
 ``hold``/``push_in``/``pull_out``/``zoom_in``/``zoom_out`` have always been
@@ -41,6 +56,7 @@ from pathlib import Path
 from typing import Sequence
 
 from muvid.renderers import RenderContext
+from muvid.renderers._errors import AnimationRenderError, RendererUnavailable
 
 #: ``an``'s spelling of "the camera does not move", and what a direction this
 #: table cannot name resolves to. Not a guess dressed as a move: an
@@ -258,19 +274,112 @@ def an_camera_move(
     return move
 
 
+def _finding_lines(findings, *, source: str) -> list[str]:
+    """Render ``an``'s error-severity findings as one diagnostic line each.
+
+    Handles BOTH of ``an``'s finding types, which are different dataclasses in
+    different modules: :class:`an.ir.validate.ValidationFinding` (severity,
+    ir_path, description) and :class:`an.verify._base.Finding`, which adds
+    ``suggested_fix``. Read by name with ``getattr`` rather than imported,
+    because this module must keep working with an ``an`` it does not pin — and
+    because the formatter runs on the failure path, where raising a second
+    exception while explaining the first is the worst possible outcome.
+    """
+    out: list[str] = []
+    for f in findings or ():
+        if getattr(f, "severity", None) != "error":
+            continue
+        line = (
+            f"  [{source}] {getattr(f, 'ir_path', '?')}: {getattr(f, 'description', f)}"
+        )
+        fix = getattr(f, "suggested_fix", None)
+        if fix:
+            line += f"\n      fix: {fix}"
+        out.append(line)
+    return out
+
+
+def _format_an_failure(report, *, scene_dir: Path, shot_id: str) -> str:
+    """Turn ``an``'s failure report into a message that names the cause.
+
+    **No single field is populated in every failure shape**, which is why this
+    reads three. ``an.orchestrate`` has five ways to return ``success=False``
+    and they disagree about where the diagnosis lives:
+
+    ===========================  ==========  ==============  =================
+    shape                        ``error``   ``validation``  findings in
+    ===========================  ==========  ==============  =================
+    validation crashed           set         **None**        --
+    validation did not pass      set         set             ``validation``
+    pre-render verifier error    **None**    set             ``verifications``
+    render failed                set         set             --
+    post-render verifier error   **None**    set             ``verifications``
+    ===========================  ==========  ==============  =================
+
+    So a formatter that reads ``report.error`` alone reports an empty string for
+    two of the five — including every :class:`an.verify.layout.LayoutLintVerifier`
+    refusal, which is the one muvid can actually provoke by synthesizing a bad
+    ``scene.md``. Reading only ``validation`` misses the other three.
+
+    The last resort is deliberate rather than defensive: if ``an`` says it failed
+    but carries no error, no failed validation and no error-severity finding, the
+    message says exactly that and dumps the report. An unexplained failure must
+    still be a *loud* failure — silence is the bug this function exists to end.
+    """
+    lines: list[str] = []
+    error = getattr(report, "error", None)
+    if error:
+        lines.append(f"  {error}")
+    lines += _finding_lines(
+        getattr(getattr(report, "validation", None), "findings", ()), source="validate"
+    )
+    for vr in getattr(report, "verifications", ()) or ():
+        lines += _finding_lines(getattr(vr, "findings", ()), source="verify")
+    if not lines:
+        lines.append(
+            "  `an` reported success=False but carried no error, no failed "
+            "validation and no error-severity finding. This is either an `an` "
+            "bug or a report shape muvid does not know how to read; the raw "
+            f"report is: {report!r}"
+        )
+    return (
+        f"`an` refused to render shot {shot_id!r}:\n"
+        + "\n".join(lines)
+        + f"\nThe scene muvid synthesized is at {scene_dir / 'scene.md'} — it is "
+        "left on disk precisely so this is diagnosable."
+    )
+
+
 def render_animation(ctx: RenderContext, *, quality: str = "balanced") -> Path:
     """Synthesize a tiny ``an`` scene for this shot and orchestrate it.
 
-    Falls back to a "still" render if the ``an`` package isn't usable
-    (it currently has heavy native deps for the cutout backend).
+    Raises :class:`~muvid.renderers._errors.RendererUnavailable` when ``an``
+    is not installed — the dispatcher answers that by rendering a ``still`` and
+    journalling that it did. Raises
+    :class:`~muvid.renderers._errors.AnimationRenderError` when ``an`` IS
+    installed and refuses the scene, because that is a bug in what muvid
+    synthesized and a still image is a wrong answer, not a lesser one (muvid#46).
     """
     try:
         from an.orchestrate import orchestrate
-    except Exception:
-        # Fall back to the still strategy.
-        from muvid.renderers.still import render_still
-
-        return render_still(ctx, quality=quality)
+    except ImportError as e:
+        # ImportError only, never bare `Exception`. The narrower catch is
+        # already the house style two functions below in
+        # `_make_lipsync_provider`; the broad one here meant an `an` that is
+        # INSTALLED BUT BROKEN — a bad transitive dep, a syntax error in a
+        # submodule — was indistinguishable from an absent one, and degraded
+        # just as quietly. A non-import failure now propagates its own
+        # traceback. The original message is carried through, so "not
+        # installed" and "installed, but its native deps are not" read
+        # differently in the warning the dispatcher emits.
+        raise RendererUnavailable(
+            f"`an` is not usable, so shot {ctx.shot.id!r} cannot be animated: "
+            f"{e}. `an` is deliberately declared in no muvid extra and carries "
+            "no version floor, so this is a supported state; `pip install an` "
+            "to render animation shots.",
+            strategy="animation",
+            fallback="still",
+        ) from e
 
     scene_dir = ctx.shot_dir / "an_scene"
     scene_dir.mkdir(parents=True, exist_ok=True)
@@ -281,10 +390,18 @@ def render_animation(ctx: RenderContext, *, quality: str = "balanced") -> Path:
     orchestrate_kwargs = {"lipsync": lipsync} if lipsync is not None else {}
     report = orchestrate(str(scene_dir), **orchestrate_kwargs)
     if not getattr(report, "success", False):
-        # Fall back rather than throwing a wall of errors.
-        from muvid.renderers.still import render_still
-
-        return render_still(ctx, quality=quality)
+        # NOT a fallback. `an` states a refusal as data rather than an
+        # exception (`OrchestratorReport.success is False`), so the swallow
+        # this replaces was a single `if` that discarded `report.error`,
+        # `report.validation` and `report.verifications` and returned a freeze
+        # frame under the shot's own filename. Three things made that worse
+        # than a missing output: the still reads as a creative choice, the
+        # provenance line recorded the REQUESTED strategy so the affected shots
+        # could not be found afterwards, and `still` can reach
+        # `falaw.generate_image` — a silent degradation that bills.
+        raise AnimationRenderError(
+            _format_an_failure(report, scene_dir=scene_dir, shot_id=ctx.shot.id)
+        )
     out = ctx.shot_dir / "output.mp4"
     src = Path(report.output_path)
     if src != out:
