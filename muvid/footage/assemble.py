@@ -116,8 +116,9 @@ def _part_plan(cuts: Sequence[AssemblyCut], fps: int) -> list[_Part]:
     on a three-cut chain: parts ``[54, 12, 48, 12, 54]``, concat by stream copy,
     180 frames for a 6.000000 s song.
 
-    Raises ``ValueError`` — BEFORE any encoding — if a transition does not fit at
-    this fps. :func:`~muvid.footage.edl.validate_edl` gates the fit in SONG time
+    Preconditions, both raising ``ValueError`` BEFORE any encoding: no transition
+    on cut 0 (there is nothing to blend from, and ``cuts[-1]`` would wrap), and
+    every transition fits at this fps. :func:`~muvid.footage.edl.validate_edl` gates the fit in SONG time
     with a 1 ms tolerance and cannot know the render rate, so a span within a frame
     of the limit can still fail here.
     """
@@ -147,6 +148,17 @@ def _part_plan(cuts: Sequence[AssemblyCut], fps: int) -> list[_Part]:
         post = d - pre
         tail = round(n_trans[i + 1] * TRANSITION_SPLIT) if i + 1 < len(cuts) else 0
         if d:
+            if i == 0:
+                # `cuts[i - 1]` would wrap to the LAST cut of the song and add
+                # `pre` uncancelled frames, so the telescoping identity below would
+                # quietly stop holding. `validate_edl` rejects this, but it is
+                # another module's gate and `_part_plan` takes AssemblyCuts
+                # directly — the module already raises before encoding for a
+                # transition that does not fit, so this gets the same treatment.
+                raise ValueError(
+                    "cut 0 carries a transition but nothing precedes it; a "
+                    "transition annotates an entry's entrance."
+                )
             prev = cuts[i - 1]
             parts.append(
                 _Part(
@@ -325,6 +337,49 @@ def _render_transition(part, out: Path, *, w, h, fps, crf: int, preset: str) -> 
     )
 
 
+def _render_first_usable(candidates, part: Path, **render_kwargs) -> None:
+    """Render the first candidate that actually yields frames; black if none does.
+
+    ONE implementation, used by both part kinds, and that is the point. The
+    per-cut and the transition-fallback paths were doing the same three things —
+    render, check the part really has a video stream, degrade — and only the
+    first got it right. The transition path re-rendered from ``p.cut``
+    *unconditionally* and then never re-checked, so when the incoming side was the
+    one that had failed it produced a **streamless** part: the concat demuxer
+    swallows it in silence and ffmpeg exits 0, so the delivered video came up short
+    by exactly the transition length with no error anywhere. Measured: 168 frames
+    against a 180-frame song.
+
+    Two rules follow, and they are why this is a loop rather than a preference:
+
+    - **Verify every attempt.** ``-frames:v`` is a cap, not a guarantee — a clip
+      whose audio outlives its video (alignment durations come from the AUDIO
+      length, so this shape is normal and documented) legitimately validates a span
+      past its last video frame and can yield nothing at all.
+    - **Try the other side before giving up on picture.** The fallback exists
+      *because* one side failed; preferring a fixed side ignores which. Black is the
+      last resort, not the second option — a 0.4 s black flash where the surviving
+      clip could have carried the boundary is a visible defect, not a graceful one.
+    """
+    for cut in candidates:
+        if not cut.clip_path:
+            continue
+        _render_part(cut, part, **render_kwargs)
+        if not part.exists() or _has_video_frames(part):
+            # A part that does not exist at all is a DIFFERENT failure — ffmpeg
+            # did not write one — and degrading it to black here would cost a
+            # second invocation per cut, breaking the one-ffmpeg-per-part bound
+            # that muvid#24's OOM fix is pinned by
+            # (`test_assemble_runs_one_bounded_ffmpeg_per_cut`). This function
+            # answers exactly one question: "the file is there, but is anything
+            # IN it?"
+            return
+        part.unlink(missing_ok=True)
+    _render_part(
+        replace(candidates[0], clip_path="", clip_in=0.0), part, **render_kwargs
+    )
+
+
 def _audio_args(song_path: str) -> list[str]:
     """Stream-copy the master when it already is the delivery contract; else encode to it.
 
@@ -418,30 +473,25 @@ def assemble_music_video(
             if p.kind == "xfade":
                 _render_transition(p, part, w=w, h=h, fps=fps, crf=crf, preset=preset)
                 if part.exists() and not _has_video_frames(part):
-                    # One side yielded nothing. The window still exists in song time,
-                    # so re-render it from the OTHER side alone: a hard cut displaced
-                    # by at most duration/2, with the frame count unchanged. Falling
-                    # through would shorten the whole render.
+                    # One side yielded nothing, so the blend is not renderable. The
+                    # window still exists in song time — fill it from a side that CAN
+                    # supply frames: a hard cut displaced by at most duration/2, with
+                    # the frame count unchanged.
                     part.unlink()
-                    if p.cut.clip_path:
-                        solo_side = replace(p.cut, clip_in=p.clip_in)
-                    elif p.prev.clip_path:
-                        solo_side = replace(p.prev, clip_in=p.prev_in)
-                    else:
-                        solo_side = replace(p.cut, clip_path="", clip_in=0.0)
-                    _render_part(solo_side, part, **render_kwargs)
+                    _render_first_usable(
+                        [
+                            replace(p.cut, clip_in=p.clip_in),
+                            replace(p.prev, clip_in=p.prev_in),
+                        ],
+                        part,
+                        **render_kwargs,
+                    )
             else:
                 # `clip_in` is the PART's in-point, not the cut's: a cut whose head
                 # was consumed by an incoming transition starts later in its clip.
-                _render_part(replace(p.cut, clip_in=p.clip_in), part, **render_kwargs)
-                if p.cut.clip_path and part.exists() and not _has_video_frames(part):
-                    # The source yielded no frames at all for this span (audio outlived
-                    # the video). The span still exists in song time — fill it black
-                    # rather than silently shortening the render.
-                    part.unlink()
-                    _render_part(
-                        replace(p.cut, clip_path="", clip_in=0.0), part, **render_kwargs
-                    )
+                _render_first_usable(
+                    [replace(p.cut, clip_in=p.clip_in)], part, **render_kwargs
+                )
             names.append(name)
         if not names:
             raise ValueError("no renderable cuts — every span rounds to zero frames")

@@ -307,7 +307,7 @@ def test_both_xfade_inputs_are_seeked_to_the_same_instant():
     assert x.clip_in == pytest.approx(cuts[1].clip_in - 6 / FPS)
 
 
-def _raw_cuts(*, t1, t2) -> list[AssemblyCut]:
+def _raw_cuts(*, t1, t2, t0=None) -> list[AssemblyCut]:
     """Cuts built directly, bypassing `validate_edl`.
 
     The part plan takes ``AssemblyCut``s, so these tests are about ITS arithmetic;
@@ -315,7 +315,7 @@ def _raw_cuts(*, t1, t2) -> list[AssemblyCut]:
     long transitions instead of measuring what they name.
     """
     return [
-        AssemblyCut(0.0, 2.0, "A", 2.0, "a.mp4"),
+        AssemblyCut(0.0, 2.0, "A", 2.0, "a.mp4", t0),
         AssemblyCut(2.0, 4.0, "B", 2.0, "b.mp4", t1),
         AssemblyCut(4.0, 6.0, "C", 2.0, "c.mp4", t2),
     ]
@@ -335,6 +335,18 @@ def test_a_transition_that_does_not_fit_at_this_fps_fails_before_any_encoding():
     ]
     with pytest.raises(ValueError, match="transitions claim"):
         _part_plan(cuts, FPS)
+
+
+def test_a_transition_on_cut_zero_raises_here_too_rather_than_wrapping():
+    """`validate_edl` blocks this, but it is another module's gate.
+
+    ``_part_plan`` takes ``AssemblyCut``s directly, so a caller reaching it another
+    way would negative-index to ``cuts[-1]`` — blending cut 0 with the LAST cut of
+    the song and adding ``pre`` frames that no ``tail`` term cancels, quietly
+    breaking the telescoping identity this function's docstring asserts.
+    """
+    with pytest.raises(ValueError, match="nothing precedes it"):
+        _part_plan(_raw_cuts(t0=T, t1=None, t2=None), FPS)
 
 
 def test_a_transition_that_rounds_to_zero_frames_warns_rather_than_no_opping():
@@ -420,6 +432,38 @@ def _clip(tmp_path, name, seconds, *, src="testsrc2"):
     return out
 
 
+def _mean_luma(video, t: float) -> float:
+    """Average Y of the frame at ``t``, via a piped PPM. Black is ~0, picture is not.
+
+    Distinguishes "the window was filled" from "the window was filled with black",
+    which no frame count can.
+    """
+    import numpy as np
+
+    r = subprocess.run(
+        [
+            "ffmpeg",
+            "-v",
+            "error",
+            "-ss",
+            f"{t:.3f}",
+            "-i",
+            str(video),
+            "-frames:v",
+            "1",
+            "-f",
+            "image2pipe",
+            "-vcodec",
+            "ppm",
+            "-",
+        ],
+        capture_output=True,
+        check=True,
+    )
+    body = r.stdout.split(b"\n", 3)[3]
+    return float(np.frombuffer(body, dtype=np.uint8).mean())
+
+
 def _nb_frames(path) -> int:
     r = subprocess.run(
         [
@@ -475,6 +519,115 @@ def test_a_transitioned_chain_renders_exactly_the_songs_frames(tmp_path):
         fps=FPS,
     )
     assert _nb_frames(out) == round(SONG * FPS)
+
+
+def _short_video_long_audio(tmp_path, name, *, video_s, audio_s):
+    """A clip whose AUDIO outlives its video — a normal, documented shape.
+
+    Alignment durations come from the audio, so such a clip legitimately validates
+    a span past its last video frame. `_render_part`'s `tpad` exists for exactly
+    this; when even the first frame is past the end, the part comes back with no
+    video stream at all.
+    """
+    out = tmp_path / f"{name}.mp4"
+    subprocess.run(
+        [
+            "ffmpeg",
+            "-y",
+            "-loglevel",
+            "error",
+            "-f",
+            "lavfi",
+            "-i",
+            f"testsrc2=size=320x180:rate=30:duration={video_s}",
+            "-f",
+            "lavfi",
+            "-i",
+            f"sine=frequency=330:duration={audio_s}",
+            "-c:v",
+            "libx264",
+            "-pix_fmt",
+            "yuv420p",
+            "-crf",
+            "18",
+            "-c:a",
+            "aac",
+            "-t",
+            str(audio_s),
+            str(out),
+        ],
+        check=True,
+    )
+    return out
+
+
+@needs_ffmpeg
+def test_a_transition_whose_incoming_side_has_no_frames_still_fills_the_window(
+    tmp_path,
+):
+    """The streamless-part bug: the render came up SHORT by the transition length.
+
+    The fallback used to re-render from ``p.cut`` unconditionally — which, when the
+    incoming side is the one that failed, is the side that just failed. Nothing
+    re-checked the result, so a part with **no video stream** reached the concat
+    list. The concat demuxer swallows it in silence and ffmpeg exits 0, so the
+    delivered video was 168 frames of a 180-frame song with no error anywhere.
+
+    Measured on the same shapes: without the transition this EDL renders correctly,
+    so enabling one is what broke it.
+    """
+    from muvid.footage.assemble import assemble_music_video
+    from muvid.visualize.ffmpeg import has_filter
+
+    if not has_filter("xfade"):
+        pytest.skip("this ffmpeg build has no 'xfade' filter")
+
+    good = _clip(tmp_path, "good", 7.0)
+    broken = _short_video_long_audio(tmp_path, "broken", video_s=1.0, audio_s=7.0)
+    song = tmp_path / "song.wav"
+    subprocess.run(
+        [
+            "ffmpeg",
+            "-y",
+            "-loglevel",
+            "error",
+            "-f",
+            "lavfi",
+            "-i",
+            f"sine=frequency=440:duration={SONG}",
+            str(song),
+        ],
+        check=True,
+    )
+    # B's alignment duration is its AUDIO length, which is what makes the span
+    # validate even though B's video ended at 1.0 s.
+    aligns = [
+        FootageAlignment("A", 0.0, 0.9, 7.0, (0.0, 6.0)),
+        FootageAlignment("B", 0.0, 0.9, 7.0, (0.0, 6.0)),
+    ]
+    edl = [EdlEntry(0.0, 3.0, "A"), EdlEntry(3.0, 6.0, "B", T)]
+    cuts = derive_cuts(
+        validate_edl(edl, aligns, SONG), aligns, {"A": str(good), "B": str(broken)}
+    )
+    out = assemble_music_video(
+        cuts,
+        song_path=str(song),
+        out_path=str(tmp_path / "final.mp4"),
+        canvas=(320, 180),
+        fps=FPS,
+    )
+    assert _nb_frames(out) == round(SONG * FPS), (
+        "the transitioned render is short — a part with no video stream reached "
+        "the concat list and was silently dropped"
+    )
+    # ...and the window shows the SURVIVING side, not black. Frame count alone
+    # cannot see this: filling the window with black is the correct LENGTH and a
+    # visible 0.4 s flash. The blend is centred on t=3.0, so t=2.9 is inside it
+    # and inside A's coverage — A can carry it, so A must.
+    assert _mean_luma(out, 2.9) > 24.0, (
+        "the transition window rendered black even though the outgoing clip could "
+        "supply it; the fallback must try the other side before giving up on picture"
+    )
 
 
 @needs_ffmpeg
