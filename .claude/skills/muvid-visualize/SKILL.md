@@ -37,7 +37,7 @@ own callable. ×realtime figures are for a 2-core box — divide by your cores.
 | `still` *(default w/ image)* | cover held on a 16:9 canvas | **0.4×** (loop-copy fast path) |
 | `cqt` *(default w/o image)* | constant-Q bars, pitch-aligned — most musical | 2.5× |
 | `bars` | classic EQ bars | 2.1× |
-| `spectrum` | scrolling spectrogram | 2.2× |
+| `spectrum` | scrolling spectrogram, **beat-flashing** | 2.2× |
 | `waves` | waveform | 2.5× (biggest files) |
 | `scope` | stereo Lissajous, dynamics-driven | 1.7× |
 | `ken_burns` | slow pan/zoom (Python/Pillow) | **6.5×** (slowest) |
@@ -47,7 +47,42 @@ accent, the sharp cover centred on top. Tune via `options=`:
 `cover_fraction`, `cover_alpha`, `tint` (a `colorchannelmixer=...` recolouring
 white→accent; `""` keeps the visualizer's own colour), `bg_dim`, `bg_saturation`,
 `blurred_background`, plus per-visual knobs (`zoom`/`scale`/`mirror` for scope,
-`gain`/`overlap`/`color` for spectrum, `colors`/`mode` for waves/bars).
+`gain`/`overlap`/`color`/`flash`/`flash_brightness`/`flash_saturation` for
+spectrum, `colors`/`mode` for waves/bars).
+
+## Beat-reactivity — the flash seam
+
+**`spectrum` pulses on every onset, and it does so BY DEFAULT.** Nothing else in
+this repo's docs said so, which is why an agent reading them could neither
+discover the effect nor turn it off (muvid#5).
+
+Because muvid renders from an audio *file* rather than a live stream, the whole
+loudness envelope is known before the first frame is drawn.
+`muvid.visualize.onset_envelope()` turns it into a per-frame transient curve with
+phosphor-style decay, and `flash_filter()` bakes that curve into an ffmpeg
+`sendcmd` script that pulses a named filter's brightness and saturation. Pure
+numpy + ffmpeg — no realtime path, no extra dependency.
+
+| knob | default | effect |
+|---|---|---|
+| `flash` | `True` | `options={"flash": False}` renders `spectrum` without it |
+| `flash_brightness` | `0.25` | peak `eq` brightness boost at a full-strength pulse |
+| `flash_saturation` | `0.8` | peak saturation boost, added to 1.0 |
+
+**There is no `flash_decay` option.** `FLASH_DECAY = 0.5` is `flash_filter`'s own
+keyword default and `spectrum_visual` never forwards an option to it, so a call
+passing one is silently ignored. Change it by calling `flash_filter` yourself.
+
+**It is a general seam, not a spectrum feature.** Any visual can append
+`flash_filter(ctx.audio, fps=ctx.fps, duration=ctx.duration, workdir=ctx.workdir)`
+to its own chain — both it and `onset_envelope` are exported from
+`muvid.visualize`. Note the hook is `flash_filter` itself, not `_reactive_plan`,
+which has none.
+
+**It degrades rather than failing.** `flash_filter` returns `""` — a fragment that
+changes nothing — when the ffmpeg build lacks `sendcmd`/`eq` or the envelope comes
+back empty. The render loses its flash; it never errors. So "no flash in the
+output" has two causes, and the build is the one to check first.
 
 ## Baked-in defaults (change only with reason)
 
