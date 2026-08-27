@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.renderers.lipsync &mdash; muvid 0.0.29 documentation</title>
+  <title>muvid.renderers._errors &mdash; muvid 0.0.29 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -24,8 +24,8 @@
     <script src="../../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
-    <link rel="next" title="muvid.renderers.still" href="still.html" />
-    <link rel="prev" title="muvid.renderers.image_to_video" href="image_to_video.html" /> 
+    <link rel="next" title="muvid.renderers.animation" href="animation.html" />
+    <link rel="prev" title="muvid.renderers._common" href="_common.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -91,10 +91,14 @@
 <li class="toctree-l1"><a class="reference internal" href="../project.html">muvid.project</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../renderers.html">muvid.renderers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="_common.html">muvid.renderers._common</a></li>
-<li class="toctree-l1"><a class="reference internal" href="_errors.html">muvid.renderers._errors</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">muvid.renderers._errors</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.renderers._errors.AnimationRenderError"><code class="docutils literal notranslate"><span class="pre">AnimationRenderError</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.renderers._errors.RendererUnavailable"><code class="docutils literal notranslate"><span class="pre">RendererUnavailable</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="animation.html">muvid.renderers.animation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="image_to_video.html">muvid.renderers.image_to_video</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">muvid.renderers.lipsync</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lipsync.html">muvid.renderers.lipsync</a></li>
 <li class="toctree-l1"><a class="reference internal" href="still.html">muvid.renderers.still</a></li>
 <li class="toctree-l1"><a class="reference internal" href="text_to_video.html">muvid.renderers.text_to_video</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../schema.html">muvid.schema</a></li>
@@ -124,9 +128,9 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">muvid.renderers.lipsync</li>
+      <li class="breadcrumb-item active">muvid.renderers._errors</li>
       <li class="wy-breadcrumbs-aside">
-            <a href="../../../_sources/module_docs/muvid/renderers/lipsync.rst.txt" rel="nofollow"> View page source</a>
+            <a href="../../../_sources/module_docs/muvid/renderers/_errors.rst.txt" rel="nofollow"> View page source</a>
       </li>
   </ul>
   <hr/>
@@ -134,22 +138,64 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="module-muvid.renderers.lipsync">
-<span id="muvid-renderers-lipsync"></span><h1>muvid.renderers.lipsync<a class="headerlink" href="#module-muvid.renderers.lipsync" title="Link to this heading"></a></h1>
-<p>Render strategy: lipsync.</p>
-<p>For shots where a character is “singing on screen”. We need a still
-image of the character (the curated anchor) plus the audio slice. Calls
-<code class="docutils literal notranslate"><span class="pre">falaw.animate_face</span></code> (image+audio → talking video).</p>
-<p>If multiple characters are present, we pick the first one and warn —
-multi-character lipsync isn’t in v0.</p>
+  <section id="module-muvid.renderers._errors">
+<span id="muvid-renderers-errors"></span><h1>muvid.renderers._errors<a class="headerlink" href="#module-muvid.renderers._errors" title="Link to this heading"></a></h1>
+<p>Typed errors the render strategies raise.</p>
+<p>Its own module, and deliberately importing nothing. <code class="docutils literal notranslate"><span class="pre">animation.py</span></code> does
+<code class="docutils literal notranslate"><span class="pre">from</span> <span class="pre">muvid.renderers</span> <span class="pre">import</span> <span class="pre">RenderContext</span></code>, and the dispatcher imports each
+strategy module <em>lazily, inside</em> <a class="reference internal" href="../renderers.html#muvid.renderers.render_shot" title="muvid.renderers.render_shot"><code class="xref py py-func docutils literal notranslate"><span class="pre">muvid.renderers.render_shot()</span></code></a> — which is
+the only reason that cycle does not already exist. Declaring these errors in
+<code class="docutils literal notranslate"><span class="pre">muvid/renderers/__init__.py</span></code> would be fine; re-exporting them from there
+would not, because a strategy module importing the package root back is exactly
+the loop the lazy imports avoid. A leaf module both sides can import is the
+shape with no edge cases.</p>
+<p>The two errors below name a distinction that muvid#46 was filed because
+<code class="docutils literal notranslate"><span class="pre">animation.py</span></code> did not make: <strong>an engine that never ran is not an engine that
+ran and refused.</strong> They are different facts about the render, they deserve
+different responses, and collapsing them is how a shot authored as <code class="docutils literal notranslate"><span class="pre">animation</span></code>
+came out as a freeze frame that read as a deliberate creative choice.</p>
+<dl class="py exception">
+<dt class="sig sig-object py" id="muvid.renderers._errors.AnimationRenderError">
+<span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">muvid.renderers._errors.</span></span><span class="sig-name descname"><span class="pre">AnimationRenderError</span></span><a class="reference internal" href="../../../_modules/muvid/renderers/_errors.html#AnimationRenderError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.renderers._errors.AnimationRenderError" title="Link to this definition"></a></dt>
+<dd><p><code class="docutils literal notranslate"><span class="pre">an</span></code> ran, and reported that it would not render this scene.</p>
+<p>Raised, never swallowed, for the reason muvid#38 removed the same shape from
+<code class="docutils literal notranslate"><span class="pre">trim_video_to_duration</span></code>: a sibling package’s failure that returns a
+plausible artifact instead of surfacing is a bug whose only symptom is a
+wrong output nobody re-measures. <code class="docutils literal notranslate"><span class="pre">an</span></code> states its refusal as <em>data</em>
+(<code class="docutils literal notranslate"><span class="pre">OrchestratorReport.success</span> <span class="pre">is</span> <span class="pre">False</span></code>) rather than an exception, so the
+swallow here was one <code class="docutils literal notranslate"><span class="pre">if</span></code> — and it discarded the exact findings that name
+the cause.</p>
+<p>The message is built by <code class="xref py py-func docutils literal notranslate"><span class="pre">muvid.renderers.animation._format_an_failure()</span></code>
+and always carries something actionable: <code class="docutils literal notranslate"><span class="pre">an</span></code>’s own error string, every
+error-severity validation and verification finding, and the path to the
+synthesized <code class="docutils literal notranslate"><span class="pre">scene.md</span></code> that produced them.</p>
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="muvid.renderers._errors.RendererUnavailable">
+<span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">muvid.renderers._errors.</span></span><span class="sig-name descname"><span class="pre">RendererUnavailable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">message</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">strategy</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fallback</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'still'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/muvid/renderers/_errors.html#RendererUnavailable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.renderers._errors.RendererUnavailable" title="Link to this definition"></a></dt>
+<dd><p>A strategy’s engine is not installed, so the strategy never ran.</p>
+<p>Not a failure: a <em>capability</em> report. <code class="docutils literal notranslate"><span class="pre">an</span></code> is deliberately declared in no
+muvid extra and carries no version floor (the import in
+<a class="reference internal" href="animation.html#module-muvid.renderers.animation" title="muvid.renderers.animation"><code class="xref py py-mod docutils literal notranslate"><span class="pre">muvid.renderers.animation</span></code></a> is soft by design), so a machine without it
+is an expected, supported machine — degrading to <code class="docutils literal notranslate"><span class="pre">still</span></code> there is the
+intended behaviour, not damage control.</p>
+<p>What muvid#46 changed is who decides. The strategy reports the fact; the
+<strong>dispatcher</strong> owns the fallback, because the dispatcher is where the
+provenance line is written and a fallback nobody journalled is a shot you
+cannot find afterwards.</p>
+<p><code class="docutils literal notranslate"><span class="pre">fallback</span></code> names the strategy to degrade to, so the dispatcher needs no
+per-strategy knowledge to honour it.</p>
+</dd></dl>
+
 </section>
 
 
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="image_to_video.html" class="btn btn-neutral float-left" title="muvid.renderers.image_to_video" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="still.html" class="btn btn-neutral float-right" title="muvid.renderers.still" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="_common.html" class="btn btn-neutral float-left" title="muvid.renderers._common" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="animation.html" class="btn btn-neutral float-right" title="muvid.renderers.animation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

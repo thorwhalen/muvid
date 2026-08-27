@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.renderers.animation &mdash; muvid 0.0.28 documentation</title>
+  <title>muvid.renderers.animation &mdash; muvid 0.0.29 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=26ffa1e9"></script>
+      <script src="../../../_static/documentation_options.js?v=828725f0"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -88,6 +88,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/project.html">muvid.project</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers.html">muvid.renderers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers/_common.html">muvid.renderers._common</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers/_errors.html">muvid.renderers._errors</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers/animation.html">muvid.renderers.animation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers/image_to_video.html">muvid.renderers.image_to_video</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers/lipsync.html">muvid.renderers.lipsync</a></li>
@@ -155,6 +156,21 @@
 <span class="sd">(muvid#44: this module emitted ``move: static``, which ``an`` has never</span>
 <span class="sd">implemented, so every animation render failed validate and fell back).</span>
 
+<span class="sd">Failure handling: an engine that never ran is not an engine that ran and</span>
+<span class="sd">refused, and muvid#46 was filed because this module collapsed the two. ``an``</span>
+<span class="sd">states a refusal as *data* (``OrchestratorReport.success is False``), so the old</span>
+<span class="sd">handling was one ``if`` that discarded ``report.error``, ``report.validation``</span>
+<span class="sd">and ``report.verifications`` and returned a still image under the shot's own</span>
+<span class="sd">filename. The output was wrong rather than absent (a freeze frame reads as a</span>
+<span class="sd">creative choice), the provenance line recorded the REQUESTED strategy so the</span>
+<span class="sd">affected shots could not be found afterwards, and ``still`` can reach</span>
+<span class="sd">``falaw.generate_image`` — a silent degradation that bills, under a gate that</span>
+<span class="sd">``cost.py`` had already told the shot was free. Now: a missing ``an`` raises</span>
+<span class="sd">:class:`~muvid.renderers._errors.RendererUnavailable` and the DISPATCHER</span>
+<span class="sd">degrades and journals it, because the dispatcher is where the provenance line is</span>
+<span class="sd">written; an ``an`` that refuses raises</span>
+<span class="sd">:class:`~muvid.renderers._errors.AnimationRenderError` carrying every finding.</span>
+
 <span class="sd">That closed set is not fixed, and muvid declares no ``an`` floor — ``an`` is</span>
 <span class="sd">in no extra, the import below is soft, and a user may have any version.</span>
 <span class="sd">``hold``/``push_in``/``pull_out``/``zoom_in``/``zoom_out`` have always been</span>
@@ -175,6 +191,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sequence</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.renderers</span><span class="w"> </span><span class="kn">import</span> <span class="n">RenderContext</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">muvid.renderers._errors</span><span class="w"> </span><span class="kn">import</span> <span class="n">AnimationRenderError</span><span class="p">,</span> <span class="n">RendererUnavailable</span>
 
 <span class="c1">#: ``an``'s spelling of "the camera does not move", and what a direction this</span>
 <span class="c1">#: table cannot name resolves to. Not a guess dressed as a move: an</span>
@@ -395,21 +412,114 @@
 
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_finding_lines</span><span class="p">(</span><span class="n">findings</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">source</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Render ``an``'s error-severity findings as one diagnostic line each.</span>
+
+<span class="sd">    Handles BOTH of ``an``'s finding types, which are different dataclasses in</span>
+<span class="sd">    different modules: :class:`an.ir.validate.ValidationFinding` (severity,</span>
+<span class="sd">    ir_path, description) and :class:`an.verify._base.Finding`, which adds</span>
+<span class="sd">    ``suggested_fix``. Read by name with ``getattr`` rather than imported,</span>
+<span class="sd">    because this module must keep working with an ``an`` it does not pin — and</span>
+<span class="sd">    because the formatter runs on the failure path, where raising a second</span>
+<span class="sd">    exception while explaining the first is the worst possible outcome.</span>
+<span class="sd">    """</span>
+    <span class="n">out</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">findings</span> <span class="ow">or</span> <span class="p">():</span>
+        <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="s2">"severity"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="o">!=</span> <span class="s2">"error"</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">line</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"  [</span><span class="si">{</span><span class="n">source</span><span class="si">}</span><span class="s2">] </span><span class="si">{</span><span class="nb">getattr</span><span class="p">(</span><span class="n">f</span><span class="p">,</span><span class="w"> </span><span class="s1">'ir_path'</span><span class="p">,</span><span class="w"> </span><span class="s1">'?'</span><span class="p">)</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">getattr</span><span class="p">(</span><span class="n">f</span><span class="p">,</span><span class="w"> </span><span class="s1">'description'</span><span class="p">,</span><span class="w"> </span><span class="n">f</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">)</span>
+        <span class="n">fix</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="s2">"suggested_fix"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">fix</span><span class="p">:</span>
+            <span class="n">line</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">      fix: </span><span class="si">{</span><span class="n">fix</span><span class="si">}</span><span class="s2">"</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">out</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_format_an_failure</span><span class="p">(</span><span class="n">report</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">scene_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">shot_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Turn ``an``'s failure report into a message that names the cause.</span>
+
+<span class="sd">    **No single field is populated in every failure shape**, which is why this</span>
+<span class="sd">    reads three. ``an.orchestrate`` has five ways to return ``success=False``</span>
+<span class="sd">    and they disagree about where the diagnosis lives:</span>
+
+<span class="sd">    ===========================  ==========  ==============  =================</span>
+<span class="sd">    shape                        ``error``   ``validation``  findings in</span>
+<span class="sd">    ===========================  ==========  ==============  =================</span>
+<span class="sd">    validation crashed           set         **None**        --</span>
+<span class="sd">    validation did not pass      set         set             ``validation``</span>
+<span class="sd">    pre-render verifier error    **None**    set             ``verifications``</span>
+<span class="sd">    render failed                set         set             --</span>
+<span class="sd">    post-render verifier error   **None**    set             ``verifications``</span>
+<span class="sd">    ===========================  ==========  ==============  =================</span>
+
+<span class="sd">    So a formatter that reads ``report.error`` alone reports an empty string for</span>
+<span class="sd">    two of the five — including every :class:`an.verify.layout.LayoutLintVerifier`</span>
+<span class="sd">    refusal, which is the one muvid can actually provoke by synthesizing a bad</span>
+<span class="sd">    ``scene.md``. Reading only ``validation`` misses the other three.</span>
+
+<span class="sd">    The last resort is deliberate rather than defensive: if ``an`` says it failed</span>
+<span class="sd">    but carries no error, no failed validation and no error-severity finding, the</span>
+<span class="sd">    message says exactly that and dumps the report. An unexplained failure must</span>
+<span class="sd">    still be a *loud* failure — silence is the bug this function exists to end.</span>
+<span class="sd">    """</span>
+    <span class="n">lines</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">error</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">report</span><span class="p">,</span> <span class="s2">"error"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">error</span><span class="p">:</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  </span><span class="si">{</span><span class="n">error</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">lines</span> <span class="o">+=</span> <span class="n">_finding_lines</span><span class="p">(</span>
+        <span class="nb">getattr</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">report</span><span class="p">,</span> <span class="s2">"validation"</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span> <span class="s2">"findings"</span><span class="p">,</span> <span class="p">()),</span> <span class="n">source</span><span class="o">=</span><span class="s2">"validate"</span>
+    <span class="p">)</span>
+    <span class="k">for</span> <span class="n">vr</span> <span class="ow">in</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">report</span><span class="p">,</span> <span class="s2">"verifications"</span><span class="p">,</span> <span class="p">())</span> <span class="ow">or</span> <span class="p">():</span>
+        <span class="n">lines</span> <span class="o">+=</span> <span class="n">_finding_lines</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">vr</span><span class="p">,</span> <span class="s2">"findings"</span><span class="p">,</span> <span class="p">()),</span> <span class="n">source</span><span class="o">=</span><span class="s2">"verify"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">lines</span><span class="p">:</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="s2">"  `an` reported success=False but carried no error, no failed "</span>
+            <span class="s2">"validation and no error-severity finding. This is either an `an` "</span>
+            <span class="s2">"bug or a report shape muvid does not know how to read; the raw "</span>
+            <span class="sa">f</span><span class="s2">"report is: </span><span class="si">{</span><span class="n">report</span><span class="si">!r}</span><span class="s2">"</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s2">"`an` refused to render shot </span><span class="si">{</span><span class="n">shot_id</span><span class="si">!r}</span><span class="s2">:</span><span class="se">\n</span><span class="s2">"</span>
+        <span class="o">+</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span>
+        <span class="o">+</span> <span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">The scene muvid synthesized is at </span><span class="si">{</span><span class="n">scene_dir</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="s1">'scene.md'</span><span class="si">}</span><span class="s2"> — it is "</span>
+        <span class="s2">"left on disk precisely so this is diagnosable."</span>
+    <span class="p">)</span>
+
+
 <div class="viewcode-block" id="render_animation">
 <a class="viewcode-back" href="../../../module_docs/muvid/renderers/animation.html#muvid.renderers.animation.render_animation">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">render_animation</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="n">RenderContext</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">quality</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"balanced"</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Synthesize a tiny ``an`` scene for this shot and orchestrate it.</span>
 
-<span class="sd">    Falls back to a "still" render if the ``an`` package isn't usable</span>
-<span class="sd">    (it currently has heavy native deps for the cutout backend).</span>
+<span class="sd">    Raises :class:`~muvid.renderers._errors.RendererUnavailable` when ``an``</span>
+<span class="sd">    is not installed — the dispatcher answers that by rendering a ``still`` and</span>
+<span class="sd">    journalling that it did. Raises</span>
+<span class="sd">    :class:`~muvid.renderers._errors.AnimationRenderError` when ``an`` IS</span>
+<span class="sd">    installed and refuses the scene, because that is a bug in what muvid</span>
+<span class="sd">    synthesized and a still image is a wrong answer, not a lesser one (muvid#46).</span>
 <span class="sd">    """</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">an.orchestrate</span><span class="w"> </span><span class="kn">import</span> <span class="n">orchestrate</span>
-    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-        <span class="c1"># Fall back to the still strategy.</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.renderers.still</span><span class="w"> </span><span class="kn">import</span> <span class="n">render_still</span>
-
-        <span class="k">return</span> <span class="n">render_still</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">quality</span><span class="o">=</span><span class="n">quality</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="c1"># ImportError only, never bare `Exception`. The narrower catch is</span>
+        <span class="c1"># already the house style two functions below in</span>
+        <span class="c1"># `_make_lipsync_provider`; the broad one here meant an `an` that is</span>
+        <span class="c1"># INSTALLED BUT BROKEN — a bad transitive dep, a syntax error in a</span>
+        <span class="c1"># submodule — was indistinguishable from an absent one, and degraded</span>
+        <span class="c1"># just as quietly. A non-import failure now propagates its own</span>
+        <span class="c1"># traceback. The original message is carried through, so "not</span>
+        <span class="c1"># installed" and "installed, but its native deps are not" read</span>
+        <span class="c1"># differently in the warning the dispatcher emits.</span>
+        <span class="k">raise</span> <span class="n">RendererUnavailable</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"`an` is not usable, so shot </span><span class="si">{</span><span class="n">ctx</span><span class="o">.</span><span class="n">shot</span><span class="o">.</span><span class="n">id</span><span class="si">!r}</span><span class="s2"> cannot be animated: "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">. `an` is deliberately declared in no muvid extra and carries "</span>
+            <span class="s2">"no version floor, so this is a supported state; `pip install an` "</span>
+            <span class="s2">"to render animation shots."</span><span class="p">,</span>
+            <span class="n">strategy</span><span class="o">=</span><span class="s2">"animation"</span><span class="p">,</span>
+            <span class="n">fallback</span><span class="o">=</span><span class="s2">"still"</span><span class="p">,</span>
+        <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
 
     <span class="n">scene_dir</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">shot_dir</span> <span class="o">/</span> <span class="s2">"an_scene"</span>
     <span class="n">scene_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -420,10 +530,18 @@
     <span class="n">orchestrate_kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"lipsync"</span><span class="p">:</span> <span class="n">lipsync</span><span class="p">}</span> <span class="k">if</span> <span class="n">lipsync</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">{}</span>
     <span class="n">report</span> <span class="o">=</span> <span class="n">orchestrate</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">scene_dir</span><span class="p">),</span> <span class="o">**</span><span class="n">orchestrate_kwargs</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">report</span><span class="p">,</span> <span class="s2">"success"</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
-        <span class="c1"># Fall back rather than throwing a wall of errors.</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.renderers.still</span><span class="w"> </span><span class="kn">import</span> <span class="n">render_still</span>
-
-        <span class="k">return</span> <span class="n">render_still</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">quality</span><span class="o">=</span><span class="n">quality</span><span class="p">)</span>
+        <span class="c1"># NOT a fallback. `an` states a refusal as data rather than an</span>
+        <span class="c1"># exception (`OrchestratorReport.success is False`), so the swallow</span>
+        <span class="c1"># this replaces was a single `if` that discarded `report.error`,</span>
+        <span class="c1"># `report.validation` and `report.verifications` and returned a freeze</span>
+        <span class="c1"># frame under the shot's own filename. Three things made that worse</span>
+        <span class="c1"># than a missing output: the still reads as a creative choice, the</span>
+        <span class="c1"># provenance line recorded the REQUESTED strategy so the affected shots</span>
+        <span class="c1"># could not be found afterwards, and `still` can reach</span>
+        <span class="c1"># `falaw.generate_image` — a silent degradation that bills.</span>
+        <span class="k">raise</span> <span class="n">AnimationRenderError</span><span class="p">(</span>
+            <span class="n">_format_an_failure</span><span class="p">(</span><span class="n">report</span><span class="p">,</span> <span class="n">scene_dir</span><span class="o">=</span><span class="n">scene_dir</span><span class="p">,</span> <span class="n">shot_id</span><span class="o">=</span><span class="n">ctx</span><span class="o">.</span><span class="n">shot</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+        <span class="p">)</span>
     <span class="n">out</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">shot_dir</span> <span class="o">/</span> <span class="s2">"output.mp4"</span>
     <span class="n">src</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">report</span><span class="o">.</span><span class="n">output_path</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">src</span> <span class="o">!=</span> <span class="n">out</span><span class="p">:</span>

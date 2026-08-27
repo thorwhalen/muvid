@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.mcp.identity &mdash; muvid 0.0.29 documentation</title>
+  <title>muvid.renderers._errors &mdash; muvid 0.0.29 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -122,8 +122,8 @@
   <ul class="wy-breadcrumbs">
       <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
           <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
-          <li class="breadcrumb-item"><a href="../mcp.html">muvid.mcp</a></li>
-      <li class="breadcrumb-item active">muvid.mcp.identity</li>
+          <li class="breadcrumb-item"><a href="../renderers.html">muvid.renderers</a></li>
+      <li class="breadcrumb-item active">muvid.renderers._errors</li>
       <li class="wy-breadcrumbs-aside">
       </li>
   </ul>
@@ -132,82 +132,73 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <h1>Source code for muvid.mcp.identity</h1><div class="highlight"><pre>
-<span></span><span class="sd">"""Caller identity for the muvid MCP tools — resolved from the OAuth token, fail-closed.</span>
+  <h1>Source code for muvid.renderers._errors</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""Typed errors the render strategies raise.</span>
 
-<span class="sd">A hosted connector is multi-user: every tool must place work under the *verified*</span>
-<span class="sd">caller, never a shared/ambient identity. muvid's tools resolve the caller via</span>
-<span class="sd">:func:`current_email`, which reads the fastmcp request's access token — so they work</span>
-<span class="sd">under ANY host middleware, including the shared ``enlace_metering.MeteringMiddleware``</span>
-<span class="sd">the unified reelee connector installs (thorwhalen/reelee#232), which keys its own</span>
-<span class="sd">context var. There is **no fallback** beyond the token: an unauthenticated call is</span>
-<span class="sd">failed closed. Mirrors ``braidio.mcp.metering.token_email``/``current_email``.</span>
+<span class="sd">Its own module, and deliberately importing nothing. ``animation.py`` does</span>
+<span class="sd">``from muvid.renderers import RenderContext``, and the dispatcher imports each</span>
+<span class="sd">strategy module *lazily, inside* :func:`muvid.renderers.render_shot` — which is</span>
+<span class="sd">the only reason that cycle does not already exist. Declaring these errors in</span>
+<span class="sd">``muvid/renderers/__init__.py`` would be fine; re-exporting them from there</span>
+<span class="sd">would not, because a strategy module importing the package root back is exactly</span>
+<span class="sd">the loop the lazy imports avoid. A leaf module both sides can import is the</span>
+<span class="sd">shape with no edge cases.</span>
+
+<span class="sd">The two errors below name a distinction that muvid#46 was filed because</span>
+<span class="sd">``animation.py`` did not make: **an engine that never ran is not an engine that</span>
+<span class="sd">ran and refused.** They are different facts about the render, they deserve</span>
+<span class="sd">different responses, and collapsing them is how a shot authored as ``animation``</span>
+<span class="sd">came out as a freeze frame that read as a deliberate creative choice.</span>
 <span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">contextlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">contextmanager</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">contextvars</span><span class="w"> </span><span class="kn">import</span> <span class="n">ContextVar</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
 
-<span class="c1">#: An explicit caller identity for contexts with no OAuth request token — local/stdio</span>
-<span class="c1">#: use and tests. Set it with :func:`use_email`. The hosted connector never sets this</span>
-<span class="c1">#: (the token is the SSOT there), so it can't mask a real caller.</span>
-<span class="n">_CURRENT_EMAIL</span><span class="p">:</span> <span class="n">ContextVar</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="n">ContextVar</span><span class="p">(</span>
-    <span class="s2">"muvid_current_email"</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span>
-<span class="p">)</span>
+<div class="viewcode-block" id="RendererUnavailable">
+<a class="viewcode-back" href="../../../module_docs/muvid/renderers/_errors.html#muvid.renderers._errors.RendererUnavailable">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">RendererUnavailable</span><span class="p">(</span><span class="ne">RuntimeError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A strategy's engine is not installed, so the strategy never ran.</span>
 
+<span class="sd">    Not a failure: a *capability* report. ``an`` is deliberately declared in no</span>
+<span class="sd">    muvid extra and carries no version floor (the import in</span>
+<span class="sd">    :mod:`muvid.renderers.animation` is soft by design), so a machine without it</span>
+<span class="sd">    is an expected, supported machine — degrading to ``still`` there is the</span>
+<span class="sd">    intended behaviour, not damage control.</span>
 
-<div class="viewcode-block" id="use_email">
-<a class="viewcode-back" href="../../../module_docs/muvid/mcp/identity.html#muvid.mcp.use_email">[docs]</a>
-<span class="nd">@contextmanager</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">use_email</span><span class="p">(</span><span class="n">email</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Bind the caller identity for the duration of the block (local/stdio/testing)."""</span>
-    <span class="n">token</span> <span class="o">=</span> <span class="n">_CURRENT_EMAIL</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">email</span><span class="p">)</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="k">yield</span>
-    <span class="k">finally</span><span class="p">:</span>
-        <span class="n">_CURRENT_EMAIL</span><span class="o">.</span><span class="n">reset</span><span class="p">(</span><span class="n">token</span><span class="p">)</span></div>
+<span class="sd">    What muvid#46 changed is who decides. The strategy reports the fact; the</span>
+<span class="sd">    **dispatcher** owns the fallback, because the dispatcher is where the</span>
+<span class="sd">    provenance line is written and a fallback nobody journalled is a shot you</span>
+<span class="sd">    cannot find afterwards.</span>
 
-
-
-<div class="viewcode-block" id="token_email">
-<a class="viewcode-back" href="../../../module_docs/muvid/mcp/identity.html#muvid.mcp.token_email">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">token_email</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""The verified caller's email from the OAuth token (``email`` claim, else ``sub``).</span>
-
-<span class="sd">    Lowercased, or ``None`` when there is no request/token context — deliberately no</span>
-<span class="sd">    fallback, so a caller is failed closed rather than handed a shared identity.</span>
+<span class="sd">    ``fallback`` names the strategy to degrade to, so the dispatcher needs no</span>
+<span class="sd">    per-strategy knowledge to honour it.</span>
 <span class="sd">    """</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">fastmcp.server.dependencies</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_access_token</span>
 
-        <span class="n">token</span> <span class="o">=</span> <span class="n">get_access_token</span><span class="p">()</span>
-    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>  <span class="c1"># noqa: BLE001 — no active request/token context</span>
-        <span class="k">return</span> <span class="kc">None</span>
-    <span class="k">if</span> <span class="n">token</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">return</span> <span class="kc">None</span>
-    <span class="n">claims</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">token</span><span class="p">,</span> <span class="s2">"claims"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{}</span>
-    <span class="n">ident</span> <span class="o">=</span> <span class="n">claims</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"email"</span><span class="p">)</span> <span class="ow">or</span> <span class="n">claims</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"sub"</span><span class="p">)</span>
-    <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">ident</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">if</span> <span class="n">ident</span> <span class="k">else</span> <span class="kc">None</span></div>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">strategy</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">fallback</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"still"</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">strategy</span> <span class="o">=</span> <span class="n">strategy</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fallback</span> <span class="o">=</span> <span class="n">fallback</span></div>
 
 
 
-<div class="viewcode-block" id="current_email">
-<a class="viewcode-back" href="../../../module_docs/muvid/mcp/identity.html#muvid.mcp.current_email">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">current_email</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""The caller's identity for the in-flight tool call (raises if unauthenticated).</span>
+<div class="viewcode-block" id="AnimationRenderError">
+<a class="viewcode-back" href="../../../module_docs/muvid/renderers/_errors.html#muvid.renderers._errors.AnimationRenderError">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">AnimationRenderError</span><span class="p">(</span><span class="ne">RuntimeError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""``an`` ran, and reported that it would not render this scene.</span>
 
-<span class="sd">    Resolves from the explicit :func:`use_email` override when present (local/stdio/</span>
-<span class="sd">    tests), else the verified OAuth token — so tools work under any host middleware, and</span>
-<span class="sd">    an unauthenticated call is failed closed.</span>
-<span class="sd">    """</span>
-    <span class="n">email</span> <span class="o">=</span> <span class="n">_CURRENT_EMAIL</span><span class="o">.</span><span class="n">get</span><span class="p">()</span> <span class="ow">or</span> <span class="n">token_email</span><span class="p">()</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">email</span><span class="p">:</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">fastmcp.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">ToolError</span>
+<span class="sd">    Raised, never swallowed, for the reason muvid#38 removed the same shape from</span>
+<span class="sd">    ``trim_video_to_duration``: a sibling package's failure that returns a</span>
+<span class="sd">    plausible artifact instead of surfacing is a bug whose only symptom is a</span>
+<span class="sd">    wrong output nobody re-measures. ``an`` states its refusal as *data*</span>
+<span class="sd">    (``OrchestratorReport.success is False``) rather than an exception, so the</span>
+<span class="sd">    swallow here was one ``if`` — and it discarded the exact findings that name</span>
+<span class="sd">    the cause.</span>
 
-        <span class="k">raise</span> <span class="n">ToolError</span><span class="p">(</span><span class="s2">"no caller identity (authentication required)"</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">email</span></div>
+<span class="sd">    The message is built by :func:`muvid.renderers.animation._format_an_failure`</span>
+<span class="sd">    and always carries something actionable: ``an``'s own error string, every</span>
+<span class="sd">    error-severity validation and verification finding, and the path to the</span>
+<span class="sd">    synthesized ``scene.md`` that produced them.</span>
+<span class="sd">    """</span></div>
 
 </pre></div>
 

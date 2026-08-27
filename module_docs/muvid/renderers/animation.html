@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.renderers.animation &mdash; muvid 0.0.28 documentation</title>
+  <title>muvid.renderers.animation &mdash; muvid 0.0.29 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -15,7 +15,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=26ffa1e9"></script>
+      <script src="../../../_static/documentation_options.js?v=828725f0"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -25,7 +25,7 @@
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
     <link rel="next" title="muvid.renderers.image_to_video" href="image_to_video.html" />
-    <link rel="prev" title="muvid.renderers._common" href="_common.html" /> 
+    <link rel="prev" title="muvid.renderers._errors" href="_errors.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -91,6 +91,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../project.html">muvid.project</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../renderers.html">muvid.renderers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="_common.html">muvid.renderers._common</a></li>
+<li class="toctree-l1"><a class="reference internal" href="_errors.html">muvid.renderers._errors</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">muvid.renderers.animation</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.renderers.animation.AN_CAMERA_MOVE_PHRASES"><code class="docutils literal notranslate"><span class="pre">AN_CAMERA_MOVE_PHRASES</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.renderers.animation.DFLT_AN_CAMERA_MOVE"><code class="docutils literal notranslate"><span class="pre">DFLT_AN_CAMERA_MOVE</span></code></a></li>
@@ -160,6 +161,20 @@ move that silently no-ops is the failure it exists to prevent. So the prose
 is TRANSLATED here, at the boundary, and never passed through
 (muvid#44: this module emitted <code class="docutils literal notranslate"><span class="pre">move:</span> <span class="pre">static</span></code>, which <code class="docutils literal notranslate"><span class="pre">an</span></code> has never
 implemented, so every animation render failed validate and fell back).</p>
+<p>Failure handling: an engine that never ran is not an engine that ran and
+refused, and muvid#46 was filed because this module collapsed the two. <code class="docutils literal notranslate"><span class="pre">an</span></code>
+states a refusal as <em>data</em> (<code class="docutils literal notranslate"><span class="pre">OrchestratorReport.success</span> <span class="pre">is</span> <span class="pre">False</span></code>), so the old
+handling was one <code class="docutils literal notranslate"><span class="pre">if</span></code> that discarded <code class="docutils literal notranslate"><span class="pre">report.error</span></code>, <code class="docutils literal notranslate"><span class="pre">report.validation</span></code>
+and <code class="docutils literal notranslate"><span class="pre">report.verifications</span></code> and returned a still image under the shot’s own
+filename. The output was wrong rather than absent (a freeze frame reads as a
+creative choice), the provenance line recorded the REQUESTED strategy so the
+affected shots could not be found afterwards, and <code class="docutils literal notranslate"><span class="pre">still</span></code> can reach
+<code class="docutils literal notranslate"><span class="pre">falaw.generate_image</span></code> — a silent degradation that bills, under a gate that
+<code class="docutils literal notranslate"><span class="pre">cost.py</span></code> had already told the shot was free. Now: a missing <code class="docutils literal notranslate"><span class="pre">an</span></code> raises
+<a class="reference internal" href="_errors.html#muvid.renderers._errors.RendererUnavailable" title="muvid.renderers._errors.RendererUnavailable"><code class="xref py py-class docutils literal notranslate"><span class="pre">RendererUnavailable</span></code></a> and the DISPATCHER
+degrades and journals it, because the dispatcher is where the provenance line is
+written; an <code class="docutils literal notranslate"><span class="pre">an</span></code> that refuses raises
+<a class="reference internal" href="_errors.html#muvid.renderers._errors.AnimationRenderError" title="muvid.renderers._errors.AnimationRenderError"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnimationRenderError</span></code></a> carrying every finding.</p>
 <p>That closed set is not fixed, and muvid declares no <code class="docutils literal notranslate"><span class="pre">an</span></code> floor — <code class="docutils literal notranslate"><span class="pre">an</span></code> is
 in no extra, the import below is soft, and a user may have any version.
 <code class="docutils literal notranslate"><span class="pre">hold</span></code>/<code class="docutils literal notranslate"><span class="pre">push_in</span></code>/<code class="docutils literal notranslate"><span class="pre">pull_out</span></code>/<code class="docutils literal notranslate"><span class="pre">zoom_in</span></code>/<code class="docutils literal notranslate"><span class="pre">zoom_out</span></code> have always been
@@ -256,8 +271,12 @@ negated move is refused rather than obeyed:</p>
 <dt class="sig sig-object py" id="muvid.renderers.animation.render_animation">
 <span class="sig-prename descclassname"><span class="pre">muvid.renderers.animation.</span></span><span class="sig-name descname"><span class="pre">render_animation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../renderers.html#muvid.renderers.RenderContext" title="muvid.renderers.RenderContext"><span class="pre">RenderContext</span></a></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">quality</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'balanced'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Path</span></span></span><a class="reference internal" href="../../../_modules/muvid/renderers/animation.html#render_animation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.renderers.animation.render_animation" title="Link to this definition"></a></dt>
 <dd><p>Synthesize a tiny <code class="docutils literal notranslate"><span class="pre">an</span></code> scene for this shot and orchestrate it.</p>
-<p>Falls back to a “still” render if the <code class="docutils literal notranslate"><span class="pre">an</span></code> package isn’t usable
-(it currently has heavy native deps for the cutout backend).</p>
+<p>Raises <a class="reference internal" href="_errors.html#muvid.renderers._errors.RendererUnavailable" title="muvid.renderers._errors.RendererUnavailable"><code class="xref py py-class docutils literal notranslate"><span class="pre">RendererUnavailable</span></code></a> when <code class="docutils literal notranslate"><span class="pre">an</span></code>
+is not installed — the dispatcher answers that by rendering a <code class="docutils literal notranslate"><span class="pre">still</span></code> and
+journalling that it did. Raises
+<a class="reference internal" href="_errors.html#muvid.renderers._errors.AnimationRenderError" title="muvid.renderers._errors.AnimationRenderError"><code class="xref py py-class docutils literal notranslate"><span class="pre">AnimationRenderError</span></code></a> when <code class="docutils literal notranslate"><span class="pre">an</span></code> IS
+installed and refuses the scene, because that is a bug in what muvid
+synthesized and a still image is a wrong answer, not a lesser one (muvid#46).</p>
 </dd></dl>
 
 </section>
@@ -266,7 +285,7 @@ negated move is refused rather than obeyed:</p>
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="_common.html" class="btn btn-neutral float-left" title="muvid.renderers._common" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="_errors.html" class="btn btn-neutral float-left" title="muvid.renderers._errors" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
         <a href="image_to_video.html" class="btn btn-neutral float-right" title="muvid.renderers.image_to_video" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
