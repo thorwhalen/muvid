@@ -126,8 +126,9 @@ For each shot, pick:
   **Needs `an` installed** (`pip install an`) — it is deliberately in no muvid
   extra. Without it the shot renders as a `still` and says so: a warning, plus
   `requested_strategy` and `fallback_reason` on the shot's `render_shot` entry in
-  `.muvid/decisions.jsonl`. A degraded shot is **not** cached, so it re-renders
-  (and re-warns) until `an` is there. If `an` IS installed and refuses the scene,
+  `.muvid/decisions.jsonl`. A degraded shot is **not** cached — any existing
+  cache entry is invalidated too — so it re-renders (and re-warns) until `an` is
+  there. If `an` IS installed and refuses the scene,
   the render **fails loudly** with every validation finding rather than quietly
   producing a freeze frame (muvid#46).
 - `still` — single image held for the duration. Cheapest. Good for

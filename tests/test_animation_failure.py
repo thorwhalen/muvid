@@ -42,7 +42,7 @@ from pathlib import Path
 import pytest
 
 from muvid.project import MusicVideoProject
-from muvid.renderers import RenderContext, render_shot
+from muvid.renderers import RenderContext, render_all, render_shot
 from muvid.renderers._errors import AnimationRenderError, RendererUnavailable
 from muvid.renderers.animation import _format_an_failure, render_animation
 from muvid.schema import ShotSpec
@@ -98,19 +98,36 @@ class _SubReport:
         self.passed = passed
 
 
-def _fake_an(orchestrate):
-    """An ``an`` package whose only member is ``orchestrate``.
+def _evict_an(monkeypatch) -> None:
+    """Drop every cached ``an.*`` module for the duration of a test.
+
+    Not hygiene — load-bearing. ``importlib._bootstrap._gcd_import`` returns a
+    cached ``sys.modules["an.orchestrate"]`` **without consulting its parent**,
+    so replacing ``an`` alone leaves ``from an.orchestrate import orchestrate``
+    resolving to the REAL function on any machine that has it. Whether it does
+    depends on whether something earlier in the session imported it, which makes
+    it a collection-ORDER dependency: the same test passes or exercises the
+    opposite path depending on what ran before it.
+    """
+    for name in [n for n in sys.modules if n == "an" or n.startswith("an.")]:
+        monkeypatch.delitem(sys.modules, name)
+
+
+def _install_fake_an(monkeypatch, orchestrate) -> None:
+    """Make ``an`` be a package whose only member is ``orchestrate``.
 
     Deliberately lacks ``an.audio``, so ``_make_lipsync_provider``'s
     ``from an.audio import ...`` raises ``ImportError`` and it returns ``None``
     — the same path a real older ``an`` takes, and one that never reaches
     ``ctx.project``.
     """
+    _evict_an(monkeypatch)
     pkg = types.ModuleType("an")
     mod = types.ModuleType("an.orchestrate")
     mod.orchestrate = orchestrate
     pkg.orchestrate = mod
-    return pkg, mod
+    monkeypatch.setitem(sys.modules, "an", pkg)
+    monkeypatch.setitem(sys.modules, "an.orchestrate", mod)
 
 
 @pytest.fixture
@@ -248,15 +265,27 @@ def test_the_message_always_names_the_scene_it_synthesized(tmp_path):
 # --------------------------------------------------------------------------
 
 
-def test_an_failure_raises_and_never_renders_a_still(ctx, monkeypatch, never_spends):
-    """The headline guard. Break the raise and this goes red on both counts."""
+@pytest.mark.parametrize("stale_output", [False, True], ids=["fresh", "stale-mp4"])
+def test_an_failure_raises_and_never_renders_a_still(
+    ctx, monkeypatch, never_spends, stale_output
+):
+    """The headline guard. Break the raise and this goes red on both counts.
+
+    The ``stale-mp4`` case is not padding: it is the steady state this change's
+    own design manufactures. Withholding the hash means a shot re-renders every
+    run, so from the second run onward ``shot_dir`` ALWAYS holds an
+    ``output.mp4`` from the previous attempt — and "return the file that is
+    already there" is the most natural way for someone to reintroduce a silent
+    degrade while keeping every other assertion green. Only a fresh-directory
+    test lets that through.
+    """
+    if stale_output:
+        (ctx.shot_dir / "output.mp4").write_bytes(b"STALE-FROM-A-PRIOR-RUN")
     report = _Report(
         error="schema/semantic validation failed",
         validation=_SubReport([_Finding("error", "shots/0/camera", "unknown move")]),
     )
-    pkg, mod = _fake_an(lambda *a, **k: report)
-    monkeypatch.setitem(sys.modules, "an", pkg)
-    monkeypatch.setitem(sys.modules, "an.orchestrate", mod)
+    _install_fake_an(monkeypatch, lambda *a, **k: report)
 
     with pytest.raises(AnimationRenderError) as e:
         render_animation(ctx)
@@ -273,15 +302,10 @@ def test_a_missing_an_is_reported_as_unavailable_not_as_a_failure(ctx, monkeypat
     raise ``ImportError`` regardless of what is installed, so this test means
     the same thing on a runner and on a developer machine.
 
-    The submodules have to go too, and that is not belt-and-braces:
-    ``importlib._bootstrap._gcd_import`` returns a cached ``sys.modules`` entry
-    for ``an.orchestrate`` **without ever consulting its parent**, so poisoning
-    ``an`` alone leaves ``from an.orchestrate import orchestrate`` resolving to
-    the real function on a machine that has it — and this test would then be
-    silently exercising the opposite path from the one it names.
+    ``_evict_an`` is what makes that true regardless of what ran before —
+    see its docstring.
     """
-    for name in [n for n in sys.modules if n == "an" or n.startswith("an.")]:
-        monkeypatch.delitem(sys.modules, name)
+    _evict_an(monkeypatch)
     monkeypatch.setitem(sys.modules, "an", None)
 
     with pytest.raises(RendererUnavailable) as e:
@@ -307,8 +331,7 @@ def test_a_broken_an_propagates_instead_of_masquerading_as_an_absent_one(
         def __getattr__(self, name):
             raise RuntimeError("an's native deps are wired wrong")
 
-    for name in [n for n in sys.modules if n.startswith("an.")]:
-        monkeypatch.delitem(sys.modules, name)
+    _evict_an(monkeypatch)
     monkeypatch.setitem(sys.modules, "an", _Exploding("an"))
 
     with pytest.raises(RuntimeError) as e:
@@ -323,9 +346,7 @@ def test_a_successful_render_is_untouched(ctx, monkeypatch, tmp_path):
     produced.write_bytes(b"mp4")
     report = _Report(success=True)
     report.output_path = produced
-    pkg, mod = _fake_an(lambda *a, **k: report)
-    monkeypatch.setitem(sys.modules, "an", pkg)
-    monkeypatch.setitem(sys.modules, "an.orchestrate", mod)
+    _install_fake_an(monkeypatch, lambda *a, **k: report)
 
     out = render_animation(ctx)
     assert out == ctx.shot_dir / "output.mp4"
@@ -462,6 +483,125 @@ def test_an_animation_failure_reaches_the_caller_of_render_shot(
     assert not (proj.shot_dir("s1") / "output.hash").exists()
 
 
+# --------------------------------------------------------------------------
+# The entry point: `muvid render` goes through render_all, and nothing did
+# --------------------------------------------------------------------------
+#
+# Every dispatcher test above stubs `render_animation` out — necessarily, since
+# they are testing the dispatcher. That left the real function's refusal path
+# reachable from exactly one test, called directly. Meanwhile `render_all` — what
+# `muvid render` with no `--shot` actually calls — had no failure test at all, so
+# re-swallowing one level up (catch `AnimationRenderError` in the loop, degrade
+# to `still`) kept the whole suite green while being WORSE than the original bug:
+# it leaves no journal entry at all, where muvid#46 at least recorded a wrong
+# strategy. These two tests drive the REAL `render_animation` from the entry
+# point, so the guard sits where the user does.
+
+
+def test_an_refusal_propagates_out_of_render_all(tmp_path, monkeypatch, never_spends):
+    """The real renderer, the real dispatcher, the path `muvid render` takes."""
+    proj = MusicVideoProject.init(tmp_path / "p")
+    for sid in ("s1", "s2"):
+        proj.upsert_shot(
+            ShotSpec(id=sid, start_s=0.0, end_s=2.0, render_strategy="animation")
+        )
+
+    def _build(project, shot, global_style):
+        d = project.shot_dir(shot.id)
+        d.mkdir(parents=True, exist_ok=True)
+        return RenderContext(
+            project=project,
+            shot=shot,
+            shot_dir=d,
+            audio_slice_path=d / "audio.wav",
+            character_image_paths={},
+            environment_image_path=None,
+            lyric_lines=[],
+            global_style=global_style,
+        )
+
+    monkeypatch.setattr("muvid.renderers._build_context", _build)
+    _install_fake_an(
+        monkeypatch, lambda *a, **k: _Report(error="render failed: Boom()")
+    )
+
+    with pytest.raises(AnimationRenderError, match="Boom"):
+        render_all(proj)
+
+    assert never_spends == []
+    # Nothing was journalled as rendered, and no cache entry claims it was.
+    assert not (proj.root / ".muvid" / "decisions.jsonl").exists()
+    assert not (proj.shot_dir("s1") / "output.hash").exists()
+
+
+def test_an_absence_degrades_all_the_way_from_render_all(tmp_path, monkeypatch):
+    """The other half: the real renderer's UNAVAILABLE path, end to end."""
+    proj = MusicVideoProject.init(tmp_path / "p")
+    proj.upsert_shot(
+        ShotSpec(id="s1", start_s=0.0, end_s=2.0, render_strategy="animation")
+    )
+
+    def _build(project, shot, global_style):
+        d = project.shot_dir(shot.id)
+        d.mkdir(parents=True, exist_ok=True)
+        return RenderContext(
+            project=project,
+            shot=shot,
+            shot_dir=d,
+            audio_slice_path=d / "audio.wav",
+            character_image_paths={},
+            environment_image_path=None,
+            lyric_lines=[],
+            global_style=global_style,
+        )
+
+    monkeypatch.setattr("muvid.renderers._build_context", _build)
+    monkeypatch.setattr("muvid.renderers.still.render_still", _stub_still)
+    _evict_an(monkeypatch)
+    monkeypatch.setitem(sys.modules, "an", None)
+
+    with pytest.warns(RuntimeWarning, match="pip install an"):
+        render_all(proj)
+
+    (entry,) = [d for d in _decisions(proj) if d["kind"] == "render_shot"]
+    assert entry["strategy"] == "still"
+    assert entry["requested_strategy"] == "animation"
+
+
+def test_a_degraded_render_invalidates_a_stale_cache_entry(
+    tmp_path, monkeypatch, stub_context
+):
+    """Declining to write the hash is not enough — `--force` walks around it.
+
+    A shot that rendered successfully once holds a hash that still MATCHES,
+    because the hash is computed from the shot and the shot did not change. A
+    forced re-render after `an` disappears overwrites output.mp4 with the freeze
+    frame; if the old hash survived, every later un-forced run would serve that
+    freeze frame from cache — and "a degraded render is not cached" would be a
+    sentence rather than a fact.
+    """
+    proj = _project_with_animation_shot(tmp_path)
+    monkeypatch.setattr(
+        "muvid.renderers.animation.render_animation", lambda ctx, **k: _stub_still(ctx)
+    )
+    render_shot(proj, "s1")
+    hash_path = proj.shot_dir("s1") / "output.hash"
+    assert hash_path.exists()
+
+    def _unavailable(ctx, **k):
+        raise RendererUnavailable("no `an` here", strategy="animation")
+
+    monkeypatch.setattr("muvid.renderers.animation.render_animation", _unavailable)
+    monkeypatch.setattr("muvid.renderers.still.render_still", _stub_still)
+    with pytest.warns(RuntimeWarning):
+        render_shot(proj, "s1", force=True)
+
+    assert not hash_path.exists(), (
+        "a degraded render left the previous successful run's hash in place; "
+        "the next un-forced render would serve the freeze frame from cache"
+    )
+
+
 def test_the_fallback_is_exactly_one_level_deep(tmp_path, monkeypatch, stub_context):
     """A fallback that is itself unavailable propagates; it does not re-degrade.
 
@@ -518,6 +658,31 @@ def test_every_strategy_in_the_table_resolves(tmp_path):
 # --------------------------------------------------------------------------
 # Freshness: the formatter must read `an`'s REAL shapes, not just our doubles
 # --------------------------------------------------------------------------
+
+
+@needs_an
+def test_the_fake_an_survives_a_previously_imported_real_submodule(ctx, monkeypatch):
+    """``_evict_an`` is load-bearing, and this is the state that proves it.
+
+    ``_install_fake_an`` overrides ``an`` and ``an.orchestrate`` explicitly, so
+    the orchestrate call is safe either way — which makes the eviction look
+    redundant. It is not: ``_make_lipsync_provider`` reaches for ``an.audio``,
+    and ``_gcd_import`` will hand back a CACHED ``an.audio`` without consulting
+    the fake parent. Then the real provider runs against this fixture's
+    ``project=None`` and the test dies somewhere unrelated to what it names.
+
+    Nothing in the suite imports ``an.audio`` today, so without this test the
+    eviction cannot go red and is indistinguishable from dead code. Importing it
+    here is the point — it manufactures the collection order that a future test
+    file would otherwise introduce silently.
+    """
+    import an.audio  # noqa: F401  — deliberately cached before the fake is installed
+
+    assert "an.audio" in sys.modules
+    _install_fake_an(monkeypatch, lambda *a, **k: _Report(error="render failed"))
+
+    with pytest.raises(AnimationRenderError):
+        render_animation(ctx)
 
 
 @needs_an

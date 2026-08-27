@@ -224,11 +224,16 @@ The split now:
   Reading `report.error` alone renders those two as an empty string — including
   every `LayoutLintVerifier` refusal, which is the shape muvid can actually
   provoke by synthesizing a bad `scene.md`.
-- **A degraded render is not cached.** `_shot_hash` is computed from the shot
-  alone, so writing it for a fallback would make the still satisfy that shot
-  forever — installing `an` later would keep returning the freeze frame without
-  ever retrying. The hash is written only when the render did what was asked, so
-  the warning repeats until the cause is fixed instead of being missable once.
+- **A degraded render is not cached, and declining to write the hash is not
+  enough to make that true.** `_shot_hash` is computed from the shot alone, so a
+  recorded hash would make the still satisfy that shot forever — installing `an`
+  later would keep returning the freeze frame without ever retrying. The hash is
+  written only when the render did what was asked **and actively unlinked when it
+  was not**: `--force` bypasses the cache check, so a shot that rendered once
+  successfully still holds a *matching* hash, and a forced re-render after `an`
+  disappeared would overwrite `output.mp4` with the freeze frame and leave that
+  hash standing. Withholding closes the fresh-project case; unlinking is what
+  makes the invariant unconditional.
 - The import catch is `except ImportError`, never bare `Exception`. The broad
   form meant an `an` that is *installed but broken* was indistinguishable from an
   absent one and degraded just as quietly.

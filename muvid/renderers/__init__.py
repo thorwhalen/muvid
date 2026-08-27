@@ -100,7 +100,7 @@ def render_shot(
     if produced.resolve() != out_path.resolve():
         shutil.copy2(produced, out_path)
 
-    # The cache entry is written only for a render that did what was asked. A
+    # The cache entry exists only for a render that did what was asked. A
     # degraded output is PROVISIONAL: `_shot_hash` is computed from the shot
     # alone, so recording it would make the still satisfy this shot forever —
     # the moment the user installs `an`, `render_shot` would keep returning the
@@ -111,6 +111,17 @@ def render_shot(
     # can be missed once and never seen again.
     if fallback_reason is None:
         hash_path.write_text(current_hash)
+    else:
+        # DECLINING to write is not enough, and the difference is a real path:
+        # `--force` bypasses the cache check above, so a shot that rendered
+        # successfully once (hash written) and is then re-rendered after `an`
+        # disappears would overwrite output.mp4 with the freeze frame while
+        # leaving the OLD hash — which still matches, because the shot did not
+        # change. The next run without `--force` would then serve that freeze
+        # frame from cache forever, and the invariant one line up would be a
+        # sentence rather than a fact. Actively invalidating makes it
+        # unconditional.
+        hash_path.unlink(missing_ok=True)
 
     decision: dict[str, Any] = {
         "shot_id": shot.id,
