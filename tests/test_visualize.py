@@ -776,3 +776,97 @@ def test_the_flashing_spectrum_renders_and_changes_the_picture(click_track, tmp_
         k: hashlib.sha256(r.path.read_bytes()).hexdigest() for k, r in renders.items()
     }
     assert digests["on"] != digests["off"], "the flash changed nothing in the picture"
+
+
+# --------------------------------------------------------------------------
+# The flash is on by default, and the skill has to say so (muvid#5)
+# --------------------------------------------------------------------------
+#
+# The spectrum visual pulses on every onset unless you turn it off, and for
+# months no markdown in this repo mentioned it: `grep -ri flash` over every .md
+# returned nothing. So an agent reading the skill could neither discover the
+# effect nor disable it, and the text that would have said so lived only on a
+# branch that has since been deleted. Prose drifts silently — a call-site sweep
+# cannot see it — which is why the camera-phrase table in
+# `tests/test_animation_camera.py` is pinned the same way.
+
+VISUALIZE_SKILL = (
+    Path(__file__).parents[1] / ".claude" / "skills" / "muvid-visualize" / "SKILL.md"
+)
+
+
+def _flash_options_the_code_reads() -> set[str]:
+    """Every ``ctx.options.get("flash*")`` key in the visuals module, by AST.
+
+    Parsed rather than grepped so a renamed or added knob is found by structure,
+    and read from the SOURCE so this cannot pass by importing a stale module.
+    """
+    import ast
+
+    tree = ast.parse(
+        (Path(__file__).parents[1] / "muvid" / "visualize" / "visuals.py").read_text()
+    )
+    keys = set()
+    for node in ast.walk(tree):
+        if (
+            isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Attribute)
+            and node.func.attr == "get"
+            and node.args
+            and isinstance(node.args[0], ast.Constant)
+            and isinstance(node.args[0].value, str)
+            and node.args[0].value.startswith("flash")
+        ):
+            keys.add(node.args[0].value)
+    return keys
+
+
+def test_the_skill_names_every_flash_option_the_code_actually_reads():
+    text = VISUALIZE_SKILL.read_text()
+    missing = sorted(k for k in _flash_options_the_code_reads() if f"`{k}`" not in text)
+    assert not missing, (
+        f"{VISUALIZE_SKILL.name} does not name the flash options {missing}; an agent "
+        "reading it cannot know they exist. Document them, or remove them from the code."
+    )
+
+
+def test_the_skill_does_not_advertise_an_option_the_code_ignores():
+    """`flash_decay` is the trap: a real constant that is NOT a forwarded option.
+
+    ``FLASH_DECAY`` is ``flash_filter``'s keyword default and ``spectrum_visual``
+    never passes an option to it, so ``options={"flash_decay": 0.9}`` is silently
+    ignored. A doc that offered it would be worse than one that said nothing.
+    """
+    read = _flash_options_the_code_reads()
+    assert "flash_decay" not in read, (
+        "`flash_decay` is now a real option — the skill's 'there is no flash_decay "
+        "option' paragraph is false and must be updated."
+    )
+    text = VISUALIZE_SKILL.read_text()
+    assert "no `flash_decay` option" in text
+
+
+def test_the_documented_flash_defaults_are_the_code_s_defaults():
+    from muvid.visualize.reactive import FLASH_BRIGHTNESS, FLASH_DECAY, FLASH_SATURATION
+
+    text = VISUALIZE_SKILL.read_text()
+    for name, value in (
+        ("flash_brightness", FLASH_BRIGHTNESS),
+        ("flash_saturation", FLASH_SATURATION),
+    ):
+        assert f"`{value}`" in text, (
+            f"the skill does not state {name}'s default of {value}"
+        )
+    assert f"`FLASH_DECAY = {FLASH_DECAY}`" in text
+
+
+def test_the_flash_is_still_on_by_default():
+    """The fact the whole doc section exists to convey."""
+    import inspect
+
+    from muvid.visualize import visuals
+
+    src = inspect.getsource(visuals.spectrum_visual)
+    assert 'ctx.options.get("flash", True)' in src, (
+        "the spectrum flash is no longer on by default; the skill says it is."
+    )
