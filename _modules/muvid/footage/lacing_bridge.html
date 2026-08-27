@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.footage.lacing_bridge &mdash; muvid 0.0.30 documentation</title>
+  <title>muvid.footage.lacing_bridge &mdash; muvid 0.0.31 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=61a342a2"></script>
+      <script src="../../../_static/documentation_options.js?v=c5dbc6bb"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -287,6 +287,19 @@
 
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_edl_body</span><span class="p">(</span><span class="n">e</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The DECISION body for one entry — ``transition`` present only when set.</span>
+
+<span class="sd">    Emitting it unconditionally would change the body of every untransitioned</span>
+<span class="sd">    document, which is the difference between an additive field and a format change</span>
+<span class="sd">    a browser surface has to move with. muvid#34.</span>
+<span class="sd">    """</span>
+    <span class="n">body</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"clip_id"</span><span class="p">:</span> <span class="n">e</span><span class="o">.</span><span class="n">clip_id</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">}</span>
+    <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="s2">"transition"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">body</span><span class="p">[</span><span class="s2">"transition"</span><span class="p">]</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">transition</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">body</span>
+
+
 <div class="viewcode-block" id="edl_annotations">
 <a class="viewcode-back" href="../../../module_docs/muvid/footage/lacing_bridge.html#muvid.footage.lacing_bridge.edl_annotations">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">edl_annotations</span><span class="p">(</span><span class="n">entries</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">song_asset_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">attributed_to</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
@@ -297,7 +310,7 @@
             <span class="n">song_asset_id</span><span class="o">=</span><span class="n">song_asset_id</span><span class="p">,</span>
             <span class="n">start_s</span><span class="o">=</span><span class="n">e</span><span class="o">.</span><span class="n">song_start</span><span class="p">,</span>
             <span class="n">end_s</span><span class="o">=</span><span class="n">e</span><span class="o">.</span><span class="n">song_end</span><span class="p">,</span>
-            <span class="n">body</span><span class="o">=</span><span class="p">{</span><span class="s2">"clip_id"</span><span class="p">:</span> <span class="n">e</span><span class="o">.</span><span class="n">clip_id</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">},</span>
+            <span class="n">body</span><span class="o">=</span><span class="n">_edl_body</span><span class="p">(</span><span class="n">e</span><span class="p">),</span>
             <span class="n">schema</span><span class="o">=</span><span class="n">MUSIC_VIDEO_EDL_SCHEMA</span><span class="p">,</span>
             <span class="n">attributed_to</span><span class="o">=</span><span class="n">attributed_to</span><span class="p">,</span>
         <span class="p">)</span>
@@ -315,7 +328,8 @@
 
 <span class="sd">    The timeline-to-EDL half: whatever the editor did to the DECISION lane — moved,</span>
 <span class="sd">    split, retargeted, deleted — exports as plain ``{song_start, song_end, clip_id}``</span>
-<span class="sd">    dicts ready for ``assemble_music_video``. Sorting and validation stay the render</span>
+<span class="sd">    dicts (plus ``transition`` where the editor set one) ready for</span>
+<span class="sd">    ``assemble_music_video``. Sorting and validation stay the render</span>
 <span class="sd">    path's business (``fill_gaps`` + ``validate_edl``); this is a faithful read.</span>
 
 <span class="sd">    Annotations are untrusted editor input, so anything shaped wrong is SKIPPED rather</span>
@@ -350,13 +364,24 @@
         <span class="n">iv</span> <span class="o">=</span> <span class="n">a</span><span class="o">.</span><span class="n">reference</span><span class="o">.</span><span class="n">interval</span>
         <span class="k">if</span> <span class="n">iv</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">continue</span>
-        <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-            <span class="p">{</span>
-                <span class="s2">"song_start"</span><span class="p">:</span> <span class="n">iv</span><span class="o">.</span><span class="n">start</span><span class="o">.</span><span class="n">to_seconds</span><span class="p">(),</span>
-                <span class="s2">"song_end"</span><span class="p">:</span> <span class="n">iv</span><span class="o">.</span><span class="n">end</span><span class="o">.</span><span class="n">to_seconds</span><span class="p">(),</span>
-                <span class="s2">"clip_id"</span><span class="p">:</span> <span class="n">a</span><span class="o">.</span><span class="n">body</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"clip_id"</span><span class="p">),</span>
+        <span class="n">entry</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">"song_start"</span><span class="p">:</span> <span class="n">iv</span><span class="o">.</span><span class="n">start</span><span class="o">.</span><span class="n">to_seconds</span><span class="p">(),</span>
+            <span class="s2">"song_end"</span><span class="p">:</span> <span class="n">iv</span><span class="o">.</span><span class="n">end</span><span class="o">.</span><span class="n">to_seconds</span><span class="p">(),</span>
+            <span class="s2">"clip_id"</span><span class="p">:</span> <span class="n">a</span><span class="o">.</span><span class="n">body</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"clip_id"</span><span class="p">),</span>
+        <span class="p">}</span>
+        <span class="c1"># Skip-shaped, NOT raising — deliberately the opposite of `_as_entry`, which</span>
+        <span class="c1"># raises on the same malformed input. The difference is the author: that one</span>
+        <span class="c1"># reads a caller's request, where dropping a direction silently is the bug;</span>
+        <span class="c1"># this one reads a browser's output, where crashing the whole export over one</span>
+        <span class="c1"># bad record is. A transition that survives here is validated by</span>
+        <span class="c1"># `validate_edl` on the way back in, like everything else in this dict.</span>
+        <span class="n">raw</span> <span class="o">=</span> <span class="n">a</span><span class="o">.</span><span class="n">body</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"transition"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"duration_s"</span><span class="p">),</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">)):</span>
+            <span class="n">entry</span><span class="p">[</span><span class="s2">"transition"</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">"duration_s"</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">raw</span><span class="p">[</span><span class="s2">"duration_s"</span><span class="p">]),</span>
+                <span class="s2">"curve"</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"curve"</span><span class="p">,</span> <span class="s2">"fade"</span><span class="p">)),</span>
             <span class="p">}</span>
-        <span class="p">)</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">entry</span><span class="p">)</span>
     <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">e</span><span class="p">:</span> <span class="n">e</span><span class="p">[</span><span class="s2">"song_start"</span><span class="p">])</span></div>
 
 

@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.footage &mdash; muvid 0.0.30 documentation</title>
+  <title>muvid.footage &mdash; muvid 0.0.31 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -15,7 +15,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=61a342a2"></script>
+      <script src="../../_static/documentation_options.js?v=c5dbc6bb"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -61,7 +61,10 @@
 <li class="toctree-l1"><a class="reference internal" href="events.html">muvid.events</a></li>
 <li class="toctree-l1"><a class="reference internal" href="facade.html">muvid.facade</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">muvid.footage</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#muvid.footage.EdlEntry"><code class="docutils literal notranslate"><span class="pre">EdlEntry</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.footage.EdlEntry"><code class="docutils literal notranslate"><span class="pre">EdlEntry</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#muvid.footage.EdlEntry.transition"><code class="docutils literal notranslate"><span class="pre">EdlEntry.transition</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.footage.FootageAlignment"><code class="docutils literal notranslate"><span class="pre">FootageAlignment</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#muvid.footage.FootageAlignment.overlaps"><code class="docutils literal notranslate"><span class="pre">FootageAlignment.overlaps</span></code></a></li>
 </ul>
@@ -166,12 +169,21 @@ alignments into an EDL (which clip covers which span of the song).</p></li>
 </ul>
 <dl class="py class">
 <dt class="sig sig-object py" id="muvid.footage.EdlEntry">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">muvid.footage.</span></span><span class="sig-name descname"><span class="pre">EdlEntry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">song_start</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">song_end</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clip_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/muvid/footage/edl.html#EdlEntry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.EdlEntry" title="Link to this definition"></a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">muvid.footage.</span></span><span class="sig-name descname"><span class="pre">EdlEntry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">song_start</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">song_end</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clip_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transition</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="footage/edl.html#muvid.footage.edl.Transition" title="muvid.footage.edl.Transition"><span class="pre">Transition</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/muvid/footage/edl.html#EdlEntry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.EdlEntry" title="Link to this definition"></a></dt>
 <dd><p>One cut: show <code class="docutils literal notranslate"><span class="pre">clip_id</span></code> over the song span <code class="docutils literal notranslate"><span class="pre">[song_start,</span> <span class="pre">song_end]</span></code>.</p>
 <p><code class="docutils literal notranslate"><span class="pre">clip_id</span> <span class="pre">==</span> <span class="pre">&quot;&quot;</span></code> is a <strong>gap entry</strong> — no footage covers this span, and the renderer
 fills it (black in v1). Gaps are explicit entries rather than absences so that an EDL
 is always contiguous over its span, every span of the song is accounted for by
 exactly one entry, and “no clip here” survives a JSON round trip (<code class="docutils literal notranslate"><span class="pre">clip_id:</span> <span class="pre">null</span></code>).</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="muvid.footage.EdlEntry.transition">
+<span class="sig-name descname"><span class="pre">transition</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="footage/edl.html#muvid.footage.edl.Transition" title="muvid.footage.edl.Transition"><span class="pre">Transition</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#muvid.footage.EdlEntry.transition" title="Link to this definition"></a></dt>
+<dd><p>Blend in from the predecessor rather than hard-cutting. <code class="docutils literal notranslate"><span class="pre">None</span></code> (the
+default) is a hard cut, so an EDL written before this field existed is a
+valid EDL now, and one written with it, read by older code, renders hard
+cuts — degraded, never wrong, in both directions.</p>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="py class">
@@ -239,7 +251,11 @@ the alignment-only built-ins ignore it. See <code class="xref py py-data docutil
 <em>implicit</em> hole is still an error, so nothing goes missing silently;</p></li>
 <li><p>each non-gap span lies within its clip’s aligned coverage, AND the derived
 <code class="docutils literal notranslate"><span class="pre">clip_in</span> <span class="pre">=</span> <span class="pre">song_start</span> <span class="pre">-</span> <span class="pre">offset</span></code> satisfies <code class="docutils literal notranslate"><span class="pre">0</span> <span class="pre">&lt;=</span> <span class="pre">clip_in</span></code> and
-<code class="docutils literal notranslate"><span class="pre">clip_in</span> <span class="pre">+</span> <span class="pre">span_duration</span> <span class="pre">&lt;=</span> <span class="pre">clip_duration</span></code> (the clip actually contains that span).</p></li>
+<code class="docutils literal notranslate"><span class="pre">clip_in</span> <span class="pre">+</span> <span class="pre">span_duration</span> <span class="pre">&lt;=</span> <span class="pre">clip_duration</span></code> (the clip actually contains that span);</p></li>
+<li><p>a <code class="xref py py-class docutils literal notranslate"><span class="pre">Transition</span></code> is on an entry that HAS a predecessor, names a known curve,
+is at least <code class="xref py py-data docutils literal notranslate"><span class="pre">MIN_TRANSITION_S</span></code> long, fits in song time counting BOTH
+transitions an entry can carry, and fits in each side’s aligned coverage — see
+<code class="xref py py-func docutils literal notranslate"><span class="pre">_validate_transition()</span></code>.</p></li>
 </ul>
 <p>Returns the normalized list of <a class="reference internal" href="#muvid.footage.EdlEntry" title="muvid.footage.EdlEntry"><code class="xref py py-class docutils literal notranslate"><span class="pre">EdlEntry</span></code></a>.</p>
 </dd></dl>

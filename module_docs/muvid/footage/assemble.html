@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.footage.assemble &mdash; muvid 0.0.30 documentation</title>
+  <title>muvid.footage.assemble &mdash; muvid 0.0.31 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -15,7 +15,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=61a342a2"></script>
+      <script src="../../../_static/documentation_options.js?v=c5dbc6bb"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -149,8 +149,8 @@ the 3.7 GB production box, while 15 cuts only just fit (muvid#21/#24). Score-dri
 routinely produce 30-70 cuts, so that shape caps exactly the edits the scoring layer
 exists to make.</p>
 <p>Now three bounded stages, memory O(1) in cut count:</p>
-<ol class="arabic simple">
-<li><p><strong>One intermediate per cut</strong> — a single-input ffmpeg run per cut (input-side <code class="docutils literal notranslate"><span class="pre">-ss</span></code>,
+<ol class="arabic">
+<li><p><strong>One intermediate per PART</strong> — a single-input ffmpeg run per cut (input-side <code class="docutils literal notranslate"><span class="pre">-ss</span></code>,
 so a late cut no longer decodes the whole head of its clip), scaled+padded onto the
 fixed canvas at a constant <code class="docutils literal notranslate"><span class="pre">fps</span></code>. A gap entry (<code class="docutils literal notranslate"><span class="pre">clip_path</span> <span class="pre">==</span> <span class="pre">&quot;&quot;</span></code> — a span of the
 song with no footage) renders as black from a <code class="docutils literal notranslate"><span class="pre">color</span></code> source, which is what makes
@@ -159,7 +159,16 @@ count derived from the shared song-time grid (<code class="docutils literal notr
 sub-frame cuts (0 grid frames) are dropped, an exhausted source clones its last frame
 up to the count (<code class="docutils literal notranslate"><span class="pre">tpad</span></code>), and a cut whose source yields no frames at all falls back
 to black — so total frames equals <code class="docutils literal notranslate"><span class="pre">round(song_duration*fps)</span></code> by construction,
-whatever the cut count, source rates, or a clip whose audio outlives its video.</p></li>
+whatever the cut count, source rates, or a clip whose audio outlives its video.</p>
+<p>A boundary carrying a <a class="reference internal" href="edl.html#muvid.footage.edl.Transition" title="muvid.footage.edl.Transition"><code class="xref py py-class docutils literal notranslate"><span class="pre">Transition</span></code></a> contributes a fourth
+kind of part: a <strong>two-input</strong> <code class="docutils literal notranslate"><span class="pre">xfade</span></code>, sitting between the two solos it blends,
+each of which is correspondingly shortened (see <code class="xref py py-func docutils literal notranslate"><span class="pre">_part_plan()</span></code>). TWO is the
+number that matters — the bounded-memory guarantee is O(1) in CUT count, and a
+constant number of decoders per invocation keeps it. Reaching for one filtergraph
+over all parts is exactly how the OOM below comes back. The counts still telescope:
+the <code class="docutils literal notranslate"><span class="pre">pre</span></code>/<code class="docutils literal notranslate"><span class="pre">post</span></code> terms cancel against the transition length, so the total is
+<code class="docutils literal notranslate"><span class="pre">round(song_duration*fps)</span></code> with or without transitions.</p>
+</li>
 <li><p><strong>Concat by stream copy</strong> (concat demuxer) — no re-encode, no filtergraph.</p></li>
 <li><p><strong>Mux the clean song</strong> in the same final pass. When the master already IS the delivery
 contract (aac, 48 kHz stereo), its packets are stream-copied bit-identically; anything
@@ -171,8 +180,9 @@ so a display-matrix portrait clip lands upright and pillarboxed, never stretched
 <p>Deliberately NOT moviepy (its <code class="docutils literal notranslate"><span class="pre">write_videofile</span></code> runs in-process and would escape the
 <code class="docutils literal notranslate"><span class="pre">$MUVID_FFMPEG_TIMEOUT_S</span></code> worker guard). Every stage runs through
 <a class="reference internal" href="../visualize/ffmpeg.html#muvid.visualize.ffmpeg.run_ffmpeg" title="muvid.visualize.ffmpeg.run_ffmpeg"><code class="xref py py-func docutils literal notranslate"><span class="pre">muvid.visualize.ffmpeg.run_ffmpeg()</span></code></a>; note the guard is <strong>per invocation</strong> now, so a
-render’s wall-clock bound is <code class="docutils literal notranslate"><span class="pre">(cuts</span> <span class="pre">+</span> <span class="pre">1)</span> <span class="pre">*</span> <span class="pre">MUVID_FFMPEG_TIMEOUT_S</span></code> — the env var bounds
-a hang, not the total render.</p>
+render’s wall-clock bound is <code class="docutils literal notranslate"><span class="pre">(parts</span> <span class="pre">+</span> <span class="pre">1)</span> <span class="pre">*</span> <span class="pre">MUVID_FFMPEG_TIMEOUT_S</span></code> — the env var bounds
+a hang, not the total render. Parts equal cuts for an untransitioned edit and approach
+<code class="docutils literal notranslate"><span class="pre">2</span> <span class="pre">*</span> <span class="pre">cuts</span></code> when every boundary is transitioned.</p>
 <dl class="py data">
 <dt class="sig sig-object py" id="muvid.footage.assemble.DEFAULT_CANVAS">
 <span class="sig-prename descclassname"><span class="pre">muvid.footage.assemble.</span></span><span class="sig-name descname"><span class="pre">DEFAULT_CANVAS</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">(1920,</span> <span class="pre">1080)</span></span><a class="headerlink" href="#muvid.footage.assemble.DEFAULT_CANVAS" title="Link to this definition"></a></dt>

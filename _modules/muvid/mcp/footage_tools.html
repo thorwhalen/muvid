@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.mcp.footage_tools &mdash; muvid 0.0.30 documentation</title>
+  <title>muvid.mcp.footage_tools &mdash; muvid 0.0.31 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=61a342a2"></script>
+      <script src="../../../_static/documentation_options.js?v=c5dbc6bb"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -539,12 +539,22 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_edl_json</span><span class="p">(</span><span class="n">e</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""One EDL entry as JSON — full precision (it must feed back verbatim), gaps as null."""</span>
-    <span class="k">return</span> <span class="p">{</span>
+<span class="w">    </span><span class="sd">"""One EDL entry as JSON — full precision (it must feed back verbatim), gaps as null.</span>
+
+<span class="sd">    ``transition`` is emitted ONLY when set. That is what keeps every existing</span>
+<span class="sd">    ``renders/*/meta.json`` byte-identical and keeps the render -&gt; edit -&gt; re-render</span>
+<span class="sd">    round trip (muvid#21 item 3) exact for an edit that uses no transitions. It is</span>
+<span class="sd">    also a plain dict, not the frozen dataclass: ``write_render_meta`` runs</span>
+<span class="sd">    ``json.dumps`` over this, which has no encoder for a dataclass.</span>
+<span class="sd">    """</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="p">{</span>
         <span class="s2">"song_start"</span><span class="p">:</span> <span class="n">e</span><span class="o">.</span><span class="n">song_start</span><span class="p">,</span>
         <span class="s2">"song_end"</span><span class="p">:</span> <span class="n">e</span><span class="o">.</span><span class="n">song_end</span><span class="p">,</span>
         <span class="s2">"clip_id"</span><span class="p">:</span> <span class="n">e</span><span class="o">.</span><span class="n">clip_id</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">}</span>
+    <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="s2">"transition"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">out</span><span class="p">[</span><span class="s2">"transition"</span><span class="p">]</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">transition</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">out</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_coverage_report</span><span class="p">(</span><span class="n">entries</span><span class="p">,</span> <span class="n">aligns</span><span class="p">,</span> <span class="n">song_dur</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
@@ -681,6 +691,15 @@
 <span class="sd">      footage is an explicit gap entry (``clip_id: null``); spans of the song your entries</span>
 <span class="sd">      do not reach (head, tail, interior holes) are gap-filled automatically and named in</span>
 <span class="sd">      the ``coverage`` report.</span>
+<span class="sd">    - each ``edl`` entry may also carry ``transition``:</span>
+<span class="sd">      ``{"duration_s": 0.4, "curve": "fade"}`` — blend IN from the previous entry instead</span>
+<span class="sd">      of hard-cutting. The blend is CENTRED on the boundary, so a beat-snapped cut stays</span>
+<span class="sd">      on the beat: each side supplies ``duration_s/2`` of source beyond its own span, and</span>
+<span class="sd">      both must actually have it (a gap side always does — it fades from black). Rejected,</span>
+<span class="sd">      not ignored, if it is on the FIRST entry (nothing to blend from), names a curve</span>
+<span class="sd">      outside ``fade``/``fadeblack``/``fadewhite``/``dissolve``/``wipe*``/``slide*``/</span>
+<span class="sd">      ``smooth*``/``circleopen``/``circleclose``, is under 0.04 s, or does not fit. Omit</span>
+<span class="sd">      it for a hard cut — the default, and what every entry without the key means.</span>
 <span class="sd">    - ``strategy='weighted'`` (score-driven): the beat-snapped Viterbi selector reads the</span>
 <span class="sd">      persisted score tracks (run ``score_footage`` first) and the selection config —</span>
 <span class="sd">      ``preset`` ("energetic"/"contemplative") and/or ``weights`` (per-metric) and/or</span>

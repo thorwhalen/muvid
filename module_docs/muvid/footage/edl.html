@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.footage.edl &mdash; muvid 0.0.30 documentation</title>
+  <title>muvid.footage.edl &mdash; muvid 0.0.31 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -15,7 +15,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=61a342a2"></script>
+      <script src="../../../_static/documentation_options.js?v=c5dbc6bb"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -64,13 +64,23 @@
 <li class="toctree-l1"><a class="reference internal" href="align.html">muvid.footage.align</a></li>
 <li class="toctree-l1"><a class="reference internal" href="assemble.html">muvid.footage.assemble</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">muvid.footage.edl</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#muvid.footage.edl.AssemblyCut"><code class="docutils literal notranslate"><span class="pre">AssemblyCut</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#muvid.footage.edl.EdlEntry"><code class="docutils literal notranslate"><span class="pre">EdlEntry</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.footage.edl.AssemblyCut"><code class="docutils literal notranslate"><span class="pre">AssemblyCut</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#muvid.footage.edl.AssemblyCut.transition"><code class="docutils literal notranslate"><span class="pre">AssemblyCut.transition</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.footage.edl.EdlEntry"><code class="docutils literal notranslate"><span class="pre">EdlEntry</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#muvid.footage.edl.EdlEntry.transition"><code class="docutils literal notranslate"><span class="pre">EdlEntry.transition</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.footage.edl.FootageAlignment"><code class="docutils literal notranslate"><span class="pre">FootageAlignment</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#muvid.footage.edl.FootageAlignment.overlaps"><code class="docutils literal notranslate"><span class="pre">FootageAlignment.overlaps</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.footage.edl.MAX_EDL_ENTRIES"><code class="docutils literal notranslate"><span class="pre">MAX_EDL_ENTRIES</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.footage.edl.MIN_TRANSITION_S"><code class="docutils literal notranslate"><span class="pre">MIN_TRANSITION_S</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.footage.edl.TRANSITION_CURVES"><code class="docutils literal notranslate"><span class="pre">TRANSITION_CURVES</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.footage.edl.TRANSITION_SPLIT"><code class="docutils literal notranslate"><span class="pre">TRANSITION_SPLIT</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.footage.edl.Transition"><code class="docutils literal notranslate"><span class="pre">Transition</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.footage.edl.derive_cuts"><code class="docutils literal notranslate"><span class="pre">derive_cuts()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.footage.edl.fill_gaps"><code class="docutils literal notranslate"><span class="pre">fill_gaps()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.footage.edl.validate_edl"><code class="docutils literal notranslate"><span class="pre">validate_edl()</span></code></a></li>
@@ -157,20 +167,40 @@ become gap entries); <a class="reference internal" href="#muvid.footage.edl.vali
 auto/strategy) passes before any cutting, and <a class="reference internal" href="#muvid.footage.edl.derive_cuts" title="muvid.footage.edl.derive_cuts"><code class="xref py py-func docutils literal notranslate"><span class="pre">derive_cuts()</span></code></a> centralizes the sign
 convention (<code class="docutils literal notranslate"><span class="pre">clip_in</span> <span class="pre">=</span> <span class="pre">song_start</span> <span class="pre">-</span> <span class="pre">offset_s</span></code>) so no third-party strategy can desync the
 result. Times are seconds (float).</p>
+<p>An entry may carry an optional <a class="reference internal" href="#muvid.footage.edl.Transition" title="muvid.footage.edl.Transition"><code class="xref py py-class docutils literal notranslate"><span class="pre">Transition</span></code></a> — a blend IN from its predecessor
+instead of a hard cut (muvid#34). It is an annotation on a boundary that already exists
+implicitly, so spans stay one-per-song-span and nothing about reading an EDL changes.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="muvid.footage.edl.AssemblyCut">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">muvid.footage.edl.</span></span><span class="sig-name descname"><span class="pre">AssemblyCut</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">song_start</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">song_end</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clip_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clip_in</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clip_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/muvid/footage/edl.html#AssemblyCut"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.edl.AssemblyCut" title="Link to this definition"></a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">muvid.footage.edl.</span></span><span class="sig-name descname"><span class="pre">AssemblyCut</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">song_start</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">song_end</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clip_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clip_in</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clip_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transition</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#muvid.footage.edl.Transition" title="muvid.footage.edl.Transition"><span class="pre">Transition</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/muvid/footage/edl.html#AssemblyCut"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.edl.AssemblyCut" title="Link to this definition"></a></dt>
 <dd><p>A validated cut ready to render: the EDL span + the derived in-point + clip path.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="muvid.footage.edl.AssemblyCut.transition">
+<span class="sig-name descname"><span class="pre">transition</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#muvid.footage.edl.Transition" title="muvid.footage.edl.Transition"><span class="pre">Transition</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#muvid.footage.edl.AssemblyCut.transition" title="Link to this definition"></a></dt>
+<dd><p>Carried through from the EDL entry, unchanged. <cite>derive_cuts</cite> gains no
+transition arithmetic: the extra source material a blend needs is measured
+in FRAMES at the render fps, which only the assembler knows.</p>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="muvid.footage.edl.EdlEntry">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">muvid.footage.edl.</span></span><span class="sig-name descname"><span class="pre">EdlEntry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">song_start</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">song_end</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clip_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/muvid/footage/edl.html#EdlEntry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.edl.EdlEntry" title="Link to this definition"></a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">muvid.footage.edl.</span></span><span class="sig-name descname"><span class="pre">EdlEntry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">song_start</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">song_end</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clip_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transition</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#muvid.footage.edl.Transition" title="muvid.footage.edl.Transition"><span class="pre">Transition</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/muvid/footage/edl.html#EdlEntry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.edl.EdlEntry" title="Link to this definition"></a></dt>
 <dd><p>One cut: show <code class="docutils literal notranslate"><span class="pre">clip_id</span></code> over the song span <code class="docutils literal notranslate"><span class="pre">[song_start,</span> <span class="pre">song_end]</span></code>.</p>
 <p><code class="docutils literal notranslate"><span class="pre">clip_id</span> <span class="pre">==</span> <span class="pre">&quot;&quot;</span></code> is a <strong>gap entry</strong> — no footage covers this span, and the renderer
 fills it (black in v1). Gaps are explicit entries rather than absences so that an EDL
 is always contiguous over its span, every span of the song is accounted for by
 exactly one entry, and “no clip here” survives a JSON round trip (<code class="docutils literal notranslate"><span class="pre">clip_id:</span> <span class="pre">null</span></code>).</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="muvid.footage.edl.EdlEntry.transition">
+<span class="sig-name descname"><span class="pre">transition</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#muvid.footage.edl.Transition" title="muvid.footage.edl.Transition"><span class="pre">Transition</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#muvid.footage.edl.EdlEntry.transition" title="Link to this definition"></a></dt>
+<dd><p>Blend in from the predecessor rather than hard-cutting. <code class="docutils literal notranslate"><span class="pre">None</span></code> (the
+default) is a hard cut, so an EDL written before this field existed is a
+valid EDL now, and one written with it, read by older code, renders hard
+cuts — degraded, never wrong, in both directions.</p>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="py class">
@@ -193,8 +223,73 @@ of being measured. Selection filters on this; reporting shows it with a reason.<
 <dt class="sig sig-object py" id="muvid.footage.edl.MAX_EDL_ENTRIES">
 <span class="sig-prename descclassname"><span class="pre">muvid.footage.edl.</span></span><span class="sig-name descname"><span class="pre">MAX_EDL_ENTRIES</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">500</span></span><a class="headerlink" href="#muvid.footage.edl.MAX_EDL_ENTRIES" title="Link to this definition"></a></dt>
 <dd><p>Cap on EDL entries (env-tunable), on BOTH the auto and the explicit-<code class="docutils literal notranslate"><span class="pre">edl</span></code> paths. The
-assembler runs one bounded ffmpeg per cut (memory O(1) in cut count), so this now caps
-total WORK (N encoder invocations on a shared box), not a single command’s inputs.</p>
+assembler runs one bounded ffmpeg per PART (memory O(1) in cut count), so this caps
+total WORK — N encoder invocations on a shared box — not a single command’s inputs.
+It counts footage CUTS, and parts are no longer one-per-cut: a transitioned boundary
+adds a part, so a fully-transitioned edit approaches <code class="docutils literal notranslate"><span class="pre">2</span> <span class="pre">*</span> <span class="pre">cuts</span></code> invocations. The cap
+stays on cuts deliberately — it is the number the caller wrote and can act on — but
+read it as bounding work only to within that factor.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="muvid.footage.edl.MIN_TRANSITION_S">
+<span class="sig-prename descclassname"><span class="pre">muvid.footage.edl.</span></span><span class="sig-name descname"><span class="pre">MIN_TRANSITION_S</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.04</span></span><a class="headerlink" href="#muvid.footage.edl.MIN_TRANSITION_S" title="Link to this definition"></a></dt>
+<dd><p>Shortest transition that is not a lie. Below roughly one frame the xfade emits
+no blended frames at all and the “transition” is a hard cut wearing a label —
+the same class of silent no-op as muvid#44’s <code class="docutils literal notranslate"><span class="pre">camera:</span> <span class="pre">{move:</span> <span class="pre">static}</span></code>, which
+<cite>an</cite> refused precisely so it could not happen quietly. The renderer ALSO warns
+if a transition rounds to zero frames at the actual render fps, which this
+song-time floor cannot know.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="muvid.footage.edl.TRANSITION_CURVES">
+<span class="sig-prename descclassname"><span class="pre">muvid.footage.edl.</span></span><span class="sig-name descname"><span class="pre">TRANSITION_CURVES</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">frozenset({'circleclose',</span> <span class="pre">'circleopen',</span> <span class="pre">'dissolve',</span> <span class="pre">'fade',</span> <span class="pre">'fadeblack',</span> <span class="pre">'fadewhite',</span> <span class="pre">'slidedown',</span> <span class="pre">'slideleft',</span> <span class="pre">'slideright',</span> <span class="pre">'slideup',</span> <span class="pre">'smoothleft',</span> <span class="pre">'smoothright',</span> <span class="pre">'wipedown',</span> <span class="pre">'wipeleft',</span> <span class="pre">'wiperight',</span> <span class="pre">'wipeup'})</span></span><a class="headerlink" href="#muvid.footage.edl.TRANSITION_CURVES" title="Link to this definition"></a></dt>
+<dd><p>The transition curves muvid offers. A curated subset of ffmpeg’s 58 <code class="docutils literal notranslate"><span class="pre">xfade</span></code>
+transitions, not all of them: this is a vocabulary we own and must keep working
+across ffmpeg builds, and an unrecognised name is refused at
+<a class="reference internal" href="#muvid.footage.edl.validate_edl" title="muvid.footage.edl.validate_edl"><code class="xref py py-func docutils literal notranslate"><span class="pre">validate_edl()</span></code></a> rather than discovered as an ffmpeg error three stages
+later. Same posture as the <code class="docutils literal notranslate"><span class="pre">an</span></code> camera-move table — translate at the boundary,
+never pass a name through and hope.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="muvid.footage.edl.TRANSITION_SPLIT">
+<span class="sig-prename descclassname"><span class="pre">muvid.footage.edl.</span></span><span class="sig-name descname"><span class="pre">TRANSITION_SPLIT</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.5</span></span><a class="headerlink" href="#muvid.footage.edl.TRANSITION_SPLIT" title="Link to this definition"></a></dt>
+<dd><p>the fraction taken from
+BEFORE the boundary. <code class="docutils literal notranslate"><span class="pre">0.5</span></code> is centred — each side supplies <code class="docutils literal notranslate"><span class="pre">duration/2</span></code> of
+extra source, and the perceptual midpoint of the blend lands exactly on the
+authored boundary.</p>
+<p>Not a tuning knob. A trailing transition (<code class="docutils literal notranslate"><span class="pre">1.0</span></code>) would need spare coverage on
+only one side and is therefore satisfiable at more boundaries — but it puts the
+perceived cut <code class="docutils literal notranslate"><span class="pre">duration/2</span></code> LATE on every transition, which is precisely what
+the beat-snapped Viterbi selector in <a class="reference internal" href="select_score.html#module-muvid.footage.select_score" title="muvid.footage.select_score"><code class="xref py py-mod docutils literal notranslate"><span class="pre">muvid.footage.select_score</span></code></a> exists to
+prevent. Centring is also the NLE convention (“centered on cut”).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Where a transition sits relative to the cut it is on</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="muvid.footage.edl.Transition">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">muvid.footage.edl.</span></span><span class="sig-name descname"><span class="pre">Transition</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">duration_s</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">curve</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'fade'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/muvid/footage/edl.html#Transition"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.edl.Transition" title="Link to this definition"></a></dt>
+<dd><p>How this entry blends IN from its predecessor.</p>
+<p>A small frozen record rather than a bare float, so <code class="docutils literal notranslate"><span class="pre">curve</span></code> (and anything
+after it) is an additive field rather than another shape change on a wire
+record.</p>
+<p>The transition belongs to the entry it is <em>on</em> — an annotation of that entry’s
+<strong>entrance</strong>. That is what keeps the EDL’s defining invariant intact: spans
+stay one-per-song-span, so the thing you can read is still the thing that
+renders. (The two rejected shapes both break it: silently widening a span
+makes the EDL stop meaning what it says, and a synthetic third entry between
+two real ones makes authoring one transition a three-entry edit — the class of
+mistake muvid#35 was filed about — while doubling the wire record count of a
+heavily-cut edit for a purely presentational reason.)</p>
+<p>A transition on the FIRST entry is rejected, not ignored: there is no
+predecessor to blend from, so it is a request that cannot be honoured, and
+honouring nothing quietly is how a direction gets lost.</p>
 </dd></dl>
 
 <dl class="py function">
@@ -216,6 +311,14 @@ the intro), interior holes between consecutive entries, and the tail
 containment stay <a class="reference internal" href="#muvid.footage.edl.validate_edl" title="muvid.footage.edl.validate_edl"><code class="xref py py-func docutils literal notranslate"><span class="pre">validate_edl()</span></code></a>’s business — call this BEFORE it, never after.</p>
 <p>An empty selection stays empty (an all-black video is not a first cut worth
 rendering silently — the caller decides what “no usable footage” means).</p>
+<p><strong>A transition blends in from whatever precedes it on the timeline, which after
+this function may be an inserted gap</strong> — i.e. a fade from black. That is a
+consequence worth stating rather than a bug to guard: a transition annotates its
+entry’s ENTRANCE, and the entrance is wherever the entry actually starts once the
+edit spans the whole song. So a transition on the caller’s first entry is
+REJECTED when footage starts at t=0 (nothing precedes it) and becomes a fade-in
+from black when it does not (the head gap precedes it). Both follow from the same
+rule; the tests pin both so the coherence stays deliberate.</p>
 </dd></dl>
 
 <dl class="py function">
@@ -232,7 +335,11 @@ rendering silently — the caller decides what “no usable footage” means).</
 <em>implicit</em> hole is still an error, so nothing goes missing silently;</p></li>
 <li><p>each non-gap span lies within its clip’s aligned coverage, AND the derived
 <code class="docutils literal notranslate"><span class="pre">clip_in</span> <span class="pre">=</span> <span class="pre">song_start</span> <span class="pre">-</span> <span class="pre">offset</span></code> satisfies <code class="docutils literal notranslate"><span class="pre">0</span> <span class="pre">&lt;=</span> <span class="pre">clip_in</span></code> and
-<code class="docutils literal notranslate"><span class="pre">clip_in</span> <span class="pre">+</span> <span class="pre">span_duration</span> <span class="pre">&lt;=</span> <span class="pre">clip_duration</span></code> (the clip actually contains that span).</p></li>
+<code class="docutils literal notranslate"><span class="pre">clip_in</span> <span class="pre">+</span> <span class="pre">span_duration</span> <span class="pre">&lt;=</span> <span class="pre">clip_duration</span></code> (the clip actually contains that span);</p></li>
+<li><p>a <a class="reference internal" href="#muvid.footage.edl.Transition" title="muvid.footage.edl.Transition"><code class="xref py py-class docutils literal notranslate"><span class="pre">Transition</span></code></a> is on an entry that HAS a predecessor, names a known curve,
+is at least <a class="reference internal" href="#muvid.footage.edl.MIN_TRANSITION_S" title="muvid.footage.edl.MIN_TRANSITION_S"><code class="xref py py-data docutils literal notranslate"><span class="pre">MIN_TRANSITION_S</span></code></a> long, fits in song time counting BOTH
+transitions an entry can carry, and fits in each side’s aligned coverage — see
+<code class="xref py py-func docutils literal notranslate"><span class="pre">_validate_transition()</span></code>.</p></li>
 </ul>
 <p>Returns the normalized list of <a class="reference internal" href="#muvid.footage.edl.EdlEntry" title="muvid.footage.edl.EdlEntry"><code class="xref py py-class docutils literal notranslate"><span class="pre">EdlEntry</span></code></a>.</p>
 </dd></dl>

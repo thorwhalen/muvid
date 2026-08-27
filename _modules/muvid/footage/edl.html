@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.footage.edl &mdash; muvid 0.0.30 documentation</title>
+  <title>muvid.footage.edl &mdash; muvid 0.0.31 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=61a342a2"></script>
+      <script src="../../../_static/documentation_options.js?v=c5dbc6bb"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -142,6 +142,10 @@
 <span class="sd">auto/strategy) passes before any cutting, and :func:`derive_cuts` centralizes the sign</span>
 <span class="sd">convention (``clip_in = song_start - offset_s``) so no third-party strategy can desync the</span>
 <span class="sd">result. Times are seconds (float).</span>
+
+<span class="sd">An entry may carry an optional :class:`Transition` — a blend IN from its predecessor</span>
+<span class="sd">instead of a hard cut (muvid#34). It is an annotation on a boundary that already exists</span>
+<span class="sd">implicitly, so spans stay one-per-song-span and nothing about reading an EDL changes.</span>
 <span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
@@ -153,9 +157,60 @@
 <span class="c1">#: Spans shorter than this (seconds) are treated as coincident / zero — guards float noise.</span>
 <span class="n">_EPS</span> <span class="o">=</span> <span class="mf">1e-3</span>
 <span class="c1">#: Cap on EDL entries (env-tunable), on BOTH the auto and the explicit-``edl`` paths. The</span>
-<span class="c1">#: assembler runs one bounded ffmpeg per cut (memory O(1) in cut count), so this now caps</span>
-<span class="c1">#: total WORK (N encoder invocations on a shared box), not a single command's inputs.</span>
+<span class="c1">#: assembler runs one bounded ffmpeg per PART (memory O(1) in cut count), so this caps</span>
+<span class="c1">#: total WORK — N encoder invocations on a shared box — not a single command's inputs.</span>
+<span class="c1">#: It counts footage CUTS, and parts are no longer one-per-cut: a transitioned boundary</span>
+<span class="c1">#: adds a part, so a fully-transitioned edit approaches ``2 * cuts`` invocations. The cap</span>
+<span class="c1">#: stays on cuts deliberately — it is the number the caller wrote and can act on — but</span>
+<span class="c1">#: read it as bounding work only to within that factor.</span>
 <span class="n">MAX_EDL_ENTRIES</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"MUVID_FOOTAGE_MAX_EDL_ENTRIES"</span><span class="p">,</span> <span class="s2">"500"</span><span class="p">))</span>
+
+<span class="c1">#: Where a transition sits relative to the cut it is on: the fraction taken from</span>
+<span class="c1">#: BEFORE the boundary. ``0.5`` is centred — each side supplies ``duration/2`` of</span>
+<span class="c1">#: extra source, and the perceptual midpoint of the blend lands exactly on the</span>
+<span class="c1">#: authored boundary.</span>
+<span class="c1">#:</span>
+<span class="c1">#: Not a tuning knob. A trailing transition (``1.0``) would need spare coverage on</span>
+<span class="c1">#: only one side and is therefore satisfiable at more boundaries — but it puts the</span>
+<span class="c1">#: perceived cut ``duration/2`` LATE on every transition, which is precisely what</span>
+<span class="c1">#: the beat-snapped Viterbi selector in :mod:`muvid.footage.select_score` exists to</span>
+<span class="c1">#: prevent. Centring is also the NLE convention ("centered on cut").</span>
+<span class="n">TRANSITION_SPLIT</span> <span class="o">=</span> <span class="mf">0.5</span>
+
+<span class="c1">#: Shortest transition that is not a lie. Below roughly one frame the xfade emits</span>
+<span class="c1">#: no blended frames at all and the "transition" is a hard cut wearing a label —</span>
+<span class="c1">#: the same class of silent no-op as muvid#44's ``camera: {move: static}``, which</span>
+<span class="c1">#: `an` refused precisely so it could not happen quietly. The renderer ALSO warns</span>
+<span class="c1">#: if a transition rounds to zero frames at the actual render fps, which this</span>
+<span class="c1">#: song-time floor cannot know.</span>
+<span class="n">MIN_TRANSITION_S</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"MUVID_FOOTAGE_MIN_TRANSITION_S"</span><span class="p">,</span> <span class="s2">"0.04"</span><span class="p">))</span>
+
+<span class="c1">#: The transition curves muvid offers. A curated subset of ffmpeg's 58 ``xfade``</span>
+<span class="c1">#: transitions, not all of them: this is a vocabulary we own and must keep working</span>
+<span class="c1">#: across ffmpeg builds, and an unrecognised name is refused at</span>
+<span class="c1">#: :func:`validate_edl` rather than discovered as an ffmpeg error three stages</span>
+<span class="c1">#: later. Same posture as the ``an`` camera-move table — translate at the boundary,</span>
+<span class="c1">#: never pass a name through and hope.</span>
+<span class="n">TRANSITION_CURVES</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span>
+    <span class="p">{</span>
+        <span class="s2">"fade"</span><span class="p">,</span>
+        <span class="s2">"fadeblack"</span><span class="p">,</span>
+        <span class="s2">"fadewhite"</span><span class="p">,</span>
+        <span class="s2">"dissolve"</span><span class="p">,</span>
+        <span class="s2">"wipeleft"</span><span class="p">,</span>
+        <span class="s2">"wiperight"</span><span class="p">,</span>
+        <span class="s2">"wipeup"</span><span class="p">,</span>
+        <span class="s2">"wipedown"</span><span class="p">,</span>
+        <span class="s2">"slideleft"</span><span class="p">,</span>
+        <span class="s2">"slideright"</span><span class="p">,</span>
+        <span class="s2">"slideup"</span><span class="p">,</span>
+        <span class="s2">"slidedown"</span><span class="p">,</span>
+        <span class="s2">"smoothleft"</span><span class="p">,</span>
+        <span class="s2">"smoothright"</span><span class="p">,</span>
+        <span class="s2">"circleopen"</span><span class="p">,</span>
+        <span class="s2">"circleclose"</span><span class="p">,</span>
+    <span class="p">}</span>
+<span class="p">)</span>
 
 
 <div class="viewcode-block" id="FootageAlignment">
@@ -204,6 +259,42 @@
 
 
 
+<div class="viewcode-block" id="Transition">
+<a class="viewcode-back" href="../../../module_docs/muvid/footage/edl.html#muvid.footage.Transition">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Transition</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""How this entry blends IN from its predecessor.</span>
+
+<span class="sd">    A small frozen record rather than a bare float, so ``curve`` (and anything</span>
+<span class="sd">    after it) is an additive field rather than another shape change on a wire</span>
+<span class="sd">    record.</span>
+
+<span class="sd">    The transition belongs to the entry it is *on* — an annotation of that entry's</span>
+<span class="sd">    **entrance**. That is what keeps the EDL's defining invariant intact: spans</span>
+<span class="sd">    stay one-per-song-span, so the thing you can read is still the thing that</span>
+<span class="sd">    renders. (The two rejected shapes both break it: silently widening a span</span>
+<span class="sd">    makes the EDL stop meaning what it says, and a synthetic third entry between</span>
+<span class="sd">    two real ones makes authoring one transition a three-entry edit — the class of</span>
+<span class="sd">    mistake muvid#35 was filed about — while doubling the wire record count of a</span>
+<span class="sd">    heavily-cut edit for a purely presentational reason.)</span>
+
+<span class="sd">    A transition on the FIRST entry is rejected, not ignored: there is no</span>
+<span class="sd">    predecessor to blend from, so it is a request that cannot be honoured, and</span>
+<span class="sd">    honouring nothing quietly is how a direction gets lost.</span>
+<span class="sd">    """</span>
+
+    <span class="n">duration_s</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">curve</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"fade"</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">"duration_s"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">duration_s</span><span class="p">,</span> <span class="s2">"curve"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">curve</span><span class="p">}</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_dict</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">d</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"Transition"</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">duration_s</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s2">"duration_s"</span><span class="p">]),</span> <span class="n">curve</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"curve"</span><span class="p">,</span> <span class="s2">"fade"</span><span class="p">)))</span></div>
+
+
+
 <div class="viewcode-block" id="EdlEntry">
 <a class="viewcode-back" href="../../../module_docs/muvid/footage/edl.html#muvid.footage.EdlEntry">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -219,6 +310,11 @@
     <span class="n">song_start</span><span class="p">:</span> <span class="nb">float</span>
     <span class="n">song_end</span><span class="p">:</span> <span class="nb">float</span>
     <span class="n">clip_id</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="c1">#: Blend in from the predecessor rather than hard-cutting. ``None`` (the</span>
+    <span class="c1">#: default) is a hard cut, so an EDL written before this field existed is a</span>
+    <span class="c1">#: valid EDL now, and one written with it, read by older code, renders hard</span>
+    <span class="c1">#: cuts — degraded, never wrong, in both directions.</span>
+    <span class="n">transition</span><span class="p">:</span> <span class="s2">"Transition | None"</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">is_gap</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
@@ -239,6 +335,10 @@
         <span class="nb">float</span>  <span class="c1"># seconds into the clip where this span begins (= song_start - offset)</span>
     <span class="p">)</span>
     <span class="n">clip_path</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="c1">#: Carried through from the EDL entry, unchanged. `derive_cuts` gains no</span>
+    <span class="c1">#: transition arithmetic: the extra source material a blend needs is measured</span>
+    <span class="c1">#: in FRAMES at the render fps, which only the assembler knows.</span>
+    <span class="n">transition</span><span class="p">:</span> <span class="s2">"Transition | None"</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">duration</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
@@ -250,11 +350,28 @@
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">EdlEntry</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">e</span>
     <span class="n">clip_id</span> <span class="o">=</span> <span class="n">e</span><span class="p">[</span><span class="s2">"clip_id"</span><span class="p">]</span>
+    <span class="n">raw</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"transition"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">raw</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">transition</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># RAISES on anything malformed, deliberately. `_as_entry` serves the</span>
+        <span class="c1"># explicit `edl=` argument — a caller's request — where dropping a</span>
+        <span class="c1"># direction silently is the bug. The lacing bridge's read is the opposite</span>
+        <span class="c1"># posture (skip, never crash) because that is a browser's output, not a</span>
+        <span class="c1"># request; the two are not inconsistent, they have different authors.</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">transition</span> <span class="o">=</span> <span class="n">Transition</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">KeyError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">)</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"EDL entry transition is malformed (</span><span class="si">{</span><span class="n">raw</span><span class="si">!r}</span><span class="s2">): it must be an "</span>
+                <span class="s2">"object with a numeric 'duration_s' and an optional 'curve'."</span>
+            <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span>
     <span class="k">return</span> <span class="n">EdlEntry</span><span class="p">(</span>
         <span class="n">song_start</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">e</span><span class="p">[</span><span class="s2">"song_start"</span><span class="p">]),</span>
         <span class="n">song_end</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">e</span><span class="p">[</span><span class="s2">"song_end"</span><span class="p">]),</span>
         <span class="c1"># JSON callers write a gap as clip_id: null; internally it is "".</span>
         <span class="n">clip_id</span><span class="o">=</span><span class="s2">""</span> <span class="k">if</span> <span class="n">clip_id</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">str</span><span class="p">(</span><span class="n">clip_id</span><span class="p">),</span>
+        <span class="n">transition</span><span class="o">=</span><span class="n">transition</span><span class="p">,</span>
     <span class="p">)</span>
 
 
@@ -271,6 +388,15 @@
 
 <span class="sd">    An empty selection stays empty (an all-black video is not a first cut worth</span>
 <span class="sd">    rendering silently — the caller decides what "no usable footage" means).</span>
+
+<span class="sd">    **A transition blends in from whatever precedes it on the timeline, which after</span>
+<span class="sd">    this function may be an inserted gap** — i.e. a fade from black. That is a</span>
+<span class="sd">    consequence worth stating rather than a bug to guard: a transition annotates its</span>
+<span class="sd">    entry's ENTRANCE, and the entrance is wherever the entry actually starts once the</span>
+<span class="sd">    edit spans the whole song. So a transition on the caller's first entry is</span>
+<span class="sd">    REJECTED when footage starts at t=0 (nothing precedes it) and becomes a fade-in</span>
+<span class="sd">    from black when it does not (the head gap precedes it). Both follow from the same</span>
+<span class="sd">    rule; the tests pin both so the coherence stays deliberate.</span>
 <span class="sd">    """</span>
     <span class="n">ordered</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">((</span><span class="n">_as_entry</span><span class="p">(</span><span class="n">e</span><span class="p">)</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">entries</span><span class="p">),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">e</span><span class="p">:</span> <span class="n">e</span><span class="o">.</span><span class="n">song_start</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">ordered</span><span class="p">:</span>
@@ -317,7 +443,11 @@
 <span class="sd">      *implicit* hole is still an error, so nothing goes missing silently;</span>
 <span class="sd">    - each non-gap span lies within its clip's aligned coverage, AND the derived</span>
 <span class="sd">      ``clip_in = song_start - offset`` satisfies ``0 &lt;= clip_in`` and</span>
-<span class="sd">      ``clip_in + span_duration &lt;= clip_duration`` (the clip actually contains that span).</span>
+<span class="sd">      ``clip_in + span_duration &lt;= clip_duration`` (the clip actually contains that span);</span>
+<span class="sd">    - a :class:`Transition` is on an entry that HAS a predecessor, names a known curve,</span>
+<span class="sd">      is at least :data:`MIN_TRANSITION_S` long, fits in song time counting BOTH</span>
+<span class="sd">      transitions an entry can carry, and fits in each side's aligned coverage — see</span>
+<span class="sd">      :func:`_validate_transition`.</span>
 
 <span class="sd">    Returns the normalized list of :class:`EdlEntry`.</span>
 <span class="sd">    """</span>
@@ -336,6 +466,7 @@
     <span class="n">by_id</span> <span class="o">=</span> <span class="p">{</span><span class="n">a</span><span class="o">.</span><span class="n">clip_id</span><span class="p">:</span> <span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">alignments</span><span class="p">}</span>
 
     <span class="n">prev_end</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">prev</span><span class="p">:</span> <span class="n">EdlEntry</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">e</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">entries</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">e</span><span class="o">.</span><span class="n">is_gap</span> <span class="ow">and</span> <span class="n">e</span><span class="o">.</span><span class="n">clip_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">by_id</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
@@ -375,9 +506,101 @@
                     <span class="sa">f</span><span class="s2">"[</span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">song_start</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">song_end</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">] (its coverage is "</span>
                     <span class="sa">f</span><span class="s2">"[</span><span class="si">{</span><span class="n">a</span><span class="o">.</span><span class="n">coverage</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">a</span><span class="o">.</span><span class="n">coverage</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">])."</span>
                 <span class="p">)</span>
+        <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">transition</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">_validate_transition</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">prev</span><span class="p">,</span> <span class="n">by_id</span><span class="p">)</span>
         <span class="n">prev_end</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">song_end</span>
+        <span class="n">prev</span> <span class="o">=</span> <span class="n">e</span>
     <span class="k">return</span> <span class="n">entries</span></div>
 
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_span</span><span class="p">(</span><span class="n">e</span><span class="p">:</span> <span class="n">EdlEntry</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">e</span><span class="o">.</span><span class="n">song_end</span> <span class="o">-</span> <span class="n">e</span><span class="o">.</span><span class="n">song_start</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_validate_transition</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">prev</span><span class="p">,</span> <span class="n">by_id</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The four things a transition has to satisfy. Raises ``ValueError``.</span>
+
+<span class="sd">    Split out only for length; it is part of :func:`validate_edl`, which remains</span>
+<span class="sd">    the ONE gate. Nothing else may check these.</span>
+<span class="sd">    """</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">transition</span>
+    <span class="k">if</span> <span class="n">prev</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"EDL entry </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2"> carries a transition but is the first entry — there is "</span>
+            <span class="s2">"nothing to blend in FROM. A transition annotates an entry's entrance, "</span>
+            <span class="s2">"so the first entry of the edit cannot have one. (An entry preceded by "</span>
+            <span class="s2">"a gap CAN: it blends in from black.)"</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="n">t</span><span class="o">.</span><span class="n">curve</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">TRANSITION_CURVES</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"EDL entry </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">: unknown transition curve </span><span class="si">{</span><span class="n">t</span><span class="o">.</span><span class="n">curve</span><span class="si">!r}</span><span class="s2">; "</span>
+            <span class="sa">f</span><span class="s2">"muvid offers </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">TRANSITION_CURVES</span><span class="p">)</span><span class="si">}</span><span class="s2">."</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="n">t</span><span class="o">.</span><span class="n">duration_s</span> <span class="o">&lt;</span> <span class="n">MIN_TRANSITION_S</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"EDL entry </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">: transition duration </span><span class="si">{</span><span class="n">t</span><span class="o">.</span><span class="n">duration_s</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">s is below the "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">MIN_TRANSITION_S</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">s floor. A transition shorter than about a frame "</span>
+            <span class="s2">"renders as a hard cut, which is a direction that silently did nothing."</span>
+        <span class="p">)</span>
+
+    <span class="c1"># (1) It must FIT IN SONG TIME. An entry can be claimed from BOTH ends — its own</span>
+    <span class="c1"># incoming transition eats the head of its span, its successor's eats the tail —</span>
+    <span class="c1"># and checking each transition against a whole span in isolation lets two</span>
+    <span class="c1"># legal-looking transitions together consume more than the span between them.</span>
+    <span class="c1">#</span>
+    <span class="c1"># Two checks, each looking ONE way, and that is exactly enough. A forward term</span>
+    <span class="c1"># for the successor's claim would be dead: entry i+1's backward check evaluates</span>
+    <span class="c1"># the identical inequality, so it could never be the sole cause of a rejection.</span>
+    <span class="c1"># (Mutation testing is how that was established — the term was written first and</span>
+    <span class="c1"># deleting it left the suite green.)</span>
+    <span class="n">lead</span><span class="p">,</span> <span class="n">trail</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">duration_s</span> <span class="o">*</span> <span class="n">TRANSITION_SPLIT</span><span class="p">,</span> <span class="n">t</span><span class="o">.</span><span class="n">duration_s</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">TRANSITION_SPLIT</span><span class="p">)</span>
+    <span class="n">prev_own_trail</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">prev</span><span class="o">.</span><span class="n">transition</span><span class="o">.</span><span class="n">duration_s</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">TRANSITION_SPLIT</span><span class="p">)</span> <span class="k">if</span> <span class="n">prev</span><span class="o">.</span><span class="n">transition</span> <span class="k">else</span> <span class="mf">0.0</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">prev_own_trail</span> <span class="o">+</span> <span class="n">lead</span> <span class="o">&gt;</span> <span class="n">_span</span><span class="p">(</span><span class="n">prev</span><span class="p">)</span> <span class="o">+</span> <span class="n">_EPS</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"EDL entry </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">: its transition needs </span><span class="si">{</span><span class="n">lead</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">s from the END of entry "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">i</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">, whose </span><span class="si">{</span><span class="n">_span</span><span class="p">(</span><span class="n">prev</span><span class="p">)</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">s span"</span>
+            <span class="o">+</span> <span class="p">(</span>
+                <span class="sa">f</span><span class="s2">" already gives </span><span class="si">{</span><span class="n">prev_own_trail</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">s to its own transition. "</span>
+                <span class="s2">"Together they exceed it."</span>
+                <span class="k">if</span> <span class="n">prev_own_trail</span>
+                <span class="k">else</span> <span class="s2">" is shorter than that."</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="n">trail</span> <span class="o">&gt;</span> <span class="n">_span</span><span class="p">(</span><span class="n">e</span><span class="p">)</span> <span class="o">+</span> <span class="n">_EPS</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"EDL entry </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">: its transition needs </span><span class="si">{</span><span class="n">trail</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">s from the START of its "</span>
+            <span class="sa">f</span><span class="s2">"own </span><span class="si">{</span><span class="n">_span</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">s span, which is shorter than that."</span>
+        <span class="p">)</span>
+
+    <span class="c1"># (2) It must fit in each side's aligned COVERAGE, evaluated PER SIDE. A blend</span>
+    <span class="c1"># reads past its own span into the neighbour's source material — legitimately,</span>
+    <span class="c1"># which is why this is not the overlap rule above. A gap side is skipped: its</span>
+    <span class="c1"># black source is synthetic and re-parameterizable, so it can always supply the</span>
+    <span class="c1"># window.</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">prev</span><span class="o">.</span><span class="n">is_gap</span><span class="p">:</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="n">by_id</span><span class="p">[</span><span class="n">prev</span><span class="o">.</span><span class="n">clip_id</span><span class="p">]</span>
+        <span class="c1"># UNCLAMPED, deliberately: `derive_cuts` clamps `clip_in` at 0 for the</span>
+        <span class="c1"># renderer, and reading a clamped value here would let a short clip pass</span>
+        <span class="c1"># by silently pretending it starts earlier than it does.</span>
+        <span class="n">end_in_clip</span> <span class="o">=</span> <span class="p">(</span><span class="n">prev</span><span class="o">.</span><span class="n">song_start</span> <span class="o">-</span> <span class="n">a</span><span class="o">.</span><span class="n">offset_s</span><span class="p">)</span> <span class="o">+</span> <span class="n">_span</span><span class="p">(</span><span class="n">prev</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">end_in_clip</span> <span class="o">+</span> <span class="n">trail</span> <span class="o">&gt;</span> <span class="n">a</span><span class="o">.</span><span class="n">duration_s</span> <span class="o">+</span> <span class="n">_EPS</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"EDL entry </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">: the transition needs </span><span class="si">{</span><span class="n">trail</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">s of clip "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">prev</span><span class="o">.</span><span class="n">clip_id</span><span class="si">!r}</span><span class="s2"> PAST the end of entry </span><span class="si">{</span><span class="n">i</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">'s span, but the clip "</span>
+                <span class="sa">f</span><span class="s2">"ends </span><span class="si">{</span><span class="n">a</span><span class="o">.</span><span class="n">duration_s</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">end_in_clip</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">s after it."</span>
+            <span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">e</span><span class="o">.</span><span class="n">is_gap</span><span class="p">:</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="n">by_id</span><span class="p">[</span><span class="n">e</span><span class="o">.</span><span class="n">clip_id</span><span class="p">]</span>
+        <span class="n">start_in_clip</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">song_start</span> <span class="o">-</span> <span class="n">a</span><span class="o">.</span><span class="n">offset_s</span>
+        <span class="k">if</span> <span class="n">start_in_clip</span> <span class="o">-</span> <span class="n">lead</span> <span class="o">&lt;</span> <span class="o">-</span><span class="n">_EPS</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"EDL entry </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">: the transition needs </span><span class="si">{</span><span class="n">lead</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">s of clip "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">clip_id</span><span class="si">!r}</span><span class="s2"> BEFORE its span starts, but the span begins only "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">start_in_clip</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">s into the clip."</span>
+            <span class="p">)</span>
 
 
 <div class="viewcode-block" id="derive_cuts">
@@ -404,6 +627,7 @@
                     <span class="n">clip_id</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span>
                     <span class="n">clip_in</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
                     <span class="n">clip_path</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span>
+                    <span class="n">transition</span><span class="o">=</span><span class="n">e</span><span class="o">.</span><span class="n">transition</span><span class="p">,</span>
                 <span class="p">)</span>
             <span class="p">)</span>
             <span class="k">continue</span>
@@ -417,6 +641,7 @@
                 <span class="n">clip_id</span><span class="o">=</span><span class="n">e</span><span class="o">.</span><span class="n">clip_id</span><span class="p">,</span>
                 <span class="n">clip_in</span><span class="o">=</span><span class="nb">max</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">song_start</span> <span class="o">-</span> <span class="n">a</span><span class="o">.</span><span class="n">offset_s</span><span class="p">),</span>
                 <span class="n">clip_path</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">clip_paths</span><span class="p">[</span><span class="n">e</span><span class="o">.</span><span class="n">clip_id</span><span class="p">]),</span>
+                <span class="n">transition</span><span class="o">=</span><span class="n">e</span><span class="o">.</span><span class="n">transition</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="p">)</span>
     <span class="k">return</span> <span class="n">cuts</span></div>

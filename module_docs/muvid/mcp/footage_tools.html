@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.mcp.footage_tools &mdash; muvid 0.0.30 documentation</title>
+  <title>muvid.mcp.footage_tools &mdash; muvid 0.0.31 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -15,7 +15,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=61a342a2"></script>
+      <script src="../../../_static/documentation_options.js?v=c5dbc6bb"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -203,6 +203,15 @@ be in order, non-overlapping, and each within its clip’s coverage. A span with
 footage is an explicit gap entry (<code class="docutils literal notranslate"><span class="pre">clip_id:</span> <span class="pre">null</span></code>); spans of the song your entries
 do not reach (head, tail, interior holes) are gap-filled automatically and named in
 the <code class="docutils literal notranslate"><span class="pre">coverage</span></code> report.</p></li>
+<li><p>each <code class="docutils literal notranslate"><span class="pre">edl</span></code> entry may also carry <code class="docutils literal notranslate"><span class="pre">transition</span></code>:
+<code class="docutils literal notranslate"><span class="pre">{&quot;duration_s&quot;:</span> <span class="pre">0.4,</span> <span class="pre">&quot;curve&quot;:</span> <span class="pre">&quot;fade&quot;}</span></code> — blend IN from the previous entry instead
+of hard-cutting. The blend is CENTRED on the boundary, so a beat-snapped cut stays
+on the beat: each side supplies <code class="docutils literal notranslate"><span class="pre">duration_s/2</span></code> of source beyond its own span, and
+both must actually have it (a gap side always does — it fades from black). Rejected,
+not ignored, if it is on the FIRST entry (nothing to blend from), names a curve
+outside <code class="docutils literal notranslate"><span class="pre">fade</span></code>/<code class="docutils literal notranslate"><span class="pre">fadeblack</span></code>/<code class="docutils literal notranslate"><span class="pre">fadewhite</span></code>/<code class="docutils literal notranslate"><span class="pre">dissolve</span></code>/<code class="docutils literal notranslate"><span class="pre">wipe*</span></code>/<code class="docutils literal notranslate"><span class="pre">slide*</span></code>/
+<code class="docutils literal notranslate"><span class="pre">smooth*</span></code>/<code class="docutils literal notranslate"><span class="pre">circleopen</span></code>/<code class="docutils literal notranslate"><span class="pre">circleclose</span></code>, is under 0.04 s, or does not fit. Omit
+it for a hard cut — the default, and what every entry without the key means.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">strategy='weighted'</span></code> (score-driven): the beat-snapped Viterbi selector reads the
 persisted score tracks (run <code class="docutils literal notranslate"><span class="pre">score_footage</span></code> first) and the selection config —
 <code class="docutils literal notranslate"><span class="pre">preset</span></code> (“energetic”/”contemplative”) and/or <code class="docutils literal notranslate"><span class="pre">weights</span></code> (per-metric) and/or
