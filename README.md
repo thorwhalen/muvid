@@ -173,10 +173,10 @@ expose it as MCP tools (`set_song`, `add_footage`, `align_footage`, `propose_edi
 
 **As an editor document.** `pip install 'muvid[editor]'` adds
 `muvid.footage.lacing_bridge`, which exports a project as
-[`lacing`](https://github.com/thorwhalen/lacing) standoff annotations — three published
-body schemas, `clip-alignment/v1`, `clip-score-track/v1` and `music-video-edl/v1`, all in
-song time on one axis — and reads an edited `DECISION` tier back into an EDL. Annotate →
-edit → export → render round-trips to the same cuts.
+[`lacing`](https://github.com/thorwhalen/lacing) standoff annotations — three body
+schemas, `clip-alignment/v1`, `clip-score-track/v1` and `music-video-edl/v1`, all in song
+time on one axis — and reads an edited `DECISION` tier back into an EDL. Annotate → edit
+→ export → render round-trips to the same cuts, transitions included.
 
 ## 30-second tour
 

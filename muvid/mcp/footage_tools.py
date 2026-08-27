@@ -389,12 +389,22 @@ def footage_timeline(project_id: str) -> dict:
 
 
 def _edl_json(e) -> dict:
-    """One EDL entry as JSON — full precision (it must feed back verbatim), gaps as null."""
-    return {
+    """One EDL entry as JSON — full precision (it must feed back verbatim), gaps as null.
+
+    ``transition`` is emitted ONLY when set. That is what keeps every existing
+    ``renders/*/meta.json`` byte-identical and keeps the render -> edit -> re-render
+    round trip (muvid#21 item 3) exact for an edit that uses no transitions. It is
+    also a plain dict, not the frozen dataclass: ``write_render_meta`` runs
+    ``json.dumps`` over this, which has no encoder for a dataclass.
+    """
+    out = {
         "song_start": e.song_start,
         "song_end": e.song_end,
         "clip_id": e.clip_id or None,
     }
+    if getattr(e, "transition", None) is not None:
+        out["transition"] = e.transition.to_dict()
+    return out
 
 
 def _coverage_report(entries, aligns, song_dur: float) -> dict:
@@ -526,6 +536,15 @@ def assemble_music_video(
       footage is an explicit gap entry (``clip_id: null``); spans of the song your entries
       do not reach (head, tail, interior holes) are gap-filled automatically and named in
       the ``coverage`` report.
+    - each ``edl`` entry may also carry ``transition``:
+      ``{"duration_s": 0.4, "curve": "fade"}`` — blend IN from the previous entry instead
+      of hard-cutting. The blend is CENTRED on the boundary, so a beat-snapped cut stays
+      on the beat: each side supplies ``duration_s/2`` of source beyond its own span, and
+      both must actually have it (a gap side always does — it fades from black). Rejected,
+      not ignored, if it is on the FIRST entry (nothing to blend from), names a curve
+      outside ``fade``/``fadeblack``/``fadewhite``/``dissolve``/``wipe*``/``slide*``/
+      ``smooth*``/``circleopen``/``circleclose``, is under 0.04 s, or does not fit. Omit
+      it for a hard cut — the default, and what every entry without the key means.
     - ``strategy='weighted'`` (score-driven): the beat-snapped Viterbi selector reads the
       persisted score tracks (run ``score_footage`` first) and the selection config —
       ``preset`` ("energetic"/"contemplative") and/or ``weights`` (per-metric) and/or
