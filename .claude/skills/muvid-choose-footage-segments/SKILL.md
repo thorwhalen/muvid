@@ -76,6 +76,15 @@ higher = better) + `raw_values[]` + a coverage `mask[]`; grid frame *k* ↔ song
   check `misc/docs/footage_scoring_research.md` §7 before changing it.
 - **Cut on the beat:** the DP only switches at beat/downbeat grid points; shot-length
   limits and the switch penalty are the strategy's tunables, not hardcoded.
+- **A transition is CENTRED on the cut, for the same reason** (muvid#34). An EDL entry may
+  carry `transition: {duration_s, curve}` — a blend IN from its predecessor. Each side
+  supplies `duration_s/2` of source beyond its own span, so the perceptual midpoint lands
+  exactly on the authored boundary; a trailing blend would put the perceived cut
+  `duration_s/2` late on every transition, defeating the beat-snapping above. `validate_edl`
+  refuses a transition on the first entry, an unknown curve, anything under 0.04 s, and one
+  that does not fit in either side's aligned coverage — a hard cut is the default and
+  needs no key. Curves: `fade`, `fadeblack`, `fadewhite`, `dissolve`, `wipe{left,right,up,
+  down}`, `slide{left,right,up,down}`, `smooth{left,right}`, `circleopen`, `circleclose`.
 - **Feasibility first:** ship the off-the-shelf tier (quality gates + master beat grid +
   PySceneDetect + the Viterbi selector) and the two named sync scores as moderate glue;
   defer VocaLiST, learned aesthetic VQA (non-commercial + GPU), emotion, and

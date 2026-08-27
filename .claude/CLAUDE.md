@@ -137,7 +137,7 @@ so **one** `import muvid.genre` surfaces both genres and both project factories.
 - `muvid/mcp/scoring_tools.py:80` uses `nw.jobs` as the durable/cancellable async job
   substrate. Reuse it; do not grow a second job system.
 
-### It ships three lacing body schemas — EdlEntry changes are on-disk-format changes
+### It ships three lacing body schemas — and what that does NOT mean
 
 `muvid/footage/lacing_bridge.py:34-36` is the SSOT for the names:
 
@@ -147,15 +147,45 @@ CLIP_SCORE_TRACK_SCHEMA = "annot://schema/clip-score-track/v1"
 MUSIC_VIDEO_EDL_SCHEMA = "annot://schema/music-video-edl/v1"
 ```
 
-These are **published record shapes** a browser surface (reelee-web#203's multichannel
-editor) reads and writes back. Consequences:
+**Correct these three facts before reasoning about them; an earlier version of this
+section got them wrong and the error propagated into issue #34, whose body and its
+comment both mis-scoped a one-day change as a federation migration:**
 
-- Changing `EdlEntry`'s fields changes `music-video-edl/v1`'s body. That is a **format**
-  change, not a refactor: bump the schema major, and know that already-persisted
-  documents and the editor both move with you.
+1. **These URIs are bare string literals.** `lacing.schema.register_body_schema` is
+   called nowhere in muvid; `lacing/bodies/` registers five schemas and none is
+   muvid's. There is no registration, no migration ladder, and no version to bump.
+2. **Nothing validates these bodies.** `lacing.schema.validate` is never called from
+   muvid, `Annotation.body` is a free `dict` whose only validator requires string keys,
+   and no lacing store consults the body registry. A body carrying an unknown key is
+   accepted today.
+3. **Adding a field to `EdlEntry` does NOT change the body.** `edl_annotations`
+   serialises `{"clip_id": ...}` and nothing else — `song_start`/`song_end` live on the
+   `MediaRef` interval. A field reaches the body only if someone puts it there.
+
+So the compatibility surface is **not** a schema version. It is two concrete things:
+
+- **`renders/{render_id}/meta.json["edl"]`** — the only place an EDL is persisted
+  (`workspace.py`'s `write_render_meta`, fed by `footage_tools._edl_json`). `_as_entry`
+  reads three keys by name and ignores the rest, so an old build reading a newer record
+  renders hard cuts — degraded, never wrong, in both directions.
+- **The live MCP wire.** `footage_editor_document` and `footage_edl_from_annotations` are
+  registered tools, and the deployed reelee connector installs `lacing` as a *top-level*
+  requirement — so the `editor`-extra guard succeeds in production and these bodies cross
+  a real multi-tenant surface. reelee-web#203's editor is still unimplemented, so there
+  is no browser consumer yet; the connector is the surface that matters.
+
+The rule for adding a field, therefore, is not "bump the schema" but **omit-when-None +
+read-by-name**: emit the key only when it is set (so every existing document and body
+stays byte-identical) and read it defensively. `EdlEntry.transition` (muvid#34) is the
+worked example, and the two read postures there are deliberately opposite —
+`edl.py`'s `_as_entry` **raises** on a malformed transition because it reads a caller's
+*request*, while `edl_from_annotations` **skips** because it reads a browser's *output*.
+
 - `edl_from_annotations` treats annotations as **untrusted editor input** — anything
   shaped wrong is skipped, never crashed on. Keep it that way.
-- Round-trip is a contract: EDL → annotations → EDL must be identity. Times quantize at
+- Round-trip is a contract: EDL → annotations → EDL must be identity — which is *why*
+  a new `EdlEntry` field has to reach the body. A field the bridge does not carry is a
+  field the editor silently DROPS on the way back. Times quantize at
   `TIME_RATE = 1_000_000` (µs), far finer than `validate_edl`'s 1 ms tolerance, so
   annotate → edit → export → render reproduces the same cuts. Do not coarsen it.
 - Score arrays are inlined today. Moving them behind a `ContentRef` is a body-schema

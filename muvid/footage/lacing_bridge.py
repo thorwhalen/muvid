@@ -147,6 +147,19 @@ def score_track_annotations(tensor, *, song_asset_id: str, attributed_to: str) -
     return out
 
 
+def _edl_body(e) -> dict:
+    """The DECISION body for one entry — ``transition`` present only when set.
+
+    Emitting it unconditionally would change the body of every untransitioned
+    document, which is the difference between an additive field and a format change
+    a browser surface has to move with. muvid#34.
+    """
+    body = {"clip_id": e.clip_id or None}
+    if getattr(e, "transition", None) is not None:
+        body["transition"] = e.transition.to_dict()
+    return body
+
+
 def edl_annotations(entries, *, song_asset_id: str, attributed_to: str) -> list:
     """The DECISION lane: one ``music-video-edl/v1`` per EDL entry, gaps included."""
     return [
@@ -155,7 +168,7 @@ def edl_annotations(entries, *, song_asset_id: str, attributed_to: str) -> list:
             song_asset_id=song_asset_id,
             start_s=e.song_start,
             end_s=e.song_end,
-            body={"clip_id": e.clip_id or None},
+            body=_edl_body(e),
             schema=MUSIC_VIDEO_EDL_SCHEMA,
             attributed_to=attributed_to,
         )
@@ -170,7 +183,8 @@ def edl_from_annotations(
 
     The timeline-to-EDL half: whatever the editor did to the DECISION lane — moved,
     split, retargeted, deleted — exports as plain ``{song_start, song_end, clip_id}``
-    dicts ready for ``assemble_music_video``. Sorting and validation stay the render
+    dicts (plus ``transition`` where the editor set one) ready for
+    ``assemble_music_video``. Sorting and validation stay the render
     path's business (``fill_gaps`` + ``validate_edl``); this is a faithful read.
 
     Annotations are untrusted editor input, so anything shaped wrong is SKIPPED rather
@@ -205,13 +219,24 @@ def edl_from_annotations(
         iv = a.reference.interval
         if iv is None:
             continue
-        out.append(
-            {
-                "song_start": iv.start.to_seconds(),
-                "song_end": iv.end.to_seconds(),
-                "clip_id": a.body.get("clip_id"),
+        entry = {
+            "song_start": iv.start.to_seconds(),
+            "song_end": iv.end.to_seconds(),
+            "clip_id": a.body.get("clip_id"),
+        }
+        # Skip-shaped, NOT raising — deliberately the opposite of `_as_entry`, which
+        # raises on the same malformed input. The difference is the author: that one
+        # reads a caller's request, where dropping a direction silently is the bug;
+        # this one reads a browser's output, where crashing the whole export over one
+        # bad record is. A transition that survives here is validated by
+        # `validate_edl` on the way back in, like everything else in this dict.
+        raw = a.body.get("transition")
+        if isinstance(raw, dict) and isinstance(raw.get("duration_s"), (int, float)):
+            entry["transition"] = {
+                "duration_s": float(raw["duration_s"]),
+                "curve": str(raw.get("curve", "fade")),
             }
-        )
+        out.append(entry)
     return sorted(out, key=lambda e: e["song_start"])
 
 
