@@ -16,11 +16,13 @@ from __future__ import annotations
 import hashlib
 import json
 import shutil
+import warnings
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 from muvid.project import MusicVideoProject
+from muvid.renderers._errors import RendererUnavailable
 from muvid.schema import ShotSpec
 
 
@@ -64,30 +66,65 @@ def render_shot(
 
     ctx = _build_context(project, shot, spec.global_style)
     strategy = shot.render_strategy
-    if strategy == "lipsync":
-        from muvid.renderers.lipsync import render_lipsync as _render
-    elif strategy == "image_to_video":
-        from muvid.renderers.image_to_video import render_image_to_video as _render
-    elif strategy == "text_to_video":
-        from muvid.renderers.text_to_video import render_text_to_video as _render
-    elif strategy == "still":
-        from muvid.renderers.still import render_still as _render
-    elif strategy == "animation":
-        from muvid.renderers.animation import render_animation as _render
-    else:
-        raise ValueError(f"Unknown render_strategy: {strategy!r}")
+    _render = _load_strategy(strategy)
 
-    produced = _render(ctx, quality=quality)
+    rendered = strategy
+    fallback_reason: str | None = None
+    try:
+        produced = _render(ctx, quality=quality)
+    except RendererUnavailable as e:
+        # The strategy's engine is not installed, so it never ran. Degrading is
+        # correct — `an` is declared in no extra by design — but the DECISION
+        # belongs here rather than inside the strategy, because this is where
+        # the provenance line is written. muvid#46: the renderer used to
+        # degrade privately and the journal recorded `strategy="animation"` for
+        # a shot that came out a freeze frame, so the record could not be used
+        # to find the affected shots afterwards.
+        # Exactly ONE level of fallback, and that is structural rather than
+        # checked: the degrade below runs INSIDE this handler, so a fallback
+        # that is itself unavailable propagates instead of being caught again.
+        # An earlier draft guarded `e.fallback == strategy` "in case it loops";
+        # mutation-testing showed the guard could not fail, because there is no
+        # loop to prevent. A guard that cannot go red is a comment that claims
+        # more than the code does.
+        rendered = e.fallback
+        fallback_reason = str(e)
+        warnings.warn(
+            f"shot {shot.id!r} asked for the {strategy!r} strategy; rendering "
+            f"it as {rendered!r} instead. {fallback_reason}",
+            RuntimeWarning,
+            stacklevel=2,
+        )
+        produced = _load_strategy(rendered)(ctx, quality=quality)
+
     if produced.resolve() != out_path.resolve():
         shutil.copy2(produced, out_path)
-    hash_path.write_text(current_hash)
-    project.log_decision(
-        "render_shot",
-        shot_id=shot.id,
-        strategy=strategy,
-        duration_s=shot.duration_s,
-        quality=quality,
-    )
+
+    # The cache entry is written only for a render that did what was asked. A
+    # degraded output is PROVISIONAL: `_shot_hash` is computed from the shot
+    # alone, so recording it would make the still satisfy this shot forever —
+    # the moment the user installs `an`, `render_shot` would keep returning the
+    # freeze frame without ever retrying. Skipping the write costs a re-render
+    # per run (an ffmpeg still-mux; `storyboard.png` is already cached by
+    # `still.py`, so no second image is generated and nothing is re-billed) and
+    # buys a warning that repeats until the cause is fixed, instead of one that
+    # can be missed once and never seen again.
+    if fallback_reason is None:
+        hash_path.write_text(current_hash)
+
+    decision: dict[str, Any] = {
+        "shot_id": shot.id,
+        # What was ACTUALLY rendered, never what was asked for.
+        "strategy": rendered,
+        "duration_s": shot.duration_s,
+        "quality": quality,
+    }
+    if rendered != strategy:
+        # Present if and ONLY if a fallback happened, which makes "find every
+        # degraded shot" a grep for one key rather than a join against the spec.
+        decision["requested_strategy"] = strategy
+        decision["fallback_reason"] = fallback_reason
+    project.log_decision("render_shot", **decision)
     return out_path
 
 
@@ -101,6 +138,37 @@ def render_all(
 
 
 # --- internals ------------------------------------------------------------
+
+#: strategy name -> the module path and function that implements it.
+#:
+#: A table rather than an if/elif chain because the fallback path needs to
+#: resolve a strategy BY NAME (a `RendererUnavailable` carries the name it wants
+#: to degrade to), and two chains that must agree is one chain too many.
+#: Imports stay lazy and inside the loader: every strategy module does
+#: ``from muvid.renderers import RenderContext``, so importing one at this
+#: module's top level closes a cycle, and `still`/`image_to_video`/
+#: `text_to_video` reach `falaw` — which `import muvid.renderers` must not pay
+#: for.
+_STRATEGIES: dict[str, tuple[str, str]] = {
+    "lipsync": ("muvid.renderers.lipsync", "render_lipsync"),
+    "image_to_video": ("muvid.renderers.image_to_video", "render_image_to_video"),
+    "text_to_video": ("muvid.renderers.text_to_video", "render_text_to_video"),
+    "still": ("muvid.renderers.still", "render_still"),
+    "animation": ("muvid.renderers.animation", "render_animation"),
+}
+
+
+def _load_strategy(strategy: str):
+    """Resolve a strategy name to its render function, importing it lazily."""
+    try:
+        module_name, func_name = _STRATEGIES[strategy]
+    except KeyError:
+        raise ValueError(
+            f"Unknown render_strategy: {strategy!r} (known: {sorted(_STRATEGIES)})"
+        ) from None
+    from importlib import import_module
+
+    return getattr(import_module(module_name), func_name)
 
 
 def _shot_hash(shot: ShotSpec, global_style: str) -> str:

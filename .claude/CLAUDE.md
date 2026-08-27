@@ -196,6 +196,47 @@ does **not** re-transcribe the same audio with whisper — muvid owns the word-t
 `an` is **not** a declared dependency in any extra; the import is soft and falls back to
 the `still` strategy when `an` is unusable.
 
+**An `an` that never ran and an `an` that refused are different facts, and the
+renderer no longer decides what to do about either.** `an` states a refusal as
+*data* — `OrchestratorReport.success is False` (`an/orchestrate.py`) — not as an
+exception, so swallowing it was a single `if`, and that `if` returned a still
+image under the shot's own filename (muvid#46). Three things made it worse than a
+missing output: the result was *wrong* rather than absent, so a freeze frame read
+as a deliberate creative choice; `renderers/__init__.py` journalled
+`strategy=shot.render_strategy` — the **requested** one — so the record could not
+be used to find the affected shots afterwards; and `still` reaches
+`falaw.generate_image`, so the degradation could **bill** while `cost.py` prices
+`animation` at nothing and the budget gate had already cleared the shot at $0.00.
+
+The split now:
+
+- **Absent** — `an` is declared in no extra and carries no floor, so a machine
+  without it is a *supported* machine. `render_animation` raises
+  `RendererUnavailable`; the **dispatcher** degrades to `still`, warns, and
+  journals `strategy="still"` plus `requested_strategy` and `fallback_reason`
+  (present if and only if a fallback happened, so finding every degraded shot is
+  a grep for one key). The fallback is caught **inside** the handler, which is
+  what caps it at exactly one level — structurally, not by a check.
+- **Refused** — `render_animation` raises `AnimationRenderError`, built by
+  `_format_an_failure`, which reads **three** fields because no single one is
+  populated in every shape: `an` has five ways to return `success=False` and two
+  of them leave `error` as `None` with the only diagnosis in `verifications`.
+  Reading `report.error` alone renders those two as an empty string — including
+  every `LayoutLintVerifier` refusal, which is the shape muvid can actually
+  provoke by synthesizing a bad `scene.md`.
+- **A degraded render is not cached.** `_shot_hash` is computed from the shot
+  alone, so writing it for a fallback would make the still satisfy that shot
+  forever — installing `an` later would keep returning the freeze frame without
+  ever retrying. The hash is written only when the render did what was asked, so
+  the warning repeats until the cause is fixed instead of being missable once.
+- The import catch is `except ImportError`, never bare `Exception`. The broad
+  form meant an `an` that is *installed but broken* was indistinguishable from an
+  absent one and degraded just as quietly.
+
+The same reasoning as the `mixing` rule above, and the same scar: a sibling
+package's failure that returns a plausible artifact instead of surfacing is a bug
+whose only symptom is a wrong output nobody re-measures.
+
 **The two packages do not share a camera vocabulary, and the boundary translates.**
 `ShotSpec.camera` is free prose a director writes into the script (`**camera**: slow
 push-in`); `an`'s `camera.move` is a closed set of named moves, and a name outside it is
