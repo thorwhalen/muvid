@@ -55,7 +55,13 @@ the user what came out, and ask just enough questions to keep moving.
    --shot s02`. Per-shot strategies: `lipsync`, `image_to_video`,
    `text_to_video`, `animation`, `still`. *Cost gate:* pass
    `--budget 2.50` to refuse to start if the estimate exceeds the
-   given USD budget. Use `muvid estimate-cost <root>` to preview the
+   given USD budget — **or if anything could not be priced at all**, since an
+   unpriceable item counts as $0 in the total and would otherwise clear any cap
+   (muvid#47). The abort names what it could not price; `--allow-unpriced`
+   proceeds anyway. Note `--budget=0` is a **$0 cap**, the strictest possible
+   gate; `--budget=-1` (the default) is the off switch. The gate is whole-project:
+   `--shot ID` **refuses** the budget flags rather than pretending to honour them.
+   Use `muvid estimate-cost <root>` to preview the
    rollup before committing.
 9. **compose** — `muvid compose <root>`. Concatenates shots, overlays
    the original song.

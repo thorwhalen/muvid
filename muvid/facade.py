@@ -251,21 +251,47 @@ def render(
     quality: str = "balanced",
     force: bool = False,
     budget: float | None = None,
+    allow_unpriced: bool = False,
 ) -> list[str]:
     """Render every shot. Returns the produced mp4 paths.
 
     ``budget`` (USD): when set, refuses to start if
-    :func:`estimate_render_cost` exceeds it. Pass ``None`` to skip the
-    gate entirely.
+    :func:`estimate_render_cost` exceeds it — **or if any part of the project
+    could not be priced at all**. Pass ``None`` (CLI: ``--budget=-1``) to skip
+    the gate entirely.
+
+    ``allow_unpriced``: proceed despite unpriceable work, after reading what it
+    is. The gate is otherwise TWO conditions, and the second is the one muvid#47
+    was filed about: a price this code could not determine contributes nothing to
+    ``total_amount``, so comparing the number alone let an unpriceable shot clear
+    **any** budget. Unknown is not zero.
+
+    The escape exists because a threshold and an approval are different things. A
+    hard refusal with no way past it would make ``--budget`` unusable for a
+    project containing one exotic model — so the default refuses, and a caller
+    who has read the names can accept them. What it must never become is a
+    silent default.
     """
     p = MusicVideoProject(root)
     if budget is not None:
         rollup = estimate_render_cost(root, quality=quality)
+        if rollup.has_unknown_costs and not allow_unpriced:
+            reasons = "\n".join(f"  - {r}" for r in rollup.skipped)
+            raise RuntimeError(
+                f"render aborted: {len(rollup.skipped)} item(s) could not be "
+                f"priced, so the ${rollup.total_amount:.2f} {rollup.currency} "
+                "estimate is a LOWER BOUND, not the cost:\n"
+                f"{reasons}\n"
+                "Pass allow_unpriced=True (CLI: --allow-unpriced) to proceed "
+                "anyway, or --budget=-1 to disable the gate entirely."
+            )
         if rollup.total_amount > budget:
             raise RuntimeError(
                 f"render aborted: estimated cost ${rollup.total_amount:.2f} "
                 f"{rollup.currency} exceeds budget ${budget:.2f}. "
-                f"Pass --budget=0 to disable, or raise the cap."
+                # NOT --budget=0: that is a $0 cap, the STRICTEST possible gate,
+                # so the old advice made the abort repeat. -1 is the off switch.
+                "Pass --budget=-1 to disable the gate, or raise the cap."
             )
     with _events.log_fal_events_to(_fal_events_log(p)):
         return [str(x) for x in _render_all(p, quality=quality, force=force)]

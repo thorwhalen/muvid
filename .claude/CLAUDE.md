@@ -272,6 +272,62 @@ The same reasoning as the `mixing` rule above, and the same scar: a sibling
 package's failure that returns a plausible artifact instead of surfacing is a bug
 whose only symptom is a wrong output nobody re-measures.
 
+### The budget gate is conjunctive — a number alone is not a decision
+
+`muvid render --budget=X` refuses on **two** conditions, and the second is the one
+muvid#47 was filed about. `muvid/cost.py` is careful: a price it cannot determine goes
+into `_Rollup.skipped` and contributes **nothing** to `total_amount`. That is correct
+arithmetic and a trap — `facade.render`'s gate compared only the number, so an
+unpriceable shot read as free and cleared **any** budget.
+
+`CostRollup.has_unknown_costs` is the flag every gate must read; it is the same
+encoding as reelee's `OperationEstimate(estimated_cost_usd, has_unknown_costs)` and the
+same rule: **unknown is not zero, and unknown must force approval.**
+
+Three ways the total under-reported, all now routed through `skipped`:
+
+- a model with no `cost_estimate`, or no model in the category (`_price_one`);
+- **`falaw` not installed at all** — the worst shape, because the old code returned a
+  bare `$0.00` with an **empty** `skipped`, leaving a gate nothing to fail on;
+- an **`animation`** shot where `an` is absent. After muvid#46 the renderer degrades
+  that to a `still`, and `still` reaches `falaw.generate_image` — so it is now priced as
+  the still it will become. `cost.an_available()` is that seam, named rather than
+  inlined precisely because the estimate legitimately depends on the environment (the
+  *render* does), and a test must be able to pin both branches instead of the answer
+  changing with the runner.
+
+Two things adversarial review caught in the first pass at this, both worth keeping in
+mind for any future gate:
+
+- **Fail-closed must not mean fail-always.** Seeding the falaw-missing skip *before*
+  reading the project could not tell "could not price things" from "there was nothing to
+  price", so a project with no pending shots — or an `an`-only animation project, a
+  supported state on a machine without the `ai` extra — was refused despite provably
+  spending nothing. It now falls through to the normal walk with a `pick_model` that
+  explains itself, so a skip is recorded per shot that would actually have reached falaw.
+- **`an_available()` must ask the question the RENDERER asks.** It probes
+  `an.orchestrate`, not `an`, because that is the module `renderers/animation.py`
+  imports: a package that is findable but whose submodule is not importable degrades to a
+  paid `still` while the estimate calls it free — the same $0.00-then-bill, one level
+  down.
+
+Two rules for anything added here:
+
+- **A threshold is not an approval.** The gate fails closed, and `allow_unpriced=True`
+  (CLI `--allow-unpriced`) is the deliberate escape — because a hard refusal with no way
+  past it makes `--budget` unusable for a project holding one exotic model. What it must
+  never become is a silent default.
+- **`--budget=0` is a $0 cap, not an off switch.** The abort message used to advise it,
+  so following the advice made the abort repeat. `-1` disables.
+- **`muvid render --shot X` REFUSES the budget flags rather than ignoring them.**
+  `facade.render_shot` takes no budget and never has, so silently accepting `--budget`
+  there would let a caller believe a cap applied to a render that is not capped — worse
+  than the gate not existing, and worse still now that the command's own `--help`
+  promises it. Gating a single shot needs a per-shot rollup; that is not built.
+
+Still open, deliberately: a **cumulative** bound. A per-run cap does not bound spend
+across runs, and no non-monetary destructive gate exists.
+
 **The two packages do not share a camera vocabulary, and the boundary translates.**
 `ShotSpec.camera` is free prose a director writes into the script (`**camera**: slow
 push-in`); `an`'s `camera.move` is a closed set of named moves, and a name outside it is

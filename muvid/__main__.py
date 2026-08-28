@@ -142,17 +142,40 @@ def render(
     quality: str = "balanced",
     force: bool = False,
     budget: float = -1.0,
+    allow_unpriced: bool = False,
 ) -> None:
     """Render one shot (--shot ID) or all shots.
 
-    ``--budget USD``: when ≥ 0, abort if the estimated cost exceeds
-    this. Pass ``-1`` (the default) to disable the gate.
+    ``--budget USD``: when ≥ 0, abort if the estimated cost exceeds this, OR if
+    anything in the project could not be priced (an unpriceable item counts as
+    $0 in the total, so the number alone would clear any cap). Pass ``-1`` (the
+    default) to disable the gate; ``--budget=0`` is a $0 cap, not an off switch.
+
+    ``--allow-unpriced``: proceed despite unpriceable work, after the abort has
+    named it.
     """
     if shot:
+        # REFUSE rather than ignore. The single-shot path has never had a cost gate
+        # (`facade.render_shot` takes no budget), so silently accepting `--budget` here
+        # would let a caller believe a cap applied to a render that is not capped —
+        # which is worse than the gate simply not existing, and worse still now that
+        # this command's own --help promises the gate.
+        if budget >= 0 or allow_unpriced:
+            raise SystemExit(
+                "--budget/--allow-unpriced apply to the whole project and are not "
+                "honoured for a single shot. Drop --shot to render (and gate) the "
+                "project, or drop the budget flags to render this shot ungated."
+            )
         print(facade.render_shot(root, shot, quality=quality, force=force))
     else:
         budget_arg = budget if budget >= 0 else None
-        for p in facade.render(root, quality=quality, force=force, budget=budget_arg):
+        for p in facade.render(
+            root,
+            quality=quality,
+            force=force,
+            budget=budget_arg,
+            allow_unpriced=allow_unpriced,
+        ):
             print(p)
 
 
