@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.facade &mdash; muvid 0.0.31 documentation</title>
+  <title>muvid.facade &mdash; muvid 0.0.32 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=c5dbc6bb"></script>
+      <script src="../../_static/documentation_options.js?v=f2234cd1"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -399,21 +399,47 @@
     <span class="n">quality</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"balanced"</span><span class="p">,</span>
     <span class="n">force</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="n">budget</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">allow_unpriced</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">"""Render every shot. Returns the produced mp4 paths.</span>
 
 <span class="sd">    ``budget`` (USD): when set, refuses to start if</span>
-<span class="sd">    :func:`estimate_render_cost` exceeds it. Pass ``None`` to skip the</span>
-<span class="sd">    gate entirely.</span>
+<span class="sd">    :func:`estimate_render_cost` exceeds it — **or if any part of the project</span>
+<span class="sd">    could not be priced at all**. Pass ``None`` (CLI: ``--budget=-1``) to skip</span>
+<span class="sd">    the gate entirely.</span>
+
+<span class="sd">    ``allow_unpriced``: proceed despite unpriceable work, after reading what it</span>
+<span class="sd">    is. The gate is otherwise TWO conditions, and the second is the one muvid#47</span>
+<span class="sd">    was filed about: a price this code could not determine contributes nothing to</span>
+<span class="sd">    ``total_amount``, so comparing the number alone let an unpriceable shot clear</span>
+<span class="sd">    **any** budget. Unknown is not zero.</span>
+
+<span class="sd">    The escape exists because a threshold and an approval are different things. A</span>
+<span class="sd">    hard refusal with no way past it would make ``--budget`` unusable for a</span>
+<span class="sd">    project containing one exotic model — so the default refuses, and a caller</span>
+<span class="sd">    who has read the names can accept them. What it must never become is a</span>
+<span class="sd">    silent default.</span>
 <span class="sd">    """</span>
     <span class="n">p</span> <span class="o">=</span> <span class="n">MusicVideoProject</span><span class="p">(</span><span class="n">root</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">budget</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">rollup</span> <span class="o">=</span> <span class="n">estimate_render_cost</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">quality</span><span class="o">=</span><span class="n">quality</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">rollup</span><span class="o">.</span><span class="n">has_unknown_costs</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">allow_unpriced</span><span class="p">:</span>
+            <span class="n">reasons</span> <span class="o">=</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  - </span><span class="si">{</span><span class="n">r</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rollup</span><span class="o">.</span><span class="n">skipped</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"render aborted: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">rollup</span><span class="o">.</span><span class="n">skipped</span><span class="p">)</span><span class="si">}</span><span class="s2"> item(s) could not be "</span>
+                <span class="sa">f</span><span class="s2">"priced, so the $</span><span class="si">{</span><span class="n">rollup</span><span class="o">.</span><span class="n">total_amount</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">rollup</span><span class="o">.</span><span class="n">currency</span><span class="si">}</span><span class="s2"> "</span>
+                <span class="s2">"estimate is a LOWER BOUND, not the cost:</span><span class="se">\n</span><span class="s2">"</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">reasons</span><span class="si">}</span><span class="se">\n</span><span class="s2">"</span>
+                <span class="s2">"Pass allow_unpriced=True (CLI: --allow-unpriced) to proceed "</span>
+                <span class="s2">"anyway, or --budget=-1 to disable the gate entirely."</span>
+            <span class="p">)</span>
         <span class="k">if</span> <span class="n">rollup</span><span class="o">.</span><span class="n">total_amount</span> <span class="o">&gt;</span> <span class="n">budget</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">"render aborted: estimated cost $</span><span class="si">{</span><span class="n">rollup</span><span class="o">.</span><span class="n">total_amount</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> "</span>
                 <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">rollup</span><span class="o">.</span><span class="n">currency</span><span class="si">}</span><span class="s2"> exceeds budget $</span><span class="si">{</span><span class="n">budget</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">. "</span>
-                <span class="sa">f</span><span class="s2">"Pass --budget=0 to disable, or raise the cap."</span>
+                <span class="c1"># NOT --budget=0: that is a $0 cap, the STRICTEST possible gate,</span>
+                <span class="c1"># so the old advice made the abort repeat. -1 is the off switch.</span>
+                <span class="s2">"Pass --budget=-1 to disable the gate, or raise the cap."</span>
             <span class="p">)</span>
     <span class="k">with</span> <span class="n">_events</span><span class="o">.</span><span class="n">log_fal_events_to</span><span class="p">(</span><span class="n">_fal_events_log</span><span class="p">(</span><span class="n">p</span><span class="p">)):</span>
         <span class="k">return</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">_render_all</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">quality</span><span class="o">=</span><span class="n">quality</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="n">force</span><span class="p">)]</span></div>

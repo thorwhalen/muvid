@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.__main__ &mdash; muvid 0.0.31 documentation</title>
+  <title>muvid.__main__ &mdash; muvid 0.0.32 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=c5dbc6bb"></script>
+      <script src="../../_static/documentation_options.js?v=f2234cd1"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -314,17 +314,40 @@
     <span class="n">quality</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"balanced"</span><span class="p">,</span>
     <span class="n">force</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="n">budget</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span>
+    <span class="n">allow_unpriced</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Render one shot (--shot ID) or all shots.</span>
 
-<span class="sd">    ``--budget USD``: when ≥ 0, abort if the estimated cost exceeds</span>
-<span class="sd">    this. Pass ``-1`` (the default) to disable the gate.</span>
+<span class="sd">    ``--budget USD``: when ≥ 0, abort if the estimated cost exceeds this, OR if</span>
+<span class="sd">    anything in the project could not be priced (an unpriceable item counts as</span>
+<span class="sd">    $0 in the total, so the number alone would clear any cap). Pass ``-1`` (the</span>
+<span class="sd">    default) to disable the gate; ``--budget=0`` is a $0 cap, not an off switch.</span>
+
+<span class="sd">    ``--allow-unpriced``: proceed despite unpriceable work, after the abort has</span>
+<span class="sd">    named it.</span>
 <span class="sd">    """</span>
     <span class="k">if</span> <span class="n">shot</span><span class="p">:</span>
+        <span class="c1"># REFUSE rather than ignore. The single-shot path has never had a cost gate</span>
+        <span class="c1"># (`facade.render_shot` takes no budget), so silently accepting `--budget` here</span>
+        <span class="c1"># would let a caller believe a cap applied to a render that is not capped —</span>
+        <span class="c1"># which is worse than the gate simply not existing, and worse still now that</span>
+        <span class="c1"># this command's own --help promises the gate.</span>
+        <span class="k">if</span> <span class="n">budget</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">allow_unpriced</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">SystemExit</span><span class="p">(</span>
+                <span class="s2">"--budget/--allow-unpriced apply to the whole project and are not "</span>
+                <span class="s2">"honoured for a single shot. Drop --shot to render (and gate) the "</span>
+                <span class="s2">"project, or drop the budget flags to render this shot ungated."</span>
+            <span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="n">facade</span><span class="o">.</span><span class="n">render_shot</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">shot</span><span class="p">,</span> <span class="n">quality</span><span class="o">=</span><span class="n">quality</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="n">force</span><span class="p">))</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">budget_arg</span> <span class="o">=</span> <span class="n">budget</span> <span class="k">if</span> <span class="n">budget</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="k">else</span> <span class="kc">None</span>
-        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">facade</span><span class="o">.</span><span class="n">render</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">quality</span><span class="o">=</span><span class="n">quality</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="n">force</span><span class="p">,</span> <span class="n">budget</span><span class="o">=</span><span class="n">budget_arg</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">facade</span><span class="o">.</span><span class="n">render</span><span class="p">(</span>
+            <span class="n">root</span><span class="p">,</span>
+            <span class="n">quality</span><span class="o">=</span><span class="n">quality</span><span class="p">,</span>
+            <span class="n">force</span><span class="o">=</span><span class="n">force</span><span class="p">,</span>
+            <span class="n">budget</span><span class="o">=</span><span class="n">budget_arg</span><span class="p">,</span>
+            <span class="n">allow_unpriced</span><span class="o">=</span><span class="n">allow_unpriced</span><span class="p">,</span>
+        <span class="p">):</span>
             <span class="nb">print</span><span class="p">(</span><span class="n">p</span><span class="p">)</span></div>
 
 
