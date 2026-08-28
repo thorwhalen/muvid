@@ -40,11 +40,47 @@ class _Rollup:
     lines: tuple[_RolledLine, ...] = ()
     skipped: tuple[str, ...] = ()
 
+    @property
+    def has_unknown_costs(self) -> bool:
+        """Whether anything could NOT be priced — the flag every gate must read.
+
+        ``total_amount`` alone is not a decision. A price this module could not
+        determine is routed into :attr:`skipped` and contributes **nothing** to
+        the total, which is correct arithmetic and a trap for any caller that
+        compares only the number: an unpriceable shot reads as free and clears
+        any budget. Same encoding as reelee's
+        ``OperationEstimate(estimated_cost_usd, has_unknown_costs)``, and the
+        same rule — *unknown is not zero, and unknown must force approval*.
+        """
+        return bool(self.skipped)
+
     def by_kind(self) -> dict[str, float]:
         out: dict[str, float] = {}
         for ln in self.lines:
             out[ln.kind] = out.get(ln.kind, 0.0) + ln.amount
         return out
+
+
+def an_available() -> bool:
+    """Whether the ``an`` package is importable — i.e. whether ``animation`` is free.
+
+    A seam, not a detail. The estimate genuinely depends on the environment here,
+    because the RENDER does: ``an`` is declared in no muvid extra and carries no
+    version floor, so a machine without it renders every ``animation`` shot as a
+    ``still`` instead. Making the probe a named function keeps that dependence
+    visible and lets a test pin both branches, rather than the answer quietly
+    changing with the runner.
+
+    Uses ``find_spec`` rather than an import: no module executes, and this runs on
+    the estimate path. It cannot see an ``an`` that is installed but broken — that
+    also degrades to a still, so this under-reports rather than over-reports.
+    """
+    from importlib.util import find_spec
+
+    try:
+        return find_spec("an") is not None
+    except (ImportError, ValueError):  # a broken or partially-removed install
+        return False
 
 
 def estimate_render_cost(
@@ -63,8 +99,16 @@ def estimate_render_cost(
     try:
         from falaw import estimate_call_cost
         from falaw.registry import pick_model
-    except ImportError:
-        return _Rollup(total_amount=0.0, currency="USD")
+    except ImportError as e:
+        # NOT a free project — an unpriceable one, and the worst shape of it:
+        # returning a bare $0.00 with an EMPTY `skipped` leaves a gate with
+        # nothing to fail on, so the caller cannot even tell that nothing was
+        # priced. Naming it here is what lets `has_unknown_costs` be true.
+        return _Rollup(
+            total_amount=0.0,
+            currency="USD",
+            skipped=(f"nothing could be priced: falaw is not installed ({e})",),
+        )
 
     spec = project.read_spec()
     lines: list[_RolledLine] = []
@@ -168,7 +212,26 @@ def _shot_lines(
         return
 
     if strategy == "animation":
-        # Local cutout render, no fal calls.
+        if an_available():
+            # Local cutout render, no fal calls.
+            return
+        # `an` is not installed, so the renderer will degrade this shot to a
+        # `still` (muvid#46) — and `still` reaches ``falaw.generate_image``.
+        # Pricing it at nothing is how a $0.00 estimate cleared a budget and
+        # then billed. Price it as exactly what it will render as; that this
+        # over-estimates when an environment anchor already exists is not a new
+        # imprecision, it is the same one every `still` shot already carries.
+        yield from _price_one(
+            "shot.image",
+            shot.id,
+            "image",
+            quality,
+            pick_model,
+            estimate_call_cost,
+            skipped,
+            seconds=None,
+            note="animation degraded to still (`an` not installed)",
+        )
         return
 
 

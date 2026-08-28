@@ -142,17 +142,29 @@ def render(
     quality: str = "balanced",
     force: bool = False,
     budget: float = -1.0,
+    allow_unpriced: bool = False,
 ) -> None:
     """Render one shot (--shot ID) or all shots.
 
-    ``--budget USD``: when ≥ 0, abort if the estimated cost exceeds
-    this. Pass ``-1`` (the default) to disable the gate.
+    ``--budget USD``: when ≥ 0, abort if the estimated cost exceeds this, OR if
+    anything in the project could not be priced (an unpriceable item counts as
+    $0 in the total, so the number alone would clear any cap). Pass ``-1`` (the
+    default) to disable the gate; ``--budget=0`` is a $0 cap, not an off switch.
+
+    ``--allow-unpriced``: proceed despite unpriceable work, after the abort has
+    named it.
     """
     if shot:
         print(facade.render_shot(root, shot, quality=quality, force=force))
     else:
         budget_arg = budget if budget >= 0 else None
-        for p in facade.render(root, quality=quality, force=force, budget=budget_arg):
+        for p in facade.render(
+            root,
+            quality=quality,
+            force=force,
+            budget=budget_arg,
+            allow_unpriced=allow_unpriced,
+        ):
             print(p)
 
 
