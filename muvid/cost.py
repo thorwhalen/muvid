@@ -71,14 +71,22 @@ def an_available() -> bool:
     visible and lets a test pin both branches, rather than the answer quietly
     changing with the runner.
 
-    Uses ``find_spec`` rather than an import: no module executes, and this runs on
-    the estimate path. It cannot see an ``an`` that is installed but broken — that
-    also degrades to a still, so this under-reports rather than over-reports.
+    **Probes ``an.orchestrate``, not ``an``** — the exact module
+    ``muvid.renderers.animation`` imports, and matching it is the whole point. Probing
+    the parent answers a DIFFERENT question: a package that is findable but whose
+    submodule cannot be imported (a half-removed install, a broken transitive dep) makes
+    the renderer degrade to a paid ``still`` while the estimate prices it at nothing —
+    the same $0.00-then-bill this function exists to close, one level down.
+
+    Catches what the renderer catches. ``find_spec`` on a submodule imports the parent,
+    so a package whose ``__init__`` raises ``ImportError`` reports unavailable here and
+    degrades there; one that raises something else propagates in BOTH places, so the
+    render fails rather than billing and "free" is the right estimate for it.
     """
     from importlib.util import find_spec
 
     try:
-        return find_spec("an") is not None
+        return find_spec("an.orchestrate") is not None
     except (ImportError, ValueError):  # a broken or partially-removed install
         return False
 
@@ -100,15 +108,27 @@ def estimate_render_cost(
         from falaw import estimate_call_cost
         from falaw.registry import pick_model
     except ImportError as e:
-        # NOT a free project — an unpriceable one, and the worst shape of it:
-        # returning a bare $0.00 with an EMPTY `skipped` leaves a gate with
-        # nothing to fail on, so the caller cannot even tell that nothing was
-        # priced. Naming it here is what lets `has_unknown_costs` be true.
-        return _Rollup(
-            total_amount=0.0,
-            currency="USD",
-            skipped=(f"nothing could be priced: falaw is not installed ({e})",),
-        )
+        # NOT a free project — an unpriceable one, and the worst shape of it: a bare
+        # $0.00 with an EMPTY `skipped` leaves a gate nothing to fail on, so the caller
+        # cannot even tell that nothing was priced.
+        #
+        # But it is not unconditionally unpriceable either, and returning early here
+        # said it was: a project whose shots are all already rendered, or which has no
+        # shots, or which is all `animation` on a machine that has `an`, needs falaw for
+        # NOTHING — and was refused anyway. So instead of short-circuiting, fall through
+        # to the normal walk with a `pick_model` that explains itself. `_price_one` then
+        # records a skip per shot that actually WOULD have reached falaw, and a project
+        # that needs none is priced cleanly at $0.00 with an empty `skipped`.
+        # Bound to a local FIRST: Python deletes the `except ... as e` name at the end
+        # of the block, so a closure over `e` raises NameError at call time — and the
+        # `except Exception` in `_price_one` would swallow that and report the
+        # NameError as the pricing failure.
+        reason = f"falaw is not installed ({e})"
+
+        def pick_model(**_kw):
+            raise RuntimeError(reason)
+
+        estimate_call_cost = None  # unreachable: pick_model always raises first
 
     spec = project.read_spec()
     lines: list[_RolledLine] = []
@@ -249,8 +269,14 @@ def _price_one(
 ):
     try:
         record = pick_model(category=category, quality_tier=quality)
-    except Exception:
-        skipped.append(f"shot {shot_id} {kind}: no model in category {category!r}")
+    except Exception as e:
+        # The reason is appended rather than replacing the message: "no model in
+        # category" is what a missing REGISTRY ENTRY looks like, and "falaw is not
+        # installed" is what a missing registry looks like. A caller reading the abort
+        # needs to tell those apart — one is a catalogue gap, the other is an install.
+        skipped.append(
+            f"shot {shot_id} {kind}: no model in category {category!r} ({e})"
+        )
         return
     cost = estimate_call_cost(record, seconds=seconds)
     if cost is None:

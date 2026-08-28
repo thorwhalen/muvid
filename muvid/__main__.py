@@ -155,6 +155,17 @@ def render(
     named it.
     """
     if shot:
+        # REFUSE rather than ignore. The single-shot path has never had a cost gate
+        # (`facade.render_shot` takes no budget), so silently accepting `--budget` here
+        # would let a caller believe a cap applied to a render that is not capped —
+        # which is worse than the gate simply not existing, and worse still now that
+        # this command's own --help promises the gate.
+        if budget >= 0 or allow_unpriced:
+            raise SystemExit(
+                "--budget/--allow-unpriced apply to the whole project and are not "
+                "honoured for a single shot. Drop --shot to render (and gate) the "
+                "project, or drop the budget flags to render this shot ungated."
+            )
         print(facade.render_shot(root, shot, quality=quality, force=force))
     else:
         budget_arg = budget if budget >= 0 else None

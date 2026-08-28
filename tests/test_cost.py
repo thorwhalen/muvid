@@ -439,3 +439,109 @@ def test_the_cli_treats_budget_zero_as_a_cap_and_minus_one_as_off(
 
     cli.render(str(tmp_path), budget=-1.0)
     assert seen["budget"] is None, "--budget=-1 disables the gate"
+
+
+# --------------------------------------------------------------------------
+# Found by adversarial review of the first pass at this fix
+# --------------------------------------------------------------------------
+
+
+def test_nothing_to_price_is_not_refused_when_falaw_is_missing(tmp_path, monkeypatch):
+    """A project that provably cannot spend must not be refused.
+
+    The first version of this fix seeded the `falaw is not installed` skip BEFORE
+    reading the project, so it could not tell "could not price things" from "there was
+    nothing to price". A project with no pending shots needs falaw for nothing, and was
+    refused anyway — which makes `--budget` unusable on a whole install class, and the
+    only remedy is to pass `--allow-unpriced` on every invocation. That habituation is
+    exactly what the escape must never become.
+    """
+    import builtins
+
+    from muvid import facade
+    from muvid.project import MusicVideoProject
+
+    facade.init_project(tmp_path / "p")
+    MusicVideoProject(tmp_path / "p")  # a project with no shots at all
+    real_import = builtins.__import__
+
+    def _no_falaw(name, *a, **k):
+        if name == "falaw" or name.startswith("falaw."):
+            raise ImportError("No module named 'falaw'")
+        return real_import(name, *a, **k)
+
+    monkeypatch.setattr(builtins, "__import__", _no_falaw)
+    rollup = facade.estimate_render_cost(tmp_path / "p")
+    assert not rollup.has_unknown_costs, rollup.skipped
+    assert rollup.skipped == ()
+
+
+def test_an_animation_only_project_needs_no_falaw_and_is_not_refused(
+    tmp_path, monkeypatch
+):
+    """The same defect, in the case a user would actually hit.
+
+    `an`-only animation work on a machine without the `ai` extra is a supported state,
+    and it reaches falaw for nothing.
+    """
+    import builtins
+
+    from muvid import facade
+
+    _project(tmp_path, monkeypatch, strategy="animation")
+    monkeypatch.setattr("muvid.cost.an_available", lambda: True)
+    real_import = builtins.__import__
+
+    def _no_falaw(name, *a, **k):
+        if name == "falaw" or name.startswith("falaw."):
+            raise ImportError("No module named 'falaw'")
+        return real_import(name, *a, **k)
+
+    monkeypatch.setattr(builtins, "__import__", _no_falaw)
+    rollup = facade.estimate_render_cost(tmp_path / "p")
+    assert not rollup.has_unknown_costs, rollup.skipped
+
+
+def test_the_probe_asks_the_same_question_the_renderer_does(monkeypatch):
+    """`an` findable but `an.orchestrate` not is a PAID still priced at nothing.
+
+    The renderer does `from an.orchestrate import orchestrate`; probing the parent
+    package answers a different question, so a half-removed install degraded to a
+    billable `still` while the estimate called it free — the same $0.00-then-bill this
+    whole change closes, one level down.
+    """
+    import importlib.util
+
+    from muvid.cost import an_available
+
+    asked = []
+
+    def _spec(name):
+        asked.append(name)
+        return None
+
+    monkeypatch.setattr(importlib.util, "find_spec", _spec)
+    assert an_available() is False
+    assert asked == ["an.orchestrate"], (
+        f"probed {asked}, but the renderer imports `an.orchestrate` — probing the "
+        "parent lets a findable-but-unusable `an` price a paid still at $0.00"
+    )
+
+
+def test_the_cli_refuses_budget_flags_with_a_single_shot(monkeypatch, tmp_path):
+    """Silently ignoring them is worse than not having the gate.
+
+    `facade.render_shot` takes no budget, so accepting `--budget` there would let a
+    caller believe a cap applied to a render that is not capped.
+    """
+    from muvid import __main__ as cli
+    from muvid import facade
+
+    monkeypatch.setattr(facade, "render_shot", lambda *a, **k: "out.mp4")
+
+    with pytest.raises(SystemExit, match="whole project"):
+        cli.render(str(tmp_path), shot="s01", budget=5.0)
+    with pytest.raises(SystemExit, match="whole project"):
+        cli.render(str(tmp_path), shot="s01", allow_unpriced=True)
+    # ...and an ungated single shot still works.
+    cli.render(str(tmp_path), shot="s01")

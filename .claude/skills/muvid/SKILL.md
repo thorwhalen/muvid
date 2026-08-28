@@ -59,7 +59,8 @@ the user what came out, and ask just enough questions to keep moving.
    unpriceable item counts as $0 in the total and would otherwise clear any cap
    (muvid#47). The abort names what it could not price; `--allow-unpriced`
    proceeds anyway. Note `--budget=0` is a **$0 cap**, the strictest possible
-   gate; `--budget=-1` (the default) is the off switch.
+   gate; `--budget=-1` (the default) is the off switch. The gate is whole-project:
+   `--shot ID` **refuses** the budget flags rather than pretending to honour them.
    Use `muvid estimate-cost <root>` to preview the
    rollup before committing.
 9. **compose** — `muvid compose <root>`. Concatenates shots, overlays
