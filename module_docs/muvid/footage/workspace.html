@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.footage.workspace &mdash; muvid 0.0.32 documentation</title>
+  <title>muvid.footage.workspace &mdash; muvid 0.0.33 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -15,7 +15,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=f2234cd1"></script>
+      <script src="../../../_static/documentation_options.js?v=565bc8c8"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -81,7 +81,9 @@
 <li class="toctree-l2"><a class="reference internal" href="#muvid.footage.workspace.FootageWorkspace"><code class="docutils literal notranslate"><span class="pre">FootageWorkspace</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.footage.workspace.MusicVideoFootageProject"><code class="docutils literal notranslate"><span class="pre">MusicVideoFootageProject</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#muvid.footage.workspace.MusicVideoFootageProject.add_clip"><code class="docutils literal notranslate"><span class="pre">MusicVideoFootageProject.add_clip()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#muvid.footage.workspace.MusicVideoFootageProject.ensure_render_refs"><code class="docutils literal notranslate"><span class="pre">MusicVideoFootageProject.ensure_render_refs()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#muvid.footage.workspace.MusicVideoFootageProject.invalidate_scores"><code class="docutils literal notranslate"><span class="pre">MusicVideoFootageProject.invalidate_scores()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#muvid.footage.workspace.MusicVideoFootageProject.next_render_ref"><code class="docutils literal notranslate"><span class="pre">MusicVideoFootageProject.next_render_ref()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#muvid.footage.workspace.MusicVideoFootageProject.set_song"><code class="docutils literal notranslate"><span class="pre">MusicVideoFootageProject.set_song()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#muvid.footage.workspace.MusicVideoFootageProject.song_hash"><code class="docutils literal notranslate"><span class="pre">MusicVideoFootageProject.song_hash()</span></code></a></li>
 </ul>
@@ -184,9 +186,42 @@ with the visualizer’s root, different subtree). <strong>Never</strong> inside 
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="muvid.footage.workspace.MusicVideoFootageProject.ensure_render_refs">
+<span class="sig-name descname"><span class="pre">ensure_render_refs</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="../../../_modules/muvid/footage/workspace.html#MusicVideoFootageProject.ensure_render_refs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.workspace.MusicVideoFootageProject.ensure_render_refs" title="Link to this definition"></a></dt>
+<dd><p>Give every render a stable, speakable reference; return <code class="docutils literal notranslate"><span class="pre">{id:</span> <span class="pre">n}</span></code>.</p>
+<p>A render id is a uuid4 slice (<code class="docutils literal notranslate"><span class="pre">b02fc05417ea</span></code>) — fine for a URL, useless
+in a sentence. Nobody can ask for “a bit less of the wide shot in
+b02fc05417ea”. So each render also carries a small ordinal, rendered as
+<code class="docutils literal notranslate"><span class="pre">cut</span> <span class="pre">4</span></code> by <code class="xref py py-func docutils literal notranslate"><span class="pre">nw.delivery.format_ref()</span></code> at the delivery boundary.</p>
+<p>This module stores the INTEGER only. The word “cut” belongs to
+<code class="docutils literal notranslate"><span class="pre">nw.delivery</span></code> and is spelled in exactly one place; core muvid does not
+depend on nw (it is in the <code class="docutils literal notranslate"><span class="pre">mcp</span></code> extra, so <code class="docutils literal notranslate"><span class="pre">muvid.visualize</span></code> and
+downstreams like <code class="docutils literal notranslate"><span class="pre">yb</span></code> stay lightweight), and a local second spelling
+is precisely the drift <code class="docutils literal notranslate"><span class="pre">nw.delivery</span></code> exists to prevent.</p>
+<p>Two properties make it worth persisting rather than deriving:</p>
+<ul class="simple">
+<li><p><strong>Stable.</strong> Assigned once, at creation, and never renumbered. A
+position in a sorted list would shift under the user every time they
+rendered again, so the reference they wrote down would rot.</p></li>
+<li><p><strong>Chronological.</strong> Backfill runs OLDEST first, so <code class="docutils literal notranslate"><span class="pre">cut</span> <span class="pre">1</span></code> is the
+first thing they made, which is what someone means by “the first cut”.</p></li>
+</ul>
+<p>Self-healing on read, in the same spirit as an open-time schema
+migration: renders made before refs existed acquire one the first time
+anything lists or resolves them, and the assignment is written back so
+it never moves again.</p>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="muvid.footage.workspace.MusicVideoFootageProject.invalidate_scores">
 <span class="sig-name descname"><span class="pre">invalidate_scores</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../../_modules/muvid/footage/workspace.html#MusicVideoFootageProject.invalidate_scores"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.workspace.MusicVideoFootageProject.invalidate_scores" title="Link to this definition"></a></dt>
 <dd><p>Delete persisted score tracks — the primary invalidation on song/offset change.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="muvid.footage.workspace.MusicVideoFootageProject.next_render_ref">
+<span class="sig-name descname"><span class="pre">next_render_ref</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="reference internal" href="../../../_modules/muvid/footage/workspace.html#MusicVideoFootageProject.next_render_ref"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.workspace.MusicVideoFootageProject.next_render_ref" title="Link to this definition"></a></dt>
+<dd><p>The ordinal the next render will carry (1-based, never reused).</p>
 </dd></dl>
 
 <dl class="py method">

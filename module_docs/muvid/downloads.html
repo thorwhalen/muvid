@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.downloads &mdash; muvid 0.0.32 documentation</title>
+  <title>muvid.downloads &mdash; muvid 0.0.33 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -15,7 +15,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=f2234cd1"></script>
+      <script src="../../_static/documentation_options.js?v=565bc8c8"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -56,13 +56,7 @@
 <li class="toctree-l1"><a class="reference internal" href="compose.html">muvid.compose</a></li>
 <li class="toctree-l1"><a class="reference internal" href="contracts.html">muvid.contracts</a></li>
 <li class="toctree-l1"><a class="reference internal" href="cost.html">muvid.cost</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">muvid.downloads</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#muvid.downloads.GENRE"><code class="docutils literal notranslate"><span class="pre">GENRE</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#muvid.downloads.ResolvedArtifact"><code class="docutils literal notranslate"><span class="pre">ResolvedArtifact</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#muvid.downloads.claim"><code class="docutils literal notranslate"><span class="pre">claim()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#muvid.downloads.resolve"><code class="docutils literal notranslate"><span class="pre">resolve()</span></code></a></li>
-</ul>
-</li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">muvid.downloads</a></li>
 <li class="toctree-l1"><a class="reference internal" href="environments.html">muvid.environments</a></li>
 <li class="toctree-l1"><a class="reference internal" href="events.html">muvid.events</a></li>
 <li class="toctree-l1"><a class="reference internal" href="facade.html">muvid.facade</a></li>
@@ -140,52 +134,8 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="module-muvid.downloads">
-<span id="muvid-downloads"></span><h1>muvid.downloads<a class="headerlink" href="#module-muvid.downloads" title="Link to this heading"></a></h1>
-<p>Resolve a caller’s rendered artifact to its file — muvid’s half of downloads.</p>
-<p>The music-video pipeline could render a 93 MB video the caller had no way to obtain:
-<code class="docutils literal notranslate"><span class="pre">meta['video']</span></code> is a server-side path, unreadable from the other end of an MCP
-connection (muvid#24 B2). Retrieval is split along ownership lines, per the seam agreed
-with the connector redesign (reelee#252 §1 Option B):</p>
-<ul class="simple">
-<li><p><strong>muvid owns resolution</strong> (this module): claim → file, authorised by the same
-per-email workspace scoping every tool uses. muvid never touches token or URL code.</p></li>
-<li><p><strong>The connector owns transport</strong>: ONE generic download route, mounted next to
-<code class="docutils literal notranslate"><span class="pre">/mcp</span></code>, turns claims into signed short-lived URLs via per-genre resolvers —
-<code class="docutils literal notranslate"><span class="pre">resolvers={'muvid':</span> <span class="pre">muvid.downloads.resolve,</span> <span class="pre">...}</span></code> — shared by reelee’s own
-exports, so this is the first registration, not a parallel mechanism.</p></li>
-</ul>
-<p>A tool therefore returns a <strong>claim</strong> — <code class="docutils literal notranslate"><span class="pre">{genre,</span> <span class="pre">project_id,</span> <span class="pre">artifact_id}</span></code> — and the
-connector-side wrapper (or the human operator, server-side) resolves it.</p>
-<dl class="py data">
-<dt class="sig sig-object py" id="muvid.downloads.GENRE">
-<span class="sig-prename descclassname"><span class="pre">muvid.downloads.</span></span><span class="sig-name descname"><span class="pre">GENRE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'muvid'</span></span><a class="headerlink" href="#muvid.downloads.GENRE" title="Link to this definition"></a></dt>
-<dd><p>The genre identifier the connector’s resolver registry keys on.</p>
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="muvid.downloads.ResolvedArtifact">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">muvid.downloads.</span></span><span class="sig-name descname"><span class="pre">ResolvedArtifact</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">content_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filename</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/muvid/downloads.html#ResolvedArtifact"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.downloads.ResolvedArtifact" title="Link to this definition"></a></dt>
-<dd><p>A resolved claim: the file plus what the transport needs to serve it.</p>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="muvid.downloads.claim">
-<span class="sig-prename descclassname"><span class="pre">muvid.downloads.</span></span><span class="sig-name descname"><span class="pre">claim</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">project_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">artifact_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="../../_modules/muvid/downloads.html#claim"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.downloads.claim" title="Link to this definition"></a></dt>
-<dd><p>The claim dict a tool returns — what the connector turns into a signed URL.</p>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="muvid.downloads.resolve">
-<span class="sig-prename descclassname"><span class="pre">muvid.downloads.</span></span><span class="sig-name descname"><span class="pre">resolve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">email</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">project_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">artifact_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#muvid.downloads.ResolvedArtifact" title="muvid.downloads.ResolvedArtifact"><span class="pre">ResolvedArtifact</span></a></span></span><a class="reference internal" href="../../_modules/muvid/downloads.html#resolve"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.downloads.resolve" title="Link to this definition"></a></dt>
-<dd><p>The caller’s rendered artifact as a servable file — muvid’s download authority.</p>
-<p><code class="docutils literal notranslate"><span class="pre">artifact_id</span></code> is a render id. Raises <code class="docutils literal notranslate"><span class="pre">KeyError</span></code> for anything that does not
-resolve to an artifact of <em>this</em> caller — including ids shaped like an attack and
-other users’ renders. (No <code class="docutils literal notranslate"><span class="pre">PermissionError</span></code> branch: workspaces are scoped by
-email, so “someone else’s render” and “no such render” are indistinguishable here,
-and saying which would leak existence.)</p>
-</dd></dl>
-
+  <section id="muvid-downloads">
+<h1>muvid.downloads<a class="headerlink" href="#muvid-downloads" title="Link to this heading"></a></h1>
 </section>
 
 

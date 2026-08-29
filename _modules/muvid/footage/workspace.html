@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.footage.workspace &mdash; muvid 0.0.32 documentation</title>
+  <title>muvid.footage.workspace &mdash; muvid 0.0.33 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=f2234cd1"></script>
+      <script src="../../../_static/documentation_options.js?v=565bc8c8"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -337,6 +337,79 @@
             <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">meta</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
         <span class="p">)</span>
 
+<div class="viewcode-block" id="MusicVideoFootageProject.ensure_render_refs">
+<a class="viewcode-back" href="../../../module_docs/muvid/footage/workspace.html#muvid.footage.workspace.MusicVideoFootageProject.ensure_render_refs">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">ensure_render_refs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Give every render a stable, speakable reference; return ``{id: n}``.</span>
+
+<span class="sd">        A render id is a uuid4 slice (``b02fc05417ea``) — fine for a URL, useless</span>
+<span class="sd">        in a sentence. Nobody can ask for "a bit less of the wide shot in</span>
+<span class="sd">        b02fc05417ea". So each render also carries a small ordinal, rendered as</span>
+<span class="sd">        ``cut 4`` by :func:`nw.delivery.format_ref` at the delivery boundary.</span>
+
+<span class="sd">        This module stores the INTEGER only. The word "cut" belongs to</span>
+<span class="sd">        ``nw.delivery`` and is spelled in exactly one place; core muvid does not</span>
+<span class="sd">        depend on nw (it is in the ``mcp`` extra, so ``muvid.visualize`` and</span>
+<span class="sd">        downstreams like ``yb`` stay lightweight), and a local second spelling</span>
+<span class="sd">        is precisely the drift ``nw.delivery`` exists to prevent.</span>
+
+<span class="sd">        Two properties make it worth persisting rather than deriving:</span>
+
+<span class="sd">        - **Stable.** Assigned once, at creation, and never renumbered. A</span>
+<span class="sd">          position in a sorted list would shift under the user every time they</span>
+<span class="sd">          rendered again, so the reference they wrote down would rot.</span>
+<span class="sd">        - **Chronological.** Backfill runs OLDEST first, so ``cut 1`` is the</span>
+<span class="sd">          first thing they made, which is what someone means by "the first cut".</span>
+
+<span class="sd">        Self-healing on read, in the same spirit as an open-time schema</span>
+<span class="sd">        migration: renders made before refs existed acquire one the first time</span>
+<span class="sd">        anything lists or resolves them, and the assignment is written back so</span>
+<span class="sd">        it never moves again.</span>
+<span class="sd">        """</span>
+        <span class="n">rdir</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">root</span> <span class="o">/</span> <span class="s2">"renders"</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">rdir</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="k">return</span> <span class="p">{}</span>
+        <span class="n">rows</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">rdir</span><span class="o">.</span><span class="n">iterdir</span><span class="p">()):</span>
+            <span class="n">meta_path</span> <span class="o">=</span> <span class="n">child</span> <span class="o">/</span> <span class="s2">"meta.json"</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">child</span><span class="o">.</span><span class="n">is_dir</span><span class="p">()</span> <span class="ow">and</span> <span class="n">meta_path</span><span class="o">.</span><span class="n">exists</span><span class="p">()):</span>
+                <span class="k">continue</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">meta</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">meta_path</span><span class="o">.</span><span class="n">read_text</span><span class="p">())</span>
+            <span class="k">except</span> <span class="p">(</span><span class="ne">OSError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+                <span class="k">continue</span>
+            <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">meta_path</span><span class="o">.</span><span class="n">stat</span><span class="p">()</span><span class="o">.</span><span class="n">st_mtime</span><span class="p">,</span> <span class="n">child</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">meta</span><span class="p">,</span> <span class="n">meta_path</span><span class="p">))</span>
+
+        <span class="n">assigned</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">name</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">meta</span><span class="p">[</span><span class="s2">"ref_n"</span><span class="p">])</span>
+            <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">meta</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">rows</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"ref_n"</span><span class="p">),</span> <span class="nb">int</span><span class="p">)</span>
+        <span class="p">}</span>
+        <span class="c1"># Oldest first: the earliest render becomes cut 1.</span>
+        <span class="n">rows</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">r</span><span class="p">:</span> <span class="n">r</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">nxt</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">assigned</span><span class="o">.</span><span class="n">values</span><span class="p">(),</span> <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">meta</span><span class="p">,</span> <span class="n">meta_path</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">assigned</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">meta</span><span class="p">[</span><span class="s2">"ref_n"</span><span class="p">]</span> <span class="o">=</span> <span class="n">nxt</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">meta_path</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">meta</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
+            <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+                <span class="c1"># A read-only or racing write must not break listing; the ref is</span>
+                <span class="c1"># still correct for THIS call, it just isn't durable yet.</span>
+                <span class="k">pass</span>
+            <span class="n">assigned</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">nxt</span>
+            <span class="n">nxt</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">return</span> <span class="n">assigned</span></div>
+
+
+<div class="viewcode-block" id="MusicVideoFootageProject.next_render_ref">
+<a class="viewcode-back" href="../../../module_docs/muvid/footage/workspace.html#muvid.footage.workspace.MusicVideoFootageProject.next_render_ref">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">next_render_ref</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The ordinal the next render will carry (1-based, never reused)."""</span>
+        <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ensure_render_refs</span><span class="p">()</span><span class="o">.</span><span class="n">values</span><span class="p">(),</span> <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span></div>
+
+
     <span class="k">def</span><span class="w"> </span><span class="nf">list_renders</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]:</span>
         <span class="n">rdir</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">root</span> <span class="o">/</span> <span class="s2">"renders"</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">rdir</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
@@ -353,6 +426,14 @@
                 <span class="n">row</span><span class="p">[</span><span class="s2">"_mtime"</span><span class="p">]</span> <span class="o">=</span> <span class="n">meta</span><span class="o">.</span><span class="n">stat</span><span class="p">()</span><span class="o">.</span><span class="n">st_mtime</span>
                 <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
         <span class="n">rows</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">r</span><span class="p">:</span> <span class="n">r</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"_mtime"</span><span class="p">),</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="c1"># Backfill is cheap (a stat + a parse already done above) and makes the</span>
+        <span class="c1"># reference visible everywhere a render is, which is the only way a user</span>
+        <span class="c1"># learns it exists.</span>
+        <span class="n">refs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ensure_render_refs</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">:</span>
+            <span class="n">n</span> <span class="o">=</span> <span class="n">refs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"render_id"</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">n</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">row</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">"ref_n"</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">rows</span></div>
 
 
