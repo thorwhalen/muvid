@@ -101,11 +101,11 @@ def _resolve_input(url: str, dest: Path, *, label: str) -> Path:
         raise _tool_error(f"could not fetch {label}: {e}") from e
 
 
-
 def _download_claim(project_id: str, render_id: str) -> dict:
     from muvid.downloads import claim
 
     return claim(project_id, render_id)
+
 
 def render_visualizer(
     project_id: str,

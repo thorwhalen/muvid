@@ -75,6 +75,7 @@ _CONTENT_TYPES = {
 #: not, and inventing a second id space for one file would be worse.
 THUMBNAIL_SUFFIX = ".thumbnail"
 
+
 #: The two genres muvid hosts, each a (workspace class, render filename stem)
 #: pair. Order matters: footage first, because that is where the work is and a
 #: project_id present in both should resolve to the one the caller meant.
@@ -86,6 +87,7 @@ def _sources():
         ("footage", FootageWorkspace, "final"),
         ("visualizer", VisualizerWorkspace, "video"),
     )
+
 
 __all__ = ["GENRE", "claim", "resolve", "list_deliverables"]
 
@@ -246,7 +248,9 @@ def list_deliverables(email: str, project_id: str = None) -> "list[Deliverable]"
             pids = (
                 [project_id]
                 if project_id
-                else [p["project_id"] for p in ws.list_projects() if p.get("project_id")]
+                else [
+                    p["project_id"] for p in ws.list_projects() if p.get("project_id")
+                ]
             )
         except (OSError, ValueError):
             continue
