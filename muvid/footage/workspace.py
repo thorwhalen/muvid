@@ -177,9 +177,19 @@ class MusicVideoFootageProject:
             return []
 
     # -- renders -------------------------------------------------------------
+    @property
+    def renders_dir(self) -> Path:
+        """Where this project's renders live.
+
+        Named to match ``VisualizerProject.renders_dir`` so anything that spans
+        both muvid genres — ``muvid.downloads`` — sees one shape instead of
+        branching on which drawer it is looking in.
+        """
+        return self.root / "renders"
+
     def new_render_dir(self, render_id: str) -> Path:
         rid = safe_component(render_id, label="render_id")
-        d = self.root / "renders" / rid
+        d = self.renders_dir / rid
         d.mkdir(parents=True, exist_ok=True)
         return d
 

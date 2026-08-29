@@ -13,7 +13,7 @@ import pytest
 nw = pytest.importorskip("nw")
 
 from nw.delivery import Deliverable  # noqa: E402
-from muvid.downloads import GENRE, claim, resolve  # noqa: E402
+from muvid.downloads import GENRE, claim, list_deliverables, resolve  # noqa: E402
 from muvid.footage.edl import FootageAlignment  # noqa: E402
 
 
@@ -195,4 +195,99 @@ def test_listing_is_how_a_reference_becomes_discoverable(tmp_path, monkeypatch):
 
     # Scoped to one project, and blind to everyone else's work.
     assert len(list_deliverables("u@x.com", "p")) == 2
+    assert list_deliverables("intruder@x.com") == []
+
+
+# --- the visualizer genre (muvid#8) -----------------------------------------
+#
+# muvid hosts TWO genres behind one `muvid_` prefix and two separate per-user
+# workspaces. The footage one was made retrievable first; the visualizer's was
+# deferred behind "a download URL depends on the storage backend minting one".
+# That premise was obsolete — the connector's signed route never calls
+# dol.content_url, it resolves a path and streams it.
+
+
+def _visualizer_render(tmp_path, monkeypatch, *, email="u@x.com", pid="viz",
+                       rid="v" * 12, thumb=False):
+    import json
+
+    monkeypatch.setenv("MUVID_DATA_HOME", str(tmp_path))
+    from muvid.mcp.workspace import VisualizerWorkspace
+
+    ws = VisualizerWorkspace.for_email(email)
+    try:
+        proj = ws.open_project(pid)
+    except FileNotFoundError:
+        proj = ws.create_project(pid)
+    d = proj.new_render_dir(rid)
+    (d / "video.mp4").write_bytes(b"viz-bytes")
+    if thumb:
+        (d / "thumbnail.jpg").write_bytes(b"jpeg-bytes")
+    (d / "meta.json").write_text(json.dumps({"render_id": rid, "visual": "bars"}))
+    return proj, rid
+
+
+def test_a_visualizer_render_resolves_without_any_storage_migration(
+    tmp_path, monkeypatch
+):
+    """muvid#8's stated blocker was never the real one."""
+    _visualizer_render(tmp_path, monkeypatch)
+    got = resolve("u@x.com", "viz", "v" * 12)
+    assert got.path.read_bytes() == b"viz-bytes"
+    assert got.content_type == "video/mp4"
+    assert got.meta["muvid_genre"] == "visualizer"
+
+
+def test_one_resolver_spans_both_muvid_genres(tmp_path, monkeypatch):
+    """A caller says genre='muvid' for either, and should not have to know which
+    drawer their project is in — that split is what produced 'no project X for
+    you' against a project that existed (muvid#23)."""
+    proj, _ = _project_with_render(tmp_path, monkeypatch)  # footage, project "p"
+    _visualizer_render(tmp_path, monkeypatch)              # visualizer, project "viz"
+
+    assert resolve("u@x.com", "p", "r1r1r1r1r1r1").meta["muvid_genre"] == "footage"
+    assert resolve("u@x.com", "viz", "v" * 12).meta["muvid_genre"] == "visualizer"
+
+    kinds = {d.meta["muvid_genre"] for d in list_deliverables("u@x.com")}
+    assert kinds == {"footage", "visualizer"}
+
+
+def test_the_poster_is_a_deliverable_of_its_own(tmp_path, monkeypatch):
+    """The one small image in the federation, and the only artifact that could
+    plausibly be returned inline in a chat."""
+    _visualizer_render(tmp_path, monkeypatch, thumb=True)
+    poster = resolve("u@x.com", "viz", "v" * 12 + ".thumbnail")
+    assert poster.content_type == "image/jpeg"
+    assert poster.kind == "image"
+    assert poster.path.read_bytes() == b"jpeg-bytes"
+    assert poster.duration_s is None
+    # And it is listed alongside the video, not instead of it.
+    ids = {d.artifact_id for d in list_deliverables("u@x.com", "viz")}
+    assert ids == {"v" * 12, "v" * 12 + ".thumbnail"}
+
+
+def test_a_missing_poster_is_a_keyerror_not_the_video(tmp_path, monkeypatch):
+    """Falling back to the video would hand an image slot 4 MB of mp4."""
+    _visualizer_render(tmp_path, monkeypatch, thumb=False)
+    with pytest.raises(KeyError):
+        resolve("u@x.com", "viz", "v" * 12 + ".thumbnail")
+    # ...and the listing simply omits it rather than erroring.
+    ids = {d.artifact_id for d in list_deliverables("u@x.com", "viz")}
+    assert ids == {"v" * 12}
+
+
+def test_the_visualizer_invents_no_reference_it_cannot_keep(tmp_path, monkeypatch):
+    """Visualizer buckets persist no ordinals, so its deliverables carry no ref.
+
+    Deriving one from sort position would be a number that moves under the user
+    — worse than no reference at all, because they would write it down.
+    """
+    _visualizer_render(tmp_path, monkeypatch)
+    assert resolve("u@x.com", "viz", "v" * 12).ref is None
+
+
+def test_visualizer_renders_are_email_scoped_too(tmp_path, monkeypatch):
+    _visualizer_render(tmp_path, monkeypatch, email="u@x.com")
+    with pytest.raises(KeyError):
+        resolve("intruder@x.com", "viz", "v" * 12)
     assert list_deliverables("intruder@x.com") == []
