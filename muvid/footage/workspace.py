@@ -189,6 +189,73 @@ class MusicVideoFootageProject:
             json.dumps(meta, indent=2)
         )
 
+    def ensure_render_refs(self) -> dict:
+        """Give every render a stable, speakable reference; return ``{id: n}``.
+
+        A render id is a uuid4 slice (``b02fc05417ea``) — fine for a URL, useless
+        in a sentence. Nobody can ask for "a bit less of the wide shot in
+        b02fc05417ea". So each render also carries a small ordinal, rendered as
+        ``cut 4`` by :func:`nw.delivery.format_ref` at the delivery boundary.
+
+        This module stores the INTEGER only. The word "cut" belongs to
+        ``nw.delivery`` and is spelled in exactly one place; core muvid does not
+        depend on nw (it is in the ``mcp`` extra, so ``muvid.visualize`` and
+        downstreams like ``yb`` stay lightweight), and a local second spelling
+        is precisely the drift ``nw.delivery`` exists to prevent.
+
+        Two properties make it worth persisting rather than deriving:
+
+        - **Stable.** Assigned once, at creation, and never renumbered. A
+          position in a sorted list would shift under the user every time they
+          rendered again, so the reference they wrote down would rot.
+        - **Chronological.** Backfill runs OLDEST first, so ``cut 1`` is the
+          first thing they made, which is what someone means by "the first cut".
+
+        Self-healing on read, in the same spirit as an open-time schema
+        migration: renders made before refs existed acquire one the first time
+        anything lists or resolves them, and the assignment is written back so
+        it never moves again.
+        """
+        rdir = self.root / "renders"
+        if not rdir.exists():
+            return {}
+        rows = []
+        for child in sorted(rdir.iterdir()):
+            meta_path = child / "meta.json"
+            if not (child.is_dir() and meta_path.exists()):
+                continue
+            try:
+                meta = json.loads(meta_path.read_text())
+            except (OSError, ValueError):
+                continue
+            rows.append((meta_path.stat().st_mtime, child.name, meta, meta_path))
+
+        assigned = {
+            name: int(meta["ref_n"])
+            for _, name, meta, _ in rows
+            if isinstance(meta.get("ref_n"), int)
+        }
+        # Oldest first: the earliest render becomes cut 1.
+        rows.sort(key=lambda r: r[0])
+        nxt = max(assigned.values(), default=0) + 1
+        for _, name, meta, meta_path in rows:
+            if name in assigned:
+                continue
+            meta["ref_n"] = nxt
+            try:
+                meta_path.write_text(json.dumps(meta, indent=2))
+            except OSError:
+                # A read-only or racing write must not break listing; the ref is
+                # still correct for THIS call, it just isn't durable yet.
+                pass
+            assigned[name] = nxt
+            nxt += 1
+        return assigned
+
+    def next_render_ref(self) -> int:
+        """The ordinal the next render will carry (1-based, never reused)."""
+        return max(self.ensure_render_refs().values(), default=0) + 1
+
     def list_renders(self) -> list[dict]:
         rdir = self.root / "renders"
         if not rdir.exists():
@@ -205,6 +272,14 @@ class MusicVideoFootageProject:
                 row["_mtime"] = meta.stat().st_mtime
                 rows.append(row)
         rows.sort(key=lambda r: r.pop("_mtime"), reverse=True)
+        # Backfill is cheap (a stat + a parse already done above) and makes the
+        # reference visible everywhere a render is, which is the only way a user
+        # learns it exists.
+        refs = self.ensure_render_refs()
+        for row in rows:
+            n = refs.get(row.get("render_id"))
+            if n is not None:
+                row.setdefault("ref_n", n)
         return rows
 
 
