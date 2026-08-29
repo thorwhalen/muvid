@@ -101,6 +101,12 @@ def _resolve_input(url: str, dest: Path, *, label: str) -> Path:
         raise _tool_error(f"could not fetch {label}: {e}") from e
 
 
+
+def _download_claim(project_id: str, render_id: str) -> dict:
+    from muvid.downloads import claim
+
+    return claim(project_id, render_id)
+
 def render_visualizer(
     project_id: str,
     *,
@@ -208,9 +214,23 @@ def render_visualizer(
         "size": list(result.size),
         "ok": ok,
         "checks": report(checks),
+        # The retrieval claim, same shape the footage genre returns. `video` and
+        # `thumbnail` stay as server-side paths — useful to an operator, unreadable
+        # to a remote caller; the claim is the caller's handle.
+        "download": _download_claim(project_id, render_id),
+        # The old note said "a downloadable URL awaits the storage-backend
+        # migration". It never did: the connector's signed route resolves a path
+        # and streams it, and never calls dol.content_url. A tool that advertises
+        # its own output as unreachable, and is wrong about why, is worse than one
+        # that says nothing (muvid#8).
         "note": (
-            "Artifact stored server-side in your project bucket; retrieve paths via "
-            "project_status. A downloadable URL awaits the storage-backend migration."
+            f"Call `reelee_get_download_url(genre='muvid', project_id='{project_id}', "
+            f"artifact_id='{render_id}')` for a link to watch and download this"
+            + (
+                f", or artifact_id='{render_id}.thumbnail' for the poster image."
+                if thumb_out
+                else "."
+            )
         ),
     }
     proj.write_render_meta(render_id, meta)
