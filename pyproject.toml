@@ -63,7 +63,13 @@ ai = [
 mcp = [
     "fastmcp",
     "py2mcp>=0.1.9",
-    "nw>=0.0.15",
+    # 0.0.34 is where `nw.delivery` exists — the Deliverable type + speakable
+    # references that `muvid.downloads` returns. Below it, resolve() raises
+    # ImportError at import time rather than serving a wrong shape, which is the
+    # right failure: the previous arrangement had muvid returning its OWN
+    # dataclass to a host typed `-> Path`, so every download 500'd while both
+    # sides' tests stayed green (thorwhalen/reelee#296).
+    "nw>=0.0.34",
 ]
 # The footage SCORING layer's TORCH-FREE core tier (thorwhalen/muvid#13): quality gates +
 # motion-to-beat + the Viterbi selector + editor score-tracks. This is what the prod

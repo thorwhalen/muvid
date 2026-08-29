@@ -605,6 +605,9 @@ def assemble_music_video(
     canvas_wh = _resolve_canvas(proj, canvas)
     cuts = derive_cuts(entries, aligns, proj.clip_paths())
     render_id = uuid.uuid4().hex[:12]
+    # The reference a human can actually say. Assigned here, at creation, so it
+    # never renumbers under them (see MusicVideoFootageProject.ensure_render_refs).
+    ref_n = proj.next_render_ref()
     render_dir = proj.new_render_dir(render_id)
     try:
         out = _assemble(
@@ -629,6 +632,10 @@ def assemble_music_video(
 
     meta = {
         "render_id": render_id,
+        # `cut 4` — what the caller says when they want to talk about this
+        # render. The integer is the durable fact; the wording is nw's.
+        "ref_n": ref_n,
+        "ref": _format_ref(ref_n),
         "video": str(out),
         "strategy": used_strategy,
         "canvas": list(canvas_wh),
@@ -653,10 +660,14 @@ def assemble_music_video(
         # into a signed short-lived URL. `video` stays a server-side path — useful to an
         # operator, unreadable to a remote caller; the claim is the caller's handle.
         "download": _download_claim(project_id, render_id),
+        # What the caller should DO next, naming the tool that does it. The
+        # previous wording ("ask the host to sign the `download` claim") named
+        # no tool, and no tool could sign a muvid claim anyway — so a user who
+        # followed it exactly still ended with nothing (thorwhalen/reelee#296).
         "note": (
-            "Artifact stored server-side in your project. Ask the host to sign the "
-            "`download` claim for a fetchable URL; a hosted connector exposes this as "
-            "its download route/tool."
+            f"Call `reelee_get_watch_url(genre='muvid', project_id='{project_id}', "
+            f"artifact_id='{render_id}')` for a link to watch and download this. "
+            f"You can refer to it as \u201c{_format_ref(ref_n)}\u201d from now on."
         ),
     }
     proj.write_render_meta(render_id, meta)
@@ -702,6 +713,12 @@ def _download_claim(project_id: str, render_id: str) -> dict:
     from muvid.downloads import claim
 
     return claim(project_id, render_id)
+
+
+def _format_ref(n: int) -> str:
+    from nw.delivery import format_ref
+
+    return format_ref(n)
 
 
 def footage_status(project_id: str) -> dict:
