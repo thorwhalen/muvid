@@ -663,9 +663,9 @@ def assemble_music_video(
         # What the caller should DO next, naming the tool that does it. The
         # previous wording ("ask the host to sign the `download` claim") named
         # no tool, and no tool could sign a muvid claim anyway — so a user who
-        # followed it exactly still ended with nothing (thorwhalen/reelee#296).
+        # followed it exactly still ended with nothing (thorwhalen/reelee#322).
         "note": (
-            f"Call `reelee_get_watch_url(genre='muvid', project_id='{project_id}', "
+            f"Call `reelee_get_download_url(genre='muvid', project_id='{project_id}', "
             f"artifact_id='{render_id}')` for a link to watch and download this. "
             f"You can refer to it as \u201c{_format_ref(ref_n)}\u201d from now on."
         ),
