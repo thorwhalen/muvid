@@ -92,6 +92,20 @@ def test_estimate_render_cost_aggregates_strategies(tmp_path, monkeypatch):
     assert "shot.text_to_video" in by_kind
 
 
+def _mark_rendered(p, shot_id):
+    """Make a shot "already rendered" the way the RENDERER defines it: output
+    file + a hash that matches the current shot definition. An output file
+    alone is NOT rendered — that weaker proxy is exactly what muvid#52 fixed."""
+    from muvid.renderers import _shot_hash
+
+    spec = p.read_spec()
+    sh = spec.shot(shot_id)
+    shot_dir = p.shot_dir(shot_id)
+    shot_dir.mkdir(parents=True, exist_ok=True)
+    (shot_dir / "output.mp4").write_bytes(b"fake")
+    (shot_dir / "output.hash").write_text(_shot_hash(sh, spec.global_style))
+
+
 def test_estimate_render_cost_skips_already_rendered(tmp_path, monkeypatch):
     from muvid import facade
     from muvid.project import MusicVideoProject
@@ -101,12 +115,93 @@ def test_estimate_render_cost_skips_already_rendered(tmp_path, monkeypatch):
     facade.init_project(tmp_path / "p")
     p = MusicVideoProject(tmp_path / "p")
     p.upsert_shot(ShotSpec(id="s01", start_s=0.0, end_s=2.0, render_strategy="still"))
-    # Pretend it's already rendered.
-    out = p.shot_dir("s01") / "output.mp4"
-    out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_bytes(b"fake")
+    _mark_rendered(p, "s01")
 
     rollup = facade.estimate_render_cost(tmp_path / "p")
+    assert rollup.total_amount == 0.0
+
+
+def test_estimate_prices_an_edited_but_rendered_shot(tmp_path, monkeypatch):
+    """muvid#52 population 1: output.mp4 exists but the shot changed since, so
+    the renderer WILL re-render (hash mismatch) and bill. Pricing it at $0.00
+    is the estimate applying a weaker rule than the renderer's."""
+    from muvid import facade
+    from muvid.project import MusicVideoProject
+    from muvid.schema import ShotSpec
+
+    _force_falaw_costs(monkeypatch)
+    facade.init_project(tmp_path / "p")
+    p = MusicVideoProject(tmp_path / "p")
+    p.upsert_shot(ShotSpec(id="s01", start_s=0.0, end_s=2.0, render_strategy="still"))
+    _mark_rendered(p, "s01")
+    # The edit: the shot definition changes AFTER the render, so the recorded
+    # hash goes stale while output.mp4 sits there looking done.
+    p.upsert_shot(
+        ShotSpec(
+            id="s01",
+            start_s=0.0,
+            end_s=2.0,
+            render_strategy="still",
+            description="now with a red balloon",
+        )
+    )
+
+    rollup = facade.estimate_render_cost(tmp_path / "p")
+    assert rollup.total_amount == pytest.approx(0.04, abs=0.001)
+
+
+def test_estimate_under_force_prices_everything(tmp_path, monkeypatch):
+    """muvid#52 population 2: --force bypasses the cache, so a fully-rendered
+    project is entirely pending. `muvid render --force --budget=0` used to
+    clear a $0 cap and then re-bill every shot."""
+    from muvid import facade
+    from muvid.project import MusicVideoProject
+    from muvid.schema import ShotSpec
+
+    _force_falaw_costs(monkeypatch)
+    facade.init_project(tmp_path / "p")
+    p = MusicVideoProject(tmp_path / "p")
+    p.upsert_shot(ShotSpec(id="s01", start_s=0.0, end_s=2.0, render_strategy="still"))
+    _mark_rendered(p, "s01")
+
+    assert facade.estimate_render_cost(tmp_path / "p").total_amount == 0.0
+    forced = facade.estimate_render_cost(tmp_path / "p", force=True)
+    assert forced.total_amount == pytest.approx(0.04, abs=0.001)
+
+    # And the exploit itself is dead: a $0 cap now refuses a forced re-render.
+    # _render_all is stubbed so the MUTANT (force not threaded into the gate)
+    # fails on the budget assertion below, not on whatever the render path
+    # trips over first — unstubbed, the mutant's next stop is a real fal call
+    # on any dev shell exporting FAL_KEY.
+    monkeypatch.setattr(facade, "_render_all", lambda *_a, **_k: [])
+    with pytest.raises(RuntimeError, match="exceeds budget"):
+        facade.render(tmp_path / "p", force=True, budget=0.0)
+
+
+def test_the_estimate_consults_the_renderers_own_predicate(tmp_path, monkeypatch):
+    """One definition of "pending", not two that must agree: the estimate must
+    call `muvid.renderers.shot_is_rendered`, not paraphrase it. A paraphrase
+    passes every behavioural test until the cache rule changes — this fails the
+    moment the call is replaced by a local re-derivation."""
+    from muvid import facade
+    from muvid.project import MusicVideoProject
+    from muvid.schema import ShotSpec
+    import muvid.renderers as renderers
+
+    _force_falaw_costs(monkeypatch)
+    facade.init_project(tmp_path / "p")
+    p = MusicVideoProject(tmp_path / "p")
+    p.upsert_shot(ShotSpec(id="s01", start_s=0.0, end_s=2.0, render_strategy="still"))
+
+    seen = []
+
+    def spy(project, shot, style, *, force=False):
+        seen.append((shot.id, force))
+        return True  # "everything is rendered" — so everything must be skipped
+
+    monkeypatch.setattr(renderers, "shot_is_rendered", spy)
+    rollup = facade.estimate_render_cost(tmp_path / "p", force=True)
+    assert seen == [("s01", True)]
     assert rollup.total_amount == 0.0
 
 
@@ -402,6 +497,60 @@ def test_an_available_survives_a_broken_install(monkeypatch):
 
     monkeypatch.setattr(importlib.util, "find_spec", _boom)
     assert an_available() is False
+
+
+def test_a_subsecond_video_shot_is_priced_at_the_billed_floor(
+    tmp_path, monkeypatch
+):
+    """The renderers send `max(1, round(duration))` to fal, so a 0.4 s (or
+    zero-duration) i2v/t2v shot bills one full second. Pricing the raw float
+    read $0.00-with-nothing-unknown for billable work — the same
+    paraphrase-the-renderer family as the cache predicate, one level down."""
+    from muvid import facade
+    from muvid.project import MusicVideoProject
+    from muvid.schema import ShotSpec
+
+    _force_falaw_costs(monkeypatch)
+    facade.init_project(tmp_path / "p")
+    p = MusicVideoProject(tmp_path / "p")
+    p.upsert_shot(
+        ShotSpec(id="s01", start_s=0.0, end_s=0.4, render_strategy="text_to_video")
+    )
+
+    rollup = facade.estimate_render_cost(tmp_path / "p")
+    # 1 billed second × $0.40, not 0.4 × $0.40.
+    assert rollup.total_amount == pytest.approx(0.40, abs=0.001)
+    assert not rollup.has_unknown_costs
+
+
+def test_the_cli_forwards_force_to_the_estimate(monkeypatch, tmp_path):
+    """Same rationale as the allow_unpriced forwarding test below: a thin
+    dispatcher that drops a keyword looks exactly like one that forwards it —
+    and this dropped keyword under-previews a --force render at $0.00."""
+    from muvid import __main__ as cli
+    from muvid import facade
+
+    class _Rollup:
+        total_amount = 0.0
+        currency = "USD"
+        skipped = ()
+        lines = ()
+
+        def by_kind(self):
+            return {}
+
+    seen = {}
+    monkeypatch.setattr(
+        facade,
+        "estimate_render_cost",
+        lambda root, **kw: seen.update(kw) or _Rollup(),
+    )
+    cli.estimate_cost(str(tmp_path), force=True)
+    assert seen["force"] is True
+
+    seen.clear()
+    cli.estimate_cost(str(tmp_path))
+    assert seen["force"] is False
 
 
 def test_the_cli_forwards_allow_unpriced(monkeypatch, tmp_path):

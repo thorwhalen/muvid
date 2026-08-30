@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from muvid.renderers import RenderContext
+from muvid.renderers import RenderContext, billed_video_seconds
 from muvid.renderers._common import storyboard_prompt, trim_video_to_duration
 
 
@@ -15,7 +15,7 @@ def render_text_to_video(ctx: RenderContext, *, quality: str = "balanced") -> Pa
     result = text_to_video(
         prompt,
         quality=quality,
-        extra={"duration": max(1, int(round(ctx.shot.duration_s)))},
+        extra={"duration": billed_video_seconds(ctx.shot.duration_s)},
     )
     if not result.first:
         raise RuntimeError(f"text_to_video: no asset returned for {ctx.shot.id}")

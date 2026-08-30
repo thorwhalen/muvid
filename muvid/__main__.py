@@ -179,14 +179,21 @@ def render(
             print(p)
 
 
-def estimate_cost(root: str, *, quality: str = "balanced") -> None:
-    """Estimate USD cost of rendering pending shots. Prints a rollup."""
-    rollup = facade.estimate_render_cost(root, quality=quality)
+def estimate_cost(root: str, *, quality: str = "balanced", force: bool = False) -> None:
+    """Estimate USD cost of rendering pending shots. Prints a rollup.
+
+    ``--force`` prices what ``render --force`` would do (everything —
+    the cache is bypassed, so nothing is "already rendered").
+    """
+    rollup = facade.estimate_render_cost(root, quality=quality, force=force)
     summary = {
         "total_amount": rollup.total_amount,
         "currency": rollup.currency,
         "by_kind": rollup.by_kind(),
         "n_skipped": len(rollup.skipped),
+        # The strings, not just the count: `render`'s abort names every
+        # unpriced item, and the command it points here at must not know less.
+        "skipped": list(rollup.skipped),
         "lines": [
             {
                 "kind": ln.kind,
