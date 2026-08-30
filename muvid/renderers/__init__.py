@@ -40,6 +40,49 @@ class RenderContext:
     global_style: str = ""
 
 
+def billed_video_seconds(duration_s: float) -> int:
+    """The seconds a video-generation call is BILLED for a shot of this length.
+
+    The fal video models take an integer duration with a floor of one second —
+    ``max(1, round())`` is the exact expression both video renderers send — so
+    an estimate must price THIS number, never the raw float: a 0.4 s shot is
+    billed one second, and a zero-duration shot priced at $0.00 with
+    ``has_unknown_costs`` false is the muvid#52 defect one level down (the
+    estimate paraphrasing the renderer's arithmetic instead of calling it).
+    """
+    return max(1, int(round(float(duration_s or 0.0))))
+
+
+def shot_is_rendered(
+    project: MusicVideoProject,
+    shot: ShotSpec,
+    global_style: str,
+    *,
+    force: bool = False,
+) -> bool:
+    """Whether :func:`render_shot` would return the cached output untouched.
+
+    THE definition of "already rendered" — there is exactly one, and both the
+    renderer and ``muvid.cost.estimate_render_cost`` call it. The estimate used
+    to apply a weaker proxy (``output.mp4`` exists), so an edited-but-rendered
+    shot (file present, hash stale) and a ``--force`` run were both priced at
+    $0.00 and then billed (muvid#52) — the same defect family as "unknown reads
+    as free" (muvid#47), with "pending reads as done" as the variant. Two
+    predicates that must agree is the shape that produced it; this function is
+    the agreement.
+    """
+    if force:
+        return False
+    shot_dir = project.shot_dir(shot.id)
+    out_path = shot_dir / "output.mp4"
+    hash_path = shot_dir / "output.hash"
+    return (
+        out_path.exists()
+        and hash_path.exists()
+        and hash_path.read_text().strip() == _shot_hash(shot, global_style)
+    )
+
+
 def render_shot(
     project: MusicVideoProject,
     shot_id: str,
@@ -50,7 +93,8 @@ def render_shot(
     """Render a single shot. Returns the path to the produced mp4.
 
     Skipped (returns the existing path) if a previously-rendered output
-    matches the current shot definition's hash, unless ``force=True``.
+    matches the current shot definition's hash, unless ``force=True`` —
+    the :func:`shot_is_rendered` predicate, which the cost estimate shares.
     """
     spec = project.read_spec()
     shot = spec.shot(shot_id)
@@ -60,9 +104,8 @@ def render_shot(
     hash_path = shot_dir / "output.hash"
     current_hash = _shot_hash(shot, spec.global_style)
 
-    if not force and out_path.exists() and hash_path.exists():
-        if hash_path.read_text().strip() == current_hash:
-            return out_path
+    if shot_is_rendered(project, shot, spec.global_style, force=force):
+        return out_path
 
     ctx = _build_context(project, shot, spec.global_style)
     strategy = shot.render_strategy

@@ -274,7 +274,9 @@ def render(
     """
     p = MusicVideoProject(root)
     if budget is not None:
-        rollup = estimate_render_cost(root, quality=quality)
+        # `force` mirrors the render below: under --force nothing is cached, so
+        # the gate must price the whole project, not $0.00 (muvid#52).
+        rollup = estimate_render_cost(root, quality=quality, force=force)
         if rollup.has_unknown_costs and not allow_unpriced:
             reasons = "\n".join(f"  - {r}" for r in rollup.skipped)
             raise RuntimeError(
@@ -297,12 +299,18 @@ def render(
         return [str(x) for x in _render_all(p, quality=quality, force=force)]
 
 
-def estimate_render_cost(root: str | Path, *, quality: str = "balanced"):
-    """Return a :class:`muvid.cost.CostRollup` for the project's pending shots."""
+def estimate_render_cost(
+    root: str | Path, *, quality: str = "balanced", force: bool = False
+):
+    """Return a :class:`muvid.cost.CostRollup` for the project's pending shots.
+
+    "Pending" is the renderer's own definition (hash + ``force``), so pass the
+    same ``force`` you will render with to price what that run will actually do.
+    """
     from muvid.cost import estimate_render_cost as _estimate
 
     p = MusicVideoProject(root)
-    return _estimate(p, quality=quality)
+    return _estimate(p, quality=quality, force=force)
 
 
 def compose(
@@ -331,15 +339,19 @@ def status(root: str | Path) -> dict:
     alignment_path = p.root / "lyrics" / "alignment.annot"
     final_path = p.root / "output" / "final.mp4"
 
+    from muvid.renderers import shot_is_rendered
+
     shot_states = []
     for sh in spec.shots:
-        out = p.shot_dir(sh.id) / "output.mp4"
         shot_states.append(
             {
                 "id": sh.id,
                 "strategy": sh.render_strategy,
                 "duration_s": sh.duration_s,
-                "rendered": out.exists(),
+                # The renderer's own predicate, so the progress bar and the
+                # cost line in one status payload cannot disagree about the
+                # same shot (an edited-but-rendered shot is pending in BOTH).
+                "rendered": shot_is_rendered(p, sh, spec.global_style),
             }
         )
     n_rendered = sum(1 for s in shot_states if s["rendered"])
@@ -426,6 +438,10 @@ def _try_estimate_cost(project: MusicVideoProject) -> dict | None:
         "currency": rollup.currency,
         "by_kind": rollup.by_kind(),
         "n_skipped": len(rollup.skipped),
+        # The names, not just the count — a display surface that throws them
+        # away for a number sends the user to a command that knows less than
+        # the abort that pointed there (muvid#52).
+        "skipped": list(rollup.skipped),
     }
 
 
@@ -510,6 +526,8 @@ def format_status(status_dict: dict) -> str:
             f"~${cost.get('total_amount', 0.0):.2f} "
             f"{cost.get('currency', 'USD')}{skipped_note}"
         )
+        for reason in cost.get("skipped", ()):
+            parts.append(f"    unpriced: {reason}")
     return "\n".join(parts)
 
 

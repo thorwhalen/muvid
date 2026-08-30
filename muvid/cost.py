@@ -9,7 +9,7 @@ ModelRecord, so any improvements to ``falaw.cost`` flow through.
 
 Used by:
 
-- :func:`muvid.facade.estimate_render_cost(root, *, quality)`
+- :func:`muvid.facade.estimate_render_cost(root, *, quality, force)`
 - ``muvid status`` shows the rollup as a summary line.
 - ``muvid render --budget=$X`` aborts before any fal call when the
   estimate exceeds X.
@@ -95,6 +95,7 @@ def estimate_render_cost(
     project: MusicVideoProject,
     *,
     quality: str = "balanced",
+    force: bool = False,
 ) -> _Rollup:
     """Estimate USD cost of running ``muvid render`` for the whole project.
 
@@ -103,6 +104,13 @@ def estimate_render_cost(
     cost 1 image-gen + 1 video-gen × duration; ``lipsync`` is 1
     avatar × duration; ``still`` is 1 image-gen; ``animation`` is
     free of fal calls (rendered locally via ``an``).
+
+    ``force`` must mirror the flag the render will run with: under
+    ``--force`` nothing is cached, so everything is pending and priced.
+    Which shots are "already rendered" is decided by the RENDERER'S own
+    predicate (``muvid.renderers.shot_is_rendered``), not re-derived here —
+    the re-derivation (``output.mp4`` exists) priced an edited shot and a
+    forced re-render at $0.00 and then billed them (muvid#52).
     """
     try:
         from falaw import estimate_call_cost
@@ -130,14 +138,16 @@ def estimate_render_cost(
 
         estimate_call_cost = None  # unreachable: pick_model always raises first
 
+    from muvid.renderers import shot_is_rendered
+
     spec = project.read_spec()
     lines: list[_RolledLine] = []
     skipped: list[str] = []
 
     for sh in spec.shots:
-        # Skip already-rendered shots — render() will hash-cache them.
-        out = project.shot_dir(sh.id) / "output.mp4"
-        if out.exists():
+        # Skip shots the renderer itself would serve from cache — ITS predicate,
+        # imported, never paraphrased (muvid#52: the paraphrase billed).
+        if shot_is_rendered(project, sh, spec.global_style, force=force):
             continue
         for line in _shot_lines(sh, quality, pick_model, estimate_call_cost, skipped):
             lines.append(line)
@@ -160,7 +170,16 @@ def _shot_lines(
     skipped: list[str],
 ):
     """Per-strategy pricing breakdown."""
+    from muvid.renderers import billed_video_seconds
+
     duration = float(shot.duration_s or 0.0)
+    # What a video call is BILLED, not what the timeline says: the renderers
+    # send an integer duration with a floor of one second, so a 0.4 s (or
+    # zero-duration) shot costs one full second — pricing the raw float is the
+    # same paraphrase-the-renderer defect as the cache-predicate half of
+    # muvid#52. Lipsync is priced on the raw duration on purpose: its billing
+    # follows the audio slice, which IS duration_s.
+    billed = billed_video_seconds(duration)
     strategy = shot.render_strategy
 
     if strategy == "still":
@@ -197,8 +216,8 @@ def _shot_lines(
             pick_model,
             estimate_call_cost,
             skipped,
-            seconds=duration,
-            note=f"i2v × {duration:.1f}s",
+            seconds=billed,
+            note=f"i2v × {billed}s billed ({duration:.1f}s shot)",
         )
         return
 
@@ -211,8 +230,8 @@ def _shot_lines(
             pick_model,
             estimate_call_cost,
             skipped,
-            seconds=duration,
-            note=f"t2v × {duration:.1f}s",
+            seconds=billed,
+            note=f"t2v × {billed}s billed ({duration:.1f}s shot)",
         )
         return
 

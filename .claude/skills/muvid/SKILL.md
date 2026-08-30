@@ -62,7 +62,11 @@ the user what came out, and ask just enough questions to keep moving.
    gate; `--budget=-1` (the default) is the off switch. The gate is whole-project:
    `--shot ID` **refuses** the budget flags rather than pretending to honour them.
    Use `muvid estimate-cost <root>` to preview the
-   rollup before committing.
+   rollup before committing — and `muvid estimate-cost <root> --force` before a
+   `render --force`, since under `--force` nothing is cached and the unforced
+   preview would show $0.00 for a fully-rendered project (muvid#52). "Pending"
+   is the renderer's own rule (content hash + force), so an edited shot whose
+   old `output.mp4` still exists is priced, not skipped.
 9. **compose** — `muvid compose <root>`. Concatenates shots, overlays
    the original song.
 
@@ -232,11 +236,13 @@ strategy, generate the missing image, etc.) — don't just retry.
 - `muvid status --json <root>` — same data structured. Pipe through
   `jq '.stages.render'` etc.
 - `muvid estimate-cost <root>` — preview the per-shot USD rollup
-  before committing to `muvid render`.
+  before committing to `muvid render` (add `--force` to preview a
+  `render --force`; the output's `skipped` list names every unpriced item).
 - `cat <root>/project.json | jq` — the SSOT.
 - `cat <root>/lyrics/lyrics.md` — the user's lyrics.
-- `ls <root>/shots/` — see which shots have been rendered (each one
-  is a folder with `output.mp4` if done).
+- `ls <root>/shots/` — see the per-shot work dirs. An `output.mp4` alone
+  does NOT mean done: a shot is rendered only if its `output.hash` matches
+  the current shot definition (`muvid status` applies that real rule).
 - `cat <root>/.muvid/decisions.jsonl` — append-only log of every
   pipeline action.
 - `tail -f <root>/.muvid/fal_events.jsonl` — live falaw progress
