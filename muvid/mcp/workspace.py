@@ -163,15 +163,22 @@ class VisualizerWorkspace:
             if not (child.is_dir() and spec.exists()):
                 continue
             try:
-                title = json.loads(spec.read_text()).get("title", child.name)
+                manifest = json.loads(spec.read_text())
+                if not isinstance(manifest, dict):
+                    manifest = {}
             except (OSError, ValueError):
-                title = child.name
+                manifest = {}
+            try:
+                mtime = spec.stat().st_mtime
+            except OSError:
+                continue  # vanished mid-scan
             rows.append(
                 {
                     "project_id": child.name,
-                    "title": title,
-                    "_mtime": spec.stat().st_mtime,
+                    "title": manifest.get("title") or child.name,
+                    "created": manifest.get("created"),
+                    "modified": mtime,
                 }
             )
-        rows.sort(key=lambda r: r.pop("_mtime"), reverse=True)
+        rows.sort(key=lambda r: r["modified"], reverse=True)
         return rows
