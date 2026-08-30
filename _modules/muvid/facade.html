@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.facade &mdash; muvid 0.0.34 documentation</title>
+  <title>muvid.facade &mdash; muvid 0.0.35 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=9dd25805"></script>
+      <script src="../../_static/documentation_options.js?v=39aadc1c"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -422,7 +422,9 @@
 <span class="sd">    """</span>
     <span class="n">p</span> <span class="o">=</span> <span class="n">MusicVideoProject</span><span class="p">(</span><span class="n">root</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">budget</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">rollup</span> <span class="o">=</span> <span class="n">estimate_render_cost</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">quality</span><span class="o">=</span><span class="n">quality</span><span class="p">)</span>
+        <span class="c1"># `force` mirrors the render below: under --force nothing is cached, so</span>
+        <span class="c1"># the gate must price the whole project, not $0.00 (muvid#52).</span>
+        <span class="n">rollup</span> <span class="o">=</span> <span class="n">estimate_render_cost</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">quality</span><span class="o">=</span><span class="n">quality</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="n">force</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">rollup</span><span class="o">.</span><span class="n">has_unknown_costs</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">allow_unpriced</span><span class="p">:</span>
             <span class="n">reasons</span> <span class="o">=</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  - </span><span class="si">{</span><span class="n">r</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rollup</span><span class="o">.</span><span class="n">skipped</span><span class="p">)</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
@@ -448,12 +450,18 @@
 
 <div class="viewcode-block" id="estimate_render_cost">
 <a class="viewcode-back" href="../../module_docs/muvid/facade.html#muvid.estimate_render_cost">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">estimate_render_cost</span><span class="p">(</span><span class="n">root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">quality</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"balanced"</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Return a :class:`muvid.cost.CostRollup` for the project's pending shots."""</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">estimate_render_cost</span><span class="p">(</span>
+    <span class="n">root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">quality</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"balanced"</span><span class="p">,</span> <span class="n">force</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Return a :class:`muvid.cost.CostRollup` for the project's pending shots.</span>
+
+<span class="sd">    "Pending" is the renderer's own definition (hash + ``force``), so pass the</span>
+<span class="sd">    same ``force`` you will render with to price what that run will actually do.</span>
+<span class="sd">    """</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.cost</span><span class="w"> </span><span class="kn">import</span> <span class="n">estimate_render_cost</span> <span class="k">as</span> <span class="n">_estimate</span>
 
     <span class="n">p</span> <span class="o">=</span> <span class="n">MusicVideoProject</span><span class="p">(</span><span class="n">root</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">_estimate</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">quality</span><span class="o">=</span><span class="n">quality</span><span class="p">)</span></div>
+    <span class="k">return</span> <span class="n">_estimate</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">quality</span><span class="o">=</span><span class="n">quality</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="n">force</span><span class="p">)</span></div>
 
 
 
@@ -485,15 +493,19 @@
     <span class="n">alignment_path</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">root</span> <span class="o">/</span> <span class="s2">"lyrics"</span> <span class="o">/</span> <span class="s2">"alignment.annot"</span>
     <span class="n">final_path</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">root</span> <span class="o">/</span> <span class="s2">"output"</span> <span class="o">/</span> <span class="s2">"final.mp4"</span>
 
+    <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.renderers</span><span class="w"> </span><span class="kn">import</span> <span class="n">shot_is_rendered</span>
+
     <span class="n">shot_states</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">sh</span> <span class="ow">in</span> <span class="n">spec</span><span class="o">.</span><span class="n">shots</span><span class="p">:</span>
-        <span class="n">out</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">shot_dir</span><span class="p">(</span><span class="n">sh</span><span class="o">.</span><span class="n">id</span><span class="p">)</span> <span class="o">/</span> <span class="s2">"output.mp4"</span>
         <span class="n">shot_states</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
             <span class="p">{</span>
                 <span class="s2">"id"</span><span class="p">:</span> <span class="n">sh</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
                 <span class="s2">"strategy"</span><span class="p">:</span> <span class="n">sh</span><span class="o">.</span><span class="n">render_strategy</span><span class="p">,</span>
                 <span class="s2">"duration_s"</span><span class="p">:</span> <span class="n">sh</span><span class="o">.</span><span class="n">duration_s</span><span class="p">,</span>
-                <span class="s2">"rendered"</span><span class="p">:</span> <span class="n">out</span><span class="o">.</span><span class="n">exists</span><span class="p">(),</span>
+                <span class="c1"># The renderer's own predicate, so the progress bar and the</span>
+                <span class="c1"># cost line in one status payload cannot disagree about the</span>
+                <span class="c1"># same shot (an edited-but-rendered shot is pending in BOTH).</span>
+                <span class="s2">"rendered"</span><span class="p">:</span> <span class="n">shot_is_rendered</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">sh</span><span class="p">,</span> <span class="n">spec</span><span class="o">.</span><span class="n">global_style</span><span class="p">),</span>
             <span class="p">}</span>
         <span class="p">)</span>
     <span class="n">n_rendered</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">shot_states</span> <span class="k">if</span> <span class="n">s</span><span class="p">[</span><span class="s2">"rendered"</span><span class="p">])</span>
@@ -581,6 +593,10 @@
         <span class="s2">"currency"</span><span class="p">:</span> <span class="n">rollup</span><span class="o">.</span><span class="n">currency</span><span class="p">,</span>
         <span class="s2">"by_kind"</span><span class="p">:</span> <span class="n">rollup</span><span class="o">.</span><span class="n">by_kind</span><span class="p">(),</span>
         <span class="s2">"n_skipped"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">rollup</span><span class="o">.</span><span class="n">skipped</span><span class="p">),</span>
+        <span class="c1"># The names, not just the count — a display surface that throws them</span>
+        <span class="c1"># away for a number sends the user to a command that knows less than</span>
+        <span class="c1"># the abort that pointed there (muvid#52).</span>
+        <span class="s2">"skipped"</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">rollup</span><span class="o">.</span><span class="n">skipped</span><span class="p">),</span>
     <span class="p">}</span>
 
 
@@ -667,6 +683,8 @@
             <span class="sa">f</span><span class="s2">"~$</span><span class="si">{</span><span class="n">cost</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'total_amount'</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">)</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> "</span>
             <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">cost</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'currency'</span><span class="p">,</span><span class="w"> </span><span class="s1">'USD'</span><span class="p">)</span><span class="si">}{</span><span class="n">skipped_note</span><span class="si">}</span><span class="s2">"</span>
         <span class="p">)</span>
+        <span class="k">for</span> <span class="n">reason</span> <span class="ow">in</span> <span class="n">cost</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"skipped"</span><span class="p">,</span> <span class="p">()):</span>
+            <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"    unpriced: </span><span class="si">{</span><span class="n">reason</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
     <span class="k">return</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span></div>
 
 

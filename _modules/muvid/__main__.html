@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.__main__ &mdash; muvid 0.0.34 documentation</title>
+  <title>muvid.__main__ &mdash; muvid 0.0.35 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=9dd25805"></script>
+      <script src="../../_static/documentation_options.js?v=39aadc1c"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -354,14 +354,21 @@
 
 <div class="viewcode-block" id="estimate_cost">
 <a class="viewcode-back" href="../../module_docs/muvid/__main__.html#muvid.__main__.estimate_cost">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">estimate_cost</span><span class="p">(</span><span class="n">root</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">quality</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"balanced"</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Estimate USD cost of rendering pending shots. Prints a rollup."""</span>
-    <span class="n">rollup</span> <span class="o">=</span> <span class="n">facade</span><span class="o">.</span><span class="n">estimate_render_cost</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">quality</span><span class="o">=</span><span class="n">quality</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">estimate_cost</span><span class="p">(</span><span class="n">root</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">quality</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"balanced"</span><span class="p">,</span> <span class="n">force</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Estimate USD cost of rendering pending shots. Prints a rollup.</span>
+
+<span class="sd">    ``--force`` prices what ``render --force`` would do (everything —</span>
+<span class="sd">    the cache is bypassed, so nothing is "already rendered").</span>
+<span class="sd">    """</span>
+    <span class="n">rollup</span> <span class="o">=</span> <span class="n">facade</span><span class="o">.</span><span class="n">estimate_render_cost</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">quality</span><span class="o">=</span><span class="n">quality</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="n">force</span><span class="p">)</span>
     <span class="n">summary</span> <span class="o">=</span> <span class="p">{</span>
         <span class="s2">"total_amount"</span><span class="p">:</span> <span class="n">rollup</span><span class="o">.</span><span class="n">total_amount</span><span class="p">,</span>
         <span class="s2">"currency"</span><span class="p">:</span> <span class="n">rollup</span><span class="o">.</span><span class="n">currency</span><span class="p">,</span>
         <span class="s2">"by_kind"</span><span class="p">:</span> <span class="n">rollup</span><span class="o">.</span><span class="n">by_kind</span><span class="p">(),</span>
         <span class="s2">"n_skipped"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">rollup</span><span class="o">.</span><span class="n">skipped</span><span class="p">),</span>
+        <span class="c1"># The strings, not just the count: `render`'s abort names every</span>
+        <span class="c1"># unpriced item, and the command it points here at must not know less.</span>
+        <span class="s2">"skipped"</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">rollup</span><span class="o">.</span><span class="n">skipped</span><span class="p">),</span>
         <span class="s2">"lines"</span><span class="p">:</span> <span class="p">[</span>
             <span class="p">{</span>
                 <span class="s2">"kind"</span><span class="p">:</span> <span class="n">ln</span><span class="o">.</span><span class="n">kind</span><span class="p">,</span>

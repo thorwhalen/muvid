@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.cost &mdash; muvid 0.0.34 documentation</title>
+  <title>muvid.cost &mdash; muvid 0.0.35 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -15,7 +15,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=9dd25805"></script>
+      <script src="../../_static/documentation_options.js?v=39aadc1c"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -150,7 +150,7 @@ render strategies (lipsync / image_to_video / text_to_video / animation
 ModelRecord, so any improvements to <code class="docutils literal notranslate"><span class="pre">falaw.cost</span></code> flow through.</p>
 <p>Used by:</p>
 <ul class="simple">
-<li><p><code class="xref py py-func docutils literal notranslate"><span class="pre">muvid.facade.estimate_render_cost(root,</span> <span class="pre">*,</span> <span class="pre">quality)()</span></code></p></li>
+<li><p><code class="xref py py-func docutils literal notranslate"><span class="pre">muvid.facade.estimate_render_cost(root,</span> <span class="pre">*,</span> <span class="pre">quality,</span> <span class="pre">force)()</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">muvid</span> <span class="pre">status</span></code> shows the rollup as a summary line.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">muvid</span> <span class="pre">render</span> <span class="pre">--budget=$X</span></code> aborts before any fal call when the
 estimate exceeds X.</p></li>
@@ -169,13 +169,19 @@ estimate exceeds X.</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="muvid.cost.estimate_render_cost">
-<span class="sig-prename descclassname"><span class="pre">muvid.cost.</span></span><span class="sig-name descname"><span class="pre">estimate_render_cost</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">project</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="project.html#muvid.project.MusicVideoProject" title="muvid.project.MusicVideoProject"><span class="pre">MusicVideoProject</span></a></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">quality</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'balanced'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">_Rollup</span></span></span><a class="reference internal" href="../../_modules/muvid/cost.html#estimate_render_cost"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.cost.estimate_render_cost" title="Link to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">muvid.cost.</span></span><span class="sig-name descname"><span class="pre">estimate_render_cost</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">project</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="project.html#muvid.project.MusicVideoProject" title="muvid.project.MusicVideoProject"><span class="pre">MusicVideoProject</span></a></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">quality</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'balanced'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">_Rollup</span></span></span><a class="reference internal" href="../../_modules/muvid/cost.html#estimate_render_cost"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.cost.estimate_render_cost" title="Link to this definition"></a></dt>
 <dd><p>Estimate USD cost of running <code class="docutils literal notranslate"><span class="pre">muvid</span> <span class="pre">render</span></code> for the whole project.</p>
 <p>Returns a structured rollup. Per-shot pricing depends on
 <code class="docutils literal notranslate"><span class="pre">shot.render_strategy</span></code>: <code class="docutils literal notranslate"><span class="pre">image_to_video</span></code> and <code class="docutils literal notranslate"><span class="pre">text_to_video</span></code>
 cost 1 image-gen + 1 video-gen × duration; <code class="docutils literal notranslate"><span class="pre">lipsync</span></code> is 1
 avatar × duration; <code class="docutils literal notranslate"><span class="pre">still</span></code> is 1 image-gen; <code class="docutils literal notranslate"><span class="pre">animation</span></code> is
 free of fal calls (rendered locally via <code class="docutils literal notranslate"><span class="pre">an</span></code>).</p>
+<p><code class="docutils literal notranslate"><span class="pre">force</span></code> must mirror the flag the render will run with: under
+<code class="docutils literal notranslate"><span class="pre">--force</span></code> nothing is cached, so everything is pending and priced.
+Which shots are “already rendered” is decided by the RENDERER’S own
+predicate (<code class="docutils literal notranslate"><span class="pre">muvid.renderers.shot_is_rendered</span></code>), not re-derived here —
+the re-derivation (<code class="docutils literal notranslate"><span class="pre">output.mp4</span></code> exists) priced an edited shot and a
+forced re-render at $0.00 and then billed them (muvid#52).</p>
 </dd></dl>
 
 </section>

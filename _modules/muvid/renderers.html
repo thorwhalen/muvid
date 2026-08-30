@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.renderers &mdash; muvid 0.0.34 documentation</title>
+  <title>muvid.renderers &mdash; muvid 0.0.35 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=9dd25805"></script>
+      <script src="../../_static/documentation_options.js?v=39aadc1c"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -177,6 +177,55 @@
 
 
 
+<div class="viewcode-block" id="billed_video_seconds">
+<a class="viewcode-back" href="../../module_docs/muvid/renderers.html#muvid.renderers.billed_video_seconds">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">billed_video_seconds</span><span class="p">(</span><span class="n">duration_s</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The seconds a video-generation call is BILLED for a shot of this length.</span>
+
+<span class="sd">    The fal video models take an integer duration with a floor of one second —</span>
+<span class="sd">    ``max(1, round())`` is the exact expression both video renderers send — so</span>
+<span class="sd">    an estimate must price THIS number, never the raw float: a 0.4 s shot is</span>
+<span class="sd">    billed one second, and a zero-duration shot priced at $0.00 with</span>
+<span class="sd">    ``has_unknown_costs`` false is the muvid#52 defect one level down (the</span>
+<span class="sd">    estimate paraphrasing the renderer's arithmetic instead of calling it).</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">duration_s</span> <span class="ow">or</span> <span class="mf">0.0</span><span class="p">))))</span></div>
+
+
+
+<div class="viewcode-block" id="shot_is_rendered">
+<a class="viewcode-back" href="../../module_docs/muvid/renderers.html#muvid.renderers.shot_is_rendered">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">shot_is_rendered</span><span class="p">(</span>
+    <span class="n">project</span><span class="p">:</span> <span class="n">MusicVideoProject</span><span class="p">,</span>
+    <span class="n">shot</span><span class="p">:</span> <span class="n">ShotSpec</span><span class="p">,</span>
+    <span class="n">global_style</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">force</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Whether :func:`render_shot` would return the cached output untouched.</span>
+
+<span class="sd">    THE definition of "already rendered" — there is exactly one, and both the</span>
+<span class="sd">    renderer and ``muvid.cost.estimate_render_cost`` call it. The estimate used</span>
+<span class="sd">    to apply a weaker proxy (``output.mp4`` exists), so an edited-but-rendered</span>
+<span class="sd">    shot (file present, hash stale) and a ``--force`` run were both priced at</span>
+<span class="sd">    $0.00 and then billed (muvid#52) — the same defect family as "unknown reads</span>
+<span class="sd">    as free" (muvid#47), with "pending reads as done" as the variant. Two</span>
+<span class="sd">    predicates that must agree is the shape that produced it; this function is</span>
+<span class="sd">    the agreement.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">force</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="n">shot_dir</span> <span class="o">=</span> <span class="n">project</span><span class="o">.</span><span class="n">shot_dir</span><span class="p">(</span><span class="n">shot</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+    <span class="n">out_path</span> <span class="o">=</span> <span class="n">shot_dir</span> <span class="o">/</span> <span class="s2">"output.mp4"</span>
+    <span class="n">hash_path</span> <span class="o">=</span> <span class="n">shot_dir</span> <span class="o">/</span> <span class="s2">"output.hash"</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="n">out_path</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+        <span class="ow">and</span> <span class="n">hash_path</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+        <span class="ow">and</span> <span class="n">hash_path</span><span class="o">.</span><span class="n">read_text</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="o">==</span> <span class="n">_shot_hash</span><span class="p">(</span><span class="n">shot</span><span class="p">,</span> <span class="n">global_style</span><span class="p">)</span>
+    <span class="p">)</span></div>
+
+
+
 <div class="viewcode-block" id="render_shot">
 <a class="viewcode-back" href="../../module_docs/muvid/renderers.html#muvid.renderers.render_shot">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">render_shot</span><span class="p">(</span>
@@ -189,7 +238,8 @@
 <span class="w">    </span><span class="sd">"""Render a single shot. Returns the path to the produced mp4.</span>
 
 <span class="sd">    Skipped (returns the existing path) if a previously-rendered output</span>
-<span class="sd">    matches the current shot definition's hash, unless ``force=True``.</span>
+<span class="sd">    matches the current shot definition's hash, unless ``force=True`` —</span>
+<span class="sd">    the :func:`shot_is_rendered` predicate, which the cost estimate shares.</span>
 <span class="sd">    """</span>
     <span class="n">spec</span> <span class="o">=</span> <span class="n">project</span><span class="o">.</span><span class="n">read_spec</span><span class="p">()</span>
     <span class="n">shot</span> <span class="o">=</span> <span class="n">spec</span><span class="o">.</span><span class="n">shot</span><span class="p">(</span><span class="n">shot_id</span><span class="p">)</span>
@@ -199,9 +249,8 @@
     <span class="n">hash_path</span> <span class="o">=</span> <span class="n">shot_dir</span> <span class="o">/</span> <span class="s2">"output.hash"</span>
     <span class="n">current_hash</span> <span class="o">=</span> <span class="n">_shot_hash</span><span class="p">(</span><span class="n">shot</span><span class="p">,</span> <span class="n">spec</span><span class="o">.</span><span class="n">global_style</span><span class="p">)</span>
 
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">force</span> <span class="ow">and</span> <span class="n">out_path</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span> <span class="ow">and</span> <span class="n">hash_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
-        <span class="k">if</span> <span class="n">hash_path</span><span class="o">.</span><span class="n">read_text</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="o">==</span> <span class="n">current_hash</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">out_path</span>
+    <span class="k">if</span> <span class="n">shot_is_rendered</span><span class="p">(</span><span class="n">project</span><span class="p">,</span> <span class="n">shot</span><span class="p">,</span> <span class="n">spec</span><span class="o">.</span><span class="n">global_style</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="n">force</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">out_path</span>
 
     <span class="n">ctx</span> <span class="o">=</span> <span class="n">_build_context</span><span class="p">(</span><span class="n">project</span><span class="p">,</span> <span class="n">shot</span><span class="p">,</span> <span class="n">spec</span><span class="o">.</span><span class="n">global_style</span><span class="p">)</span>
     <span class="n">strategy</span> <span class="o">=</span> <span class="n">shot</span><span class="o">.</span><span class="n">render_strategy</span>

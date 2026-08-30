@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.cost &mdash; muvid 0.0.34 documentation</title>
+  <title>muvid.cost &mdash; muvid 0.0.35 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=9dd25805"></script>
+      <script src="../../_static/documentation_options.js?v=39aadc1c"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -143,7 +143,7 @@
 
 <span class="sd">Used by:</span>
 
-<span class="sd">- :func:`muvid.facade.estimate_render_cost(root, *, quality)`</span>
+<span class="sd">- :func:`muvid.facade.estimate_render_cost(root, *, quality, force)`</span>
 <span class="sd">- ``muvid status`` shows the rollup as a summary line.</span>
 <span class="sd">- ``muvid render --budget=$X`` aborts before any fal call when the</span>
 <span class="sd">  estimate exceeds X.</span>
@@ -231,6 +231,7 @@
     <span class="n">project</span><span class="p">:</span> <span class="n">MusicVideoProject</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">quality</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"balanced"</span><span class="p">,</span>
+    <span class="n">force</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_Rollup</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Estimate USD cost of running ``muvid render`` for the whole project.</span>
 
@@ -239,6 +240,13 @@
 <span class="sd">    cost 1 image-gen + 1 video-gen × duration; ``lipsync`` is 1</span>
 <span class="sd">    avatar × duration; ``still`` is 1 image-gen; ``animation`` is</span>
 <span class="sd">    free of fal calls (rendered locally via ``an``).</span>
+
+<span class="sd">    ``force`` must mirror the flag the render will run with: under</span>
+<span class="sd">    ``--force`` nothing is cached, so everything is pending and priced.</span>
+<span class="sd">    Which shots are "already rendered" is decided by the RENDERER'S own</span>
+<span class="sd">    predicate (``muvid.renderers.shot_is_rendered``), not re-derived here —</span>
+<span class="sd">    the re-derivation (``output.mp4`` exists) priced an edited shot and a</span>
+<span class="sd">    forced re-render at $0.00 and then billed them (muvid#52).</span>
 <span class="sd">    """</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">falaw</span><span class="w"> </span><span class="kn">import</span> <span class="n">estimate_call_cost</span>
@@ -266,14 +274,16 @@
 
         <span class="n">estimate_call_cost</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># unreachable: pick_model always raises first</span>
 
+    <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.renderers</span><span class="w"> </span><span class="kn">import</span> <span class="n">shot_is_rendered</span>
+
     <span class="n">spec</span> <span class="o">=</span> <span class="n">project</span><span class="o">.</span><span class="n">read_spec</span><span class="p">()</span>
     <span class="n">lines</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">_RolledLine</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">skipped</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
 
     <span class="k">for</span> <span class="n">sh</span> <span class="ow">in</span> <span class="n">spec</span><span class="o">.</span><span class="n">shots</span><span class="p">:</span>
-        <span class="c1"># Skip already-rendered shots — render() will hash-cache them.</span>
-        <span class="n">out</span> <span class="o">=</span> <span class="n">project</span><span class="o">.</span><span class="n">shot_dir</span><span class="p">(</span><span class="n">sh</span><span class="o">.</span><span class="n">id</span><span class="p">)</span> <span class="o">/</span> <span class="s2">"output.mp4"</span>
-        <span class="k">if</span> <span class="n">out</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="c1"># Skip shots the renderer itself would serve from cache — ITS predicate,</span>
+        <span class="c1"># imported, never paraphrased (muvid#52: the paraphrase billed).</span>
+        <span class="k">if</span> <span class="n">shot_is_rendered</span><span class="p">(</span><span class="n">project</span><span class="p">,</span> <span class="n">sh</span><span class="p">,</span> <span class="n">spec</span><span class="o">.</span><span class="n">global_style</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="n">force</span><span class="p">):</span>
             <span class="k">continue</span>
         <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">_shot_lines</span><span class="p">(</span><span class="n">sh</span><span class="p">,</span> <span class="n">quality</span><span class="p">,</span> <span class="n">pick_model</span><span class="p">,</span> <span class="n">estimate_call_cost</span><span class="p">,</span> <span class="n">skipped</span><span class="p">):</span>
             <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
@@ -297,7 +307,16 @@
     <span class="n">skipped</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
 <span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Per-strategy pricing breakdown."""</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.renderers</span><span class="w"> </span><span class="kn">import</span> <span class="n">billed_video_seconds</span>
+
     <span class="n">duration</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">shot</span><span class="o">.</span><span class="n">duration_s</span> <span class="ow">or</span> <span class="mf">0.0</span><span class="p">)</span>
+    <span class="c1"># What a video call is BILLED, not what the timeline says: the renderers</span>
+    <span class="c1"># send an integer duration with a floor of one second, so a 0.4 s (or</span>
+    <span class="c1"># zero-duration) shot costs one full second — pricing the raw float is the</span>
+    <span class="c1"># same paraphrase-the-renderer defect as the cache-predicate half of</span>
+    <span class="c1"># muvid#52. Lipsync is priced on the raw duration on purpose: its billing</span>
+    <span class="c1"># follows the audio slice, which IS duration_s.</span>
+    <span class="n">billed</span> <span class="o">=</span> <span class="n">billed_video_seconds</span><span class="p">(</span><span class="n">duration</span><span class="p">)</span>
     <span class="n">strategy</span> <span class="o">=</span> <span class="n">shot</span><span class="o">.</span><span class="n">render_strategy</span>
 
     <span class="k">if</span> <span class="n">strategy</span> <span class="o">==</span> <span class="s2">"still"</span><span class="p">:</span>
@@ -334,8 +353,8 @@
             <span class="n">pick_model</span><span class="p">,</span>
             <span class="n">estimate_call_cost</span><span class="p">,</span>
             <span class="n">skipped</span><span class="p">,</span>
-            <span class="n">seconds</span><span class="o">=</span><span class="n">duration</span><span class="p">,</span>
-            <span class="n">note</span><span class="o">=</span><span class="sa">f</span><span class="s2">"i2v × </span><span class="si">{</span><span class="n">duration</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">s"</span><span class="p">,</span>
+            <span class="n">seconds</span><span class="o">=</span><span class="n">billed</span><span class="p">,</span>
+            <span class="n">note</span><span class="o">=</span><span class="sa">f</span><span class="s2">"i2v × </span><span class="si">{</span><span class="n">billed</span><span class="si">}</span><span class="s2">s billed (</span><span class="si">{</span><span class="n">duration</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">s shot)"</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="k">return</span>
 
@@ -348,8 +367,8 @@
             <span class="n">pick_model</span><span class="p">,</span>
             <span class="n">estimate_call_cost</span><span class="p">,</span>
             <span class="n">skipped</span><span class="p">,</span>
-            <span class="n">seconds</span><span class="o">=</span><span class="n">duration</span><span class="p">,</span>
-            <span class="n">note</span><span class="o">=</span><span class="sa">f</span><span class="s2">"t2v × </span><span class="si">{</span><span class="n">duration</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">s"</span><span class="p">,</span>
+            <span class="n">seconds</span><span class="o">=</span><span class="n">billed</span><span class="p">,</span>
+            <span class="n">note</span><span class="o">=</span><span class="sa">f</span><span class="s2">"t2v × </span><span class="si">{</span><span class="n">billed</span><span class="si">}</span><span class="s2">s billed (</span><span class="si">{</span><span class="n">duration</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">s shot)"</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="k">return</span>
 
