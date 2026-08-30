@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.footage.workspace &mdash; muvid 0.0.35 documentation</title>
+  <title>muvid.footage.workspace &mdash; muvid 0.0.36 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=39aadc1c"></script>
+      <script src="../../../_static/documentation_options.js?v=0e525676"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -532,19 +532,30 @@
         <span class="n">rows</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">pdir</span><span class="o">.</span><span class="n">iterdir</span><span class="p">():</span>
             <span class="n">spec</span> <span class="o">=</span> <span class="n">child</span> <span class="o">/</span> <span class="s2">"manifest.json"</span>
-            <span class="k">if</span> <span class="n">child</span><span class="o">.</span><span class="n">is_dir</span><span class="p">()</span> <span class="ow">and</span> <span class="n">spec</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
-                <span class="k">try</span><span class="p">:</span>
-                    <span class="n">title</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">read_text</span><span class="p">())</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"title"</span><span class="p">,</span> <span class="n">child</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
-                <span class="k">except</span> <span class="p">(</span><span class="ne">OSError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
-                    <span class="n">title</span> <span class="o">=</span> <span class="n">child</span><span class="o">.</span><span class="n">name</span>
-                <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                    <span class="p">{</span>
-                        <span class="s2">"project_id"</span><span class="p">:</span> <span class="n">child</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
-                        <span class="s2">"title"</span><span class="p">:</span> <span class="n">title</span><span class="p">,</span>
-                        <span class="s2">"_mtime"</span><span class="p">:</span> <span class="n">spec</span><span class="o">.</span><span class="n">stat</span><span class="p">()</span><span class="o">.</span><span class="n">st_mtime</span><span class="p">,</span>
-                    <span class="p">}</span>
-                <span class="p">)</span>
-        <span class="n">rows</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">r</span><span class="p">:</span> <span class="n">r</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"_mtime"</span><span class="p">),</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">child</span><span class="o">.</span><span class="n">is_dir</span><span class="p">()</span> <span class="ow">and</span> <span class="n">spec</span><span class="o">.</span><span class="n">exists</span><span class="p">()):</span>
+                <span class="k">continue</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">manifest</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">read_text</span><span class="p">())</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">manifest</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+                    <span class="n">manifest</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">except</span> <span class="p">(</span><span class="ne">OSError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+                <span class="n">manifest</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">mtime</span> <span class="o">=</span> <span class="n">spec</span><span class="o">.</span><span class="n">stat</span><span class="p">()</span><span class="o">.</span><span class="n">st_mtime</span>
+            <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+                <span class="k">continue</span>  <span class="c1"># vanished mid-scan</span>
+            <span class="c1"># `modified`/`created` stay on the row: every consumer used to</span>
+            <span class="c1"># re-guess an order this method had already computed and popped</span>
+            <span class="c1"># (the delivery seam's ProjectLister sorts a cross-genre union).</span>
+            <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="p">{</span>
+                    <span class="s2">"project_id"</span><span class="p">:</span> <span class="n">child</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                    <span class="s2">"title"</span><span class="p">:</span> <span class="n">manifest</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"title"</span><span class="p">)</span> <span class="ow">or</span> <span class="n">child</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                    <span class="s2">"created"</span><span class="p">:</span> <span class="n">manifest</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"created"</span><span class="p">),</span>
+                    <span class="s2">"modified"</span><span class="p">:</span> <span class="n">mtime</span><span class="p">,</span>
+                <span class="p">}</span>
+            <span class="p">)</span>
+        <span class="n">rows</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">r</span><span class="p">:</span> <span class="n">r</span><span class="p">[</span><span class="s2">"modified"</span><span class="p">],</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">rows</span></div>
 
 </pre></div>
