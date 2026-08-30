@@ -89,7 +89,7 @@ def _sources():
     )
 
 
-__all__ = ["GENRE", "claim", "resolve", "list_deliverables"]
+__all__ = ["GENRE", "claim", "resolve", "list_deliverables", "list_projects"]
 
 
 def claim(project_id: str, artifact_id: str) -> dict:
@@ -279,3 +279,63 @@ def list_deliverables(email: str, project_id: str = None) -> "list[Deliverable]"
                         continue
     out.sort(key=lambda d: d.created_at or 0, reverse=True)
     return out
+
+
+def _count_renders(proj, kind: str) -> int:
+    """Finished renders in one project — ``0`` is the load-bearing answer.
+
+    A footage project with a song and twelve clips and no cut is exactly what
+    reelee#333 exists to make findable; a listing renders ``0`` as "no cut
+    yet" rather than omitting the project.
+    """
+    rdir = proj.renders_dir
+    if not rdir.is_dir():
+        return 0
+    n = 0
+    for child in rdir.iterdir():
+        if child.is_dir() and _render_file(proj, kind, child.name) is not None:
+            n += 1
+    return n
+
+
+def list_projects(email: str) -> list:
+    """Every project of this caller's, across both muvid genres — rendered or not.
+
+    muvid's half of ``nw.delivery.ProjectLister``. Returns
+    ``list[nw.delivery.ProjectSummary]``, newest-modified first. One
+    registration spans both drawers, exactly as ``resolve`` does — a
+    ``project_id`` present in both yields two rows, disambiguated by
+    ``meta["muvid_genre"]`` (the drawer split already bit once, muvid#23).
+
+    The seam's error contract applies: ``[]`` is a positive claim ("no
+    projects under this caller"), an infrastructure failure raises, and this
+    function never creates a workspace directory just to list it —
+    ``for_email`` constructs paths, only create/render paths mkdir.
+
+    Imported lazily so an environment carrying an older ``nw`` loses exactly
+    this capability, never the module (and with it ``resolve``).
+    """
+    from nw.delivery import ProjectSummary
+
+    rows = []
+    for kind, workspace, _stem in _sources():
+        ws = workspace.for_email(email)
+        for r in ws.list_projects():
+            pid = r["project_id"]
+            try:
+                proj = ws.open_project(pid)
+            except (FileNotFoundError, ValueError):
+                continue  # vanished mid-scan — genuinely absent
+            rows.append(
+                ProjectSummary(
+                    project_id=pid,
+                    title=r.get("title") or pid,
+                    genre=GENRE,
+                    created_at=r.get("created"),
+                    modified_at=r.get("modified"),
+                    deliverable_count=_count_renders(proj, kind),
+                    meta={"muvid_genre": kind},
+                )
+            )
+    rows.sort(key=lambda p: p.modified_at or 0.0, reverse=True)
+    return rows

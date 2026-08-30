@@ -291,3 +291,97 @@ def test_visualizer_renders_are_email_scoped_too(tmp_path, monkeypatch):
     with pytest.raises(KeyError):
         resolve("intruder@x.com", "viz", "v" * 12)
     assert list_deliverables("intruder@x.com") == []
+
+
+# ---------------------------------------------------------------------------
+# list_projects — muvid's half of nw.delivery.ProjectLister (reelee#333)
+# ---------------------------------------------------------------------------
+
+
+def test_a_never_rendered_project_is_findable_with_zero_deliverables(
+    tmp_path, monkeypatch
+):
+    """The reelee#333 acceptance case: a footage project with work in it and
+    no cut yet must appear in the listing, counted at 0 ("no cut yet") —
+    before this, it was invisible to every surface in the system."""
+    monkeypatch.setenv("MUVID_DATA_HOME", str(tmp_path))
+    from muvid.downloads import list_projects
+    from muvid.footage.workspace import FootageWorkspace
+
+    FootageWorkspace.for_email("u@x.com").create_project("wip", title="We'll See")
+    rows = list_projects("u@x.com")
+    assert [r.project_id for r in rows] == ["wip"]
+    row = rows[0]
+    assert row.title == "We'll See"
+    assert row.genre == GENRE
+    assert row.deliverable_count == 0
+    assert row.meta["muvid_genre"] == "footage"
+    assert row.created_at is not None
+    assert row.modified_at is not None
+
+
+def test_rendered_projects_are_counted_and_ordered_newest_first(
+    tmp_path, monkeypatch
+):
+    import os
+    import time
+
+    monkeypatch.setenv("MUVID_DATA_HOME", str(tmp_path))
+    from muvid.downloads import list_projects
+    from muvid.footage.workspace import FootageWorkspace
+
+    ws = FootageWorkspace.for_email("u@x.com")
+    older = ws.create_project("older")
+    (older.new_render_dir("r1" * 6) / "final.mp4").write_bytes(b"x")
+    (older.new_render_dir("r2" * 6) / "final.mp4").write_bytes(b"y")
+    newer = ws.create_project("newer")
+    # Order is by the manifest's mtime; make it unambiguous.
+    past = time.time() - 1000
+    os.utime(ws.project_root("older") / "manifest.json", (past, past))
+
+    rows = list_projects("u@x.com")
+    assert [r.project_id for r in rows] == ["newer", "older"]
+    assert rows[1].deliverable_count == 2
+    assert rows[0].deliverable_count == 0
+
+
+def test_both_drawers_list_disambiguated_by_meta(tmp_path, monkeypatch):
+    """One registration spans footage AND visualizer; the same project_id in
+    both drawers yields two rows a host tells apart by meta — never by
+    (genre, project_id), which collides (muvid#23's split, listed honestly)."""
+    monkeypatch.setenv("MUVID_DATA_HOME", str(tmp_path))
+    from muvid.downloads import list_projects
+    from muvid.footage.workspace import FootageWorkspace
+    from muvid.mcp.workspace import VisualizerWorkspace
+
+    FootageWorkspace.for_email("u@x.com").create_project("same")
+    VisualizerWorkspace.for_email("u@x.com").create_project("same")
+
+    rows = list_projects("u@x.com")
+    assert [r.project_id for r in rows] == ["same", "same"]
+    assert {r.meta["muvid_genre"] for r in rows} == {"footage", "visualizer"}
+
+
+def test_listing_is_blind_to_other_callers_and_empty_for_the_unknown(
+    tmp_path, monkeypatch
+):
+    monkeypatch.setenv("MUVID_DATA_HOME", str(tmp_path))
+    from muvid.downloads import list_projects
+    from muvid.footage.workspace import FootageWorkspace
+
+    FootageWorkspace.for_email("owner@x.com").create_project("private")
+    assert list_projects("someone-else@x.com") == []
+
+
+def test_listing_never_mints_a_workspace_directory(tmp_path, monkeypatch):
+    """Emptiness is the only signal there is — an empty answer must mean the
+    directory was never there, so listing must not create it (the seam's
+    ProjectLister contract)."""
+    monkeypatch.setenv("MUVID_DATA_HOME", str(tmp_path))
+    from muvid.downloads import list_projects
+    from muvid.footage.workspace import FootageWorkspace
+    from muvid.mcp.workspace import VisualizerWorkspace
+
+    assert list_projects("ghost@x.com") == []
+    assert not FootageWorkspace.for_email("ghost@x.com").projects_dir.exists()
+    assert not VisualizerWorkspace.for_email("ghost@x.com").projects_dir.exists()

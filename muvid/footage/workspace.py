@@ -375,17 +375,28 @@ class FootageWorkspace:
         rows = []
         for child in pdir.iterdir():
             spec = child / "manifest.json"
-            if child.is_dir() and spec.exists():
-                try:
-                    title = json.loads(spec.read_text()).get("title", child.name)
-                except (OSError, ValueError):
-                    title = child.name
-                rows.append(
-                    {
-                        "project_id": child.name,
-                        "title": title,
-                        "_mtime": spec.stat().st_mtime,
-                    }
-                )
-        rows.sort(key=lambda r: r.pop("_mtime"), reverse=True)
+            if not (child.is_dir() and spec.exists()):
+                continue
+            try:
+                manifest = json.loads(spec.read_text())
+                if not isinstance(manifest, dict):
+                    manifest = {}
+            except (OSError, ValueError):
+                manifest = {}
+            try:
+                mtime = spec.stat().st_mtime
+            except OSError:
+                continue  # vanished mid-scan
+            # `modified`/`created` stay on the row: every consumer used to
+            # re-guess an order this method had already computed and popped
+            # (the delivery seam's ProjectLister sorts a cross-genre union).
+            rows.append(
+                {
+                    "project_id": child.name,
+                    "title": manifest.get("title") or child.name,
+                    "created": manifest.get("created"),
+                    "modified": mtime,
+                }
+            )
+        rows.sort(key=lambda r: r["modified"], reverse=True)
         return rows
