@@ -89,7 +89,14 @@ def _sources():
     )
 
 
-__all__ = ["GENRE", "claim", "resolve", "list_deliverables", "list_projects", "organise"]
+__all__ = [
+    "GENRE",
+    "claim",
+    "resolve",
+    "list_deliverables",
+    "list_projects",
+    "organise",
+]
 
 
 def claim(project_id: str, artifact_id: str) -> dict:
@@ -521,4 +528,6 @@ def organise(
         raise
 
     # The receipt: re-read from storage, never echo the request.
-    return _deliverable(proj, kind, pid, render_id, _refs_for(proj, kind).get(render_id))
+    return _deliverable(
+        proj, kind, pid, render_id, _refs_for(proj, kind).get(render_id)
+    )
