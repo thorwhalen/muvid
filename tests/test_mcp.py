@@ -309,18 +309,26 @@ def test_failed_render_leaves_no_orphan_dir(tmp_path, monkeypatch):
 
 
 def test_a_user_cannot_reach_another_users_project(tmp_path, monkeypatch):
+    from fastmcp.exceptions import ToolError
+
     _bind(tmp_path, monkeypatch)  # creates project 'p' under u@x.com
     with use_email("intruder@x.com"):
-        with pytest.raises(FileNotFoundError):
+        # project_status now spans both drawers via downloads._open, so the
+        # refusal is a clean ToolError — and it must not reveal WHOSE project
+        # exists, only that none does for this caller.
+        with pytest.raises(ToolError) as exc:
             tools.project_status("p")
+        assert "u@x.com" not in str(exc.value)
         with pytest.raises(FileNotFoundError):
             tools.render_visualizer("p", audio="https://x/a.wav", visual="cqt")
         assert tools.list_projects()["projects"] == []
 
 
 def test_traversal_project_id_is_rejected_via_the_tool(tmp_path, monkeypatch):
+    from fastmcp.exceptions import ToolError
+
     _bind(tmp_path, monkeypatch)
-    with use_email("u@x.com"), pytest.raises(ValueError):
+    with use_email("u@x.com"), pytest.raises(ToolError):
         tools.project_status("../intruder@x.com/p")
 
 
@@ -377,3 +385,35 @@ def test_every_public_tool_function_is_registered():
             f"{module.__name__}: unregistered {sorted(public - set(declared))}, "
             f"declared-but-missing {sorted(set(declared) - public)}"
         )
+
+
+# -- both drawers (field finding 8, 2026-08-30) -------------------------------
+
+
+def test_a_caller_with_footage_work_sees_it_through_the_project_tools(
+    tmp_path, monkeypatch
+):
+    """The field repro, at the tool level: the connector listed and served a
+    caller's footage renders while muvid_list_projects returned [] and
+    muvid_project_status asserted the project did not exist — a false
+    statement, not a limitation. Both tools must span both drawers."""
+    monkeypatch.setenv("MUVID_DATA_HOME", str(tmp_path))
+    from muvid.footage.workspace import FootageWorkspace
+
+    proj = FootageWorkspace.for_email("u@x.com").create_project(
+        "we_ll_see", title="We'll See"
+    )
+    rdir = proj.new_render_dir("r1" * 6)
+    (rdir / "final.mp4").write_bytes(b"cut")
+    (rdir / "meta.json").write_text('{"render_id": "%s"}' % ("r1" * 6))
+
+    with use_email("u@x.com"):
+        rows = tools.list_projects()["projects"]
+        assert [r["project_id"] for r in rows] == ["we_ll_see"]
+        assert rows[0]["muvid_genre"] == "footage"
+        assert rows[0]["n_renders"] == 1
+
+        status = tools.project_status("we_ll_see")
+        assert status["muvid_genre"] == "footage"
+        assert status["title"] == "We'll See"
+        assert [r["render_id"] for r in status["renders"]] == ["r1" * 6]

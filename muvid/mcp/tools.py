@@ -75,16 +75,51 @@ def list_visuals() -> dict:
 
 
 def list_projects() -> dict:
-    """List your music-visualizer projects (buckets). Free."""
-    return {"projects": _workspace().list_projects()}
+    """List ALL your muvid projects — music-video (footage) AND visualizer. Free.
+
+    Rows carry ``muvid_genre`` ("footage" or "visualizer") and ``n_renders``
+    (0 means the project exists but has no finished render yet — it is still
+    listed). This tool used to read only the visualizer drawer, so a caller
+    whose footage renders the connector had just SERVED was told they had no
+    projects at all — a false statement, not a limitation (field finding,
+    2026-08-30).
+    """
+    from muvid.downloads import list_projects as _list_both_drawers
+
+    return {
+        "projects": [
+            {
+                "project_id": p.project_id,
+                "title": p.title,
+                "muvid_genre": p.meta.get("muvid_genre"),
+                "n_renders": p.deliverable_count,
+                "created": p.created_at,
+                "modified": p.modified_at,
+            }
+            for p in _list_both_drawers(current_email())
+        ]
+    }
 
 
 def project_status(project_id: str) -> dict:
-    """Your project's details and its renders (newest-first). Free."""
-    proj = _workspace().open_project(project_id)
+    """Your project's details and its renders (newest-first), whichever muvid
+    genre it belongs to. Free.
+
+    Spans both drawers, exactly as downloads do: asserting "no project X" about
+    a footage project because only the visualizer drawer was checked is a false
+    statement about the caller's own work (muvid#23's shape, still live on this
+    tool until now).
+    """
+    from muvid.downloads import _open
+
+    try:
+        kind, pid, proj = _open(current_email(), project_id)
+    except KeyError as e:
+        raise _tool_error(str(e)) from None
     return {
-        "project_id": project_id,
-        "title": proj.manifest().get("title", project_id),
+        "project_id": pid,
+        "muvid_genre": kind,
+        "title": proj.manifest().get("title", pid),
         "renders": proj.list_renders(),
     }
 
