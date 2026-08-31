@@ -89,7 +89,7 @@ def _sources():
     )
 
 
-__all__ = ["GENRE", "claim", "resolve", "list_deliverables", "list_projects"]
+__all__ = ["GENRE", "claim", "resolve", "list_deliverables", "list_projects", "organise"]
 
 
 def claim(project_id: str, artifact_id: str) -> dict:
@@ -148,20 +148,25 @@ def _refs_for(proj, kind: str) -> dict:
     return proj.ensure_render_refs()
 
 
+def _read_render_meta(proj, render_id: str) -> dict:
+    meta_path = proj.renders_dir / render_id / "meta.json"
+    if not meta_path.exists():
+        return {}
+    import json
+
+    try:
+        loaded = json.loads(meta_path.read_text())
+        return loaded if isinstance(loaded, dict) else {}
+    except (OSError, ValueError):
+        return {}
+
+
 def _deliverable(proj, kind, pid, render_id, ref_n, *, thumbnail=False) -> Deliverable:
     path = _render_file(proj, kind, render_id, thumbnail=thumbnail)
     if path is None:
         what = "poster" if thumbnail else "render"
         raise KeyError(f"no such {what} {render_id!r} in project {pid!r}")
-    meta = {}
-    meta_path = proj.renders_dir / render_id / "meta.json"
-    if meta_path.exists():
-        import json
-
-        try:
-            meta = json.loads(meta_path.read_text())
-        except (OSError, ValueError):
-            meta = {}
+    meta = _read_render_meta(proj, render_id)
     if ref_n is None and isinstance(meta.get("ref_n"), int):
         ref_n = meta["ref_n"]
     stat = path.stat()
@@ -169,6 +174,27 @@ def _deliverable(proj, kind, pid, render_id, ref_n, *, thumbnail=False) -> Deliv
     duration = round(span[1] - span[0], 2) if len(span) == 2 else meta.get("duration")
     label = ("cut-%d" % ref_n) if ref_n else render_id
     stem = f"{pid}-{label}" + ("-poster" if thumbnail else "")
+    # Organise state lives in its OWN sub-dict of meta.json ("organise":
+    # {title, tags, note}) — the render pipeline already writes top-level
+    # keys of its own (ref_n, edl, note, download, ...), and sharing the
+    # top level made the pipeline's instructional `note` surface as a
+    # user-assigned one, and organise(note="") delete a pipeline key
+    # (adversarial-review finding). tags/note still SURFACE in
+    # Deliverable.meta under the parameter names — the seam pins the
+    # read-side spelling, not the storage layout.
+    org = meta.get("organise") if isinstance(meta.get("organise"), dict) else {}
+    assigned_title = org.get("title") if isinstance(org.get("title"), str) else None
+    out_meta = {
+        "strategy": meta.get("strategy"),
+        "canvas": meta.get("canvas"),
+        "visual": meta.get("visual"),
+        "ok": meta.get("ok"),
+        "muvid_genre": kind,
+    }
+    if org.get("tags"):
+        out_meta["tags"] = list(org["tags"])
+    if org.get("note"):
+        out_meta["note"] = org["note"]
     return Deliverable(
         path=path,
         content_type=_CONTENT_TYPES[path.suffix],
@@ -177,26 +203,41 @@ def _deliverable(proj, kind, pid, render_id, ref_n, *, thumbnail=False) -> Deliv
         project_id=pid,
         genre=GENRE,
         ref=(format_ref(ref_n) if ref_n else None) if not thumbnail else None,
-        title=pid.replace("_", " ") + (" (poster)" if thumbnail else ""),
+        title=(assigned_title or pid.replace("_", " "))
+        + (" (poster)" if thumbnail else ""),
         duration_s=None if thumbnail else duration,
         size_bytes=stat.st_size,
         created_at=stat.st_mtime,
-        meta={
-            "strategy": meta.get("strategy"),
-            "canvas": meta.get("canvas"),
-            "visual": meta.get("visual"),
-            "ok": meta.get("ok"),
-            "muvid_genre": kind,
-        },
+        meta=out_meta,
     )
+
+
+def _render_id_for_title(proj, title: str) -> "str | None":
+    """The render whose organise-assigned title matches, case-folded, or None."""
+    rdir = proj.renders_dir
+    if not rdir.is_dir():
+        return None
+    want = title.strip().casefold()
+    for child in rdir.iterdir():
+        if not child.is_dir():
+            continue
+        org = _read_render_meta(proj, child.name).get("organise")
+        assigned = org.get("title") if isinstance(org, dict) else None
+        if isinstance(assigned, str) and assigned.strip().casefold() == want:
+            return child.name
+    return None
 
 
 def resolve(email: str, project_id: str, artifact_id: str) -> Deliverable:
     """The caller's rendered artifact as a servable file — muvid's download authority.
 
     ``artifact_id`` is a render id, a speakable reference (``cut 4``, ``#4``,
-    ``4``), or a render id with ``.thumbnail`` appended for the visualizer's
-    poster image. Spans both muvid genres.
+    ``4``), an organise-ASSIGNED title (matched case-folded within the
+    project's drawer), or any of those with ``.thumbnail`` appended for the
+    poster image. Precedence: a reference never falls through to titles, and
+    a raw id always beats a title — an id-shaped title can therefore never
+    win, which is why ``organise`` refuses id-colliding titles at write time.
+    Spans both muvid genres.
 
     Raises ``KeyError`` for anything that does not resolve to an artifact of
     *this* caller — including ids shaped like an attack and other users' renders.
@@ -228,9 +269,19 @@ def resolve(email: str, project_id: str, artifact_id: str) -> Deliverable:
     # Backfill here too, so a render reports the SAME reference however it was
     # asked for. Resolving by id used to skip this, which meant `cut 4` and
     # `b02fc05417ea` described one file with two different labels.
-    return _deliverable(
-        proj, kind, pid, aid, _refs_for(proj, kind).get(aid), thumbnail=want_thumb
-    )
+    try:
+        return _deliverable(
+            proj, kind, pid, aid, _refs_for(proj, kind).get(aid), thumbnail=want_thumb
+        )
+    except KeyError:
+        # Not an id — an organise-assigned TITLE must resolve from the moment
+        # it is accepted (the seam's accepted-title-resolves obligation).
+        rid = _render_id_for_title(proj, raw)
+        if rid is None:
+            raise
+        return _deliverable(
+            proj, kind, pid, rid, _refs_for(proj, kind).get(rid), thumbnail=want_thumb
+        )
 
 
 def list_deliverables(email: str, project_id: str = None) -> "list[Deliverable]":
@@ -339,3 +390,135 @@ def list_projects(email: str) -> list:
             )
     rows.sort(key=lambda p: p.modified_at or 0.0, reverse=True)
     return rows
+
+
+def organise(
+    email: str,
+    project_id: str,
+    artifact_id: str,
+    *,
+    title: "str | None" = None,
+    tags: "list | None" = None,
+    note: "str | None" = None,
+) -> Deliverable:
+    """Rename, tag or annotate one render — muvid's half of ``nw.delivery.Organiser``.
+
+    Persistence is the render's own ``meta.json`` — genre-owned state next to
+    what it names, never a host label store. The contract's durability
+    guarantees, kept the way the seam demands:
+
+    - ``artifact_id`` (the render id) never changes and no file is renamed —
+      the id is what a signed token is minted against, and ``ref_n`` (the
+      ``cut N`` ordinal) is never renumbered. ``organise`` edits the human
+      TITLE only.
+    - An accepted title resolves immediately (``resolve`` scans assigned
+      titles), which is why collisions — with another assigned title OR with
+      any render id in the project — are refused naming the holder.
+    - ``None`` leaves a field unchanged; ``""``/``[]`` clears it. A request
+      changing nothing is refused. All-or-nothing: everything is validated
+      before one byte is written.
+    - The return is the deliverable AS RE-READ through ``_deliverable``
+      (which reads ``meta.json`` back), so the reply is exactly what the
+      next listing shows. ``tags``/``note`` surface in ``Deliverable.meta``
+      under the parameter names, per the seam.
+
+    Auth is ``resolve``'s exactly: ``KeyError`` when nothing is the caller's
+    (no existence leaks), ``ValueError`` when the request itself is refused.
+    A ``.thumbnail`` target is refused — the poster has no name of its own.
+    """
+    import json
+
+    from nw.delivery import check_title
+
+    if title is None and tags is None and note is None:
+        raise ValueError("nothing to change: pass title=, tags= and/or note=")
+    raw = (artifact_id or "").strip()
+    if raw.endswith(THUMBNAIL_SUFFIX):
+        raise ValueError(
+            "organise the render itself, not its poster — drop the "
+            f"{THUMBNAIL_SUFFIX!r} suffix"
+        )
+
+    kind, pid, proj = _open(email, project_id)
+    # The target must resolve as the caller's BEFORE anything is written —
+    # and resolving through resolve() itself keeps one id vocabulary. (This
+    # may backfill ref ordinals as a side effect: the ref store's own
+    # idempotent behaviour on any resolve, not part of this request.)
+    target = resolve(email, project_id, raw)
+    render_id = target.artifact_id
+
+    new_title: "str | None" = None
+    if title is not None and title != "":
+        new_title = check_title(title)
+        if new_title.endswith(THUMBNAIL_SUFFIX):
+            raise ValueError(
+                f"a title cannot end with {THUMBNAIL_SUFFIX!r} — resolve "
+                "strips that suffix to address posters, so the name could "
+                "never win"
+            )
+        want = new_title.casefold()
+        rdir = proj.renders_dir
+        if rdir.is_dir():
+            for child in rdir.iterdir():
+                if not child.is_dir() or child.name == render_id:
+                    continue
+                if child.name.casefold() == want:
+                    raise ValueError(
+                        f"{new_title!r} collides with render id {child.name!r}"
+                    )
+                sib = _read_render_meta(proj, child.name).get("organise")
+                other = sib.get("title") if isinstance(sib, dict) else None
+                if isinstance(other, str) and other.strip().casefold() == want:
+                    raise ValueError(
+                        f"{new_title!r} is already the title of {child.name!r}"
+                    )
+    if tags is not None and not isinstance(tags, (list, tuple)):
+        raise ValueError("tags must be a list of strings (or [] to clear)")
+
+    meta = _read_render_meta(proj, render_id)
+    org = meta.get("organise") if isinstance(meta.get("organise"), dict) else {}
+    org = dict(org)
+    if title is not None:
+        if title == "":
+            org.pop("title", None)
+        else:
+            org["title"] = new_title
+    if tags is not None:
+        if len(tags) == 0:
+            org.pop("tags", None)
+        else:
+            org["tags"] = [str(t) for t in tags]
+    if note is not None:
+        if note == "":
+            org.pop("note", None)
+        else:
+            org["note"] = str(note)
+    if org:
+        meta["organise"] = org
+    else:
+        meta.pop("organise", None)
+
+    # Atomic replace: meta.json carries PIPELINE-critical keys (ref_n, edl,
+    # download, ...) — a truncate-then-write interrupted mid-write would
+    # corrupt refs and status for this render, so never write in place.
+    import os
+    import tempfile
+
+    meta_path = proj.renders_dir / render_id / "meta.json"
+    meta_path.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp = tempfile.mkstemp(
+        dir=str(meta_path.parent), prefix=".meta.", suffix=".tmp"
+    )
+    try:
+        with os.fdopen(fd, "w") as f:
+            f.write(json.dumps(meta, indent=2))
+        os.replace(tmp, meta_path)
+    except BaseException:
+        try:
+            os.unlink(tmp)
+        except OSError:
+            pass
+        raise
+
+    # The receipt: re-read from storage, never echo the request.
+    return _deliverable(proj, kind, pid, render_id, _refs_for(proj, kind).get(render_id))

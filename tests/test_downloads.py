@@ -385,3 +385,129 @@ def test_listing_never_mints_a_workspace_directory(tmp_path, monkeypatch):
     assert list_projects("ghost@x.com") == []
     assert not FootageWorkspace.for_email("ghost@x.com").projects_dir.exists()
     assert not VisualizerWorkspace.for_email("ghost@x.com").projects_dir.exists()
+
+
+# ---------------------------------------------------------------------------
+# organise — muvid's half of nw.delivery.Organiser (ADR asset-surfaces §3.3/§4)
+# ---------------------------------------------------------------------------
+
+
+def _footage_project_two_renders(tmp_path, monkeypatch, *, email="u@x.com"):
+    monkeypatch.setenv("MUVID_DATA_HOME", str(tmp_path))
+    from muvid.footage.workspace import FootageWorkspace
+
+    proj = FootageWorkspace.for_email(email).create_project("p")
+    for rid in ("r1" * 6, "r2" * 6):
+        rdir = proj.new_render_dir(rid)
+        (rdir / "final.mp4").write_bytes(b"cut-" + rid.encode())
+        (rdir / "meta.json").write_text('{"render_id": "%s"}' % rid)
+    return proj
+
+
+def test_an_accepted_title_resolves_and_the_receipt_is_a_reread(
+    tmp_path, monkeypatch
+):
+    from muvid.downloads import organise
+
+    _footage_project_two_renders(tmp_path, monkeypatch)
+    got = organise(
+        "u@x.com", "p", "r1" * 6,
+        title="The Slow Open", tags=["keeper"], note="send this one",
+    )
+    # The receipt is a re-read: the assigned title is the deliverable's title,
+    # tags/note ride meta under the parameter names (the seam's pinning), and
+    # the identity did not move.
+    assert got.artifact_id == "r1" * 6
+    assert got.title == "The Slow Open"
+    assert got.meta["tags"] == ["keeper"]
+    assert got.meta["note"] == "send this one"
+    # The obligation that keeps naming genre-side: the accepted title RESOLVES.
+    assert resolve("u@x.com", "p", "The Slow Open").artifact_id == "r1" * 6
+    assert resolve("u@x.com", "p", "the slow open").artifact_id == "r1" * 6
+    # And no file moved: the raw id still resolves to the same bytes.
+    assert resolve("u@x.com", "p", "r1" * 6).path.read_bytes() == b"cut-" + b"r1" * 6
+
+
+def test_title_collisions_are_refused_naming_the_holder(tmp_path, monkeypatch):
+    from muvid.downloads import organise
+
+    _footage_project_two_renders(tmp_path, monkeypatch)
+    organise("u@x.com", "p", "r1" * 6, title="The Slow Open")
+    with pytest.raises(ValueError, match="already the title"):
+        organise("u@x.com", "p", "r2" * 6, title="the slow open")
+    with pytest.raises(ValueError, match="collides with render id"):
+        organise("u@x.com", "p", "r1" * 6, title="r2" * 6)
+
+
+def test_ref_shaped_titles_are_refused_by_the_shared_rule(tmp_path, monkeypatch):
+    from muvid.downloads import organise
+
+    _footage_project_two_renders(tmp_path, monkeypatch)
+    for bad in ("cut 4", "#7", "12"):
+        with pytest.raises(ValueError, match="reads as a reference"):
+            organise("u@x.com", "p", "r1" * 6, title=bad)
+
+
+def test_none_leaves_alone_and_empty_clears(tmp_path, monkeypatch):
+    from muvid.downloads import organise
+
+    _footage_project_two_renders(tmp_path, monkeypatch)
+    organise("u@x.com", "p", "r1" * 6, title="Named", note="keep")
+    # None = untouched: only tags change here.
+    got = organise("u@x.com", "p", "r1" * 6, tags=["a", "b"])
+    assert got.title == "Named" and got.meta["note"] == "keep"
+    # "" / [] = clear.
+    got = organise("u@x.com", "p", "r1" * 6, title="", tags=[], note="")
+    assert got.title == "p"  # back to the derived default
+    assert "tags" not in got.meta and "note" not in got.meta
+    with pytest.raises(KeyError):
+        resolve("u@x.com", "p", "Named")  # the cleared title no longer resolves
+
+
+def test_organise_authorizes_like_resolve_and_refuses_junk(tmp_path, monkeypatch):
+    from muvid.downloads import organise
+
+    _footage_project_two_renders(tmp_path, monkeypatch)
+    with pytest.raises(KeyError):
+        organise("intruder@x.com", "p", "r1" * 6, title="Mine Now")
+    with pytest.raises(ValueError, match="nothing to change"):
+        organise("u@x.com", "p", "r1" * 6)
+    with pytest.raises(ValueError, match="poster"):
+        organise("u@x.com", "p", "r1" * 6 + ".thumbnail", title="X")
+    # All-or-nothing: a refused title writes nothing, including the valid note.
+    with pytest.raises(ValueError):
+        organise("u@x.com", "p", "r1" * 6, title="cut 4", note="should not land")
+    assert "note" not in resolve("u@x.com", "p", "r1" * 6).meta
+
+
+def test_pipeline_meta_keys_and_organise_state_never_collide(tmp_path, monkeypatch):
+    """The render pipeline writes its own top-level meta.json keys — including
+    `note` (instructional strings) — so organise state lives in an `organise`
+    sub-dict. A pipeline note must never surface as a user-assigned one, and
+    clearing the organise note must never delete the pipeline's key
+    (adversarial-review finding)."""
+    import json
+
+    from muvid.downloads import organise
+
+    proj = _footage_project_two_renders(tmp_path, monkeypatch)
+    meta_path = proj.renders_dir / ("r1" * 6) / "meta.json"
+    meta_path.write_text(json.dumps({
+        "render_id": "r1" * 6,
+        "note": "PIPELINE: re-render with --force after editing",
+        "ref_n": 1,
+    }))
+
+    # The pipeline note is not a user note.
+    assert "note" not in resolve("u@x.com", "p", "r1" * 6).meta
+
+    organise("u@x.com", "p", "r1" * 6, note="the good one")
+    got = resolve("u@x.com", "p", "r1" * 6)
+    assert got.meta["note"] == "the good one"
+
+    # Clearing the ORGANISE note leaves the pipeline's key (and ref_n) intact.
+    organise("u@x.com", "p", "r1" * 6, note="")
+    stored = json.loads(meta_path.read_text())
+    assert stored["note"].startswith("PIPELINE")
+    assert stored["ref_n"] == 1
+    assert "organise" not in stored  # fully cleared sub-dict is removed
