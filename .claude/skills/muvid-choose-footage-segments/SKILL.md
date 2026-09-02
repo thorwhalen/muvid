@@ -99,9 +99,14 @@ the canvas and a portrait clip in a landscape edit is ~68% black bars.
 ```python
 from muvid.footage import CropWindow, EdlEntry
 
-EdlEntry(0.0, 3.8, "c01", crop=CropWindow(x=0.0, y=0.42, w=1.0, h=0.32))          # static
-EdlEntry(3.8, 7.6, "c01", crop=CropWindow(0.0, 0.30, 1.0, 0.32),
-                          crop_end=CropWindow(0.0, 0.52, 1.0, 0.32))              # a pan
+EdlEntry(0.0, 3.8, "c01", crop=CropWindow(x=0.0, y=0.42, w=1.0, h=0.32))  # static
+EdlEntry(
+    3.8,
+    7.6,
+    "c01",
+    crop=CropWindow(0.0, 0.30, 1.0, 0.32),
+    crop_end=CropWindow(0.0, 0.52, 1.0, 0.32),
+)  # a pan
 ```
 
 Four things to know:
