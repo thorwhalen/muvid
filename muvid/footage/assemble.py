@@ -199,6 +199,38 @@ def _part_plan(cuts: Sequence[AssemblyCut], fps: int) -> list[_Part]:
     return parts
 
 
+def _crop_filter(cut: "AssemblyCut") -> str:
+    """Compile a cut's normalised crop window into a ``crop`` filter, or ``""``.
+
+    Normalised fractions only become pixels once the source dimensions are known,
+    and the only thing that knows them is ffmpeg — hence ``iw``/``ih`` rather than
+    arithmetic here. Emitting nothing when there is no crop is what keeps every
+    pre-crop EDL byte-identical through this path.
+
+    A moving window is a linear ramp in the filter's own ``t``, clamped at both
+    ends so the last frame lands exactly on ``crop_end`` rather than overshooting
+    by the one spare frame ``_render_part`` decodes. ``setpts=PTS-STARTPTS`` is
+    prepended ONLY in the moving case, because ``t`` must start at 0 for the ramp
+    to mean anything and adding it unconditionally would change a path that works.
+
+    Not ``zoompan``: its expression vocabulary has no ``t`` at all (it exposes
+    ``on``/``in``/``pon``), and it duplicates frames on video input.
+    """
+    c = cut.crop
+    if c is None:
+        return ""
+    w = f"iw*{c.w:.6f}"
+    h = f"ih*{c.h:.6f}"
+    e = cut.crop_end
+    if e is None or (abs(e.x - c.x) < 1e-9 and abs(e.y - c.y) < 1e-9):
+        return f"crop=w='{w}':h='{h}':x='iw*{c.x:.6f}':y='ih*{c.y:.6f}'"
+    T = max(cut.duration, 1e-6)
+    prog = f"min(max(t/{T:.6f},0),1)"
+    x = f"iw*({c.x:.6f}+({e.x - c.x:.6f})*{prog})"
+    y = f"ih*({c.y:.6f}+({e.y - c.y:.6f})*{prog})"
+    return f"setpts=PTS-STARTPTS,crop=w='{w}':h='{h}':x='{x}':y='{y}'"
+
+
 def _video_codec_args(crf: int, preset: str) -> list[str]:
     return [
         "-c:v",
@@ -231,7 +263,9 @@ def _render_part(
     # validates a span past the last video frame, and without tpad that part comes up
     # short, silently desyncing every later cut. Cloning the last frame makes the frame
     # count exact whenever the source yields at least one frame.
+    crop = _crop_filter(cut)
     vf = (
+        f"{crop + ',' if crop else ''}"
         f"scale={w}:{h}:force_original_aspect_ratio=decrease,"
         f"pad={w}:{h}:(ow-iw)/2:(oh-ih)/2,setsar=1,fps={fps},"
         f"tpad=stop=-1:stop_mode=clone"
@@ -313,18 +347,26 @@ def _render_transition(part, out: Path, *, w, h, fps, crf: int, preset: str) -> 
     """
     from muvid.visualize.ffmpeg import run_ffmpeg
 
-    norm = (
-        f"scale={w}:{h}:force_original_aspect_ratio=decrease,"
-        f"pad={w}:{h}:(ow-iw)/2:(oh-ih)/2,setsar=1,fps={fps},"
-        f"tpad=stop=-1:stop_mode=clone,format=yuv420p"
-    )
+    # Per-input, not one shared string: the two sides of a boundary are different
+    # cuts and may carry different crops. A single `norm` would silently apply the
+    # A-side framing to the B-side — the blend would still render, at the wrong
+    # framing, which is exactly the kind of failure nothing downstream can see.
+    def _norm(cut) -> str:
+        crop = _crop_filter(cut)
+        return (
+            f"{crop + ',' if crop else ''}"
+            f"scale={w}:{h}:force_original_aspect_ratio=decrease,"
+            f"pad={w}:{h}:(ow-iw)/2:(oh-ih)/2,setsar=1,fps={fps},"
+            f"tpad=stop=-1:stop_mode=clone,format=yuv420p"
+        )
+
     n = part.n_frames
     run_ffmpeg(
         [
             *_xfade_input(part.prev, part.prev_in, n, w=w, h=h, fps=fps),
             *_xfade_input(part.cut, part.clip_in, n, w=w, h=h, fps=fps),
             "-filter_complex",
-            f"[0:v]{norm}[a];[1:v]{norm}[b];"
+            f"[0:v]{_norm(part.prev)}[a];[1:v]{_norm(part.cut)}[b];"
             f"[a][b]xfade=transition={part.curve}:duration={n / fps:.6f}:offset=0[v]",
             "-map",
             "[v]",

@@ -157,6 +157,10 @@ def _edl_body(e) -> dict:
     body = {"clip_id": e.clip_id or None}
     if getattr(e, "transition", None) is not None:
         body["transition"] = e.transition.to_dict()
+    for field in ("crop", "crop_end"):
+        v = getattr(e, field, None)
+        if v is not None:
+            body[field] = v.to_dict()
     return body
 
 
@@ -236,6 +240,12 @@ def edl_from_annotations(
                 "duration_s": float(raw["duration_s"]),
                 "curve": str(raw.get("curve", "fade")),
             }
+        for field in ("crop", "crop_end"):
+            raw = a.body.get(field)
+            if isinstance(raw, dict) and all(
+                isinstance(raw.get(k), (int, float)) for k in ("x", "y", "w", "h")
+            ):
+                entry[field] = {k: float(raw[k]) for k in ("x", "y", "w", "h")}
         out.append(entry)
     return sorted(out, key=lambda e: e["song_start"])
 

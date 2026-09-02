@@ -11,7 +11,8 @@ Modules:
 - :mod:`muvid.footage.align` — align a clip set to the song (thin over ``mixing.audio``).
 - :mod:`muvid.footage.strategy` — the pluggable ``SelectionStrategy`` registry that turns
   alignments into an EDL (which clip covers which span of the song).
-- :mod:`muvid.footage.edl` — the ``validate_edl`` SSOT + EDL/alignment data types.
+- :mod:`muvid.footage.edl` — the ``validate_edl`` SSOT + EDL/alignment data types,
+  including the per-cut ``CropWindow`` (the EDL's spatial half, muvid#60).
 - :mod:`muvid.footage.assemble` — the bounded single-ffmpeg-pass assembler.
 - :mod:`muvid.footage.workspace` — the per-user stateful project (song + clips + manifest).
 """
@@ -19,6 +20,7 @@ Modules:
 from muvid.footage.edl import (
     FootageAlignment,
     EdlEntry,
+    CropWindow,
     validate_edl,
     derive_cuts,
 )
@@ -33,6 +35,7 @@ from muvid.footage.strategy import (
 __all__ = [
     "FootageAlignment",
     "EdlEntry",
+    "CropWindow",
     "validate_edl",
     "derive_cuts",
     "SelectionStrategy",
