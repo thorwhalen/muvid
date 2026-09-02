@@ -80,6 +80,32 @@ Pipeline: face-detect → track → mouth-crop → SyncNet score vs **master voc
   circular stats) captures groove even when syncopated. All MIT/BSD/ISC → commercial-clean.
 - Refs: Visual Rhythm & Beat [10], BAS/AIST++ [11], madmom [8], BeatNet [9] (report §3).
 
+### Measured, on real crowd footage: none of this detects a beat lock — and why that is not the last word
+
+Run on three phone recordings of a dancing crowd, a camera-compensated whole-frame flow
+envelope showed **no phase concentration at all** — |z| < 2 against a circular-shift null
+at beat, 2-beat, bar and 2-bar periods, and spatially resolved into 48 cells, **0/48**
+reached z > 3. One clip's elevated beat-frequency SNR was most plausibly disco lights
+pulsing, not dancers. (Detail: thorwhalen/muvid#61.)
+
+**Read that as a result about the METHOD, not about the footage.** Perceptually meaningful
+timing lives at 1–20 ms; a frame period is 16.7–33 ms. Literal frame-to-onset mapping
+therefore cannot resolve rhythmic placement, and a negative result from it only confirms
+that premise. Scoring a clip on "is it lively here" works fine — that is what these
+metrics are actually good for, and it is what the selector uses them for. Concluding
+"the dancers are not on the beat" from them does not follow.
+
+Recovering the timing needs **inference against a musical prior**, not measurement:
+extract sparse high-confidence anchors (velocity zero-crossings, acceleration peaks — beat
+*candidates with confidences*, never hard onsets) and filter them through a state space
+over (phase-in-bar, tempo). The signal-theoretic licence is finite rate of innovation. See
+`thoremin/docs/research/rhythm-from-gesture-research-map.md`; thorwhalen/thoremin#178
+proposes extracting that engine as a shared package (`ictus`), with muvid as a consumer —
+and muvid is the right place to *validate* it, because here the ground truth is known.
+
+**Do not build an automatic time-warp driver on BAS or envelope cross-correlation.** They
+are selection scores. The driver is the inference engine.
+
 ## Quality tier (cheap CPU; also HARD GATES) — all OpenCV, Apache-2.0
 
 - `sharpness` = variance of the Laplacian (`cv2.Laplacian(gray).var()`), <1 ms/frame.
