@@ -123,6 +123,39 @@ class FootageAlignment:
 
 
 @dataclass(frozen=True)
+class CropWindow:
+    """A rectangle to take from the source frame, as fractions of its width/height.
+
+    Normalised rather than pixels so one window is valid for every clip in a
+    multi-device edit regardless of its resolution, and so an EDL survives a source
+    being re-encoded at a different size. ``(0, 0, 1, 1)`` is the whole frame.
+
+    The convention is ``burns.Rect``'s, deliberately — top-left origin, window
+    fraction — so a crop authored here and a Ken Burns path computed there
+    interoperate with no rename table.
+
+    This is the spatial half the EDL lacked: without it every source is letterboxed
+    onto the canvas, so a portrait clip in a landscape edit is ~68% black bars and a
+    caller has no way to say which two-thirds of the frame to keep. That choice is
+    editorial — on a real 478x850 clip of dancers a whole body does not fit in a
+    full-width 16:9 window at all (315-380px of subject into 269px), so "heads or
+    feet" is a decision per cut, not a default.
+    """
+
+    x: float
+    y: float
+    w: float
+    h: float
+
+    def to_dict(self) -> dict:
+        return {"x": self.x, "y": self.y, "w": self.w, "h": self.h}
+
+    @classmethod
+    def from_dict(cls, d: dict) -> "CropWindow":
+        return cls(x=float(d["x"]), y=float(d["y"]), w=float(d["w"]), h=float(d["h"]))
+
+
+@dataclass(frozen=True)
 class Transition:
     """How this entry blends IN from its predecessor.
 
@@ -173,6 +206,16 @@ class EdlEntry:
     #: valid EDL now, and one written with it, read by older code, renders hard
     #: cuts — degraded, never wrong, in both directions.
     transition: "Transition | None" = None
+    #: Take only this rectangle of the source frame. ``None`` keeps the whole frame
+    #: letterboxed onto the canvas, which is what every EDL written before this
+    #: field existed means — additive in both directions, like ``transition``.
+    crop: "CropWindow | None" = None
+    #: With ``crop``, makes the window MOVE linearly from ``crop`` to ``crop_end``
+    #: across the cut — a pan. Same size as ``crop`` (see :func:`validate_edl`): a
+    #: window that changes size mid-cut resizes the filter's output every frame,
+    #: which is a different and much less robust thing than a pan. A push-in is
+    #: expressed as a *different* fixed window on the *next* cut.
+    crop_end: "CropWindow | None" = None
 
     @property
     def is_gap(self) -> bool:
@@ -194,10 +237,35 @@ class AssemblyCut:
     #: transition arithmetic: the extra source material a blend needs is measured
     #: in FRAMES at the render fps, which only the assembler knows.
     transition: "Transition | None" = None
+    #: Carried through from the EDL entry, unchanged — the assembler compiles these
+    #: to a ``crop`` filter, because normalised fractions only become pixels once
+    #: you know the source dimensions, which only ffmpeg knows.
+    crop: "CropWindow | None" = None
+    crop_end: "CropWindow | None" = None
 
     @property
     def duration(self) -> float:
         return self.song_end - self.song_start
+
+
+def _as_crop(raw, field: str) -> "CropWindow | None":
+    """Parse one crop field. RAISES on anything malformed, like the transition read.
+
+    Same reasoning: ``_as_entry`` serves the caller's explicit ``edl=`` argument, and
+    dropping a requested framing silently is the bug — a caller who asked for the
+    bottom third and got the whole letterboxed frame has no way to tell.
+    """
+    if raw is None:
+        return None
+    if isinstance(raw, CropWindow):
+        return raw
+    try:
+        return CropWindow.from_dict(raw)
+    except (TypeError, KeyError, ValueError) as exc:
+        raise ValueError(
+            f"EDL entry {field} is malformed ({raw!r}): it must be an object with "
+            "numeric 'x', 'y', 'w' and 'h', as fractions of the source frame."
+        ) from exc
 
 
 def _as_entry(e) -> EdlEntry:
@@ -226,6 +294,8 @@ def _as_entry(e) -> EdlEntry:
         # JSON callers write a gap as clip_id: null; internally it is "".
         clip_id="" if clip_id is None else str(clip_id),
         transition=transition,
+        crop=_as_crop(e.get("crop"), "crop"),
+        crop_end=_as_crop(e.get("crop_end"), "crop_end"),
     )
 
 
@@ -357,6 +427,8 @@ def validate_edl(
                 )
         if e.transition is not None:
             _validate_transition(i, e, prev, by_id)
+        if e.crop is not None or e.crop_end is not None:
+            _validate_crop(i, e)
         prev_end = e.song_end
         prev = e
     return entries
@@ -364,6 +436,51 @@ def validate_edl(
 
 def _span(e: EdlEntry) -> float:
     return e.song_end - e.song_start
+
+
+def _validate_crop(i, e) -> None:
+    """The four things a crop has to satisfy. Raises ``ValueError``.
+
+    Split out only for length; it is part of :func:`validate_edl`, which remains
+    the ONE gate. Nothing else may check these.
+    """
+    if e.crop is None:
+        raise ValueError(
+            f"EDL entry {i} has crop_end but no crop. crop_end is where the window "
+            "MOVES TO; without a starting window there is nothing to move."
+        )
+    for name, c in (("crop", e.crop), ("crop_end", e.crop_end)):
+        if c is None:
+            continue
+        if c.w <= 0 or c.h <= 0:
+            raise ValueError(
+                f"EDL entry {i}: {name} has a non-positive size ({c.w}x{c.h}). "
+                "A crop window is a fraction of the source frame, so w and h must "
+                "be > 0."
+            )
+        if c.x < -_EPS or c.y < -_EPS or c.x + c.w > 1 + _EPS or c.y + c.h > 1 + _EPS:
+            raise ValueError(
+                f"EDL entry {i}: {name} ({c.x:.3f}, {c.y:.3f}, {c.w:.3f}, {c.h:.3f}) "
+                "falls outside the source frame. These are FRACTIONS: x, y >= 0 and "
+                "x+w, y+h <= 1."
+            )
+    if e.is_gap:
+        raise ValueError(
+            f"EDL entry {i} is a gap but carries a crop. A gap has no source frame "
+            "to take a rectangle out of — the assembler fills it synthetically."
+        )
+    if e.crop_end is not None and (
+        abs(e.crop_end.w - e.crop.w) > _EPS or abs(e.crop_end.h - e.crop.h) > _EPS
+    ):
+        # A window that also CHANGES SIZE across the cut re-inits the crop filter's
+        # output dimensions every frame, which is a different and much less robust
+        # thing than a pan (and is what makes `zoompan` unusable on video input).
+        # A push-in is expressed as a different fixed window on the next cut.
+        raise ValueError(
+            f"EDL entry {i}: crop_end must be the same SIZE as crop "
+            f"({e.crop.w:.3f}x{e.crop.h:.3f}, got {e.crop_end.w:.3f}x{e.crop_end.h:.3f}). "
+            "crop_end pans the window; it does not resize it."
+        )
 
 
 def _validate_transition(i, e, prev, by_id) -> None:
@@ -474,6 +591,8 @@ def derive_cuts(
                     clip_in=0.0,
                     clip_path="",
                     transition=e.transition,
+                    crop=e.crop,
+                    crop_end=e.crop_end,
                 )
             )
             continue
@@ -488,6 +607,8 @@ def derive_cuts(
                 clip_in=max(0.0, e.song_start - a.offset_s),
                 clip_path=str(clip_paths[e.clip_id]),
                 transition=e.transition,
+                crop=e.crop,
+                crop_end=e.crop_end,
             )
         )
     return cuts

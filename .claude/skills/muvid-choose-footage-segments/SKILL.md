@@ -90,6 +90,41 @@ higher = better) + `raw_values[]` + a coverage `mask[]`; grid frame *k* ↔ song
   defer VocaLiST, learned aesthetic VQA (non-commercial + GPU), emotion, and
   diversity/pacing ILP to v2 (see the report's phasing).
 
+## WHERE in the frame, not just WHICH clip (muvid#60)
+
+Selection answers *which clip is on-air*. `EdlEntry.crop` answers *which rectangle of
+it* — the EDL's spatial half, added because without it every source is letterboxed onto
+the canvas and a portrait clip in a landscape edit is ~68% black bars.
+
+```python
+from muvid.footage import CropWindow, EdlEntry
+
+EdlEntry(0.0, 3.8, "c01", crop=CropWindow(x=0.0, y=0.42, w=1.0, h=0.32))          # static
+EdlEntry(3.8, 7.6, "c01", crop=CropWindow(0.0, 0.30, 1.0, 0.32),
+                          crop_end=CropWindow(0.0, 0.52, 1.0, 0.32))              # a pan
+```
+
+Four things to know:
+
+- **Fractions, not pixels**, on `burns.Rect`'s convention (top-left origin, window
+  fraction) — so one window is valid for every clip in a multi-device edit whatever its
+  resolution, and a Ken Burns path computed in `burns` drops in with no rename table.
+- **`crop_end` pans; it does not resize.** Same `w`/`h` as `crop`, enforced by
+  `validate_edl`. A window that also changes size re-inits the filter's output
+  dimensions every frame; a push-in is a *different fixed window on the next cut*.
+- **Choosing the window is editorial, and on real footage it has to be.** Measured on a
+  478×850 clip of dancers under a concrete overhang: the top ~35–40% of every frame is
+  dead ceiling (so a centre crop is the wrong crop), and a standing body occupies
+  315–380 px against a full-width 16:9 window of 269 px — **a whole body does not fit**.
+  "Heads or feet" is a per-cut decision, not a default. A motion-saliency-weighted
+  vertical profile put the best centre at 0.58 of the allowed range, measurably low.
+- **Absent means what it always meant.** No crop emits no filter at all, so every EDL
+  written before this field renders byte-identically, and the persisted
+  `music-video-edl/v1` body omits the key unless set — additive, no lacing migration.
+
+Not `zoompan`: its expression vocabulary has no `t` (it exposes `on`/`in`/`pon`), and it
+duplicates frames on video input. `crop` with a `t` expression is the filter.
+
 ## Where this plugs into the existing code (IMPLEMENTED v1 — muvid#13)
 
 - `muvid/footage/scoring/` — the layer: `grid.py` (`ScoreTrack` + resample + robust-normalize
