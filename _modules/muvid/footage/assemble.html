@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.footage.assemble &mdash; muvid 0.0.38 documentation</title>
+  <title>muvid.footage.assemble &mdash; muvid 0.0.39 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=423071ad"></script>
+      <script src="../../../_static/documentation_options.js?v=e648f5b4"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -333,6 +333,38 @@
     <span class="k">return</span> <span class="n">parts</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_crop_filter</span><span class="p">(</span><span class="n">cut</span><span class="p">:</span> <span class="s2">"AssemblyCut"</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Compile a cut's normalised crop window into a ``crop`` filter, or ``""``.</span>
+
+<span class="sd">    Normalised fractions only become pixels once the source dimensions are known,</span>
+<span class="sd">    and the only thing that knows them is ffmpeg — hence ``iw``/``ih`` rather than</span>
+<span class="sd">    arithmetic here. Emitting nothing when there is no crop is what keeps every</span>
+<span class="sd">    pre-crop EDL byte-identical through this path.</span>
+
+<span class="sd">    A moving window is a linear ramp in the filter's own ``t``, clamped at both</span>
+<span class="sd">    ends so the last frame lands exactly on ``crop_end`` rather than overshooting</span>
+<span class="sd">    by the one spare frame ``_render_part`` decodes. ``setpts=PTS-STARTPTS`` is</span>
+<span class="sd">    prepended ONLY in the moving case, because ``t`` must start at 0 for the ramp</span>
+<span class="sd">    to mean anything and adding it unconditionally would change a path that works.</span>
+
+<span class="sd">    Not ``zoompan``: its expression vocabulary has no ``t`` at all (it exposes</span>
+<span class="sd">    ``on``/``in``/``pon``), and it duplicates frames on video input.</span>
+<span class="sd">    """</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">cut</span><span class="o">.</span><span class="n">crop</span>
+    <span class="k">if</span> <span class="n">c</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">""</span>
+    <span class="n">w</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"iw*</span><span class="si">{</span><span class="n">c</span><span class="o">.</span><span class="n">w</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">"</span>
+    <span class="n">h</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"ih*</span><span class="si">{</span><span class="n">c</span><span class="o">.</span><span class="n">h</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">"</span>
+    <span class="n">e</span> <span class="o">=</span> <span class="n">cut</span><span class="o">.</span><span class="n">crop_end</span>
+    <span class="k">if</span> <span class="n">e</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">x</span> <span class="o">-</span> <span class="n">c</span><span class="o">.</span><span class="n">x</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">1e-9</span> <span class="ow">and</span> <span class="nb">abs</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">y</span> <span class="o">-</span> <span class="n">c</span><span class="o">.</span><span class="n">y</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">1e-9</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"crop=w='</span><span class="si">{</span><span class="n">w</span><span class="si">}</span><span class="s2">':h='</span><span class="si">{</span><span class="n">h</span><span class="si">}</span><span class="s2">':x='iw*</span><span class="si">{</span><span class="n">c</span><span class="o">.</span><span class="n">x</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">':y='ih*</span><span class="si">{</span><span class="n">c</span><span class="o">.</span><span class="n">y</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">'"</span>
+    <span class="n">T</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">cut</span><span class="o">.</span><span class="n">duration</span><span class="p">,</span> <span class="mf">1e-6</span><span class="p">)</span>
+    <span class="n">prog</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"min(max(t/</span><span class="si">{</span><span class="n">T</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">,0),1)"</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"iw*(</span><span class="si">{</span><span class="n">c</span><span class="o">.</span><span class="n">x</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">+(</span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">x</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">c</span><span class="o">.</span><span class="n">x</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">)*</span><span class="si">{</span><span class="n">prog</span><span class="si">}</span><span class="s2">)"</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"ih*(</span><span class="si">{</span><span class="n">c</span><span class="o">.</span><span class="n">y</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">+(</span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">y</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">c</span><span class="o">.</span><span class="n">y</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">)*</span><span class="si">{</span><span class="n">prog</span><span class="si">}</span><span class="s2">)"</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">"setpts=PTS-STARTPTS,crop=w='</span><span class="si">{</span><span class="n">w</span><span class="si">}</span><span class="s2">':h='</span><span class="si">{</span><span class="n">h</span><span class="si">}</span><span class="s2">':x='</span><span class="si">{</span><span class="n">x</span><span class="si">}</span><span class="s2">':y='</span><span class="si">{</span><span class="n">y</span><span class="si">}</span><span class="s2">'"</span>
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">_video_codec_args</span><span class="p">(</span><span class="n">crf</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">preset</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
     <span class="k">return</span> <span class="p">[</span>
         <span class="s2">"-c:v"</span><span class="p">,</span>
@@ -365,7 +397,9 @@
     <span class="c1"># validates a span past the last video frame, and without tpad that part comes up</span>
     <span class="c1"># short, silently desyncing every later cut. Cloning the last frame makes the frame</span>
     <span class="c1"># count exact whenever the source yields at least one frame.</span>
+    <span class="n">crop</span> <span class="o">=</span> <span class="n">_crop_filter</span><span class="p">(</span><span class="n">cut</span><span class="p">)</span>
     <span class="n">vf</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">crop</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="s1">','</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">crop</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">''</span><span class="si">}</span><span class="s2">"</span>
         <span class="sa">f</span><span class="s2">"scale=</span><span class="si">{</span><span class="n">w</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">h</span><span class="si">}</span><span class="s2">:force_original_aspect_ratio=decrease,"</span>
         <span class="sa">f</span><span class="s2">"pad=</span><span class="si">{</span><span class="n">w</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">h</span><span class="si">}</span><span class="s2">:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=</span><span class="si">{</span><span class="n">fps</span><span class="si">}</span><span class="s2">,"</span>
         <span class="sa">f</span><span class="s2">"tpad=stop=-1:stop_mode=clone"</span>
@@ -447,18 +481,26 @@
 <span class="sd">    """</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.visualize.ffmpeg</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_ffmpeg</span>
 
-    <span class="n">norm</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="sa">f</span><span class="s2">"scale=</span><span class="si">{</span><span class="n">w</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">h</span><span class="si">}</span><span class="s2">:force_original_aspect_ratio=decrease,"</span>
-        <span class="sa">f</span><span class="s2">"pad=</span><span class="si">{</span><span class="n">w</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">h</span><span class="si">}</span><span class="s2">:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=</span><span class="si">{</span><span class="n">fps</span><span class="si">}</span><span class="s2">,"</span>
-        <span class="sa">f</span><span class="s2">"tpad=stop=-1:stop_mode=clone,format=yuv420p"</span>
-    <span class="p">)</span>
+    <span class="c1"># Per-input, not one shared string: the two sides of a boundary are different</span>
+    <span class="c1"># cuts and may carry different crops. A single `norm` would silently apply the</span>
+    <span class="c1"># A-side framing to the B-side — the blend would still render, at the wrong</span>
+    <span class="c1"># framing, which is exactly the kind of failure nothing downstream can see.</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_norm</span><span class="p">(</span><span class="n">cut</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="n">crop</span> <span class="o">=</span> <span class="n">_crop_filter</span><span class="p">(</span><span class="n">cut</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">crop</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="s1">','</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">crop</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">''</span><span class="si">}</span><span class="s2">"</span>
+            <span class="sa">f</span><span class="s2">"scale=</span><span class="si">{</span><span class="n">w</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">h</span><span class="si">}</span><span class="s2">:force_original_aspect_ratio=decrease,"</span>
+            <span class="sa">f</span><span class="s2">"pad=</span><span class="si">{</span><span class="n">w</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">h</span><span class="si">}</span><span class="s2">:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=</span><span class="si">{</span><span class="n">fps</span><span class="si">}</span><span class="s2">,"</span>
+            <span class="sa">f</span><span class="s2">"tpad=stop=-1:stop_mode=clone,format=yuv420p"</span>
+        <span class="p">)</span>
+
     <span class="n">n</span> <span class="o">=</span> <span class="n">part</span><span class="o">.</span><span class="n">n_frames</span>
     <span class="n">run_ffmpeg</span><span class="p">(</span>
         <span class="p">[</span>
             <span class="o">*</span><span class="n">_xfade_input</span><span class="p">(</span><span class="n">part</span><span class="o">.</span><span class="n">prev</span><span class="p">,</span> <span class="n">part</span><span class="o">.</span><span class="n">prev_in</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">w</span><span class="o">=</span><span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="o">=</span><span class="n">h</span><span class="p">,</span> <span class="n">fps</span><span class="o">=</span><span class="n">fps</span><span class="p">),</span>
             <span class="o">*</span><span class="n">_xfade_input</span><span class="p">(</span><span class="n">part</span><span class="o">.</span><span class="n">cut</span><span class="p">,</span> <span class="n">part</span><span class="o">.</span><span class="n">clip_in</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">w</span><span class="o">=</span><span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="o">=</span><span class="n">h</span><span class="p">,</span> <span class="n">fps</span><span class="o">=</span><span class="n">fps</span><span class="p">),</span>
             <span class="s2">"-filter_complex"</span><span class="p">,</span>
-            <span class="sa">f</span><span class="s2">"[0:v]</span><span class="si">{</span><span class="n">norm</span><span class="si">}</span><span class="s2">[a];[1:v]</span><span class="si">{</span><span class="n">norm</span><span class="si">}</span><span class="s2">[b];"</span>
+            <span class="sa">f</span><span class="s2">"[0:v]</span><span class="si">{</span><span class="n">_norm</span><span class="p">(</span><span class="n">part</span><span class="o">.</span><span class="n">prev</span><span class="p">)</span><span class="si">}</span><span class="s2">[a];[1:v]</span><span class="si">{</span><span class="n">_norm</span><span class="p">(</span><span class="n">part</span><span class="o">.</span><span class="n">cut</span><span class="p">)</span><span class="si">}</span><span class="s2">[b];"</span>
             <span class="sa">f</span><span class="s2">"[a][b]xfade=transition=</span><span class="si">{</span><span class="n">part</span><span class="o">.</span><span class="n">curve</span><span class="si">}</span><span class="s2">:duration=</span><span class="si">{</span><span class="n">n</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">fps</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">:offset=0[v]"</span><span class="p">,</span>
             <span class="s2">"-map"</span><span class="p">,</span>
             <span class="s2">"[v]"</span><span class="p">,</span>

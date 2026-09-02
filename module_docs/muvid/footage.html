@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.footage &mdash; muvid 0.0.38 documentation</title>
+  <title>muvid.footage &mdash; muvid 0.0.39 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -15,7 +15,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=423071ad"></script>
+      <script src="../../_static/documentation_options.js?v=e648f5b4"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -61,7 +61,10 @@
 <li class="toctree-l1"><a class="reference internal" href="events.html">muvid.events</a></li>
 <li class="toctree-l1"><a class="reference internal" href="facade.html">muvid.facade</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">muvid.footage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.footage.CropWindow"><code class="docutils literal notranslate"><span class="pre">CropWindow</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.footage.EdlEntry"><code class="docutils literal notranslate"><span class="pre">EdlEntry</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#muvid.footage.EdlEntry.crop"><code class="docutils literal notranslate"><span class="pre">EdlEntry.crop</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#muvid.footage.EdlEntry.crop_end"><code class="docutils literal notranslate"><span class="pre">EdlEntry.crop_end</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#muvid.footage.EdlEntry.transition"><code class="docutils literal notranslate"><span class="pre">EdlEntry.transition</span></code></a></li>
 </ul>
 </li>
@@ -163,18 +166,55 @@ chosen or auto-selected edit is assembled into a music video over the clean song
 <li><p><a class="reference internal" href="footage/align.html#module-muvid.footage.align" title="muvid.footage.align"><code class="xref py py-mod docutils literal notranslate"><span class="pre">muvid.footage.align</span></code></a> — align a clip set to the song (thin over <code class="docutils literal notranslate"><span class="pre">mixing.audio</span></code>).</p></li>
 <li><p><a class="reference internal" href="footage/strategy.html#module-muvid.footage.strategy" title="muvid.footage.strategy"><code class="xref py py-mod docutils literal notranslate"><span class="pre">muvid.footage.strategy</span></code></a> — the pluggable <code class="docutils literal notranslate"><span class="pre">SelectionStrategy</span></code> registry that turns
 alignments into an EDL (which clip covers which span of the song).</p></li>
-<li><p><a class="reference internal" href="footage/edl.html#module-muvid.footage.edl" title="muvid.footage.edl"><code class="xref py py-mod docutils literal notranslate"><span class="pre">muvid.footage.edl</span></code></a> — the <code class="docutils literal notranslate"><span class="pre">validate_edl</span></code> SSOT + EDL/alignment data types.</p></li>
+<li><p><a class="reference internal" href="footage/edl.html#module-muvid.footage.edl" title="muvid.footage.edl"><code class="xref py py-mod docutils literal notranslate"><span class="pre">muvid.footage.edl</span></code></a> — the <code class="docutils literal notranslate"><span class="pre">validate_edl</span></code> SSOT + EDL/alignment data types,
+including the per-cut <code class="docutils literal notranslate"><span class="pre">CropWindow</span></code> (the EDL’s spatial half, muvid#60).</p></li>
 <li><p><a class="reference internal" href="footage/assemble.html#module-muvid.footage.assemble" title="muvid.footage.assemble"><code class="xref py py-mod docutils literal notranslate"><span class="pre">muvid.footage.assemble</span></code></a> — the bounded single-ffmpeg-pass assembler.</p></li>
 <li><p><a class="reference internal" href="footage/workspace.html#module-muvid.footage.workspace" title="muvid.footage.workspace"><code class="xref py py-mod docutils literal notranslate"><span class="pre">muvid.footage.workspace</span></code></a> — the per-user stateful project (song + clips + manifest).</p></li>
 </ul>
 <dl class="py class">
+<dt class="sig sig-object py" id="muvid.footage.CropWindow">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">muvid.footage.</span></span><span class="sig-name descname"><span class="pre">CropWindow</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">h</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/muvid/footage/edl.html#CropWindow"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.CropWindow" title="Link to this definition"></a></dt>
+<dd><p>A rectangle to take from the source frame, as fractions of its width/height.</p>
+<p>Normalised rather than pixels so one window is valid for every clip in a
+multi-device edit regardless of its resolution, and so an EDL survives a source
+being re-encoded at a different size. <code class="docutils literal notranslate"><span class="pre">(0,</span> <span class="pre">0,</span> <span class="pre">1,</span> <span class="pre">1)</span></code> is the whole frame.</p>
+<p>The convention is <code class="docutils literal notranslate"><span class="pre">burns.Rect</span></code>’s, deliberately — top-left origin, window
+fraction — so a crop authored here and a Ken Burns path computed there
+interoperate with no rename table.</p>
+<p>This is the spatial half the EDL lacked: without it every source is letterboxed
+onto the canvas, so a portrait clip in a landscape edit is ~68% black bars and a
+caller has no way to say which two-thirds of the frame to keep. That choice is
+editorial — on a real 478x850 clip of dancers a whole body does not fit in a
+full-width 16:9 window at all (315-380px of subject into 269px), so “heads or
+feet” is a decision per cut, not a default.</p>
+</dd></dl>
+
+<dl class="py class">
 <dt class="sig sig-object py" id="muvid.footage.EdlEntry">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">muvid.footage.</span></span><span class="sig-name descname"><span class="pre">EdlEntry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">song_start</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">song_end</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clip_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transition</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="footage/edl.html#muvid.footage.edl.Transition" title="muvid.footage.edl.Transition"><span class="pre">Transition</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/muvid/footage/edl.html#EdlEntry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.EdlEntry" title="Link to this definition"></a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">muvid.footage.</span></span><span class="sig-name descname"><span class="pre">EdlEntry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">song_start</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">song_end</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clip_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transition</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="footage/edl.html#muvid.footage.edl.Transition" title="muvid.footage.edl.Transition"><span class="pre">Transition</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crop</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="footage/edl.html#muvid.footage.edl.CropWindow" title="muvid.footage.edl.CropWindow"><span class="pre">CropWindow</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crop_end</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="footage/edl.html#muvid.footage.edl.CropWindow" title="muvid.footage.edl.CropWindow"><span class="pre">CropWindow</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/muvid/footage/edl.html#EdlEntry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.EdlEntry" title="Link to this definition"></a></dt>
 <dd><p>One cut: show <code class="docutils literal notranslate"><span class="pre">clip_id</span></code> over the song span <code class="docutils literal notranslate"><span class="pre">[song_start,</span> <span class="pre">song_end]</span></code>.</p>
 <p><code class="docutils literal notranslate"><span class="pre">clip_id</span> <span class="pre">==</span> <span class="pre">&quot;&quot;</span></code> is a <strong>gap entry</strong> — no footage covers this span, and the renderer
 fills it (black in v1). Gaps are explicit entries rather than absences so that an EDL
 is always contiguous over its span, every span of the song is accounted for by
 exactly one entry, and “no clip here” survives a JSON round trip (<code class="docutils literal notranslate"><span class="pre">clip_id:</span> <span class="pre">null</span></code>).</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="muvid.footage.EdlEntry.crop">
+<span class="sig-name descname"><span class="pre">crop</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="footage/edl.html#muvid.footage.edl.CropWindow" title="muvid.footage.edl.CropWindow"><span class="pre">CropWindow</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#muvid.footage.EdlEntry.crop" title="Link to this definition"></a></dt>
+<dd><p>Take only this rectangle of the source frame. <code class="docutils literal notranslate"><span class="pre">None</span></code> keeps the whole frame
+letterboxed onto the canvas, which is what every EDL written before this
+field existed means — additive in both directions, like <code class="docutils literal notranslate"><span class="pre">transition</span></code>.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="muvid.footage.EdlEntry.crop_end">
+<span class="sig-name descname"><span class="pre">crop_end</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="footage/edl.html#muvid.footage.edl.CropWindow" title="muvid.footage.edl.CropWindow"><span class="pre">CropWindow</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#muvid.footage.EdlEntry.crop_end" title="Link to this definition"></a></dt>
+<dd><p>With <code class="docutils literal notranslate"><span class="pre">crop</span></code>, makes the window MOVE linearly from <code class="docutils literal notranslate"><span class="pre">crop</span></code> to <code class="docutils literal notranslate"><span class="pre">crop_end</span></code>
+across the cut — a pan. Same size as <code class="docutils literal notranslate"><span class="pre">crop</span></code> (see <a class="reference internal" href="#muvid.footage.validate_edl" title="muvid.footage.validate_edl"><code class="xref py py-func docutils literal notranslate"><span class="pre">validate_edl()</span></code></a>): a
+window that changes size mid-cut resizes the filter’s output every frame,
+which is a different and much less robust thing than a pan. A push-in is
+expressed as a <em>different</em> fixed window on the <em>next</em> cut.</p>
+</dd></dl>
+
 <dl class="py attribute">
 <dt class="sig sig-object py" id="muvid.footage.EdlEntry.transition">
 <span class="sig-name descname"><span class="pre">transition</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="footage/edl.html#muvid.footage.edl.Transition" title="muvid.footage.edl.Transition"><span class="pre">Transition</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#muvid.footage.EdlEntry.transition" title="Link to this definition"></a></dt>

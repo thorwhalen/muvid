@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.footage.edl &mdash; muvid 0.0.38 documentation</title>
+  <title>muvid.footage.edl &mdash; muvid 0.0.39 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=423071ad"></script>
+      <script src="../../../_static/documentation_options.js?v=e648f5b4"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -259,6 +259,42 @@
 
 
 
+<div class="viewcode-block" id="CropWindow">
+<a class="viewcode-back" href="../../../module_docs/muvid/footage/edl.html#muvid.footage.CropWindow">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">CropWindow</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""A rectangle to take from the source frame, as fractions of its width/height.</span>
+
+<span class="sd">    Normalised rather than pixels so one window is valid for every clip in a</span>
+<span class="sd">    multi-device edit regardless of its resolution, and so an EDL survives a source</span>
+<span class="sd">    being re-encoded at a different size. ``(0, 0, 1, 1)`` is the whole frame.</span>
+
+<span class="sd">    The convention is ``burns.Rect``'s, deliberately — top-left origin, window</span>
+<span class="sd">    fraction — so a crop authored here and a Ken Burns path computed there</span>
+<span class="sd">    interoperate with no rename table.</span>
+
+<span class="sd">    This is the spatial half the EDL lacked: without it every source is letterboxed</span>
+<span class="sd">    onto the canvas, so a portrait clip in a landscape edit is ~68% black bars and a</span>
+<span class="sd">    caller has no way to say which two-thirds of the frame to keep. That choice is</span>
+<span class="sd">    editorial — on a real 478x850 clip of dancers a whole body does not fit in a</span>
+<span class="sd">    full-width 16:9 window at all (315-380px of subject into 269px), so "heads or</span>
+<span class="sd">    feet" is a decision per cut, not a default.</span>
+<span class="sd">    """</span>
+
+    <span class="n">x</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">y</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">w</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">h</span><span class="p">:</span> <span class="nb">float</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">"x"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="s2">"y"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">w</span><span class="p">,</span> <span class="s2">"h"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">h</span><span class="p">}</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_dict</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">d</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"CropWindow"</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s2">"x"</span><span class="p">]),</span> <span class="n">y</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s2">"y"</span><span class="p">]),</span> <span class="n">w</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s2">"w"</span><span class="p">]),</span> <span class="n">h</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s2">"h"</span><span class="p">]))</span></div>
+
+
+
 <div class="viewcode-block" id="Transition">
 <a class="viewcode-back" href="../../../module_docs/muvid/footage/edl.html#muvid.footage.Transition">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -315,6 +351,16 @@
     <span class="c1">#: valid EDL now, and one written with it, read by older code, renders hard</span>
     <span class="c1">#: cuts — degraded, never wrong, in both directions.</span>
     <span class="n">transition</span><span class="p">:</span> <span class="s2">"Transition | None"</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1">#: Take only this rectangle of the source frame. ``None`` keeps the whole frame</span>
+    <span class="c1">#: letterboxed onto the canvas, which is what every EDL written before this</span>
+    <span class="c1">#: field existed means — additive in both directions, like ``transition``.</span>
+    <span class="n">crop</span><span class="p">:</span> <span class="s2">"CropWindow | None"</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1">#: With ``crop``, makes the window MOVE linearly from ``crop`` to ``crop_end``</span>
+    <span class="c1">#: across the cut — a pan. Same size as ``crop`` (see :func:`validate_edl`): a</span>
+    <span class="c1">#: window that changes size mid-cut resizes the filter's output every frame,</span>
+    <span class="c1">#: which is a different and much less robust thing than a pan. A push-in is</span>
+    <span class="c1">#: expressed as a *different* fixed window on the *next* cut.</span>
+    <span class="n">crop_end</span><span class="p">:</span> <span class="s2">"CropWindow | None"</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">is_gap</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
@@ -339,11 +385,36 @@
     <span class="c1">#: transition arithmetic: the extra source material a blend needs is measured</span>
     <span class="c1">#: in FRAMES at the render fps, which only the assembler knows.</span>
     <span class="n">transition</span><span class="p">:</span> <span class="s2">"Transition | None"</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1">#: Carried through from the EDL entry, unchanged — the assembler compiles these</span>
+    <span class="c1">#: to a ``crop`` filter, because normalised fractions only become pixels once</span>
+    <span class="c1">#: you know the source dimensions, which only ffmpeg knows.</span>
+    <span class="n">crop</span><span class="p">:</span> <span class="s2">"CropWindow | None"</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">crop_end</span><span class="p">:</span> <span class="s2">"CropWindow | None"</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">duration</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">song_end</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">song_start</span></div>
 
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_as_crop</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">field</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"CropWindow | None"</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Parse one crop field. RAISES on anything malformed, like the transition read.</span>
+
+<span class="sd">    Same reasoning: ``_as_entry`` serves the caller's explicit ``edl=`` argument, and</span>
+<span class="sd">    dropping a requested framing silently is the bug — a caller who asked for the</span>
+<span class="sd">    bottom third and got the whole letterboxed frame has no way to tell.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">raw</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">CropWindow</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">raw</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">CropWindow</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">KeyError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">)</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"EDL entry </span><span class="si">{</span><span class="n">field</span><span class="si">}</span><span class="s2"> is malformed (</span><span class="si">{</span><span class="n">raw</span><span class="si">!r}</span><span class="s2">): it must be an object with "</span>
+            <span class="s2">"numeric 'x', 'y', 'w' and 'h', as fractions of the source frame."</span>
+        <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_as_entry</span><span class="p">(</span><span class="n">e</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EdlEntry</span><span class="p">:</span>
@@ -372,6 +443,8 @@
         <span class="c1"># JSON callers write a gap as clip_id: null; internally it is "".</span>
         <span class="n">clip_id</span><span class="o">=</span><span class="s2">""</span> <span class="k">if</span> <span class="n">clip_id</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">str</span><span class="p">(</span><span class="n">clip_id</span><span class="p">),</span>
         <span class="n">transition</span><span class="o">=</span><span class="n">transition</span><span class="p">,</span>
+        <span class="n">crop</span><span class="o">=</span><span class="n">_as_crop</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"crop"</span><span class="p">),</span> <span class="s2">"crop"</span><span class="p">),</span>
+        <span class="n">crop_end</span><span class="o">=</span><span class="n">_as_crop</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"crop_end"</span><span class="p">),</span> <span class="s2">"crop_end"</span><span class="p">),</span>
     <span class="p">)</span>
 
 
@@ -508,6 +581,8 @@
                 <span class="p">)</span>
         <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">transition</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">_validate_transition</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">prev</span><span class="p">,</span> <span class="n">by_id</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">crop</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">e</span><span class="o">.</span><span class="n">crop_end</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">_validate_crop</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
         <span class="n">prev_end</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">song_end</span>
         <span class="n">prev</span> <span class="o">=</span> <span class="n">e</span>
     <span class="k">return</span> <span class="n">entries</span></div>
@@ -516,6 +591,51 @@
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_span</span><span class="p">(</span><span class="n">e</span><span class="p">:</span> <span class="n">EdlEntry</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
     <span class="k">return</span> <span class="n">e</span><span class="o">.</span><span class="n">song_end</span> <span class="o">-</span> <span class="n">e</span><span class="o">.</span><span class="n">song_start</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_validate_crop</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The four things a crop has to satisfy. Raises ``ValueError``.</span>
+
+<span class="sd">    Split out only for length; it is part of :func:`validate_edl`, which remains</span>
+<span class="sd">    the ONE gate. Nothing else may check these.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">crop</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"EDL entry </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2"> has crop_end but no crop. crop_end is where the window "</span>
+            <span class="s2">"MOVES TO; without a starting window there is nothing to move."</span>
+        <span class="p">)</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="p">((</span><span class="s2">"crop"</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">crop</span><span class="p">),</span> <span class="p">(</span><span class="s2">"crop_end"</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">crop_end</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="n">c</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">w</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">c</span><span class="o">.</span><span class="n">h</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"EDL entry </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> has a non-positive size (</span><span class="si">{</span><span class="n">c</span><span class="o">.</span><span class="n">w</span><span class="si">}</span><span class="s2">x</span><span class="si">{</span><span class="n">c</span><span class="o">.</span><span class="n">h</span><span class="si">}</span><span class="s2">). "</span>
+                <span class="s2">"A crop window is a fraction of the source frame, so w and h must "</span>
+                <span class="s2">"be &gt; 0."</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">x</span> <span class="o">&lt;</span> <span class="o">-</span><span class="n">_EPS</span> <span class="ow">or</span> <span class="n">c</span><span class="o">.</span><span class="n">y</span> <span class="o">&lt;</span> <span class="o">-</span><span class="n">_EPS</span> <span class="ow">or</span> <span class="n">c</span><span class="o">.</span><span class="n">x</span> <span class="o">+</span> <span class="n">c</span><span class="o">.</span><span class="n">w</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">_EPS</span> <span class="ow">or</span> <span class="n">c</span><span class="o">.</span><span class="n">y</span> <span class="o">+</span> <span class="n">c</span><span class="o">.</span><span class="n">h</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">_EPS</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"EDL entry </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">c</span><span class="o">.</span><span class="n">x</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">c</span><span class="o">.</span><span class="n">y</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">c</span><span class="o">.</span><span class="n">w</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">c</span><span class="o">.</span><span class="n">h</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">) "</span>
+                <span class="s2">"falls outside the source frame. These are FRACTIONS: x, y &gt;= 0 and "</span>
+                <span class="s2">"x+w, y+h &lt;= 1."</span>
+            <span class="p">)</span>
+    <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">is_gap</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"EDL entry </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2"> is a gap but carries a crop. A gap has no source frame "</span>
+            <span class="s2">"to take a rectangle out of — the assembler fills it synthetically."</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">crop_end</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="p">(</span>
+        <span class="nb">abs</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">crop_end</span><span class="o">.</span><span class="n">w</span> <span class="o">-</span> <span class="n">e</span><span class="o">.</span><span class="n">crop</span><span class="o">.</span><span class="n">w</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">_EPS</span> <span class="ow">or</span> <span class="nb">abs</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">crop_end</span><span class="o">.</span><span class="n">h</span> <span class="o">-</span> <span class="n">e</span><span class="o">.</span><span class="n">crop</span><span class="o">.</span><span class="n">h</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">_EPS</span>
+    <span class="p">):</span>
+        <span class="c1"># A window that also CHANGES SIZE across the cut re-inits the crop filter's</span>
+        <span class="c1"># output dimensions every frame, which is a different and much less robust</span>
+        <span class="c1"># thing than a pan (and is what makes `zoompan` unusable on video input).</span>
+        <span class="c1"># A push-in is expressed as a different fixed window on the next cut.</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"EDL entry </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">: crop_end must be the same SIZE as crop "</span>
+            <span class="sa">f</span><span class="s2">"(</span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">crop</span><span class="o">.</span><span class="n">w</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">x</span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">crop</span><span class="o">.</span><span class="n">h</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">, got </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">crop_end</span><span class="o">.</span><span class="n">w</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">x</span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">crop_end</span><span class="o">.</span><span class="n">h</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">). "</span>
+            <span class="s2">"crop_end pans the window; it does not resize it."</span>
+        <span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_validate_transition</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">prev</span><span class="p">,</span> <span class="n">by_id</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -628,6 +748,8 @@
                     <span class="n">clip_in</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
                     <span class="n">clip_path</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span>
                     <span class="n">transition</span><span class="o">=</span><span class="n">e</span><span class="o">.</span><span class="n">transition</span><span class="p">,</span>
+                    <span class="n">crop</span><span class="o">=</span><span class="n">e</span><span class="o">.</span><span class="n">crop</span><span class="p">,</span>
+                    <span class="n">crop_end</span><span class="o">=</span><span class="n">e</span><span class="o">.</span><span class="n">crop_end</span><span class="p">,</span>
                 <span class="p">)</span>
             <span class="p">)</span>
             <span class="k">continue</span>
@@ -642,6 +764,8 @@
                 <span class="n">clip_in</span><span class="o">=</span><span class="nb">max</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">song_start</span> <span class="o">-</span> <span class="n">a</span><span class="o">.</span><span class="n">offset_s</span><span class="p">),</span>
                 <span class="n">clip_path</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">clip_paths</span><span class="p">[</span><span class="n">e</span><span class="o">.</span><span class="n">clip_id</span><span class="p">]),</span>
                 <span class="n">transition</span><span class="o">=</span><span class="n">e</span><span class="o">.</span><span class="n">transition</span><span class="p">,</span>
+                <span class="n">crop</span><span class="o">=</span><span class="n">e</span><span class="o">.</span><span class="n">crop</span><span class="p">,</span>
+                <span class="n">crop_end</span><span class="o">=</span><span class="n">e</span><span class="o">.</span><span class="n">crop_end</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="p">)</span>
     <span class="k">return</span> <span class="n">cuts</span></div>
