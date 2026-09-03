@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.visualize.canvas &mdash; muvid 0.0.40 documentation</title>
+  <title>muvid.visualize.canvas &mdash; muvid 0.0.41 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -15,7 +15,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=84bd753f"></script>
+      <script src="../../../_static/documentation_options.js?v=20c5f126"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -125,12 +125,14 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.visualize.canvas.background_chain"><code class="docutils literal notranslate"><span class="pre">background_chain()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.visualize.canvas.brightness_saturation_lut"><code class="docutils literal notranslate"><span class="pre">brightness_saturation_lut()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.visualize.canvas.canvas_image"><code class="docutils literal notranslate"><span class="pre">canvas_image()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.visualize.canvas.compose_chain"><code class="docutils literal notranslate"><span class="pre">compose_chain()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.visualize.canvas.cover_box"><code class="docutils literal notranslate"><span class="pre">cover_box()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.visualize.canvas.cover_chain"><code class="docutils literal notranslate"><span class="pre">cover_chain()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.visualize.canvas.default_font"><code class="docutils literal notranslate"><span class="pre">default_font()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.visualize.canvas.escape_filter_value"><code class="docutils literal notranslate"><span class="pre">escape_filter_value()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.visualize.canvas.lut_filter"><code class="docutils literal notranslate"><span class="pre">lut_filter()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.visualize.canvas.overlay_chain"><code class="docutils literal notranslate"><span class="pre">overlay_chain()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.visualize.canvas.thumbnail_image"><code class="docutils literal notranslate"><span class="pre">thumbnail_image()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.visualize.canvas.title_chain"><code class="docutils literal notranslate"><span class="pre">title_chain()</span></code></a></li>
@@ -367,6 +369,43 @@ busy artwork).</p>
 <dt class="sig sig-object py" id="muvid.visualize.canvas.background_chain">
 <span class="sig-prename descclassname"><span class="pre">muvid.visualize.canvas.</span></span><span class="sig-name descname"><span class="pre">background_chain</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layout</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#muvid.visualize.canvas.CoverLayout" title="muvid.visualize.canvas.CoverLayout"><span class="pre">CoverLayout</span></a></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">src</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../../_modules/muvid/visualize/canvas.html#background_chain"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.visualize.canvas.background_chain" title="Link to this definition"></a></dt>
 <dd><p>Filter chain turning cover stream <code class="docutils literal notranslate"><span class="pre">src</span></code> into a full-frame background.</p>
+<p>The darken/desaturate step is <code class="docutils literal notranslate"><span class="pre">lutyuv</span></code>, not <code class="docutils literal notranslate"><span class="pre">eq</span></code>: see
+<a class="reference internal" href="#muvid.visualize.canvas.brightness_saturation_lut" title="muvid.visualize.canvas.brightness_saturation_lut"><code class="xref py py-func docutils literal notranslate"><span class="pre">brightness_saturation_lut()</span></code></a> for why (<code class="docutils literal notranslate"><span class="pre">eq</span></code> is GPL-only) and for the
+exact arithmetic it reproduces.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.visualize.canvas.brightness_saturation_lut">
+<span class="sig-prename descclassname"><span class="pre">muvid.visualize.canvas.</span></span><span class="sig-name descname"><span class="pre">brightness_saturation_lut</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">brightness</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">saturation</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../_modules/muvid/visualize/canvas.html#brightness_saturation_lut"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.visualize.canvas.brightness_saturation_lut" title="Link to this definition"></a></dt>
+<dd><p><code class="docutils literal notranslate"><span class="pre">lutyuv</span></code> y/u/v expressions reproducing <code class="docutils literal notranslate"><span class="pre">eq</span></code>’s brightness + saturation.</p>
+<p><code class="docutils literal notranslate"><span class="pre">eq</span></code> is compiled into ffmpeg only under <code class="docutils literal notranslate"><span class="pre">--enable-gpl</span></code>, so every chain that
+reached for it made muvid require a GPL build for what is arithmetic on three
+planes. <code class="docutils literal notranslate"><span class="pre">lutyuv</span></code> is LGPL and expresses the same two knobs exactly as <code class="docutils literal notranslate"><span class="pre">vf_eq</span></code>
+defines them: brightness is an ADDITIVE offset of <code class="docutils literal notranslate"><span class="pre">brightness</span> <span class="pre">*</span> <span class="pre">255</span></code> on luma,
+saturation a scaling of chroma about <code class="xref py py-data docutils literal notranslate"><span class="pre">_CHROMA_PIVOT</span></code>.</p>
+<p>Returns a <code class="docutils literal notranslate"><span class="pre">{component:</span> <span class="pre">expression}</span></code> mapping rather than a filter string
+because the two callers need different shapes — one composes a filtergraph,
+the other emits one <code class="docutils literal notranslate"><span class="pre">sendcmd</span></code> command per component — and a second copy of
+this arithmetic is exactly how the two would drift apart.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>brightness</strong> – Additive luma offset, -1 to 1, in <code class="docutils literal notranslate"><span class="pre">eq</span></code>’s units (a fraction
+of full scale). <code class="docutils literal notranslate"><span class="pre">0</span></code> is a no-op.</p></li>
+<li><p><strong>saturation</strong> – Chroma scaling about neutral. <code class="docutils literal notranslate"><span class="pre">1</span></code> is a no-op.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">lut</span> <span class="o">=</span> <span class="n">brightness_saturation_lut</span><span class="p">(</span><span class="n">brightness</span><span class="o">=-</span><span class="mf">0.25</span><span class="p">,</span> <span class="n">saturation</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">lut</span><span class="p">[</span><span class="s2">"y"</span><span class="p">]</span>
+<span class="go">'clip(val-63.75,0,255)'</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">lut</span><span class="p">[</span><span class="s2">"u"</span><span class="p">]</span> <span class="o">==</span> <span class="n">lut</span><span class="p">[</span><span class="s2">"v"</span><span class="p">]</span>
+<span class="go">True</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">brightness_saturation_lut</span><span class="p">()[</span><span class="s2">"y"</span><span class="p">],</span> <span class="n">brightness_saturation_lut</span><span class="p">()[</span><span class="s2">"u"</span><span class="p">]</span>
+<span class="go">('clip(val+0,0,255)', 'clip((val-127.5)*1+127.5,0,255)')</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="py function">
@@ -448,6 +487,28 @@ special, so <code class="docutils literal notranslate"><span class="pre">\%</spa
 did anything. drawtext’s <code class="docutils literal notranslate"><span class="pre">%{...}</span></code> text expansion is a third level that
 applies to that one filter’s <code class="docutils literal notranslate"><span class="pre">text</span></code> option only, and is out of scope for a
 general-purpose filtergraph escaper.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.visualize.canvas.lut_filter">
+<span class="sig-prename descclassname"><span class="pre">muvid.visualize.canvas.</span></span><span class="sig-name descname"><span class="pre">lut_filter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">exprs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../../_modules/muvid/visualize/canvas.html#lut_filter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.visualize.canvas.lut_filter" title="Link to this definition"></a></dt>
+<dd><p>A <code class="docutils literal notranslate"><span class="pre">lutyuv</span></code> filter from <a class="reference internal" href="#muvid.visualize.canvas.brightness_saturation_lut" title="muvid.visualize.canvas.brightness_saturation_lut"><code class="xref py py-func docutils literal notranslate"><span class="pre">brightness_saturation_lut()</span></code></a>’s expressions.</p>
+<p>The expressions contain <code class="docutils literal notranslate"><span class="pre">,</span></code>, which the <em>filtergraph</em> parser reads as “next
+filter”, so every one goes through <a class="reference internal" href="#muvid.visualize.canvas.escape_filter_value" title="muvid.visualize.canvas.escape_filter_value"><code class="xref py py-func docutils literal notranslate"><span class="pre">escape_filter_value()</span></code></a> — the same
+escaper, and the same reason, as a <code class="docutils literal notranslate"><span class="pre">sendcmd</span></code> script path.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>exprs</strong> – <code class="docutils literal notranslate"><span class="pre">{component:</span> <span class="pre">expression}</span></code>.</p></li>
+<li><p><strong>label</strong> – Optional <code class="docutils literal notranslate"><span class="pre">&#64;label</span></code> so <code class="docutils literal notranslate"><span class="pre">sendcmd</span></code> can address this filter.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">lut_filter</span><span class="p">({</span><span class="s2">"y"</span><span class="p">:</span> <span class="s2">"clip(val+0,0,255)"</span><span class="p">},</span> <span class="n">label</span><span class="o">=</span><span class="s2">"flash"</span><span class="p">)</span>
+<span class="go">'lutyuv@flash=y=clip(val+0\\,0\\,255)'</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="py function">

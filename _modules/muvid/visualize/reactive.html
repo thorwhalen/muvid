@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.visualize.reactive &mdash; muvid 0.0.40 documentation</title>
+  <title>muvid.visualize.reactive &mdash; muvid 0.0.41 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=84bd753f"></script>
+      <script src="../../../_static/documentation_options.js?v=20c5f126"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -136,9 +136,9 @@
 
 <span class="sd">Because ``muvid`` renders from an audio *file*, not a live stream, the whole</span>
 <span class="sd">loudness envelope is knowable up front. This module turns that envelope into an</span>
-<span class="sd">ffmpeg ``sendcmd`` script that modulates a named filter (brightness/saturation)</span>
-<span class="sd">frame by frame — a beat-reactive "flash" baked deterministically into the</span>
-<span class="sd">render. No realtime, and no dependency beyond ``numpy`` and the ffmpeg</span>
+<span class="sd">ffmpeg ``sendcmd`` script that rewrites a named ``lutyuv``'s lookup table frame</span>
+<span class="sd">by frame — a beat-reactive "flash" baked deterministically into the render. No</span>
+<span class="sd">realtime, and no dependency beyond ``numpy`` and the ffmpeg</span>
 <span class="sd">:mod:`muvid.visualize` already requires.</span>
 
 <span class="sd">It is a general seam, not spectrum-specific: any visual can attach a flash to a</span>
@@ -154,7 +154,11 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">muvid.visualize.canvas</span><span class="w"> </span><span class="kn">import</span> <span class="n">escape_filter_value</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">muvid.visualize.canvas</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">brightness_saturation_lut</span><span class="p">,</span>
+    <span class="n">escape_filter_value</span><span class="p">,</span>
+    <span class="n">lut_filter</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.visualize.ffmpeg</span><span class="w"> </span><span class="kn">import</span> <span class="n">PathLike</span><span class="p">,</span> <span class="n">decode_pcm</span><span class="p">,</span> <span class="n">has_filter</span>
 
 <span class="c1">#: Sample rate the envelope is measured at. Low is fine — we only need a</span>
@@ -170,21 +174,32 @@
 <span class="c1">#: beat flashes and fades rather than blinking for a single frame.</span>
 <span class="n">FLASH_DECAY</span> <span class="o">=</span> <span class="mf">0.5</span>
 
-<span class="c1">#: Peak brightness boost at a full-strength pulse (ffmpeg ``eq`` ``brightness``,</span>
-<span class="c1">#: -1..1). At rest the filter is a no-op; this is how far a beat pushes it.</span>
+<span class="c1">#: Peak brightness boost at a full-strength pulse, in ``eq``'s units (an additive</span>
+<span class="c1">#: offset as a fraction of full scale, -1..1). At rest the filter is a no-op; this</span>
+<span class="c1">#: is how far a beat pushes it.</span>
 <span class="n">FLASH_BRIGHTNESS</span> <span class="o">=</span> <span class="mf">0.25</span>
 
-<span class="c1">#: Peak saturation boost at a full-strength pulse, *added to* 1.0 (ffmpeg ``eq``).</span>
+<span class="c1">#: Peak saturation boost at a full-strength pulse, *added to* 1.0.</span>
 <span class="n">FLASH_SATURATION</span> <span class="o">=</span> <span class="mf">0.8</span>
 
-<span class="c1">#: Default ``sendcmd`` label for the pulsing ``eq``. Distinct per flash, so one</span>
-<span class="c1">#: filtergraph can carry several without their commands crossing.</span>
+<span class="c1">#: Default ``sendcmd`` label for the pulsing lookup table. Distinct per flash, so</span>
+<span class="c1">#: one filtergraph can carry several without their commands crossing.</span>
 <span class="n">DEFAULT_FLASH_LABEL</span> <span class="o">=</span> <span class="s2">"flash"</span>
 
 <span class="c1">#: The ffmpeg filters a flash chain is built from. Both are core filters, but a</span>
 <span class="c1">#: stripped build can omit either — and the flash is a garnish, so a build that</span>
 <span class="c1">#: cannot do it should render the visual *without* the flash rather than fail.</span>
-<span class="n">FLASH_FILTERS</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"sendcmd"</span><span class="p">,</span> <span class="s2">"eq"</span><span class="p">)</span>
+<span class="c1">#:</span>
+<span class="c1">#: This tuple is the *probe*, so it has to name the filters the chain really</span>
+<span class="c1">#: contains. It said ``eq`` while the point of muvid#69 was to stop needing ``eq``</span>
+<span class="c1">#: (GPL-only): left stale, an LGPL build — the very build this change exists to</span>
+<span class="c1">#: serve — would have failed the probe and silently rendered with no flash at all.</span>
+<span class="n">FLASH_FILTERS</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"sendcmd"</span><span class="p">,</span> <span class="s2">"lutyuv"</span><span class="p">)</span>
+
+<span class="c1">#: The ``sendcmd`` commands one flash frame sends: one per ``lutyuv`` component.</span>
+<span class="c1">#: ``eq`` took two (``brightness``, ``saturation``); a LUT is addressed per plane,</span>
+<span class="c1">#: so chroma costs two commands carrying the same expression.</span>
+<span class="n">FLASH_COMPONENTS</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"y"</span><span class="p">,</span> <span class="s2">"u"</span><span class="p">,</span> <span class="s2">"v"</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="onset_envelope">
@@ -262,20 +277,29 @@
     <span class="n">brightness</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
     <span class="n">saturation</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Write a ``sendcmd`` script pulsing ``target``'s brightness/saturation.</span>
+<span class="w">    </span><span class="sd">"""Write a ``sendcmd`` script pulsing ``target``'s lookup table.</span>
 
-<span class="sd">    Each frame ``i`` gets a command setting the named filter's ``brightness`` to</span>
-<span class="sd">    ``brightness * envelope[i]`` and ``saturation`` to ``1 + saturation *</span>
-<span class="sd">    envelope[i]`` — so at rest (envelope 0) the filter is a no-op, and on a beat</span>
-<span class="sd">    it brightens and intensifies.</span>
+<span class="sd">    Each frame ``i`` gets one command per component of</span>
+<span class="sd">    :data:`FLASH_COMPONENTS`, re-stating the ``lutyuv`` expression for a</span>
+<span class="sd">    brightness of ``brightness * envelope[i]`` and a saturation of ``1 +</span>
+<span class="sd">    saturation * envelope[i]`` — so at rest (envelope 0) the filter is a no-op,</span>
+<span class="sd">    and on a beat it brightens and intensifies. ``lutyuv`` rebuilds its 256-entry</span>
+<span class="sd">    table when a component expression is set, which is what makes it drivable at</span>
+<span class="sd">    all; unlike ``eq`` it needs no ``eval=frame``, because the table IS the state.</span>
+
+<span class="sd">    The expressions contain ``,``, which ``sendcmd``'s own parser reads as "next</span>
+<span class="sd">    command in this interval", so each is single-quoted. That is ``sendcmd``'s</span>
+<span class="sd">    quoting, not the filtergraph's — this file is never parsed as a graph, so</span>
+<span class="sd">    :func:`~muvid.visualize.canvas.escape_filter_value` is the wrong tool here</span>
+<span class="sd">    and is used only on the script's *path*, which does go into a graph.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        envelope: Per-frame pulse from :func:`onset_envelope`.</span>
 <span class="sd">        path: Where to write the script.</span>
 <span class="sd">        fps: Frame rate (to turn frame index into a timestamp).</span>
 <span class="sd">        target: The ``sendcmd`` target — a filter labelled ``name@label``.</span>
-<span class="sd">        brightness: Peak brightness boost (ffmpeg ``eq`` brightness, -1..1).</span>
-<span class="sd">        saturation: Peak saturation boost added to 1.0 (ffmpeg ``eq``).</span>
+<span class="sd">        brightness: Peak brightness boost (an additive offset, -1..1).</span>
+<span class="sd">        saturation: Peak saturation boost added to 1.0.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        The written path.</span>
@@ -283,8 +307,11 @@
     <span class="n">lines</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">envelope</span><span class="p">):</span>
         <span class="n">t</span> <span class="o">=</span> <span class="n">i</span> <span class="o">/</span> <span class="n">fps</span>
-        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">t</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> [enter] </span><span class="si">{</span><span class="n">target</span><span class="si">}</span><span class="s2"> brightness </span><span class="si">{</span><span class="n">brightness</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">v</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">;"</span><span class="p">)</span>
-        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">t</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> [enter] </span><span class="si">{</span><span class="n">target</span><span class="si">}</span><span class="s2"> saturation </span><span class="si">{</span><span class="mi">1</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">saturation</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">v</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">;"</span><span class="p">)</span>
+        <span class="n">exprs</span> <span class="o">=</span> <span class="n">brightness_saturation_lut</span><span class="p">(</span>
+            <span class="n">brightness</span><span class="o">=</span><span class="n">brightness</span> <span class="o">*</span> <span class="n">v</span><span class="p">,</span> <span class="n">saturation</span><span class="o">=</span><span class="mi">1</span> <span class="o">+</span> <span class="n">saturation</span> <span class="o">*</span> <span class="n">v</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">component</span> <span class="ow">in</span> <span class="n">FLASH_COMPONENTS</span><span class="p">:</span>
+            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">t</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> [enter] </span><span class="si">{</span><span class="n">target</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">component</span><span class="si">}</span><span class="s2"> '</span><span class="si">{</span><span class="n">exprs</span><span class="p">[</span><span class="n">component</span><span class="p">]</span><span class="si">}</span><span class="s2">';"</span><span class="p">)</span>
     <span class="n">path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
     <span class="n">path</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">))</span>
     <span class="k">return</span> <span class="n">path</span>
@@ -306,22 +333,24 @@
 <span class="w">    </span><span class="sd">"""A filter fragment that makes the stream it follows pulse with the beat.</span>
 
 <span class="sd">    Computes the envelope, writes the ``sendcmd`` script into ``workdir``, and</span>
-<span class="sd">    returns the chain ``,sendcmd=f=…,eq@&lt;label&gt;=…`` to append after the visual</span>
+<span class="sd">    returns the chain ``,sendcmd=f=…,lutyuv@&lt;label&gt;=…`` to append after the visual</span>
 <span class="sd">    filter (e.g. ``showspectrum``).</span>
 
 <span class="sd">    Returns ``""`` — a fragment that changes nothing — when the audio yields no</span>
 <span class="sd">    envelope or this ffmpeg build lacks :data:`FLASH_FILTERS`, so a caller can</span>
 <span class="sd">    append it unconditionally and still render.</span>
 
-<span class="sd">    The ``eq`` starts as a no-op (``brightness=0:saturation=1``); the script</span>
-<span class="sd">    drives it. ``eval=frame`` so it re-reads every frame.</span>
+<span class="sd">    The ``lutyuv`` starts as an identity table (brightness 0, saturation 1); the</span>
+<span class="sd">    script drives it. It is a LUT rather than an ``eq`` because ``eq`` exists only</span>
+<span class="sd">    in a GPL-configured ffmpeg (muvid#69) — see</span>
+<span class="sd">    :func:`~muvid.visualize.canvas.brightness_saturation_lut`.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        audio: The track whose beats drive the flash.</span>
-<span class="sd">        fps: The render's frame rate (one command pair per frame).</span>
+<span class="sd">        fps: The render's frame rate (one command per component per frame).</span>
 <span class="sd">        duration: Clamp the flash to this many seconds (``None`` = whole track).</span>
 <span class="sd">        workdir: Directory to write the ``sendcmd`` script into.</span>
-<span class="sd">        label: ``sendcmd`` label for this flash's ``eq``.</span>
+<span class="sd">        label: ``sendcmd`` label for this flash's ``lutyuv``.</span>
 <span class="sd">        brightness: Peak brightness boost on a beat.</span>
 <span class="sd">        saturation: Peak saturation boost on a beat.</span>
 <span class="sd">        decay: Per-frame afterglow of a pulse.</span>
@@ -331,7 +360,13 @@
     <span class="n">envelope</span> <span class="o">=</span> <span class="n">onset_envelope</span><span class="p">(</span><span class="n">audio</span><span class="p">,</span> <span class="n">fps</span><span class="o">=</span><span class="n">fps</span><span class="p">,</span> <span class="n">duration</span><span class="o">=</span><span class="n">duration</span><span class="p">,</span> <span class="n">decay</span><span class="o">=</span><span class="n">decay</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">envelope</span><span class="p">:</span>
         <span class="k">return</span> <span class="s2">""</span>
-    <span class="n">target</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"eq@</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">"</span>
+    <span class="n">at_rest</span> <span class="o">=</span> <span class="n">lut_filter</span><span class="p">(</span><span class="n">brightness_saturation_lut</span><span class="p">(),</span> <span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">)</span>
+    <span class="c1"># The sendcmd target is DERIVED from the filter the fragment declares, never</span>
+    <span class="c1"># spelled a second time. A command addressed to a filter that is not in the</span>
+    <span class="c1"># graph is completely silent — ffmpeg exits 0, logs nothing even at `warning`,</span>
+    <span class="c1"># and simply never flashes — so the two spellings drifting apart would cost</span>
+    <span class="c1"># the effect with nothing anywhere to say so.</span>
+    <span class="n">target</span> <span class="o">=</span> <span class="n">at_rest</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"="</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
     <span class="n">script</span> <span class="o">=</span> <span class="n">_write_flash_script</span><span class="p">(</span>
         <span class="n">envelope</span><span class="p">,</span>
         <span class="n">Path</span><span class="p">(</span><span class="n">workdir</span><span class="p">)</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">.cmd"</span><span class="p">,</span>
@@ -340,10 +375,7 @@
         <span class="n">brightness</span><span class="o">=</span><span class="n">brightness</span><span class="p">,</span>
         <span class="n">saturation</span><span class="o">=</span><span class="n">saturation</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="k">return</span> <span class="p">(</span>
-        <span class="sa">f</span><span class="s2">",sendcmd=f=</span><span class="si">{</span><span class="n">escape_filter_value</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">script</span><span class="p">))</span><span class="si">}</span><span class="s2">"</span>
-        <span class="sa">f</span><span class="s2">",</span><span class="si">{</span><span class="n">target</span><span class="si">}</span><span class="s2">=brightness=0:saturation=1:eval=frame"</span>
-    <span class="p">)</span></div>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">",sendcmd=f=</span><span class="si">{</span><span class="n">escape_filter_value</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">script</span><span class="p">))</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="n">at_rest</span><span class="si">}</span><span class="s2">"</span></div>
 
 </pre></div>
 

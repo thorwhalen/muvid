@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.visualize.canvas &mdash; muvid 0.0.40 documentation</title>
+  <title>muvid.visualize.canvas &mdash; muvid 0.0.41 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=84bd753f"></script>
+      <script src="../../../_static/documentation_options.js?v=20c5f126"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -318,6 +318,87 @@
 
 
 
+<span class="c1">#: The full 8-bit range ``eq`` clips its output to. ``lutyuv`` offers ``minval`` /</span>
+<span class="c1">#: ``maxval`` / ``clipval`` variables and they are NOT these — they are the</span>
+<span class="c1">#: *broadcast* range (16–235 luma, 16–240 chroma), so reaching for the named</span>
+<span class="c1">#: constants instead of these literals would crush blacks and clip highlights that</span>
+<span class="c1">#: ``eq`` left untouched. The literals are what reproduces ``eq``.</span>
+<span class="n">_FULL_RANGE</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">255</span><span class="p">)</span>
+
+<span class="c1">#: Chroma neutral, and the pivot saturation scales about. ``vf_eq`` works in 0–1</span>
+<span class="c1">#: and pivots on 0.5, which is 127.5 in 8 bits — *not* 128. The naive value never</span>
+<span class="c1">#: costs more than ``0.5 * |1 - saturation|`` LSB, so no max-error bound can catch</span>
+<span class="c1">#: it; what it does is raise the MEAN chroma error against ``eq`` (~1.3x at the</span>
+<span class="c1">#: shipped saturation of 0.8, ~2x at 0.6). Free to get right, so it is written</span>
+<span class="c1">#: once, here — and pinned by a test that measures the mean, not the max.</span>
+<span class="n">_CHROMA_PIVOT</span> <span class="o">=</span> <span class="mf">127.5</span>
+
+
+<div class="viewcode-block" id="brightness_saturation_lut">
+<a class="viewcode-back" href="../../../module_docs/muvid/visualize/canvas.html#muvid.visualize.brightness_saturation_lut">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">brightness_saturation_lut</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span> <span class="n">brightness</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">saturation</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""``lutyuv`` y/u/v expressions reproducing ``eq``'s brightness + saturation.</span>
+
+<span class="sd">    ``eq`` is compiled into ffmpeg only under ``--enable-gpl``, so every chain that</span>
+<span class="sd">    reached for it made muvid require a GPL build for what is arithmetic on three</span>
+<span class="sd">    planes. ``lutyuv`` is LGPL and expresses the same two knobs exactly as ``vf_eq``</span>
+<span class="sd">    defines them: brightness is an ADDITIVE offset of ``brightness * 255`` on luma,</span>
+<span class="sd">    saturation a scaling of chroma about :data:`_CHROMA_PIVOT`.</span>
+
+<span class="sd">    Returns a ``{component: expression}`` mapping rather than a filter string</span>
+<span class="sd">    because the two callers need different shapes — one composes a filtergraph,</span>
+<span class="sd">    the other emits one ``sendcmd`` command per component — and a second copy of</span>
+<span class="sd">    this arithmetic is exactly how the two would drift apart.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        brightness: Additive luma offset, -1 to 1, in ``eq``'s units (a fraction</span>
+<span class="sd">            of full scale). ``0`` is a no-op.</span>
+<span class="sd">        saturation: Chroma scaling about neutral. ``1`` is a no-op.</span>
+
+<span class="sd">    Examples:</span>
+<span class="sd">        &gt;&gt;&gt; lut = brightness_saturation_lut(brightness=-0.25, saturation=0.8)</span>
+<span class="sd">        &gt;&gt;&gt; lut["y"]</span>
+<span class="sd">        'clip(val-63.75,0,255)'</span>
+<span class="sd">        &gt;&gt;&gt; lut["u"] == lut["v"]</span>
+<span class="sd">        True</span>
+<span class="sd">        &gt;&gt;&gt; brightness_saturation_lut()["y"], brightness_saturation_lut()["u"]</span>
+<span class="sd">        ('clip(val+0,0,255)', 'clip((val-127.5)*1+127.5,0,255)')</span>
+<span class="sd">    """</span>
+    <span class="n">lo</span><span class="p">,</span> <span class="n">hi</span> <span class="o">=</span> <span class="n">_FULL_RANGE</span>
+    <span class="n">chroma</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"clip((val-</span><span class="si">{</span><span class="n">_CHROMA_PIVOT</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2">)*</span><span class="si">{</span><span class="n">saturation</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2">+</span><span class="si">{</span><span class="n">_CHROMA_PIVOT</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="n">lo</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="n">hi</span><span class="si">}</span><span class="s2">)"</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">"y"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"clip(val</span><span class="si">{</span><span class="n">brightness</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">hi</span><span class="si">:</span><span class="s2">+g</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="n">lo</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="n">hi</span><span class="si">}</span><span class="s2">)"</span><span class="p">,</span>
+        <span class="s2">"u"</span><span class="p">:</span> <span class="n">chroma</span><span class="p">,</span>
+        <span class="s2">"v"</span><span class="p">:</span> <span class="n">chroma</span><span class="p">,</span>
+    <span class="p">}</span></div>
+
+
+
+<div class="viewcode-block" id="lut_filter">
+<a class="viewcode-back" href="../../../module_docs/muvid/visualize/canvas.html#muvid.visualize.lut_filter">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">lut_filter</span><span class="p">(</span><span class="n">exprs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="o">*</span><span class="p">,</span> <span class="n">label</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""A ``lutyuv`` filter from :func:`brightness_saturation_lut`'s expressions.</span>
+
+<span class="sd">    The expressions contain ``,``, which the *filtergraph* parser reads as "next</span>
+<span class="sd">    filter", so every one goes through :func:`escape_filter_value` — the same</span>
+<span class="sd">    escaper, and the same reason, as a ``sendcmd`` script path.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        exprs: ``{component: expression}``.</span>
+<span class="sd">        label: Optional ``@label`` so ``sendcmd`` can address this filter.</span>
+
+<span class="sd">    Examples:</span>
+<span class="sd">        &gt;&gt;&gt; lut_filter({"y": "clip(val+0,0,255)"}, label="flash")</span>
+<span class="sd">        'lutyuv@flash=y=clip(val+0\\,0\\,255)'</span>
+<span class="sd">    """</span>
+    <span class="n">at</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"@</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">"</span> <span class="k">if</span> <span class="n">label</span> <span class="k">else</span> <span class="s2">""</span>
+    <span class="n">opts</span> <span class="o">=</span> <span class="s2">":"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">=</span><span class="si">{</span><span class="n">escape_filter_value</span><span class="p">(</span><span class="n">v</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">exprs</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">"lutyuv</span><span class="si">{</span><span class="n">at</span><span class="si">}</span><span class="s2">=</span><span class="si">{</span><span class="n">opts</span><span class="si">}</span><span class="s2">"</span></div>
+
+
+
 <div class="viewcode-block" id="title_chain">
 <a class="viewcode-back" href="../../../module_docs/muvid/visualize/canvas.html#muvid.visualize.title_chain">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">title_chain</span><span class="p">(</span>
@@ -364,7 +445,12 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">background_chain</span><span class="p">(</span>
     <span class="n">size</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">layout</span><span class="p">:</span> <span class="n">CoverLayout</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">src</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">out</span><span class="p">:</span> <span class="nb">str</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Filter chain turning cover stream ``src`` into a full-frame background."""</span>
+<span class="w">    </span><span class="sd">"""Filter chain turning cover stream ``src`` into a full-frame background.</span>
+
+<span class="sd">    The darken/desaturate step is ``lutyuv``, not ``eq``: see</span>
+<span class="sd">    :func:`brightness_saturation_lut` for why (``eq`` is GPL-only) and for the</span>
+<span class="sd">    exact arithmetic it reproduces.</span>
+<span class="sd">    """</span>
     <span class="n">width</span><span class="p">,</span> <span class="n">height</span> <span class="o">=</span> <span class="n">size</span>
     <span class="k">if</span> <span class="n">layout</span><span class="o">.</span><span class="n">background</span> <span class="o">==</span> <span class="s2">"color"</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">(</span>
@@ -372,10 +458,13 @@
             <span class="sa">f</span><span class="s2">"drawbox=x=0:y=0:w=</span><span class="si">{</span><span class="n">width</span><span class="si">}</span><span class="s2">:h=</span><span class="si">{</span><span class="n">height</span><span class="si">}</span><span class="s2">:"</span>
             <span class="sa">f</span><span class="s2">"color=</span><span class="si">{</span><span class="n">layout</span><span class="o">.</span><span class="n">background_color</span><span class="si">}</span><span class="s2">:t=fill[</span><span class="si">{</span><span class="n">out</span><span class="si">}</span><span class="s2">]"</span>
         <span class="p">)</span>
+    <span class="n">lut</span> <span class="o">=</span> <span class="n">lut_filter</span><span class="p">(</span>
+        <span class="n">brightness_saturation_lut</span><span class="p">(</span><span class="n">brightness</span><span class="o">=-</span><span class="n">layout</span><span class="o">.</span><span class="n">dim</span><span class="p">,</span> <span class="n">saturation</span><span class="o">=</span><span class="n">layout</span><span class="o">.</span><span class="n">saturation</span><span class="p">)</span>
+    <span class="p">)</span>
     <span class="k">return</span> <span class="p">(</span>
         <span class="sa">f</span><span class="s2">"[</span><span class="si">{</span><span class="n">src</span><span class="si">}</span><span class="s2">]scale=</span><span class="si">{</span><span class="n">width</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">height</span><span class="si">}</span><span class="s2">:force_original_aspect_ratio=increase,"</span>
         <span class="sa">f</span><span class="s2">"crop=</span><span class="si">{</span><span class="n">width</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">height</span><span class="si">}</span><span class="s2">,gblur=sigma=</span><span class="si">{</span><span class="n">layout</span><span class="o">.</span><span class="n">blur_sigma</span><span class="si">}</span><span class="s2">,"</span>
-        <span class="sa">f</span><span class="s2">"eq=brightness=-</span><span class="si">{</span><span class="n">layout</span><span class="o">.</span><span class="n">dim</span><span class="si">}</span><span class="s2">:saturation=</span><span class="si">{</span><span class="n">layout</span><span class="o">.</span><span class="n">saturation</span><span class="si">}</span><span class="s2">[</span><span class="si">{</span><span class="n">out</span><span class="si">}</span><span class="s2">]"</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">lut</span><span class="si">}</span><span class="s2">[</span><span class="si">{</span><span class="n">out</span><span class="si">}</span><span class="s2">]"</span>
     <span class="p">)</span></div>
 
 

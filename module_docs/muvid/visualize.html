@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.visualize &mdash; muvid 0.0.40 documentation</title>
+  <title>muvid.visualize &mdash; muvid 0.0.41 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -15,7 +15,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=84bd753f"></script>
+      <script src="../../_static/documentation_options.js?v=20c5f126"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -786,21 +786,23 @@ audio” as “no effect” (see <a class="reference internal" href="visualize/r
 <span class="sig-prename descclassname"><span class="pre">muvid.visualize.</span></span><span class="sig-name descname"><span class="pre">flash_filter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">audio</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">fps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">duration</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">workdir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'flash'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">brightness</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.25</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">saturation</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.8</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decay</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.5</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../_modules/muvid/visualize/reactive.html#flash_filter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.visualize.flash_filter" title="Link to this definition"></a></dt>
 <dd><p>A filter fragment that makes the stream it follows pulse with the beat.</p>
 <p>Computes the envelope, writes the <code class="docutils literal notranslate"><span class="pre">sendcmd</span></code> script into <code class="docutils literal notranslate"><span class="pre">workdir</span></code>, and
-returns the chain <code class="docutils literal notranslate"><span class="pre">,sendcmd=f=…,eq&#64;&lt;label&gt;=…</span></code> to append after the visual
+returns the chain <code class="docutils literal notranslate"><span class="pre">,sendcmd=f=…,lutyuv&#64;&lt;label&gt;=…</span></code> to append after the visual
 filter (e.g. <code class="docutils literal notranslate"><span class="pre">showspectrum</span></code>).</p>
 <p>Returns <code class="docutils literal notranslate"><span class="pre">&quot;&quot;</span></code> — a fragment that changes nothing — when the audio yields no
 envelope or this ffmpeg build lacks <code class="xref py py-data docutils literal notranslate"><span class="pre">FLASH_FILTERS</span></code>, so a caller can
 append it unconditionally and still render.</p>
-<p>The <code class="docutils literal notranslate"><span class="pre">eq</span></code> starts as a no-op (<code class="docutils literal notranslate"><span class="pre">brightness=0:saturation=1</span></code>); the script
-drives it. <code class="docutils literal notranslate"><span class="pre">eval=frame</span></code> so it re-reads every frame.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">lutyuv</span></code> starts as an identity table (brightness 0, saturation 1); the
+script drives it. It is a LUT rather than an <code class="docutils literal notranslate"><span class="pre">eq</span></code> because <code class="docutils literal notranslate"><span class="pre">eq</span></code> exists only
+in a GPL-configured ffmpeg (muvid#69) — see
+<a class="reference internal" href="visualize/canvas.html#muvid.visualize.canvas.brightness_saturation_lut" title="muvid.visualize.canvas.brightness_saturation_lut"><code class="xref py py-func docutils literal notranslate"><span class="pre">brightness_saturation_lut()</span></code></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>audio</strong> – The track whose beats drive the flash.</p></li>
-<li><p><strong>fps</strong> – The render’s frame rate (one command pair per frame).</p></li>
+<li><p><strong>fps</strong> – The render’s frame rate (one command per component per frame).</p></li>
 <li><p><strong>duration</strong> – Clamp the flash to this many seconds (<code class="docutils literal notranslate"><span class="pre">None</span></code> = whole track).</p></li>
 <li><p><strong>workdir</strong> – Directory to write the <code class="docutils literal notranslate"><span class="pre">sendcmd</span></code> script into.</p></li>
-<li><p><strong>label</strong> – <code class="docutils literal notranslate"><span class="pre">sendcmd</span></code> label for this flash’s <code class="docutils literal notranslate"><span class="pre">eq</span></code>.</p></li>
+<li><p><strong>label</strong> – <code class="docutils literal notranslate"><span class="pre">sendcmd</span></code> label for this flash’s <code class="docutils literal notranslate"><span class="pre">lutyuv</span></code>.</p></li>
 <li><p><strong>brightness</strong> – Peak brightness boost on a beat.</p></li>
 <li><p><strong>saturation</strong> – Peak saturation boost on a beat.</p></li>
 <li><p><strong>decay</strong> – Per-frame afterglow of a pulse.</p></li>

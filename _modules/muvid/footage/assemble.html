@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.footage.assemble &mdash; muvid 0.0.40 documentation</title>
+  <title>muvid.footage.assemble &mdash; muvid 0.0.41 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=84bd753f"></script>
+      <script src="../../../_static/documentation_options.js?v=20c5f126"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -347,8 +347,22 @@
 <span class="sd">    prepended ONLY in the moving case, because ``t`` must start at 0 for the ramp</span>
 <span class="sd">    to mean anything and adding it unconditionally would change a path that works.</span>
 
-<span class="sd">    Not ``zoompan``: its expression vocabulary has no ``t`` at all (it exposes</span>
-<span class="sd">    ``on``/``in``/``pon``), and it duplicates frames on video input.</span>
+<span class="sd">    ``crop`` is the right filter HERE because the window never changes size —</span>
+<span class="sd">    not because ``zoompan`` is unusable. What ``crop`` cannot do is vary ``w``/``h``:</span>
+<span class="sd">    those two expressions are evaluated ONCE, at configure time, when ``t`` is NAN.</span>
+<span class="sd">    Both of that root cause's symptoms are real, and the quiet one is the dangerous</span>
+<span class="sd">    one — ``w='iw*0.5*(1+t)'`` refuses to configure ("Error when evaluating the</span>
+<span class="sd">    expression" / "Failed to configure input pad"), while ``w='iw*(0.5+0.2*min(t/2,1))'``</span>
+<span class="sd">    exits 0 and renders a plausible video frozen at ONE size (measured: 224 px for</span>
+<span class="sd">    every frame of a window that was meant to run 160 -&gt; 224).</span>
+
+<span class="sd">    ``zoompan`` CAN vary size, and the note that used to sit here was wrong about</span>
+<span class="sd">    why it was passed over. Measured on ffmpeg 8.1: ``t`` really is undefined in</span>
+<span class="sd">    ``zoompan``, but the filter is not time-blind — ``in_time``/``it`` work, as do</span>
+<span class="sd">    the counters ``on``/``in``. Nor does it inherently duplicate frames: that is</span>
+<span class="sd">    entirely its default ``d=90`` (20 input frames -&gt; 1800 out), and ``d=1`` is</span>
+<span class="sd">    exactly 1:1. So a resizing window is a ``zoompan`` job; a pan at constant size</span>
+<span class="sd">    is this one, and ``crop`` expresses it with one expression per axis.</span>
 <span class="sd">    """</span>
     <span class="n">c</span> <span class="o">=</span> <span class="n">cut</span><span class="o">.</span><span class="n">crop</span>
     <span class="k">if</span> <span class="n">c</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
