@@ -172,6 +172,7 @@ entries = punch_in_cuts(entries, canvas=(1920, 1080), fps=30, every=2)
 
 # A whole looks.Look — compiled against the binary muvid will actually run.
 import looks
+
 muted = looks.Look(steps=(looks.Effect(name="saturation", params={"amount": 0.35}),))
 grade = stylize(muted, canvas=(1920, 1080), fps=30)
 
@@ -198,6 +199,23 @@ Five things to know:
   container input (`[1:v]`) or carrying a graph separator is **refused by
   `validate_edl`**, because either would reintroduce the shape that was OOM-killed at
   30 cuts (muvid#21/#24).
+- **The filters are an ALLOWLIST, because `assemble_music_video` is a live per-caller
+  MCP tool and `look` arrives over that wire.** `validate_edl` accepts only
+  `muvid.footage.edl.LOOK_FILTERS` — what `muvid.footage.look` and `looks` actually
+  emit, plus `hue`. Everything else is refused **by name**, which is what closes the
+  whole class rather than one filter: before the allowlist,
+  `look="metadata=mode=print:file=<any writable path>"` passed the gate, rendered
+  normally, returned a success payload and truncated that file to zero bytes (measured;
+  `deshake=filename=` is a second, structurally different write primitive, and
+  `movie=`/`amovie=` open an unaccounted container). The name is resolved the way
+  ffmpeg resolves it — `'metadata'` and `\m\e\t\a\d\a\t\a` both reach the same
+  filter — so this is not string matching. Compile the look; don't hand-write one.
+- **A second SOURCE is not reachable from a look at all.** An earlier version of this
+  section (and of `_validate_look`'s error text) said to use `movie=`. That advice does
+  not work: `movie=` is a zero-input source, so the solo site's *simple* filtergraph is
+  structurally invalid (`had 1 input(s) and 2 output(s)`, measured on ffmpeg 9.0.1) and
+  the transition site opens a second container from inside the fragment. Compositing
+  needs a splice site the assembler does not have.
 - **One sharp edge, measured: a *moving* look restarts its ramp on a transitioned
   boundary** — the blend is a separate invocation whose clock starts at 0 again. A grade
   or a LUT is unaffected. muvid#73 has the numbers and the options.

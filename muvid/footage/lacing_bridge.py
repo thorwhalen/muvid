@@ -148,11 +148,18 @@ def score_track_annotations(tensor, *, song_asset_id: str, attributed_to: str) -
 
 
 def _edl_body(e) -> dict:
-    """The DECISION body for one entry — ``transition`` present only when set.
+    """The DECISION body for one entry — each optional field present only when set.
 
-    Emitting it unconditionally would change the body of every untransitioned
-    document, which is the difference between an additive field and a format change
-    a browser surface has to move with. muvid#34.
+    Emitting one unconditionally would change the body of every document that does
+    not use it, which is the difference between an additive field and a format
+    change a browser surface has to move with (muvid#34).
+
+    **Every optional field has to be here, and that is the contract rather than a
+    courtesy.** ``.claude/CLAUDE.md``: "Round-trip is a contract: EDL -> annotations
+    -> EDL must be identity — which is *why* a new ``EdlEntry`` field has to reach
+    the body. A field the bridge does not carry is a field the editor silently
+    DROPS on the way back." ``look`` was added to ``EdlEntry`` without reaching
+    here, so an edit opened in the editor and exported came back ungraded.
     """
     body = {"clip_id": e.clip_id or None}
     if getattr(e, "transition", None) is not None:
@@ -161,6 +168,8 @@ def _edl_body(e) -> dict:
         v = getattr(e, field, None)
         if v is not None:
             body[field] = v.to_dict()
+    if getattr(e, "look", None) is not None:
+        body["look"] = str(e.look)
     return body
 
 
@@ -187,8 +196,8 @@ def edl_from_annotations(
 
     The timeline-to-EDL half: whatever the editor did to the DECISION lane — moved,
     split, retargeted, deleted — exports as plain ``{song_start, song_end, clip_id}``
-    dicts (plus ``transition`` where the editor set one) ready for
-    ``assemble_music_video``. Sorting and validation stay the render
+    dicts (plus ``transition``/``crop``/``crop_end``/``look`` where the editor set
+    one) ready for ``assemble_music_video``. Sorting and validation stay the render
     path's business (``fill_gaps`` + ``validate_edl``); this is a faithful read.
 
     Annotations are untrusted editor input, so anything shaped wrong is SKIPPED rather
@@ -246,6 +255,13 @@ def edl_from_annotations(
                 isinstance(raw.get(k), (int, float)) for k in ("x", "y", "w", "h")
             ):
                 entry[field] = {k: float(raw[k]) for k in ("x", "y", "w", "h")}
+        # Same skip-shaped read: a look is a filter fragment, and whether THIS one
+        # is acceptable is `validate_edl`'s single-gate business on the way back in
+        # — never this function's, which only settles the type. A non-string is an
+        # editor bug, not an edit, so it is dropped rather than crashing the export.
+        raw = a.body.get("look")
+        if isinstance(raw, str):
+            entry["look"] = raw
         out.append(entry)
     return sorted(out, key=lambda e: e["song_start"])
 

@@ -41,8 +41,15 @@ A cut may also carry a **look** — a compiled ``looks`` filter fragment
 (:mod:`muvid.footage.look`) spliced into the per-part chain by :func:`_part_filter`.
 It is the federation seam and it is deliberately the cheapest possible one: a ``-vf``
 fragment adds no ``-i``, so it cannot move the invariant above. That is enforced rather
-than trusted — :func:`~muvid.footage.edl._validate_look` refuses a fragment that names a
-container input or that is more than one linear chain.
+than trusted, and by an ALLOWLIST rather than by refusals —
+:func:`~muvid.footage.edl._validate_look` accepts only the filters
+:data:`~muvid.footage.edl.LOOK_FILTERS` names, and refuses a fragment that names a
+container input, that is more than one linear chain, or that is not lexically closed.
+The allowlist is what closes ``movie=``/``amovie=`` (a second container opened from
+*inside* the fragment, which is the invariant leaving by the back door) and, because
+``assemble_music_video`` is a live per-caller MCP tool whose ``edl`` argument is
+free-form, the filters that write the host's disk (``metadata=…:file=``,
+``deshake=filename=``, ``sendcmd``, ``signature``).
 
 Deliberately NOT moviepy (its ``write_videofile`` runs in-process and would escape the
 ``$MUVID_FFMPEG_TIMEOUT_S`` worker guard). Every stage runs through

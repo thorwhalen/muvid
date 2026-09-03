@@ -18,10 +18,21 @@ Why a ``-vf`` fragment is the *cheapest possible* seam, which is why it was
 chosen: it adds no ``-i``. muvid's assembler was rewritten (muvid#21/#24) because
 one ``-filter_complex`` over all cuts held a decoder per cut and was OOM-killed at
 30 cuts on a 3.7 GB box; the guarantee it bought is O(1) decoders per invocation.
-A filter fragment cannot touch that. A look that wants a second *source* reaches
-it as ``movie=`` — a filter, not an input — which is ``looks``' own rule for the
-same reason, and :func:`muvid.footage.edl._validate_look` enforces the muvid half
-rather than trusting it.
+A filter fragment cannot touch that.
+
+**A look cannot reach a second source at all, and the earlier claim that it could
+via ``movie=`` was wrong twice over.** ``movie=`` is a zero-input source filter,
+so at the solo site — a *simple* filtergraph, one input and one output — it leaves
+the preceding chain unconsumed and ffmpeg refuses the whole graph before decoding
+a frame (*"had 1 input(s) and 2 output(s)"*, measured on ffmpeg 9.0.1; every
+composited form, ``movie=X,overlay=10:10`` included, fails identically, and the
+forms that DO render all need ``[``/``]``/``;``). At the transition site it does
+run, and what it does there is call ``avformat_open_input`` on a path from inside
+the fragment — a second container decoder that no invocation accounted for, which
+is the muvid#21/#24 invariant going out the back door. So
+:func:`muvid.footage.edl._validate_look` refuses it, along with every other filter
+outside :data:`muvid.footage.edl.LOOK_FILTERS`. Compositing needs a second splice
+site the assembler does not have; that is a change to the assembler, not a look.
 
 Three functions, in the order you are likely to want them:
 

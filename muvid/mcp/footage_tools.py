@@ -388,13 +388,33 @@ def footage_timeline(project_id: str) -> dict:
     }
 
 
+#: Every optional :class:`~muvid.footage.edl.EdlEntry` field :func:`_edl_json`
+#: carries, and how to render it. **The list is the round trip.** ``_as_entry``
+#: reads all of these back by name, so a field missing from here is a direction
+#: the caller gave, the renderer honoured, and the returned/persisted edit does
+#: not contain — which is worse than a field that was never accepted, because the
+#: tool's own contract says this list "must feed straight back as the edl= argument
+#: and reproduce the same render". ``crop``/``crop_end`` (muvid#60) and ``look``
+#: (the looks seam) were each dropped this way; ``transition`` (muvid#34) was
+#: hand-written and survived, which is exactly why the three are now one table
+#: rather than three ``if``s the next field forgets to join.
+_EDL_OPTIONAL_FIELDS = (
+    ("transition", lambda v: v.to_dict()),
+    ("crop", lambda v: v.to_dict()),
+    ("crop_end", lambda v: v.to_dict()),
+    ("look", str),
+)
+
+
 def _edl_json(e) -> dict:
     """One EDL entry as JSON — full precision (it must feed back verbatim), gaps as null.
 
-    ``transition`` is emitted ONLY when set. That is what keeps every existing
-    ``renders/*/meta.json`` byte-identical and keeps the render -> edit -> re-render
-    round trip (muvid#21 item 3) exact for an edit that uses no transitions. It is
-    also a plain dict, not the frozen dataclass: ``write_render_meta`` runs
+    Optional fields are emitted ONLY when set (:data:`_EDL_OPTIONAL_FIELDS`). That
+    omit-when-None rule is what keeps every existing ``renders/*/meta.json``
+    byte-identical — the compatibility surface named in ``.claude/CLAUDE.md``, since
+    these bodies have no schema version to bump — and keeps the render -> edit ->
+    re-render round trip (muvid#21 item 3) exact for an edit that uses none of them.
+    Values are plain dicts, not the frozen dataclasses: ``write_render_meta`` runs
     ``json.dumps`` over this, which has no encoder for a dataclass.
     """
     out = {
@@ -402,8 +422,10 @@ def _edl_json(e) -> dict:
         "song_end": e.song_end,
         "clip_id": e.clip_id or None,
     }
-    if getattr(e, "transition", None) is not None:
-        out["transition"] = e.transition.to_dict()
+    for field, render in _EDL_OPTIONAL_FIELDS:
+        v = getattr(e, field, None)
+        if v is not None:
+            out[field] = render(v)
     return out
 
 
@@ -545,6 +567,20 @@ def assemble_music_video(
       outside ``fade``/``fadeblack``/``fadewhite``/``dissolve``/``wipe*``/``slide*``/
       ``smooth*``/``circleopen``/``circleclose``, is under 0.04 s, or does not fit. Omit
       it for a hard cut — the default, and what every entry without the key means.
+    - each ``edl`` entry may also carry ``crop`` / ``crop_end``
+      (``{"x":0,"y":0.25,"w":1,"h":0.5}``, fractions of the SOURCE frame — the
+      framing decision; ``crop_end`` pans that window and must be the same size)
+      and ``look`` (ONE linear ffmpeg filter chain — the grade, LUT, posterise or
+      in-shot punch-in, applied to the delivery CANVAS after scaling).
+      ``look`` is an **allowlist**: only the filters named by
+      ``muvid.footage.edl.LOOK_FILTERS`` are accepted, and a chain naming
+      anything else — a
+      second container (``movie=``), a filter that writes a file
+      (``metadata=…:file=``, ``deshake=filename=``), a pad label, a graph
+      separator, or an unclosed quote — is refused by name at ``validate_edl``,
+      not discovered as an ffmpeg side effect. Compile one with
+      ``muvid.footage.look`` (``punch_in`` / ``motion`` / ``stylize``) rather than
+      hand-writing it. All four fields survive verbatim in the returned ``edl``.
     - ``strategy='weighted'`` (score-driven): the beat-snapped Viterbi selector reads the
       persisted score tracks (run ``score_footage`` first) and the selection config —
       ``preset`` ("energetic"/"contemplative") and/or ``weights`` (per-metric) and/or

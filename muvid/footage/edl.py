@@ -227,10 +227,17 @@ class EdlEntry:
     #: muvid does not author this string: :mod:`muvid.footage.look` compiles it
     #: from a :class:`looks.Look` or from a punch-in request. That split is the
     #: whole point of the seam — ``looks`` decides what a pixel becomes, muvid
-    #: keeps ``-c:v`` and the process shape. :func:`_validate_look` is the gate:
-    #: a fragment that names a container input, or that is more than ONE linear
-    #: chain, is refused, because either would break the bounded-memory
-    #: invariant the assembler rests on.
+    #: keeps ``-c:v`` and the process shape.
+    #:
+    #: **A caller may still hand one over, so this field is a trust boundary.**
+    #: ``assemble_music_video`` is a live per-caller MCP tool taking free-form
+    #: ``edl`` dicts, and this string becomes ffmpeg the renderer runs. So
+    #: :func:`_validate_look` gates it against the ALLOWLIST
+    #: :data:`LOOK_FILTERS` — not against a list of refusals — and also refuses a
+    #: fragment that names a container input, that is more than ONE linear chain,
+    #: or that is not lexically closed. The first two of those would break the
+    #: bounded-memory invariant the assembler rests on; the allowlist is what
+    #: keeps a look from writing this machine's disk.
     look: "str | None" = None
 
     @property
@@ -404,8 +411,10 @@ def validate_edl(
     - each non-gap span lies within its clip's aligned coverage, AND the derived
       ``clip_in = song_start - offset`` satisfies ``0 <= clip_in`` and
       ``clip_in + span_duration <= clip_duration`` (the clip actually contains that span);
-    - a ``look`` (the ``looks`` seam) is ONE linear filter chain, names no container
-      input, and is not on a gap — see :func:`_validate_look`;
+    - a ``look`` (the ``looks`` seam) names only filters in :data:`LOOK_FILTERS`,
+      is ONE lexically-closed linear filter chain, names no container input, and is
+      not on a gap — see :func:`_validate_look`, which is the trust boundary for a
+      caller-supplied filter string;
     - a :class:`Transition` is on an entry that HAS a predecessor, names a known curve,
       is at least :data:`MIN_TRANSITION_S` long, fits in song time counting BOTH
       transitions an entry can carry, and fits in each side's aligned coverage — see
@@ -533,7 +542,7 @@ def _validate_crop(i, e) -> None:
         )
 
 
-#: Characters a look fragment may not carry UNESCAPED. Each turns the fragment
+#: Characters a look fragment may not carry as SYNTAX. Each turns the fragment
 #: from a filter *chain* into a filter *graph*, and the assembler splices it into
 #: a larger chain with commas — so ``a,b;c,d`` spliced into ``X,<frag>,Y`` becomes
 #: a different graph than either side wrote. ``[`` and ``]`` are how a graph names
@@ -543,14 +552,191 @@ def _validate_crop(i, e) -> None:
 #: inside a path stays legal and only a bare one is refused.
 _LOOK_FORBIDDEN = "[];"
 
+#: The filters a ``look`` may name. **An allowlist, because a look is executable
+#: ffmpeg arriving from a remote caller.**
+#:
+#: ``assemble_music_video`` is a live MCP tool on the per-caller reelee AV
+#: connector and its ``edl`` argument is free-form dicts, so this string is
+#: attacker-supplied input to a process that can write the host's filesystem.
+#: Measured, on this branch before the allowlist existed: a look of
+#: ``metadata=mode=print:file=<any path the renderer can write>`` passed the gate,
+#: rendered normally, returned a success payload, and truncated the named file to
+#: zero bytes. ``deshake=filename=`` is a second, structurally different write
+#: primitive; ``movie=``/``amovie=`` open an unaccounted container; ``sendcmd``,
+#: ``signature``, ``ssim`` and ``psnr`` each name a file of their own.
+#:
+#: A blocklist cannot close that — there are ~481 filters and the dangerous ones
+#: have nothing lexical in common. So the rule is the one this module already uses
+#: for :data:`TRANSITION_CURVES` and that ``an``'s camera table uses for moves:
+#: **a curated vocabulary we own, refused at the gate rather than discovered as an
+#: ffmpeg side effect three stages later.**
+#:
+#: Two groups, and the split is the maintenance rule:
+#:
+#: - **Compiled** — every filter the two compilers on this seam can emit:
+#:   :mod:`muvid.footage.look` (``zoompan``/``crop``/``scale``/``setpts``, via
+#:   ``looks.compile_motion``) and ``looks``' registered ffmpeg implementations
+#:   (their declared ``ImplRef.requires_filters``). This set is *pinned against
+#:   ``looks`` by a test*, deliberately rather than derived from it at import
+#:   time: deriving would let a new ``looks`` effect widen muvid's remote-input
+#:   surface silently, where the test makes it a decision someone records here.
+#: - **Hand-authored** — ``hue``, the one filter this repo's own docstrings reach
+#:   for and nothing compiles. It is LGPL, takes no path, and is what a person
+#:   writes when they want "desaturate that shot".
+#:
+#: **What earns a place here**, and it is checked by
+#: ``tests/test_edl_look.py::test_no_allowlisted_filter_can_name_a_file``: the
+#: filter must declare no filesystem-path option at all. ``lut3d``'s ``file`` is
+#: the single recorded exception (:data:`_LOOK_FILE_OPTIONS`) — it *loads* a
+#: ``.cube``, which is how ``looks``' flagship grade reaches its LUT, and it reads
+#: rather than writes. Nothing else may name a path, so adding a filter here is a
+#: two-place edit and the second place is a measurement of the real binary.
+#:
+#: **What this does NOT bound**, stated because a partial claim is worse than
+#: none. An allowlisted filter can still be given absurd PARAMETERS, and the two
+#: that matter are measured rather than guessed at:
+#:
+#: - ``scale`` sets the frame size, and the frame size is memory. On ffmpeg 9.0.1,
+#:   ``scale=320:180`` peaks at 21.7 MB RSS and ``scale=320:180,scale=8000:8000``
+#:   at 324.7 MB — 15x, from one caller-supplied number, on a box that has already
+#:   been OOM-killed once (muvid#21/#24). Not closed here because bounding it means
+#:   evaluating ffmpeg expressions (``iw*2`` is a legal width), which is a bigger
+#:   piece of work than this gate; it wants its own issue.
+#: - ``lut3d=file=`` will *attempt* to open any path the renderer can read. It
+#:   cannot write, and a non-``.cube`` file fails to parse.
+#:
+#: Both are failures inside the caller's OWN render. Writing to someone else's
+#: disk is the class this closes.
+LOOK_FILTERS = frozenset(
+    {
+        # -- compiled: muvid.footage.look, via looks.compile_motion --
+        "zoompan",
+        "crop",
+        "scale",
+        "setpts",
+        # -- compiled: looks' registered ffmpeg implementations --
+        "bilateral",
+        "boxblur",
+        "colorchannelmixer",
+        "colorlevels",
+        "eq",
+        "gblur",
+        "lut3d",
+        "lutrgb",
+        "lutyuv",
+        "unsharp",
+        # `null` and `pad` are emitted by ``looks``' geometry effects and declared
+        # by NONE of them: ``fill``/``fit``/``stretch`` each declare
+        # ``requires_filters=("scale",)`` and then compile to `null` when the
+        # target already IS the clip size, and to `scale,pad=…` when it
+        # letterboxes. Found by COMPILING every effect, not by reading the
+        # registry — which is why the drift test is a floor on this set and not a
+        # definition of it, and why looks' declaration is worth fixing upstream.
+        "null",
+        "pad",
+        # -- hand-authored --
+        "hue",
+    }
+)
+
+#: The only ``(filter, option)`` pair on :data:`LOOK_FILTERS` allowed to name a
+#: path, with the reason it is allowed: ``lut3d`` LOADS a ``.cube``, which is the
+#: whole of ``looks``' ``lut3d``/``gradient_map`` effect, and loading is a read.
+_LOOK_FILE_OPTIONS = {("lut3d", "file")}
+
+
+class _LookSyntaxError(ValueError):
+    """A look fragment that is not lexically CLOSED. Carries the open character."""
+
+    def __init__(self, char: str):
+        self.char = char
+        super().__init__(char)
+
+
+def _significant(s: str):
+    r"""Yield ``(index, char)`` for each character ffmpeg reads as SYNTAX.
+
+    Models both of ffmpeg's escape mechanisms, because modelling only one is a
+    silent hole: ``av_get_token`` treats ``\`` as escaping the next character
+    **and** copies everything between single quotes literally — inside quotes a
+    backslash is an ordinary character and a terminator is swallowed. So
+    ``crop=x='min(a,b)'`` is ONE filter, not two, and a check that walks only
+    backslashes splits it in the middle.
+
+    Raises:
+        _LookSyntaxError: if the fragment ends inside a quote, or on a dangling
+            backslash. Neither is a character to refuse — it is the fragment
+            failing to be CLOSED, which is exactly what "one chain spliceable by
+            comma" requires: an open quote swallows the ``,format=yuv420p[a];[1:``
+            the transition site appends, and a trailing backslash escapes the
+            splice's own comma. Both render fine alone and restructure the graph
+            beside a transition (measured: ffmpeg exits 234 with
+            ``No option name near 'v]scale=...'``).
+
+    Yields every character whose syntactic role ffmpeg will honour — i.e. all of
+    them except the ones an escape or a quoted run hides:
+
+    >>> "".join(c for _, c in _significant("scale=2,hue=s=0"))
+    'scale=2,hue=s=0'
+    >>> "".join(c for _, c in _significant(r"lut3d=file=a\[b\].cube"))
+    'lut3d=file=ab.cube'
+    >>> "".join(c for _, c in _significant("crop=x='min(a,b)'"))
+    'crop=x='
+    """
+    i = 0
+    while i < len(s):
+        c = s[i]
+        if c == "\\":
+            if i + 1 >= len(s):
+                raise _LookSyntaxError("\\")
+            i += 2
+            continue
+        if c == "'":
+            j = s.find("'", i + 1)
+            if j < 0:
+                raise _LookSyntaxError("'")
+            i = j + 1
+            continue
+        yield i, c
+        i += 1
+
+
+def _unquote(s: str) -> str:
+    r"""``s`` as ffmpeg's tokenizer resolves it — escapes applied, quotes removed.
+
+    Needed for the *name* half of :func:`_look_filter_names`, and the need is not
+    cosmetic: ffmpeg resolves ``'metadata'`` and ``\m\e\t\a\d\a\t\a`` to the
+    filter ``metadata`` (both measured — each truncated a canary file), so an
+    allowlist that compared the raw text would be bypassed by either spelling.
+
+    >>> _unquote(r"h\ue")
+    'hue'
+    >>> _unquote("'hue'")
+    'hue'
+    """
+    out, i = [], 0
+    while i < len(s):
+        c = s[i]
+        if c == "\\":
+            if i + 1 >= len(s):
+                raise _LookSyntaxError("\\")
+            out.append(s[i + 1])
+            i += 2
+            continue
+        if c == "'":
+            j = s.find("'", i + 1)
+            if j < 0:
+                raise _LookSyntaxError("'")
+            out.append(s[i + 1 : j])
+            i = j + 1
+            continue
+        out.append(c)
+        i += 1
+    return "".join(out)
+
 
 def _first_unescaped(s: str, chars: str) -> "str | None":
-    r"""The first character of ``chars`` in ``s`` that no backslash escapes.
-
-    ffmpeg's filtergraph parser treats ``\`` as escaping the next character, so
-    this walks rather than greps: ``lut3d=file=a\[b\].cube`` is a legal fragment
-    and ``[0:v]scale=2`` is not, and a search for bare characters cannot tell
-    them apart.
+    r"""The first character of ``chars`` in ``s`` that ffmpeg would read as syntax.
 
     >>> _first_unescaped("scale=2,hue=s=0", "[];") is None
     True
@@ -558,16 +744,45 @@ def _first_unescaped(s: str, chars: str) -> "str | None":
     '['
     >>> _first_unescaped(r"lut3d=file=a\[b\].cube", "[];") is None
     True
+    >>> _first_unescaped("lut3d=file='a[b].cube'", "[];") is None
+    True
     """
-    i = 0
-    while i < len(s):
-        if s[i] == "\\":
-            i += 2
-            continue
-        if s[i] in chars:
-            return s[i]
-        i += 1
+    for _, c in _significant(s):
+        if c in chars:
+            return c
     return None
+
+
+def _look_filter_names(look: str) -> "list[str]":
+    r"""The filter each link of the chain names, as ffmpeg will resolve it.
+
+    Splits on the commas ffmpeg reads as separators (not on the ones inside a
+    quoted expression), then takes each link's name token — everything before its
+    first significant ``=``, minus a ``@instance`` label — and resolves it through
+    :func:`_unquote`. Whitespace around a name is stripped because ffmpeg strips
+    it too (``hue = s=0`` is a working chain, measured).
+
+    >>> _look_filter_names("scale=2,hue=s=0")
+    ['scale', 'hue']
+    >>> _look_filter_names("crop=x='min(a,b)':y=0,zoompan=d=1")
+    ['crop', 'zoompan']
+    >>> _look_filter_names(r"\m\e\t\a\d\a\t\a=mode=print")
+    ['metadata']
+    >>> _look_filter_names("hue@grade=s=0")
+    ['hue']
+    """
+    breaks = [i for i, c in _significant(look) if c == ","]
+    spans, start = [], 0
+    for b in breaks + [len(look)]:
+        spans.append(look[start:b])
+        start = b + 1
+    names = []
+    for link in spans:
+        eq = next((i for i, c in _significant(link) if c == "="), len(link))
+        raw = link[:eq].strip()
+        at = next((i for i, c in _significant(raw) if c == "@"), len(raw))
+        names.append(_unquote(raw[:at]).strip())
+    return names
 
 
 def _validate_look(i, e) -> None:
@@ -576,21 +791,32 @@ def _validate_look(i, e) -> None:
     Split out only for length; it is part of :func:`validate_edl`, which remains
     the ONE gate. Nothing else may check these.
 
-    A look is **executable ffmpeg**, which is a wider vocabulary than the
-    rectangles beside it, so what is checked is exactly what the assembler's shape
-    depends on — not an attempt to police the filter language:
+    A look is **executable ffmpeg supplied by a caller**, and
+    ``assemble_music_video`` is a live per-caller MCP tool, so this is the
+    trust boundary for the whole seam. Four rules:
 
+    - **Only filters muvid names.** :data:`LOOK_FILTERS` is an allowlist, and the
+      constant carries why a blocklist cannot work here.
     - **One linear chain.** The fragment is concatenated with commas into a chain
       the assembler already builds, so a graph separator or a pad label makes the
-      result mean something neither side wrote.
-    - **No container input.** ``[1:v]`` is how a filter reaches a second ``-i``,
-      and a constant number of decoders per invocation is the whole of the
-      bounded-memory guarantee muvid#21/#24 bought. A look that wants a second
-      source reaches it as ``movie=`` — a filter, not an input — which is
-      ``looks``' own rule (its rule 20) for the same reason.
+      result mean something neither side wrote. ``[1:v]`` is also how a filter
+      reaches a second ``-i``, and a constant number of decoders per invocation is
+      the whole of the bounded-memory guarantee muvid#21/#24 bought.
+    - **Lexically closed.** An unterminated quote or a trailing backslash is not a
+      forbidden character — it is a fragment that means one thing alone and
+      another thing spliced, which is the same defect one level down.
     - **Not on a gap.** A gap has no footage; the assembler builds its black fill
       from a synthetic source with its own chain, so a look there would need a
       third splice site and would be styling nothing.
+
+    A look wanting a second SOURCE has nowhere to go, and saying so is the point:
+    ``movie=`` — which an earlier version of this message advised — is refused,
+    and would not have worked if it were not. It is a zero-input source filter, so
+    at the solo site it leaves the preceding chain unconsumed and ffmpeg refuses
+    the whole simple filtergraph (*"had 1 input(s) and 2 output(s)"*, measured),
+    and at the transition site it opens a second container from inside the
+    fragment — the accounting muvid#21/#24 exists to keep. Compositing needs a
+    second splice site the assembler does not have.
     """
     look = e.look
     if not look.strip():
@@ -610,17 +836,45 @@ def _validate_look(i, e) -> None:
             f"EDL entry {i}: look starts or ends with a comma ({look!r}). The "
             "assembler supplies the separators; a stray one emits an empty filter."
         )
-    bad = _first_unescaped(look, _LOOK_FORBIDDEN)
+    try:
+        bad = _first_unescaped(look, _LOOK_FORBIDDEN)
+    except _LookSyntaxError as exc:
+        raise ValueError(
+            f"EDL entry {i}: look is not lexically closed — it ends "
+            + (
+                "inside a single-quoted run"
+                if exc.char == "'"
+                else "on a dangling backslash"
+            )
+            + f" ({look!r}). ffmpeg's tokenizer would swallow whatever the "
+            "assembler splices after it, so the fragment means one thing on a "
+            "solo cut and something else on a blended boundary, where it eats "
+            "the `,format=yuv420p[a];[1:` that follows and builds a different "
+            "graph. Close it."
+        ) from None
     if bad is not None:
         raise ValueError(
             f"EDL entry {i}: look contains an unescaped {bad!r} ({look!r}). A look "
             "must be ONE linear filter chain naming no container input: it is "
             "spliced into the per-cut chain, where a pad label or a graph separator "
             "silently builds a different graph, and a second input would add a "
-            "decoder per cut — the shape muvid#21/#24 was OOM-killed for. A second "
-            "SOURCE is reachable as `movie=`, which is a filter. Escape a literal "
-            f"{bad!r} inside a path with a backslash (looks.escape_filter_value "
-            "does)."
+            "decoder per cut — the shape muvid#21/#24 was OOM-killed for. Escape a "
+            f"literal {bad!r} inside a path with a backslash "
+            "(looks.escape_filter_value does)."
+        )
+    for name in _look_filter_names(look):
+        if name in LOOK_FILTERS:
+            continue
+        raise ValueError(
+            f"EDL entry {i}: look names the filter {name!r}, which muvid does not "
+            f"offer ({look!r}). A look is executable ffmpeg reaching a renderer "
+            "that can write this machine's disk, and it arrives over a per-caller "
+            "tool surface, so the filters are an ALLOWLIST rather than a set of "
+            "refusals: muvid offers "
+            f"{sorted(LOOK_FILTERS)}. Compile the look with muvid.footage.look "
+            "(punch_in / motion / stylize) instead of hand-writing one, and if a "
+            "filter genuinely belongs on this seam add it to "
+            "muvid.footage.edl.LOOK_FILTERS deliberately — it must name no file."
         )
     if e.is_gap:
         raise ValueError(

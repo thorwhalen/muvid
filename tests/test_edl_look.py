@@ -2,21 +2,31 @@
 
 The contract under test:
 
-- a look is ONE linear filter chain, gated by the ONE gate, and survives the JSON
-  round trip and ``derive_cuts`` like ``crop`` does;
-- an EDL **without** one is byte-identical through the render path — not merely
+- a look is ONE lexically-closed linear filter chain naming only filters
+  ``LOOK_FILTERS`` offers, gated by the ONE gate, and survives the JSON *and*
+  editor round trips like ``crop`` does;
+- **the gate is a trust boundary, not a tidiness rule.** ``assemble_music_video``
+  is a live per-caller MCP tool whose ``edl`` argument is free-form dicts, so a
+  look is executable ffmpeg from a remote caller: before the allowlist,
+  ``metadata=mode=print:file=<path>`` passed the gate and truncated that file
+  while the render returned a success payload;
+- an EDL **without** a look is byte-identical through the render path — not merely
   "works", identical, which is what makes the field additive;
-- the fragment lands on **both** render sites, at the same place in the chain,
-  because the two sites are the two sides of a blended boundary and a look that
-  reaches one and not the other is a visible seam;
+- the fragment lands on **both** render sites, at the same place in the chain, and
+  **each side carries its OWN cut's look**, because the two sites are the two
+  sides of a blended boundary and a look that reaches one and not the other, or
+  that reaches both from one cut, is a visible seam;
 - muvid#66's in-shot punch-in really zooms, and does not change the frame count.
 
 The pixel checks render for real. A splice that produces a plausible string and a
-different picture is exactly the failure this is here to catch.
+different picture is exactly the failure this is here to catch. Where a rule is a
+REFUSAL, there is a measurement of the thing being refused actually misbehaving —
+a gate that refuses something harmless is a gate nobody can evaluate.
 """
 
 from __future__ import annotations
 
+import re
 import shutil
 import subprocess
 from pathlib import Path
@@ -25,6 +35,7 @@ import pytest
 
 from muvid.footage.assemble import _part_filter
 from muvid.footage.edl import (
+    LOOK_FILTERS,
     AssemblyCut,
     CropWindow,
     EdlEntry,
@@ -48,6 +59,12 @@ SONG_DUR = 10.0
 _A = FootageAlignment("A", 0.0, 0.9, 10.0, (0.0, 10.0))
 _B = FootageAlignment("B", 0.0, 0.9, 10.0, (0.0, 10.0))
 _GREY = "hue=s=0"
+#: A second, DIFFERENT look. The per-side assertions below are only worth anything
+#: if the two sides carry different fragments: with one look on both, "the look
+#: reached the blend" and "one cut's look reached BOTH blend inputs" emit the same
+#: string, and the guard cannot tell them apart. `punch_in_cuts(every=2)` produces
+#: exactly this asymmetry by construction, so it is the normal shape, not a corner.
+_WARM = "hue=h=90"
 
 
 def _entry(**kw) -> EdlEntry:
@@ -191,17 +208,14 @@ def test_the_look_composes_with_a_crop_rather_than_replacing_it():
     assert got.endswith(f",{_GREY}")
 
 
-def test_both_render_sites_place_the_look_identically(monkeypatch, tmp_path):
-    """The two copies of the template are the two SIDES of a blended boundary.
+def _record_ffmpeg(monkeypatch):
+    """Run the assembler with every ffmpeg call RECORDED instead of run.
 
-    A look that reaches the solo part but not the blend (or reaches it in a
-    different position) makes a cut's two sides disagree exactly where the xfade
-    puts them on top of each other — a visible seam, and one nothing downstream
-    can detect. Before this change the template was written out twice; the test
-    asserts the property rather than the refactor.
+    Returns the list the calls land in. Shared by the two argv-level guards below
+    — the per-side look placement and the look-less argv snapshot — because they
+    need the same harness and the setup is four monkeypatches nobody should copy.
     """
     import muvid.visualize.ffmpeg as F
-    from muvid.footage.assemble import assemble_music_video
 
     calls = []
     monkeypatch.setattr(F, "require_ffmpeg", lambda *a, **k: None)
@@ -210,11 +224,32 @@ def test_both_render_sites_place_the_look_identically(monkeypatch, tmp_path):
         F, "probe", lambda *a, **k: {"streams": [{"codec_type": "video"}]}
     )
     monkeypatch.setattr(F, "run_ffmpeg", lambda args, **k: calls.append(list(args)))
+    return calls
 
+
+def test_both_render_sites_place_each_cut_s_OWN_look(monkeypatch, tmp_path):
+    """The two copies of the template are the two SIDES of a blended boundary.
+
+    A look that reaches the solo part but not the blend, reaches it in a different
+    position, or reaches it from the WRONG CUT, makes a boundary's two sides
+    disagree exactly where the xfade puts them on top of each other — a visible
+    seam, and one nothing downstream can detect.
+
+    The two entries carry DIFFERENT looks on purpose. That is the whole difference
+    between this and the version it replaces, which gave both entries the same
+    string and asserted ``graph.count(tail) == 2``: that count is satisfied just as
+    well by ``_norm`` reading the look from one fixed side, i.e. by the exact
+    collapse ``_norm``'s own comment says the per-input call prevents. Measured
+    under that mutation: the whole suite stayed green, while the rendered blend
+    showed a hard 0.000 -> 125.572 saturation cliff one frame in.
+    """
+    from muvid.footage.assemble import assemble_music_video
+
+    calls = _record_ffmpeg(monkeypatch)
     entries = validate_edl(
         [
             EdlEntry(0.0, 4.0, "A", look=_GREY),
-            EdlEntry(4.0, 10.0, "B", transition=Transition(0.4, "fade"), look=_GREY),
+            EdlEntry(4.0, 10.0, "B", transition=Transition(0.4, "fade"), look=_WARM),
         ],
         [_A, _B],
         SONG_DUR,
@@ -228,16 +263,20 @@ def test_both_render_sites_place_the_look_identically(monkeypatch, tmp_path):
     blends = [
         c[c.index("-filter_complex") + 1] for c in calls if "-filter_complex" in c
     ]
-    assert solos and blends, (
-        "the EDL must exercise BOTH sites for this to mean anything"
+    assert len(solos) == 2 and len(blends) == 1, (
+        f"the EDL must be solo(A) xfade solo(B) for this to mean anything, "
+        f"got {len(solos)} solos and {len(blends)} blends"
     )
-    tail = "tpad=stop=-1:stop_mode=clone," + _GREY
-    for vf in solos:
-        assert vf.endswith(tail), vf
-    for graph in blends:
-        # BOTH sides of the blend, not just one: `_norm` is per-input precisely
-        # because the two sides are different cuts.
-        assert graph.count(tail + ",format=yuv420p") == 2, graph
+    norm = "tpad=stop=-1:stop_mode=clone,"
+    # The solo parts, in plan order: A's look on A, B's look on B.
+    assert solos[0].endswith(norm + _GREY), solos[0]
+    assert solos[1].endswith(norm + _WARM), solos[1]
+    # ...and PER BRANCH of the blend. `[0:v]` is the OUTGOING cut (A), `[1:v]` the
+    # incoming (B); a look read from a fixed side lands the same fragment twice.
+    a_branch, rest = blends[0].split("[a];", 1)
+    b_branch = rest.split("[b];", 1)[0]
+    assert a_branch.endswith(norm + _GREY + ",format=yuv420p"), a_branch
+    assert b_branch.endswith(norm + _WARM + ",format=yuv420p"), b_branch
     # ...and the blend really is two decoders, still. The seam must not have
     # moved the invariant muvid#21/#24 bought.
     for c in calls:
@@ -507,14 +546,562 @@ def test_a_punch_in_really_zooms(tmp_path):
 
 
 @needs_ffmpeg
-def test_an_edl_with_no_look_renders_the_pixels_it_always_did(tmp_path):
-    """The additive claim, checked on DECODED frames rather than on the code.
+def test_a_look_less_render_is_deterministic(tmp_path):
+    """Two renders of the same look-less EDL agree frame for frame.
 
-    Two renders of the same look-less EDL must agree frame for frame. That the
-    field exists at all must be invisible to every edit written before it.
+    Named for what it asserts. It used to be called
+    ``test_an_edl_with_no_look_renders_the_pixels_it_always_did`` and its
+    docstring promised that "the field exists at all must be invisible to every
+    edit written before it" — but it renders twice with the SAME build, so it can
+    only measure determinism. Measured: ``-crf`` +12, and shifting
+    ``_render_part``'s input seek by three frames, each moved every look-less
+    render's decoded pixels and left this test green.
+
+    The historical claim is pinned where it can be pinned build-independently, by
+    :func:`test_a_look_less_assemble_emits_the_argv_it_always_did` below. A decoded
+    digest cannot do that job: an x264 intermediate's output varies with encoder
+    build and thread count, so a committed pixel hash would fail on a different
+    machine for a reason that has nothing to do with muvid.
     """
     import numpy as np
 
     a = _frames(_render(tmp_path / "a", None), 320, 180)
     b = _frames(_render(tmp_path / "b", None), 320, 180)
     assert np.array_equal(a, b)
+
+
+#: EXACTLY the ffmpeg muvid ran for a look-less two-cut edit with one transition,
+#: captured before the ``look`` field existed and pinned as a literal. Four
+#: invocations: solo(A), the xfade, solo(B), and the concat+mux.
+#:
+#: This is the additive claim in the one form that survives a change of machine.
+#: The per-cut chain has its own literal (``_HISTORICAL``), but the chain is only
+#: part of the render — the seek arithmetic, the exact frame counts, the encoder
+#: settings and the mux contract are the rest of it, and nothing pinned them. Both
+#: of the mutations that defeated the old pixel test (``-crf`` +12; the input seek
+#: shifted by 3/fps) are visible right here, and neither needs ffmpeg to detect.
+#:
+#: Paths are normalised because two of them are a temp directory. Everything else
+#: is verbatim — including argument ORDER, which is what makes it a snapshot
+#: rather than a set of spot checks.
+_HISTORICAL_ARGV = (
+    # solo(A): input-side seek, one spare frame of input, exact -frames:v cap
+    [
+        "-ss", "0.000000", "-t", "4.040000", "-i", "/tmp/a.mp4",
+        "-vf",
+        "scale=640:360:force_original_aspect_ratio=decrease,"
+        "pad=640:360:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=25,tpad=stop=-1:stop_mode=clone",
+        "-frames:v", "95",
+        "-an", "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "20",
+        "-preset", "veryfast", "<parts>/part0000.mp4",
+    ],
+    # the blended boundary: TWO decoders, never more, each seeked to the window
+    [
+        "-ss", "3.800000", "-t", "0.440000", "-i", "/tmp/a.mp4",
+        "-ss", "3.800000", "-t", "0.440000", "-i", "/tmp/b.mp4",
+        "-filter_complex",
+        "[0:v]scale=640:360:force_original_aspect_ratio=decrease,"
+        "pad=640:360:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=25,tpad=stop=-1:stop_mode=clone,"
+        "format=yuv420p[a];"
+        "[1:v]scale=640:360:force_original_aspect_ratio=decrease,"
+        "pad=640:360:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=25,tpad=stop=-1:stop_mode=clone,"
+        "format=yuv420p[b];"
+        "[a][b]xfade=transition=fade:duration=0.400000:offset=0[v]",
+        "-map", "[v]", "-frames:v", "10",
+        "-an", "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "20",
+        "-preset", "veryfast", "<parts>/part0001.mp4",
+    ],
+    # solo(B), shortened at the head by its own incoming transition
+    [
+        "-ss", "4.200000", "-t", "6.040000", "-i", "/tmp/b.mp4",
+        "-vf",
+        "scale=640:360:force_original_aspect_ratio=decrease,"
+        "pad=640:360:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=25,tpad=stop=-1:stop_mode=clone",
+        "-frames:v", "145",
+        "-an", "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "20",
+        "-preset", "veryfast", "<parts>/part0002.mp4",
+    ],
+    # concat by STREAM COPY + the clean song, encoded to the delivery contract
+    [
+        "-f", "concat", "-i", "<parts>/parts.txt", "-i", "/tmp/song.wav",
+        "-map", "0:v", "-map", "1:a:0", "-t", "10.000000",
+        "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-ac", "2",
+        "-use_editlist", "0", "-movflags", "+faststart", "<out>",
+    ],
+)
+
+
+def test_a_look_less_assemble_emits_the_argv_it_always_did(monkeypatch, tmp_path):
+    """The additive claim, pinned against a RECORDING rather than against itself.
+
+    ``_HISTORICAL`` pins the filter chain; this pins the whole invocation, which
+    is where the two mutations that beat the old pixel test live. It needs no
+    ffmpeg (the runner is recorded), so it runs everywhere and is stable across
+    ffmpeg builds — the two properties a decoded-pixel digest cannot have.
+    """
+    from muvid.footage.assemble import assemble_music_video
+
+    calls = _record_ffmpeg(monkeypatch)
+    entries = validate_edl(
+        [
+            EdlEntry(0.0, 4.0, "A"),
+            EdlEntry(4.0, 10.0, "B", transition=Transition(0.4, "fade")),
+        ],
+        [_A, _B],
+        SONG_DUR,
+    )
+    cuts = derive_cuts(entries, [_A, _B], {"A": "/tmp/a.mp4", "B": "/tmp/b.mp4"})
+    out = tmp_path / "out.mp4"
+    assemble_music_video(
+        cuts, "/tmp/song.wav", str(out), canvas=(640, 360), fps=25, crf=20,
+        preset="veryfast",
+    )
+
+    def normalise(arg: str) -> str:
+        # The parts dir carries a random suffix and lives under a temp root; the
+        # output path is the caller's. Neither is a fact about the render.
+        if arg == str(out):
+            return "<out>"
+        parent = Path(arg).parent
+        if parent.name.startswith(".parts-"):
+            return f"<parts>/{Path(arg).name}"
+        return arg
+
+    got = tuple([normalise(a) for a in c] for c in calls)
+    assert got == _HISTORICAL_ARGV
+
+
+# -- the trust boundary: a look is executable ffmpeg from a REMOTE caller ------
+#
+# `assemble_music_video` is a live MCP tool on the per-caller reelee AV connector
+# (muvid/mcp/__init__.py's FOOTAGE_TOOLS) and its `edl` argument is free-form
+# dicts, from which `_as_entry` reads `look` by name. So every string below is
+# reachable over the wire, and each one was ACCEPTED by `validate_edl` on this
+# branch before `LOOK_FILTERS` existed.
+
+#: One entry per PRIMITIVE, not one per filter — the point is that the dangerous
+#: filters have nothing lexical in common, which is why a blocklist cannot work.
+_HOSTILE_LOOKS = [
+    # create/truncate any path the renderer can write (measured: a 34-byte canary
+    # went to 0 bytes and the render still returned a success payload)
+    ("metadata=mode=print:file=/tmp/muvid-canary", "metadata"),
+    # a second, structurally different write primitive — its own CSV log
+    ("deshake=filename=/tmp/muvid-canary", "deshake"),
+    ("signature=filename=/tmp/muvid-canary", "signature"),
+    ("ssim=stats_file=/tmp/muvid-canary", "ssim"),
+    ("psnr=f=/tmp/muvid-canary", "psnr"),
+    ("removelogo=filename=/tmp/muvid-canary", "removelogo"),
+    ("curves=plot=/tmp/muvid-canary", "curves"),
+    # read a path chosen by the caller
+    ("sendcmd=f=/etc/hosts", "sendcmd"),
+    # a second CONTAINER opened from inside the fragment — the muvid#21/#24
+    # decoder accounting leaving by the back door
+    ("movie=/tmp/whatever.mp4", "movie"),
+    ("amovie=/tmp/whatever.m4a", "amovie"),
+    # arbitrary per-pixel expression evaluation, and a graph-shape change
+    ("geq=r=0", "geq"),
+    ("concat=n=2", "concat"),
+]
+
+
+@pytest.mark.parametrize("look, filter_name", _HOSTILE_LOOKS)
+def test_a_look_may_name_only_a_filter_muvid_offers(look, filter_name):
+    """The gate is an ALLOWLIST, and this is the population that makes it one."""
+    with pytest.raises(ValueError, match=f"names the filter {filter_name!r}"):
+        validate_edl([_entry(look=look)], [_A], 4.0)
+
+
+@pytest.mark.parametrize(
+    "spelling",
+    [
+        r"\m\e\t\a\d\a\t\a=mode=print:file=/tmp/muvid-canary",
+        "'metadata'=mode=print:file=/tmp/muvid-canary",
+        "m'e'tadata=mode=print:file=/tmp/muvid-canary",
+        "metadata@instance=mode=print:file=/tmp/muvid-canary",
+        "hue=s=0, metadata =mode=print:file=/tmp/muvid-canary",
+        "hue=s=0,metadata=mode=print:file=/tmp/muvid-canary",
+    ],
+)
+def test_the_allowlist_resolves_a_name_the_way_ffmpeg_does(spelling):
+    """An allowlist that compared RAW text would be bypassed by five spellings.
+
+    ffmpeg's ``av_get_token`` applies escapes and strips quotes before it looks a
+    filter up, and it allows a ``@instance`` label and whitespace around the name.
+    Each spelling here was measured against ffmpeg 9.0.1 *outside* muvid: every one
+    resolves to ``metadata`` and truncated a canary file to 0 bytes on exit 0. So
+    the check has to resolve the token, not grep the string — that is what
+    ``_unquote`` in the gate is for, and this test is the reason it exists.
+    """
+    with pytest.raises(ValueError, match="names the filter 'metadata'"):
+        validate_edl([_entry(look=spelling)], [_A], 4.0)
+
+
+@needs_ffmpeg
+def test_the_gate_is_what_stops_a_look_writing_a_file(tmp_path):
+    """The whole finding, end to end: the payload WORKS, and muvid refuses it.
+
+    A refusal test alone proves nothing about the danger — it could be refusing
+    something harmless. So this runs the exact chain ``_part_filter`` builds
+    through real ffmpeg first, as a CONTROL, and only then asserts the gate.
+    """
+    canary = tmp_path / "canary.txt"
+    body = "canary contents that must survive\n"
+    payload = f"metadata=mode=print:file={canary}"
+
+    # CONTROL — the payload is real on this binary. Same chain, same order.
+    canary.write_text(body)
+    src = _src(tmp_path, "src", 1.0, size="64x48")
+    chain_ = _part_filter(
+        _cut(clip_path=str(src), look=payload), w=64, h=48, fps=25
+    )
+    r = subprocess.run(
+        ["ffmpeg", "-v", "error", "-i", str(src), "-vf", chain_,
+         "-frames:v", "3", "-an", "-f", "null", "-"],
+        capture_output=True,
+    )
+    assert r.returncode == 0, r.stderr.decode()[:400]
+    assert canary.read_text() == "", (
+        "the control did not fire — this ffmpeg build does not have the write "
+        "primitive, so the assertion below would be vacuous"
+    )
+
+    # THE GATE — same string, refused before anything runs.
+    canary.write_text(body)
+    with pytest.raises(ValueError, match="names the filter 'metadata'"):
+        validate_edl([_entry(look=payload)], [_A], 4.0)
+    assert canary.read_text() == body
+
+
+@needs_ffmpeg
+def test_no_allowlisted_filter_can_name_a_file():
+    """What earns a place on the allowlist, asked of the real binary.
+
+    A name allowlist is only as good as the names on it: allow one filter with a
+    writable path option and the whole class is back. So this reads each
+    allowlisted filter's option table out of ffmpeg rather than trusting the
+    curation, and the single exception is recorded by name with its reason.
+
+    Sanity-checked in the same run against filters that are NOT allowlisted, so a
+    probe that silently returned nothing cannot make this pass.
+    """
+    from muvid.footage.edl import _LOOK_FILE_OPTIONS
+
+    def path_options(name):
+        r = subprocess.run(
+            ["ffmpeg", "-hide_banner", "-h", f"filter={name}"],
+            capture_output=True, text=True,
+        )
+        opts = {
+            m.group(1)
+            for m in (
+                re.match(r"^\s{2,}([A-Za-z0-9_]+)\s+<", line)
+                for line in (r.stdout + r.stderr).splitlines()
+            )
+            if m
+        }
+        return {o for o in opts if o in ("f", "plot") or "file" in o or "path" in o}
+
+    # The instrument works: filters that DO name a file are seen to.
+    seen = {n: path_options(n) for n in ("metadata", "movie", "curves", "sendcmd")}
+    assert all(seen.values()), f"the option probe returned nothing for {seen}"
+
+    for name in sorted(LOOK_FILTERS):
+        found = path_options(name)
+        allowed = {o for f, o in _LOOK_FILE_OPTIONS if f == name}
+        assert found <= allowed, (
+            f"{name!r} declares the path option(s) {sorted(found - allowed)}, so a "
+            f"caller-supplied look could name a file through it. Either drop it "
+            f"from LOOK_FILTERS or record the option in _LOOK_FILE_OPTIONS with "
+            f"the reason it is safe — reading, not writing, is the only reason so "
+            f"far (lut3d loads a .cube)."
+        )
+
+
+def test_the_allowlist_covers_every_filter_looks_declares():
+    """Drift guard: a new ``looks`` effect must be a DECISION here, not a surprise.
+
+    Pinned against ``looks``' registry rather than derived from it, and the
+    direction matters both ways. Derived, a new ``looks`` effect would silently
+    widen muvid's remote-input surface. Unpinned, a new effect would compile
+    happily and then be refused by muvid's own gate at render time — a failure the
+    caller cannot act on.
+
+    ``requires_filters`` is a FLOOR, not the whole set: ``fill``/``fit``/``stretch``
+    each declare ``("scale",)`` and were measured to also emit ``null`` (target
+    equals the clip) and ``pad`` (letterbox). Both are on the allowlist for that
+    measured reason; this test pins the declared half, which is the half that can
+    be checked without running ffmpeg.
+    """
+    import looks
+
+    declared = {
+        f
+        for effect in looks.effects()
+        for impl in looks.REGISTRY.implementations(effect)
+        if impl.backend == "ffmpeg"
+        for f in impl.requires_filters
+    }
+    assert declared, "looks declared no ffmpeg filters at all — the probe is wrong"
+    missing = declared - LOOK_FILTERS
+    assert not missing, (
+        f"looks can now emit {sorted(missing)}, which muvid's gate refuses. Add "
+        f"each to muvid.footage.edl.LOOK_FILTERS deliberately — and only after "
+        f"checking it names no file (test_no_allowlisted_filter_can_name_a_file)."
+    )
+
+
+def test_every_look_muvid_itself_compiles_passes_its_own_gate():
+    """The allowlist must not refuse the seam it exists to protect.
+
+    Covers both compilers: ``muvid.footage.look``'s geometry (``punch_in`` ->
+    ``zoompan``, ``motion`` -> ``setpts,crop``) and every ``looks`` effect that can
+    be compiled without an artifact or a target.
+    """
+    import looks
+
+    frags = [
+        punch_in(canvas=(640, 360), fps=25, duration_s=3.0),
+        motion(
+            [
+                (0.0, CropWindow(0.0, 0.0, 0.5, 0.5)),
+                (2.0, CropWindow(0.5, 0.5, 0.5, 0.5)),
+            ],
+            canvas=(640, 360),
+            fps=25,
+        ),
+    ]
+    from muvid.footage.look import stylize
+
+    compiled = []
+    for name in sorted(looks.effects()):
+        try:
+            frag = stylize(
+                looks.Look(steps=(looks.Effect(name=name),)),
+                canvas=(640, 360),
+                fps=25,
+                duration_s=3.0,
+            )
+        except Exception:
+            continue  # needs params or an artifact; the geometry ones are below
+        compiled.append(name)
+        frags.append(frag)
+    assert compiled, "no looks effect compiled bare — this test would be vacuous"
+    for target in ("640x360", "1280x720", "1080x1080"):
+        for name in ("fill", "fit", "stretch"):
+            frags.append(
+                stylize(
+                    looks.Look(
+                        steps=(looks.Effect(name=name, params={"target": target}),)
+                    ),
+                    canvas=(640, 360),
+                    fps=25,
+                    duration_s=3.0,
+                )
+            )
+    for frag in frags:
+        validate_edl([_entry(look=frag)], [_A], 4.0)  # must not raise
+
+
+# -- the lexer: "one linear chain" has to survive ffmpeg's OWN escaping --------
+
+
+@pytest.mark.parametrize(
+    "look, why",
+    [
+        ("hue=s='0", "inside a single-quoted run"),
+        (r"hue=s=0\ ".strip(), "on a dangling backslash"),
+    ],
+)
+def test_a_look_that_is_not_lexically_closed_is_refused(look, why):
+    """An open quote and a trailing backslash both EAT what is spliced after them.
+
+    Neither is a forbidden character, which is why the character walk missed both:
+    ``hue=s='0`` carries no ``[``, ``]`` or ``;`` at all. What it does carry is an
+    unterminated quote, and ``av_get_token`` copies everything after it literally —
+    including the ``,format=yuv420p[a];[1:`` the transition site appends. Measured:
+    that exact look renders fine on a solo cut and aborts the whole render at the
+    first blended boundary with ``No option name near 'v]scale=...'``, after N
+    parts have already been encoded.
+    """
+    with pytest.raises(ValueError, match="not lexically closed"):
+        validate_edl([_entry(look=look)], [_A], 4.0)
+    with pytest.raises(ValueError, match=why):
+        validate_edl([_entry(look=look)], [_A], 4.0)
+
+
+@needs_ffmpeg
+def test_an_unclosed_quote_really_does_restructure_the_transition_graph(tmp_path):
+    """The measurement behind the rule above, on real ffmpeg — and the asymmetry.
+
+    Refusing something is only right if it is actually broken, and the specific
+    danger here is that it is broken at ONE of the two render sites. A gate that
+    let it through would be discovered by a caller as a render that worked until
+    they added a transition.
+    """
+    src = _src(tmp_path, "src", 1.0, size="64x48")
+    norm = _part_filter(_cut(clip_path=str(src)), w=64, h=48, fps=25)
+    look = "hue=s='0"
+
+    solo = subprocess.run(
+        ["ffmpeg", "-v", "error", "-i", str(src), "-vf", f"{norm},{look}",
+         "-frames:v", "3", "-an", "-f", "null", "-"],
+        capture_output=True,
+    )
+    blend = subprocess.run(
+        ["ffmpeg", "-v", "error", "-i", str(src), "-i", str(src),
+         "-filter_complex",
+         f"[0:v]{norm},{look},format=yuv420p[a];"
+         f"[1:v]{norm},{look},format=yuv420p[b];"
+         f"[a][b]xfade=transition=fade:duration=0.1:offset=0[v]",
+         "-map", "[v]", "-frames:v", "2", "-an", "-f", "null", "-"],
+        capture_output=True,
+    )
+    assert solo.returncode == 0, solo.stderr.decode()[:300]
+    assert blend.returncode != 0, "the transition site accepted it after all"
+    assert b"No option name" in blend.stderr, blend.stderr.decode()[:400]
+
+
+def test_a_quoted_comma_is_not_a_filter_separator():
+    """The other half of the same lexer bug, in the direction that REFUSES work.
+
+    ``looks.compile_motion`` writes ``min(max(t,0),1)`` inside single quotes, so a
+    splitter that treats every comma as a separator reads one ``crop`` as four
+    filters with names like ``0)`` — and refuses a fragment muvid itself produced.
+    """
+    from muvid.footage.edl import _look_filter_names
+
+    frag = motion(
+        [(0.0, CropWindow(0.0, 0.0, 0.5, 0.5)), (2.0, CropWindow(0.5, 0.5, 0.5, 0.5))],
+        canvas=(640, 360),
+        fps=25,
+    )
+    quoted = frag.split("'")[1::2]
+    assert any("," in q for q in quoted), (
+        f"the fixture must contain a QUOTED comma; got {quoted}"
+    )
+    assert _look_filter_names(frag) == ["setpts", "crop", "scale"]
+    validate_edl([_entry(look=frag)], [_A], 4.0)  # must not raise
+
+
+@needs_ffmpeg
+def test_a_zero_input_source_cannot_reach_a_look_at_all(tmp_path):
+    """Why ``movie=`` is refused rather than advised, measured at the solo site.
+
+    ``_validate_look``'s error message used to end with "A second SOURCE is
+    reachable as ``movie=``, which is a filter" — advice that cannot be followed.
+    ``movie=`` takes zero inputs, so in one unlabelled chain the preceding chain's
+    output is left unconsumed and ffmpeg refuses the whole SIMPLE filtergraph
+    before decoding anything. The forms that do render all need ``[``, ``]`` and
+    ``;`` — exactly the characters the gate refuses for the graph-shape reason.
+    """
+    src = _src(tmp_path, "src", 1.0, size="64x48")
+    norm = _part_filter(_cut(clip_path=str(src)), w=64, h=48, fps=25)
+    for tail in (f"movie={src}", f"movie={src},overlay=10:10", "color=black", "nullsrc"):
+        r = subprocess.run(
+            ["ffmpeg", "-v", "error", "-i", str(src), "-vf", f"{norm},{tail}",
+             "-frames:v", "3", "-an", "-f", "null", "-"],
+            capture_output=True,
+        )
+        assert r.returncode != 0, f"{tail!r} rendered at the solo site after all"
+        assert b"exactly 1 input and 1 output" in r.stderr, r.stderr.decode()[:300]
+        # ...and muvid refuses it before it can get that far.
+        with pytest.raises(ValueError, match="names the filter"):
+            validate_edl([_entry(look=tail)], [_A], 4.0)
+
+
+# -- the round trip: a field the renderer honours must come BACK --------------
+
+
+def test_every_optional_edl_field_is_carried_by_the_returned_edl():
+    """The guard that stops the NEXT field repeating this.
+
+    ``assemble_music_video``'s own contract says the ``edl`` it returns "must feed
+    straight back as the edl= argument and reproduce the same render", and
+    ``renders/{id}/meta.json["edl"]`` is fed by the same function — the
+    compatibility surface ``.claude/CLAUDE.md`` names, since these bodies carry no
+    schema version. ``transition`` was hand-written into ``_edl_json`` and
+    survived; ``crop``, ``crop_end`` and ``look`` were each added to ``EdlEntry``
+    and forgotten, so a caller's grade was accepted, honoured, and absent from
+    both the reply and the record beside the file it graded.
+
+    Parameterised over ``EdlEntry``'s OWN dataclass fields, deliberately — not over
+    ``_edl_json``'s table, which is the thing that forgets. The literal list is the
+    second half: a new field fails here until someone classifies it.
+    """
+    import dataclasses
+
+    from muvid.mcp.footage_tools import _edl_json
+
+    required = {"song_start", "song_end", "clip_id"}
+    optional = [f.name for f in dataclasses.fields(EdlEntry) if f.name not in required]
+    assert optional == ["transition", "crop", "crop_end", "look"], (
+        f"EdlEntry grew or lost an optional field ({optional}). Decide whether it "
+        "belongs in the returned/persisted edit, add it to "
+        "footage_tools._EDL_OPTIONAL_FIELDS and to lacing_bridge._edl_body, then "
+        "update this list."
+    )
+    values = {
+        "transition": Transition(0.4, "fade"),
+        "crop": CropWindow(0.0, 0.25, 1.0, 0.5),
+        "crop_end": CropWindow(0.0, 0.25, 1.0, 0.5),
+        "look": _GREY,
+    }
+    for field in optional:
+        e = EdlEntry(0.0, 4.0, "A", **{field: values[field]})
+        assert field in _edl_json(e), (
+            f"{field!r} is accepted by validate_edl and honoured by the renderer, "
+            "but the edl the tool returns and persists does not carry it — so "
+            "feeding that edl back, which the tool's own note instructs, silently "
+            "renders something else."
+        )
+    # ...and an entry that sets none of them is byte-identical to what it always
+    # was. Omit-when-None is what keeps every existing meta.json readable.
+    assert _edl_json(EdlEntry(0.0, 1.0, "A")) == {
+        "song_start": 0.0,
+        "song_end": 1.0,
+        "clip_id": "A",
+    }
+
+
+def test_a_look_survives_the_json_round_trip_verbatim():
+    """Accepted -> returned -> fed back -> the SAME render, which is the contract."""
+    from muvid.mcp.footage_tools import _edl_json
+
+    caller = [
+        {"song_start": 0.0, "song_end": 4.0, "clip_id": "A", "look": _GREY},
+        {"song_start": 4.0, "song_end": 10.0, "clip_id": "A", "look": _WARM,
+         "transition": {"duration_s": 0.4, "curve": "fade"}},
+    ]
+    first = validate_edl(caller, [_A], SONG_DUR)
+    returned = [_edl_json(e) for e in first]
+    second = validate_edl(returned, [_A], SONG_DUR)
+    assert [e.look for e in second] == [_GREY, _WARM]
+    assert [_edl_json(e) for e in second] == returned
+
+
+def test_a_look_survives_the_editor_round_trip():
+    """EDL -> annotations -> EDL is identity, and a look is part of the identity.
+
+    ``.claude/CLAUDE.md``: "A field the bridge does not carry is a field the editor
+    silently DROPS on the way back." Same shape as the transition guard next door.
+    """
+    pytest.importorskip("lacing")
+    from muvid.footage.lacing_bridge import edl_annotations, edl_from_annotations
+
+    entries = validate_edl([_entry(look=_GREY)], [_A], 4.0)
+    anns = edl_annotations(entries, song_asset_id="a" * 64, attributed_to="t")
+    [back] = edl_from_annotations(anns)
+    assert back["look"] == _GREY
+    assert validate_edl([back], [_A], 4.0)[0].look == _GREY
+
+
+def test_the_editor_read_skips_a_malformed_look_rather_than_crashing():
+    """Untrusted browser output: skip-shaped, matching ``crop`` and ``transition``."""
+    pytest.importorskip("lacing")
+    from muvid.footage.lacing_bridge import edl_annotations, edl_from_annotations
+
+    entries = validate_edl([_entry(look=_GREY)], [_A], 4.0)
+    anns = edl_annotations(entries, song_asset_id="a" * 64, attributed_to="t")
+    anns[0].body["look"] = {"not": "a string"}
+    [back] = edl_from_annotations(anns)
+    assert "look" not in back
