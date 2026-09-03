@@ -850,15 +850,15 @@ def test_the_allowlist_covers_every_filter_looks_declares():
     )
 
 
-def test_every_look_muvid_itself_compiles_passes_its_own_gate():
-    """The allowlist must not refuse the seam it exists to protect.
+def test_every_geometry_look_muvid_compiles_passes_its_own_gate():
+    """The allowlist must not refuse the seam it exists to protect — the half that
+    needs no binary.
 
-    Covers both compilers: ``muvid.footage.look``'s geometry (``punch_in`` ->
-    ``zoompan``, ``motion`` -> ``setpts,crop``) and every ``looks`` effect that can
-    be compiled without an artifact or a target.
+    ``muvid.footage.look``'s geometry compiles from pure arithmetic (``punch_in``
+    -> ``zoompan``, ``motion`` -> ``setpts,crop``), so it is checked everywhere,
+    including the Windows leg where muvid installs no ffmpeg. The ``looks``-effect
+    half probes a binary and is next door.
     """
-    import looks
-
     frags = [
         punch_in(canvas=(640, 360), fps=25, duration_s=3.0),
         motion(
@@ -870,9 +870,25 @@ def test_every_look_muvid_itself_compiles_passes_its_own_gate():
             fps=25,
         ),
     ]
+    for frag in frags:
+        validate_edl([_entry(look=frag)], [_A], 4.0)  # must not raise
+
+
+@needs_ffmpeg
+def test_every_looks_effect_muvid_compiles_passes_its_own_gate():
+    """The other half: every ``looks`` effect, compiled against the real binary.
+
+    ``stylize`` PROBES ffmpeg — that is the whole point of it, since a filter's
+    licence tier is a property of the build — so this cannot run where there is no
+    binary. Marked rather than allowed to fall into the ``except`` below, which
+    would turn "no ffmpeg" into "nothing compiled" and then into a vacuity failure
+    (it did, on the Windows leg).
+    """
+    import looks
+
     from muvid.footage.look import stylize
 
-    compiled = []
+    frags, compiled = [], []
     for name in sorted(looks.effects()):
         try:
             frag = stylize(
@@ -886,7 +902,7 @@ def test_every_look_muvid_itself_compiles_passes_its_own_gate():
         compiled.append(name)
         frags.append(frag)
     assert compiled, "no looks effect compiled bare — this test would be vacuous"
-    for target in ("640x360", "1280x720", "1080x1080"):
+    for target in ("640x360", "1280x720", "1080x1080"):  # null / scale / scale,pad
         for name in ("fill", "fit", "stretch"):
             frags.append(
                 stylize(
@@ -937,28 +953,53 @@ def test_an_unclosed_quote_really_does_restructure_the_transition_graph(tmp_path
     danger here is that it is broken at ONE of the two render sites. A gate that
     let it through would be discovered by a caller as a render that worked until
     they added a transition.
+
+    Three commands, because two of them are the controls that make the third mean
+    something: the same look renders at the solo site, fails at the transition
+    site, and the transition site accepts the identical graph once the quote is
+    CLOSED. The third is what isolates the quote as the cause rather than the
+    graph shape.
+
+    **Deliberately no assertion on ffmpeg's wording.** The diagnostic is
+    build-specific — 9.0.1 says ``No option name near 'v]scale=…'`` while the CI
+    runner's older build says ``Error applying option
+    'force_original_aspect_ratio' to filter 'hue'``. Both are the same restructure
+    (the quote swallowed ``,format=yuv420p[a];[1:v]scale=64:48:``, so an option
+    from the far side of the splice landed on ``hue``), and pinning either string
+    would make this test a fact about one machine.
     """
     src = _src(tmp_path, "src", 1.0, size="64x48")
     norm = _part_filter(_cut(clip_path=str(src)), w=64, h=48, fps=25)
-    look = "hue=s='0"
 
-    solo = subprocess.run(
-        ["ffmpeg", "-v", "error", "-i", str(src), "-vf", f"{norm},{look}",
-         "-frames:v", "3", "-an", "-f", "null", "-"],
-        capture_output=True,
+    def solo(look):
+        return subprocess.run(
+            ["ffmpeg", "-v", "error", "-i", str(src), "-vf", f"{norm},{look}",
+             "-frames:v", "3", "-an", "-f", "null", "-"],
+            capture_output=True,
+        )
+
+    def blend(look):
+        return subprocess.run(
+            ["ffmpeg", "-v", "error", "-i", str(src), "-i", str(src),
+             "-filter_complex",
+             f"[0:v]{norm},{look},format=yuv420p[a];"
+             f"[1:v]{norm},{look},format=yuv420p[b];"
+             f"[a][b]xfade=transition=fade:duration=0.1:offset=0[v]",
+             "-map", "[v]", "-frames:v", "2", "-an", "-f", "null", "-"],
+            capture_output=True,
+        )
+
+    open_quote, closed = "hue=s='0", "hue=s=0"
+    a, b, c = solo(open_quote), blend(open_quote), blend(closed)
+    assert a.returncode == 0, (
+        f"the solo site refused it, so there is no asymmetry to demonstrate: "
+        f"{a.stderr.decode()[:300]}"
     )
-    blend = subprocess.run(
-        ["ffmpeg", "-v", "error", "-i", str(src), "-i", str(src),
-         "-filter_complex",
-         f"[0:v]{norm},{look},format=yuv420p[a];"
-         f"[1:v]{norm},{look},format=yuv420p[b];"
-         f"[a][b]xfade=transition=fade:duration=0.1:offset=0[v]",
-         "-map", "[v]", "-frames:v", "2", "-an", "-f", "null", "-"],
-        capture_output=True,
+    assert c.returncode == 0, (
+        f"the CLOSED control failed, so the graph shape is wrong and the test "
+        f"proves nothing about the quote: {c.stderr.decode()[:300]}"
     )
-    assert solo.returncode == 0, solo.stderr.decode()[:300]
-    assert blend.returncode != 0, "the transition site accepted it after all"
-    assert b"No option name" in blend.stderr, blend.stderr.decode()[:400]
+    assert b.returncode != 0, "the transition site accepted the unclosed quote"
 
 
 def test_a_quoted_comma_is_not_a_filter_separator():
