@@ -169,6 +169,81 @@ def escape_filter_value(value: str) -> str:
     )
 
 
+#: The full 8-bit range ``eq`` clips its output to. ``lutyuv`` offers ``minval`` /
+#: ``maxval`` / ``clipval`` variables and they are NOT these — they are the
+#: *broadcast* range (16–235 luma, 16–240 chroma), so reaching for the named
+#: constants instead of these literals would crush blacks and clip highlights that
+#: ``eq`` left untouched. The literals are what reproduces ``eq``.
+_FULL_RANGE = (0, 255)
+
+#: Chroma neutral, and the pivot saturation scales about. ``vf_eq`` works in 0–1
+#: and pivots on 0.5, which is 127.5 in 8 bits — *not* 128. The naive value never
+#: costs more than ``0.5 * |1 - saturation|`` LSB, so no max-error bound can catch
+#: it; what it does is raise the MEAN chroma error against ``eq`` (~1.3x at the
+#: shipped saturation of 0.8, ~2x at 0.6). Free to get right, so it is written
+#: once, here — and pinned by a test that measures the mean, not the max.
+_CHROMA_PIVOT = 127.5
+
+
+def brightness_saturation_lut(
+    *, brightness: float = 0.0, saturation: float = 1.0
+) -> dict[str, str]:
+    """``lutyuv`` y/u/v expressions reproducing ``eq``'s brightness + saturation.
+
+    ``eq`` is compiled into ffmpeg only under ``--enable-gpl``, so every chain that
+    reached for it made muvid require a GPL build for what is arithmetic on three
+    planes. ``lutyuv`` is LGPL and expresses the same two knobs exactly as ``vf_eq``
+    defines them: brightness is an ADDITIVE offset of ``brightness * 255`` on luma,
+    saturation a scaling of chroma about :data:`_CHROMA_PIVOT`.
+
+    Returns a ``{component: expression}`` mapping rather than a filter string
+    because the two callers need different shapes — one composes a filtergraph,
+    the other emits one ``sendcmd`` command per component — and a second copy of
+    this arithmetic is exactly how the two would drift apart.
+
+    Args:
+        brightness: Additive luma offset, -1 to 1, in ``eq``'s units (a fraction
+            of full scale). ``0`` is a no-op.
+        saturation: Chroma scaling about neutral. ``1`` is a no-op.
+
+    Examples:
+        >>> lut = brightness_saturation_lut(brightness=-0.25, saturation=0.8)
+        >>> lut["y"]
+        'clip(val-63.75,0,255)'
+        >>> lut["u"] == lut["v"]
+        True
+        >>> brightness_saturation_lut()["y"], brightness_saturation_lut()["u"]
+        ('clip(val+0,0,255)', 'clip((val-127.5)*1+127.5,0,255)')
+    """
+    lo, hi = _FULL_RANGE
+    chroma = f"clip((val-{_CHROMA_PIVOT:g})*{saturation:g}+{_CHROMA_PIVOT:g},{lo},{hi})"
+    return {
+        "y": f"clip(val{brightness * hi:+g},{lo},{hi})",
+        "u": chroma,
+        "v": chroma,
+    }
+
+
+def lut_filter(exprs: dict[str, str], *, label: str = "") -> str:
+    r"""A ``lutyuv`` filter from :func:`brightness_saturation_lut`'s expressions.
+
+    The expressions contain ``,``, which the *filtergraph* parser reads as "next
+    filter", so every one goes through :func:`escape_filter_value` — the same
+    escaper, and the same reason, as a ``sendcmd`` script path.
+
+    Args:
+        exprs: ``{component: expression}``.
+        label: Optional ``@label`` so ``sendcmd`` can address this filter.
+
+    Examples:
+        >>> lut_filter({"y": "clip(val+0,0,255)"}, label="flash")
+        'lutyuv@flash=y=clip(val+0\\,0\\,255)'
+    """
+    at = f"@{label}" if label else ""
+    opts = ":".join(f"{k}={escape_filter_value(v)}" for k, v in exprs.items())
+    return f"lutyuv{at}={opts}"
+
+
 def title_chain(
     title: str,
     size: tuple[int, int],
@@ -210,7 +285,12 @@ def title_chain(
 def background_chain(
     size: tuple[int, int], layout: CoverLayout, *, src: str, out: str
 ) -> str:
-    """Filter chain turning cover stream ``src`` into a full-frame background."""
+    """Filter chain turning cover stream ``src`` into a full-frame background.
+
+    The darken/desaturate step is ``lutyuv``, not ``eq``: see
+    :func:`brightness_saturation_lut` for why (``eq`` is GPL-only) and for the
+    exact arithmetic it reproduces.
+    """
     width, height = size
     if layout.background == "color":
         return (
@@ -218,10 +298,13 @@ def background_chain(
             f"drawbox=x=0:y=0:w={width}:h={height}:"
             f"color={layout.background_color}:t=fill[{out}]"
         )
+    lut = lut_filter(
+        brightness_saturation_lut(brightness=-layout.dim, saturation=layout.saturation)
+    )
     return (
         f"[{src}]scale={width}:{height}:force_original_aspect_ratio=increase,"
         f"crop={width}:{height},gblur=sigma={layout.blur_sigma},"
-        f"eq=brightness=-{layout.dim}:saturation={layout.saturation}[{out}]"
+        f"{lut}[{out}]"
     )
 
 
