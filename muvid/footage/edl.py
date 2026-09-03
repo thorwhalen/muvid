@@ -214,8 +214,24 @@ class EdlEntry:
     #: across the cut — a pan. Same size as ``crop`` (see :func:`validate_edl`): a
     #: window that changes size mid-cut resizes the filter's output every frame,
     #: which is a different and much less robust thing than a pan. A push-in is
-    #: expressed as a *different* fixed window on the *next* cut.
+    #: expressed as a *different* fixed window on the *next* cut, or — since the
+    #: ``looks`` seam below — as a ``look`` carrying a ``zoompan`` ramp, which is
+    #: the one filter that CAN resize its window mid-cut (muvid#66).
     crop_end: "CropWindow | None" = None
+    #: **The ``looks`` seam.** A compiled ffmpeg filter-chain fragment applied to
+    #: this cut's picture once it has been normalised onto the canvas. ``None``
+    #: (the default) emits nothing at all, so an EDL written before this field
+    #: existed renders byte-identically — additive in both directions, like
+    #: ``transition`` and ``crop``.
+    #:
+    #: muvid does not author this string: :mod:`muvid.footage.look` compiles it
+    #: from a :class:`looks.Look` or from a punch-in request. That split is the
+    #: whole point of the seam — ``looks`` decides what a pixel becomes, muvid
+    #: keeps ``-c:v`` and the process shape. :func:`_validate_look` is the gate:
+    #: a fragment that names a container input, or that is more than ONE linear
+    #: chain, is refused, because either would break the bounded-memory
+    #: invariant the assembler rests on.
+    look: "str | None" = None
 
     @property
     def is_gap(self) -> bool:
@@ -242,6 +258,11 @@ class AssemblyCut:
     #: you know the source dimensions, which only ffmpeg knows.
     crop: "CropWindow | None" = None
     crop_end: "CropWindow | None" = None
+    #: Carried through from the EDL entry, unchanged and already validated — the
+    #: ``looks`` seam. The assembler splices it into the ONE filter template both
+    #: of its render sites share, so a look lands identically on a solo cut and on
+    #: each side of a blended boundary. See :attr:`EdlEntry.look`.
+    look: "str | None" = None
 
     @property
     def duration(self) -> float:
@@ -266,6 +287,25 @@ def _as_crop(raw, field: str) -> "CropWindow | None":
             f"EDL entry {field} is malformed ({raw!r}): it must be an object with "
             "numeric 'x', 'y', 'w' and 'h', as fractions of the source frame."
         ) from exc
+
+
+def _as_look(raw) -> "str | None":
+    """Parse the look field. RAISES on a non-string, like the crop read.
+
+    Same posture and the same reason: ``_as_entry`` serves the caller's explicit
+    ``edl=`` argument, so dropping a requested look silently is the bug. The
+    *content* of the string is :func:`_validate_look`'s business — this only
+    settles the type, because ``validate_edl`` is the ONE gate and a second one
+    here would be a second place to keep in agreement.
+    """
+    if raw is None:
+        return None
+    if not isinstance(raw, str):
+        raise ValueError(
+            f"EDL entry look is malformed ({raw!r}): it must be a string — one "
+            "compiled ffmpeg filter chain, as muvid.footage.look emits."
+        )
+    return raw
 
 
 def _as_entry(e) -> EdlEntry:
@@ -296,6 +336,7 @@ def _as_entry(e) -> EdlEntry:
         transition=transition,
         crop=_as_crop(e.get("crop"), "crop"),
         crop_end=_as_crop(e.get("crop_end"), "crop_end"),
+        look=_as_look(e.get("look")),
     )
 
 
@@ -363,6 +404,8 @@ def validate_edl(
     - each non-gap span lies within its clip's aligned coverage, AND the derived
       ``clip_in = song_start - offset`` satisfies ``0 <= clip_in`` and
       ``clip_in + span_duration <= clip_duration`` (the clip actually contains that span);
+    - a ``look`` (the ``looks`` seam) is ONE linear filter chain, names no container
+      input, and is not on a gap — see :func:`_validate_look`;
     - a :class:`Transition` is on an entry that HAS a predecessor, names a known curve,
       is at least :data:`MIN_TRANSITION_S` long, fits in song time counting BOTH
       transitions an entry can carry, and fits in each side's aligned coverage — see
@@ -429,6 +472,8 @@ def validate_edl(
             _validate_transition(i, e, prev, by_id)
         if e.crop is not None or e.crop_end is not None:
             _validate_crop(i, e)
+        if e.look is not None:
+            _validate_look(i, e)
         prev_end = e.song_end
         prev = e
     return entries
@@ -482,7 +527,105 @@ def _validate_crop(i, e) -> None:
         raise ValueError(
             f"EDL entry {i}: crop_end must be the same SIZE as crop "
             f"({e.crop.w:.3f}x{e.crop.h:.3f}, got {e.crop_end.w:.3f}x{e.crop_end.h:.3f}). "
-            "crop_end pans the window; it does not resize it."
+            "crop_end pans the window; it does not resize it. A window that "
+            "GROWS is a punch-in: express it as a `look` (muvid.footage.look."
+            "punch_in), which compiles to `zoompan` — the one filter that can."
+        )
+
+
+#: Characters a look fragment may not carry UNESCAPED. Each turns the fragment
+#: from a filter *chain* into a filter *graph*, and the assembler splices it into
+#: a larger chain with commas — so ``a,b;c,d`` spliced into ``X,<frag>,Y`` becomes
+#: a different graph than either side wrote. ``[`` and ``]`` are how a graph names
+#: a pad, which is also how it would reach a second decoder (``[1:v]``) and take
+#: the bounded-memory invariant with it. ``looks`` escapes all three with a single
+#: backslash (verified against ``looks.escape_filter_value``), so an escaped one
+#: inside a path stays legal and only a bare one is refused.
+_LOOK_FORBIDDEN = "[];"
+
+
+def _first_unescaped(s: str, chars: str) -> "str | None":
+    r"""The first character of ``chars`` in ``s`` that no backslash escapes.
+
+    ffmpeg's filtergraph parser treats ``\`` as escaping the next character, so
+    this walks rather than greps: ``lut3d=file=a\[b\].cube`` is a legal fragment
+    and ``[0:v]scale=2`` is not, and a search for bare characters cannot tell
+    them apart.
+
+    >>> _first_unescaped("scale=2,hue=s=0", "[];") is None
+    True
+    >>> _first_unescaped("[0:v]scale=2", "[];")
+    '['
+    >>> _first_unescaped(r"lut3d=file=a\[b\].cube", "[];") is None
+    True
+    """
+    i = 0
+    while i < len(s):
+        if s[i] == "\\":
+            i += 2
+            continue
+        if s[i] in chars:
+            return s[i]
+        i += 1
+    return None
+
+
+def _validate_look(i, e) -> None:
+    """What a look fragment has to satisfy. Raises ``ValueError``.
+
+    Split out only for length; it is part of :func:`validate_edl`, which remains
+    the ONE gate. Nothing else may check these.
+
+    A look is **executable ffmpeg**, which is a wider vocabulary than the
+    rectangles beside it, so what is checked is exactly what the assembler's shape
+    depends on — not an attempt to police the filter language:
+
+    - **One linear chain.** The fragment is concatenated with commas into a chain
+      the assembler already builds, so a graph separator or a pad label makes the
+      result mean something neither side wrote.
+    - **No container input.** ``[1:v]`` is how a filter reaches a second ``-i``,
+      and a constant number of decoders per invocation is the whole of the
+      bounded-memory guarantee muvid#21/#24 bought. A look that wants a second
+      source reaches it as ``movie=`` — a filter, not an input — which is
+      ``looks``' own rule (its rule 20) for the same reason.
+    - **Not on a gap.** A gap has no footage; the assembler builds its black fill
+      from a synthetic source with its own chain, so a look there would need a
+      third splice site and would be styling nothing.
+    """
+    look = e.look
+    if not look.strip():
+        raise ValueError(
+            f"EDL entry {i} has an empty look. Omit the field (or pass null) to "
+            "render without one — an empty string is a request that cannot be "
+            "honoured, and honouring nothing quietly is how a direction gets lost."
+        )
+    if look.strip() != look:
+        raise ValueError(
+            f"EDL entry {i}: look has leading or trailing whitespace ({look!r}). "
+            "It is spliced verbatim into a filter chain, so trimming it here would "
+            "be this module quietly editing an ffmpeg expression."
+        )
+    if look.startswith(",") or look.endswith(","):
+        raise ValueError(
+            f"EDL entry {i}: look starts or ends with a comma ({look!r}). The "
+            "assembler supplies the separators; a stray one emits an empty filter."
+        )
+    bad = _first_unescaped(look, _LOOK_FORBIDDEN)
+    if bad is not None:
+        raise ValueError(
+            f"EDL entry {i}: look contains an unescaped {bad!r} ({look!r}). A look "
+            "must be ONE linear filter chain naming no container input: it is "
+            "spliced into the per-cut chain, where a pad label or a graph separator "
+            "silently builds a different graph, and a second input would add a "
+            "decoder per cut — the shape muvid#21/#24 was OOM-killed for. A second "
+            "SOURCE is reachable as `movie=`, which is a filter. Escape a literal "
+            f"{bad!r} inside a path with a backslash (looks.escape_filter_value "
+            "does)."
+        )
+    if e.is_gap:
+        raise ValueError(
+            f"EDL entry {i} is a gap but carries a look. A gap has no footage to "
+            "style — the assembler fills it synthetically from its own source."
         )
 
 
@@ -596,6 +739,7 @@ def derive_cuts(
                     transition=e.transition,
                     crop=e.crop,
                     crop_end=e.crop_end,
+                    look=e.look,
                 )
             )
             continue
@@ -612,6 +756,7 @@ def derive_cuts(
                 transition=e.transition,
                 crop=e.crop,
                 crop_end=e.crop_end,
+                look=e.look,
             )
         )
     return cuts

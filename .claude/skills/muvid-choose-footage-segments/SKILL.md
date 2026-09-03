@@ -6,9 +6,12 @@ description: >
   Triggers on "which clip should be on-air", "score footage segments", "auto-choose
   footage", "pick the best take", "footage selection strategy", "multichannel editor
   view", "lip-sync score", "motion-to-beat / dance-match score", or building the auto
-  composer / human-editor timeline for aligned footage. The concrete per-metric scoring
-  recipes live in `muvid-score-footage`; this skill owns the score MENU, the song-time
-  data model, the two-consumer principle, and the selection strategy.
+  composer / human-editor timeline for aligned footage. ALSO covers what happens to the
+  pixels once a clip is chosen — the per-cut crop window and the `look` seam onto the
+  `looks` package: "punch in", "in-shot zoom", "push-in", "Ken Burns on footage", "colour
+  grade a cut", "apply a LUT", "stylize the edit". The concrete per-metric scoring recipes
+  live in `muvid-score-footage`; this skill owns the score MENU, the song-time data model,
+  the two-consumer principle, the selection strategy, and the crop/look spatial half.
 ---
 
 # muvid-choose-footage-segments — score & select footage over a song
@@ -117,8 +120,8 @@ Four things to know:
 - **`crop_end` pans; it does not resize.** Same `w`/`h` as `crop`, enforced by
   `validate_edl`. `crop` fixes its output size ONCE, at configure time — it cannot
   vary `w`/`h` at all — so a resizing window would either refuse to configure or
-  silently render at one wrong size. A push-in is a *different fixed window on the
-  next cut*.
+  silently render at one wrong size. An in-shot **push-in** is therefore not a crop
+  at all: it is a `look` (see the next section), which compiles to `zoompan`.
 - **Choosing the window is editorial, and on real footage it has to be.** Measured on a
   478×850 clip of dancers under a concrete overhang: the top ~35–40% of every frame is
   dead ceiling (so a centre crop is the wrong crop), and a standing body occupies
@@ -145,6 +148,59 @@ Measured on ffmpeg 8.1, in case you need the other shape:
   `d=90` (20 frames in, 1800 out). `d=1` is exactly 1:1.
 
 So a *resizing* window is a `zoompan` job. This one is not, and `crop` is simpler.
+Reaching for the other shape is `EdlEntry.look` — the next section.
+
+## WHAT the pixels become: the `look` seam (muvid#66, `looks` build-order item 10)
+
+`crop` says which rectangle. **`look` says what the pixels in it become** — a grade, a
+LUT, a posterise, or an in-shot punch-in. It is one compiled ffmpeg filter chain carried
+on the entry and spliced into the per-cut chain the assembler already builds.
+
+muvid never authors that string. `muvid.footage.look` compiles it from
+[`looks`](https://pypi.org/project/looks/), which owns the effect vocabulary, the
+licence tier of every filter it emits, and the choice of which filter expresses a given
+camera path. muvid keeps `-c:v`, the frame counts and the process shape.
+
+```python
+from muvid.footage import EdlEntry, punch_in, punch_in_cuts, stylize, chain
+
+# The in-shot punch-in the design partner asked for: stays on the SAME shot.
+EdlEntry(0.0, 3.8, "c01", look=punch_in(canvas=(1920, 1080), fps=30, duration_s=3.8))
+
+# ~2N of them, evenly redistributed over an edit rather than appended.
+entries = punch_in_cuts(entries, canvas=(1920, 1080), fps=30, every=2)
+
+# A whole looks.Look — compiled against the binary muvid will actually run.
+import looks
+muted = looks.Look(steps=(looks.Effect(name="saturation", params={"amount": 0.35}),))
+grade = stylize(muted, canvas=(1920, 1080), fps=30)
+
+# One cut carries one look, so two effects are one chain.
+EdlEntry(3.8, 7.6, "c01", look=chain(punch_in(...), grade))
+```
+
+Five things to know:
+
+- **Absent means what it always meant.** No look emits no filter at all — verified by
+  rendering the same look-less EDL before and after the field existed and comparing
+  DECODED frames (identical framemd5, 200 frames, through both render sites).
+- **The windows a `look` moves are fractions of the CANVAS, not of the source.** The
+  fragment is spliced *after* `scale`/`pad`/`fps`, so it sees the delivery canvas at the
+  delivery rate. That is what lets a punch-in be compiled with exact numbers instead of
+  a per-clip probe, and what makes the same punch read the same over a portrait phone
+  clip and a landscape one. `crop` is still the source-relative decision; they compose,
+  crop first.
+- **It lands identically on both sides of a blended boundary.** The assembler renders a
+  transition as a two-input `xfade` whose sides are normalised separately, so a look
+  reaching one side and not the other would be a visible seam. One template now serves
+  both sites.
+- **A `-vf` fragment adds no decoder**, which is why this is the seam. A look naming a
+  container input (`[1:v]`) or carrying a graph separator is **refused by
+  `validate_edl`**, because either would reintroduce the shape that was OOM-killed at
+  30 cuts (muvid#21/#24).
+- **One sharp edge, measured: a *moving* look restarts its ramp on a transitioned
+  boundary** — the blend is a separate invocation whose clock starts at 0 again. A grade
+  or a LUT is unaffected. muvid#73 has the numbers and the options.
 
 ## Where this plugs into the existing code (IMPLEMENTED v1 — muvid#13)
 
@@ -166,4 +222,7 @@ So a *resizing* window is a `zoompan` job. This one is not, and `crop` is simple
   at ASSEMBLE, so one tensor serves every preset. MCP: `score_footage` (background `nw.jobs`),
   `footage_score_status` (bounded long-poll), `footage_scores` (editor reads), and
   `assemble_music_video(strategy='weighted', preset=…, weights=…, config=…)`.
+- `muvid/footage/look.py` — the `looks` seam: `punch_in`, `motion`, `stylize`, `chain`,
+  `punch_in_cuts`. Compiles only; the assembler splices. `muvid/footage/assemble.py`'s
+  `_part_filter` is THE per-cut chain, shared by the solo and the transition sites.
 - `mixing.audio.beat_grid` (mixing[beats]) supplies the master beat/onset grid.

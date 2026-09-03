@@ -13,6 +13,8 @@ Modules:
   alignments into an EDL (which clip covers which span of the song).
 - :mod:`muvid.footage.edl` — the ``validate_edl`` SSOT + EDL/alignment data types,
   including the per-cut ``CropWindow`` (the EDL's spatial half, muvid#60).
+- :mod:`muvid.footage.look` — the ``looks`` seam: compile a grade, a LUT or an
+  in-shot punch-in (muvid#66) into the per-cut ``-vf`` fragment the assembler splices.
 - :mod:`muvid.footage.assemble` — the bounded single-ffmpeg-pass assembler.
 - :mod:`muvid.footage.workspace` — the per-user stateful project (song + clips + manifest).
 """
@@ -23,6 +25,14 @@ from muvid.footage.edl import (
     CropWindow,
     validate_edl,
     derive_cuts,
+)
+from muvid.footage.look import (
+    LookError,
+    chain,
+    motion,
+    punch_in,
+    punch_in_cuts,
+    stylize,
 )
 from muvid.footage.strategy import (
     SelectionStrategy,
@@ -38,6 +48,12 @@ __all__ = [
     "CropWindow",
     "validate_edl",
     "derive_cuts",
+    "LookError",
+    "chain",
+    "motion",
+    "punch_in",
+    "punch_in_cuts",
+    "stylize",
     "SelectionStrategy",
     "register_selection_strategy",
     "list_strategies",
