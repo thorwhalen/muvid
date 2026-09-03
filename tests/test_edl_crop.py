@@ -102,8 +102,9 @@ def test_crop_end_without_crop_is_refused():
 
 
 def test_crop_end_may_not_resize_the_window():
-    # A window that changes size mid-cut re-inits the filter's output dimensions
-    # every frame. A push-in is a different fixed window on the next cut.
+    # `crop` evaluates `w`/`h` once, at configure time, so it cannot vary its
+    # output size mid-cut at all — it either refuses to configure or freezes at one
+    # wrong size. A push-in is a different fixed window on the next cut.
     with pytest.raises(ValueError, match="same SIZE"):
         validate_edl(
             [
@@ -422,3 +423,69 @@ def test_the_persisted_body_carries_a_crop_and_omits_it_when_unset():
     body = _edl_body(_entry(crop=CropWindow(0.0, 0.3, 1.0, 0.4)))
     assert body["crop"] == {"x": 0.0, "y": 0.3, "w": 1.0, "h": 0.4}
     assert "crop_end" not in body
+
+
+# --------------------------------------------------------------------------
+# The skill's ffmpeg note is the copy with the widest blast radius (muvid#68)
+# --------------------------------------------------------------------------
+#
+# `muvid-choose-footage-segments/SKILL.md` is the text an agent LOADS before
+# authoring a crop window, so a wrong claim in it does not merely sit there — it
+# gets repeated into other repos, which is exactly how the old "zoompan has no
+# time variable and duplicates frames" line escaped muvid. Prose drifts silently
+# (a call-site sweep cannot see it), so pin the two claims that were false.
+#
+# Measured on ffmpeg 8.1: `pon` does not exist in zoompan at all ("Undefined
+# constant"); `in_time` / `it` do; and the frame duplication is entirely the
+# default `d=90` (20 in, 1800 out) — `d=1` is 1:1.
+
+FOOTAGE_SKILL = (
+    Path(__file__).parents[1]
+    / ".claude"
+    / "skills"
+    / "muvid-choose-footage-segments"
+    / "SKILL.md"
+)
+
+
+def test_the_skill_does_not_name_a_zoompan_variable_that_does_not_exist():
+    import re
+
+    text = FOOTAGE_SKILL.read_text()
+    assert not re.search(r"\bpon\b", text), (
+        f"{FOOTAGE_SKILL.name} names `pon` as a zoompan variable; ffmpeg answers "
+        "'Undefined constant'. An agent reading this writes an expression that "
+        "cannot configure."
+    )
+
+
+def test_the_skill_does_not_claim_zoompan_has_no_time_variable():
+    """The positive form of the claim, because that is the checkable one.
+
+    A note saying only "zoompan has no `t`" is true and misleading: the filter is
+    not time-blind. Requiring it to NAME the variable that does work is what stops
+    the bare, discouraging half-truth from coming back.
+    """
+    text = FOOTAGE_SKILL.read_text()
+    if "zoompan" not in text:
+        return
+    assert "in_time" in text, (
+        f"{FOOTAGE_SKILL.name} discusses zoompan without naming `in_time` — its "
+        "real elapsed-time variable. Saying only that it lacks `t` reads as 'this "
+        "filter cannot do time', which is how muvid#68 happened."
+    )
+
+
+def test_the_skill_states_the_root_cause_of_crops_fixed_size():
+    """Naming one symptom gets the note reopened by whoever measures the other.
+
+    `crop` refuses to configure for some expression shapes and silently freezes at
+    one size for others; both are real, and both follow from `w`/`h` being
+    evaluated once, at configure time, with `t` still NAN.
+    """
+    text = FOOTAGE_SKILL.read_text().lower()
+    assert "configure time" in text, (
+        f"{FOOTAGE_SKILL.name} no longer states WHY crop cannot resize (its `w`/`h` "
+        "are evaluated once, at configure time). Without the cause, the half of the "
+        "behaviour it does not describe reads as a contradiction."
+    )

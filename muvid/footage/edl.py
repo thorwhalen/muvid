@@ -472,9 +472,12 @@ def _validate_crop(i, e) -> None:
     if e.crop_end is not None and (
         abs(e.crop_end.w - e.crop.w) > _EPS or abs(e.crop_end.h - e.crop.h) > _EPS
     ):
-        # A window that also CHANGES SIZE across the cut re-inits the crop filter's
-        # output dimensions every frame, which is a different and much less robust
-        # thing than a pan (and is what makes `zoompan` unusable on video input).
+        # `crop` cannot vary its output size at all: `w` and `h` are evaluated ONCE,
+        # at configure time, when `t` is still NAN. So a window that CHANGES SIZE
+        # across the cut either refuses to configure or — the quiet, dangerous case —
+        # exits 0 and renders every frame at one wrong size. (It does not re-init per
+        # frame; an earlier version of this comment said so, and also blamed the same
+        # non-existent behaviour on `zoompan`, which can in fact resize.)
         # A push-in is expressed as a different fixed window on the next cut.
         raise ValueError(
             f"EDL entry {i}: crop_end must be the same SIZE as crop "

@@ -60,13 +60,14 @@ Because muvid renders from an audio *file* rather than a live stream, the whole
 loudness envelope is known before the first frame is drawn.
 `muvid.visualize.onset_envelope()` turns it into a per-frame transient curve with
 phosphor-style decay, and `flash_filter()` bakes that curve into an ffmpeg
-`sendcmd` script that pulses a named filter's brightness and saturation. Pure
+`sendcmd` script that rewrites a `lutyuv`'s lookup table every frame — brightness
+as an additive luma offset, saturation as a scaling of chroma about neutral. Pure
 numpy + ffmpeg — no realtime path, no extra dependency.
 
 | knob | default | effect |
 |---|---|---|
 | `flash` | `True` | `options={"flash": False}` renders `spectrum` without it |
-| `flash_brightness` | `0.25` | peak `eq` brightness boost at a full-strength pulse |
+| `flash_brightness` | `0.25` | peak brightness boost at a full-strength pulse, as a fraction of full scale |
 | `flash_saturation` | `0.8` | peak saturation boost, added to 1.0 |
 
 **There is no `flash_decay` option.** `FLASH_DECAY = 0.5` is `flash_filter`'s own
@@ -80,9 +81,15 @@ to its own chain — both it and `onset_envelope` are exported from
 which has none.
 
 **It degrades rather than failing.** `flash_filter` returns `""` — a fragment that
-changes nothing — when the ffmpeg build lacks `sendcmd`/`eq` or the envelope comes
-back empty. The render loses its flash; it never errors. So "no flash in the
-output" has two causes, and the build is the one to check first.
+changes nothing — when the ffmpeg build lacks one of `FLASH_FILTERS` (`sendcmd`,
+`lutyuv`) or the envelope comes back empty. The render loses its flash; it never
+errors. So "no flash in the output" has two causes, and the build is the one to
+check first — read `FLASH_FILTERS` rather than a filter name written in prose,
+which is how that probe went stale once already (muvid#69).
+
+**It needs no GPL ffmpeg.** Both the flash and the darkened background used to run
+on `eq`, which ffmpeg compiles only under `--enable-gpl`. They are `lutyuv` now —
+same arithmetic, LGPL filter (muvid#69).
 
 ## Baked-in defaults (change only with reason)
 

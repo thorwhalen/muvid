@@ -115,8 +115,10 @@ Four things to know:
   fraction) — so one window is valid for every clip in a multi-device edit whatever its
   resolution, and a Ken Burns path computed in `burns` drops in with no rename table.
 - **`crop_end` pans; it does not resize.** Same `w`/`h` as `crop`, enforced by
-  `validate_edl`. A window that also changes size re-inits the filter's output
-  dimensions every frame; a push-in is a *different fixed window on the next cut*.
+  `validate_edl`. `crop` fixes its output size ONCE, at configure time — it cannot
+  vary `w`/`h` at all — so a resizing window would either refuse to configure or
+  silently render at one wrong size. A push-in is a *different fixed window on the
+  next cut*.
 - **Choosing the window is editorial, and on real footage it has to be.** Measured on a
   478×850 clip of dancers under a concrete overhang: the top ~35–40% of every frame is
   dead ceiling (so a centre crop is the wrong crop), and a standing body occupies
@@ -127,8 +129,22 @@ Four things to know:
   written before this field renders byte-identically, and the persisted
   `music-video-edl/v1` body omits the key unless set — additive, no lacing migration.
 
-Not `zoompan`: its expression vocabulary has no `t` (it exposes `on`/`in`/`pon`), and it
-duplicates frames on video input. `crop` with a `t` expression is the filter.
+`crop` with a `t` expression is the filter **for a pan at constant window size** —
+which is the only shape this EDL can express. It is not a verdict on `zoompan`.
+Measured on ffmpeg 8.1, in case you need the other shape:
+
+- `crop` cannot vary `w`/`h` at all: those expressions are evaluated once, at
+  configure time, with `t` still NAN. Depending on the expression you either get a
+  refusal (`Error when evaluating the expression` / `Failed to configure input pad`)
+  or — worse — a clean exit 0 and a plausible video frozen at a single wrong size.
+- `zoompan` genuinely has no `t` — but it is not time-blind: `in_time` and its
+  alias `it` are the elapsed input time, alongside the frame counters `on`/`in`.
+  Reach for one of those, and let ffmpeg — not a remembered variable name — tell
+  you whether it exists.
+- `zoompan` does not duplicate frames on video input by nature — that is its default
+  `d=90` (20 frames in, 1800 out). `d=1` is exactly 1:1.
+
+So a *resizing* window is a `zoompan` job. This one is not, and `crop` is simpler.
 
 ## Where this plugs into the existing code (IMPLEMENTED v1 — muvid#13)
 

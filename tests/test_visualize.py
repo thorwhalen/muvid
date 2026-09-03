@@ -14,6 +14,7 @@ import subprocess
 from dataclasses import replace
 from pathlib import Path
 
+import numpy as np
 import pytest
 
 from tests.ffmpeg_support import needs_ffmpeg, needs_ffmpeg_filter
@@ -22,22 +23,28 @@ from muvid.visualize.canvas import (
     CoverLayout,
     TitleStyle,
     background_chain,
+    brightness_saturation_lut,
     compose_chain,
     cover_box,
     cover_chain,
     escape_filter_value,
+    lut_filter,
     overlay_chain,
 )
 from muvid.visualize.ffmpeg import Loudness, media_duration
 from muvid.visualize.reactive import (
     DEFAULT_FLASH_LABEL,
     FLASH_BRIGHTNESS,
+    FLASH_COMPONENTS,
+    FLASH_FILTERS,
     FLASH_SATURATION,
     _write_flash_script,
     flash_filter,
     onset_envelope,
 )
 from muvid.visualize.visuals import (
+    REACTIVE_BG_DIM,
+    REACTIVE_BG_SATURATION,
     VisualContext,
     VisualPlan,
     list_visuals,
@@ -562,11 +569,13 @@ CLICK_PERIOD_S = 1.0
 CLICK_SECONDS = 4
 CLICK_FPS = 10
 
-#: One ``sendcmd`` line per (frame, property), e.g.
-#: ``1.000 [enter] eq@flash brightness 0.250;``
+#: One ``sendcmd`` line per (frame, LUT component), e.g.
+#: ``1.000 [enter] lutyuv@flash y 'clip(val+63.75,0,255)';``
+#: The expression is single-quoted because it contains ``,``, which is
+#: ``sendcmd``'s own "next command" separator.
 SENDCMD_LINE = re.compile(
     r"^(?P<t>\d+\.\d{3}) \[enter\] (?P<target>\S+) "
-    r"(?P<prop>brightness|saturation) (?P<value>-?\d+\.\d{3});$"
+    r"(?P<comp>[yuv]) '(?P<expr>[^']*)';$"
 )
 
 
@@ -634,29 +643,45 @@ def test_the_sendcmd_script_is_well_formed(tmp_path):
         envelope,
         tmp_path / "f.cmd",
         fps=CLICK_FPS,
-        target="eq@flash",
+        target="lutyuv@flash",
         brightness=FLASH_BRIGHTNESS,
         saturation=FLASH_SATURATION,
     )
     lines = script.read_text().splitlines()
-    assert len(lines) == 2 * len(envelope)  # a brightness and a saturation per frame
+    # One command per LUT component per frame — a table is addressed per plane,
+    # where `eq` took a single `brightness` and a single `saturation`.
+    assert len(lines) == len(FLASH_COMPONENTS) * len(envelope)
 
     matched = [SENDCMD_LINE.match(line) for line in lines]
     assert all(matched), [ln for ln, m in zip(lines, matched) if not m]
-    assert {m["target"] for m in matched} == {"eq@flash"}
+    assert {m["target"] for m in matched} == {"lutyuv@flash"}
 
     times = [float(m["t"]) for m in matched]
     assert times == sorted(times)  # sendcmd needs its commands in time order
     assert times[0] == 0.0
     assert times[-1] == (len(envelope) - 1) / CLICK_FPS
 
-    values = {
-        prop: [float(m["value"]) for m in matched if m["prop"] == prop]
-        for prop in ("brightness", "saturation")
-    }
-    # At rest the eq is a no-op (0 / 1); a full pulse reaches the configured peaks.
-    assert values["brightness"] == [0.0, FLASH_BRIGHTNESS / 2, FLASH_BRIGHTNESS]
-    assert values["saturation"] == [1.0, 1 + FLASH_SATURATION / 2, 1 + FLASH_SATURATION]
+    # Each frame's three expressions must be the LUT for the pulse strength that
+    # frame carries: at rest a no-op, at full pulse the configured peaks. The
+    # arithmetic inside them is pinned against `eq` itself, in pixels, by
+    # test_the_lut_reproduces_the_gpl_eq_it_replaced.
+    per_frame = [
+        matched[i * len(FLASH_COMPONENTS) : (i + 1) * len(FLASH_COMPONENTS)]
+        for i in range(len(envelope))
+    ]
+    for pulse, frame in zip(envelope, per_frame):
+        expected = brightness_saturation_lut(
+            brightness=FLASH_BRIGHTNESS * pulse,
+            saturation=1 + FLASH_SATURATION * pulse,
+        )
+        assert [m["comp"] for m in frame] == list(FLASH_COMPONENTS)
+        assert {m["comp"]: m["expr"] for m in frame} == expected
+
+    # The one that must be EXACT rather than close: at rest the flash may not
+    # touch a single pixel, or every unflashed frame of every render moves.
+    assert {m["comp"]: m["expr"] for m in matched[: len(FLASH_COMPONENTS)]} == (
+        brightness_saturation_lut()
+    )
 
 
 #: Workdir names covering every character that is special to one or both of
@@ -675,7 +700,7 @@ AWKWARD_WORKDIR_NAMES = [
 ]
 
 
-@needs_ffmpeg_filter("sendcmd", "eq")
+@needs_ffmpeg_filter(*FLASH_FILTERS)
 @pytest.mark.parametrize("dirname", AWKWARD_WORKDIR_NAMES)
 def test_the_flash_fragment_renders_from_a_workdir_that_needs_escaping(
     click_track, tmp_path, dirname
@@ -687,7 +712,10 @@ def test_the_flash_fragment_renders_from_a_workdir_that_needs_escaping(
     )
     # It is appended to a visual's chain, so it must open with the separator.
     assert fragment.startswith(",sendcmd=f=")
-    assert f",eq@{DEFAULT_FLASH_LABEL}=brightness=0:saturation=1:eval=frame" in fragment
+    # The filter the script drives, sitting at its identity table until a command
+    # arrives. `lutyuv` needs no `eval=frame`: rebuilding the table IS the update.
+    assert f",lutyuv@{DEFAULT_FLASH_LABEL}=" in fragment
+    assert lut_filter(brightness_saturation_lut(), label=DEFAULT_FLASH_LABEL) in fragment
 
     script = workdir / f"{DEFAULT_FLASH_LABEL}.cmd"
     assert script.exists()
@@ -729,7 +757,7 @@ def test_a_build_without_sendcmd_drops_the_flash_instead_of_breaking_the_graph(
     assert fragment == ""
 
 
-@needs_ffmpeg_filter("showspectrum", "sendcmd", "eq")
+@needs_ffmpeg_filter("showspectrum", *FLASH_FILTERS)
 def test_the_spectrum_visual_flashes_last_in_the_chain_and_can_be_switched_off(
     click_track, tmp_path
 ):
@@ -742,7 +770,7 @@ def test_the_spectrum_visual_flashes_last_in_the_chain_and_can_be_switched_off(
         workdir=tmp_path,
     )
     chain = resolve_visual("spectrum", ctx).filters[0]
-    assert "sendcmd=f=" in chain and f"eq@{DEFAULT_FLASH_LABEL}=" in chain
+    assert "sendcmd=f=" in chain and f"lutyuv@{DEFAULT_FLASH_LABEL}=" in chain
     # The flash must come *after* the recolour, so it modulates the colours the
     # frame actually shows rather than ones that are about to be replaced.
     assert chain.index("colorchannelmixer") < chain.index("sendcmd")
@@ -751,7 +779,7 @@ def test_the_spectrum_visual_flashes_last_in_the_chain_and_can_be_switched_off(
     assert "sendcmd" not in off.filters[0]
 
 
-@needs_ffmpeg_filter("showspectrum", "sendcmd", "eq")
+@needs_ffmpeg_filter("showspectrum", *FLASH_FILTERS)
 def test_the_flashing_spectrum_renders_and_changes_the_picture(click_track, tmp_path):
     # ffmpeg is the real judge of a sendcmd script: a malformed one fails the
     # render outright. And the flash has to *do* something, so the same source
@@ -776,6 +804,223 @@ def test_the_flashing_spectrum_renders_and_changes_the_picture(click_track, tmp_
         k: hashlib.sha256(r.path.read_bytes()).hexdigest() for k, r in renders.items()
     }
     assert digests["on"] != digests["off"], "the flash changed nothing in the picture"
+
+
+# --------------------------------------------------------------------------
+# The GPL `eq` is gone; the substitution is measured, not asserted (muvid#69)
+# --------------------------------------------------------------------------
+#
+# `eq` is compiled into ffmpeg only under `--enable-gpl`, so muvid needed a GPL
+# build for two chains that are arithmetic on three planes: the darkened blurred
+# background, and the beat flash. Both are `lutyuv` now.
+#
+# A string assertion cannot check a substitution — it only checks that somebody
+# typed the new name. So render both filters over the same source and compare
+# DECODED planes. The residual is not zero, and the reason matters: `vf_eq` runs
+# an integer fast path that quantises `brightness` to 1/100 and carries a
+# rounding offset, while these expressions are the exact arithmetic `eq`'s own
+# documentation describes. Measured luma offsets (input value -> output value),
+# ffmpeg 8.1:
+#
+#     brightness   exact (b*255)   eq     lutyuv
+#       -0.25         -63.75      -65      -64
+#       -0.30         -76.50      -80      -77
+#       -0.55        -140.25     -144     -141
+#       +0.1875       +47.81      +45      +47
+#
+# So where the two disagree, `lutyuv` is the correct side. `EQ_LUT_TOLERANCE_LSB`
+# bounds that disagreement; it is a measurement, and tightening it below the
+# measured worst case would fail on `eq`'s error, not on ours.
+#
+# This test is the one place that still WANTS the GPL filter — it is the
+# reference being retired — so it skips on the LGPL build the change exists to
+# serve.
+
+#: Worst per-plane |eq - lutyuv| over the shipped constants, measured. ~1% of
+#: full scale: invisible in the picture, and in `eq`'s favour nowhere.
+EQ_LUT_TOLERANCE_LSB = 3
+
+
+def _planes(vf, *, size=(160, 90), frames=1):
+    """Decode `vf` over a fixed synthetic source into stacked (Y, U, V) planes.
+
+    yuv444p so chroma is compared at full resolution — a subsampled read would
+    average away exactly the chroma error this test exists to bound.
+    """
+    w, h = size
+    out = subprocess.run(
+        [
+            "ffmpeg", "-hide_banner", "-loglevel", "error",
+            "-f", "lavfi", "-i", f"testsrc2=s={w}x{h}:r=10:d={frames / 10}",
+            "-vf", vf, "-f", "rawvideo", "-pix_fmt", "yuv444p", "-",
+        ],
+        capture_output=True,
+        check=True,
+    ).stdout
+    return np.frombuffer(out, np.uint8).astype(int).reshape(-1, 3, h, w)
+
+
+def _max_plane_diff(eq_filter, lut_exprs):
+    a = _planes(eq_filter)
+    b = _planes(lut_filter(lut_exprs))
+    assert a.shape == b.shape
+    return int(np.abs(a - b).max())
+
+
+@needs_ffmpeg
+def test_the_script_addresses_the_filter_the_fragment_declares(click_track, tmp_path):
+    """A sendcmd command aimed at a filter that is not in the graph is SILENT.
+
+    Measured on ffmpeg 8.1: a script targeting `nosuch@flash` renders the whole
+    clip, exits 0, and logs nothing at `-loglevel warning`. The flash just never
+    happens. So the label the script writes and the label the filter carries have
+    to be the same string by construction, and this is the test that says so.
+    """
+    fragment = flash_filter(
+        click_track, fps=CLICK_FPS, duration=float(CLICK_SECONDS), workdir=tmp_path
+    )
+    assert fragment
+    declared = {
+        p.split("=")[0]
+        for p in re.split(r"(?<!\\),", fragment)
+        if p and "@" in p.split("=")[0]
+    }
+    script = (tmp_path / f"{DEFAULT_FLASH_LABEL}.cmd").read_text().splitlines()
+    targeted = {SENDCMD_LINE.match(line)["target"] for line in script}
+    assert targeted == declared, (
+        f"the script drives {sorted(targeted)} but the fragment declares "
+        f"{sorted(declared)}; ffmpeg will render this happily and never flash."
+    )
+
+
+@needs_ffmpeg_filter("eq", "lutyuv")
+@pytest.mark.parametrize(
+    "dim,saturation",
+    [
+        (CoverLayout().dim, CoverLayout().saturation),  # the still-cover default
+        (REACTIVE_BG_DIM, REACTIVE_BG_SATURATION),  # every reactive visual
+        (0.55, REACTIVE_BG_SATURATION),  # `scope`'s darker frame
+    ],
+)
+def test_the_background_lut_reproduces_the_gpl_eq_it_replaced(dim, saturation):
+    """`background_chain`'s darken/desaturate, at the constants that ship."""
+    worst = _max_plane_diff(
+        f"eq=brightness=-{dim}:saturation={saturation}",
+        brightness_saturation_lut(brightness=-dim, saturation=saturation),
+    )
+    assert worst <= EQ_LUT_TOLERANCE_LSB, (
+        f"dim={dim} saturation={saturation}: the lutyuv background is {worst} LSB "
+        f"from the eq it replaced (bound {EQ_LUT_TOLERANCE_LSB}). That is a look "
+        "change, not a substitution."
+    )
+
+
+@needs_ffmpeg_filter("eq", "lutyuv")
+@pytest.mark.parametrize("pulse", [0.0, 0.25, 0.5, 0.75, 1.0])
+def test_the_flash_lut_reproduces_the_gpl_eq_it_replaced(pulse):
+    """The flash, across its whole envelope — including the two endpoints."""
+    brightness, saturation = FLASH_BRIGHTNESS * pulse, 1 + FLASH_SATURATION * pulse
+    worst = _max_plane_diff(
+        f"eq=brightness={brightness}:saturation={saturation}",
+        brightness_saturation_lut(brightness=brightness, saturation=saturation),
+    )
+    assert worst <= EQ_LUT_TOLERANCE_LSB, (
+        f"pulse={pulse}: the lutyuv flash is {worst} LSB from the eq it replaced "
+        f"(bound {EQ_LUT_TOLERANCE_LSB})."
+    )
+
+
+@needs_ffmpeg
+def test_the_flash_probe_names_the_filters_the_fragment_actually_uses(
+    click_track, tmp_path
+):
+    """`FLASH_FILTERS` is a probe, and a stale probe fails in silence.
+
+    `flash_filter` returns `""` when a build lacks one of these, so naming a
+    filter the chain no longer contains means an LGPL build — the build muvid#69
+    exists to serve — passes nothing and renders with no flash, with no error
+    anywhere. It stayed `("sendcmd", "eq")` for exactly as long as nothing
+    derived it from the fragment, so derive it.
+    """
+    fragment = flash_filter(
+        click_track, fps=CLICK_FPS, duration=float(CLICK_SECONDS), workdir=tmp_path
+    )
+    assert fragment, "no fragment to inspect — this build cannot flash at all"
+    # Split on the commas the filtergraph parser would split on: the escaped ones
+    # inside the script path and the LUT expressions are not separators.
+    parts = [p for p in re.split(r"(?<!\\),", fragment) if p]
+    used = {p.split("=")[0].split("@")[0] for p in parts}
+    assert used == set(FLASH_FILTERS), (
+        f"the flash fragment uses {sorted(used)} but FLASH_FILTERS probes for "
+        f"{sorted(FLASH_FILTERS)}. A build missing a filter this does not probe "
+        "for fails the render; one missing a filter it no longer uses loses the "
+        "flash for no reason."
+    )
+
+
+@needs_ffmpeg_filter("eq", "lutyuv")
+def test_the_chroma_pivot_is_127_5_and_not_128():
+    """128 is the intuitive pivot and it is the wrong one.
+
+    `vf_eq` scales saturation in 0-1 about 0.5, which is 127.5 in eight bits.
+    The difference never exceeds `0.5 * |1 - saturation|`, so across muvid's
+    range it is well under one LSB and the tolerance test above cannot see it —
+    it shows up in the MEAN, which is why this one measures that instead. Left
+    unpinned, "128 is obviously the middle" is a one-character edit nothing
+    would have caught.
+    """
+    dim, saturation = CoverLayout().dim, CoverLayout().saturation
+    reference = _planes(f"eq=brightness=-{dim}:saturation={saturation}")
+
+    def mean_chroma_error(exprs):
+        got = _planes(lut_filter({k: v for k, v in exprs.items() if k in "uv"}))
+        return float(np.abs(reference[:, 1:] - got[:, 1:]).mean())
+
+    # The SHIPPED expressions, not a re-derivation of them — a test that built
+    # both pivots by hand would pin the decision while letting the constant in
+    # the code be anything at all.
+    ours = mean_chroma_error(
+        brightness_saturation_lut(brightness=-dim, saturation=saturation)
+    )
+    naive_expr = f"clip((val-128)*{saturation:g}+128,0,255)"
+    naive = mean_chroma_error({"u": naive_expr, "v": naive_expr})
+    assert ours < naive, (
+        f"the shipped chroma pivot gives mean error {ours:.3f} against eq, and "
+        f"pivoting about 128 gives {naive:.3f}. 127.5 is supposed to be the "
+        "better one — check _CHROMA_PIVOT."
+    )
+
+
+def test_the_canvas_doctests_actually_run():
+    """`testpaths` is `tests/` and nothing passes `--doctest-modules`, so a `>>>`
+    under `muvid/` is prose that no run has ever executed. The LUT builders'
+    examples state exact filter strings — the kind of claim that goes stale in
+    silence — so collect that one module's doctests here.
+    """
+    import doctest
+
+    from muvid.visualize import canvas
+
+    result = doctest.testmod(
+        canvas, optionflags=doctest.NORMALIZE_WHITESPACE | doctest.ELLIPSIS
+    )
+    assert result.attempted, "no doctests found in canvas.py — did they move?"
+    assert result.failed == 0
+
+
+@needs_ffmpeg_filter("lutyuv")
+def test_the_flash_at_rest_is_bit_exact_and_not_merely_close():
+    """The tolerance above may not cover the resting state.
+
+    Most frames of most renders carry no pulse, so `brightness=0, saturation=1`
+    has to be the identity to the byte — a 1-LSB "no-op" would tint every quiet
+    frame of every video muvid makes.
+    """
+    untouched = _planes("null")
+    at_rest = _planes(lut_filter(brightness_saturation_lut()))
+    assert np.array_equal(untouched, at_rest), (
+        "the flash's resting LUT is not the identity; every unflashed frame moves"
+    )
 
 
 # --------------------------------------------------------------------------

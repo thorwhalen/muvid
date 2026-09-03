@@ -213,8 +213,22 @@ def _crop_filter(cut: "AssemblyCut") -> str:
     prepended ONLY in the moving case, because ``t`` must start at 0 for the ramp
     to mean anything and adding it unconditionally would change a path that works.
 
-    Not ``zoompan``: its expression vocabulary has no ``t`` at all (it exposes
-    ``on``/``in``/``pon``), and it duplicates frames on video input.
+    ``crop`` is the right filter HERE because the window never changes size —
+    not because ``zoompan`` is unusable. What ``crop`` cannot do is vary ``w``/``h``:
+    those two expressions are evaluated ONCE, at configure time, when ``t`` is NAN.
+    Both of that root cause's symptoms are real, and the quiet one is the dangerous
+    one — ``w='iw*0.5*(1+t)'`` refuses to configure ("Error when evaluating the
+    expression" / "Failed to configure input pad"), while ``w='iw*(0.5+0.2*min(t/2,1))'``
+    exits 0 and renders a plausible video frozen at ONE size (measured: 224 px for
+    every frame of a window that was meant to run 160 -> 224).
+
+    ``zoompan`` CAN vary size, and the note that used to sit here was wrong about
+    why it was passed over. Measured on ffmpeg 8.1: ``t`` really is undefined in
+    ``zoompan``, but the filter is not time-blind — ``in_time``/``it`` work, as do
+    the counters ``on``/``in``. Nor does it inherently duplicate frames: that is
+    entirely its default ``d=90`` (20 input frames -> 1800 out), and ``d=1`` is
+    exactly 1:1. So a resizing window is a ``zoompan`` job; a pan at constant size
+    is this one, and ``crop`` expresses it with one expression per axis.
     """
     c = cut.crop
     if c is None:
