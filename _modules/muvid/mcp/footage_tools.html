@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.mcp.footage_tools &mdash; muvid 0.0.44 documentation</title>
+  <title>muvid.mcp.footage_tools &mdash; muvid 0.0.45 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=78cc6f98"></script>
+      <script src="../../../_static/documentation_options.js?v=dcb4eb81"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -549,11 +549,20 @@
 <span class="c1">#: (the looks seam) were each dropped this way; ``transition`` (muvid#34) was</span>
 <span class="c1">#: hand-written and survived, which is exactly why the three are now one table</span>
 <span class="c1">#: rather than three ``if``s the next field forgets to join.</span>
+<span class="c1">#:</span>
+<span class="c1">#: Each row is ``(field, render, absent)``, where ``absent`` is the value that</span>
+<span class="c1">#: means "omit this key". It is a column rather than a hardcoded ``None`` because</span>
+<span class="c1">#: ``look_time_varying`` (muvid#73) is a **boolean** whose absent value is</span>
+<span class="c1">#: ``False``, and ``False is not None`` — an ``is not None`` test would have</span>
+<span class="c1">#: emitted it on every entry ever written, changing every existing</span>
+<span class="c1">#: ``renders/*/meta.json`` and every DECISION body for a field almost none of</span>
+<span class="c1">#: them use. Same omit-when-absent contract, one generalisation.</span>
 <span class="n">_EDL_OPTIONAL_FIELDS</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="p">(</span><span class="s2">"transition"</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="n">v</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()),</span>
-    <span class="p">(</span><span class="s2">"crop"</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="n">v</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()),</span>
-    <span class="p">(</span><span class="s2">"crop_end"</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="n">v</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()),</span>
-    <span class="p">(</span><span class="s2">"look"</span><span class="p">,</span> <span class="nb">str</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"transition"</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="n">v</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(),</span> <span class="kc">None</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"crop"</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="n">v</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(),</span> <span class="kc">None</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"crop_end"</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="n">v</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(),</span> <span class="kc">None</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"look"</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"look_time_varying"</span><span class="p">,</span> <span class="nb">bool</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span>
 <span class="p">)</span>
 
 
@@ -561,21 +570,26 @@
 <span class="w">    </span><span class="sd">"""One EDL entry as JSON — full precision (it must feed back verbatim), gaps as null.</span>
 
 <span class="sd">    Optional fields are emitted ONLY when set (:data:`_EDL_OPTIONAL_FIELDS`). That</span>
-<span class="sd">    omit-when-None rule is what keeps every existing ``renders/*/meta.json``</span>
+<span class="sd">    omit-when-absent rule is what keeps every existing ``renders/*/meta.json``</span>
 <span class="sd">    byte-identical — the compatibility surface named in ``.claude/CLAUDE.md``, since</span>
 <span class="sd">    these bodies have no schema version to bump — and keeps the render -&gt; edit -&gt;</span>
 <span class="sd">    re-render round trip (muvid#21 item 3) exact for an edit that uses none of them.</span>
 <span class="sd">    Values are plain dicts, not the frozen dataclasses: ``write_render_meta`` runs</span>
 <span class="sd">    ``json.dumps`` over this, which has no encoder for a dataclass.</span>
+
+<span class="sd">    ``bool`` as ``look_time_varying``'s renderer is doing real work, not</span>
+<span class="sd">    decoration: the field's value is a ``LookFragment``-derived flag and a plain</span>
+<span class="sd">    ``bool()`` is what guarantees the JSON carries ``true``/``false`` rather than</span>
+<span class="sd">    something ``json.dumps`` would reject or a subclass would smuggle through.</span>
 <span class="sd">    """</span>
     <span class="n">out</span> <span class="o">=</span> <span class="p">{</span>
         <span class="s2">"song_start"</span><span class="p">:</span> <span class="n">e</span><span class="o">.</span><span class="n">song_start</span><span class="p">,</span>
         <span class="s2">"song_end"</span><span class="p">:</span> <span class="n">e</span><span class="o">.</span><span class="n">song_end</span><span class="p">,</span>
         <span class="s2">"clip_id"</span><span class="p">:</span> <span class="n">e</span><span class="o">.</span><span class="n">clip_id</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">}</span>
-    <span class="k">for</span> <span class="n">field</span><span class="p">,</span> <span class="n">render</span> <span class="ow">in</span> <span class="n">_EDL_OPTIONAL_FIELDS</span><span class="p">:</span>
-        <span class="n">v</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">field</span><span class="p">,</span> <span class="n">render</span><span class="p">,</span> <span class="n">absent</span> <span class="ow">in</span> <span class="n">_EDL_OPTIONAL_FIELDS</span><span class="p">:</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">absent</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">v</span> <span class="o">!=</span> <span class="n">absent</span><span class="p">:</span>
             <span class="n">out</span><span class="p">[</span><span class="n">field</span><span class="p">]</span> <span class="o">=</span> <span class="n">render</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">out</span>
 
@@ -663,6 +677,7 @@
             <span class="n">fill_gaps</span><span class="p">(</span><span class="n">select_edl</span><span class="p">(</span><span class="n">strat</span><span class="p">,</span> <span class="n">aligns</span><span class="p">,</span> <span class="n">song_dur</span><span class="p">,</span> <span class="n">context</span><span class="o">=</span><span class="n">context</span><span class="p">),</span> <span class="n">song_dur</span><span class="p">),</span>
             <span class="n">aligns</span><span class="p">,</span>
             <span class="n">song_dur</span><span class="p">,</span>
+            <span class="n">canvas</span><span class="o">=</span><span class="n">proj</span><span class="o">.</span><span class="n">canvas</span><span class="p">(),</span>
         <span class="p">)</span>
     <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">KeyError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
         <span class="k">raise</span> <span class="n">_tool_error</span><span class="p">(</span><span class="sa">f</span><span class="s2">"could not build a valid edit: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
@@ -734,9 +749,24 @@
 <span class="sd">      second container (``movie=``), a filter that writes a file</span>
 <span class="sd">      (``metadata=…:file=``, ``deshake=filename=``), a pad label, a graph</span>
 <span class="sd">      separator, or an unclosed quote — is refused by name at ``validate_edl``,</span>
-<span class="sd">      not discovered as an ffmpeg side effect. Compile one with</span>
-<span class="sd">      ``muvid.footage.look`` (``punch_in`` / ``motion`` / ``stylize``) rather than</span>
-<span class="sd">      hand-writing it. All four fields survive verbatim in the returned ``edl``.</span>
+<span class="sd">      not discovered as an ffmpeg side effect. Its output frame is also bounded:</span>
+<span class="sd">      a ``scale``/``pad``/``zoompan`` size must be a plain pixel count (not</span>
+<span class="sd">      ``iw*80``, not ``-1``, not ``hd720``) and no more than</span>
+<span class="sd">      ``muvid.footage.edl.MAX_LOOK_SCALE`` times the render canvas — frame size</span>
+<span class="sd">      is memory, and ``scale=8000:8000`` costs 328 MB against 19 MB for a look</span>
+<span class="sd">      that stays at canvas size. On those four filters only options muvid has</span>
+<span class="sd">      measured may be set at all — ``scale`` w/h/s/size + ``flags``, ``pad``</span>
+<span class="sd">      w/h/x/y + ``color``, ``crop`` w/h/x/y, all of ``zoompan`` — because</span>
+<span class="sd">      ``pad=aspect`` and ``scale=force_original_aspect_ratio`` move the frame</span>
+<span class="sd">      while declaring no size a bound can read (590 MB and 941 MB measured on a</span>
+<span class="sd">      1920x1080 canvas). Compile one with ``muvid.footage.look``</span>
+<span class="sd">      (``punch_in`` / ``motion`` / ``stylize``) rather than hand-writing it.</span>
+<span class="sd">    - an entry carrying a MOVING look (a punch-in, a pan) should also set</span>
+<span class="sd">      ``look_time_varying: true``. It changes no pixels; it puts a line in the</span>
+<span class="sd">      reply's ``warnings`` when a blended boundary restarts the move's ramp,</span>
+<span class="sd">      which it does because the blend is a separate seek (muvid#73). Leave it</span>
+<span class="sd">      off — the default — for a grade, a LUT or a posterise, which never read the</span>
+<span class="sd">      clock. All five fields survive verbatim in the returned ``edl``.</span>
 <span class="sd">    - ``strategy='weighted'`` (score-driven): the beat-snapped Viterbi selector reads the</span>
 <span class="sd">      persisted score tracks (run ``score_footage`` first) and the selection config —</span>
 <span class="sd">      ``preset`` ("energetic"/"contemplative") and/or ``weights`` (per-metric) and/or</span>
@@ -751,6 +781,14 @@
 <span class="sd">    scaled onto the canvas (padded, never stretched), gaps render black, and the CLEAN</span>
 <span class="sd">    song audio runs under it all. Returns the render + the same coverage report</span>
 <span class="sd">    ``propose_edit`` gives.</span>
+
+<span class="sd">    **Read the returned ``warnings`` list.** It is always present and usually</span>
+<span class="sd">    empty, and it is what the render PLAN found: a transition that rounded to</span>
+<span class="sd">    zero frames at this fps, or a moving look on a blended boundary whose ramp</span>
+<span class="sd">    therefore restarts (muvid#73). Neither fails the render — ``ok`` stays true —</span>
+<span class="sd">    so this list is the only place either one is ever said. It exists because</span>
+<span class="sd">    these findings used to be Python warnings on the server's stderr, which a</span>
+<span class="sd">    remote caller has no access to.</span>
 <span class="sd">    """</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.footage.assemble</span><span class="w"> </span><span class="kn">import</span> <span class="n">assemble_music_video</span> <span class="k">as</span> <span class="n">_assemble</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.footage.edl</span><span class="w"> </span><span class="kn">import</span> <span class="n">derive_cuts</span><span class="p">,</span> <span class="n">fill_gaps</span><span class="p">,</span> <span class="n">validate_edl</span>
@@ -764,6 +802,13 @@
     <span class="k">if</span> <span class="ow">not</span> <span class="n">aligns</span><span class="p">:</span>
         <span class="k">raise</span> <span class="n">_tool_error</span><span class="p">(</span><span class="s2">"no alignment — call align_footage first"</span><span class="p">)</span>
     <span class="n">song_dur</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">song_duration</span><span class="p">()</span>
+    <span class="c1"># Resolved BEFORE validation, not after: a caller-supplied `look` is bounded</span>
+    <span class="c1"># against the canvas it will be rendered onto (muvid#75), and the canvas is</span>
+    <span class="c1"># also what a `canvas=` override changes. Resolving it afterwards — where this</span>
+    <span class="c1"># line used to sit — would have bounded a portrait render against the</span>
+    <span class="c1"># project's landscape canvas, i.e. the gate and the renderer disagreeing about</span>
+    <span class="c1"># the one number the bound is relative to.</span>
+    <span class="n">canvas_wh</span> <span class="o">=</span> <span class="n">_resolve_canvas</span><span class="p">(</span><span class="n">proj</span><span class="p">,</span> <span class="n">canvas</span><span class="p">)</span>
 
     <span class="n">has_selection_config</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">preset</span> <span class="ow">or</span> <span class="n">weights</span> <span class="ow">or</span> <span class="n">config</span><span class="p">)</span>
     <span class="k">try</span><span class="p">:</span>
@@ -772,7 +817,9 @@
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                     <span class="s2">"selection config (preset/weights/config) can't accompany an explicit edl"</span>
                 <span class="p">)</span>
-            <span class="n">entries</span> <span class="o">=</span> <span class="n">validate_edl</span><span class="p">(</span><span class="n">fill_gaps</span><span class="p">(</span><span class="n">edl</span><span class="p">,</span> <span class="n">song_dur</span><span class="p">),</span> <span class="n">aligns</span><span class="p">,</span> <span class="n">song_dur</span><span class="p">)</span>
+            <span class="n">entries</span> <span class="o">=</span> <span class="n">validate_edl</span><span class="p">(</span>
+                <span class="n">fill_gaps</span><span class="p">(</span><span class="n">edl</span><span class="p">,</span> <span class="n">song_dur</span><span class="p">),</span> <span class="n">aligns</span><span class="p">,</span> <span class="n">song_dur</span><span class="p">,</span> <span class="n">canvas</span><span class="o">=</span><span class="n">canvas_wh</span>
+            <span class="p">)</span>
             <span class="n">used_strategy</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">strat</span> <span class="o">=</span> <span class="n">strategy</span> <span class="ow">or</span> <span class="p">(</span>
@@ -789,24 +836,32 @@
                 <span class="p">),</span>
                 <span class="n">aligns</span><span class="p">,</span>
                 <span class="n">song_dur</span><span class="p">,</span>
+                <span class="n">canvas</span><span class="o">=</span><span class="n">canvas_wh</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="n">used_strategy</span> <span class="o">=</span> <span class="n">strat</span>
     <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">KeyError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
         <span class="k">raise</span> <span class="n">_tool_error</span><span class="p">(</span><span class="sa">f</span><span class="s2">"could not build a valid edit: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
 
-    <span class="n">canvas_wh</span> <span class="o">=</span> <span class="n">_resolve_canvas</span><span class="p">(</span><span class="n">proj</span><span class="p">,</span> <span class="n">canvas</span><span class="p">)</span>
     <span class="n">cuts</span> <span class="o">=</span> <span class="n">derive_cuts</span><span class="p">(</span><span class="n">entries</span><span class="p">,</span> <span class="n">aligns</span><span class="p">,</span> <span class="n">proj</span><span class="o">.</span><span class="n">clip_paths</span><span class="p">())</span>
     <span class="n">render_id</span> <span class="o">=</span> <span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span><span class="o">.</span><span class="n">hex</span><span class="p">[:</span><span class="mi">12</span><span class="p">]</span>
     <span class="c1"># The reference a human can actually say. Assigned here, at creation, so it</span>
     <span class="c1"># never renumbers under them (see MusicVideoFootageProject.ensure_render_refs).</span>
     <span class="n">ref_n</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">next_render_ref</span><span class="p">()</span>
     <span class="n">render_dir</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">new_render_dir</span><span class="p">(</span><span class="n">render_id</span><span class="p">)</span>
+    <span class="c1"># The render-plan findings, on their way to the CALLER. `_part_plan` raises</span>
+    <span class="c1"># them as `AssemblyWarning`s, which reach this process's stderr and stop</span>
+    <span class="c1"># there — and on the deployed per-caller connector the caller has no stderr,</span>
+    <span class="c1"># so a muvid#73 hitch came back as an `ok` render with nothing said about it.</span>
+    <span class="c1"># A warning the caller cannot see is the silent no-op this repo refuses</span>
+    <span class="c1"># everywhere else, so the sink is threaded in and its contents are returned.</span>
+    <span class="n">notes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">out</span> <span class="o">=</span> <span class="n">_assemble</span><span class="p">(</span>
             <span class="n">cuts</span><span class="p">,</span>
             <span class="nb">str</span><span class="p">(</span><span class="n">proj</span><span class="o">.</span><span class="n">song_path</span><span class="p">()),</span>
             <span class="nb">str</span><span class="p">(</span><span class="n">render_dir</span> <span class="o">/</span> <span class="s2">"final.mp4"</span><span class="p">),</span>
             <span class="n">canvas</span><span class="o">=</span><span class="n">canvas_wh</span><span class="p">,</span>
+            <span class="n">on_note</span><span class="o">=</span><span class="n">notes</span><span class="o">.</span><span class="n">append</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="c1"># audio= arms the duration-match check — the one that catches a mis-built</span>
         <span class="c1"># filtergraph (muvid#24 B3); correct now BECAUSE every EDL is gap-filled to the</span>
@@ -848,6 +903,15 @@
         <span class="p">),</span>
         <span class="s2">"ok"</span><span class="p">:</span> <span class="ow">not</span> <span class="n">failures</span><span class="p">(</span><span class="n">checks</span><span class="p">),</span>
         <span class="s2">"checks"</span><span class="p">:</span> <span class="n">report</span><span class="p">(</span><span class="n">checks</span><span class="p">),</span>
+        <span class="c1"># What the render PLAN found: a transition that rounded to zero frames at</span>
+        <span class="c1"># this fps, a time-varying look on a blended boundary (muvid#73). Neither</span>
+        <span class="c1"># fails the render — `ok` stays true — so this list is the whole of the</span>
+        <span class="c1"># caller's ability to know. ALWAYS present, empty when clean: an absent</span>
+        <span class="c1"># key makes "old build" and "nothing to report" the same reading, which</span>
+        <span class="c1"># is the ambiguity the omit-when-absent rule exists to avoid for EDL</span>
+        <span class="c1"># fields whose absent value is meaningful. Here the meaningful value is</span>
+        <span class="c1"># "nothing", and a caller has to be able to rely on being told it.</span>
+        <span class="s2">"warnings"</span><span class="p">:</span> <span class="n">notes</span><span class="p">,</span>
         <span class="c1"># The retrieval claim: what a host's generic download route (reelee#252) turns</span>
         <span class="c1"># into a signed short-lived URL. `video` stays a server-side path — useful to an</span>
         <span class="c1"># operator, unreadable to a remote caller; the claim is the caller's handle.</span>

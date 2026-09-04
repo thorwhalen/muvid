@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.footage.edl &mdash; muvid 0.0.44 documentation</title>
+  <title>muvid.footage.edl &mdash; muvid 0.0.45 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=78cc6f98"></script>
+      <script src="../../../_static/documentation_options.js?v=dcb4eb81"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -152,8 +152,9 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sequence</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">Sequence</span>
 
 <span class="c1">#: Spans shorter than this (seconds) are treated as coincident / zero — guards float noise.</span>
 <span class="n">_EPS</span> <span class="o">=</span> <span class="mf">1e-3</span>
@@ -165,6 +166,89 @@
 <span class="c1">#: stays on cuts deliberately — it is the number the caller wrote and can act on — but</span>
 <span class="c1">#: read it as bounding work only to within that factor.</span>
 <span class="n">MAX_EDL_ENTRIES</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"MUVID_FOOTAGE_MAX_EDL_ENTRIES"</span><span class="p">,</span> <span class="s2">"500"</span><span class="p">))</span>
+
+<span class="c1">#: How many times the delivery canvas a ``look`` may ask for, PER DIMENSION</span>
+<span class="c1">#: (env-tunable). So the area bound is ``MAX_LOOK_SCALE ** 2`` — 16x the canvas.</span>
+<span class="c1">#:</span>
+<span class="c1">#: **Four, chosen against measurements rather than taste.** Three of them:</span>
+<span class="c1">#:</span>
+<span class="c1">#: - ``2`` is the standard supersample and would be the tempting answer, but it</span>
+<span class="c1">#:   REFUSES a look muvid itself compiles: ``stylize(fill, target="1080x1080")``</span>
+<span class="c1">#:   on a 640x360 canvas emits ``scale=1920:1080,crop=1080:1080:420:0``, which is</span>
+<span class="c1">#:   exactly 3x linear. A bound that refuses the seam it protects is not a bound,</span>
+<span class="c1">#:   it is an outage.</span>
+<span class="c1">#: - ``3`` accepts that one *exactly on the boundary*, which is one rounding away</span>
+<span class="c1">#:   from the same outage.</span>
+<span class="c1">#: - ``4`` caps the worst case at 4x muvid's largest canvas — 7680x4320 — which</span>
+<span class="c1">#:   measures **184.8 MB** peak RSS, against **327.6 MB** for the</span>
+<span class="c1">#:   ``scale=8000:8000`` this closes and the ~2 GB ``scale=20000:20000``</span>
+<span class="c1">#:   extrapolates to. (ffmpeg 9.0.1, three frames from a 64x48 source,</span>
+<span class="c1">#:   ``/usr/bin/time -l``; the same harness reads 18.8 MB for ``scale=64:48`` and</span>
+<span class="c1">#:   32.8 MB for ``scale=1920:1080``.)</span>
+<span class="c1">#:</span>
+<span class="c1">#: Bigger than the canvas is never useful — the delivered frame IS the canvas, so</span>
+<span class="c1">#: anything past it is resampled straight back down — which is why a *small*</span>
+<span class="c1">#: multiple is the whole of the legitimate range.</span>
+<span class="n">MAX_LOOK_SCALE</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"MUVID_FOOTAGE_MAX_LOOK_SCALE"</span><span class="p">,</span> <span class="s2">"4"</span><span class="p">))</span>
+
+<span class="c1">#: How many filter links one look may carry, and how many of those may set a</span>
+<span class="c1">#: size. **Bounding the frame does not bound the memory** — that is the half</span>
+<span class="c1">#: :data:`MAX_LOOK_SCALE` misses, and it misses it by a factor of ten.</span>
+<span class="c1">#:</span>
+<span class="c1">#: Measured, ffmpeg 9.0.1, three frames, ``/usr/bin/time -l`` peak RSS, every</span>
+<span class="c1">#: link sitting exactly AT the size cap (7680x4320 for a 1920x1080 canvas), so</span>
+<span class="c1">#: every fragment below is one :func:`_validate_look_size` accepts:</span>
+<span class="c1">#:</span>
+<span class="c1">#: =========================  =========</span>
+<span class="c1">#: look                       peak RSS</span>
+<span class="c1">#: =========================  =========</span>
+<span class="c1">#: ``scale=7680:4320`` x1     171 MB</span>
+<span class="c1">#: ``scale=7680:4320`` x8     505 MB</span>
+<span class="c1">#: ``scale=7680:4320`` x32    1648 MB</span>
+<span class="c1">#: ``scale=7680:4320`` x64    3171 MB</span>
+<span class="c1">#: =========================  =========</span>
+<span class="c1">#:</span>
+<span class="c1">#: ~47 MB per additional link, unbounded, on a box that has been OOM-killed at</span>
+<span class="c1">#: 30 cuts (muvid#21/#24). The size cap refuses ``scale=8000:8000`` at 241 MB</span>
+<span class="c1">#: while accepting thirty-two links of 7680x4320 at 1648 MB — which is the</span>
+<span class="c1">#: shape of a bound that measures the wrong quantity.</span>
+<span class="c1">#:</span>
+<span class="c1">#: TWO caps rather than one, because they bound different things and one number</span>
+<span class="c1">#: cannot do both: the total bounds the graph, and the resize count bounds how</span>
+<span class="c1">#: many LARGE frames can exist in it. Together the measured worst case is</span>
+<span class="c1">#: **292 MB** (2 links at the size cap plus 14 cheap ones) against 3171 MB</span>
+<span class="c1">#: today. A single total-link cap loose enough for a rich grade would leave the</span>
+<span class="c1">#: multiplicative worst case an order of magnitude higher.</span>
+<span class="c1">#:</span>
+<span class="c1">#: The values are generous by construction: muvid's own compilers emit **1**</span>
+<span class="c1">#: link for ``punch_in`` and **2** for a two-effect ``stylize``, and at most one</span>
+<span class="c1">#: of those ever sets a size.</span>
+<span class="n">MAX_LOOK_LINKS</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"MUVID_FOOTAGE_MAX_LOOK_LINKS"</span><span class="p">,</span> <span class="s2">"16"</span><span class="p">))</span>
+<span class="n">MAX_LOOK_RESIZES</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"MUVID_FOOTAGE_MAX_LOOK_RESIZES"</span><span class="p">,</span> <span class="s2">"2"</span><span class="p">))</span>
+
+<span class="c1">#: The canvas :func:`validate_edl` bounds a look against when its caller names</span>
+<span class="c1">#: none: the element-wise maximum of ``workspace.CANVASES``, so the default is</span>
+<span class="c1">#: the LOOSEST bound that is still a bound — never an absent one.</span>
+<span class="c1">#:</span>
+<span class="c1">#: A ``None`` default would have been the smaller diff and the wrong shape: it</span>
+<span class="c1">#: makes "nobody threaded the canvas through" indistinguishable from "this look</span>
+<span class="c1">#: is fine", which is the silent no-op this module refuses everywhere else. The</span>
+<span class="c1">#: default only covers a direct caller of :func:`validate_edl`.</span>
+<span class="c1">#:</span>
+<span class="c1">#: **Every muvid path that can carry a caller's look passes the real canvas, and</span>
+<span class="c1">#: that is asserted by an AST scan of the call sites** rather than by behaviour.</span>
+<span class="c1">#: The distinction is load-bearing and an earlier version of this comment glossed</span>
+<span class="c1">#: it: three of the five sites validate machine-generated entries from</span>
+<span class="c1">#: ``select_edl``, which has no ``look``, so deleting ``canvas=`` from any of</span>
+<span class="c1">#: them left the whole suite green — the claim was true of one site and prose</span>
+<span class="c1">#: about the rest. The scan holds all five (it found the fifth, in</span>
+<span class="c1">#: ``select_score``), and the one site that deliberately passes no canvas is</span>
+<span class="c1">#: recorded with its reason plus a test of the premise that reason rests on. See</span>
+<span class="c1">#: ``tests/test_edl_look_size_bound.py``. Pinned against</span>
+<span class="c1">#: ``workspace.CANVASES`` by a test rather than imported from it, because</span>
+<span class="c1">#: ``muvid.footage.edl`` is on the import-safe path and ``workspace`` is not on</span>
+<span class="c1">#: it for free.</span>
+<span class="n">DFLT_LOOK_CANVAS</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1920</span><span class="p">,</span> <span class="mi">1920</span><span class="p">)</span>
 
 <span class="c1">#: Where a transition sits relative to the cut it is on: the fraction taken from</span>
 <span class="c1">#: BEFORE the boundary. ``0.5`` is centred — each side supplies ``duration/2`` of</span>
@@ -381,10 +465,45 @@
     <span class="c1">#: :func:`_validate_look` gates it against the ALLOWLIST</span>
     <span class="c1">#: :data:`LOOK_FILTERS` — not against a list of refusals — and also refuses a</span>
     <span class="c1">#: fragment that names a container input, that is more than ONE linear chain,</span>
-    <span class="c1">#: or that is not lexically closed. The first two of those would break the</span>
-    <span class="c1">#: bounded-memory invariant the assembler rests on; the allowlist is what</span>
-    <span class="c1">#: keeps a look from writing this machine's disk.</span>
+    <span class="c1">#: that is not lexically closed, that sets an option muvid has not classified</span>
+    <span class="c1">#: on one of the four filters that can change the output geometry, or that</span>
+    <span class="c1">#: asks for a frame more than :data:`MAX_LOOK_SCALE` times the delivery</span>
+    <span class="c1">#: canvas. The first two of those would break the bounded-memory invariant</span>
+    <span class="c1">#: the assembler rests on; the allowlist is what keeps a look from writing</span>
+    <span class="c1">#: this machine's disk; and the last two are what keep an allowlisted filter</span>
+    <span class="c1">#: from spending 900 MB of it (muvid#75).</span>
     <span class="n">look</span><span class="p">:</span> <span class="s2">"str | None"</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1">#: Whether :attr:`look` READS THE FILTER CLOCK — a punch-in, a pan, anything</span>
+    <span class="c1">#: whose expressions mention ``t`` / ``in_time`` / ``n``. ``False`` (the</span>
+    <span class="c1">#: default) means a grade, a LUT, a posterise: a look that draws every frame</span>
+    <span class="c1">#: the same way and is therefore unaffected by where the clock starts.</span>
+    <span class="c1">#:</span>
+    <span class="c1">#: **It exists because the string throws that answer away** (muvid#73). A</span>
+    <span class="c1">#: transitioned boundary renders as a separate two-input invocation whose</span>
+    <span class="c1">#: inputs are input-side-seeked to the blend window, and input-side ``-ss``</span>
+    <span class="c1">#: rebases the filter timeline to 0 — so a moving look **restarts its ramp**</span>
+    <span class="c1">#: for the length of the blend. Measured on a 3.0 s cut at 25 fps with a</span>
+    <span class="c1">#: 0.4 s fade and ``punch_in(zoom=1.12)``: the solo part's last frame is</span>
+    <span class="c1">#: drawn at zoom 1.109 (mean |diff| 28.1/255 against the same frame rendered</span>
+    <span class="c1">#: with no look), the blend part's first frame at zoom 1.000 (0.7/255 —</span>
+    <span class="c1">#: indistinguishable from no punch at all). muvid cannot rebase the fragment</span>
+    <span class="c1">#: without rewriting an arbitrary ffmpeg expression, which is exactly what</span>
+    <span class="c1">#: ``looks`` refuses to do for itself (its rule 27), so the assembler WARNS</span>
+    <span class="c1">#: rather than silently rendering the hitch</span>
+    <span class="c1">#: (:func:`muvid.footage.assemble._part_plan`) — the same "never a silent</span>
+    <span class="c1">#: no-op" posture as the zero-frame-transition warning beside it.</span>
+    <span class="c1">#:</span>
+    <span class="c1">#: **A caller-supplied look defaults to ``False``, so an UNDECLARED moving</span>
+    <span class="c1">#: look stays silent.** That is the known limit of the chosen shape, not an</span>
+    <span class="c1">#: oversight: the alternative is muvid deciding by reading the fragment,</span>
+    <span class="c1">#: which is the same rewriting-an-arbitrary-expression problem one step</span>
+    <span class="c1">#: earlier. muvid's own compilers declare it for you —</span>
+    <span class="c1">#: :func:`muvid.footage.look.punch_in` and</span>
+    <span class="c1">#: :func:`~muvid.footage.look.motion` return a fragment that says ``True``,</span>
+    <span class="c1">#: :func:`~muvid.footage.look.stylize` one that answers from the compiled</span>
+    <span class="c1">#: plan, and :func:`~muvid.footage.look.punch_in_cuts` sets this field FROM</span>
+    <span class="c1">#: the fragment rather than hardcoding it.</span>
+    <span class="n">look_time_varying</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">is_gap</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
@@ -419,6 +538,11 @@
     <span class="c1">#: of its render sites share, so a look lands identically on a solo cut and on</span>
     <span class="c1">#: each side of a blended boundary. See :attr:`EdlEntry.look`.</span>
     <span class="n">look</span><span class="p">:</span> <span class="s2">"str | None"</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1">#: Carried through unchanged, and the assembler is its ONE consumer: only it</span>
+    <span class="c1">#: knows which boundaries become a separate two-input invocation, which is</span>
+    <span class="c1">#: where a moving look's ramp restarts (muvid#73). See</span>
+    <span class="c1">#: :attr:`EdlEntry.look_time_varying` for the measurement.</span>
+    <span class="n">look_time_varying</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">duration</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
@@ -465,6 +589,28 @@
     <span class="k">return</span> <span class="n">raw</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_as_look_time_varying</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Parse the ``look_time_varying`` flag. RAISES on a non-bool.</span>
+
+<span class="sd">    Same posture as the look and crop reads, and here the coercion it refuses is</span>
+<span class="sd">    the dangerous one: ``bool("false")`` is ``True``, so accepting a string would</span>
+<span class="sd">    turn a caller writing ``"false"`` into a warning they cannot switch off, and</span>
+<span class="sd">    ``bool(0)``/``bool("")`` would silently disarm a declaration that was made.</span>
+<span class="sd">    JSON has real booleans; a caller sending anything else has a bug worth</span>
+<span class="sd">    hearing about.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">raw</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="nb">bool</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"EDL entry look_time_varying is malformed (</span><span class="si">{</span><span class="n">raw</span><span class="si">!r}</span><span class="s2">): it must be a "</span>
+            <span class="s2">"boolean. It says whether the look READS THE CLOCK (a punch-in, a "</span>
+            <span class="s2">"pan) — true makes the assembler warn when the cut borders a "</span>
+            <span class="s2">"transition, where the ramp restarts (muvid#73)."</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">raw</span>
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">_as_entry</span><span class="p">(</span><span class="n">e</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EdlEntry</span><span class="p">:</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">EdlEntry</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">e</span>
@@ -494,6 +640,7 @@
         <span class="n">crop</span><span class="o">=</span><span class="n">_as_crop</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"crop"</span><span class="p">),</span> <span class="s2">"crop"</span><span class="p">),</span>
         <span class="n">crop_end</span><span class="o">=</span><span class="n">_as_crop</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"crop_end"</span><span class="p">),</span> <span class="s2">"crop_end"</span><span class="p">),</span>
         <span class="n">look</span><span class="o">=</span><span class="n">_as_look</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"look"</span><span class="p">)),</span>
+        <span class="n">look_time_varying</span><span class="o">=</span><span class="n">_as_look_time_varying</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"look_time_varying"</span><span class="p">)),</span>
     <span class="p">)</span>
 
 
@@ -552,6 +699,8 @@
     <span class="n">edl</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">,</span>
     <span class="n">alignments</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">FootageAlignment</span><span class="p">],</span>
     <span class="n">song_duration</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">canvas</span><span class="p">:</span> <span class="s2">"tuple[int, int]"</span> <span class="o">=</span> <span class="n">DFLT_LOOK_CANVAS</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">EdlEntry</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">"""Validate an EDL (from a strategy OR a caller) — the ONE gate before any cutting.</span>
 
@@ -567,16 +716,35 @@
 <span class="sd">      ``clip_in = song_start - offset`` satisfies ``0 &lt;= clip_in`` and</span>
 <span class="sd">      ``clip_in + span_duration &lt;= clip_duration`` (the clip actually contains that span);</span>
 <span class="sd">    - a ``look`` (the ``looks`` seam) names only filters in :data:`LOOK_FILTERS`,</span>
-<span class="sd">      is ONE lexically-closed linear filter chain, names no container input, and is</span>
-<span class="sd">      not on a gap — see :func:`_validate_look`, which is the trust boundary for a</span>
-<span class="sd">      caller-supplied filter string;</span>
+<span class="sd">      is ONE lexically-closed linear filter chain, names no container input, is</span>
+<span class="sd">      not on a gap, sets only options :data:`_LOOK_GEOMETRY_FILTERS` classifies on</span>
+<span class="sd">      the four filters that can change the output frame, and asks for a frame no</span>
+<span class="sd">      more than :data:`MAX_LOOK_SCALE` times ``canvas`` — see</span>
+<span class="sd">      :func:`_validate_look`, which is the trust boundary for a caller-supplied</span>
+<span class="sd">      filter string;</span>
+<span class="sd">    - ``look_time_varying`` is a boolean, and is not set on an entry with no</span>
+<span class="sd">      ``look`` (a declaration about a look that is not there is a request that</span>
+<span class="sd">      cannot be honoured);</span>
 <span class="sd">    - a :class:`Transition` is on an entry that HAS a predecessor, names a known curve,</span>
 <span class="sd">      is at least :data:`MIN_TRANSITION_S` long, fits in song time counting BOTH</span>
 <span class="sd">      transitions an entry can carry, and fits in each side's aligned coverage — see</span>
 <span class="sd">      :func:`_validate_transition`.</span>
 
+<span class="sd">    ``canvas`` is the DELIVERY canvas the assembler will render onto — the only</span>
+<span class="sd">    thing a look's output frame can honestly be bounded against, since the look is</span>
+<span class="sd">    spliced after the assembler's own ``scale``/``pad`` onto it. Every muvid path</span>
+<span class="sd">    passes the real one; :data:`DFLT_LOOK_CANVAS` covers a direct caller and is</span>
+<span class="sd">    the loosest bound rather than an absent one.</span>
+
 <span class="sd">    Returns the normalized list of :class:`EdlEntry`.</span>
 <span class="sd">    """</span>
+    <span class="n">w</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">canvas</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="nb">int</span><span class="p">(</span><span class="n">canvas</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="k">if</span> <span class="n">w</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">h</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"canvas must be positive, got </span><span class="si">{</span><span class="n">canvas</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">x</span><span class="si">{</span><span class="n">canvas</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">. It is the "</span>
+            <span class="s2">"delivery size a look's output frame is bounded against."</span>
+        <span class="p">)</span>
+    <span class="n">canvas</span> <span class="o">=</span> <span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="p">)</span>
     <span class="n">entries</span> <span class="o">=</span> <span class="p">[</span><span class="n">_as_entry</span><span class="p">(</span><span class="n">e</span><span class="p">)</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">edl</span><span class="p">]</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">entries</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"EDL is empty — nothing to assemble."</span><span class="p">)</span>
@@ -637,7 +805,14 @@
         <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">crop</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">e</span><span class="o">.</span><span class="n">crop_end</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">_validate_crop</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">look</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">_validate_look</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
+            <span class="n">_validate_look</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">canvas</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">e</span><span class="o">.</span><span class="n">look_time_varying</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"EDL entry </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2"> sets look_time_varying but carries no look. The "</span>
+                <span class="s2">"flag says whether THE LOOK reads the clock; with no look there "</span>
+                <span class="s2">"is nothing for it to describe, and the warning it arms would "</span>
+                <span class="s2">"never fire — a direction that quietly does nothing."</span>
+            <span class="p">)</span>
         <span class="n">prev_end</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">song_end</span>
         <span class="n">prev</span> <span class="o">=</span> <span class="n">e</span>
     <span class="k">return</span> <span class="n">entries</span></div>
@@ -748,34 +923,20 @@
 <span class="c1">#: rather than writes. Nothing else may name a path, so adding a filter here is a</span>
 <span class="c1">#: two-place edit and the second place is a measurement of the real binary.</span>
 <span class="c1">#:</span>
-<span class="c1">#: **What this does NOT bound**, stated because a partial claim is worse than</span>
-<span class="c1">#: none. An allowlisted filter can still be given absurd PARAMETERS, and the two</span>
-<span class="c1">#: that matter are measured rather than guessed at:</span>
+<span class="c1">#: **The frame size an allowlisted filter may ask for is bounded separately**</span>
+<span class="c1">#: (muvid#75) — see :data:`_LOOK_GEOMETRY_FILTERS` and :data:`MAX_LOOK_SCALE`.</span>
+<span class="c1">#: The allowlist is a vocabulary; it says nothing about the PARAMETERS a member</span>
+<span class="c1">#: is given, and one of those parameters is memory. Nor is a size bound a bound</span>
+<span class="c1">#: on the OPTIONS that set a size: ``pad``'s ``aspect`` and ``scale``'s</span>
+<span class="c1">#: ``force_original_aspect_ratio`` both move the frame while declaring no</span>
+<span class="c1">#: dimension a bound can read, so the four filters that can change the output</span>
+<span class="c1">#: geometry are allowlisted per OPTION as well as by name.</span>
 <span class="c1">#:</span>
-<span class="c1">#: - **Frame size is memory, and THREE options set it**, not one. Measured on</span>
-<span class="c1">#:   ffmpeg 9.0.1, three frames from a 64x48 source, peak RSS:</span>
-<span class="c1">#:</span>
-<span class="c1">#:   =====================================  =========</span>
-<span class="c1">#:   look                                   peak RSS</span>
-<span class="c1">#:   =====================================  =========</span>
-<span class="c1">#:   ``scale=64:48``                        10 MB</span>
-<span class="c1">#:   ``scale=64:48,scale=8000:8000``        300 MB</span>
-<span class="c1">#:   ``zoompan=d=1:s=8000x8000:fps=25``     289 MB</span>
-<span class="c1">#:   ``scale=w='iw*80':h='ih*80'``          112 MB</span>
-<span class="c1">#:   =====================================  =========</span>
-<span class="c1">#:</span>
-<span class="c1">#:   All four are ACCEPTED by this gate. An earlier version of this note named</span>
-<span class="c1">#:   only ``scale``, which under-enumerated the surface it exists to describe:</span>
-<span class="c1">#:   ``zoompan``'s ``s`` is a second lever of the same magnitude, and it is</span>
-<span class="c1">#:   allowlisted precisely because ``muvid.footage.look.punch_in`` needs it.</span>
-<span class="c1">#:   Not closed here because a correct bound is RELATIVE TO THE CANVAS — which</span>
-<span class="c1">#:   this function is not given — and because ``iw*80`` is a legal width, so a</span>
-<span class="c1">#:   literal cap is not the whole answer. Tracked as muvid#75.</span>
-<span class="c1">#: - ``lut3d=file=`` will *attempt* to open any path the renderer can read. It</span>
-<span class="c1">#:   cannot write, and a non-``.cube`` file fails to parse.</span>
-<span class="c1">#:</span>
-<span class="c1">#: Both are failures inside the caller's OWN render. Writing to someone else's</span>
-<span class="c1">#: disk is the class this closes.</span>
+<span class="c1">#: **What this still does NOT bound**, stated because a partial claim is worse</span>
+<span class="c1">#: than none: ``lut3d=file=`` will *attempt* to open any path the renderer can</span>
+<span class="c1">#: read. It cannot write, and a non-``.cube`` file fails to parse. That is a</span>
+<span class="c1">#: failure inside the caller's OWN render; writing to someone else's disk is the</span>
+<span class="c1">#: class this closes.</span>
 <span class="n">LOOK_FILTERS</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span>
     <span class="p">{</span>
         <span class="c1"># -- compiled: muvid.footage.look, via looks.compile_motion --</span>
@@ -812,6 +973,188 @@
 <span class="c1">#: path, with the reason it is allowed: ``lut3d`` LOADS a ``.cube``, which is the</span>
 <span class="c1">#: whole of ``looks``' ``lut3d``/``gradient_map`` effect, and loading is a read.</span>
 <span class="n">_LOOK_FILE_OPTIONS</span> <span class="o">=</span> <span class="p">{(</span><span class="s2">"lut3d"</span><span class="p">,</span> <span class="s2">"file"</span><span class="p">)}</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">_FilterOptions</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Which options a look may set on one geometry-capable filter."""</span>
+
+    <span class="c1">#: option name -&gt; the axis it sets: ``"width"``, ``"height"``, or ``"size"``</span>
+    <span class="c1">#: (a single ``WxH``). Bounded against the canvas.</span>
+    <span class="n">sizes</span><span class="p">:</span> <span class="s2">"dict[str, str]"</span>
+    <span class="c1">#: accepted and not bounded — measured not to move the output frame.</span>
+    <span class="n">free</span><span class="p">:</span> <span class="nb">frozenset</span>
+    <span class="c1">#: the leading UNNAMED slots a look may fill, in libavfilter's order. Short</span>
+    <span class="c1">#: on purpose: a positional past the end is REFUSED, never dropped.</span>
+    <span class="n">positional</span><span class="p">:</span> <span class="nb">tuple</span>
+
+
+<span class="c1">#: Which options a look may set on a filter that can change the OUTPUT FRAME</span>
+<span class="c1">#: GEOMETRY — an allowlist, the same shape and for the same reason</span>
+<span class="c1">#: :data:`LOOK_FILTERS` is one, and the correction of the first pass at muvid#75.</span>
+<span class="c1">#:</span>
+<span class="c1">#: **The first pass listed the options that SET a size and read the rest as</span>
+<span class="c1">#: nothing, which is a blocklist wearing an allowlist's clothes** — and it leaked</span>
+<span class="c1">#: twice, both bigger than the ``scale=8000:8000`` it refused. Measured on a</span>
+<span class="c1">#: 1920x1080 canvas with the exact ``-vf`` the assembler builds, 3 frames,</span>
+<span class="c1">#: ``/usr/bin/time -l`` peak RSS:</span>
+<span class="c1">#:</span>
+<span class="c1">#: ==========================================================  ============  =========</span>
+<span class="c1">#: fragment                                                    frame         peak RSS</span>
+<span class="c1">#: ==========================================================  ============  =========</span>
+<span class="c1">#: (look at canvas size)                                       1920x1080      110 MB</span>
+<span class="c1">#: ``scale=7680:4320`` — the bound's own stated worst case      7680x4320      268 MB</span>
+<span class="c1">#: ``scale=8000:8000`` — REFUSED, the case muvid#75 named       8000x8000      403 MB</span>
+<span class="c1">#: ``pad=w=1920:h=1080:aspect=1/30``                           1920x57600      590 MB</span>
+<span class="c1">#: ``crop=w=1920:h=200,scale=w=7680:h=4320:``</span>
+<span class="c1">#: ``force_original_aspect_ratio=increase``                    41472x4320      941 MB</span>
+<span class="c1">#: ==========================================================  ============  =========</span>
+<span class="c1">#:</span>
+<span class="c1">#: Both leaks declare nothing the old table could read: ``pad``'s ``aspect``</span>
+<span class="c1">#: grows w *or* h to satisfy a ratio, so both dimensions can sit AT canvas size;</span>
+<span class="c1">#: ``scale``'s ``force_original_aspect_ratio`` derives the frame from the input</span>
+<span class="c1">#: aspect, which a preceding ``crop`` makes extreme, so both dimensions can sit</span>
+<span class="c1">#: exactly ON the bound. A third, ``force_divisible_by``, only acts in</span>
+<span class="c1">#: combination with the second — which is why a one-option-at-a-time sweep</span>
+<span class="c1">#: cannot find it and the table is an allowlist instead.</span>
+<span class="c1">#:</span>
+<span class="c1">#: **How this list was arrived at**, because "we named the levers we thought of"</span>
+<span class="c1">#: is what produced the first pass: for every option of every one of the 17</span>
+<span class="c1">#: filters in :data:`LOOK_FILTERS`, read out of ``ffmpeg -h filter=&lt;name&gt;``, a</span>
+<span class="c1">#: value of the option's declared type was rendered from a 64x48 source in three</span>
+<span class="c1">#: contexts — alone, beside a size, and beside a size AND</span>
+<span class="c1">#: ``force_original_aspect_ratio`` — and the produced frame compared to the</span>
+<span class="c1">#: fragment's own baseline. On ffmpeg 9.0.1 and 6.1.6 alike the frame moves for</span>
+<span class="c1">#: exactly these: ``crop``'s ``out_w``/``w``/``out_h``/``h``, ``pad``'s</span>
+<span class="c1">#: ``width``/``w``/``height``/``h``/``aspect``, ``scale``'s</span>
+<span class="c1">#: ``w``/``width``/``h``/``height``/``size``/``s``/</span>
+<span class="c1">#: ``force_original_aspect_ratio``/``force_divisible_by``, and ``zoompan``'s</span>
+<span class="c1">#: ``s``. Nothing on the other 13 filters moves it, which is why they are absent</span>
+<span class="c1">#: here and their options are not checked at all.</span>
+<span class="c1">#:</span>
+<span class="c1">#: The sweep is an instrument, not the guard. **The guard is that anything not</span>
+<span class="c1">#: named here is refused**, because the census the sweep reads is itself</span>
+<span class="c1">#: incomplete: ``ffmpeg -h filter=scale`` on 6.1.6 does not print ``s``/``size``</span>
+<span class="c1">#: and ``scale=s=320x240`` works there anyway (measured, 320x240). A table that</span>
+<span class="c1">#: classified only what the help prints would have had a hole on that binary.</span>
+<span class="c1">#:</span>
+<span class="c1">#: Two entries that look like omissions and are not:</span>
+<span class="c1">#:</span>
+<span class="c1">#: - ``crop``'s ``w``/``h`` are ``free``, not sizes. ``crop`` cannot GROW a frame</span>
+<span class="c1">#:   — ``crop=8000:8000`` and ``crop=w='iw*80':h='ih*80'`` are both refused by</span>
+<span class="c1">#:   ffmpeg ("Invalid too big or non positive size") — so its output is bounded</span>
+<span class="c1">#:   by its input, and bounding it would refuse ``looks``' constant-size</span>
+<span class="c1">#:   ``motion`` (``crop=w='iw*0.5':h='ih*0.5'``), the one muvid-compiled fragment</span>
+<span class="c1">#:   whose size options are expressions.</span>
+<span class="c1">#: - the positional prefixes stop at what muvid's own compilers emit, and a</span>
+<span class="c1">#:   positional past the end is refused rather than dropped. Dropping it was the</span>
+<span class="c1">#:   second half of the ``pad`` leak: ``pad``'s ``aspect`` is its SEVENTH</span>
+<span class="c1">#:   positional slot, so ``pad=1920:1080:0:0:black:init:1/30`` reaches it without</span>
+<span class="c1">#:   naming it (measured, both binaries: 192x48 from a 64x48 source at</span>
+<span class="c1">#:   ``aspect=4/1``, and ``pad=64:48:0:0:black:init:4/1`` likewise). Carrying the</span>
+<span class="c1">#:   full order instead would not be safe either, and the reason is measurable:</span>
+<span class="c1">#:   the two builds this fleet runs do not declare the same option list for</span>
+<span class="c1">#:   ``scale``. On 9.0.1 the fifth slot is ``size`` (``scale=100:100:bicubic:0:X``</span>
+<span class="c1">#:   answers "Size and width/height expressions cannot be set at the same time");</span>
+<span class="c1">#:   6.1.6's ``-h filter=scale`` does not list ``size``/``s`` at all, so its fifth</span>
+<span class="c1">#:   slot is something else. A hardcoded full order would therefore disagree with</span>
+<span class="c1">#:   one of the two binaries about what a bare argument SAYS, which is the one</span>
+<span class="c1">#:   thing a gate must never do. Stopping short and refusing is version-proof.</span>
+<span class="c1">#:</span>
+<span class="c1">#:   The two rules overlap on purpose, and the overlap is defence rather than</span>
+<span class="c1">#:   redundancy: lengthening ``pad``'s prefix to all seven slots still refuses</span>
+<span class="c1">#:   ``pad=1920:1080:0:0:black:init:1/30``, because ``eval`` and ``aspect`` are</span>
+<span class="c1">#:   then read as unclassified OPTIONS instead of unclassified SLOTS (verified by</span>
+<span class="c1">#:   mutation). What the short prefix adds is that muvid never has to be right</span>
+<span class="c1">#:   about a slot it did not measure.</span>
+<span class="n">_LOOK_GEOMETRY_FILTERS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"scale"</span><span class="p">:</span> <span class="n">_FilterOptions</span><span class="p">(</span>
+        <span class="n">sizes</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">"w"</span><span class="p">:</span> <span class="s2">"width"</span><span class="p">,</span>
+            <span class="s2">"width"</span><span class="p">:</span> <span class="s2">"width"</span><span class="p">,</span>
+            <span class="s2">"h"</span><span class="p">:</span> <span class="s2">"height"</span><span class="p">,</span>
+            <span class="s2">"height"</span><span class="p">:</span> <span class="s2">"height"</span><span class="p">,</span>
+            <span class="s2">"s"</span><span class="p">:</span> <span class="s2">"size"</span><span class="p">,</span>
+            <span class="s2">"size"</span><span class="p">:</span> <span class="s2">"size"</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="n">free</span><span class="o">=</span><span class="nb">frozenset</span><span class="p">({</span><span class="s2">"flags"</span><span class="p">}),</span>
+        <span class="n">positional</span><span class="o">=</span><span class="p">(</span><span class="s2">"w"</span><span class="p">,</span> <span class="s2">"h"</span><span class="p">),</span>
+    <span class="p">),</span>
+    <span class="s2">"pad"</span><span class="p">:</span> <span class="n">_FilterOptions</span><span class="p">(</span>
+        <span class="n">sizes</span><span class="o">=</span><span class="p">{</span><span class="s2">"w"</span><span class="p">:</span> <span class="s2">"width"</span><span class="p">,</span> <span class="s2">"width"</span><span class="p">:</span> <span class="s2">"width"</span><span class="p">,</span> <span class="s2">"h"</span><span class="p">:</span> <span class="s2">"height"</span><span class="p">,</span> <span class="s2">"height"</span><span class="p">:</span> <span class="s2">"height"</span><span class="p">},</span>
+        <span class="n">free</span><span class="o">=</span><span class="nb">frozenset</span><span class="p">({</span><span class="s2">"x"</span><span class="p">,</span> <span class="s2">"y"</span><span class="p">,</span> <span class="s2">"color"</span><span class="p">}),</span>
+        <span class="n">positional</span><span class="o">=</span><span class="p">(</span><span class="s2">"w"</span><span class="p">,</span> <span class="s2">"h"</span><span class="p">,</span> <span class="s2">"x"</span><span class="p">,</span> <span class="s2">"y"</span><span class="p">),</span>
+    <span class="p">),</span>
+    <span class="s2">"crop"</span><span class="p">:</span> <span class="n">_FilterOptions</span><span class="p">(</span>
+        <span class="n">sizes</span><span class="o">=</span><span class="p">{},</span>
+        <span class="n">free</span><span class="o">=</span><span class="nb">frozenset</span><span class="p">({</span><span class="s2">"w"</span><span class="p">,</span> <span class="s2">"out_w"</span><span class="p">,</span> <span class="s2">"h"</span><span class="p">,</span> <span class="s2">"out_h"</span><span class="p">,</span> <span class="s2">"x"</span><span class="p">,</span> <span class="s2">"y"</span><span class="p">}),</span>
+        <span class="n">positional</span><span class="o">=</span><span class="p">(</span><span class="s2">"w"</span><span class="p">,</span> <span class="s2">"h"</span><span class="p">,</span> <span class="s2">"x"</span><span class="p">,</span> <span class="s2">"y"</span><span class="p">),</span>
+    <span class="p">),</span>
+    <span class="s2">"zoompan"</span><span class="p">:</span> <span class="n">_FilterOptions</span><span class="p">(</span>
+        <span class="n">sizes</span><span class="o">=</span><span class="p">{</span><span class="s2">"s"</span><span class="p">:</span> <span class="s2">"size"</span><span class="p">},</span>
+        <span class="n">free</span><span class="o">=</span><span class="nb">frozenset</span><span class="p">({</span><span class="s2">"zoom"</span><span class="p">,</span> <span class="s2">"z"</span><span class="p">,</span> <span class="s2">"x"</span><span class="p">,</span> <span class="s2">"y"</span><span class="p">,</span> <span class="s2">"d"</span><span class="p">,</span> <span class="s2">"fps"</span><span class="p">}),</span>
+        <span class="n">positional</span><span class="o">=</span><span class="p">(</span><span class="s2">"zoom"</span><span class="p">,</span> <span class="s2">"x"</span><span class="p">,</span> <span class="s2">"y"</span><span class="p">,</span> <span class="s2">"d"</span><span class="p">,</span> <span class="s2">"s"</span><span class="p">,</span> <span class="s2">"fps"</span><span class="p">),</span>
+    <span class="p">),</span>
+<span class="p">}</span>
+
+<span class="c1">#: The measured reason a particular geometry option is refused rather than</span>
+<span class="c1">#: bounded, quoted into the refusal so the caller is told what it does and not</span>
+<span class="c1">#: merely that it is not allowed. Every other unclassified option gets the</span>
+<span class="c1">#: generic message; these four are the ones a bound could plausibly have been</span>
+<span class="c1">#: written for, so the reason it was not is recorded where it is enforced.</span>
+<span class="c1">#:</span>
+<span class="c1">#: All four are refused rather than bounded for one reason: bounding them means</span>
+<span class="c1">#: computing the frame this filter will produce from the frame the previous one</span>
+<span class="c1">#: produced — libavfilter's geometry negotiation, reimplemented in Python and</span>
+<span class="c1">#: kept in agreement with two binaries. That is the same refusal</span>
+<span class="c1">#: :func:`_validate_look_size` already makes for an expression, for the same</span>
+<span class="c1">#: reason, and it costs the seam nothing: **no fragment muvid compiles sets any</span>
+<span class="c1">#: of them** — swept over ``punch_in`` (4 zooms x 4 canvases x 2 rates),</span>
+<span class="c1">#: ``motion``, and all 14 ``looks`` effects at 6 targets on 4 canvases, whose</span>
+<span class="c1">#: entire emitted vocabulary is ``scale`` w/h positional, ``pad`` w/h/x/y</span>
+<span class="c1">#: positional plus ``color``, ``crop`` w/h/x/y positional, ``zoompan``</span>
+<span class="c1">#: ``z``/``x``/``y``/``d``/``s``/``fps``, ``lut3d=file``, and the colour filters.</span>
+<span class="n">_LOOK_REFUSED_OPTIONS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="p">(</span><span class="s2">"pad"</span><span class="p">,</span> <span class="s2">"aspect"</span><span class="p">):</span> <span class="p">(</span>
+        <span class="s2">"it pads to fit an ASPECT rather than a resolution, so `w`/`h` can be "</span>
+        <span class="s2">"left AT canvas size and the frame still explodes: measured on a "</span>
+        <span class="s2">"1920x1080 canvas, `pad=w=1920:h=1080:aspect=1/30` renders a 1920x57600 "</span>
+        <span class="s2">"frame at 590 MB peak RSS, against 110 MB for a look that stays at "</span>
+        <span class="s2">"canvas size and 403 MB for the `scale=8000:8000` this bound refuses"</span>
+    <span class="p">),</span>
+    <span class="p">(</span><span class="s2">"scale"</span><span class="p">,</span> <span class="s2">"force_original_aspect_ratio"</span><span class="p">):</span> <span class="p">(</span>
+        <span class="s2">"it derives the frame from the INPUT aspect, which a preceding `crop` "</span>
+        <span class="s2">"can make extreme, so both declared sizes can sit exactly ON the bound "</span>
+        <span class="s2">"and the frame still explodes: measured, "</span>
+        <span class="s2">"`crop=w=1920:h=200,scale=w=7680:h=4320:force_original_aspect_ratio="</span>
+        <span class="s2">"increase` renders 41472x4320 at 941 MB peak RSS"</span>
+    <span class="p">),</span>
+    <span class="p">(</span><span class="s2">"scale"</span><span class="p">,</span> <span class="s2">"force_divisible_by"</span><span class="p">):</span> <span class="p">(</span>
+        <span class="s2">"it rounds the frame up, and only in combination with "</span>
+        <span class="s2">"`force_original_aspect_ratio` — measured on a 64x48 input, "</span>
+        <span class="s2">"`scale=w=100:h=100:force_original_aspect_ratio=increase` produces "</span>
+        <span class="s2">"133x100 and adding `force_divisible_by=64` makes it 128x128. An option "</span>
+        <span class="s2">"that does nothing alone is exactly the one a one-at-a-time sweep misses"</span>
+    <span class="p">),</span>
+    <span class="p">(</span><span class="s2">"scale"</span><span class="p">,</span> <span class="s2">"eval"</span><span class="p">):</span> <span class="p">(</span>
+        <span class="s2">"`eval=frame` re-evaluates the size expressions per frame, and this "</span>
+        <span class="s2">"gate reads a fragment once. A size muvid cannot read is refused rather "</span>
+        <span class="s2">"than bounded (see the `not a plain pixel count` rule), and a size that "</span>
+        <span class="s2">"can CHANGE after it was read is the same problem in time"</span>
+    <span class="p">),</span>
+    <span class="p">(</span><span class="s2">"pad"</span><span class="p">,</span> <span class="s2">"eval"</span><span class="p">):</span> <span class="p">(</span>
+        <span class="s2">"`eval=frame` re-evaluates the size expressions per frame, and this "</span>
+        <span class="s2">"gate reads a fragment once — the same reason `scale`'s is refused"</span>
+    <span class="p">),</span>
+<span class="p">}</span>
+
+<span class="c1">#: A size option muvid can bound: a plain pixel count, optionally quoted.</span>
+<span class="n">_LOOK_PIXELS</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"^\d+$"</span><span class="p">)</span>
+<span class="c1">#: A ``WxH`` image size muvid can bound. Deliberately NOT ffmpeg's full</span>
+<span class="c1">#: ``av_parse_video_size`` vocabulary: that also accepts abbreviations, and</span>
+<span class="c1">#: ``zoompan=d=1:s=whuxga:fps=25`` really does produce a 7680x4800 frame at</span>
+<span class="c1">#: 321.2 MB (measured). A name muvid would have to keep a second copy of the</span>
+<span class="c1">#: table for is refused and the caller told to spell the size.</span>
+<span class="n">_LOOK_PIXEL_SIZE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"^(\d+)x(\d+)$"</span><span class="p">)</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">_LookSyntaxError</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">):</span>
@@ -961,6 +1304,50 @@
     <span class="k">return</span> <span class="n">s</span><span class="p">[</span><span class="n">lo</span><span class="p">:</span><span class="n">hi</span><span class="p">]</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_split_significant</span><span class="p">(</span><span class="n">s</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">sep</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"list[str]"</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""``s`` split on the ``sep`` characters ffmpeg reads as SEPARATORS.</span>
+
+<span class="sd">    The one splitter for both of a filter chain's levels — ``,`` between links,</span>
+<span class="sd">    ``:`` between one link's arguments — so a quoted expression survives both.</span>
+<span class="sd">    Written once rather than twice because the second copy is where the two stop</span>
+<span class="sd">    agreeing about what a fragment says.</span>
+
+<span class="sd">    &gt;&gt;&gt; _split_significant("scale=2,hue=s=0", ",")</span>
+<span class="sd">    ['scale=2', 'hue=s=0']</span>
+<span class="sd">    &gt;&gt;&gt; _split_significant("w='min(iw,2)':h=100", ":")</span>
+<span class="sd">    ["w='min(iw,2)'", 'h=100']</span>
+<span class="sd">    """</span>
+    <span class="n">breaks</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">_significant</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">if</span> <span class="n">c</span> <span class="o">==</span> <span class="n">sep</span><span class="p">]</span>
+    <span class="n">out</span><span class="p">,</span> <span class="n">start</span> <span class="o">=</span> <span class="p">[],</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">breaks</span> <span class="o">+</span> <span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">)]:</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">b</span><span class="p">])</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="n">b</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="k">return</span> <span class="n">out</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_look_links</span><span class="p">(</span><span class="n">look</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"list[tuple[str, str]]"</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Each link of the chain as ``(filter name, argument string)``.</span>
+
+<span class="sd">    &gt;&gt;&gt; _look_links("scale=2,hue=s=0")</span>
+<span class="sd">    [('scale', '2'), ('hue', 's=0')]</span>
+<span class="sd">    &gt;&gt;&gt; _look_links("null")</span>
+<span class="sd">    [('null', '')]</span>
+<span class="sd">    """</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">link</span> <span class="ow">in</span> <span class="n">_split_significant</span><span class="p">(</span><span class="n">look</span><span class="p">,</span> <span class="s2">","</span><span class="p">):</span>
+        <span class="n">eq</span> <span class="o">=</span> <span class="nb">next</span><span class="p">((</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">_significant</span><span class="p">(</span><span class="n">link</span><span class="p">)</span> <span class="k">if</span> <span class="n">c</span> <span class="o">==</span> <span class="s2">"="</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">link</span><span class="p">))</span>
+        <span class="n">raw</span> <span class="o">=</span> <span class="n">_strip_unescaped</span><span class="p">(</span><span class="n">link</span><span class="p">[:</span><span class="n">eq</span><span class="p">])</span>
+        <span class="n">at</span> <span class="o">=</span> <span class="nb">next</span><span class="p">((</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">_significant</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span> <span class="k">if</span> <span class="n">c</span> <span class="o">==</span> <span class="s2">"@"</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">raw</span><span class="p">))</span>
+        <span class="c1"># No `.strip()` AFTER unescaping. `\ ` is an escaped space, so stripping</span>
+        <span class="c1"># the unescaped result removed the space and left the backslash that</span>
+        <span class="c1"># escaped it — `_unquote` then raised `_LookSyntaxError("\\")` from</span>
+        <span class="c1"># OUTSIDE `_validate_look`'s try/except, so a lexically CLOSED look was</span>
+        <span class="c1"># refused with a message that was a single backslash. Through the MCP</span>
+        <span class="c1"># tool that reached the caller as the whole explanation.</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">_unquote</span><span class="p">(</span><span class="n">raw</span><span class="p">[:</span><span class="n">at</span><span class="p">]),</span> <span class="n">link</span><span class="p">[</span><span class="n">eq</span> <span class="o">+</span> <span class="mi">1</span> <span class="p">:]))</span>
+    <span class="k">return</span> <span class="n">out</span>
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">_look_filter_names</span><span class="p">(</span><span class="n">look</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"list[str]"</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""The filter each link of the chain names, as ffmpeg will resolve it.</span>
 
@@ -986,27 +1373,362 @@
 <span class="sd">    &gt;&gt;&gt; _look_filter_names("hue@grade=s=0")</span>
 <span class="sd">    ['hue']</span>
 <span class="sd">    """</span>
-    <span class="n">breaks</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">_significant</span><span class="p">(</span><span class="n">look</span><span class="p">)</span> <span class="k">if</span> <span class="n">c</span> <span class="o">==</span> <span class="s2">","</span><span class="p">]</span>
-    <span class="n">spans</span><span class="p">,</span> <span class="n">start</span> <span class="o">=</span> <span class="p">[],</span> <span class="mi">0</span>
-    <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">breaks</span> <span class="o">+</span> <span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">look</span><span class="p">)]:</span>
-        <span class="n">spans</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">look</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">b</span><span class="p">])</span>
-        <span class="n">start</span> <span class="o">=</span> <span class="n">b</span> <span class="o">+</span> <span class="mi">1</span>
-    <span class="n">names</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">link</span> <span class="ow">in</span> <span class="n">spans</span><span class="p">:</span>
-        <span class="n">eq</span> <span class="o">=</span> <span class="nb">next</span><span class="p">((</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">_significant</span><span class="p">(</span><span class="n">link</span><span class="p">)</span> <span class="k">if</span> <span class="n">c</span> <span class="o">==</span> <span class="s2">"="</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">link</span><span class="p">))</span>
-        <span class="n">raw</span> <span class="o">=</span> <span class="n">_strip_unescaped</span><span class="p">(</span><span class="n">link</span><span class="p">[:</span><span class="n">eq</span><span class="p">])</span>
-        <span class="n">at</span> <span class="o">=</span> <span class="nb">next</span><span class="p">((</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">_significant</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span> <span class="k">if</span> <span class="n">c</span> <span class="o">==</span> <span class="s2">"@"</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">raw</span><span class="p">))</span>
-        <span class="c1"># No `.strip()` AFTER unescaping. `\ ` is an escaped space, so stripping</span>
-        <span class="c1"># the unescaped result removed the space and left the backslash that</span>
-        <span class="c1"># escaped it — `_unquote` then raised `_LookSyntaxError("\\")` from</span>
-        <span class="c1"># OUTSIDE `_validate_look`'s try/except, so a lexically CLOSED look was</span>
-        <span class="c1"># refused with a message that was a single backslash. Through the MCP</span>
-        <span class="c1"># tool that reached the caller as the whole explanation.</span>
-        <span class="n">names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_unquote</span><span class="p">(</span><span class="n">raw</span><span class="p">[:</span><span class="n">at</span><span class="p">]))</span>
-    <span class="k">return</span> <span class="n">names</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">name</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">_look_links</span><span class="p">(</span><span class="n">look</span><span class="p">)]</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_validate_look</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_link_options</span><span class="p">(</span>
+    <span class="n">args</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">positional</span><span class="p">:</span> <span class="s2">"Sequence[str]"</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"tuple[dict[str, str], list[tuple[str, bool]]]"</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""One link's arguments as ``{option name: raw value}``, ffmpeg's way.</span>
+
+<span class="sd">    Two rules taken from libavfilter's ``process_options`` rather than from</span>
+<span class="sd">    intuition, and both change the answer:</span>
+
+<span class="sd">    - an argument with no ``=`` is POSITIONAL, filling the next slot of</span>
+<span class="sd">      ``positional`` (the option list in declaration order, aliases collapsed);</span>
+<span class="sd">    - **positional slots stop being offered after the first named argument**, so</span>
+<span class="sd">      a bare argument after a ``key=value`` one goes to ``overflow`` and is</span>
+<span class="sd">      REFUSED rather than read as a later slot. **Not because ffmpeg agrees —</span>
+<span class="sd">      because the two builds this fleet runs do not agree with each other:**</span>
+
+<span class="sd">      ==========================  ==============  ================</span>
+<span class="sd">      fragment                    ffmpeg 9.0.1    ffmpeg 6.1.6</span>
+<span class="sd">      ==========================  ==============  ================</span>
+<span class="sd">      ``scale=w=100:8000``        rc=234          **100x8000**</span>
+<span class="sd">      ``scale=w=8000:100``        rc=234          **8000x100**</span>
+<span class="sd">      ``scale=100:h=8000``        100x8000        100x8000</span>
+<span class="sd">      ==========================  ==============  ================</span>
+
+<span class="sd">      9.0.1 discards the remaining shorthand ("No option name near '8000'"); 6.1.6</span>
+<span class="sd">      fills the next slot. A gate that picked either reading would be wrong on the</span>
+<span class="sd">      other binary, and on 6.1.6 it would be wrong in the dangerous direction —</span>
+<span class="sd">      reading ``scale=w=8000:100`` as ``{w: 100}`` accepts a fragment that renders</span>
+<span class="sd">      8000 px wide. So this is a hole where it is dropped, not merely an</span>
+<span class="sd">      over-refusal: without the rule the trailing bare argument refills slot 0 and</span>
+<span class="sd">      **overwrites** the named ``w``.</span>
+
+<span class="sd">    Later assignments win, as ``av_opt_set`` does.</span>
+
+<span class="sd">    Returns ``(options, overflow)``. ``overflow`` is one ``(value, after_named)``</span>
+<span class="sd">    per positional argument that found no slot — **reported rather than dropped**,</span>
+<span class="sd">    which is the half the first pass got wrong. ``positional`` stops at the slots</span>
+<span class="sd">    muvid classifies (see :data:`_LOOK_GEOMETRY_FILTERS`), so a bare argument past</span>
+<span class="sd">    the end is not a triviality: ``pad``'s ``aspect`` is its seventh slot, and</span>
+<span class="sd">    ``pad=1920:1080:0:0:black:init:1/30`` reaches it without naming it. Silently</span>
+<span class="sd">    dropping slot 7 is what let that fragment through.</span>
+
+<span class="sd">    An EMPTY argument string declares nothing, which is a case rather than a</span>
+<span class="sd">    triviality: ``scale`` and ``pad`` with no arguments at all are legal ffmpeg</span>
+<span class="sd">    (rc=0, frame unchanged — measured), and reading their absent ``w`` as the</span>
+<span class="sd">    empty string made the gate refuse a fragment the binary accepts. Note this is</span>
+<span class="sd">    the whole list being empty; an empty value *within* a list (``scale=:100``)</span>
+<span class="sd">    is left alone, because ffmpeg refuses that too ("Cannot parse expression for</span>
+<span class="sd">    width: ''", rc=234) and the gate agreeing is the point.</span>
+
+<span class="sd">    &gt;&gt;&gt; _link_options("8000:8000", ("w", "h"))</span>
+<span class="sd">    ({'w': '8000', 'h': '8000'}, [])</span>
+<span class="sd">    &gt;&gt;&gt; _link_options("w=8000:h=8000", ("w", "h"))</span>
+<span class="sd">    ({'w': '8000', 'h': '8000'}, [])</span>
+<span class="sd">    &gt;&gt;&gt; _link_options("1:0:0:1:640x360:25", ("zoom", "x", "y", "d", "s", "fps"))[0]["s"]</span>
+<span class="sd">    '640x360'</span>
+<span class="sd">    &gt;&gt;&gt; _link_options("", ("w", "h"))</span>
+<span class="sd">    ({}, [])</span>
+<span class="sd">    &gt;&gt;&gt; _link_options("64:48:0:0:black", ("w", "h", "x", "y"))[1]</span>
+<span class="sd">    [('black', False)]</span>
+<span class="sd">    &gt;&gt;&gt; _link_options("w=100:8000", ("w", "h"))</span>
+<span class="sd">    ({'w': '100'}, [('8000', True)])</span>
+<span class="sd">    """</span>
+    <span class="n">out</span><span class="p">:</span> <span class="s2">"dict[str, str]"</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">overflow</span><span class="p">:</span> <span class="s2">"list[tuple[str, bool]]"</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">args</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">out</span><span class="p">,</span> <span class="n">overflow</span>
+    <span class="n">slot</span><span class="p">,</span> <span class="n">named_seen</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="kc">False</span>
+    <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">_split_significant</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s2">":"</span><span class="p">):</span>
+        <span class="n">eq</span> <span class="o">=</span> <span class="nb">next</span><span class="p">((</span><span class="n">j</span> <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">_significant</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span> <span class="k">if</span> <span class="n">c</span> <span class="o">==</span> <span class="s2">"="</span><span class="p">),</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">eq</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">named_seen</span> <span class="ow">or</span> <span class="n">slot</span> <span class="o">&gt;=</span> <span class="nb">len</span><span class="p">(</span><span class="n">positional</span><span class="p">):</span>
+                <span class="n">overflow</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">arg</span><span class="p">,</span> <span class="n">named_seen</span><span class="p">))</span>
+                <span class="k">continue</span>
+            <span class="n">out</span><span class="p">[</span><span class="n">positional</span><span class="p">[</span><span class="n">slot</span><span class="p">]]</span> <span class="o">=</span> <span class="n">arg</span>
+            <span class="n">slot</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">continue</span>
+        <span class="n">named_seen</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">out</span><span class="p">[</span><span class="n">_unquote</span><span class="p">(</span><span class="n">_strip_unescaped</span><span class="p">(</span><span class="n">arg</span><span class="p">[:</span><span class="n">eq</span><span class="p">]))]</span> <span class="o">=</span> <span class="n">arg</span><span class="p">[</span><span class="n">eq</span> <span class="o">+</span> <span class="mi">1</span> <span class="p">:]</span>
+    <span class="k">return</span> <span class="n">out</span><span class="p">,</span> <span class="n">overflow</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_look_output_sizes</span><span class="p">(</span><span class="n">look</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"list[tuple[str, str, str, str, int | None]]"</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Every output frame DIMENSION the chain declares.</span>
+
+<span class="sd">    One ``(filter, option, axis, raw text, pixels or None)`` per declared</span>
+<span class="sd">    dimension. ``axis`` is ``"width"`` or ``"height"``; ``pixels`` is ``None``</span>
+<span class="sd">    when the value is not a plain pixel count muvid can bound — an expression, a</span>
+<span class="sd">    negative auto-value, an image-size abbreviation.</span>
+
+<span class="sd">    Only the ``sizes`` options of :data:`_LOOK_GEOMETRY_FILTERS` are reported; an</span>
+<span class="sd">    absent one leaves the frame unchanged (``scale``/``pad`` default to</span>
+<span class="sd">    ``iw``/``ih``) and is not a lever. Every OTHER way of moving the frame —</span>
+<span class="sd">    ``pad=aspect``, ``scale=force_original_aspect_ratio``, an unclassified option</span>
+<span class="sd">    on a geometry filter, an unclassified positional slot — is not a size this</span>
+<span class="sd">    function can report at all, and is refused by</span>
+<span class="sd">    :func:`_look_unclassified_options` instead. The two together are the bound;</span>
+<span class="sd">    this one alone was the muvid#75 leak.</span>
+
+<span class="sd">    ``zoompan``'s absent ``s`` is the one documented exception to that last</span>
+<span class="sd">    sentence: its default is a literal ``hd720``, so a ``zoompan`` with no ``s``</span>
+<span class="sd">    outputs 1280x720 whatever the canvas is. It is left unreported deliberately —</span>
+<span class="sd">    a fixed 0.9 Mpix (36.5 MB measured) cannot be the memory hazard this bound</span>
+<span class="sd">    exists for, and reporting it would refuse a harmless look on a small canvas</span>
+<span class="sd">    for a reason that is not memory.</span>
+
+<span class="sd">    &gt;&gt;&gt; _look_output_sizes("scale=8000:8000")</span>
+<span class="sd">    [('scale', 'w', 'width', '8000', 8000), ('scale', 'h', 'height', '8000', 8000)]</span>
+<span class="sd">    &gt;&gt;&gt; _look_output_sizes("zoompan=d=1:s=640x360:fps=25")</span>
+<span class="sd">    [('zoompan', 's', 'width', '640x360', 640), ('zoompan', 's', 'height', '640x360', 360)]</span>
+<span class="sd">    &gt;&gt;&gt; _look_output_sizes("scale=w='iw*80':h='ih*80'")</span>
+<span class="sd">    [('scale', 'w', 'width', 'iw*80', None), ('scale', 'h', 'height', 'ih*80', None)]</span>
+<span class="sd">    &gt;&gt;&gt; _look_output_sizes("hue=s=0,crop=w='iw*0.5':h='ih*0.5'")</span>
+<span class="sd">    []</span>
+<span class="sd">    """</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">args</span> <span class="ow">in</span> <span class="n">_look_links</span><span class="p">(</span><span class="n">look</span><span class="p">):</span>
+        <span class="n">spec</span> <span class="o">=</span> <span class="n">_LOOK_GEOMETRY_FILTERS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">spec</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">opts</span><span class="p">,</span> <span class="n">_overflow</span> <span class="o">=</span> <span class="n">_link_options</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">spec</span><span class="o">.</span><span class="n">positional</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">opt</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">opts</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">axis</span> <span class="o">=</span> <span class="n">spec</span><span class="o">.</span><span class="n">sizes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">opt</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">axis</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">text</span> <span class="o">=</span> <span class="n">_unquote</span><span class="p">(</span><span class="n">_strip_unescaped</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">axis</span> <span class="o">==</span> <span class="s2">"size"</span><span class="p">:</span>
+                <span class="n">m</span> <span class="o">=</span> <span class="n">_LOOK_PIXEL_SIZE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">ax</span><span class="p">,</span> <span class="n">group</span> <span class="ow">in</span> <span class="p">((</span><span class="s2">"width"</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="s2">"height"</span><span class="p">,</span> <span class="mi">2</span><span class="p">)):</span>
+                    <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                        <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">opt</span><span class="p">,</span> <span class="n">ax</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="n">group</span><span class="p">))</span> <span class="k">if</span> <span class="n">m</span> <span class="k">else</span> <span class="kc">None</span><span class="p">)</span>
+                    <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">px</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">text</span><span class="p">)</span> <span class="k">if</span> <span class="n">_LOOK_PIXELS</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">text</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
+                <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">name</span><span class="p">,</span> <span class="n">opt</span><span class="p">,</span> <span class="n">axis</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">px</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">out</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_allowed_options</span><span class="p">(</span><span class="n">filt</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"set[str]"</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Every option name a look may set on ``filt``. Empty for an unlisted filter.</span>
+
+<span class="sd">    &gt;&gt;&gt; sorted(_allowed_options("zoompan"))</span>
+<span class="sd">    ['d', 'fps', 's', 'x', 'y', 'z', 'zoom']</span>
+<span class="sd">    &gt;&gt;&gt; _allowed_options("hue")</span>
+<span class="sd">    set()</span>
+<span class="sd">    """</span>
+    <span class="n">spec</span> <span class="o">=</span> <span class="n">_LOOK_GEOMETRY_FILTERS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">filt</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">set</span><span class="p">()</span> <span class="k">if</span> <span class="n">spec</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">set</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">sizes</span><span class="p">)</span> <span class="o">|</span> <span class="nb">set</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">free</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_look_unclassified_options</span><span class="p">(</span><span class="n">look</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"list[tuple[str, str, str]]"</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Every way this chain could move the frame that muvid has NOT classified.</span>
+
+<span class="sd">    One ``(filter, what, why)`` per offence, on the filters in</span>
+<span class="sd">    :data:`_LOOK_GEOMETRY_FILTERS` only — the four that can change the output</span>
+<span class="sd">    geometry at all. The other thirteen allowlisted filters are not</span>
+<span class="sd">    option-checked, because no option of any of them moves the frame (measured;</span>
+<span class="sd">    see the table's docstring and ``tests/test_edl_look_options.py``, which</span>
+<span class="sd">    re-reads the option list out of the installed binary so a new one cannot</span>
+<span class="sd">    arrive unnoticed).</span>
+
+<span class="sd">    Three offences, and the third is the one a named-option check alone misses:</span>
+
+<span class="sd">    - an option with a recorded reason (:data:`_LOOK_REFUSED_OPTIONS`);</span>
+<span class="sd">    - an option the allowlist does not name at all;</span>
+<span class="sd">    - a POSITIONAL argument past the slots muvid classifies — ``pad``'s</span>
+<span class="sd">      ``aspect`` is its seventh slot and needs no name to reach.</span>
+
+<span class="sd">    &gt;&gt;&gt; _look_unclassified_options("scale=1920:1080,hue=s=0")</span>
+<span class="sd">    []</span>
+<span class="sd">    &gt;&gt;&gt; [(f, w) for f, w, _ in _look_unclassified_options("pad=aspect=4/1")]</span>
+<span class="sd">    [('pad', "the 'aspect' option")]</span>
+<span class="sd">    &gt;&gt;&gt; [(f, w) for f, w, _ in _look_unclassified_options("pad=64:48:0:0:black")]</span>
+<span class="sd">    [('pad', "the positional argument 'black'")]</span>
+<span class="sd">    """</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">args</span> <span class="ow">in</span> <span class="n">_look_links</span><span class="p">(</span><span class="n">look</span><span class="p">):</span>
+        <span class="n">spec</span> <span class="o">=</span> <span class="n">_LOOK_GEOMETRY_FILTERS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">spec</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">opts</span><span class="p">,</span> <span class="n">overflow</span> <span class="o">=</span> <span class="n">_link_options</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">spec</span><span class="o">.</span><span class="n">positional</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">opt</span> <span class="ow">in</span> <span class="n">opts</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">opt</span> <span class="ow">in</span> <span class="n">spec</span><span class="o">.</span><span class="n">sizes</span> <span class="ow">or</span> <span class="n">opt</span> <span class="ow">in</span> <span class="n">spec</span><span class="o">.</span><span class="n">free</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">why</span> <span class="o">=</span> <span class="n">_LOOK_REFUSED_OPTIONS</span><span class="o">.</span><span class="n">get</span><span class="p">((</span><span class="n">name</span><span class="p">,</span> <span class="n">opt</span><span class="p">))</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">name</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"the </span><span class="si">{</span><span class="n">opt</span><span class="si">!r}</span><span class="s2"> option"</span><span class="p">,</span> <span class="n">why</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">value</span><span class="p">,</span> <span class="n">after_named</span> <span class="ow">in</span> <span class="n">overflow</span><span class="p">:</span>
+            <span class="n">why</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="s2">"a bare argument after a `key=value` one means DIFFERENT THINGS "</span>
+                <span class="s2">"on different ffmpeg builds, so muvid declines to guess: 9.0.1 "</span>
+                <span class="s1">'discards it (`scale=w=8000:100` exits 234, "No option name '</span>
+                <span class="s2">"near '100'</span><span class="se">\"</span><span class="s2">) while 6.1.6 fills the next slot and renders "</span>
+                <span class="s2">"8000x100. Spell every option by name"</span>
+                <span class="k">if</span> <span class="n">after_named</span>
+                <span class="k">else</span> <span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> takes </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">positional</span><span class="p">)</span><span class="si">}</span><span class="s2"> positional arguments in "</span>
+                    <span class="s2">"muvid's table and this is one more. The slots past that end "</span>
+                    <span class="s2">"are not the same on every ffmpeg build (`scale`'s fifth is "</span>
+                    <span class="s2">"`size` on 9.0.1, and 6.1.6 does not declare `size` on "</span>
+                    <span class="s2">"`scale` at all) and one of `pad`'s is `aspect`, which grows "</span>
+                    <span class="s2">"the frame. Spell the option by name"</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">name</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"the positional argument </span><span class="si">{</span><span class="n">value</span><span class="si">!r}</span><span class="s2">"</span><span class="p">,</span> <span class="n">why</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">out</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_validate_look_links</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">look</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Bound how many filter links a look carries, and how many resize. Raises.</span>
+
+<span class="sd">    The companion to :func:`_validate_look_size`, and the half it misses:</span>
+<span class="sd">    bounding the FRAME does not bound the MEMORY. Every fragment this refuses</span>
+<span class="sd">    sits entirely inside the size cap — thirty-two links of ``scale=7680:4320``</span>
+<span class="sd">    on a 1920x1080 canvas is 1648 MB and was accepted, while the size cap</span>
+<span class="sd">    refuses ``scale=8000:8000`` at 241 MB. See :data:`MAX_LOOK_LINKS` for the</span>
+<span class="sd">    table.</span>
+
+<span class="sd">    Counted through :func:`_look_filter_names`, so the count is the one ffmpeg</span>
+<span class="sd">    will make — escaped commas inside an expression are not separators, and a</span>
+<span class="sd">    look whose links are spelled with quotes or escapes counts the same.</span>
+<span class="sd">    """</span>
+    <span class="n">names</span> <span class="o">=</span> <span class="n">_look_filter_names</span><span class="p">(</span><span class="n">look</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">names</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">MAX_LOOK_LINKS</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"EDL entry </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">: look chains </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">names</span><span class="p">)</span><span class="si">}</span><span class="s2"> filters, more than the "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">MAX_LOOK_LINKS</span><span class="si">}</span><span class="s2"> muvid allows. Frame size is not the only thing "</span>
+            <span class="s2">"that costs memory — measured, each additional link at the size cap "</span>
+            <span class="s2">"adds about 47 MB, and the cap exists so a look cannot reach 3 GB "</span>
+            <span class="s2">"one accepted link at a time. muvid's own looks use one or two."</span>
+        <span class="p">)</span>
+    <span class="n">resizes</span> <span class="o">=</span> <span class="p">[</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">names</span> <span class="k">if</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">_LOOK_GEOMETRY_FILTERS</span><span class="p">]</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">resizes</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">MAX_LOOK_RESIZES</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"EDL entry </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">: look resizes </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">resizes</span><span class="p">)</span><span class="si">}</span><span class="s2"> times (</span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">resizes</span><span class="p">)</span><span class="si">}</span><span class="s2">), "</span>
+            <span class="sa">f</span><span class="s2">"more than the </span><span class="si">{</span><span class="n">MAX_LOOK_RESIZES</span><span class="si">}</span><span class="s2"> muvid allows. Each resize can hold a "</span>
+            <span class="sa">f</span><span class="s2">"frame up to </span><span class="si">{</span><span class="n">MAX_LOOK_SCALE</span><span class="si">}</span><span class="s2">x the canvas, so this is the cap that "</span>
+            <span class="s2">"bounds how many LARGE frames the graph carries; the total-link cap "</span>
+            <span class="s2">"bounds the graph. A look needs one resize, or none — the assembler "</span>
+            <span class="s2">"has already conformed the cut to the canvas before the look runs."</span>
+        <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_validate_look_size</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">look</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">canvas</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Bound the frame a look asks for against the delivery canvas. Raises.</span>
+
+<span class="sd">    The allowlist :data:`LOOK_FILTERS` is a vocabulary; it does not bound what a</span>
+<span class="sd">    member is asked to DO, and frame size is memory. Measured on ffmpeg 9.0.1,</span>
+<span class="sd">    three frames from a 64x48 source, ``/usr/bin/time -l`` peak RSS: 18.8 MB for</span>
+<span class="sd">    ``scale=64:48``, **327.6 MB** for ``scale=64:48,scale=8000:8000``, **312.5 MB**</span>
+<span class="sd">    for ``zoompan=d=1:s=8000x8000:fps=25``, **306.6 MB** for ``pad=8000:8000`` and</span>
+<span class="sd">    **118.4 MB** for ``scale=w='iw*80':h='ih*80'``. All five were accepted before</span>
+<span class="sd">    muvid#75, from a number a remote OAuth caller writes into</span>
+<span class="sd">    ``assemble_music_video``'s free-form ``edl=``, on the box muvid#21/#24 was</span>
+<span class="sd">    OOM-killed on.</span>
+
+<span class="sd">    Three rules. The first is the one a *list of size options* alone misses, and</span>
+<span class="sd">    it is what the first pass at this got wrong:</span>
+
+<span class="sd">    - **On a filter that can change the geometry, only options muvid classifies</span>
+<span class="sd">      may be set** (:data:`_LOOK_GEOMETRY_FILTERS`) — including through an</span>
+<span class="sd">      unnamed positional slot. Two options move the frame while DECLARING no</span>
+<span class="sd">      dimension the rule below can read, and both are bigger than the case that</span>
+<span class="sd">      rule refuses: ``pad=w=1920:h=1080:aspect=1/30`` renders a 1920x57600 frame</span>
+<span class="sd">      at 590 MB with w and h sitting at canvas size, and</span>
+<span class="sd">      ``crop=w=1920:h=200,scale=w=7680:h=4320:force_original_aspect_ratio=increase``</span>
+<span class="sd">      renders 41472x4320 at 941 MB with both sizes sitting exactly on the bound</span>
+<span class="sd">      (measured on a 1920x1080 canvas against 110 MB at canvas size and 403 MB</span>
+<span class="sd">      for the refused ``scale=8000:8000``). So the classification is an</span>
+<span class="sd">      ALLOWLIST: an option muvid has not measured is refused, and the census of</span>
+<span class="sd">      what the binary offers is a CI test rather than the guard, because the</span>
+<span class="sd">      census is itself incomplete (ffmpeg 6.1.6's ``-h filter=scale`` omits</span>
+<span class="sd">      ``s``/``size``, which work there).</span>
+<span class="sd">    - **A declared dimension may not exceed** :data:`MAX_LOOK_SCALE` **times the</span>
+<span class="sd">      canvas.** The look is spliced after the assembler's own ``scale``/``pad``,</span>
+<span class="sd">      so the frame entering it IS the canvas and the frame leaving it is resampled</span>
+<span class="sd">      straight back onto the canvas — anything much larger is spending memory to</span>
+<span class="sd">      throw pixels away.</span>
+<span class="sd">    - **A declared dimension must be a plain pixel count.** ``iw*80`` is a legal</span>
+<span class="sd">      width and evaluates against the input, so a literal cap does not see it;</span>
+<span class="sd">      the same is true of ``-1``/``-2`` (derive from the input aspect, which a</span>
+<span class="sd">      preceding ``crop`` can make extreme — measured:</span>
+<span class="sd">      ``crop=w=64:h=2,scale=-1:4000`` asks for a 128000x4000 frame) and of</span>
+<span class="sd">      ``av_parse_video_size``'s abbreviations (``zoompan=d=1:s=whuxga:fps=25``</span>
+<span class="sd">      really produces 7680x4800, at 321.2 MB).</span>
+
+<span class="sd">    **What stays reachable**, stated because a partial claim is worse than none —</span>
+<span class="sd">    and this paragraph is the one the first pass overstated, so read it as the</span>
+<span class="sd">    correction it is. A look may still ask for ``MAX_LOOK_SCALE`` x the canvas in</span>
+<span class="sd">    BOTH dimensions — 16x the area, 268 MB measured at 7680x4320 on a 1920x1080</span>
+<span class="sd">    canvas against 110 MB at canvas size — on every cut of an edit, and the cap is</span>
+<span class="sd">    per invocation rather than cumulative, exactly like :data:`MAX_EDL_ENTRIES`.</span>
+<span class="sd">    What is closed is every way a look can name a frame LARGER than that, in any</span>
+<span class="sd">    spelling, on any of the four filters that can set one.</span>
+
+<span class="sd">    Refusing an EXPRESSION rather than bounding its multiplier syntactically —</span>
+<span class="sd">    and, for the same reason, refusing an aspect-driven option rather than</span>
+<span class="sd">    computing the frame it produces — is a decision with a measurement behind it:</span>
+<span class="sd">    **every size option muvid's own compilers emit is already a literal, and none</span>
+<span class="sd">    of them sets a refused option** — ``looks.compile_motion`` writes</span>
+<span class="sd">    ``zoompan=d=1:s=640x360``, ``looks``' geometry effects write ``scale=1280:720``</span>
+<span class="sd">    and ``pad=1080:1080:0:236:color=0x000000`` — swept over ``punch_in`` (4 zooms</span>
+<span class="sd">    x 4 canvases x 2 rates), ``motion``, and every ``looks`` effect at 6 targets on</span>
+<span class="sd">    all four muvid canvases. The only muvid-compiled fragment whose size options</span>
+<span class="sd">    are expressions is ``motion``'s constant-size ``crop=w='iw*0.5':h='ih*0.5'``,</span>
+<span class="sd">    and ``crop``'s ``w``/``h`` are ``free`` rather than sizes because ``crop``</span>
+<span class="sd">    structurally cannot grow a frame. So the strict rule costs the seam nothing,</span>
+<span class="sd">    where either alternative would be a second copy of libavfilter's geometry</span>
+<span class="sd">    negotiation to keep in agreement with two binaries.</span>
+<span class="sd">    """</span>
+    <span class="k">for</span> <span class="n">filt</span><span class="p">,</span> <span class="n">what</span><span class="p">,</span> <span class="n">why</span> <span class="ow">in</span> <span class="n">_look_unclassified_options</span><span class="p">(</span><span class="n">look</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"EDL entry </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">: look sets </span><span class="si">{</span><span class="n">what</span><span class="si">}</span><span class="s2"> on </span><span class="si">{</span><span class="n">filt</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">look</span><span class="si">!r}</span><span class="s2">), which muvid "</span>
+            <span class="sa">f</span><span class="s2">"does not classify. "</span>
+            <span class="o">+</span> <span class="p">(</span><span class="sa">f</span><span class="s2">"That option is refused because </span><span class="si">{</span><span class="n">why</span><span class="si">}</span><span class="s2">. "</span> <span class="k">if</span> <span class="n">why</span> <span class="k">else</span> <span class="s2">""</span><span class="p">)</span>
+            <span class="o">+</span> <span class="sa">f</span><span class="s2">"A look may set only </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">_allowed_options</span><span class="p">(</span><span class="n">filt</span><span class="p">))</span><span class="si">}</span><span class="s2"> on </span><span class="si">{</span><span class="n">filt</span><span class="si">}</span><span class="s2">, "</span>
+            <span class="sa">f</span><span class="s2">"and at most </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">_LOOK_GEOMETRY_FILTERS</span><span class="p">[</span><span class="n">filt</span><span class="p">]</span><span class="o">.</span><span class="n">positional</span><span class="p">)</span><span class="si">}</span><span class="s2"> unnamed "</span>
+            <span class="sa">f</span><span class="s2">"arguments (</span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">_LOOK_GEOMETRY_FILTERS</span><span class="p">[</span><span class="n">filt</span><span class="p">]</span><span class="o">.</span><span class="n">positional</span><span class="p">)</span><span class="si">}</span><span class="s2">). "</span>
+            <span class="s2">"The four filters that can change the output frame are allowlisted "</span>
+            <span class="s2">"per OPTION, not per name: frame size is memory, this is a live "</span>
+            <span class="s2">"per-caller tool on a box that has been OOM-killed, and an option "</span>
+            <span class="s2">"muvid has not measured could move the frame without declaring a "</span>
+            <span class="s2">"dimension the bound can read (`pad=w=W:h=H:aspect=1/30` renders "</span>
+            <span class="s2">"57600 px high with W and H at canvas size)."</span>
+        <span class="p">)</span>
+    <span class="n">limits</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"width"</span><span class="p">:</span> <span class="n">MAX_LOOK_SCALE</span> <span class="o">*</span> <span class="n">canvas</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">"height"</span><span class="p">:</span> <span class="n">MAX_LOOK_SCALE</span> <span class="o">*</span> <span class="n">canvas</span><span class="p">[</span><span class="mi">1</span><span class="p">]}</span>
+    <span class="k">for</span> <span class="n">filt</span><span class="p">,</span> <span class="n">opt</span><span class="p">,</span> <span class="n">axis</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">px</span> <span class="ow">in</span> <span class="n">_look_output_sizes</span><span class="p">(</span><span class="n">look</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">px</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"EDL entry </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">: look sets </span><span class="si">{</span><span class="n">filt</span><span class="si">}</span><span class="s2">'s </span><span class="si">{</span><span class="n">opt</span><span class="si">!r}</span><span class="s2"> to </span><span class="si">{</span><span class="n">text</span><span class="si">!r}</span><span class="s2">, which is "</span>
+                <span class="sa">f</span><span class="s2">"not a plain pixel count (</span><span class="si">{</span><span class="n">look</span><span class="si">!r}</span><span class="s2">). A look's output frame is "</span>
+                <span class="s2">"bounded against the delivery canvas, and a bound cannot read an "</span>
+                <span class="s2">"expression: `iw*80` evaluates against whatever is underneath, "</span>
+                <span class="s2">"`-1`/`-2` derive from the input aspect (which a preceding crop "</span>
+                <span class="s2">"can make extreme — `crop=w=64:h=2,scale=-1:4000` asks for a "</span>
+                <span class="s2">"128000x4000 frame), and a size NAME resolves through ffmpeg's "</span>
+                <span class="s2">"own table (`s=whuxga` is 7680x4800, 321 MB). Write the size in "</span>
+                <span class="sa">f</span><span class="s2">"pixels — muvid's own compilers do (muvid.footage.look emits "</span>
+                <span class="sa">f</span><span class="s2">"`s=</span><span class="si">{</span><span class="n">canvas</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">x</span><span class="si">{</span><span class="n">canvas</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">`)."</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">px</span> <span class="o">&gt;</span> <span class="n">limits</span><span class="p">[</span><span class="n">axis</span><span class="p">]:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"EDL entry </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">: look asks for a frame </span><span class="si">{</span><span class="n">px</span><span class="si">}</span><span class="s2"> px </span><span class="si">{</span><span class="s1">'wide'</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">axis</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="s1">'width'</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">'high'</span><span class="si">}</span><span class="s2"> "</span>
+                <span class="sa">f</span><span class="s2">"via </span><span class="si">{</span><span class="n">filt</span><span class="si">}</span><span class="s2">'s </span><span class="si">{</span><span class="n">opt</span><span class="si">!r}</span><span class="s2">, more than </span><span class="si">{</span><span class="n">MAX_LOOK_SCALE</span><span class="si">}</span><span class="s2">x the "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">canvas</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">x</span><span class="si">{</span><span class="n">canvas</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2"> canvas (</span><span class="si">{</span><span class="n">look</span><span class="si">!r}</span><span class="s2">). Frame size is memory, "</span>
+                <span class="s2">"and this is a live per-caller tool on a box that has been "</span>
+                <span class="s2">"OOM-killed: `scale=8000:8000` peaks at 328 MB against 19 MB for a "</span>
+                <span class="s2">"look that stays at canvas size, and `pad`/`zoompan` reach the "</span>
+                <span class="s2">"same magnitude. Scaling past the canvas buys nothing either — the "</span>
+                <span class="sa">f</span><span class="s2">"delivered frame is the canvas — so the limit is </span><span class="si">{</span><span class="n">limits</span><span class="p">[</span><span class="s1">'width'</span><span class="p">]</span><span class="si">}</span><span class="s2">x"</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">limits</span><span class="p">[</span><span class="s1">'height'</span><span class="p">]</span><span class="si">}</span><span class="s2">, which still leaves room to supersample."</span>
+            <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_validate_look</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">canvas</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""What a look fragment has to satisfy. Raises ``ValueError``.</span>
 
 <span class="sd">    Split out only for length; it is part of :func:`validate_edl`, which remains</span>
@@ -1014,7 +1736,7 @@
 
 <span class="sd">    A look is **executable ffmpeg supplied by a caller**, and</span>
 <span class="sd">    ``assemble_music_video`` is a live per-caller MCP tool, so this is the</span>
-<span class="sd">    trust boundary for the whole seam. Four rules:</span>
+<span class="sd">    trust boundary for the whole seam. Five rules:</span>
 
 <span class="sd">    - **Only filters muvid names.** :data:`LOOK_FILTERS` is an allowlist, and the</span>
 <span class="sd">      constant carries why a blocklist cannot work here.</span>
@@ -1029,6 +1751,11 @@
 <span class="sd">    - **Not on a gap.** A gap has no footage; the assembler builds its black fill</span>
 <span class="sd">      from a synthetic source with its own chain, so a look there would need a</span>
 <span class="sd">      third splice site and would be styling nothing.</span>
+<span class="sd">    - **A bounded frame.** The allowlist is a vocabulary and says nothing about</span>
+<span class="sd">      the PARAMETERS a member is given; one of those is the output frame size,</span>
+<span class="sd">      which is memory. See :func:`_validate_look_size`, which is why this</span>
+<span class="sd">      function needs the ``canvas`` — the assembler knew it and the gate did not</span>
+<span class="sd">      (muvid#75).</span>
 
 <span class="sd">    A look wanting a second SOURCE has nowhere to go, and saying so is the point:</span>
 <span class="sd">    ``movie=`` — which an earlier version of this message advised — is refused,</span>
@@ -1097,6 +1824,8 @@
             <span class="s2">"filter genuinely belongs on this seam add it to "</span>
             <span class="s2">"muvid.footage.edl.LOOK_FILTERS deliberately — it must name no file."</span>
         <span class="p">)</span>
+    <span class="n">_validate_look_links</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">look</span><span class="p">)</span>
+    <span class="n">_validate_look_size</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">look</span><span class="p">,</span> <span class="n">canvas</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">is_gap</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">"EDL entry </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2"> is a gap but carries a look. A gap has no footage to "</span>
@@ -1217,6 +1946,7 @@
                     <span class="n">crop</span><span class="o">=</span><span class="n">e</span><span class="o">.</span><span class="n">crop</span><span class="p">,</span>
                     <span class="n">crop_end</span><span class="o">=</span><span class="n">e</span><span class="o">.</span><span class="n">crop_end</span><span class="p">,</span>
                     <span class="n">look</span><span class="o">=</span><span class="n">e</span><span class="o">.</span><span class="n">look</span><span class="p">,</span>
+                    <span class="n">look_time_varying</span><span class="o">=</span><span class="n">e</span><span class="o">.</span><span class="n">look_time_varying</span><span class="p">,</span>
                 <span class="p">)</span>
             <span class="p">)</span>
             <span class="k">continue</span>
@@ -1234,6 +1964,7 @@
                 <span class="n">crop</span><span class="o">=</span><span class="n">e</span><span class="o">.</span><span class="n">crop</span><span class="p">,</span>
                 <span class="n">crop_end</span><span class="o">=</span><span class="n">e</span><span class="o">.</span><span class="n">crop_end</span><span class="p">,</span>
                 <span class="n">look</span><span class="o">=</span><span class="n">e</span><span class="o">.</span><span class="n">look</span><span class="p">,</span>
+                <span class="n">look_time_varying</span><span class="o">=</span><span class="n">e</span><span class="o">.</span><span class="n">look_time_varying</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="p">)</span>
     <span class="k">return</span> <span class="n">cuts</span></div>

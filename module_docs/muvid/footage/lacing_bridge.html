@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.footage.lacing_bridge &mdash; muvid 0.0.44 documentation</title>
+  <title>muvid.footage.lacing_bridge &mdash; muvid 0.0.45 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -15,7 +15,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=78cc6f98"></script>
+      <script src="../../../_static/documentation_options.js?v=dcb4eb81"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -216,9 +216,10 @@ mutates that tier and exports it back through <a class="reference internal" href
 <dd><p>DECISION-tier annotations → the <code class="docutils literal notranslate"><span class="pre">edl=</span></code> argument, verbatim.</p>
 <p>The timeline-to-EDL half: whatever the editor did to the DECISION lane — moved,
 split, retargeted, deleted — exports as plain <code class="docutils literal notranslate"><span class="pre">{song_start,</span> <span class="pre">song_end,</span> <span class="pre">clip_id}</span></code>
-dicts (plus <code class="docutils literal notranslate"><span class="pre">transition</span></code>/<code class="docutils literal notranslate"><span class="pre">crop</span></code>/<code class="docutils literal notranslate"><span class="pre">crop_end</span></code>/<code class="docutils literal notranslate"><span class="pre">look</span></code> where the editor set
-one) ready for <code class="docutils literal notranslate"><span class="pre">assemble_music_video</span></code>. Sorting and validation stay the render
-path’s business (<code class="docutils literal notranslate"><span class="pre">fill_gaps</span></code> + <code class="docutils literal notranslate"><span class="pre">validate_edl</span></code>); this is a faithful read.</p>
+dicts (plus <code class="docutils literal notranslate"><span class="pre">transition</span></code>/<code class="docutils literal notranslate"><span class="pre">crop</span></code>/<code class="docutils literal notranslate"><span class="pre">crop_end</span></code>/<code class="docutils literal notranslate"><span class="pre">look</span></code>/<code class="docutils literal notranslate"><span class="pre">look_time_varying</span></code>
+where the editor set one) ready for <code class="docutils literal notranslate"><span class="pre">assemble_music_video</span></code>. Sorting and
+validation stay the render path’s business (<code class="docutils literal notranslate"><span class="pre">fill_gaps</span></code> + <code class="docutils literal notranslate"><span class="pre">validate_edl</span></code>);
+this is a faithful read.</p>
 <p>Annotations are untrusted editor input, so anything shaped wrong is SKIPPED rather
 than crashing the export: wrong schema/tier, or (an editor could in principle attach
 a <code class="docutils literal notranslate"><span class="pre">music-video-edl/v1</span></code> body to an <code class="docutils literal notranslate"><span class="pre">AnnotationRef</span></code>, whose <code class="docutils literal notranslate"><span class="pre">interval</span></code> is

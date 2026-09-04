@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.footage.assemble &mdash; muvid 0.0.44 documentation</title>
+  <title>muvid.footage.assemble &mdash; muvid 0.0.45 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=78cc6f98"></script>
+      <script src="../../../_static/documentation_options.js?v=dcb4eb81"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -184,7 +184,33 @@
 <span class="sd">*inside* the fragment, which is the invariant leaving by the back door) and, because</span>
 <span class="sd">``assemble_music_video`` is a live per-caller MCP tool whose ``edl`` argument is</span>
 <span class="sd">free-form, the filters that write the host's disk (``metadata=…:file=``,</span>
-<span class="sd">``deshake=filename=``, ``sendcmd``, ``signature``).</span>
+<span class="sd">``deshake=filename=``, ``sendcmd``, ``signature``). The allowlist is a</span>
+<span class="sd">vocabulary and bounds no PARAMETER, so the frame size a look asks for is bounded</span>
+<span class="sd">separately against the delivery canvas (muvid#75) — ``scale=8000:8000`` peaks at</span>
+<span class="sd">328 MB from a 64x48 source against 19 MB for a look that stays at canvas size,</span>
+<span class="sd">and ``pad``/``zoompan`` reach the same magnitude. **Nor is a size bound a bound on</span>
+<span class="sd">the OPTIONS that set one**: ``pad``'s ``aspect`` and ``scale``'s</span>
+<span class="sd">``force_original_aspect_ratio`` both move the frame while declaring no dimension</span>
+<span class="sd">a bound can read, and on the production canvas both are larger than the case the</span>
+<span class="sd">size bound refuses (590 MB and 941 MB against 403 MB). So the four filters that</span>
+<span class="sd">can change the output geometry are allowlisted per OPTION and per positional</span>
+<span class="sd">slot — see :data:`~muvid.footage.edl._LOOK_GEOMETRY_FILTERS`.</span>
+
+<span class="sd">A cut whose look is **time-varying** — a punch-in, a pan, anything reading the</span>
+<span class="sd">filter clock — additionally makes :func:`_part_plan` **warn** when the cut borders</span>
+<span class="sd">a transition: the blend is a separate invocation whose inputs are</span>
+<span class="sd">input-side-seeked, so the clock restarts and the move plays again from the start</span>
+<span class="sd">(muvid#73). The EDL says which kind a look is</span>
+<span class="sd">(:attr:`~muvid.footage.edl.EdlEntry.look_time_varying`) because the fragment is a</span>
+<span class="sd">bare string muvid did not author; rebasing it would mean rewriting an arbitrary</span>
+<span class="sd">ffmpeg expression, which is what ``looks``' rule 27 refuses.</span>
+
+<span class="sd">**Both of :func:`_part_plan`'s findings go to two places**, and the second half</span>
+<span class="sd">was missing until now: a :class:`AssemblyWarning` on stderr, *and* the ``on_note``</span>
+<span class="sd">sink the caller's reply is built from. ``assemble_music_video`` is a live</span>
+<span class="sd">per-caller MCP tool and its caller has no stderr, so a warning that reached only</span>
+<span class="sd">stderr was a hitch the caller was billed for and never told about — the silent</span>
+<span class="sd">no-op this module refuses everywhere else. See :func:`_emit`.</span>
 
 <span class="sd">Deliberately NOT moviepy (its ``write_videofile`` runs in-process and would escape the</span>
 <span class="sd">``$MUVID_FFMPEG_TIMEOUT_S`` worker guard). Every stage runs through</span>
@@ -248,7 +274,112 @@
     <span class="n">curve</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"fade"</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_part_plan</span><span class="p">(</span><span class="n">cuts</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">AssemblyCut</span><span class="p">],</span> <span class="n">fps</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">_Part</span><span class="p">]:</span>
+<div class="viewcode-block" id="AssemblyWarning">
+<a class="viewcode-back" href="../../../module_docs/muvid/footage/assemble.html#muvid.footage.assemble.AssemblyWarning">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">AssemblyWarning</span><span class="p">(</span><span class="ne">RuntimeWarning</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A render-plan finding the caller should see — not an error, not silence.</span>
+
+<span class="sd">    A ``RuntimeWarning`` subclass, so every existing ``pytest.warns(RuntimeWarning)``</span>
+<span class="sd">    and every stderr reader keeps working. It exists so the *reply* half can pick</span>
+<span class="sd">    these out: ``warnings.warn`` reaches a developer's stderr and nothing else, and</span>
+<span class="sd">    :func:`~muvid.mcp.footage_tools.assemble_music_video` is a live per-caller MCP</span>
+<span class="sd">    tool whose caller has no stderr. A warning the caller cannot see is the silent</span>
+<span class="sd">    no-op this module refuses everywhere else — so :func:`assemble_music_video`</span>
+<span class="sd">    takes an ``on_note`` sink and the tool returns what it collects.</span>
+
+<span class="sd">    A distinct class rather than a stderr filter or a ``catch_warnings`` block:</span>
+<span class="sd">    ``catch_warnings`` mutates process-global state and the connector serves</span>
+<span class="sd">    concurrent callers, so one render could swallow or steal another's warnings.</span>
+<span class="sd">    """</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_emit</span><span class="p">(</span><span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">note</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">stacklevel</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Raise an :class:`AssemblyWarning` AND hand it to the reply sink.</span>
+
+<span class="sd">    Both, never either: the warning is what a developer sees on stderr and what</span>
+<span class="sd">    ``pytest.warns`` catches, and ``note`` is the only thing a remote MCP caller</span>
+<span class="sd">    can ever see. Dropping the warning would break every existing stderr reader;</span>
+<span class="sd">    dropping the note is the muvid#73 half that shipped unnoticed — the finding</span>
+<span class="sd">    landed in the server process and the caller got an ``ok`` render with the</span>
+<span class="sd">    hitch in it.</span>
+<span class="sd">    """</span>
+    <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">AssemblyWarning</span><span class="p">,</span> <span class="n">stacklevel</span><span class="o">=</span><span class="n">stacklevel</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">note</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">note</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_warn_time_varying_looks_on_transitions</span><span class="p">(</span>
+    <span class="n">cuts</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">AssemblyCut</span><span class="p">],</span> <span class="n">n_trans</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">note</span><span class="o">=</span><span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Warn per cut whose MOVING look borders a blended boundary (muvid#73).</span>
+
+<span class="sd">    A transitioned boundary is rendered as a separate two-input invocation whose</span>
+<span class="sd">    inputs are input-side-seeked to the blend window (:func:`_xfade_input`), and</span>
+<span class="sd">    input-side ``-ss`` rebases the filter timeline to 0 — so a look whose</span>
+<span class="sd">    expressions read that clock **starts its ramp again** for the length of the</span>
+<span class="sd">    blend. Measured on a 3.0 s cut at 25 fps with a 0.4 s fade and</span>
+<span class="sd">    ``punch_in(zoom=1.12)``: the solo part's last frame is drawn at zoom 1.109</span>
+<span class="sd">    (mean |diff| 28.1/255 against the same frame rendered with no look), the</span>
+<span class="sd">    blend part's first frame at zoom 1.000 (0.7/255 — indistinguishable from no</span>
+<span class="sd">    punch at all).</span>
+
+<span class="sd">    Warning rather than fixing is the decision recorded in muvid#73: rebasing</span>
+<span class="sd">    means rewriting an ffmpeg expression muvid did not author and cannot parse,</span>
+<span class="sd">    which is exactly what ``looks`` refuses to do for itself (its rule 27), and a</span>
+<span class="sd">    wrong rebase moves the effect to a different second of the clip at exit 0</span>
+<span class="sd">    with an empty stderr. A documented hitch beats that.</span>
+
+<span class="sd">    Three things it deliberately does NOT warn about, each of which is the reason</span>
+<span class="sd">    :attr:`~muvid.footage.edl.EdlEntry.look_time_varying` had to exist at all:</span>
+
+<span class="sd">    - a **static** look on a transitioned boundary — a grade, a LUT, a posterise</span>
+<span class="sd">      never reads the clock, and warning on every graded transitioned cut is what</span>
+<span class="sd">      made this warning unimplementable while the seam was a bare string;</span>
+<span class="sd">    - a **moving** look on a plain cut — one invocation, one clock, nothing to</span>
+<span class="sd">      restart;</span>
+<span class="sd">    - a moving look a caller did not DECLARE. The flag defaults to ``False``, so</span>
+<span class="sd">      an undeclared moving look stays silent. That is the known limit of the</span>
+<span class="sd">      chosen shape (see the field's own docstring), not an oversight.</span>
+
+<span class="sd">    One warning per affected CUT, not per side of a boundary: a cut between two</span>
+<span class="sd">    transitions has its ramp restarted on both, but that is one thing wrong with</span>
+<span class="sd">    one cut and the caller acts on it once.</span>
+<span class="sd">    """</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">cut</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">cuts</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">cut</span><span class="o">.</span><span class="n">look</span> <span class="ow">and</span> <span class="n">cut</span><span class="o">.</span><span class="n">look_time_varying</span><span class="p">):</span>
+            <span class="k">continue</span>
+        <span class="c1"># Its own incoming blend, or the one its successor pulls out of its tail.</span>
+        <span class="c1"># Both render THIS cut through `_part_filter` in a freshly-seeked</span>
+        <span class="c1"># invocation, so either is enough to restart the ramp.</span>
+        <span class="n">incoming</span> <span class="o">=</span> <span class="n">n_trans</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span>
+        <span class="n">outgoing</span> <span class="o">=</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">cuts</span><span class="p">)</span> <span class="ow">and</span> <span class="n">n_trans</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">incoming</span> <span class="ow">or</span> <span class="n">outgoing</span><span class="p">):</span>
+            <span class="k">continue</span>
+        <span class="n">where</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="s2">"both of its boundaries are blended"</span>
+            <span class="k">if</span> <span class="n">incoming</span> <span class="ow">and</span> <span class="n">outgoing</span>
+            <span class="k">else</span> <span class="p">(</span>
+                <span class="s2">"it blends IN from the previous cut"</span>
+                <span class="k">if</span> <span class="n">incoming</span>
+                <span class="k">else</span> <span class="s2">"the next cut blends IN from it"</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">_emit</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"cut </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">: a time-varying look (</span><span class="si">{</span><span class="n">cut</span><span class="o">.</span><span class="n">look</span><span class="si">!r}</span><span class="s2">) borders a transition — "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">where</span><span class="si">}</span><span class="s2">. The blended part is a separate invocation whose inputs are "</span>
+            <span class="s2">"input-side-seeked, which rebases the filter clock to 0, so the move "</span>
+            <span class="s2">"RESTARTS for the length of the blend (measured: a 1.12x punch reaches "</span>
+            <span class="s2">"zoom 1.109 on the solo part and is redrawn at 1.000 on the blend). "</span>
+            <span class="s2">"Either drop the transition on this boundary or use a static look "</span>
+            <span class="s2">"(a grade/LUT is unaffected). muvid cannot rebase the fragment — see "</span>
+            <span class="s2">"muvid#73."</span><span class="p">,</span>
+            <span class="n">note</span><span class="p">,</span>
+            <span class="n">stacklevel</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+        <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_part_plan</span><span class="p">(</span><span class="n">cuts</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">AssemblyCut</span><span class="p">],</span> <span class="n">fps</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">note</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">_Part</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">"""The ordered ffmpeg jobs for these cuts. Pure — no encoding, no I/O.</span>
 
 <span class="sd">    **Per CUT, never per boundary.** The per-boundary reading is the tempting one</span>
@@ -270,6 +401,20 @@
 <span class="sd">    every transition fits at this fps. :func:`~muvid.footage.edl.validate_edl` gates the fit in SONG time</span>
 <span class="sd">    with a 1 ms tolerance and cannot know the render rate, so a span within a frame</span>
 <span class="sd">    of the limit can still fail here.</span>
+
+<span class="sd">    It also WARNS twice, and both warnings are the same "never a silent no-op"</span>
+<span class="sd">    posture: a transition that rounds to zero frames at this rate, and a cut whose</span>
+<span class="sd">    **time-varying look borders a blended boundary** — see</span>
+<span class="sd">    :func:`_warn_time_varying_looks_on_transitions`. This is the one place that</span>
+<span class="sd">    can say either, because both are properties of the render PLAN rather than of</span>
+<span class="sd">    the EDL: only here is it known that a transitioned boundary becomes a separate</span>
+<span class="sd">    two-input invocation, and only here is the fps known at all.</span>
+
+<span class="sd">    ``note`` is the reply sink — a ``str -&gt; None`` callable that receives the same</span>
+<span class="sd">    text. It exists because ``warnings.warn`` reaches a developer's stderr and</span>
+<span class="sd">    stops there: the only production caller of either of these findings is a</span>
+<span class="sd">    remote MCP caller who has no stderr, so before it, an ``ok`` render came back</span>
+<span class="sd">    with the hitch in it and no way to know. See :func:`_emit`.</span>
 <span class="sd">    """</span>
     <span class="n">counts</span> <span class="o">=</span> <span class="n">_frame_counts</span><span class="p">(</span><span class="n">cuts</span><span class="p">,</span> <span class="n">fps</span><span class="p">)</span>
 
@@ -281,15 +426,16 @@
         <span class="k">if</span> <span class="n">n</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="c1"># Never a silent no-op: a transition that rounds away at this rate is a</span>
             <span class="c1"># direction that did nothing, which is the muvid#44 failure shape.</span>
-            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+            <span class="n">_emit</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">"cut </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">: a </span><span class="si">{</span><span class="n">t</span><span class="o">.</span><span class="n">duration_s</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">s transition rounds to zero frames at "</span>
                 <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">fps</span><span class="si">}</span><span class="s2"> fps and renders as a hard cut."</span><span class="p">,</span>
-                <span class="ne">RuntimeWarning</span><span class="p">,</span>
-                <span class="n">stacklevel</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+                <span class="n">note</span><span class="p">,</span>
+                <span class="n">stacklevel</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="k">return</span> <span class="n">n</span>
 
     <span class="n">n_trans</span> <span class="o">=</span> <span class="p">[</span><span class="n">_n_transition</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">cuts</span><span class="p">))]</span>
+    <span class="n">_warn_time_varying_looks_on_transitions</span><span class="p">(</span><span class="n">cuts</span><span class="p">,</span> <span class="n">n_trans</span><span class="p">,</span> <span class="n">note</span><span class="p">)</span>
     <span class="n">parts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">_Part</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">cut</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">cuts</span><span class="p">,</span> <span class="n">counts</span><span class="p">)):</span>
         <span class="n">d</span> <span class="o">=</span> <span class="n">n_trans</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
@@ -682,6 +828,7 @@
     <span class="n">fps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">DEFAULT_FPS</span><span class="p">,</span>
     <span class="n">crf</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span>
     <span class="n">preset</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"veryfast"</span><span class="p">,</span>
+    <span class="n">on_note</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Render ``cuts`` (a validated, contiguous, gap-filled EDL) into ``out_path``.</span>
 
@@ -689,6 +836,18 @@
 <span class="sd">    concat, and a final mux of the clean song for ``[cuts[0].song_start,</span>
 <span class="sd">    cuts[-1].song_end]`` — which, for EDLs produced by ``fill_gaps``, is the whole song.</span>
 <span class="sd">    Returns ``out_path``.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        on_note: optional ``str -&gt; None`` sink for the render-plan findings</span>
+<span class="sd">            :func:`_part_plan` raises (a transition that rounds to zero frames; a</span>
+<span class="sd">            time-varying look on a blended boundary — muvid#73). They are ALWAYS</span>
+<span class="sd">            raised as :class:`AssemblyWarning` as well; this is the additional</span>
+<span class="sd">            path, and the only one a remote caller can see. ``assemble_music_video``</span>
+<span class="sd">            is a live per-caller MCP tool, so a finding that reaches only the</span>
+<span class="sd">            server's stderr is a hitch the caller is billed for and never told</span>
+<span class="sd">            about. A callback rather than a changed return type, because the</span>
+<span class="sd">            return type is a public contract and because ``catch_warnings``</span>
+<span class="sd">            mutates process-global state that concurrent renders would share.</span>
 <span class="sd">    """</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.visualize.ffmpeg</span><span class="w"> </span><span class="kn">import</span> <span class="n">require_ffmpeg</span><span class="p">,</span> <span class="n">require_filter</span><span class="p">,</span> <span class="n">run_ffmpeg</span>
 
@@ -707,7 +866,7 @@
     <span class="k">try</span><span class="p">:</span>
         <span class="c1"># Planned in full BEFORE any encoding, so a transition that does not fit at</span>
         <span class="c1"># this fps fails on cut 0 rather than after forty parts are on disk.</span>
-        <span class="n">plan</span> <span class="o">=</span> <span class="n">_part_plan</span><span class="p">(</span><span class="n">cuts</span><span class="p">,</span> <span class="n">fps</span><span class="p">)</span>
+        <span class="n">plan</span> <span class="o">=</span> <span class="n">_part_plan</span><span class="p">(</span><span class="n">cuts</span><span class="p">,</span> <span class="n">fps</span><span class="p">,</span> <span class="n">on_note</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s2">"xfade"</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">plan</span><span class="p">):</span>
             <span class="n">require_filter</span><span class="p">(</span><span class="s2">"xfade"</span><span class="p">,</span> <span class="n">needed_for</span><span class="o">=</span><span class="s2">"EDL transitions"</span><span class="p">)</span>
         <span class="n">names</span> <span class="o">=</span> <span class="p">[]</span>

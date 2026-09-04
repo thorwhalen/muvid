@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.mcp.footage_tools &mdash; muvid 0.0.44 documentation</title>
+  <title>muvid.mcp.footage_tools &mdash; muvid 0.0.45 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -15,7 +15,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=78cc6f98"></script>
+      <script src="../../../_static/documentation_options.js?v=dcb4eb81"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -224,9 +224,24 @@ anything else — a
 second container (<code class="docutils literal notranslate"><span class="pre">movie=</span></code>), a filter that writes a file
 (<code class="docutils literal notranslate"><span class="pre">metadata=…:file=</span></code>, <code class="docutils literal notranslate"><span class="pre">deshake=filename=</span></code>), a pad label, a graph
 separator, or an unclosed quote — is refused by name at <code class="docutils literal notranslate"><span class="pre">validate_edl</span></code>,
-not discovered as an ffmpeg side effect. Compile one with
-<code class="docutils literal notranslate"><span class="pre">muvid.footage.look</span></code> (<code class="docutils literal notranslate"><span class="pre">punch_in</span></code> / <code class="docutils literal notranslate"><span class="pre">motion</span></code> / <code class="docutils literal notranslate"><span class="pre">stylize</span></code>) rather than
-hand-writing it. All four fields survive verbatim in the returned <code class="docutils literal notranslate"><span class="pre">edl</span></code>.</p></li>
+not discovered as an ffmpeg side effect. Its output frame is also bounded:
+a <code class="docutils literal notranslate"><span class="pre">scale</span></code>/<code class="docutils literal notranslate"><span class="pre">pad</span></code>/<code class="docutils literal notranslate"><span class="pre">zoompan</span></code> size must be a plain pixel count (not
+<code class="docutils literal notranslate"><span class="pre">iw*80</span></code>, not <code class="docutils literal notranslate"><span class="pre">-1</span></code>, not <code class="docutils literal notranslate"><span class="pre">hd720</span></code>) and no more than
+<code class="docutils literal notranslate"><span class="pre">muvid.footage.edl.MAX_LOOK_SCALE</span></code> times the render canvas — frame size
+is memory, and <code class="docutils literal notranslate"><span class="pre">scale=8000:8000</span></code> costs 328 MB against 19 MB for a look
+that stays at canvas size. On those four filters only options muvid has
+measured may be set at all — <code class="docutils literal notranslate"><span class="pre">scale</span></code> w/h/s/size + <code class="docutils literal notranslate"><span class="pre">flags</span></code>, <code class="docutils literal notranslate"><span class="pre">pad</span></code>
+w/h/x/y + <code class="docutils literal notranslate"><span class="pre">color</span></code>, <code class="docutils literal notranslate"><span class="pre">crop</span></code> w/h/x/y, all of <code class="docutils literal notranslate"><span class="pre">zoompan</span></code> — because
+<code class="docutils literal notranslate"><span class="pre">pad=aspect</span></code> and <code class="docutils literal notranslate"><span class="pre">scale=force_original_aspect_ratio</span></code> move the frame
+while declaring no size a bound can read (590 MB and 941 MB measured on a
+1920x1080 canvas). Compile one with <code class="docutils literal notranslate"><span class="pre">muvid.footage.look</span></code>
+(<code class="docutils literal notranslate"><span class="pre">punch_in</span></code> / <code class="docutils literal notranslate"><span class="pre">motion</span></code> / <code class="docutils literal notranslate"><span class="pre">stylize</span></code>) rather than hand-writing it.</p></li>
+<li><p>an entry carrying a MOVING look (a punch-in, a pan) should also set
+<code class="docutils literal notranslate"><span class="pre">look_time_varying:</span> <span class="pre">true</span></code>. It changes no pixels; it puts a line in the
+reply’s <code class="docutils literal notranslate"><span class="pre">warnings</span></code> when a blended boundary restarts the move’s ramp,
+which it does because the blend is a separate seek (muvid#73). Leave it
+off — the default — for a grade, a LUT or a posterise, which never read the
+clock. All five fields survive verbatim in the returned <code class="docutils literal notranslate"><span class="pre">edl</span></code>.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">strategy='weighted'</span></code> (score-driven): the beat-snapped Viterbi selector reads the
 persisted score tracks (run <code class="docutils literal notranslate"><span class="pre">score_footage</span></code> first) and the selection config —
 <code class="docutils literal notranslate"><span class="pre">preset</span></code> (“energetic”/”contemplative”) and/or <code class="docutils literal notranslate"><span class="pre">weights</span></code> (per-metric) and/or
@@ -241,6 +256,13 @@ re-rendered in another shape, no new project needed. Default: the project’s ca
 scaled onto the canvas (padded, never stretched), gaps render black, and the CLEAN
 song audio runs under it all. Returns the render + the same coverage report
 <code class="docutils literal notranslate"><span class="pre">propose_edit</span></code> gives.</p>
+<p><strong>Read the returned ``warnings`` list.</strong> It is always present and usually
+empty, and it is what the render PLAN found: a transition that rounded to
+zero frames at this fps, or a moving look on a blended boundary whose ramp
+therefore restarts (muvid#73). Neither fails the render — <code class="docutils literal notranslate"><span class="pre">ok</span></code> stays true —
+so this list is the only place either one is ever said. It exists because
+these findings used to be Python warnings on the server’s stderr, which a
+remote caller has no access to.</p>
 </dd></dl>
 
 <dl class="py function">

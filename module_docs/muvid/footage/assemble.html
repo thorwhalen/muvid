@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.footage.assemble &mdash; muvid 0.0.44 documentation</title>
+  <title>muvid.footage.assemble &mdash; muvid 0.0.45 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -15,7 +15,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=78cc6f98"></script>
+      <script src="../../../_static/documentation_options.js?v=dcb4eb81"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -63,6 +63,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../footage.html">muvid.footage</a></li>
 <li class="toctree-l1"><a class="reference internal" href="align.html">muvid.footage.align</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">muvid.footage.assemble</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.footage.assemble.AssemblyWarning"><code class="docutils literal notranslate"><span class="pre">AssemblyWarning</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.footage.assemble.DEFAULT_CANVAS"><code class="docutils literal notranslate"><span class="pre">DEFAULT_CANVAS</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.footage.assemble.DEFAULT_FPS"><code class="docutils literal notranslate"><span class="pre">DEFAULT_FPS</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.footage.assemble.assemble_music_video"><code class="docutils literal notranslate"><span class="pre">assemble_music_video()</span></code></a></li>
@@ -190,13 +191,53 @@ The allowlist is what closes <code class="docutils literal notranslate"><span cl
 <em>inside</em> the fragment, which is the invariant leaving by the back door) and, because
 <code class="docutils literal notranslate"><span class="pre">assemble_music_video</span></code> is a live per-caller MCP tool whose <code class="docutils literal notranslate"><span class="pre">edl</span></code> argument is
 free-form, the filters that write the host’s disk (<code class="docutils literal notranslate"><span class="pre">metadata=…:file=</span></code>,
-<code class="docutils literal notranslate"><span class="pre">deshake=filename=</span></code>, <code class="docutils literal notranslate"><span class="pre">sendcmd</span></code>, <code class="docutils literal notranslate"><span class="pre">signature</span></code>).</p>
+<code class="docutils literal notranslate"><span class="pre">deshake=filename=</span></code>, <code class="docutils literal notranslate"><span class="pre">sendcmd</span></code>, <code class="docutils literal notranslate"><span class="pre">signature</span></code>). The allowlist is a
+vocabulary and bounds no PARAMETER, so the frame size a look asks for is bounded
+separately against the delivery canvas (muvid#75) — <code class="docutils literal notranslate"><span class="pre">scale=8000:8000</span></code> peaks at
+328 MB from a 64x48 source against 19 MB for a look that stays at canvas size,
+and <code class="docutils literal notranslate"><span class="pre">pad</span></code>/<code class="docutils literal notranslate"><span class="pre">zoompan</span></code> reach the same magnitude. <strong>Nor is a size bound a bound on
+the OPTIONS that set one</strong>: <code class="docutils literal notranslate"><span class="pre">pad</span></code>’s <code class="docutils literal notranslate"><span class="pre">aspect</span></code> and <code class="docutils literal notranslate"><span class="pre">scale</span></code>’s
+<code class="docutils literal notranslate"><span class="pre">force_original_aspect_ratio</span></code> both move the frame while declaring no dimension
+a bound can read, and on the production canvas both are larger than the case the
+size bound refuses (590 MB and 941 MB against 403 MB). So the four filters that
+can change the output geometry are allowlisted per OPTION and per positional
+slot — see <code class="xref py py-data docutils literal notranslate"><span class="pre">_LOOK_GEOMETRY_FILTERS</span></code>.</p>
+<p>A cut whose look is <strong>time-varying</strong> — a punch-in, a pan, anything reading the
+filter clock — additionally makes <code class="xref py py-func docutils literal notranslate"><span class="pre">_part_plan()</span></code> <strong>warn</strong> when the cut borders
+a transition: the blend is a separate invocation whose inputs are
+input-side-seeked, so the clock restarts and the move plays again from the start
+(muvid#73). The EDL says which kind a look is
+(<a class="reference internal" href="edl.html#muvid.footage.edl.EdlEntry.look_time_varying" title="muvid.footage.edl.EdlEntry.look_time_varying"><code class="xref py py-attr docutils literal notranslate"><span class="pre">look_time_varying</span></code></a>) because the fragment is a
+bare string muvid did not author; rebasing it would mean rewriting an arbitrary
+ffmpeg expression, which is what <code class="docutils literal notranslate"><span class="pre">looks</span></code>’ rule 27 refuses.</p>
+<p><strong>Both of :func:`_part_plan`’s findings go to two places</strong>, and the second half
+was missing until now: a <a class="reference internal" href="#muvid.footage.assemble.AssemblyWarning" title="muvid.footage.assemble.AssemblyWarning"><code class="xref py py-class docutils literal notranslate"><span class="pre">AssemblyWarning</span></code></a> on stderr, <em>and</em> the <code class="docutils literal notranslate"><span class="pre">on_note</span></code>
+sink the caller’s reply is built from. <code class="docutils literal notranslate"><span class="pre">assemble_music_video</span></code> is a live
+per-caller MCP tool and its caller has no stderr, so a warning that reached only
+stderr was a hitch the caller was billed for and never told about — the silent
+no-op this module refuses everywhere else. See <code class="xref py py-func docutils literal notranslate"><span class="pre">_emit()</span></code>.</p>
 <p>Deliberately NOT moviepy (its <code class="docutils literal notranslate"><span class="pre">write_videofile</span></code> runs in-process and would escape the
 <code class="docutils literal notranslate"><span class="pre">$MUVID_FFMPEG_TIMEOUT_S</span></code> worker guard). Every stage runs through
 <a class="reference internal" href="../visualize/ffmpeg.html#muvid.visualize.ffmpeg.run_ffmpeg" title="muvid.visualize.ffmpeg.run_ffmpeg"><code class="xref py py-func docutils literal notranslate"><span class="pre">muvid.visualize.ffmpeg.run_ffmpeg()</span></code></a>; note the guard is <strong>per invocation</strong> now, so a
 render’s wall-clock bound is <code class="docutils literal notranslate"><span class="pre">(parts</span> <span class="pre">+</span> <span class="pre">1)</span> <span class="pre">*</span> <span class="pre">MUVID_FFMPEG_TIMEOUT_S</span></code> — the env var bounds
 a hang, not the total render. Parts equal cuts for an untransitioned edit and approach
 <code class="docutils literal notranslate"><span class="pre">2</span> <span class="pre">*</span> <span class="pre">cuts</span></code> when every boundary is transitioned.</p>
+<dl class="py exception">
+<dt class="sig sig-object py" id="muvid.footage.assemble.AssemblyWarning">
+<span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">muvid.footage.assemble.</span></span><span class="sig-name descname"><span class="pre">AssemblyWarning</span></span><a class="reference internal" href="../../../_modules/muvid/footage/assemble.html#AssemblyWarning"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.assemble.AssemblyWarning" title="Link to this definition"></a></dt>
+<dd><p>A render-plan finding the caller should see — not an error, not silence.</p>
+<p>A <code class="docutils literal notranslate"><span class="pre">RuntimeWarning</span></code> subclass, so every existing <code class="docutils literal notranslate"><span class="pre">pytest.warns(RuntimeWarning)</span></code>
+and every stderr reader keeps working. It exists so the <em>reply</em> half can pick
+these out: <code class="docutils literal notranslate"><span class="pre">warnings.warn</span></code> reaches a developer’s stderr and nothing else, and
+<a class="reference internal" href="../mcp/footage_tools.html#muvid.mcp.footage_tools.assemble_music_video" title="muvid.mcp.footage_tools.assemble_music_video"><code class="xref py py-func docutils literal notranslate"><span class="pre">assemble_music_video()</span></code></a> is a live per-caller MCP
+tool whose caller has no stderr. A warning the caller cannot see is the silent
+no-op this module refuses everywhere else — so <a class="reference internal" href="#muvid.footage.assemble.assemble_music_video" title="muvid.footage.assemble.assemble_music_video"><code class="xref py py-func docutils literal notranslate"><span class="pre">assemble_music_video()</span></code></a>
+takes an <code class="docutils literal notranslate"><span class="pre">on_note</span></code> sink and the tool returns what it collects.</p>
+<p>A distinct class rather than a stderr filter or a <code class="docutils literal notranslate"><span class="pre">catch_warnings</span></code> block:
+<code class="docutils literal notranslate"><span class="pre">catch_warnings</span></code> mutates process-global state and the connector serves
+concurrent callers, so one render could swallow or steal another’s warnings.</p>
+</dd></dl>
+
 <dl class="py data">
 <dt class="sig sig-object py" id="muvid.footage.assemble.DEFAULT_CANVAS">
 <span class="sig-prename descclassname"><span class="pre">muvid.footage.assemble.</span></span><span class="sig-name descname"><span class="pre">DEFAULT_CANVAS</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">(1920,</span> <span class="pre">1080)</span></span><a class="headerlink" href="#muvid.footage.assemble.DEFAULT_CANVAS" title="Link to this definition"></a></dt>
@@ -216,12 +257,26 @@ a hang, not the total render. Parts equal cuts for an untransitioned edit and ap
 
 <dl class="py function">
 <dt class="sig sig-object py" id="muvid.footage.assemble.assemble_music_video">
-<span class="sig-prename descclassname"><span class="pre">muvid.footage.assemble.</span></span><span class="sig-name descname"><span class="pre">assemble_music_video</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cuts</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="edl.html#muvid.footage.edl.AssemblyCut" title="muvid.footage.edl.AssemblyCut"><span class="pre">AssemblyCut</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">song_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">canvas</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">(1920,</span> <span class="pre">1080)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">30</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crf</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">preset</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'veryfast'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Path</span></span></span><a class="reference internal" href="../../../_modules/muvid/footage/assemble.html#assemble_music_video"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.assemble.assemble_music_video" title="Link to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">muvid.footage.assemble.</span></span><span class="sig-name descname"><span class="pre">assemble_music_video</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cuts</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="edl.html#muvid.footage.edl.AssemblyCut" title="muvid.footage.edl.AssemblyCut"><span class="pre">AssemblyCut</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">song_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">canvas</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">(1920,</span> <span class="pre">1080)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">30</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crf</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">preset</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'veryfast'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">on_note</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Path</span></span></span><a class="reference internal" href="../../../_modules/muvid/footage/assemble.html#assemble_music_video"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.assemble.assemble_music_video" title="Link to this definition"></a></dt>
 <dd><p>Render <code class="docutils literal notranslate"><span class="pre">cuts</span></code> (a validated, contiguous, gap-filled EDL) into <code class="docutils literal notranslate"><span class="pre">out_path</span></code>.</p>
 <p>Bounded stages: one single-input ffmpeg run per cut (gaps render black), a stream-copy
 concat, and a final mux of the clean song for <code class="docutils literal notranslate"><span class="pre">[cuts[0].song_start,</span>
 <span class="pre">cuts[-1].song_end]</span></code> — which, for EDLs produced by <code class="docutils literal notranslate"><span class="pre">fill_gaps</span></code>, is the whole song.
 Returns <code class="docutils literal notranslate"><span class="pre">out_path</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>on_note</strong> – optional <code class="docutils literal notranslate"><span class="pre">str</span> <span class="pre">-&gt;</span> <span class="pre">None</span></code> sink for the render-plan findings
+<code class="xref py py-func docutils literal notranslate"><span class="pre">_part_plan()</span></code> raises (a transition that rounds to zero frames; a
+time-varying look on a blended boundary — muvid#73). They are ALWAYS
+raised as <a class="reference internal" href="#muvid.footage.assemble.AssemblyWarning" title="muvid.footage.assemble.AssemblyWarning"><code class="xref py py-class docutils literal notranslate"><span class="pre">AssemblyWarning</span></code></a> as well; this is the additional
+path, and the only one a remote caller can see. <code class="docutils literal notranslate"><span class="pre">assemble_music_video</span></code>
+is a live per-caller MCP tool, so a finding that reaches only the
+server’s stderr is a hitch the caller is billed for and never told
+about. A callback rather than a changed return type, because the
+return type is a public contract and because <code class="docutils literal notranslate"><span class="pre">catch_warnings</span></code>
+mutates process-global state that concurrent renders would share.</p>
+</dd>
+</dl>
 </dd></dl>
 
 </section>

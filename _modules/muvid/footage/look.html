@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.footage.look &mdash; muvid 0.0.44 documentation</title>
+  <title>muvid.footage.look &mdash; muvid 0.0.45 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=78cc6f98"></script>
+      <script src="../../../_static/documentation_options.js?v=dcb4eb81"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -177,7 +177,10 @@
 <span class="sd">- :func:`stylize` — a whole :class:`looks.Look` (grade, LUT, posterise …)</span>
 <span class="sd">  compiled against the binary muvid will actually run.</span>
 
-<span class="sd">:func:`chain` puts two of them on one cut.</span>
+<span class="sd">:func:`chain` puts two of them on one cut. Each returns a :class:`LookFragment` —</span>
+<span class="sd">a ``str`` that also answers :attr:`~LookFragment.time_varying` — except that</span>
+<span class="sd">:func:`chain` returns ``None`` when nothing survives. Read the answer back with</span>
+<span class="sd">:func:`is_time_varying`, which treats a plain ``str`` as static.</span>
 
 <span class="sd">**Which binary.** The fleet has two ffmpegs in routine use and neither is a</span>
 <span class="sd">superset of the other (``looks``' research note 11 §3.4 measured 484 vs 481</span>
@@ -187,27 +190,35 @@
 <span class="sd">from ``PATH`` (:func:`muvid.visualize.ffmpeg.run_ffmpeg`), so that is what</span>
 <span class="sd">:func:`stylize` probes. Pass ``env=`` to compile against a different one.</span>
 
-<span class="sd">**One limitation, measured rather than guessed at, and not fixable here.** A</span>
-<span class="sd">*time-varying* look on a cut that borders a :class:`~muvid.footage.edl.Transition`</span>
-<span class="sd">**restarts its ramp on the blended part**. The assembler renders a transitioned</span>
-<span class="sd">boundary as a separate two-input invocation whose inputs are input-side-seeked to</span>
-<span class="sd">the blend window, so the filter clock there begins at 0 again instead of</span>
-<span class="sd">continuing the cut's.</span>
+<span class="sd">**One limitation, measured rather than guessed at, and not fixable here — but no</span>
+<span class="sd">longer silent.** A *time-varying* look on a cut that borders a</span>
+<span class="sd">:class:`~muvid.footage.edl.Transition` **restarts its ramp on the blended part**.</span>
+<span class="sd">The assembler renders a transitioned boundary as a separate two-input invocation</span>
+<span class="sd">whose inputs are input-side-seeked to the blend window, so the filter clock there</span>
+<span class="sd">begins at 0 again instead of continuing the cut's.</span>
 
 <span class="sd">Measured on a 3.0 s cut at 25 fps with a 0.4 s fade and a 1.12x punch: the solo</span>
-<span class="sd">part's last frame is drawn at zoom 1.109 (mean |diff| 23.1/255 against the same</span>
+<span class="sd">part's last frame is drawn at zoom 1.109 (mean |diff| 28.1/255 against the same</span>
 <span class="sd">frame rendered without the look), while the blend part's first frame is drawn at</span>
-<span class="sd">zoom 1.000 (mean |diff| 0.5/255 against its own unlooked twin — i.e.</span>
+<span class="sd">zoom 1.000 (mean |diff| 0.7/255 against its own unlooked twin — i.e.</span>
 <span class="sd">indistinguishable from no punch at all). The move snaps back for the length of</span>
 <span class="sd">the blend and then the next cut begins.</span>
 
 <span class="sd">A **static** look — a grade, a LUT, a posterise — is unaffected, because it never</span>
-<span class="sd">reads the clock, and it is what the seam is mostly for. For a *moving* look,</span>
-<span class="sd">either keep it off transitioned boundaries or accept the hitch. muvid cannot</span>
-<span class="sd">rebase the fragment without rewriting an arbitrary ffmpeg expression, which is</span>
+<span class="sd">reads the clock, and it is what the seam is mostly for. muvid still cannot rebase</span>
+<span class="sd">the fragment: that means rewriting an arbitrary ffmpeg expression, which is</span>
 <span class="sd">exactly what ``looks`` refuses to do for itself (its rule 27), and a wrong rebase</span>
-<span class="sd">is worse than a documented one: it would exit 0 having moved the effect to a</span>
-<span class="sd">different second of the clip. Tracked as muvid#73.</span>
+<span class="sd">is worse than a documented one — it would exit 0 having moved the effect to a</span>
+<span class="sd">different second of the clip.</span>
+
+<span class="sd">What muvid *can* do, and now does (muvid#73), is **say which kind a look is** so</span>
+<span class="sd">the assembler can warn instead of rendering the hitch quietly. Every function</span>
+<span class="sd">here returns a :class:`LookFragment` — a plain ``str`` that also answers</span>
+<span class="sd">``.time_varying`` — and :func:`punch_in_cuts` copies that answer onto</span>
+<span class="sd">:attr:`~muvid.footage.edl.EdlEntry.look_time_varying`, which is what the</span>
+<span class="sd">assembler reads. A caller assembling entries by hand should do the same; the flag</span>
+<span class="sd">defaults to ``False``, so an *undeclared* moving look is still silent, and that</span>
+<span class="sd">limit is stated on the field rather than left to be discovered.</span>
 <span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
@@ -225,11 +236,97 @@
 <span class="c1">#: Where :func:`punch_in` zooms toward, as a fraction of the canvas. Centre.</span>
 <span class="n">DEFAULT_PUNCH_ANCHOR</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">)</span>
 
+<span class="c1">#: ``looks`` effects whose compiled fragment READS THE FILTER CLOCK, so a cut</span>
+<span class="c1">#: carrying one is affected by muvid#73's restart on a blended boundary.</span>
+<span class="c1">#:</span>
+<span class="c1">#: **Pinned here rather than derived from ``looks``, for the same reason</span>
+<span class="c1">#: :data:`muvid.footage.edl.LOOK_FILTERS` is** — a new ``looks`` effect must be a</span>
+<span class="c1">#: decision someone records, not a silent change to what muvid warns about. The</span>
+<span class="c1">#: drift test in ``tests/test_look_time_varying.py`` fails when</span>
+<span class="c1">#: ``looks.effects()`` grows,</span>
+<span class="c1">#: which is what forces the classification.</span>
+<span class="c1">#:</span>
+<span class="c1">#: ``ImplRef.timeline`` is NOT this property and must not be mistaken for it: it</span>
+<span class="c1">#: says the implementation supports ffmpeg's ``enable=`` option. ``motion`` — the</span>
+<span class="c1">#: one genuinely moving effect — declares ``timeline=False``, and every static</span>
+<span class="c1">#: grade declares ``True``, so reading it would get every row backwards.</span>
+<span class="n">TIME_VARYING_EFFECTS</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">({</span><span class="s2">"motion"</span><span class="p">})</span>
+
 
 <div class="viewcode-block" id="LookError">
 <a class="viewcode-back" href="../../../module_docs/muvid/footage/look.html#muvid.footage.LookError">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">LookError</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""A look could not be compiled. Carries what to do about it."""</span></div>
+
+
+
+<div class="viewcode-block" id="LookFragment">
+<a class="viewcode-back" href="../../../module_docs/muvid/footage/look.html#muvid.footage.LookFragment">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">LookFragment</span><span class="p">(</span><span class="nb">str</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A compiled filter chain that remembers whether it READS THE CLOCK.</span>
+
+<span class="sd">    A plain ``str`` in every way that matters — it splices, compares, serialises</span>
+<span class="sd">    and JSON-encodes identically, so nothing downstream needs to know it exists —</span>
+<span class="sd">    that additionally answers :attr:`time_varying`. That is what lets</span>
+<span class="sd">    :func:`punch_in_cuts` set</span>
+<span class="sd">    :attr:`muvid.footage.edl.EdlEntry.look_time_varying` *from the fragment*</span>
+<span class="sd">    instead of hardcoding a value beside the call that produced it, and what lets</span>
+<span class="sd">    :func:`chain` combine two fragments without either caller re-deriving the</span>
+<span class="sd">    answer.</span>
+
+<span class="sd">    A subclass rather than a ``(str, bool)`` pair because the fragment is already</span>
+<span class="sd">    a wire value: the EDL field is a string, the MCP reply is a string, and the</span>
+<span class="sd">    ``looks`` API returns a string. Changing that shape would push a rename table</span>
+<span class="sd">    into every consumer to carry one bit that only muvid's own compilers can</span>
+<span class="sd">    know.</span>
+
+<span class="sd">    **The bit does not survive a round trip, and is not meant to.** ``str``</span>
+<span class="sd">    operations return plain ``str``, and JSON has no place to put it — the</span>
+<span class="sd">    durable home is the EDL entry's own field, which is exactly why muvid#73 put</span>
+<span class="sd">    it there. :func:`is_time_varying` reads a fragment of either kind, treating a</span>
+<span class="sd">    plain string as static, which is the same default the field has.</span>
+
+<span class="sd">    &gt;&gt;&gt; frag = LookFragment("zoompan=d=1:s=64x48:fps=25", time_varying=True)</span>
+<span class="sd">    &gt;&gt;&gt; frag.time_varying, frag == "zoompan=d=1:s=64x48:fps=25"</span>
+<span class="sd">    (True, True)</span>
+<span class="sd">    &gt;&gt;&gt; is_time_varying("hue=s=0")</span>
+<span class="sd">    False</span>
+
+<span class="sd">    Copyable and picklable, which needs saying because it is not free: ``str``</span>
+<span class="sd">    subclasses are reconstructed through ``__new__``, and without</span>
+<span class="sd">    ``__getnewargs_ex__`` both ``copy.deepcopy`` and ``pickle`` raise</span>
+<span class="sd">    ``TypeError: __new__() missing 1 required keyword-only argument`` — measured.</span>
+<span class="sd">    An ``EdlEntry`` carrying one is an ordinary dataclass a caller may well copy.</span>
+
+<span class="sd">    &gt;&gt;&gt; import copy, pickle</span>
+<span class="sd">    &gt;&gt;&gt; copy.deepcopy(frag).time_varying, pickle.loads(pickle.dumps(frag)) == frag</span>
+<span class="sd">    (True, True)</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">fragment</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">time_varying</span><span class="p">:</span> <span class="nb">bool</span><span class="p">):</span>
+        <span class="n">obj</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">fragment</span><span class="p">)</span>
+        <span class="n">obj</span><span class="o">.</span><span class="n">time_varying</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">time_varying</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">obj</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__getnewargs_ex__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">((</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="p">),),</span> <span class="p">{</span><span class="s2">"time_varying"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_varying</span><span class="p">})</span></div>
+
+
+
+<div class="viewcode-block" id="is_time_varying">
+<a class="viewcode-back" href="../../../module_docs/muvid/footage/look.html#muvid.footage.is_time_varying">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">is_time_varying</span><span class="p">(</span><span class="n">fragment</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Whether ``fragment`` declares that it reads the clock. Plain strings: no.</span>
+
+<span class="sd">    The one place that default lives, so a caller reading a fragment and the EDL</span>
+<span class="sd">    field's own default cannot drift apart.</span>
+
+<span class="sd">    &gt;&gt;&gt; is_time_varying(LookFragment("zoompan=d=1", time_varying=True))</span>
+<span class="sd">    True</span>
+<span class="sd">    &gt;&gt;&gt; is_time_varying("hue=s=0"), is_time_varying(None)</span>
+<span class="sd">    (False, False)</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">fragment</span><span class="p">,</span> <span class="s2">"time_varying"</span><span class="p">,</span> <span class="kc">False</span><span class="p">))</span></div>
 
 
 
@@ -271,7 +368,7 @@
 
 <div class="viewcode-block" id="chain">
 <a class="viewcode-back" href="../../../module_docs/muvid/footage/look.html#muvid.footage.chain">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">chain</span><span class="p">(</span><span class="o">*</span><span class="n">fragments</span><span class="p">:</span> <span class="s2">"Optional[str]"</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"Optional[str]"</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">chain</span><span class="p">(</span><span class="o">*</span><span class="n">fragments</span><span class="p">:</span> <span class="s2">"Optional[str]"</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"Optional[LookFragment]"</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Join look fragments into one, dropping the empty ones.</span>
 
 <span class="sd">    A cut carries at most one look, so two effects on one cut are one chain.</span>
@@ -279,19 +376,39 @@
 <span class="sd">    wants for "no look" — an empty string is refused by ``validate_edl``</span>
 <span class="sd">    deliberately, so this does not produce one.</span>
 
+<span class="sd">    **The result is time-varying if ANY component is** — the OR, not the AND and</span>
+<span class="sd">    not the last one's answer. A chain runs every link on every frame, so one</span>
+<span class="sd">    moving link makes the whole fragment move, and muvid#73's restart hits it.</span>
+<span class="sd">    Getting this wrong in the safe-looking direction (AND) would silence the</span>
+<span class="sd">    warning on exactly the chains most likely to have one: a punch composed with</span>
+<span class="sd">    a grade.</span>
+
+<span class="sd">    A plain ``str`` component contributes ``False``, matching</span>
+<span class="sd">    :func:`is_time_varying` and the EDL field's own default — so hand-writing one</span>
+<span class="sd">    half of a chain quietly downgrades only that half's claim, never the other's.</span>
+
 <span class="sd">    &gt;&gt;&gt; chain("hue=s=0", None, "", "unsharp=5:5:1")</span>
 <span class="sd">    'hue=s=0,unsharp=5:5:1'</span>
 <span class="sd">    &gt;&gt;&gt; chain(None, "") is None</span>
 <span class="sd">    True</span>
+<span class="sd">    &gt;&gt;&gt; chain("hue=s=0", LookFragment("zoompan=d=1", time_varying=True)).time_varying</span>
+<span class="sd">    True</span>
+<span class="sd">    &gt;&gt;&gt; chain("hue=s=0", "unsharp=5:5:1").time_varying</span>
+<span class="sd">    False</span>
 <span class="sd">    """</span>
-    <span class="n">kept</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">fragments</span> <span class="k">if</span> <span class="n">f</span> <span class="ow">and</span> <span class="n">f</span><span class="o">.</span><span class="n">strip</span><span class="p">()]</span>
-    <span class="k">return</span> <span class="s2">","</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">kept</span><span class="p">)</span> <span class="ow">or</span> <span class="kc">None</span></div>
+    <span class="n">kept</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">fragments</span> <span class="k">if</span> <span class="n">f</span> <span class="ow">and</span> <span class="n">f</span><span class="o">.</span><span class="n">strip</span><span class="p">()]</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">kept</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="n">LookFragment</span><span class="p">(</span>
+        <span class="s2">","</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">kept</span><span class="p">),</span>
+        <span class="n">time_varying</span><span class="o">=</span><span class="nb">any</span><span class="p">(</span><span class="n">is_time_varying</span><span class="p">(</span><span class="n">f</span><span class="p">)</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">kept</span><span class="p">),</span>
+    <span class="p">)</span></div>
 
 
 
 <div class="viewcode-block" id="motion">
 <a class="viewcode-back" href="../../../module_docs/muvid/footage/look.html#muvid.footage.motion">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">motion</span><span class="p">(</span><span class="n">keyframes</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">canvas</span><span class="p">,</span> <span class="n">fps</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">motion</span><span class="p">(</span><span class="n">keyframes</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">canvas</span><span class="p">,</span> <span class="n">fps</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"LookFragment"</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""A camera path over the cut, as a filter fragment. ``looks`` picks the filter.</span>
 
 <span class="sd">    Args:</span>
@@ -304,7 +421,13 @@
 <span class="sd">        fps: the assembler's delivery frame rate.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        One linear ffmpeg filter chain, ready for the ``look`` field.</span>
+<span class="sd">        One linear ffmpeg filter chain, ready for the ``look`` field, declaring</span>
+<span class="sd">        itself **time-varying** — a camera path is a ramp in the filter's own</span>
+<span class="sd">        clock (``in_time`` under ``zoompan``, ``t`` under ``crop``), whichever</span>
+<span class="sd">        filter ``looks`` picks, so it is muvid#73's affected kind. A path whose</span>
+<span class="sd">        keyframes happen to hold still is still declared moving: the fragment</span>
+<span class="sd">        reads the clock either way, and that is the property the warning is</span>
+<span class="sd">        about.</span>
 
 <span class="sd">    **The windows are fractions of the CANVAS, not of the source.** That follows</span>
 <span class="sd">    from where the fragment is spliced: after ``scale``/``pad``, so the frame it</span>
@@ -330,9 +453,10 @@
         <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">keyframes</span>
     <span class="p">]</span>
     <span class="k">try</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">looks</span><span class="o">.</span><span class="n">compile_motion</span><span class="p">(</span><span class="n">frames</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="n">looks</span><span class="o">.</span><span class="n">Size</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="p">),</span> <span class="n">fps</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">fps</span><span class="p">))</span>
+        <span class="n">frag</span> <span class="o">=</span> <span class="n">looks</span><span class="o">.</span><span class="n">compile_motion</span><span class="p">(</span><span class="n">frames</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="n">looks</span><span class="o">.</span><span class="n">Size</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="p">),</span> <span class="n">fps</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">fps</span><span class="p">))</span>
     <span class="k">except</span> <span class="n">looks</span><span class="o">.</span><span class="n">MotionError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="n">LookError</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">exc</span><span class="p">))</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span></div>
+        <span class="k">raise</span> <span class="n">LookError</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">exc</span><span class="p">))</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span>
+    <span class="k">return</span> <span class="n">LookFragment</span><span class="p">(</span><span class="n">frag</span><span class="p">,</span> <span class="n">time_varying</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
 
 
 
@@ -347,7 +471,7 @@
     <span class="n">anchor</span><span class="p">:</span> <span class="s2">"tuple[float, float]"</span> <span class="o">=</span> <span class="n">DEFAULT_PUNCH_ANCHOR</span><span class="p">,</span>
     <span class="n">start_s</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
     <span class="n">end_s</span><span class="p">:</span> <span class="s2">"Optional[float]"</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"LookFragment"</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""An in-shot punch-in: hold, then push in, WITHOUT leaving the shot (muvid#66).</span>
 
 <span class="sd">    The design partner asked for "roughly 2N" of these and was explicit that it</span>
@@ -371,7 +495,11 @@
 <span class="sd">        end_s: reach the final framing here and hold. Defaults to ``duration_s``.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        One linear ffmpeg filter chain, ready for the ``look`` field.</span>
+<span class="sd">        One linear ffmpeg filter chain, ready for the ``look`` field, declaring</span>
+<span class="sd">        itself **time-varying** (it goes through :func:`motion`). Put that on the</span>
+<span class="sd">        entry as ``look_time_varying`` — :func:`punch_in_cuts` does — or the</span>
+<span class="sd">        assembler cannot warn you when the cut borders a transition and the move</span>
+<span class="sd">        restarts (muvid#73).</span>
 
 <span class="sd">    A move is a ramp between two windows, and the windows are fractions of the</span>
 <span class="sd">    canvas (see :func:`motion`). The end window keeps the canvas's aspect ratio,</span>
@@ -380,6 +508,8 @@
 
 <span class="sd">    &gt;&gt;&gt; frag = punch_in(canvas=(640, 360), fps=25, duration_s=3.0)</span>
 <span class="sd">    &gt;&gt;&gt; frag.startswith("zoompan=d=1:s=640x360:fps=25:")</span>
+<span class="sd">    True</span>
+<span class="sd">    &gt;&gt;&gt; frag.time_varying</span>
 <span class="sd">    True</span>
 
 <span class="sd">    A pull-out is this move backwards, so it goes through :func:`motion` with the</span>
@@ -438,7 +568,7 @@
     <span class="n">ffmpeg</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"ffmpeg"</span><span class="p">,</span>
     <span class="n">env</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="n">policy</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"LookFragment"</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""A :class:`looks.Look` compiled against the binary muvid will run.</span>
 
 <span class="sd">    Args:</span>
@@ -452,7 +582,22 @@
 <span class="sd">            applies when omitted.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        One linear ffmpeg filter chain, ready for the ``look`` field.</span>
+<span class="sd">        One linear ffmpeg filter chain, ready for the ``look`` field, declaring</span>
+<span class="sd">        whether it is time-varying **from the compiled plan** rather than by</span>
+<span class="sd">        assumption. A grade, a LUT, a posterise is static; two shapes are not,</span>
+<span class="sd">        and both are reachable from here:</span>
+
+<span class="sd">        - a step naming a :data:`TIME_VARYING_EFFECTS` member — ``motion`` is one</span>
+<span class="sd">          of ``looks``' registered effects, so ``stylize`` can emit exactly the</span>
+<span class="sd">          ``zoompan`` ramp :func:`punch_in` does (verified by compiling it);</span>
+<span class="sd">        - a step with an ``at`` :class:`looks.Span`, which compiles to</span>
+<span class="sd">          ``enable='between(t,…)'`` — measured: ``Effect("blur", at=Span(0.5,</span>
+<span class="sd">          1.5))`` becomes ``gblur=sigma=2:enable='between(t,0.5,1.5)'``. Reading</span>
+<span class="sd">          the clock to decide *whether* to apply is the same restart, and the</span>
+<span class="sd">          effect is not on any list of moving ones.</span>
+
+<span class="sd">        A blanket ``False`` here — the obvious reading, since ``stylize`` is the</span>
+<span class="sd">        grade-shaped door — would have been wrong for both.</span>
 
 <span class="sd">    **The clip is declared, not measured.** ``looks`` compiles against a</span>
 <span class="sd">    *declared* clip, and at this splice point muvid knows the geometry and the</span>
@@ -487,7 +632,13 @@
     <span class="p">)</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">plan</span> <span class="o">=</span> <span class="n">looks</span><span class="o">.</span><span class="n">compile_look</span><span class="p">(</span><span class="n">look</span><span class="p">,</span> <span class="n">clip</span><span class="o">=</span><span class="n">clip</span><span class="p">,</span> <span class="n">env</span><span class="o">=</span><span class="n">resolved</span><span class="p">,</span> <span class="n">policy</span><span class="o">=</span><span class="n">policy</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">looks</span><span class="o">.</span><span class="n">vf</span><span class="p">(</span><span class="n">plan</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">LookFragment</span><span class="p">(</span>
+            <span class="n">looks</span><span class="o">.</span><span class="n">vf</span><span class="p">(</span><span class="n">plan</span><span class="p">),</span>
+            <span class="n">time_varying</span><span class="o">=</span><span class="nb">any</span><span class="p">(</span>
+                <span class="n">step</span><span class="o">.</span><span class="n">at</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">step</span><span class="o">.</span><span class="n">effect</span> <span class="ow">in</span> <span class="n">TIME_VARYING_EFFECTS</span>
+                <span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="n">plan</span><span class="o">.</span><span class="n">steps</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
     <span class="k">except</span> <span class="p">(</span>
         <span class="n">looks</span><span class="o">.</span><span class="n">CompileError</span><span class="p">,</span>
         <span class="n">looks</span><span class="o">.</span><span class="n">LooksLicenceError</span><span class="p">,</span>
@@ -534,6 +685,14 @@
 <span class="sd">        already carries a look keeps it — this composes with hand-authoring</span>
 <span class="sd">        rather than overwriting it, because silently replacing an authored</span>
 <span class="sd">        direction is the failure this package guards against elsewhere.</span>
+
+<span class="sd">        Each punched entry also carries ``look_time_varying``, taken FROM the</span>
+<span class="sd">        fragment via :func:`is_time_varying` rather than written as a literal</span>
+<span class="sd">        ``True`` beside the ``punch_in`` call. The two would agree today and the</span>
+<span class="sd">        literal is the one that would stop agreeing — this is the same reason</span>
+<span class="sd">        ``_edl_json`` is a table rather than four ``if``\\ s. Without it the</span>
+<span class="sd">        assembler cannot warn that a punch bordering a transition restarts its</span>
+<span class="sd">        ramp (muvid#73).</span>
 <span class="sd">    """</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">replace</span>
 
@@ -545,16 +704,14 @@
             <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
             <span class="k">continue</span>
         <span class="k">if</span> <span class="n">n</span> <span class="o">%</span> <span class="n">every</span> <span class="o">==</span> <span class="n">offset</span> <span class="o">%</span> <span class="n">every</span><span class="p">:</span>
-            <span class="n">e</span> <span class="o">=</span> <span class="n">replace</span><span class="p">(</span>
-                <span class="n">e</span><span class="p">,</span>
-                <span class="n">look</span><span class="o">=</span><span class="n">punch_in</span><span class="p">(</span>
-                    <span class="n">canvas</span><span class="o">=</span><span class="n">canvas</span><span class="p">,</span>
-                    <span class="n">fps</span><span class="o">=</span><span class="n">fps</span><span class="p">,</span>
-                    <span class="n">duration_s</span><span class="o">=</span><span class="n">e</span><span class="o">.</span><span class="n">song_end</span> <span class="o">-</span> <span class="n">e</span><span class="o">.</span><span class="n">song_start</span><span class="p">,</span>
-                    <span class="n">zoom</span><span class="o">=</span><span class="n">zoom</span><span class="p">,</span>
-                    <span class="n">anchor</span><span class="o">=</span><span class="n">anchor</span><span class="p">,</span>
-                <span class="p">),</span>
+            <span class="n">frag</span> <span class="o">=</span> <span class="n">punch_in</span><span class="p">(</span>
+                <span class="n">canvas</span><span class="o">=</span><span class="n">canvas</span><span class="p">,</span>
+                <span class="n">fps</span><span class="o">=</span><span class="n">fps</span><span class="p">,</span>
+                <span class="n">duration_s</span><span class="o">=</span><span class="n">e</span><span class="o">.</span><span class="n">song_end</span> <span class="o">-</span> <span class="n">e</span><span class="o">.</span><span class="n">song_start</span><span class="p">,</span>
+                <span class="n">zoom</span><span class="o">=</span><span class="n">zoom</span><span class="p">,</span>
+                <span class="n">anchor</span><span class="o">=</span><span class="n">anchor</span><span class="p">,</span>
             <span class="p">)</span>
+            <span class="n">e</span> <span class="o">=</span> <span class="n">replace</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">look</span><span class="o">=</span><span class="n">frag</span><span class="p">,</span> <span class="n">look_time_varying</span><span class="o">=</span><span class="n">is_time_varying</span><span class="p">(</span><span class="n">frag</span><span class="p">))</span>
         <span class="n">n</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">out</span></div>
