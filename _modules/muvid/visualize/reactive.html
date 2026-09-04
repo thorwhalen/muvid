@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.visualize.reactive &mdash; muvid 0.0.45 documentation</title>
+  <title>muvid.visualize.reactive &mdash; muvid 0.0.46 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=dcb4eb81"></script>
+      <script src="../../../_static/documentation_options.js?v=eb4c61eb"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -185,6 +185,35 @@
 
 <span class="c1">#: Default ``sendcmd`` label for the pulsing lookup table. Distinct per flash, so</span>
 <span class="c1">#: one filtergraph can carry several without their commands crossing.</span>
+<span class="c1">#:</span>
+<span class="c1">#: The label is NOT the ``sendcmd`` target, and reading it as one is how muvid#72</span>
+<span class="c1">#: came to report the flash as inert. ``avfilter_graph_send_command`` matches three</span>
+<span class="c1">#: things and a bare label is none of them, so the target is the *instance* name —</span>
+<span class="c1">#: the whole ``lutyuv@flash`` spelling, which :func:`flash_filter` derives from the</span>
+<span class="c1">#: filter it emits rather than composing a second time. Measured on ffmpeg 9.0.1 and</span>
+<span class="c1">#: 6.1.6, driving a grey source with one full-strength pulse on frame 5 in a graph</span>
+<span class="c1">#: that also carries `background_chain`'s own unlabelled ``lutyuv`` — and in BOTH</span>
+<span class="c1">#: graph orders, because the type name's answer depends on the order:</span>
+<span class="c1">#:</span>
+<span class="c1">#:     target          plate first                  flash first (muvid's own order)</span>
+<span class="c1">#:                     plate      flash             plate      flash</span>
+<span class="c1">#:     lutyuv@flash    unmoved    126 -&gt; 189        unmoved    126 -&gt; 189  &lt;- shipped</span>
+<span class="c1">#:     lutyuv          33 -&gt; 67   unmoved           unmoved    126 -&gt; 189</span>
+<span class="c1">#:     flash           unmoved    unmoved           unmoved    unmoved</span>
+<span class="c1">#:     all             ffmpeg SIGSEGVs on both builds</span>
+<span class="c1">#:</span>
+<span class="c1">#: ``sendcmd`` dispatches with ``AVFILTER_CMD_FLAG_ONE``, so the type name reaches</span>
+<span class="c1">#: only the FIRST ``lutyuv`` the parser created and stops. Which one that is comes</span>
+<span class="c1">#: down to where the chains sit in the composed string, and in muvid's real graph</span>
+<span class="c1">#: the flash is FIRST — `_reactive_plan` emits ``[aviz]…lutyuv@flash…[_viz]``</span>
+<span class="c1">#: before `background_chain` (measured on the composed spectrum graph: char 279</span>
+<span class="c1">#: against char 493). So the type name would happen to work today, silently, and</span>
+<span class="c1">#: break on any reordering; muvid#72's prediction that it would flash the plate</span>
+<span class="c1">#: instead is what happens in the other order. The instance name is the address</span>
+<span class="c1">#: that does not depend on the accident — measured identical in both orders above.</span>
+<span class="c1">#: ``all`` hands ``y &lt;lut expression&gt;`` to every commandable filter in the graph,</span>
+<span class="c1">#: including the ``crop`` in `background_chain`, whose ``y`` is a geometry</span>
+<span class="c1">#: expression; it fails to parse and the process dies (exit 139, both builds).</span>
 <span class="n">DEFAULT_FLASH_LABEL</span> <span class="o">=</span> <span class="s2">"flash"</span>
 
 <span class="c1">#: The ffmpeg filters a flash chain is built from. Both are core filters, but a</span>
@@ -363,10 +392,17 @@
         <span class="k">return</span> <span class="s2">""</span>
     <span class="n">at_rest</span> <span class="o">=</span> <span class="n">lut_filter</span><span class="p">(</span><span class="n">brightness_saturation_lut</span><span class="p">(),</span> <span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">)</span>
     <span class="c1"># The sendcmd target is DERIVED from the filter the fragment declares, never</span>
-    <span class="c1"># spelled a second time. A command addressed to a filter that is not in the</span>
-    <span class="c1"># graph is completely silent — ffmpeg exits 0, logs nothing even at `warning`,</span>
-    <span class="c1"># and simply never flashes — so the two spellings drifting apart would cost</span>
-    <span class="c1"># the effect with nothing anywhere to say so.</span>
+    <span class="c1"># spelled a second time — and what it derives is the whole `lutyuv@flash`</span>
+    <span class="c1"># instance name, not the bare label and not the bare type (see</span>
+    <span class="c1"># DEFAULT_FLASH_LABEL for the three spellings measured, in both graph orders,</span>
+    <span class="c1"># and what each one does). An instance name is the only one of the three whose</span>
+    <span class="c1"># answer does not depend on where in the composed graph the chains sit.</span>
+    <span class="c1"># A command addressed to a filter</span>
+    <span class="c1"># that is not in the graph is completely silent — ffmpeg exits 0, logs nothing</span>
+    <span class="c1"># even at `warning`, and simply never flashes — so the two spellings drifting</span>
+    <span class="c1"># apart would cost the effect with nothing anywhere to say so. That is why the</span>
+    <span class="c1"># guard is a RENDER: a string test cannot tell a reachable address from an</span>
+    <span class="c1"># unreachable one, which is exactly how muvid#72 got its answer.</span>
     <span class="n">target</span> <span class="o">=</span> <span class="n">at_rest</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"="</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
     <span class="n">script</span> <span class="o">=</span> <span class="n">_write_flash_script</span><span class="p">(</span>
         <span class="n">envelope</span><span class="p">,</span>

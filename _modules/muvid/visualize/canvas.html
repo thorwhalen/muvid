@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.visualize.canvas &mdash; muvid 0.0.45 documentation</title>
+  <title>muvid.visualize.canvas &mdash; muvid 0.0.46 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=dcb4eb81"></script>
+      <script src="../../../_static/documentation_options.js?v=eb4c61eb"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -185,6 +185,10 @@
 <span class="sd">            frame) or ``"color"`` (a flat :attr:`background_color`).</span>
 <span class="sd">        blur_sigma: Gaussian blur strength for the ``"blur"`` background.</span>
 <span class="sd">        dim: How much to darken the background, 0 (unchanged) to 1 (black).</span>
+<span class="sd">            Multiplicative — the background's luma is *scaled* by ``1 - dim``</span>
+<span class="sd">            about black, so a shadow gets darker rather than being deleted. See</span>
+<span class="sd">            :func:`dim_saturation_lut`; the constant is not comparable with the</span>
+<span class="sd">            additive offset that preceded it (muvid#70).</span>
 <span class="sd">        saturation: Background saturation (&lt; 1 desaturates, so the sharp cover</span>
 <span class="sd">            stays the focal point).</span>
 <span class="sd">        cover_fraction: How much of the frame the sharp cover fills. The cover</span>
@@ -200,7 +204,11 @@
 
     <span class="n">background</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"blur"</span>
     <span class="n">blur_sigma</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">30.0</span>
-    <span class="n">dim</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.25</span>
+    <span class="c1">#: Measured, not chosen: the multiplicative dim that lands the plate's mean</span>
+    <span class="c1">#: DISPLAY luma where the additive `0.25` left it, pooled over four</span>
+    <span class="c1">#: photographs (muvid#70). The two forms are not comparable at the same</span>
+    <span class="c1">#: nominal value — see :func:`dim_saturation_lut`.</span>
+    <span class="n">dim</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.65</span>
     <span class="n">saturation</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.8</span>
     <span class="n">cover_fraction</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.92</span>
     <span class="n">cover_alpha</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span>
@@ -334,6 +342,35 @@
 <span class="c1">#: once, here — and pinned by a test that measures the mean, not the max.</span>
 <span class="n">_CHROMA_PIVOT</span> <span class="o">=</span> <span class="mf">127.5</span>
 
+<span class="c1">#: The pivot the DIM scales luma about: ``lutyuv``'s own ``minval``, which is the</span>
+<span class="c1">#: black level of whichever pixel format the plate chain negotiated.</span>
+<span class="c1">#:</span>
+<span class="c1">#: **It is not a constant, and deriving it rather than writing 16 is the point.**</span>
+<span class="c1">#: Measured by reading it back out of this module's own chain (a LUT whose ``y``</span>
+<span class="c1">#: expression *is* ``minval``), identically on ffmpeg 9.0.1 and 6.1.6:</span>
+<span class="c1">#:</span>
+<span class="c1">#:     cover      the plate chain runs   ``minval``</span>
+<span class="c1">#:     PNG        ``yuv444p``            16      &lt;- limited range</span>
+<span class="c1">#:     JPEG       ``yuvj420p`` (pc)      0       &lt;- FULL range</span>
+<span class="c1">#:</span>
+<span class="c1">#: Album art is commonly a JPEG, so both halves are real inputs. A hardcoded ``16``</span>
+<span class="c1">#: is invisible on the PNG half — byte-identical, max\\|diff\\| 0.0 — and hazes the</span>
+<span class="c1">#: JPEG half: measured end to end on the composed spectrum graph, the plate's mean</span>
+<span class="c1">#: goes 7.53 -&gt; 21.58 out of 255 and its floor 3 -&gt; 18 (ffmpeg 9.0.1; 22.59 -&gt; 34.53</span>
+<span class="c1">#: and 18 -&gt; 31 on 6.1.6), i.e. grey exactly where the design wants black.</span>
+<span class="c1">#:</span>
+<span class="c1">#: This is the one place :data:`_FULL_RANGE`'s warning does NOT apply, and the</span>
+<span class="c1">#: distinction is the whole fix. That warning is about reproducing ``eq``, whose</span>
+<span class="c1">#: clip bounds are 0–255. A dim is not a clip: it is a scaling, and a scaling needs</span>
+<span class="c1">#: the pivot the picture's black actually sits on. On a limited-range plate</span>
+<span class="c1">#: ``val * gain`` pivots on a black that is not in the data and pushes the whole</span>
+<span class="c1">#: picture under the floor, which the next conversion to RGB clamps away. Measured</span>
+<span class="c1">#: on a real cover at ``dim=0.9``: pivoting on 0 leaves 78.7% of the plate at</span>
+<span class="c1">#: display black over 6 distinct levels; pivoting here leaves 8.4% over 20. The</span>
+<span class="c1">#: naive multiplicative form reproduces the bug it was meant to fix — and a</span>
+<span class="c1">#: hardcoded 16 reproduces it on the other range instead.</span>
+<span class="n">_DIM_PIVOT</span> <span class="o">=</span> <span class="s2">"minval"</span>
+
 
 <div class="viewcode-block" id="brightness_saturation_lut">
 <a class="viewcode-back" href="../../../module_docs/muvid/visualize/canvas.html#muvid.visualize.brightness_saturation_lut">[docs]</a>
@@ -368,9 +405,67 @@
 <span class="sd">        ('clip(val+0,0,255)', 'clip((val-127.5)*1+127.5,0,255)')</span>
 <span class="sd">    """</span>
     <span class="n">lo</span><span class="p">,</span> <span class="n">hi</span> <span class="o">=</span> <span class="n">_FULL_RANGE</span>
-    <span class="n">chroma</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"clip((val-</span><span class="si">{</span><span class="n">_CHROMA_PIVOT</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2">)*</span><span class="si">{</span><span class="n">saturation</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2">+</span><span class="si">{</span><span class="n">_CHROMA_PIVOT</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="n">lo</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="n">hi</span><span class="si">}</span><span class="s2">)"</span>
+    <span class="n">chroma</span> <span class="o">=</span> <span class="n">_chroma_expr</span><span class="p">(</span><span class="n">saturation</span><span class="p">)</span>
     <span class="k">return</span> <span class="p">{</span>
         <span class="s2">"y"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"clip(val</span><span class="si">{</span><span class="n">brightness</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">hi</span><span class="si">:</span><span class="s2">+g</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="n">lo</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="n">hi</span><span class="si">}</span><span class="s2">)"</span><span class="p">,</span>
+        <span class="s2">"u"</span><span class="p">:</span> <span class="n">chroma</span><span class="p">,</span>
+        <span class="s2">"v"</span><span class="p">:</span> <span class="n">chroma</span><span class="p">,</span>
+    <span class="p">}</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_chroma_expr</span><span class="p">(</span><span class="n">saturation</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""``lutyuv`` u/v expression scaling chroma about :data:`_CHROMA_PIVOT`.</span>
+
+<span class="sd">    Both LUT builders need it and it is written once: the two are already the two</span>
+<span class="sd">    halves of one look, and a second copy of ``eq``'s saturation arithmetic is</span>
+<span class="sd">    exactly how the darkened plate and the beat flash would start desaturating by</span>
+<span class="sd">    different amounts.</span>
+<span class="sd">    """</span>
+    <span class="n">lo</span><span class="p">,</span> <span class="n">hi</span> <span class="o">=</span> <span class="n">_FULL_RANGE</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">"clip((val-</span><span class="si">{</span><span class="n">_CHROMA_PIVOT</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2">)*</span><span class="si">{</span><span class="n">saturation</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2">+</span><span class="si">{</span><span class="n">_CHROMA_PIVOT</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="n">lo</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="n">hi</span><span class="si">}</span><span class="s2">)"</span>
+
+
+<div class="viewcode-block" id="dim_saturation_lut">
+<a class="viewcode-back" href="../../../module_docs/muvid/visualize/canvas.html#muvid.visualize.dim_saturation_lut">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">dim_saturation_lut</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">dim</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">saturation</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""``lutyuv`` y/u/v expressions that DARKEN luma and desaturate chroma.</span>
+
+<span class="sd">    The sibling of :func:`brightness_saturation_lut`, and deliberately not the same</span>
+<span class="sd">    arithmetic. ``eq``'s brightness — which this replaces at the one site that wanted</span>
+<span class="sd">    to *darken* rather than to *shift* — is an additive offset, and subtracting a</span>
+<span class="sd">    constant does not dim a picture: it slides the histogram down and clamps</span>
+<span class="sd">    everything below the offset to the floor. The plate's shadows did not get darker,</span>
+<span class="sd">    they were deleted, and at the reactive constants that took 57–99% of the plate to</span>
+<span class="sd">    display black (muvid#70).</span>
+
+<span class="sd">    So luma is *scaled* by ``1 - dim`` about :data:`_DIM_PIVOT`, which preserves the</span>
+<span class="sd">    order of every pair of pixels — a shadow stays darker than what is next to it</span>
+<span class="sd">    instead of joining it at black. Chroma is untouched by the change and still goes</span>
+<span class="sd">    through :func:`_chroma_expr`, so the desaturation half remains ``eq``'s.</span>
+
+<span class="sd">    ``dim`` therefore means something different from the additive offset it replaces,</span>
+<span class="sd">    and the constants that ship were re-measured rather than converted: see</span>
+<span class="sd">    :class:`CoverLayout` and :mod:`muvid.visualize.visuals`.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        dim: How much to darken, 0 (unchanged) to 1 (black).</span>
+<span class="sd">        saturation: Chroma scaling about neutral. ``1`` is a no-op.</span>
+
+<span class="sd">    Examples:</span>
+<span class="sd">        &gt;&gt;&gt; lut = dim_saturation_lut(dim=0.65, saturation=0.8)</span>
+<span class="sd">        &gt;&gt;&gt; lut["y"]</span>
+<span class="sd">        'clip((val-minval)*0.35+minval,0,255)'</span>
+<span class="sd">        &gt;&gt;&gt; lut["u"] == lut["v"] == brightness_saturation_lut(saturation=0.8)["u"]</span>
+<span class="sd">        True</span>
+<span class="sd">        &gt;&gt;&gt; dim_saturation_lut()["y"]  # 0 is a no-op, and reads as one</span>
+<span class="sd">        'clip((val-minval)*1+minval,0,255)'</span>
+<span class="sd">    """</span>
+    <span class="n">lo</span><span class="p">,</span> <span class="n">hi</span> <span class="o">=</span> <span class="n">_FULL_RANGE</span>
+    <span class="n">chroma</span> <span class="o">=</span> <span class="n">_chroma_expr</span><span class="p">(</span><span class="n">saturation</span><span class="p">)</span>
+    <span class="n">gain</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">dim</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">"y"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"clip((val-</span><span class="si">{</span><span class="n">_DIM_PIVOT</span><span class="si">}</span><span class="s2">)*</span><span class="si">{</span><span class="n">gain</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2">+</span><span class="si">{</span><span class="n">_DIM_PIVOT</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="n">lo</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="n">hi</span><span class="si">}</span><span class="s2">)"</span><span class="p">,</span>
         <span class="s2">"u"</span><span class="p">:</span> <span class="n">chroma</span><span class="p">,</span>
         <span class="s2">"v"</span><span class="p">:</span> <span class="n">chroma</span><span class="p">,</span>
     <span class="p">}</span></div>
@@ -380,7 +475,7 @@
 <div class="viewcode-block" id="lut_filter">
 <a class="viewcode-back" href="../../../module_docs/muvid/visualize/canvas.html#muvid.visualize.lut_filter">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">lut_filter</span><span class="p">(</span><span class="n">exprs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="o">*</span><span class="p">,</span> <span class="n">label</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">"""A ``lutyuv`` filter from :func:`brightness_saturation_lut`'s expressions.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""A ``lutyuv`` filter from either LUT builder's expressions.</span>
 
 <span class="sd">    The expressions contain ``,``, which the *filtergraph* parser reads as "next</span>
 <span class="sd">    filter", so every one goes through :func:`escape_filter_value` — the same</span>
@@ -448,9 +543,10 @@
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Filter chain turning cover stream ``src`` into a full-frame background.</span>
 
-<span class="sd">    The darken/desaturate step is ``lutyuv``, not ``eq``: see</span>
-<span class="sd">    :func:`brightness_saturation_lut` for why (``eq`` is GPL-only) and for the</span>
-<span class="sd">    exact arithmetic it reproduces.</span>
+<span class="sd">    The darken/desaturate step is ``lutyuv``, not ``eq``: ``eq`` is GPL-only</span>
+<span class="sd">    (muvid#69). Its luma half is no longer ``eq``'s arithmetic either — a dim has</span>
+<span class="sd">    to scale, not subtract, or the plate's shadows are deleted rather than</span>
+<span class="sd">    darkened. See :func:`dim_saturation_lut`.</span>
 <span class="sd">    """</span>
     <span class="n">width</span><span class="p">,</span> <span class="n">height</span> <span class="o">=</span> <span class="n">size</span>
     <span class="k">if</span> <span class="n">layout</span><span class="o">.</span><span class="n">background</span> <span class="o">==</span> <span class="s2">"color"</span><span class="p">:</span>
@@ -459,9 +555,7 @@
             <span class="sa">f</span><span class="s2">"drawbox=x=0:y=0:w=</span><span class="si">{</span><span class="n">width</span><span class="si">}</span><span class="s2">:h=</span><span class="si">{</span><span class="n">height</span><span class="si">}</span><span class="s2">:"</span>
             <span class="sa">f</span><span class="s2">"color=</span><span class="si">{</span><span class="n">layout</span><span class="o">.</span><span class="n">background_color</span><span class="si">}</span><span class="s2">:t=fill[</span><span class="si">{</span><span class="n">out</span><span class="si">}</span><span class="s2">]"</span>
         <span class="p">)</span>
-    <span class="n">lut</span> <span class="o">=</span> <span class="n">lut_filter</span><span class="p">(</span>
-        <span class="n">brightness_saturation_lut</span><span class="p">(</span><span class="n">brightness</span><span class="o">=-</span><span class="n">layout</span><span class="o">.</span><span class="n">dim</span><span class="p">,</span> <span class="n">saturation</span><span class="o">=</span><span class="n">layout</span><span class="o">.</span><span class="n">saturation</span><span class="p">)</span>
-    <span class="p">)</span>
+    <span class="n">lut</span> <span class="o">=</span> <span class="n">lut_filter</span><span class="p">(</span><span class="n">dim_saturation_lut</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="n">layout</span><span class="o">.</span><span class="n">dim</span><span class="p">,</span> <span class="n">saturation</span><span class="o">=</span><span class="n">layout</span><span class="o">.</span><span class="n">saturation</span><span class="p">))</span>
     <span class="k">return</span> <span class="p">(</span>
         <span class="sa">f</span><span class="s2">"[</span><span class="si">{</span><span class="n">src</span><span class="si">}</span><span class="s2">]scale=</span><span class="si">{</span><span class="n">width</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">height</span><span class="si">}</span><span class="s2">:force_original_aspect_ratio=increase,"</span>
         <span class="sa">f</span><span class="s2">"crop=</span><span class="si">{</span><span class="n">width</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">height</span><span class="si">}</span><span class="s2">,gblur=sigma=</span><span class="si">{</span><span class="n">layout</span><span class="o">.</span><span class="n">blur_sigma</span><span class="si">}</span><span class="s2">,"</span>

@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.visualize.canvas &mdash; muvid 0.0.45 documentation</title>
+  <title>muvid.visualize.canvas &mdash; muvid 0.0.46 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -15,7 +15,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=dcb4eb81"></script>
+      <script src="../../../_static/documentation_options.js?v=eb4c61eb"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -112,6 +112,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#muvid.visualize.canvas.CoverLayout.cover_fraction"><code class="docutils literal notranslate"><span class="pre">CoverLayout.cover_fraction</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#muvid.visualize.canvas.CoverLayout.cover_alpha"><code class="docutils literal notranslate"><span class="pre">CoverLayout.cover_alpha</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#muvid.visualize.canvas.CoverLayout.background_color"><code class="docutils literal notranslate"><span class="pre">CoverLayout.background_color</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id0"><code class="docutils literal notranslate"><span class="pre">CoverLayout.dim</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.visualize.canvas.DEFAULT_SIZE"><code class="docutils literal notranslate"><span class="pre">DEFAULT_SIZE</span></code></a></li>
@@ -132,6 +133,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#muvid.visualize.canvas.cover_box"><code class="docutils literal notranslate"><span class="pre">cover_box()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.visualize.canvas.cover_chain"><code class="docutils literal notranslate"><span class="pre">cover_chain()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.visualize.canvas.default_font"><code class="docutils literal notranslate"><span class="pre">default_font()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.visualize.canvas.dim_saturation_lut"><code class="docutils literal notranslate"><span class="pre">dim_saturation_lut()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.visualize.canvas.escape_filter_value"><code class="docutils literal notranslate"><span class="pre">escape_filter_value()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.visualize.canvas.lut_filter"><code class="docutils literal notranslate"><span class="pre">lut_filter()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.visualize.canvas.overlay_chain"><code class="docutils literal notranslate"><span class="pre">overlay_chain()</span></code></a></li>
@@ -184,7 +186,7 @@ same chains compose into the bigger filtergraph that <a class="reference interna
 assembles for audio-reactive visuals.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="muvid.visualize.canvas.CoverLayout">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">muvid.visualize.canvas.</span></span><span class="sig-name descname"><span class="pre">CoverLayout</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">background</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'blur'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">blur_sigma</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">30.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.25</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">saturation</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.8</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cover_fraction</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.92</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cover_alpha</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">background_color</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'black'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/muvid/visualize/canvas.html#CoverLayout"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.visualize.canvas.CoverLayout" title="Link to this definition"></a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">muvid.visualize.canvas.</span></span><span class="sig-name descname"><span class="pre">CoverLayout</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">background</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'blur'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">blur_sigma</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">30.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.65</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">saturation</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.8</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cover_fraction</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.92</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cover_alpha</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">background_color</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'black'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/muvid/visualize/canvas.html#CoverLayout"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.visualize.canvas.CoverLayout" title="Link to this definition"></a></dt>
 <dd><p>How a cover image is placed on the canvas.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="muvid.visualize.canvas.CoverLayout.background">
@@ -212,7 +214,11 @@ frame) or <code class="docutils literal notranslate"><span class="pre">&quot;col
 <dl class="py attribute">
 <dt class="sig sig-object py" id="muvid.visualize.canvas.CoverLayout.dim">
 <span class="sig-name descname"><span class="pre">dim</span></span><a class="headerlink" href="#muvid.visualize.canvas.CoverLayout.dim" title="Link to this definition"></a></dt>
-<dd><p>How much to darken the background, 0 (unchanged) to 1 (black).</p>
+<dd><p>How much to darken the background, 0 (unchanged) to 1 (black).
+Multiplicative — the background’s luma is <em>scaled</em> by <code class="docutils literal notranslate"><span class="pre">1</span> <span class="pre">-</span> <span class="pre">dim</span></code>
+about black, so a shadow gets darker rather than being deleted. See
+<a class="reference internal" href="#muvid.visualize.canvas.dim_saturation_lut" title="muvid.visualize.canvas.dim_saturation_lut"><code class="xref py py-func docutils literal notranslate"><span class="pre">dim_saturation_lut()</span></code></a>; the constant is not comparable with the
+additive offset that preceded it (muvid#70).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>float</p>
@@ -267,6 +273,20 @@ the blurred background — show through it.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id0">
+<span class="sig-name descname"><span class="pre">dim</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.65</span></span><a class="headerlink" href="#id0" title="Link to this definition"></a></dt>
+<dd><p>the multiplicative dim that lands the plate’s mean
+DISPLAY luma where the additive <cite>0.25</cite> left it, pooled over four
+photographs (muvid#70). The two forms are not comparable at the same
+nominal value — see <a class="reference internal" href="#muvid.visualize.canvas.dim_saturation_lut" title="muvid.visualize.canvas.dim_saturation_lut"><code class="xref py py-func docutils literal notranslate"><span class="pre">dim_saturation_lut()</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Measured, not chosen</p>
 </dd>
 </dl>
 </dd></dl>
@@ -370,9 +390,10 @@ busy artwork).</p>
 <dt class="sig sig-object py" id="muvid.visualize.canvas.background_chain">
 <span class="sig-prename descclassname"><span class="pre">muvid.visualize.canvas.</span></span><span class="sig-name descname"><span class="pre">background_chain</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layout</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#muvid.visualize.canvas.CoverLayout" title="muvid.visualize.canvas.CoverLayout"><span class="pre">CoverLayout</span></a></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">src</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../../_modules/muvid/visualize/canvas.html#background_chain"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.visualize.canvas.background_chain" title="Link to this definition"></a></dt>
 <dd><p>Filter chain turning cover stream <code class="docutils literal notranslate"><span class="pre">src</span></code> into a full-frame background.</p>
-<p>The darken/desaturate step is <code class="docutils literal notranslate"><span class="pre">lutyuv</span></code>, not <code class="docutils literal notranslate"><span class="pre">eq</span></code>: see
-<a class="reference internal" href="#muvid.visualize.canvas.brightness_saturation_lut" title="muvid.visualize.canvas.brightness_saturation_lut"><code class="xref py py-func docutils literal notranslate"><span class="pre">brightness_saturation_lut()</span></code></a> for why (<code class="docutils literal notranslate"><span class="pre">eq</span></code> is GPL-only) and for the
-exact arithmetic it reproduces.</p>
+<p>The darken/desaturate step is <code class="docutils literal notranslate"><span class="pre">lutyuv</span></code>, not <code class="docutils literal notranslate"><span class="pre">eq</span></code>: <code class="docutils literal notranslate"><span class="pre">eq</span></code> is GPL-only
+(muvid#69). Its luma half is no longer <code class="docutils literal notranslate"><span class="pre">eq</span></code>’s arithmetic either — a dim has
+to scale, not subtract, or the plate’s shadows are deleted rather than
+darkened. See <a class="reference internal" href="#muvid.visualize.canvas.dim_saturation_lut" title="muvid.visualize.canvas.dim_saturation_lut"><code class="xref py py-func docutils literal notranslate"><span class="pre">dim_saturation_lut()</span></code></a>.</p>
 </dd></dl>
 
 <dl class="py function">
@@ -467,6 +488,44 @@ show through it.</p>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="muvid.visualize.canvas.dim_saturation_lut">
+<span class="sig-prename descclassname"><span class="pre">muvid.visualize.canvas.</span></span><span class="sig-name descname"><span class="pre">dim_saturation_lut</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">saturation</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../_modules/muvid/visualize/canvas.html#dim_saturation_lut"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.visualize.canvas.dim_saturation_lut" title="Link to this definition"></a></dt>
+<dd><p><code class="docutils literal notranslate"><span class="pre">lutyuv</span></code> y/u/v expressions that DARKEN luma and desaturate chroma.</p>
+<p>The sibling of <a class="reference internal" href="#muvid.visualize.canvas.brightness_saturation_lut" title="muvid.visualize.canvas.brightness_saturation_lut"><code class="xref py py-func docutils literal notranslate"><span class="pre">brightness_saturation_lut()</span></code></a>, and deliberately not the same
+arithmetic. <code class="docutils literal notranslate"><span class="pre">eq</span></code>’s brightness — which this replaces at the one site that wanted
+to <em>darken</em> rather than to <em>shift</em> — is an additive offset, and subtracting a
+constant does not dim a picture: it slides the histogram down and clamps
+everything below the offset to the floor. The plate’s shadows did not get darker,
+they were deleted, and at the reactive constants that took 57–99% of the plate to
+display black (muvid#70).</p>
+<p>So luma is <em>scaled</em> by <code class="docutils literal notranslate"><span class="pre">1</span> <span class="pre">-</span> <span class="pre">dim</span></code> about <code class="xref py py-data docutils literal notranslate"><span class="pre">_DIM_PIVOT</span></code>, which preserves the
+order of every pair of pixels — a shadow stays darker than what is next to it
+instead of joining it at black. Chroma is untouched by the change and still goes
+through <code class="xref py py-func docutils literal notranslate"><span class="pre">_chroma_expr()</span></code>, so the desaturation half remains <code class="docutils literal notranslate"><span class="pre">eq</span></code>’s.</p>
+<p><code class="docutils literal notranslate"><span class="pre">dim</span></code> therefore means something different from the additive offset it replaces,
+and the constants that ship were re-measured rather than converted: see
+<a class="reference internal" href="#muvid.visualize.canvas.CoverLayout" title="muvid.visualize.canvas.CoverLayout"><code class="xref py py-class docutils literal notranslate"><span class="pre">CoverLayout</span></code></a> and <a class="reference internal" href="visuals.html#module-muvid.visualize.visuals" title="muvid.visualize.visuals"><code class="xref py py-mod docutils literal notranslate"><span class="pre">muvid.visualize.visuals</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dim</strong> – How much to darken, 0 (unchanged) to 1 (black).</p></li>
+<li><p><strong>saturation</strong> – Chroma scaling about neutral. <code class="docutils literal notranslate"><span class="pre">1</span></code> is a no-op.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">lut</span> <span class="o">=</span> <span class="n">dim_saturation_lut</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mf">0.65</span><span class="p">,</span> <span class="n">saturation</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">lut</span><span class="p">[</span><span class="s2">"y"</span><span class="p">]</span>
+<span class="go">'clip((val-minval)*0.35+minval,0,255)'</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">lut</span><span class="p">[</span><span class="s2">"u"</span><span class="p">]</span> <span class="o">==</span> <span class="n">lut</span><span class="p">[</span><span class="s2">"v"</span><span class="p">]</span> <span class="o">==</span> <span class="n">brightness_saturation_lut</span><span class="p">(</span><span class="n">saturation</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)[</span><span class="s2">"u"</span><span class="p">]</span>
+<span class="go">True</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">dim_saturation_lut</span><span class="p">()[</span><span class="s2">"y"</span><span class="p">]</span>  <span class="c1"># 0 is a no-op, and reads as one</span>
+<span class="go">'clip((val-minval)*1+minval,0,255)'</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="muvid.visualize.canvas.escape_filter_value">
 <span class="sig-prename descclassname"><span class="pre">muvid.visualize.canvas.</span></span><span class="sig-name descname"><span class="pre">escape_filter_value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../../_modules/muvid/visualize/canvas.html#escape_filter_value"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.visualize.canvas.escape_filter_value" title="Link to this definition"></a></dt>
 <dd><p>Escape <code class="docutils literal notranslate"><span class="pre">value</span></code> for use as a filter option inside an ffmpeg filtergraph.</p>
@@ -493,7 +552,7 @@ general-purpose filtergraph escaper.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="muvid.visualize.canvas.lut_filter">
 <span class="sig-prename descclassname"><span class="pre">muvid.visualize.canvas.</span></span><span class="sig-name descname"><span class="pre">lut_filter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">exprs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../../_modules/muvid/visualize/canvas.html#lut_filter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.visualize.canvas.lut_filter" title="Link to this definition"></a></dt>
-<dd><p>A <code class="docutils literal notranslate"><span class="pre">lutyuv</span></code> filter from <a class="reference internal" href="#muvid.visualize.canvas.brightness_saturation_lut" title="muvid.visualize.canvas.brightness_saturation_lut"><code class="xref py py-func docutils literal notranslate"><span class="pre">brightness_saturation_lut()</span></code></a>’s expressions.</p>
+<dd><p>A <code class="docutils literal notranslate"><span class="pre">lutyuv</span></code> filter from either LUT builder’s expressions.</p>
 <p>The expressions contain <code class="docutils literal notranslate"><span class="pre">,</span></code>, which the <em>filtergraph</em> parser reads as “next
 filter”, so every one goes through <a class="reference internal" href="#muvid.visualize.canvas.escape_filter_value" title="muvid.visualize.canvas.escape_filter_value"><code class="xref py py-func docutils literal notranslate"><span class="pre">escape_filter_value()</span></code></a> — the same
 escaper, and the same reason, as a <code class="docutils literal notranslate"><span class="pre">sendcmd</span></code> script path.</p>

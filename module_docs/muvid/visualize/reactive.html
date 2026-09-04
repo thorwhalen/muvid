@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.visualize.reactive &mdash; muvid 0.0.45 documentation</title>
+  <title>muvid.visualize.reactive &mdash; muvid 0.0.46 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -15,7 +15,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=dcb4eb81"></script>
+      <script src="../../../_static/documentation_options.js?v=eb4c61eb"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -166,6 +166,36 @@ fragment, so a visual can append it unconditionally.</p>
 <span class="sig-prename descclassname"><span class="pre">muvid.visualize.reactive.</span></span><span class="sig-name descname"><span class="pre">DEFAULT_FLASH_LABEL</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'flash'</span></span><a class="headerlink" href="#muvid.visualize.reactive.DEFAULT_FLASH_LABEL" title="Link to this definition"></a></dt>
 <dd><p>Default <code class="docutils literal notranslate"><span class="pre">sendcmd</span></code> label for the pulsing lookup table. Distinct per flash, so
 one filtergraph can carry several without their commands crossing.</p>
+<p>The label is NOT the <code class="docutils literal notranslate"><span class="pre">sendcmd</span></code> target, and reading it as one is how muvid#72
+came to report the flash as inert. <code class="docutils literal notranslate"><span class="pre">avfilter_graph_send_command</span></code> matches three
+things and a bare label is none of them, so the target is the <em>instance</em> name —
+the whole <code class="docutils literal notranslate"><span class="pre">lutyuv&#64;flash</span></code> spelling, which <a class="reference internal" href="#muvid.visualize.reactive.flash_filter" title="muvid.visualize.reactive.flash_filter"><code class="xref py py-func docutils literal notranslate"><span class="pre">flash_filter()</span></code></a> derives from the
+filter it emits rather than composing a second time. Measured on ffmpeg 9.0.1 and
+6.1.6, driving a grey source with one full-strength pulse on frame 5 in a graph
+that also carries <cite>background_chain</cite>’s own unlabelled <code class="docutils literal notranslate"><span class="pre">lutyuv</span></code> — and in BOTH
+graph orders, because the type name’s answer depends on the order:</p>
+<blockquote>
+<div><dl class="simple">
+<dt>target          plate first                  flash first (muvid’s own order)</dt><dd><p>plate      flash             plate      flash</p>
+</dd>
+</dl>
+<p><a class="reference external" href="mailto:lutyuv&#37;&#52;&#48;flash">lutyuv<span>&#64;</span>flash</a>    unmoved    126 -&gt; 189        unmoved    126 -&gt; 189  &lt;- shipped
+lutyuv          33 -&gt; 67   unmoved           unmoved    126 -&gt; 189
+flash           unmoved    unmoved           unmoved    unmoved
+all             ffmpeg SIGSEGVs on both builds</p>
+</div></blockquote>
+<p><code class="docutils literal notranslate"><span class="pre">sendcmd</span></code> dispatches with <code class="docutils literal notranslate"><span class="pre">AVFILTER_CMD_FLAG_ONE</span></code>, so the type name reaches
+only the FIRST <code class="docutils literal notranslate"><span class="pre">lutyuv</span></code> the parser created and stops. Which one that is comes
+down to where the chains sit in the composed string, and in muvid’s real graph
+the flash is FIRST — <cite>_reactive_plan</cite> emits <code class="docutils literal notranslate"><span class="pre">[aviz]…lutyuv&#64;flash…[_viz]</span></code>
+before <cite>background_chain</cite> (measured on the composed spectrum graph: char 279
+against char 493). So the type name would happen to work today, silently, and
+break on any reordering; muvid#72’s prediction that it would flash the plate
+instead is what happens in the other order. The instance name is the address
+that does not depend on the accident — measured identical in both orders above.
+<code class="docutils literal notranslate"><span class="pre">all</span></code> hands <code class="docutils literal notranslate"><span class="pre">y</span> <span class="pre">&lt;lut</span> <span class="pre">expression&gt;</span></code> to every commandable filter in the graph,
+including the <code class="docutils literal notranslate"><span class="pre">crop</span></code> in <cite>background_chain</cite>, whose <code class="docutils literal notranslate"><span class="pre">y</span></code> is a geometry
+expression; it fails to parse and the process dies (exit 139, both builds).</p>
 </dd></dl>
 
 <dl class="py data">

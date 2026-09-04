@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.visualize.visuals &mdash; muvid 0.0.45 documentation</title>
+  <title>muvid.visualize.visuals &mdash; muvid 0.0.46 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -15,7 +15,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=dcb4eb81"></script>
+      <script src="../../../_static/documentation_options.js?v=eb4c61eb"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -111,6 +111,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#muvid.visualize.visuals.DEFAULT_TINT"><code class="docutils literal notranslate"><span class="pre">DEFAULT_TINT</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.visualize.visuals.REACTIVE_BG_SATURATION"><code class="docutils literal notranslate"><span class="pre">REACTIVE_BG_SATURATION</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.visualize.visuals.REACTIVE_COVER_FRACTION"><code class="docutils literal notranslate"><span class="pre">REACTIVE_COVER_FRACTION</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.visualize.visuals.SCOPE_BG_DIM"><code class="docutils literal notranslate"><span class="pre">SCOPE_BG_DIM</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.visualize.visuals.SCOPE_COVER_ALPHA"><code class="docutils literal notranslate"><span class="pre">SCOPE_COVER_ALPHA</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.visualize.visuals.Visual"><code class="docutils literal notranslate"><span class="pre">Visual</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.visualize.visuals.VisualContext"><code class="docutils literal notranslate"><span class="pre">VisualContext</span></code></a><ul>
@@ -219,6 +220,20 @@ with the <code class="docutils literal notranslate"><span class="pre">tint</span
 (a bright, saturated blurred cover both tints everything its own colour and,
 under the screen blend, washes the accent out to white). The sharp centred
 cover still carries the artwork’s colour; only the surround is muted.</p>
+<p>The dim is MULTIPLICATIVE (muvid#70), so this value is not comparable with the
+additive <code class="docutils literal notranslate"><span class="pre">0.5</span></code> it replaces — it is the constant that lands the plate’s mean
+display luma where the offset left it, measured over four photographs (as PNGs;
+on JPEG covers the OLD chain landed somewhere else, because an additive offset
+is range-dependent and a scaling is not — see <code class="xref py py-data docutils literal notranslate"><span class="pre">canvas._DIM_PIVOT</span></code>).</p>
+<p>The washout this comment warns about was then measured rather than assumed: under
+<cite>screen</cite>, out = P + V(1 - P), so the accent’s contribution is what a brighter
+plate would eat. Isolated by rendering the real composed graph twice, once with
+the visualizer branch removed — which under <cite>screen</cite> leaves the plate alone — and
+differencing: over six covers (three photographs, each as PNG and as JPEG) the
+accent’s frame-mean added luma moves by at most 0.10/255. State the instrument
+with any number here: the accent is sparse, so a frame mean is small and a
+mean over the visualizer’s own pixels is not, and only the ratio is portable.
+It still reads.</p>
 </dd></dl>
 
 <dl class="py data">
@@ -227,6 +242,17 @@ cover still carries the artwork’s colour; only the surround is muted.</p>
 <dd><p>Over a reactive background the cover fills nearly the whole frame (with a
 little padding), and is made slightly transparent so the visualizer plays on
 through it rather than being hidden behind an opaque card.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="muvid.visualize.visuals.SCOPE_BG_DIM">
+<span class="sig-prename descclassname"><span class="pre">muvid.visualize.visuals.</span></span><span class="sig-name descname"><span class="pre">SCOPE_BG_DIM</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.965</span></span><a class="headerlink" href="#muvid.visualize.visuals.SCOPE_BG_DIM" title="Link to this definition"></a></dt>
+<dd><p>The vectorscope’s plate is darker still, so its sparse line-work has the least
+competition of any visual. Named rather than spelled at the call site for the
+same reason <cite>spectrum_visual</cite>’s is: muvid#70 named three constants to retune and
+there were four sites, the fourth being a bare literal nothing pointed at.
+Multiplicative like the other two, and measured the same way — the value that
+lands the plate where the additive <code class="docutils literal notranslate"><span class="pre">0.55</span></code> left it.</p>
 </dd></dl>
 
 <dl class="py data">

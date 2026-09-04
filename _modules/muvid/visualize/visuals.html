@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.visualize.visuals &mdash; muvid 0.0.45 documentation</title>
+  <title>muvid.visualize.visuals &mdash; muvid 0.0.46 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=dcb4eb81"></script>
+      <script src="../../../_static/documentation_options.js?v=eb4c61eb"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -191,6 +191,14 @@
 <span class="c1">#: through the cover and in the space around it.</span>
 <span class="n">SCOPE_COVER_ALPHA</span> <span class="o">=</span> <span class="mf">0.72</span>
 
+<span class="c1">#: The vectorscope's plate is darker still, so its sparse line-work has the least</span>
+<span class="c1">#: competition of any visual. Named rather than spelled at the call site for the</span>
+<span class="c1">#: same reason `spectrum_visual`'s is: muvid#70 named three constants to retune and</span>
+<span class="c1">#: there were four sites, the fourth being a bare literal nothing pointed at.</span>
+<span class="c1">#: Multiplicative like the other two, and measured the same way — the value that</span>
+<span class="c1">#: lands the plate where the additive ``0.55`` left it.</span>
+<span class="n">SCOPE_BG_DIM</span> <span class="o">=</span> <span class="mf">0.965</span>
+
 <span class="c1">#: Default accent for the line/bar visualizers, applied as a *tint*. Several</span>
 <span class="c1">#: ffmpeg visualizers ignore their ``colors`` option (``showfreqs`` draws white</span>
 <span class="c1">#: whatever you ask for), so rather than fight each filter we render them white</span>
@@ -204,8 +212,24 @@
 <span class="c1">#: (a bright, saturated blurred cover both tints everything its own colour and,</span>
 <span class="c1">#: under the screen blend, washes the accent out to white). The sharp centred</span>
 <span class="c1">#: cover still carries the artwork's colour; only the surround is muted.</span>
+<span class="c1">#:</span>
+<span class="c1">#: The dim is MULTIPLICATIVE (muvid#70), so this value is not comparable with the</span>
+<span class="c1">#: additive ``0.5`` it replaces — it is the constant that lands the plate's mean</span>
+<span class="c1">#: display luma where the offset left it, measured over four photographs (as PNGs;</span>
+<span class="c1">#: on JPEG covers the OLD chain landed somewhere else, because an additive offset</span>
+<span class="c1">#: is range-dependent and a scaling is not — see :data:`canvas._DIM_PIVOT`).</span>
+<span class="c1">#:</span>
+<span class="c1">#: The washout this comment warns about was then measured rather than assumed: under</span>
+<span class="c1">#: `screen`, out = P + V(1 - P), so the accent's contribution is what a brighter</span>
+<span class="c1">#: plate would eat. Isolated by rendering the real composed graph twice, once with</span>
+<span class="c1">#: the visualizer branch removed — which under `screen` leaves the plate alone — and</span>
+<span class="c1">#: differencing: over six covers (three photographs, each as PNG and as JPEG) the</span>
+<span class="c1">#: accent's frame-mean added luma moves by at most 0.10/255. State the instrument</span>
+<span class="c1">#: with any number here: the accent is sparse, so a frame mean is small and a</span>
+<span class="c1">#: mean over the visualizer's own pixels is not, and only the ratio is portable.</span>
+<span class="c1">#: It still reads.</span>
 <span class="n">REACTIVE_BG_SATURATION</span> <span class="o">=</span> <span class="mf">0.18</span>
-<span class="n">REACTIVE_BG_DIM</span> <span class="o">=</span> <span class="mf">0.5</span>
+<span class="n">REACTIVE_BG_DIM</span> <span class="o">=</span> <span class="mf">0.945</span>
 
 
 <div class="viewcode-block" id="VisualContext">
@@ -471,8 +495,10 @@
 <span class="sd">    Args:</span>
 <span class="sd">        cover_fraction: How much of the frame the centred cover fills.</span>
 <span class="sd">        cover_alpha: Cover opacity, 0–1; below 1 lets the visualizer show through.</span>
-<span class="sd">        bg_dim: Background darkening (``None`` keeps the layout's value). Darker</span>
-<span class="sd">            backgrounds make a faint visualizer stand out.</span>
+<span class="sd">        bg_dim: Background darkening, 0 (unchanged) to 1 (black) — a *scaling* of</span>
+<span class="sd">            the plate's luma by ``1 - bg_dim``, not an offset, so a value carried</span>
+<span class="sd">            over from before muvid#70 comes out far too bright. Darker backgrounds</span>
+<span class="sd">            make a faint visualizer stand out. (``None`` keeps the layout's value.)</span>
 <span class="sd">        bg_saturation: Background saturation (``None`` keeps the layout's value).</span>
 
 <span class="sd">    Options:</span>
@@ -652,7 +678,12 @@
             <span class="n">saturation</span><span class="o">=</span><span class="n">ctx</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"flash_saturation"</span><span class="p">,</span> <span class="n">FLASH_SATURATION</span><span class="p">),</span>
         <span class="p">)</span>
     <span class="c1"># spectrum colours itself, so skip the shared line tint (tint="").</span>
-    <span class="k">return</span> <span class="n">_reactive_plan</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">viz</span><span class="p">,</span> <span class="n">filter_name</span><span class="o">=</span><span class="s2">"showspectrum"</span><span class="p">,</span> <span class="n">bg_dim</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">tint</span><span class="o">=</span><span class="s2">""</span><span class="p">)</span></div>
+    <span class="c1"># bg_dim is named, not spelled: it was a bare `0.5` that happened to equal</span>
+    <span class="c1"># REACTIVE_BG_DIM, so retuning the constant would silently have left spectrum</span>
+    <span class="c1"># on the old value. muvid#70 lists three constants; there were four sites.</span>
+    <span class="k">return</span> <span class="n">_reactive_plan</span><span class="p">(</span>
+        <span class="n">ctx</span><span class="p">,</span> <span class="n">viz</span><span class="p">,</span> <span class="n">filter_name</span><span class="o">=</span><span class="s2">"showspectrum"</span><span class="p">,</span> <span class="n">bg_dim</span><span class="o">=</span><span class="n">REACTIVE_BG_DIM</span><span class="p">,</span> <span class="n">tint</span><span class="o">=</span><span class="s2">""</span>
+    <span class="p">)</span></div>
 
 
 
@@ -706,7 +737,7 @@
         <span class="n">viz</span><span class="p">,</span>
         <span class="n">filter_name</span><span class="o">=</span><span class="s2">"avectorscope"</span><span class="p">,</span>
         <span class="n">cover_alpha</span><span class="o">=</span><span class="n">SCOPE_COVER_ALPHA</span><span class="p">,</span>
-        <span class="n">bg_dim</span><span class="o">=</span><span class="mf">0.55</span><span class="p">,</span>
+        <span class="n">bg_dim</span><span class="o">=</span><span class="n">SCOPE_BG_DIM</span><span class="p">,</span>
     <span class="p">)</span></div>
 
 </pre></div>
