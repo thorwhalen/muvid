@@ -187,8 +187,13 @@ that list "must feed straight back as the edl= argument and reproduce the same r
 `_EDL_OPTIONAL_FIELDS` is the emit table and `lacing_bridge._edl_body` is its editor
 twin; the guard is parameterised over `EdlEntry`'s **own dataclass fields** (never over
 the tables, which are the things that forget) plus a literal list, so a new field fails
-the suite until someone classifies it. `EdlEntry.transition` (muvid#34) is the
-worked example, and the two read postures there are deliberately opposite —
+the suite until someone classifies it. **The rule is omit-when-ABSENT, not
+omit-when-`None`** — `look_time_varying` (muvid#73) is a `bool` whose absent value is
+`False`, and `False is not None`, so the emit table carries the absent value as a column
+rather than testing `is not None`. Getting that wrong puts the key in every record ever
+written, for a field almost none of them use; it is measured rather than reasoned about
+(render the corpus under both revisions and diff the JSON). `EdlEntry.transition`
+(muvid#34) is the worked example, and the two read postures there are deliberately opposite —
 `edl.py`'s `_as_entry` **raises** on a malformed transition because it reads a caller's
 *request*, while `edl_from_annotations` **skips** because it reads a browser's *output*.
 
@@ -412,6 +417,33 @@ bridge before muvid#37.
   **when you widen `_as_entry`, you widen the remote input surface**, and a field whose
   value is interpreted rather than measured needs a curated vocabulary the way
   `TRANSITION_CURVES` and the `an` camera table do.
+- **A vocabulary is not a bound on its PARAMETERS, and the second half took a separate
+  pass** (muvid#75). `LOOK_FILTERS` closed the filters that write the host's disk; it did
+  not stop an allowlisted one being asked for a 64-megapixel frame. Measured from a 64x48
+  source: `scale=8000:8000` 328 MB, `zoompan=d=1:s=8000x8000` 313 MB, **`pad=8000:8000`
+  307 MB** (the lever the issue itself did not name — `pad` is allowlisted because
+  `looks`' `fit` letterboxes with it), against 19 MB at canvas size. So `validate_edl`
+  now takes the delivery `canvas` and `_validate_look_size` bounds every declared
+  dimension at `MAX_LOOK_SCALE` (4) times it. Two things generalise past this field:
+  **the bound has to be relative to something the gate is given** — `_resolve_canvas` had
+  to move *above* the validation in `assemble_music_video`, or a `canvas=` override would
+  be bounded against the project's canvas — and **an expression is refused rather than
+  bounded**, because `iw*80` evaluates against whatever is underneath, `-1` derives from
+  an aspect a preceding `crop` can make extreme, and a size *name* resolves through
+  ffmpeg's own table (`s=whuxga` is 7680x4800). That costs nothing only because every
+  size muvid's own compilers emit is already a literal — swept, not assumed.
+- **The seam is a bare string, so anything muvid must know about a look has to be its own
+  field.** `EdlEntry.look_time_varying` (muvid#73) is the worked example: a moving look
+  restarts its ramp on a transitioned boundary (the blend is a separate input-side-seeked
+  invocation, so the filter clock returns to 0 — a 1.12x punch reaching zoom 1.109 on the
+  solo part is redrawn at 1.000 on the blend), and muvid cannot tell a punch from a grade
+  by looking at the fragment. Rebasing it is refused for `looks`' rule-27 reason. The
+  compilers answer instead — `punch_in`/`motion`/`stylize` return a `LookFragment`, a
+  `str` that also carries `.time_varying`, so `punch_in_cuts` *copies* the answer rather
+  than hardcoding it. `stylize` derives it from the compiled plan rather than declaring
+  itself static: `looks`' `motion` effect and any step with an `at` span both reach the
+  clock. Do **not** reach for `ImplRef.timeline` for this — it means "supports `enable=`"
+  and classifies every row backwards (`motion` is `False`, the static grades are `True`).
 - Tools resolve the caller through `muvid.mcp.identity.current_email()` and scope every
   path by email. Workspace scoping is the authorization model — `downloads.resolve`
   raises `KeyError` (not `PermissionError`) for another user's render, because saying
@@ -501,8 +533,9 @@ assertion deliberately and say why in the commit.
 - Arguments beyond the 2nd–3rd position are **keyword-only**.
 - No magic numbers. Tunables are module constants, and the operational ones read an
   env var with a documented default (`MUVID_FOOTAGE_MAX_EDL_ENTRIES`,
-  `MUVID_FOOTAGE_MIN_CONFIDENCE`, `MUVID_FFMPEG_TIMEOUT_S`, `MUVID_FETCH_TIMEOUT_S`,
-  `MUVID_SCORING_*`, `MUVID_DATA_HOME`).
+  `MUVID_FOOTAGE_MAX_LOOK_SCALE`, `MUVID_FOOTAGE_MIN_CONFIDENCE`,
+  `MUVID_FFMPEG_TIMEOUT_S`, `MUVID_FETCH_TIMEOUT_S`, `MUVID_SCORING_*`,
+  `MUVID_DATA_HOME`).
 - **Every module needs a top-level docstring** (auto-extracted for docs; `D100` is the
   one ruff rule selected). muvid's docstrings carry the *why* and the issue number —
   match that; they are the real design record.

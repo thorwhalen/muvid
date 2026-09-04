@@ -180,7 +180,7 @@ grade = stylize(muted, canvas=(1920, 1080), fps=30)
 EdlEntry(3.8, 7.6, "c01", look=chain(punch_in(...), grade))
 ```
 
-Five things to know:
+What to know (the list is unnumbered on purpose — the count was already wrong):
 
 - **Absent means what it always meant.** No look emits no filter at all — verified by
   rendering the same look-less EDL before and after the field existed and comparing
@@ -216,9 +216,37 @@ Five things to know:
   structurally invalid (`had 1 input(s) and 2 output(s)`, measured on ffmpeg 9.0.1) and
   the transition site opens a second container from inside the fragment. Compositing
   needs a splice site the assembler does not have.
+- **The frame size is bounded too, because an allowlist is a vocabulary and says
+  nothing about PARAMETERS.** A `scale`/`pad`/`zoompan` size must be a plain pixel count
+  and no more than `MAX_LOOK_SCALE` (4) times the render canvas. Measured from a 64x48
+  source: `scale=8000:8000` peaks at 328 MB, `zoompan=d=1:s=8000x8000` at 313 MB,
+  `pad=8000:8000` at 307 MB, against 19 MB for a look that stays at canvas size — one
+  number a remote caller writes, on the box that was OOM-killed at 30 cuts. `iw*80`,
+  `-1` and `hd1080` are refused rather than bounded, because a multiplier evaluates
+  against whatever is underneath and a size NAME resolves through ffmpeg's own table
+  (`s=whuxga` is a real 7680x4800 frame). muvid's own compilers emit literals, so this
+  costs the seam nothing (muvid#75).
 - **One sharp edge, measured: a *moving* look restarts its ramp on a transitioned
-  boundary** — the blend is a separate invocation whose clock starts at 0 again. A grade
-  or a LUT is unaffected. muvid#73 has the numbers and the options.
+  boundary** — the blend is a separate invocation whose clock starts at 0 again, so a
+  1.12x punch reaching zoom 1.109 on the solo part is redrawn at 1.000 on the blend. A
+  grade or a LUT is unaffected. muvid cannot rebase the fragment (that is rewriting an
+  arbitrary ffmpeg expression — `looks`' rule 27), so **the EDL says which kind a look
+  is** and the assembler warns:
+
+  ```python
+  # punch_in / motion / stylize return a LookFragment — a str that also answers
+  # .time_varying — so the flag is COPIED, never hand-typed beside the call.
+  frag = punch_in(canvas=(1920, 1080), fps=30, duration_s=3.8)
+  EdlEntry(0.0, 3.8, "c01", look=frag, look_time_varying=is_time_varying(frag))
+
+  # punch_in_cuts already does it for you.
+  entries = punch_in_cuts(entries, canvas=(1920, 1080), fps=30, every=2)
+  ```
+
+  Over the wire it is `"look_time_varying": true` on the entry. It changes no pixels and
+  it is omitted when false, so every existing edit is byte-identical. Its known limit is
+  stated rather than hidden: an **undeclared** moving look stays silent, because the
+  alternative is muvid deciding by reading the fragment (muvid#73).
 
 ## Where this plugs into the existing code (IMPLEMENTED v1 — muvid#13)
 

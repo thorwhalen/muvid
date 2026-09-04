@@ -49,7 +49,20 @@ The allowlist is what closes ``movie=``/``amovie=`` (a second container opened f
 *inside* the fragment, which is the invariant leaving by the back door) and, because
 ``assemble_music_video`` is a live per-caller MCP tool whose ``edl`` argument is
 free-form, the filters that write the host's disk (``metadata=…:file=``,
-``deshake=filename=``, ``sendcmd``, ``signature``).
+``deshake=filename=``, ``sendcmd``, ``signature``). The allowlist is a
+vocabulary and bounds no PARAMETER, so the frame size a look asks for is bounded
+separately against the delivery canvas (muvid#75) — ``scale=8000:8000`` peaks at
+328 MB from a 64x48 source against 19 MB for a look that stays at canvas size,
+and ``pad``/``zoompan`` reach the same magnitude.
+
+A cut whose look is **time-varying** — a punch-in, a pan, anything reading the
+filter clock — additionally makes :func:`_part_plan` **warn** when the cut borders
+a transition: the blend is a separate invocation whose inputs are
+input-side-seeked, so the clock restarts and the move plays again from the start
+(muvid#73). The EDL says which kind a look is
+(:attr:`~muvid.footage.edl.EdlEntry.look_time_varying`) because the fragment is a
+bare string muvid did not author; rebasing it would mean rewriting an arbitrary
+ffmpeg expression, which is what ``looks``' rule 27 refuses.
 
 Deliberately NOT moviepy (its ``write_videofile`` runs in-process and would escape the
 ``$MUVID_FFMPEG_TIMEOUT_S`` worker guard). Every stage runs through
@@ -113,6 +126,76 @@ class _Part:
     curve: str = "fade"
 
 
+def _warn_time_varying_looks_on_transitions(
+    cuts: Sequence[AssemblyCut], n_trans: Sequence[int]
+) -> None:
+    """Warn per cut whose MOVING look borders a blended boundary (muvid#73).
+
+    A transitioned boundary is rendered as a separate two-input invocation whose
+    inputs are input-side-seeked to the blend window (:func:`_xfade_input`), and
+    input-side ``-ss`` rebases the filter timeline to 0 — so a look whose
+    expressions read that clock **starts its ramp again** for the length of the
+    blend. Measured on a 3.0 s cut at 25 fps with a 0.4 s fade and
+    ``punch_in(zoom=1.12)``: the solo part's last frame is drawn at zoom 1.109
+    (mean |diff| 28.1/255 against the same frame rendered with no look), the
+    blend part's first frame at zoom 1.000 (0.7/255 — indistinguishable from no
+    punch at all).
+
+    Warning rather than fixing is the decision recorded in muvid#73: rebasing
+    means rewriting an ffmpeg expression muvid did not author and cannot parse,
+    which is exactly what ``looks`` refuses to do for itself (its rule 27), and a
+    wrong rebase moves the effect to a different second of the clip at exit 0
+    with an empty stderr. A documented hitch beats that.
+
+    Three things it deliberately does NOT warn about, each of which is the reason
+    :attr:`~muvid.footage.edl.EdlEntry.look_time_varying` had to exist at all:
+
+    - a **static** look on a transitioned boundary — a grade, a LUT, a posterise
+      never reads the clock, and warning on every graded transitioned cut is what
+      made this warning unimplementable while the seam was a bare string;
+    - a **moving** look on a plain cut — one invocation, one clock, nothing to
+      restart;
+    - a moving look a caller did not DECLARE. The flag defaults to ``False``, so
+      an undeclared moving look stays silent. That is the known limit of the
+      chosen shape (see the field's own docstring), not an oversight.
+
+    One warning per affected CUT, not per side of a boundary: a cut between two
+    transitions has its ramp restarted on both, but that is one thing wrong with
+    one cut and the caller acts on it once.
+    """
+    for i, cut in enumerate(cuts):
+        if not (cut.look and cut.look_time_varying):
+            continue
+        # Its own incoming blend, or the one its successor pulls out of its tail.
+        # Both render THIS cut through `_part_filter` in a freshly-seeked
+        # invocation, so either is enough to restart the ramp.
+        incoming = n_trans[i] > 0
+        outgoing = i + 1 < len(cuts) and n_trans[i + 1] > 0
+        if not (incoming or outgoing):
+            continue
+        where = (
+            "both of its boundaries are blended"
+            if incoming and outgoing
+            else (
+                "it blends IN from the previous cut"
+                if incoming
+                else "the next cut blends IN from it"
+            )
+        )
+        warnings.warn(
+            f"cut {i}: a time-varying look ({cut.look!r}) borders a transition — "
+            f"{where}. The blended part is a separate invocation whose inputs are "
+            "input-side-seeked, which rebases the filter clock to 0, so the move "
+            "RESTARTS for the length of the blend (measured: a 1.12x punch reaches "
+            "zoom 1.109 on the solo part and is redrawn at 1.000 on the blend). "
+            "Either drop the transition on this boundary or use a static look "
+            "(a grade/LUT is unaffected). muvid cannot rebase the fragment — see "
+            "muvid#73.",
+            RuntimeWarning,
+            stacklevel=4,
+        )
+
+
 def _part_plan(cuts: Sequence[AssemblyCut], fps: int) -> list[_Part]:
     """The ordered ffmpeg jobs for these cuts. Pure — no encoding, no I/O.
 
@@ -135,6 +218,14 @@ def _part_plan(cuts: Sequence[AssemblyCut], fps: int) -> list[_Part]:
     every transition fits at this fps. :func:`~muvid.footage.edl.validate_edl` gates the fit in SONG time
     with a 1 ms tolerance and cannot know the render rate, so a span within a frame
     of the limit can still fail here.
+
+    It also WARNS twice, and both warnings are the same "never a silent no-op"
+    posture: a transition that rounds to zero frames at this rate, and a cut whose
+    **time-varying look borders a blended boundary** — see
+    :func:`_warn_time_varying_looks_on_transitions`. This is the one place that
+    can say either, because both are properties of the render PLAN rather than of
+    the EDL: only here is it known that a transitioned boundary becomes a separate
+    two-input invocation, and only here is the fps known at all.
     """
     counts = _frame_counts(cuts, fps)
 
@@ -155,6 +246,7 @@ def _part_plan(cuts: Sequence[AssemblyCut], fps: int) -> list[_Part]:
         return n
 
     n_trans = [_n_transition(i) for i in range(len(cuts))]
+    _warn_time_varying_looks_on_transitions(cuts, n_trans)
     parts: list[_Part] = []
     for i, (cut, n) in enumerate(zip(cuts, counts)):
         d = n_trans[i]
