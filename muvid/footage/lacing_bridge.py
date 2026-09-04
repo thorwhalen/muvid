@@ -170,6 +170,14 @@ def _edl_body(e) -> dict:
             body[field] = v.to_dict()
     if getattr(e, "look", None) is not None:
         body["look"] = str(e.look)
+    # Omit-when-FALSE, not omit-when-None: `look_time_varying` (muvid#73) is a
+    # bool whose absent value is `False`, and `False is not None` — an
+    # `is not None` test here would have put the key in every DECISION body ever
+    # written, which is the format change this rule exists to avoid. `str(e.look)`
+    # above is the same care one field over: a `LookFragment` is a `str` subclass
+    # and the body must carry the plain value.
+    if getattr(e, "look_time_varying", False):
+        body["look_time_varying"] = True
     return body
 
 
@@ -196,9 +204,10 @@ def edl_from_annotations(
 
     The timeline-to-EDL half: whatever the editor did to the DECISION lane — moved,
     split, retargeted, deleted — exports as plain ``{song_start, song_end, clip_id}``
-    dicts (plus ``transition``/``crop``/``crop_end``/``look`` where the editor set
-    one) ready for ``assemble_music_video``. Sorting and validation stay the render
-    path's business (``fill_gaps`` + ``validate_edl``); this is a faithful read.
+    dicts (plus ``transition``/``crop``/``crop_end``/``look``/``look_time_varying``
+    where the editor set one) ready for ``assemble_music_video``. Sorting and
+    validation stay the render path's business (``fill_gaps`` + ``validate_edl``);
+    this is a faithful read.
 
     Annotations are untrusted editor input, so anything shaped wrong is SKIPPED rather
     than crashing the export: wrong schema/tier, or (an editor could in principle attach
@@ -262,6 +271,15 @@ def edl_from_annotations(
         raw = a.body.get("look")
         if isinstance(raw, str):
             entry["look"] = raw
+        # Same skip-shaped read, and `isinstance(..., bool)` rather than a truth
+        # test on purpose: `_as_entry` RAISES on a non-bool (bool("false") is
+        # True, which would arm a warning the caller asked to be off), so
+        # forwarding a string from here would turn an editor's bug into an
+        # export the render path refuses. A missing or wrong-typed flag reads as
+        # the field's own default.
+        raw = a.body.get("look_time_varying")
+        if isinstance(raw, bool) and raw:
+            entry["look_time_varying"] = True
         out.append(entry)
     return sorted(out, key=lambda e: e["song_start"])
 
@@ -300,6 +318,7 @@ def editor_document(proj, *, attributed_to: str = "") -> dict:
                 fill_gaps(select_edl(DEFAULT_STRATEGY, aligns, song_dur), song_dur),
                 aligns,
                 song_dur,
+                canvas=proj.canvas(),
             )
         except (ValueError, KeyError) as e:
             # The alignment + score-track annotations below are independently good —

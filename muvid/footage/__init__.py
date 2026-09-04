@@ -28,7 +28,9 @@ from muvid.footage.edl import (
 )
 from muvid.footage.look import (
     LookError,
+    LookFragment,
     chain,
+    is_time_varying,
     motion,
     punch_in,
     punch_in_cuts,
@@ -49,7 +51,9 @@ __all__ = [
     "validate_edl",
     "derive_cuts",
     "LookError",
+    "LookFragment",
     "chain",
+    "is_time_varying",
     "motion",
     "punch_in",
     "punch_in_cuts",
