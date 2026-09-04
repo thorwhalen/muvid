@@ -292,7 +292,7 @@ Claude Code skills) through the eight stages. It will:
 ```
 muvid/
   __init__.py         public surface (the facade)
-  __main__.py         CLI (argh)
+  __main__.py         CLI (cw)
   schema.py           ProjectSpec, ShotSpec, SectionSpec, …
   project.py          MusicVideoProject (folder facade)
   lyrics.py           transcribe + parse/render lyrics.md

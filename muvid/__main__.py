@@ -1,4 +1,4 @@
-"""muvid CLI — argh dispatch over the top-level facade.
+"""muvid CLI — cw dispatch over the top-level facade.
 
 Run ``muvid --help`` after install. Every verb is the same Python
 function the skill and UI call.
@@ -233,33 +233,44 @@ def serve(root: str = ".", *, host: str = "127.0.0.1", port: int = 7800) -> None
     _serve(root=root, host=host, port=port)
 
 
-def main() -> None:
+#: Every CLI verb, in the order they appear in ``muvid --help``. A plain list of
+#: plain functions: the parser is derived from these signatures and docstrings,
+#: so the command surface cannot drift from what is defined above.
+COMMANDS = [
+    init,
+    transcribe,
+    align,
+    character,
+    character_images,
+    character_generate,
+    character_curate,
+    character_curate_interactive,
+    environment,
+    environment_render,
+    script,
+    script_apply,
+    render,
+    estimate_cost,
+    compose,
+    status,
+    serve,
+]
+
+
+def main() -> int:
+    """Dispatch the muvid CLI and return the exit code.
+
+    ``cw.dispatch`` *returns* the code rather than exiting, so both entry points
+    have to raise it: the console script through ``sys.exit(main())``, and
+    ``python -m muvid`` through the guard below. Without that, every argument
+    error would exit 0.
+    """
     try:
-        import argh  # type: ignore
-    except ImportError as e:
-        raise SystemExit("muvid CLI requires `argh`. pip install argh.") from e
-    argh.dispatch_commands(
-        [
-            init,
-            transcribe,
-            align,
-            character,
-            character_images,
-            character_generate,
-            character_curate,
-            character_curate_interactive,
-            environment,
-            environment_render,
-            script,
-            script_apply,
-            render,
-            estimate_cost,
-            compose,
-            status,
-            serve,
-        ]
-    )
+        import cw  # type: ignore
+    except ImportError as e:  # pragma: no cover - cw is a declared dependency
+        raise SystemExit("muvid CLI requires `cw`. pip install cw.") from e
+    return cw.dispatch(COMMANDS)
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

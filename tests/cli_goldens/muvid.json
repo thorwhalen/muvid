@@ -1,0 +1,282 @@
+{
+ "recorded_from": "argh 0.31.3 (argh.dispatch_commands, default name-mapping policy), before the cw migration",
+ "note": "rc and the normalised usage line only. Full --help bodies and argparse error text are deliberately NOT pinned: CPython rewrites both between versions (3.12 changed 'invalid choice' quoting and the option column) and CI spans 3.10 and 3.12. The empty-diff proof over full stdout/stderr was done at migration time and is recorded in the PR.",
+ "cases": [
+  {
+   "argv": [],
+   "rc": 0,
+   "usage": "PROG [-h] {init,transcribe,align,character,character-images,character-generate,character-curate,character-curate-interactive,environment,environment-render,script,script-apply,render,estimate-cost,compose,status,serve} ..."
+  },
+  {
+   "argv": [
+    "--help"
+   ],
+   "rc": 0,
+   "usage": "PROG [-h] {init,transcribe,align,character,character-images,character-generate,character-curate,character-curate-interactive,environment,environment-render,script,script-apply,render,estimate-cost,compose,status,serve} ..."
+  },
+  {
+   "argv": [
+    "-h"
+   ],
+   "rc": 0,
+   "usage": "PROG [-h] {init,transcribe,align,character,character-images,character-generate,character-curate,character-curate-interactive,environment,environment-render,script,script-apply,render,estimate-cost,compose,status,serve} ..."
+  },
+  {
+   "argv": [
+    "init",
+    "--help"
+   ],
+   "rc": 0,
+   "usage": "PROG init [-h] [-t TITLE] [-s SONG] root"
+  },
+  {
+   "argv": [
+    "transcribe",
+    "--help"
+   ],
+   "rc": 0,
+   "usage": "PROG transcribe [-h] [-a API_KEY] root"
+  },
+  {
+   "argv": [
+    "align",
+    "--help"
+   ],
+   "rc": 0,
+   "usage": "PROG align [-h] [-a ALIGNER] root"
+  },
+  {
+   "argv": [
+    "character",
+    "--help"
+   ],
+   "rc": 0,
+   "usage": "PROG character [-h] [-d DESCRIPTION] [-v VOICE_ID] [-r REFERENCE_AUDIO_URL] root name"
+  },
+  {
+   "argv": [
+    "character-images",
+    "--help"
+   ],
+   "rc": 0,
+   "usage": "PROG character-images [-h] root name [paths ...]"
+  },
+  {
+   "argv": [
+    "character-generate",
+    "--help"
+   ],
+   "rc": 0,
+   "usage": "PROG character-generate [-h] [-n N] [-q QUALITY] root name"
+  },
+  {
+   "argv": [
+    "character-curate",
+    "--help"
+   ],
+   "rc": 0,
+   "usage": "PROG character-curate [-h] [-k K] [-r RECIPE] root name"
+  },
+  {
+   "argv": [
+    "character-curate-interactive",
+    "--help"
+   ],
+   "rc": 0,
+   "usage": "PROG character-curate-interactive [-h] [-k K] [-r RECIPE] [-p PRESENT] root name decisions"
+  },
+  {
+   "argv": [
+    "environment",
+    "--help"
+   ],
+   "rc": 0,
+   "usage": "PROG environment [-h] [-d DESCRIPTION] [-t TIME_OF_DAY] [-l LIGHTING] root name"
+  },
+  {
+   "argv": [
+    "environment-render",
+    "--help"
+   ],
+   "rc": 0,
+   "usage": "PROG environment-render [-h] [-q QUALITY] root name"
+  },
+  {
+   "argv": [
+    "script",
+    "--help"
+   ],
+   "rc": 0,
+   "usage": "PROG script [-h] root"
+  },
+  {
+   "argv": [
+    "script-apply",
+    "--help"
+   ],
+   "rc": 0,
+   "usage": "PROG script-apply [-h] root"
+  },
+  {
+   "argv": [
+    "render",
+    "--help"
+   ],
+   "rc": 0,
+   "usage": "PROG render [-h] [-s SHOT] [-q QUALITY] [-f] [-b BUDGET] [-a] root"
+  },
+  {
+   "argv": [
+    "estimate-cost",
+    "--help"
+   ],
+   "rc": 0,
+   "usage": "PROG estimate-cost [-h] [-q QUALITY] [-f] root"
+  },
+  {
+   "argv": [
+    "compose",
+    "--help"
+   ],
+   "rc": 0,
+   "usage": "PROG compose [-h] [-o OUT_NAME] [-s] root"
+  },
+  {
+   "argv": [
+    "status",
+    "--help"
+   ],
+   "rc": 0,
+   "usage": "PROG status [-h] [-j] root"
+  },
+  {
+   "argv": [
+    "serve",
+    "--help"
+   ],
+   "rc": 0,
+   "usage": "PROG serve [-h] [-r ROOT] [--host HOST] [-p PORT]"
+  },
+  {
+   "argv": [
+    "no-such-command"
+   ],
+   "rc": 2,
+   "usage": "PROG [-h] {init,transcribe,align,character,character-images,character-generate,character-curate,character-curate-interactive,environment,environment-render,script,script-apply,render,estimate-cost,compose,status,serve} ..."
+  },
+  {
+   "argv": [
+    "init"
+   ],
+   "rc": 2,
+   "usage": "PROG init [-h] [-t TITLE] [-s SONG] root"
+  },
+  {
+   "argv": [
+    "init",
+    "--no-such-flag"
+   ],
+   "rc": 2,
+   "usage": "PROG init [-h] [-t TITLE] [-s SONG] root"
+  },
+  {
+   "argv": [
+    "character-images"
+   ],
+   "rc": 2,
+   "usage": "PROG character-images [-h] root name [paths ...]"
+  },
+  {
+   "argv": [
+    "character-images",
+    "root"
+   ],
+   "rc": 2,
+   "usage": "PROG character-images [-h] root name [paths ...]"
+  },
+  {
+   "argv": [
+    "character",
+    "root"
+   ],
+   "rc": 2,
+   "usage": "PROG character [-h] [-d DESCRIPTION] [-v VOICE_ID] [-r REFERENCE_AUDIO_URL] root name"
+  },
+  {
+   "argv": [
+    "render",
+    ".",
+    "--shot",
+    "s1",
+    "--budget",
+    "1"
+   ],
+   "rc": 1,
+   "usage": ""
+  },
+  {
+   "argv": [
+    "render",
+    ".",
+    "--shot",
+    "s1",
+    "--allow-unpriced"
+   ],
+   "rc": 1,
+   "usage": ""
+  },
+  {
+   "argv": [
+    "serve",
+    "positional-not-allowed"
+   ],
+   "rc": 2,
+   "usage": "PROG [-h] {init,transcribe,align,character,character-images,character-generate,character-curate,character-curate-interactive,environment,environment-render,script,script-apply,render,estimate-cost,compose,status,serve} ..."
+  },
+  {
+   "argv": [
+    "character-curate-interactive",
+    "root",
+    "name"
+   ],
+   "rc": 2,
+   "usage": "PROG character-curate-interactive [-h] [-k K] [-r RECIPE] [-p PRESENT] root name decisions"
+  },
+  {
+   "argv": [
+    "estimate-cost",
+    "--quality"
+   ],
+   "rc": 2,
+   "usage": "PROG estimate-cost [-h] [-q QUALITY] [-f] root"
+  },
+  {
+   "argv": [
+    "compose",
+    "root",
+    "extra"
+   ],
+   "rc": 2,
+   "usage": "PROG [-h] {init,transcribe,align,character,character-images,character-generate,character-curate,character-curate-interactive,environment,environment-render,script,script-apply,render,estimate-cost,compose,status,serve} ..."
+  },
+  {
+   "argv": [
+    "status",
+    "root",
+    "--json",
+    "extra"
+   ],
+   "rc": 2,
+   "usage": "PROG [-h] {init,transcribe,align,character,character-images,character-generate,character-curate,character-curate-interactive,environment,environment-render,script,script-apply,render,estimate-cost,compose,status,serve} ..."
+  },
+  {
+   "argv": [
+    "align",
+    "root",
+    "--aligner"
+   ],
+   "rc": 2,
+   "usage": "PROG align [-h] [-a ALIGNER] root"
+  }
+ ]
+}
