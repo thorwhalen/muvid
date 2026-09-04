@@ -18,14 +18,18 @@ def test_log_fal_events_to_writes_jsonl(tmp_path):
     with log_fal_events_to(log):
         emit(
             ProgressEvent(
-                kind="queued", application="fal-ai/x",
-                call_id="abc123", elapsed_s=0.0,
+                kind="queued",
+                application="fal-ai/x",
+                call_id="abc123",
+                elapsed_s=0.0,
             )
         )
         emit(
             ProgressEvent(
-                kind="done", application="fal-ai/x",
-                call_id="abc123", elapsed_s=0.5,
+                kind="done",
+                application="fal-ai/x",
+                call_id="abc123",
+                elapsed_s=0.5,
             )
         )
 
@@ -42,9 +46,7 @@ def test_log_fal_events_unsubscribes_on_exit(tmp_path):
 
     log = tmp_path / ".muvid" / "fal_events.jsonl"
     with log_fal_events_to(log):
-        emit(
-            ProgressEvent(kind="queued", application="x", call_id="1")
-        )
+        emit(ProgressEvent(kind="queued", application="x", call_id="1"))
     # Outside the context — should not append.
     emit(ProgressEvent(kind="done", application="x", call_id="1"))
 
@@ -75,12 +77,8 @@ def test_status_includes_recent_fal_events(tmp_path):
     facade.init_project(tmp_path / "p")
     log = tmp_path / "p" / ".muvid" / "fal_events.jsonl"
     with log_fal_events_to(log):
-        emit(
-            ProgressEvent(kind="queued", application="fal-ai/test", call_id="x")
-        )
-        emit(
-            ProgressEvent(kind="done", application="fal-ai/test", call_id="x")
-        )
+        emit(ProgressEvent(kind="queued", application="fal-ai/test", call_id="x"))
+        emit(ProgressEvent(kind="done", application="fal-ai/test", call_id="x"))
 
     s = facade.status(tmp_path / "p")
     assert "recent_fal_events" in s

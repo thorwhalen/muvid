@@ -596,12 +596,25 @@ _LOOK_FORBIDDEN = "[];"
 #: none. An allowlisted filter can still be given absurd PARAMETERS, and the two
 #: that matter are measured rather than guessed at:
 #:
-#: - ``scale`` sets the frame size, and the frame size is memory. On ffmpeg 9.0.1,
-#:   ``scale=320:180`` peaks at 21.7 MB RSS and ``scale=320:180,scale=8000:8000``
-#:   at 324.7 MB — 15x, from one caller-supplied number, on a box that has already
-#:   been OOM-killed once (muvid#21/#24). Not closed here because bounding it means
-#:   evaluating ffmpeg expressions (``iw*2`` is a legal width), which is a bigger
-#:   piece of work than this gate; it wants its own issue.
+#: - **Frame size is memory, and THREE options set it**, not one. Measured on
+#:   ffmpeg 9.0.1, three frames from a 64x48 source, peak RSS:
+#:
+#:   =====================================  =========
+#:   look                                   peak RSS
+#:   =====================================  =========
+#:   ``scale=64:48``                        10 MB
+#:   ``scale=64:48,scale=8000:8000``        300 MB
+#:   ``zoompan=d=1:s=8000x8000:fps=25``     289 MB
+#:   ``scale=w='iw*80':h='ih*80'``          112 MB
+#:   =====================================  =========
+#:
+#:   All four are ACCEPTED by this gate. An earlier version of this note named
+#:   only ``scale``, which under-enumerated the surface it exists to describe:
+#:   ``zoompan``'s ``s`` is a second lever of the same magnitude, and it is
+#:   allowlisted precisely because ``muvid.footage.look.punch_in`` needs it.
+#:   Not closed here because a correct bound is RELATIVE TO THE CANVAS — which
+#:   this function is not given — and because ``iw*80`` is a legal width, so a
+#:   literal cap is not the whole answer. Tracked as muvid#76.
 #: - ``lut3d=file=`` will *attempt* to open any path the renderer can read. It
 #:   cannot write, and a non-``.cube`` file fails to parse.
 #:
@@ -704,10 +717,26 @@ def _significant(s: str):
 def _unquote(s: str) -> str:
     r"""``s`` as ffmpeg's tokenizer resolves it — escapes applied, quotes removed.
 
-    Needed for the *name* half of :func:`_look_filter_names`, and the need is not
-    cosmetic: ffmpeg resolves ``'metadata'`` and ``\m\e\t\a\d\a\t\a`` to the
-    filter ``metadata`` (both measured — each truncated a canary file), so an
-    allowlist that compared the raw text would be bypassed by either spelling.
+    Needed for the *name* half of :func:`_look_filter_names`, and its role is to
+    **widen** what the allowlist accepts, not to secure it. An earlier version of
+    this docstring had that backwards — it claimed a raw-text compare "would be
+    bypassed" by ``'metadata'`` or ``\m\e\t\a\d\a\t\a``. Measured, it is not:
+    against an ALLOWLIST a raw compare fails **closed**, because neither spelling
+    is a member either. What a raw compare loses is the legitimate direction —
+    ``h\ue=s=0`` resolves to the allowed ``hue`` and would be refused.
+
+    ======================================  =============  ================
+    spelling                                raw compare    with ``_unquote``
+    ======================================  =============  ================
+    ``metadata=mode=print:file=…``          refused        refused
+    ``\m\e\t\a\d\a\t\a=…``                   refused        refused
+    ``h\ue=s=0``  (legitimate)              **refused**    accepted
+    ======================================  =============  ================
+
+    The security comes from :data:`LOOK_FILTERS` being a closed set. Stating that
+    correctly matters: a reader who believes this function is the guard could
+    "simplify" by dropping the allowlist and keeping the normalisation, which is
+    the one edit that would reopen the hole.
 
     >>> _unquote(r"h\ue")
     'hue'
@@ -753,14 +782,44 @@ def _first_unescaped(s: str, chars: str) -> "str | None":
     return None
 
 
+def _strip_unescaped(s: str) -> str:
+    r"""Trim whitespace from the ends — but only whitespace ffmpeg would trim.
+
+    A plain ``.strip()`` here removed an ESCAPED space and left the backslash
+    that escaped it, so ``hue\ =s=0`` became ``hue\`` and the lexer raised
+    ``_LookSyntaxError("\\")`` from outside the caller's try/except: a lexically
+    closed look refused with a message that was a single backslash, reaching an
+    MCP caller as the whole explanation.
+
+    >>> _strip_unescaped("  hue  ")
+    'hue'
+    >>> _strip_unescaped(r"hue\ ")
+    'hue\\ '
+    """
+    significant = {i for i, _ in _significant(s)}
+    lo, hi = 0, len(s)
+    while lo < hi and s[lo].isspace() and lo in significant:
+        lo += 1
+    while hi > lo and s[hi - 1].isspace() and hi - 1 in significant:
+        hi -= 1
+    return s[lo:hi]
+
+
 def _look_filter_names(look: str) -> "list[str]":
     r"""The filter each link of the chain names, as ffmpeg will resolve it.
 
     Splits on the commas ffmpeg reads as separators (not on the ones inside a
     quoted expression), then takes each link's name token — everything before its
     first significant ``=``, minus a ``@instance`` label — and resolves it through
-    :func:`_unquote`. Whitespace around a name is stripped because ffmpeg strips
-    it too (``hue = s=0`` is a working chain, measured).
+    :func:`_unquote`.
+
+    Only **unescaped** whitespace is trimmed, because that is the only kind
+    ffmpeg trims: ``hue =s=0`` works (rc=0), while ``\ hue=s=0`` names the
+    filter *space-h-u-e* and fails with "No such filter: ' hue'" (rc=8). Both
+    measured. A plain ``.strip()`` here resolved the second to ``hue`` and
+    accepted it — harmless, since ffmpeg then refused it, but it also meant the
+    gate and the binary disagreed about what a fragment says, which is the one
+    thing a gate must not do.
 
     >>> _look_filter_names("scale=2,hue=s=0")
     ['scale', 'hue']
@@ -779,9 +838,15 @@ def _look_filter_names(look: str) -> "list[str]":
     names = []
     for link in spans:
         eq = next((i for i, c in _significant(link) if c == "="), len(link))
-        raw = link[:eq].strip()
+        raw = _strip_unescaped(link[:eq])
         at = next((i for i, c in _significant(raw) if c == "@"), len(raw))
-        names.append(_unquote(raw[:at]).strip())
+        # No `.strip()` AFTER unescaping. `\ ` is an escaped space, so stripping
+        # the unescaped result removed the space and left the backslash that
+        # escaped it — `_unquote` then raised `_LookSyntaxError("\\")` from
+        # OUTSIDE `_validate_look`'s try/except, so a lexically CLOSED look was
+        # refused with a message that was a single backslash. Through the MCP
+        # tool that reached the caller as the whole explanation.
+        names.append(_unquote(raw[:at]))
     return names
 
 

@@ -61,8 +61,12 @@ def test_manifest_is_current_guards_song_and_alignment():
 
     m = {"song_hash": "h1", "align_fingerprint": "f1"}
     assert manifest_is_current(m, song_hash="h1", align_fingerprint="f1")
-    assert not manifest_is_current(m, song_hash="h2", align_fingerprint="f1")  # new song
-    assert not manifest_is_current(m, song_hash="h1", align_fingerprint="f2")  # re-aligned
+    assert not manifest_is_current(
+        m, song_hash="h2", align_fingerprint="f1"
+    )  # new song
+    assert not manifest_is_current(
+        m, song_hash="h1", align_fingerprint="f2"
+    )  # re-aligned
     assert not manifest_is_current(None, song_hash="h1", align_fingerprint="f1")
 
 
@@ -102,7 +106,10 @@ def test_norm_excludes_masked_and_all_masked_is_none():
     norm = compute_norm([raw], [m], direction="higher_better")
     assert norm["p95"] < 100
     # all masked → None (→ null in the manifest, all-NaN scores)
-    assert compute_norm([raw], [np.zeros(3, dtype=bool)], direction="higher_better") is None
+    assert (
+        compute_norm([raw], [np.zeros(3, dtype=bool)], direction="higher_better")
+        is None
+    )
     out = apply_norm(raw, None, direction="higher_better")
     assert np.isnan(out).all()
 
@@ -118,7 +125,10 @@ def _track(cid, metric, arr, hop=0.1):
 def test_build_tensor_missing_metric_is_all_masked_column():
     n = 5
     tracks = {
-        "A": [_track("A", "sharp", [1, 2, 3, 4, 5]), _track("A", "motion", [5, 4, 3, 2, 1])],
+        "A": [
+            _track("A", "sharp", [1, 2, 3, 4, 5]),
+            _track("A", "motion", [5, 4, 3, 2, 1]),
+        ],
         "B": [_track("B", "sharp", [2, 2, 2, 2, 2])],  # B has no 'motion' track
     }
     tensor = build_tensor(tracks, t0=0.0, hop_s=0.1, n=n, metrics=["sharp", "motion"])
@@ -129,7 +139,9 @@ def test_build_tensor_missing_metric_is_all_masked_column():
 
 
 def test_build_tensor_geometry_mismatch_raises():
-    bad = ScoreTrack("A", "x", 0.0, 0.05, np.zeros(5, np.float32), np.ones(5, bool), "higher_better")
+    bad = ScoreTrack(
+        "A", "x", 0.0, 0.05, np.zeros(5, np.float32), np.ones(5, bool), "higher_better"
+    )
     with pytest.raises(ValueError, match="geometry"):
         build_tensor({"A": [bad]}, t0=0.0, hop_s=0.1, n=5, metrics=["x"])
 
@@ -142,7 +154,9 @@ def test_save_load_roundtrip_and_nan_safe_manifest(tmp_path):
     a = np.linspace(0, 1, n).astype(np.float32)
     tracks = {
         "A": [_track("A", "sharp", a)],
-        "B": [_track("B", "sharp", np.full(n, np.nan, np.float32))],  # all-masked metric
+        "B": [
+            _track("B", "sharp", np.full(n, np.nan, np.float32))
+        ],  # all-masked metric
     }
     save_scores(
         tmp_path,

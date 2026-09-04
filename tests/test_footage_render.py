@@ -97,7 +97,9 @@ def test_gap_entries_round_trip_json_null():
 
 
 def test_derive_cuts_maps_a_gap_to_no_source():
-    entries = validate_edl(fill_gaps([EdlEntry(5, 15, "L")], SONG_DUR), [_LATE], SONG_DUR)
+    entries = validate_edl(
+        fill_gaps([EdlEntry(5, 15, "L")], SONG_DUR), [_LATE], SONG_DUR
+    )
     cuts = derive_cuts(entries, [_LATE], {"L": "/tmp/l.mp4"})
     assert [c.clip_path for c in cuts] == ["", "/tmp/l.mp4", ""]
     assert cuts[0].duration == pytest.approx(5.0)
@@ -118,7 +120,9 @@ def test_assemble_runs_one_bounded_ffmpeg_per_cut(monkeypatch, tmp_path):
     monkeypatch.setattr(F, "probe", lambda *a, **k: {})
     monkeypatch.setattr(F, "run_ffmpeg", lambda args, **k: calls.append(args))
 
-    entries = validate_edl(fill_gaps([EdlEntry(5, 15, "L")], SONG_DUR), [_LATE], SONG_DUR)
+    entries = validate_edl(
+        fill_gaps([EdlEntry(5, 15, "L")], SONG_DUR), [_LATE], SONG_DUR
+    )
     cuts = derive_cuts(entries, [_LATE], {"L": "/tmp/l.mp4"})
     assemble_music_video(cuts, "/tmp/song.wav", str(tmp_path / "final.mp4"))
 
@@ -431,9 +435,7 @@ def test_a_source_exhausted_cut_cannot_shorten_or_desync_the_video(tmp_path):
     )
     # The armed verify must agree — it reads the VIDEO STREAM duration now, so a short
     # video track can no longer hide behind the container (= audio) duration.
-    assert not failures(
-        verify_video(out, audio=str(song), expected_canvas=(1280, 720))
-    )
+    assert not failures(verify_video(out, audio=str(song), expected_canvas=(1280, 720)))
     # The straddling cut clones its last frame (bright testsrc), the wholly-beyond cut
     # falls back to black — visible properties, not implementation details.
     assert _frame_pixels(out, 4.05).mean() > 40, "straddle: cloned last frame"

@@ -29,9 +29,7 @@ def test_status_after_adding_a_shot(tmp_path):
 
     facade.init_project(tmp_path / "p")
     p = MusicVideoProject(tmp_path / "p")
-    p.upsert_shot(
-        ShotSpec(id="s01", start_s=0.0, end_s=2.0, render_strategy="still")
-    )
+    p.upsert_shot(ShotSpec(id="s01", start_s=0.0, end_s=2.0, render_strategy="still"))
     s = facade.status(tmp_path / "p")
     assert s["stages"]["script"] is True
     assert s["stages"]["render"]["total"] == 1

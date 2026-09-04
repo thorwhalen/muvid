@@ -21,8 +21,14 @@ def test_init_creates_expected_folders(tmp_path):
     root = tmp_path / "p"
     proj = MusicVideoProject.init(root, title="X")
     for sub in (
-        "song", "lyrics", "characters", "environments",
-        "script", "shots", "output", ".muvid",
+        "song",
+        "lyrics",
+        "characters",
+        "environments",
+        "script",
+        "shots",
+        "output",
+        ".muvid",
     ):
         assert (root / sub).is_dir()
     spec = proj.read_spec()
@@ -79,9 +85,20 @@ def test_set_song_probes_duration(tmp_path):
         pytest.skip("ffmpeg/ffprobe not available on PATH")
     song = tmp_path / "src.wav"
     subprocess.run(
-        ["ffmpeg", "-y", "-f", "lavfi", "-i", "anullsrc=cl=mono:r=22050",
-         "-t", "3", str(song)],
-        check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+        [
+            "ffmpeg",
+            "-y",
+            "-f",
+            "lavfi",
+            "-i",
+            "anullsrc=cl=mono:r=22050",
+            "-t",
+            "3",
+            str(song),
+        ],
+        check=True,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
     )
     proj = MusicVideoProject.init(tmp_path / "p", song_path=song, copy_song=True)
     spec = proj.read_spec()

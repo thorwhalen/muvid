@@ -143,7 +143,11 @@ class TestArchiveExpansion:
         archive = tmp_path / "a.zip"
         archive.write_bytes(_zip_bytes({"clip.mov": b"a", "notes.txt": b"b"}))
         got, skipped = extract_media_members(
-            archive, tmp_path / "out", extensions=("mov",), max_members=8, max_member_bytes=1000
+            archive,
+            tmp_path / "out",
+            extensions=("mov",),
+            max_members=8,
+            max_member_bytes=1000,
         )
         assert [p.name for p in got] == ["clip.mov"]
         assert [s["name"] for s in skipped] == ["notes.txt"]
@@ -156,7 +160,11 @@ class TestArchiveExpansion:
         archive = tmp_path / "a.zip"
         archive.write_bytes(_zip_bytes({f"c{i}.mov": b"x" for i in range(5)}))
         got, skipped = extract_media_members(
-            archive, tmp_path / "out", extensions=("mov",), max_members=2, max_member_bytes=1000
+            archive,
+            tmp_path / "out",
+            extensions=("mov",),
+            max_members=2,
+            max_member_bytes=1000,
         )
         assert len(got) == 2
         assert len(skipped) == 3
@@ -168,7 +176,11 @@ class TestArchiveExpansion:
         archive = tmp_path / "a.zip"
         archive.write_bytes(_zip_bytes({"big.mov": b"x" * 500, "ok.mov": b"x"}))
         got, skipped = extract_media_members(
-            archive, tmp_path / "out", extensions=("mov",), max_members=8, max_member_bytes=100
+            archive,
+            tmp_path / "out",
+            extensions=("mov",),
+            max_members=8,
+            max_member_bytes=100,
         )
         assert [p.name for p in got] == ["ok.mov"]
         assert "exceeds" in skipped[0]["reason"]
@@ -194,14 +206,20 @@ class TestArchiveExpansion:
         archive.write_bytes(SIGNIN_PAGE)
         with pytest.raises(FetchError, match="not a readable ZIP"):
             extract_media_members(
-                archive, tmp_path / "out", extensions=("mov",), max_members=8, max_member_bytes=1000
+                archive,
+                tmp_path / "out",
+                extensions=("mov",),
+                max_members=8,
+                max_member_bytes=1000,
             )
 
 
 class TestContentKindGuard:
     """An HTML sign-in page must never be written to disk as media."""
 
-    def test_a_signin_page_is_refused_with_the_permission_diagnosis(self, tmp_path, monkeypatch):
+    def test_a_signin_page_is_refused_with_the_permission_diagnosis(
+        self, tmp_path, monkeypatch
+    ):
         import muvid.mcp._fetch as fetch_mod
         from muvid.mcp._fetch import FetchError, fetch_to_file_streaming
 
@@ -218,11 +236,16 @@ class TestContentKindGuard:
             def __exit__(self, *a):
                 return False
 
-        monkeypatch.setattr(fetch_mod, "_open_following_redirects", lambda u, d: _Resp())
+        monkeypatch.setattr(
+            fetch_mod, "_open_following_redirects", lambda u, d: _Resp()
+        )
         dest = tmp_path / "song.mp3"
         with pytest.raises(FetchError, match="anyone-with-the-link"):
             fetch_to_file_streaming(
-                "https://drive.google.com/x", dest, max_bytes=10_000, expect_kind="audio"
+                "https://drive.google.com/x",
+                dest,
+                max_bytes=10_000,
+                expect_kind="audio",
             )
         assert not dest.exists(), "a refused payload must leave no partial file"
 
@@ -243,9 +266,13 @@ class TestContentKindGuard:
             def __exit__(self, *a):
                 return False
 
-        monkeypatch.setattr(fetch_mod, "_open_following_redirects", lambda u, d: _Resp())
+        monkeypatch.setattr(
+            fetch_mod, "_open_following_redirects", lambda u, d: _Resp()
+        )
         dest = tmp_path / "clip.mp4"
-        fetch_to_file_streaming("https://x/y.mp4", dest, max_bytes=10_000, expect_kind="video")
+        fetch_to_file_streaming(
+            "https://x/y.mp4", dest, max_bytes=10_000, expect_kind="video"
+        )
         assert dest.read_bytes() == FAKE_MP4
 
 
@@ -262,8 +289,12 @@ class TestNoSourceLeavesTheAddressableSet:
         from muvid.footage.edl import FootageAlignment
 
         a = FootageAlignment(
-            clip_id="x", offset_s=1.0, confidence=0.4, duration_s=5.0,
-            coverage=(2.0, 2.0), overlaps=False,
+            clip_id="x",
+            offset_s=1.0,
+            confidence=0.4,
+            duration_s=5.0,
+            coverage=(2.0, 2.0),
+            overlaps=False,
         )
         assert FootageAlignment.from_dict(a.to_dict()) == a
 
@@ -272,8 +303,11 @@ class TestNoSourceLeavesTheAddressableSet:
         from muvid.footage.edl import FootageAlignment
 
         legacy = {
-            "clip_id": "x", "offset_s": 1.0, "confidence": 0.4,
-            "duration_s": 5.0, "coverage": [1.0, 6.0],
+            "clip_id": "x",
+            "offset_s": 1.0,
+            "confidence": 0.4,
+            "duration_s": 5.0,
+            "coverage": [1.0, 6.0],
         }
         assert FootageAlignment.from_dict(legacy).overlaps is True
 

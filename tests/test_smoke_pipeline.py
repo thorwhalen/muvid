@@ -44,13 +44,27 @@ def _make_solid_mp4(out: Path, duration_s: float, color: str = "navy") -> None:
     """Solid-color mp4 with silent audio track, ``duration_s`` long."""
     out.parent.mkdir(parents=True, exist_ok=True)
     cmd = [
-        "ffmpeg", "-y",
-        "-f", "lavfi", "-i", f"color=c={color}:s=160x90:r=24:d={duration_s}",
-        "-f", "lavfi", "-i", "anullsrc=r=22050:cl=mono",
-        "-c:v", "libx264", "-pix_fmt", "yuv420p",
-        "-c:a", "aac", "-b:a", "32k",
+        "ffmpeg",
+        "-y",
+        "-f",
+        "lavfi",
+        "-i",
+        f"color=c={color}:s=160x90:r=24:d={duration_s}",
+        "-f",
+        "lavfi",
+        "-i",
+        "anullsrc=r=22050:cl=mono",
+        "-c:v",
+        "libx264",
+        "-pix_fmt",
+        "yuv420p",
+        "-c:a",
+        "aac",
+        "-b:a",
+        "32k",
         "-shortest",
-        "-t", f"{duration_s}",
+        "-t",
+        f"{duration_s}",
         str(out),
     ]
     subprocess.run(cmd, check=True, capture_output=True)
@@ -60,10 +74,16 @@ def _make_synthetic_song(out: Path, duration_s: float = 12.0) -> None:
     """Sine-wave mp3 of fixed duration."""
     out.parent.mkdir(parents=True, exist_ok=True)
     cmd = [
-        "ffmpeg", "-y",
-        "-f", "lavfi",
-        "-i", f"sine=frequency=440:duration={duration_s}",
-        "-c:a", "libmp3lame", "-b:a", "64k",
+        "ffmpeg",
+        "-y",
+        "-f",
+        "lavfi",
+        "-i",
+        f"sine=frequency=440:duration={duration_s}",
+        "-c:a",
+        "libmp3lame",
+        "-b:a",
+        "64k",
         str(out),
     ]
     subprocess.run(cmd, check=True, capture_output=True)
@@ -72,9 +92,14 @@ def _make_synthetic_song(out: Path, duration_s: float = 12.0) -> None:
 def _make_solid_png(out: Path, color: str = "red") -> None:
     out.parent.mkdir(parents=True, exist_ok=True)
     cmd = [
-        "ffmpeg", "-y",
-        "-f", "lavfi", "-i", f"color=c={color}:s=64x64",
-        "-frames:v", "1",
+        "ffmpeg",
+        "-y",
+        "-f",
+        "lavfi",
+        "-i",
+        f"color=c={color}:s=64x64",
+        "-frames:v",
+        "1",
         str(out),
     ]
     subprocess.run(cmd, check=True, capture_output=True)
@@ -82,9 +107,13 @@ def _make_solid_png(out: Path, color: str = "red") -> None:
 
 def _ffprobe_duration(path: Path) -> float:
     cmd = [
-        "ffprobe", "-v", "error",
-        "-show_entries", "format=duration",
-        "-of", "default=noprint_wrappers=1:nokey=1",
+        "ffprobe",
+        "-v",
+        "error",
+        "-show_entries",
+        "format=duration",
+        "-of",
+        "default=noprint_wrappers=1:nokey=1",
         str(path),
     ]
     return float(subprocess.check_output(cmd).decode().strip())
@@ -105,9 +134,27 @@ CANNED_TRANSCRIPT = {
         {"text": "hello", "type": "word", "start": 0.5, "end": 1.0, "confidence": 0.95},
         {"text": "hello", "type": "word", "start": 1.0, "end": 1.5, "confidence": 0.93},
         {"text": "hello", "type": "word", "start": 1.5, "end": 2.0, "confidence": 0.92},
-        {"text": "goodbye", "type": "word", "start": 6.0, "end": 6.5, "confidence": 0.91},
-        {"text": "goodbye", "type": "word", "start": 6.5, "end": 7.0, "confidence": 0.90},
-        {"text": "goodbye", "type": "word", "start": 7.0, "end": 7.5, "confidence": 0.89},
+        {
+            "text": "goodbye",
+            "type": "word",
+            "start": 6.0,
+            "end": 6.5,
+            "confidence": 0.91,
+        },
+        {
+            "text": "goodbye",
+            "type": "word",
+            "start": 6.5,
+            "end": 7.0,
+            "confidence": 0.90,
+        },
+        {
+            "text": "goodbye",
+            "type": "word",
+            "start": 7.0,
+            "end": 7.5,
+            "confidence": 0.89,
+        },
     ],
 }
 
@@ -190,9 +237,7 @@ def patched_seams(monkeypatch, stub_image):
     monkeypatch.setattr(
         _t2v, "render_text_to_video", _make_render_stub("text_to_video")
     )
-    monkeypatch.setattr(
-        _anim, "render_animation", _make_render_stub("animation")
-    )
+    monkeypatch.setattr(_anim, "render_animation", _make_render_stub("animation"))
 
 
 # --- the test --------------------------------------------------------------
@@ -240,24 +285,40 @@ def test_full_pipeline(tmp_path, patched_seams, stub_image):
     # 6. five shots — one per render strategy
     shots = [
         ShotSpec(
-            id="s01", start_s=0.0, end_s=2.0, render_strategy="still",
+            id="s01",
+            start_s=0.0,
+            end_s=2.0,
+            render_strategy="still",
             environment="park",
         ),
         ShotSpec(
-            id="s02", start_s=2.0, end_s=4.0, render_strategy="lipsync",
-            environment="park", characters=("alice",),
+            id="s02",
+            start_s=2.0,
+            end_s=4.0,
+            render_strategy="lipsync",
+            environment="park",
+            characters=("alice",),
         ),
         ShotSpec(
-            id="s03", start_s=4.0, end_s=6.0,
-            render_strategy="image_to_video", environment="park",
+            id="s03",
+            start_s=4.0,
+            end_s=6.0,
+            render_strategy="image_to_video",
+            environment="park",
         ),
         ShotSpec(
-            id="s04", start_s=6.0, end_s=8.0,
+            id="s04",
+            start_s=6.0,
+            end_s=8.0,
             render_strategy="text_to_video",
         ),
         ShotSpec(
-            id="s05", start_s=8.0, end_s=10.0, render_strategy="animation",
-            environment="park", characters=("alice",),
+            id="s05",
+            start_s=8.0,
+            end_s=10.0,
+            render_strategy="animation",
+            environment="park",
+            characters=("alice",),
         ),
     ]
     for sh in shots:
@@ -290,9 +351,7 @@ def test_render_caching_skips_rerender(tmp_path, patched_seams, stub_image):
     _make_synthetic_song(song_path, duration_s=6.0)
     facade.init_project(project_root, title="cache", song=song_path)
     p = MusicVideoProject(project_root)
-    p.upsert_shot(
-        ShotSpec(id="s01", start_s=0.0, end_s=2.0, render_strategy="still")
-    )
+    p.upsert_shot(ShotSpec(id="s01", start_s=0.0, end_s=2.0, render_strategy="still"))
     out1 = Path(facade.render(project_root)[0])
     mtime1 = out1.stat().st_mtime_ns
 

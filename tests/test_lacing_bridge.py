@@ -134,7 +134,9 @@ def test_score_track_annotations_one_per_clip_metric_with_masked_values_as_null(
 
     from muvid.footage.scoring.grid import ScoreTensor
 
-    S = np.array([[[0.1], [np.nan], [0.9]]], dtype="float32")  # 1 clip, 3 frames, 1 metric
+    S = np.array(
+        [[[0.1], [np.nan], [0.9]]], dtype="float32"
+    )  # 1 clip, 3 frames, 1 metric
     M = np.array([[[True], [False], [True]]])
     tensor = ScoreTensor(
         clip_ids=["A"],
@@ -147,7 +149,9 @@ def test_score_track_annotations_one_per_clip_metric_with_masked_values_as_null(
         raw=S,
         norms={"quality": None},
     )
-    (ann,) = score_track_annotations(tensor, song_asset_id=SONG_HASH, attributed_to="u:x")
+    (ann,) = score_track_annotations(
+        tensor, song_asset_id=SONG_HASH, attributed_to="u:x"
+    )
     assert ann.body_schema_uri == CLIP_SCORE_TRACK_SCHEMA
     assert ann.tier == "clip:A"
     assert ann.body["values"] == [pytest.approx(0.1), None, pytest.approx(0.9)]
@@ -168,7 +172,11 @@ def test_edl_round_trips_through_annotations_including_gaps():
 
     back = edl_from_annotations(anns)
     assert back == [
-        {"song_start": e.song_start, "song_end": e.song_end, "clip_id": e.clip_id or None}
+        {
+            "song_start": e.song_start,
+            "song_end": e.song_end,
+            "clip_id": e.clip_id or None,
+        }
         for e in entries
     ]
     # …and the round trip feeds straight back through the real render path.
@@ -289,7 +297,9 @@ def test_editor_document_degrades_when_the_default_proposal_cant_build(
     assert doc["decision_error"] is not None
     assert not [a for a in doc["annotations"] if a["tier"] == DECISION_TIER]
     # everything else in the document still built
-    assert any(a["body_schema_uri"] == CLIP_ALIGNMENT_SCHEMA for a in doc["annotations"])
+    assert any(
+        a["body_schema_uri"] == CLIP_ALIGNMENT_SCHEMA for a in doc["annotations"]
+    )
 
 
 def test_editor_document_tool_degrades_when_the_default_proposal_cant_build(
@@ -358,7 +368,9 @@ def test_editor_document_includes_scores_when_persisted(tmp_path, monkeypatch):
     doc = editor_document(proj)
     schemas = {a["body_schema_uri"] for a in doc["annotations"]}
     assert CLIP_SCORE_TRACK_SCHEMA in schemas
-    score_anns = [a for a in doc["annotations"] if a["body_schema_uri"] == CLIP_SCORE_TRACK_SCHEMA]
+    score_anns = [
+        a for a in doc["annotations"] if a["body_schema_uri"] == CLIP_SCORE_TRACK_SCHEMA
+    ]
     assert {a["body"]["clip_id"] for a in score_anns} == {"A", "B"}
 
 

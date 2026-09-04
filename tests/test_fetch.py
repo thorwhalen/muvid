@@ -188,8 +188,6 @@ def test_an_auth_status_names_the_permission_problem(
     assert not dest.exists()
 
 
-
-
 def test_permission_errors_are_still_caught_as_fetch_errors():
     # A subclass, deliberately: every existing `except FetchError` in the tool layer
     # keeps working, so callers gain the distinction without needing to change.

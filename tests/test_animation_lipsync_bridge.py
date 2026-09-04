@@ -30,7 +30,9 @@ def _make_alignment_store(project_root, shot_start=0.0, shot_end=10.0):
         # Put words inside the shot window
         b.section("verse", shot_start, shot_end, title="verse")
         b.line(
-            "hello world", shot_start + 0.5, shot_start + 2.0,
+            "hello world",
+            shot_start + 0.5,
+            shot_start + 2.0,
             section="verse",
             line_index=0,
             words=[

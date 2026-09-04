@@ -480,7 +480,9 @@ def test_assemble_pins_the_delivery_audio_contract_in_its_args(monkeypatch):
 
     calls = []
     monkeypatch.setattr(F, "require_ffmpeg", lambda *a, **k: None)
-    monkeypatch.setattr(F, "probe", lambda *a, **k: {})  # un-probeable song → encode path
+    monkeypatch.setattr(
+        F, "probe", lambda *a, **k: {}
+    )  # un-probeable song → encode path
     monkeypatch.setattr(F, "run_ffmpeg", lambda args, **k: calls.append(args))
     assemble_music_video(
         [AssemblyCut(0.0, 5.0, "A", 0.0, "/tmp/a.mp4")],
