@@ -140,9 +140,15 @@ def test_a_frame_far_larger_than_the_canvas_is_refused(look):
         # what makes the table an allowlist rather than a list of known levers.
         ("scale=w=1920:h=1080:threads=4", "unclassified", 0),
         ("crop=w=1920:h=1080:keep_aspect=1", "unclassified", 0),
-        # a bare argument after a named one — ffmpeg refuses it too (rc=234,
-        # "No option name near '8000'"), so the gate agreeing is the point.
-        ("scale=w=1920:8000", "discarded shorthand", 0),
+        # a bare argument after a named one. The two builds this fleet runs
+        # DISAGREE about what it means — 9.0.1 discards it (rc=234, "No option
+        # name near '8000'"), 6.1.6 fills the next slot and renders it — so the
+        # gate declines to guess. Dropping that rule is a hole rather than an
+        # over-refusal: the trailing value refills slot 0 and overwrites the
+        # named `w`, so `scale=w=8000:100` reads as 100 and is accepted while
+        # 6.1.6 renders it 8000 px wide.
+        ("scale=w=1920:8000", "builds disagree; refused rather than guessed", 0),
+        ("scale=w=8000:100", "the dangerous direction on ffmpeg 6", 0),
     ],
 )
 def test_an_option_that_moves_the_frame_without_declaring_a_size_is_refused(
@@ -675,7 +681,10 @@ def test_every_muvid_call_to_validate_edl_passes_the_canvas():
             if name != "validate_edl":
                 continue
             sites += 1
-            where = str(path.relative_to(root))
+            # `as_posix`, never `str`: on Windows the separator is a backslash
+            # and the recorded key would never match, so the exemption would
+            # vanish and this test would fail on one runner only (it did).
+            where = path.relative_to(root).as_posix()
             if not any(kw.arg == "canvas" for kw in node.keywords):
                 if where not in CANVASLESS_VALIDATE_EDL_SITES:
                     missing.append(f"{where}:{node.lineno}")

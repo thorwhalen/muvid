@@ -1195,13 +1195,26 @@ def _link_options(
 
     - an argument with no ``=`` is POSITIONAL, filling the next slot of
       ``positional`` (the option list in declaration order, aliases collapsed);
-    - **positional slots stop being offered after the first named argument** —
-      ffmpeg discards the remaining shorthand, so a bare argument after a
-      ``key=value`` one is an error there rather than a later slot. Reading it as
-      a slot would make this function claim a size the binary never sets.
-      Measured on ffmpeg 9.0.1: ``scale=w=100:8000`` and ``scale=w=8000:100``
-      both exit 234 with "No option name near '8000'", while ``scale=100:h=8000``
-      produces 100x8000.
+    - **positional slots stop being offered after the first named argument**, so
+      a bare argument after a ``key=value`` one goes to ``overflow`` and is
+      REFUSED rather than read as a later slot. **Not because ffmpeg agrees —
+      because the two builds this fleet runs do not agree with each other:**
+
+      ==========================  ==============  ================
+      fragment                    ffmpeg 9.0.1    ffmpeg 6.1.6
+      ==========================  ==============  ================
+      ``scale=w=100:8000``        rc=234          **100x8000**
+      ``scale=w=8000:100``        rc=234          **8000x100**
+      ``scale=100:h=8000``        100x8000        100x8000
+      ==========================  ==============  ================
+
+      9.0.1 discards the remaining shorthand ("No option name near '8000'"); 6.1.6
+      fills the next slot. A gate that picked either reading would be wrong on the
+      other binary, and on 6.1.6 it would be wrong in the dangerous direction —
+      reading ``scale=w=8000:100`` as ``{w: 100}`` accepts a fragment that renders
+      8000 px wide. So this is a hole where it is dropped, not merely an
+      over-refusal: without the rule the trailing bare argument refills slot 0 and
+      **overwrites** the named ``w``.
 
     Later assignments win, as ``av_opt_set`` does.
 
@@ -1359,9 +1372,11 @@ def _look_unclassified_options(look: str) -> "list[tuple[str, str, str]]":
             out.append((name, f"the {opt!r} option", why or ""))
         for value, after_named in overflow:
             why = (
-                "ffmpeg refuses it too — a bare argument after a `key=value` one "
-                "is discarded shorthand there (`scale=w=100:8000` exits 234 with "
-                "\"No option name near '8000'\")"
+                "a bare argument after a `key=value` one means DIFFERENT THINGS "
+                "on different ffmpeg builds, so muvid declines to guess: 9.0.1 "
+                'discards it (`scale=w=8000:100` exits 234, "No option name '
+                "near '100'\") while 6.1.6 fills the next slot and renders "
+                "8000x100. Spell every option by name"
                 if after_named
                 else (
                     f"{name} takes {len(spec.positional)} positional arguments in "

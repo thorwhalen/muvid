@@ -471,24 +471,51 @@ def test_the_positional_prefix_is_the_order_the_binary_really_uses(
 
 
 @needs_ffmpeg
-def test_a_bare_argument_after_a_named_one_is_ffmpegs_error_not_a_later_slot(
+def test_a_bare_argument_after_a_named_one_is_refused_because_builds_DISAGREE(
     sweep_source,
 ):
-    """``_link_options``' ``named_seen`` rule, against the binary that decides it.
+    """``_link_options``' ``named_seen`` rule, against the binaries that decide it.
 
-    The rule is a measured fact about libavfilter's ``process_options``, which
-    discards the remaining shorthand once a ``key=value`` argument is seen, and
-    the docstring states it as one. Without a test the claim was carried by prose
-    alone — and reading a trailing bare argument as the NEXT slot would make the
-    gate report a size the binary never sets, which is the one thing a gate must
-    not do.
+    **This test found that the rule is load-bearing, not cosmetic, and corrected
+    what the code said about it.** The first version asserted ffmpeg refuses a
+    bare argument after a ``key=value`` one — measured on 9.0.1, where
+    ``scale=w=100:8000`` exits 234 with *"No option name near '8000'"*. CI, on
+    Ubuntu's ffmpeg 6, returned rc=0. Re-measured on 6.1.6:
 
-    ``scale=100:h=8000`` is the positive control: positionals BEFORE the first
-    named argument really do fill their slots, so the rule is about ordering
-    rather than about refusing bare arguments.
+        ==========================  ==============  ================
+        fragment                    ffmpeg 9.0.1    ffmpeg 6.1.6
+        ==========================  ==============  ================
+        ``scale=w=100:8000``        rc=234          **100x8000**
+        ``scale=w=8000:100``        rc=234          **8000x100**
+        ``scale=100:h=8000``        100x8000        100x8000
+        ==========================  ==============  ================
+
+    So on ffmpeg 6 a bare argument after a named one **does** fill the next slot,
+    and the two builds this fleet runs mean *different things* by the same
+    fragment. That is precisely why the gate refuses it rather than reading it:
+    a gate that picked either interpretation would be wrong on the other binary,
+    and wrong in the dangerous direction on one of them — reading
+    ``scale=w=8000:100`` as ``{w: 100}`` accepts a fragment ffmpeg 6 renders
+    8000 px wide.
+
+    It also makes the ``named_seen`` rule a HOLE rather than an over-refusal
+    where it is dropped: without it the trailing ``100`` refills slot 0 and
+    overwrites ``w=8000``, so the gate reads 100 and accepts. On 9.0.1 that is
+    harmless because ffmpeg refuses anyway; on 6.1.6 it renders.
+
+    ``scale=100:h=8000`` is the positive control — positionals BEFORE the first
+    named argument fill their slots on both builds, so the rule is about
+    ordering, not about refusing bare arguments.
     """
-    assert _produced(sweep_source, "scale=w=100:8000")[0] != 0
-    assert _produced(sweep_source, "scale=w=8000:100")[0] != 0
+    for look in ("scale=w=100:8000", "scale=w=8000:100"):
+        with pytest.raises(ValueError, match="does not classify"):
+            _validate_look_size(0, look, (SRC_W, SRC_H))
+        rc, produced = _produced(sweep_source, look)
+        assert rc != 0 or produced is not None, "neither refused nor rendered?"
+        if rc == 0:
+            # this build fills the slot; the reading the gate declines to make
+            # would have under-read the frame by a factor of 80 or more
+            assert max(produced) >= 8000, produced
     assert _produced(sweep_source, "scale=100:h=8000")[1] == (100, 8000)
 
 

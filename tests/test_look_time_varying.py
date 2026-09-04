@@ -752,6 +752,12 @@ def test_the_mcp_reply_carries_the_findings_the_render_plan_made(tmp_path, monke
     monkeypatch.setattr(F, "require_ffmpeg", lambda *a, **k: None)
     monkeypatch.setattr(F, "probe", lambda *a, **k: {})
     monkeypatch.setattr(F, "run_ffmpeg", lambda args, **k: None)
+    # The edit has a transition, so `assemble_music_video` calls `require_filter`,
+    # which shells out to `ffmpeg -filters` — the one subprocess the other three
+    # stubs miss. Unstubbed it raised FileNotFoundError on a runner with no
+    # ffmpeg, which is a skip-vs-fail question this test has no business asking:
+    # it asserts the reply's shape, not the build's capabilities.
+    monkeypatch.setattr(F, "require_filter", lambda *a, **k: None)
     monkeypatch.setattr(V, "verify_video", lambda *a, **k: [])
     monkeypatch.setattr(V, "failures", lambda c: [])
     monkeypatch.setattr(V, "report", lambda c: "ok")
