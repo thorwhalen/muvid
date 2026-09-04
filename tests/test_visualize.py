@@ -27,6 +27,7 @@ from muvid.visualize.canvas import (
     compose_chain,
     cover_box,
     cover_chain,
+    dim_saturation_lut,
     escape_filter_value,
     lut_filter,
     overlay_chain,
@@ -45,6 +46,7 @@ from muvid.visualize.reactive import (
 from muvid.visualize.visuals import (
     REACTIVE_BG_DIM,
     REACTIVE_BG_SATURATION,
+    SCOPE_BG_DIM,
     VisualContext,
     VisualPlan,
     list_visuals,
@@ -429,6 +431,37 @@ def _video_stream(path: Path) -> dict:
     return json.loads(out.stdout)["streams"][0]
 
 
+def _frame_luma(path: Path, size: tuple[int, int]) -> np.ndarray:
+    """Mean luma of every decoded frame of ``path``.
+
+    The only way to ask whether a render's *picture* moved. A digest answers "are
+    these files identical", which a format conversion alone can make false.
+    """
+    width, height = size
+    out = subprocess.run(
+        [
+            "ffmpeg",
+            "-hide_banner",
+            "-loglevel",
+            "error",
+            "-i",
+            str(path),
+            "-f",
+            "rawvideo",
+            "-pix_fmt",
+            "yuv444p",
+            "-",
+        ],
+        capture_output=True,
+        check=True,
+    ).stdout
+    return (
+        np.frombuffer(out, np.uint8)
+        .reshape(-1, 3, height, width)[:, 0]
+        .mean(axis=(1, 2))
+    )
+
+
 @needs_ffmpeg
 def test_still_render_is_16_9_yuv420p_and_as_long_as_the_song(song_and_cover, tmp_path):
     from muvid.visualize import render_audio_video
@@ -807,6 +840,28 @@ def test_the_flashing_spectrum_renders_and_changes_the_picture(click_track, tmp_
     }
     assert digests["on"] != digests["off"], "the flash changed nothing in the picture"
 
+    # ...and "not identical" is a very weak claim, which is the muvid#72 lesson:
+    # adding a `lutyuv` to a chain that ends in `rgba` forces a format conversion, so
+    # the two files differ whether or not a single command ever lands. Read the frames
+    # and require the difference to follow the ENVELOPE — which is where the beats
+    # really are. Guessing them from the click period is off by one: the onset is a
+    # RISE in loudness, so it registers on the frame before the click as well.
+    on, off = (_frame_luma(renders[k].path, (320, 180)) for k in ("on", "off"))
+    envelope = onset_envelope(click_track, fps=CLICK_FPS, duration=float(CLICK_SECONDS))
+    frames = min(len(on), len(off), len(envelope))
+    delta = on[:frames] - off[:frames]
+    pulse = np.array(envelope[:frames])
+    lit, dark = delta[pulse >= 0.9], np.abs(delta[pulse == 0])
+    assert lit.size and dark.size, "the envelope has no pulses, or no rest between them"
+    assert lit.min() > 20, (
+        f"at full pulse the flash brightened the frame by only {lit.round(2).tolist()} "
+        "out of 255. It is supposed to be the loudest thing in the picture."
+    )
+    assert dark.max() < 0.5, (
+        f"frames the envelope calls silent moved by up to {dark.max():.2f} with the "
+        "flash on. At envelope 0 the LUT is the identity and must not touch a pixel."
+    )
+
 
 # --------------------------------------------------------------------------
 # The GPL `eq` is gone; the substitution is measured, not asserted (muvid#69)
@@ -907,25 +962,197 @@ def test_the_script_addresses_the_filter_the_fragment_declares(click_track, tmp_
     )
 
 
+# --------------------------------------------------------------------------
+# The flash's sendcmd target reaches the flash, and nothing else (muvid#72)
+# --------------------------------------------------------------------------
+#
+# muvid#72 reported the flash as never having fired, on the strength of a script
+# targeting `flash`. That is not the address muvid sends: `flash_filter` derives the
+# target from the filter it emits, which makes it `lutyuv@flash` — the instance name,
+# which `avfilter_graph_send_command` does match. Measured below, and on the historical
+# `eq@flash` form too, the flash has always fired.
+#
+# What was true is the other half of that issue: nothing asserted the flash moves a
+# pixel. The coverage pinned the generated STRINGS, and a string cannot tell a
+# reachable address from an unreachable one — every one of those assertions passes
+# against a target that dispatches to nothing. So the guard has to be a render.
+#
+# The graph below carries BOTH `lutyuv` filters the real composed graph does: the
+# background plate's (unlabelled) and the flash's (`lutyuv@flash`), side by side.
+# Per-frame mean luma, one full-strength pulse on frame 5, identical on ffmpeg 9.0.1
+# and 6.1.6:
+#
+#     target          plate half                    flash half
+#     lutyuv@flash    flat 33.0                     126.0 -> 189.0 on the pulse
+#     lutyuv          33 -> 67, and 130 on the      flat 126.0
+#                     pulse (its dim REPLACED)
+#     flash           flat 33.0                     flat 126.0
+#
+# The type name is not merely indiscriminate, which is what muvid#72 expected of it:
+# `sendcmd` dispatches with `AVFILTER_CMD_FLAG_ONE`, so it reaches the FIRST match in
+# graph order and stops. The plate takes the flash's commands and the flash takes
+# none. `all` is not a third option either — it hands `y <lut expression>` to every
+# commandable filter, `background_chain`'s `crop` included, whose `y` is a geometry
+# expression; both builds segfault (exit 139). That one is left out of the
+# parametrisation deliberately: a test whose passing condition is "ffmpeg crashes"
+# breaks the day ffmpeg stops crashing.
+
+FLASH_PROBE_FPS = 10
+FLASH_PROBE_FRAMES = 10
+FLASH_PROBE_PULSE = 5
+FLASH_PROBE_HALF = (160, 120)
+
+#: Static on purpose. `testsrc2` animates, and against a moving plate "the plate did
+#: not move" is a claim this instrument could not make.
+FLASH_PROBE_PLATE_SOURCE = "color=c=#4a3050:s=300x300"
+
+
+def _flash_probe(target: str, tmp_path: Path) -> tuple[np.ndarray, np.ndarray]:
+    """Per-frame mean luma of (the background plate, the flash), driven by ``target``.
+
+    Both halves of one `hstack`, so a single render answers both questions and the
+    two are compared under exactly the same conditions.
+    """
+    width, height = FLASH_PROBE_HALF
+    duration = FLASH_PROBE_FRAMES / FLASH_PROBE_FPS
+    script = _write_flash_script(
+        [1.0 if i == FLASH_PROBE_PULSE else 0.0 for i in range(FLASH_PROBE_FRAMES)],
+        tmp_path / f"probe-{target.replace('@', '_')}.cmd",
+        fps=FLASH_PROBE_FPS,
+        target=target,
+        brightness=FLASH_BRIGHTNESS,
+        saturation=FLASH_SATURATION,
+    )
+    at_rest = lut_filter(brightness_saturation_lut(), label=DEFAULT_FLASH_LABEL)
+    graph = ";".join(
+        [
+            f"{FLASH_PROBE_PLATE_SOURCE}:r={FLASH_PROBE_FPS}:d={duration}[src]",
+            background_chain(FLASH_PROBE_HALF, CoverLayout(), src="src", out="plate"),
+            f"color=c=gray:s={width}x{height}:r={FLASH_PROBE_FPS}:d={duration},"
+            f"sendcmd=f={escape_filter_value(str(script))},{at_rest}[lit]",
+            "[plate][lit]hstack=inputs=2[v]",
+        ]
+    )
+    out = subprocess.run(
+        [
+            "ffmpeg",
+            "-hide_banner",
+            "-loglevel",
+            "error",
+            "-filter_complex",
+            graph,
+            "-map",
+            "[v]",
+            "-frames:v",
+            str(FLASH_PROBE_FRAMES),
+            "-f",
+            "rawvideo",
+            "-pix_fmt",
+            "yuv444p",
+            "-",
+        ],
+        capture_output=True,
+        check=True,
+    ).stdout
+    luma = np.frombuffer(out, np.uint8).reshape(-1, 3, height, 2 * width)[:, 0]
+    return (
+        luma[:, :, :width].mean(axis=(1, 2)),
+        luma[:, :, width:].mean(axis=(1, 2)),
+    )
+
+
+def _shipped_flash_target(click_track, tmp_path) -> str:
+    """The target the SHIPPED code writes — read out of its own script, not retyped."""
+    assert flash_filter(
+        click_track, fps=CLICK_FPS, duration=float(CLICK_SECONDS), workdir=tmp_path
+    ), "no fragment to inspect — this build cannot flash at all"
+    script = (tmp_path / f"{DEFAULT_FLASH_LABEL}.cmd").read_text().splitlines()
+    targets = {SENDCMD_LINE.match(line)["target"] for line in script}
+    assert len(targets) == 1, targets
+    return targets.pop()
+
+
+@needs_ffmpeg_filter(*FLASH_FILTERS, "gblur", "hstack")
+def test_the_flash_brightens_the_frame_on_the_pulse_and_nowhere_else(
+    click_track, tmp_path
+):
+    """The assertion muvid#72 asked for: render a pulse, read the luma, watch it move."""
+    plate, flash = _flash_probe(_shipped_flash_target(click_track, tmp_path), tmp_path)
+
+    rest = flash[0]
+    assert flash[FLASH_PROBE_PULSE] - rest > 40, (
+        f"the pulse frame came out at {flash[FLASH_PROBE_PULSE]:.1f} against a "
+        f"resting {rest:.1f}. The command dispatched to nothing — ffmpeg exits 0 "
+        "either way, so only the pixels can say so."
+    )
+    quiet = np.delete(flash, FLASH_PROBE_PULSE)
+    assert np.ptp(quiet) < 0.5, (
+        f"the unpulsed frames are not all at rest: {quiet.round(2).tolist()}. At "
+        "envelope 0 the LUT is the identity and must not touch a pixel."
+    )
+    assert np.ptp(plate) < 0.5, (
+        f"the background plate moved ({plate.round(2).tolist()}) while the flash "
+        "played. The flash's script must not reach the plate's own lutyuv."
+    )
+
+
+@needs_ffmpeg_filter(*FLASH_FILTERS, "gblur", "hstack")
+@pytest.mark.parametrize("wrong", ["lutyuv", DEFAULT_FLASH_LABEL])
+def test_the_flash_target_is_neither_the_type_name_nor_the_bare_label(
+    click_track, tmp_path, wrong
+):
+    """The two spellings muvid#72 weighed, and what each of them actually does.
+
+    This is the control for the test above: it shows the instrument can see both
+    failures, so "the plate did not move" there means something.
+    """
+    assert _shipped_flash_target(click_track, tmp_path) != wrong
+    plate, flash = _flash_probe(wrong, tmp_path)
+    if wrong == "lutyuv":
+        # The type name reaches the FIRST matching filter and stops there.
+        assert np.ptp(plate) > 10, (
+            f"targeting the type name left the plate alone ({plate.round(2).tolist()}) "
+            "— then this control shows nothing and neither does the test above."
+        )
+        assert np.ptp(flash) < 0.5, (
+            f"targeting the type name also drove the flash ({flash.round(2).tolist()}); "
+            "AVFILTER_CMD_FLAG_ONE says only the first match is dispatched to."
+        )
+    else:
+        assert np.ptp(plate) < 0.5 and np.ptp(flash) < 0.5, (
+            f"the bare label reached something: plate {plate.round(2).tolist()}, "
+            f"flash {flash.round(2).tolist()}. It is not an address ffmpeg resolves, "
+            "which is the whole of muvid#72."
+        )
+
+
 @needs_ffmpeg_filter("eq", "lutyuv")
 @pytest.mark.parametrize(
-    "dim,saturation",
+    "saturation",
     [
-        (CoverLayout().dim, CoverLayout().saturation),  # the still-cover default
-        (REACTIVE_BG_DIM, REACTIVE_BG_SATURATION),  # every reactive visual
-        (0.55, REACTIVE_BG_SATURATION),  # `scope`'s darker frame
+        CoverLayout().saturation,  # the still-cover default
+        REACTIVE_BG_SATURATION,  # every reactive visual, and `scope`
     ],
 )
-def test_the_background_lut_reproduces_the_gpl_eq_it_replaced(dim, saturation):
-    """`background_chain`'s darken/desaturate, at the constants that ship."""
+def test_the_background_desaturation_still_reproduces_the_gpl_eq_it_replaced(
+    saturation,
+):
+    """Only the CHROMA half is still `eq`'s arithmetic — and it has to stay so.
+
+    The luma half deliberately is not, since muvid#70: `eq`'s brightness is an
+    additive offset, and the background wanted a DIM. Nothing about that decision
+    touches saturation, so a drift there would be an unnoticed second look change
+    riding along with the intended one.
+    """
+    exprs = dim_saturation_lut(saturation=saturation)
     worst = _max_plane_diff(
-        f"eq=brightness=-{dim}:saturation={saturation}",
-        brightness_saturation_lut(brightness=-dim, saturation=saturation),
+        f"eq=saturation={saturation}",
+        {k: v for k, v in exprs.items() if k in "uv"},
     )
     assert worst <= EQ_LUT_TOLERANCE_LSB, (
-        f"dim={dim} saturation={saturation}: the lutyuv background is {worst} LSB "
-        f"from the eq it replaced (bound {EQ_LUT_TOLERANCE_LSB}). That is a look "
-        "change, not a substitution."
+        f"saturation={saturation}: the lutyuv background chroma is {worst} LSB from "
+        f"the eq it replaced (bound {EQ_LUT_TOLERANCE_LSB}). That is a look change, "
+        "not a substitution."
     )
 
 
@@ -1002,6 +1229,283 @@ def test_the_chroma_pivot_is_127_5_and_not_128():
         f"the shipped chroma pivot gives mean error {ours:.3f} against eq, and "
         f"pivoting about 128 gives {naive:.3f}. 127.5 is supposed to be the "
         "better one — check _CHROMA_PIVOT."
+    )
+
+
+# --------------------------------------------------------------------------
+# The plate's dim SCALES the cover, it does not subtract from it (muvid#70)
+# --------------------------------------------------------------------------
+#
+# Subtracting a constant does not dim a picture: it slides the histogram down and
+# clamps everything under the offset to the floor, so the plate's shadows were not
+# darkened, they were deleted. Measured through the shipped chain over four
+# photographs, ffmpeg 9.0.1 and 6.1.6 agreeing to the digit:
+#
+#     site      additive dim   at display black   distinct display levels
+#     still         0.25        8.6% -  69.7%            89 - 136
+#     reactive      0.50       65.3% -  99.1%            25 -  72
+#     scope         0.55       72.8% -  99.6%            12 -  59
+#
+# Two things about the instrument, both of which the issue's own numbers predate
+# and both of which make the damage worse than it reported:
+#
+# * the plate's luma plane is LIMITED range — every source measured floors at 16 or
+#   above — so display black is `Y <= 16`, not `Y == 0`. Counting code zero
+#   under-reports the crush by everything between 1 and 16.
+# * therefore a multiplicative dim has to scale about that floor. `val * gain`
+#   pivots on a black that is not in the data and pushes the whole picture under
+#   the floor, which the next conversion to RGB clamps away: at the reactive
+#   constant it leaves the plate 100% black. The naive multiplicative form
+#   reproduces the bug it replaces, which is why `_DIM_PIVOT` exists.
+
+#: The plate is rendered at this size from a square source, mirroring the real use
+#: (cover art is square, the canvas is 16:9). Small enough to render in a moment,
+#: big enough that `gblur=sigma=30` is the same relative blur as it is at 1080p.
+PLATE_SIZE = (480, 270)
+
+#: Deterministic, structured, and bit-reproducible on both binaries — measured, not
+#: assumed. Two of them, because a statistic that agrees on both is one a swscale
+#: difference on some other machine is unlikely to have invented.
+PLATE_SOURCES = (
+    "testsrc2=s=600x600:r=10:d=0.1",
+    "mandelbrot=s=600x600:r=10:end_pts=1",
+)
+
+#: Broadcast black and white. `lutyuv`'s own `minval`/`maxval`, measured as 16/235
+#: on ffmpeg 9.0.1 and 6.1.6, inside this module's plate chain rather than in a
+#: toy probe.
+BROADCAST_BLACK, BROADCAST_WHITE = 16, 235
+
+#: (old additive dim, shipped multiplicative dim, saturation) per site. The old
+#: values are spelled out because they are gone from the code and this is the
+#: comparison the whole change is about — a control that must still crush.
+DIM_SITES = {
+    "still": (0.25, CoverLayout().dim, CoverLayout().saturation),
+    "reactive": (0.50, REACTIVE_BG_DIM, REACTIVE_BG_SATURATION),
+    "scope": (0.55, SCOPE_BG_DIM, REACTIVE_BG_SATURATION),
+}
+
+
+def _plate_codes(source: str, exprs: dict[str, str]) -> np.ndarray:
+    """The plate's raw luma CODES, from the shipped chain with ``exprs`` as its LUT.
+
+    Goes through `background_chain` itself rather than an isolated `lutyuv`, so the
+    scale, the crop and the blur in front of the LUT are the ones that ship.
+    """
+    layout = CoverLayout()
+    chain = background_chain(PLATE_SIZE, layout, src="in", out="out")
+    shipped = lut_filter(
+        dim_saturation_lut(dim=layout.dim, saturation=layout.saturation)
+    )
+    assert shipped in chain, "background_chain no longer builds its LUT this way"
+    vf = (
+        chain.replace(shipped, lut_filter(exprs))
+        .replace("[in]", "")
+        .replace("[out]", "")
+    )
+    width, height = PLATE_SIZE
+    out = subprocess.run(
+        [
+            "ffmpeg",
+            "-hide_banner",
+            "-loglevel",
+            "error",
+            "-f",
+            "lavfi",
+            "-i",
+            source,
+            "-vf",
+            vf,
+            "-frames:v",
+            "1",
+            "-f",
+            "rawvideo",
+            "-pix_fmt",
+            "yuv444p",
+            "-",
+        ],
+        capture_output=True,
+        check=True,
+    ).stdout
+    return np.frombuffer(out, np.uint8).reshape(3, height, width)[0].astype(float)
+
+
+def _plate_luma(source: str, exprs: dict[str, str]) -> np.ndarray:
+    """What the screen shows: the plate's codes expanded from limited to full range."""
+    span = BROADCAST_WHITE - BROADCAST_BLACK
+    codes = _plate_codes(source, exprs)
+    return np.clip(np.round((codes - BROADCAST_BLACK) * 255 / span), 0, 255)
+
+
+def _additive_exprs(dim: float, saturation: float) -> dict[str, str]:
+    """The chain that shipped before muvid#70 — the control this is measured against."""
+    return brightness_saturation_lut(brightness=-dim, saturation=saturation)
+
+
+def _pivot_zero_exprs(dim: float, saturation: float) -> dict[str, str]:
+    """The obvious multiplicative form, and the wrong one: scaling about zero."""
+    return {
+        **dim_saturation_lut(dim=dim, saturation=saturation),
+        "y": f"clip(val*{1 - dim:g},0,255)",
+    }
+
+
+def _at_black(luma: np.ndarray) -> float:
+    return float((luma == 0).mean())
+
+
+@needs_ffmpeg_filter("lutyuv", "gblur")
+@pytest.mark.parametrize("source", PLATE_SOURCES)
+@pytest.mark.parametrize("site", list(DIM_SITES))
+def test_the_dim_darkens_the_plate_instead_of_deleting_its_shadows(site, source):
+    old, new, saturation = DIM_SITES[site]
+    undimmed = _plate_luma(source, dim_saturation_lut(saturation=saturation))
+    additive = _plate_luma(source, _additive_exprs(old, saturation))
+    shipped = _plate_luma(source, dim_saturation_lut(dim=new, saturation=saturation))
+
+    # The control first: the instrument has to be able to SEE the defect, or the
+    # assertion below passes for reasons that have nothing to do with the fix.
+    assert _at_black(additive) > 0.05, (
+        f"{site}/{source}: the additive dim this replaces put only "
+        f"{100 * _at_black(additive):.2f}% of the plate at display black, so this "
+        "source cannot show the crush and the comparison proves nothing."
+    )
+    assert _at_black(shipped) < 0.005, (
+        f"{site}/{source}: {100 * _at_black(shipped):.2f}% of the plate sits at "
+        f"display black (the additive dim it replaces: "
+        f"{100 * _at_black(additive):.2f}%). A dim scales shadows; it does not "
+        "delete them."
+    )
+    # ...and the structure is still there rather than merely off the floor. A
+    # scaling multiplies the plate's CONTRAST by the same gain it multiplies its
+    # level by, so std/std is the gain; clipping destroys contrast at a rate that
+    # tracks nothing (measured here: 2.7x to 7.3x the nominal gain, and varying by
+    # source, because it depends on how much of the picture fell off the bottom).
+    gain = 1 - new
+    spread = shipped.std() / undimmed.std()
+    assert 0.90 * gain <= spread <= 1.45 * gain, (
+        f"{site}/{source}: the plate's contrast is {spread:.4f} of the undimmed "
+        f"plate's, where a scaling by {gain:.3f} would give {gain:.3f} (the "
+        f"additive dim it replaces gives {additive.std() / undimmed.std():.4f})."
+    )
+
+
+@needs_ffmpeg_filter("lutyuv", "gblur")
+@pytest.mark.parametrize("source", PLATE_SOURCES)
+@pytest.mark.parametrize("site", list(DIM_SITES))
+def test_the_dim_pivots_on_the_broadcast_black_and_not_on_zero(site, source):
+    """`val * gain` is the obvious multiplicative form, and it is the wrong one.
+
+    The plate's luma is limited range, so zero is not its black; scaling about zero
+    drives the picture under the floor and the next RGB conversion clamps it away.
+    Measured on ffmpeg 9.0.1 and 6.1.6: at the reactive and scope constants the
+    naive form leaves the plate *entirely* at display black.
+    """
+    _, new, saturation = DIM_SITES[site]
+
+    # A black source, in CODES rather than display luma: below the broadcast floor
+    # everything already reads as black, so only the codes can tell "at the floor"
+    # from "far under it" — and only a source that contains black can show that a
+    # dim leaves it where it is. Every structured source has its own floor, which is
+    # why this half does not use one.
+    black = "color=c=black:s=600x600:r=10:d=0.1"
+    kept = _plate_codes(black, dim_saturation_lut(dim=new, saturation=saturation))
+    dropped = _plate_codes(black, _pivot_zero_exprs(new, saturation))
+    assert kept.max() == kept.min() == BROADCAST_BLACK, (
+        f"{site}: black comes out of the plate at code {kept.min():.0f}..."
+        f"{kept.max():.0f} instead of staying at the broadcast black "
+        f"{BROADCAST_BLACK}. A dim scales about the black the picture HAS; going "
+        "under the floor is how the shadows get clamped away. Check _DIM_PIVOT."
+    )
+    assert dropped.max() < BROADCAST_BLACK, (
+        f"{site}: scaling about zero was supposed to push black under the floor and "
+        f"left it at {dropped.max():.0f} — the control does not control anything."
+    )
+
+    # ...and on a real picture that costs the whole lower end of the plate.
+    shipped = _plate_codes(source, dim_saturation_lut(dim=new, saturation=saturation))
+    naive = _plate_codes(source, _pivot_zero_exprs(new, saturation))
+    assert shipped.mean() > naive.mean(), (
+        f"{site}/{source}: pivoting on zero gives mean {naive.mean():.2f} and the "
+        f"shipped LUT gives {shipped.mean():.2f} — they should not agree, and the "
+        "shipped one is the brighter."
+    )
+
+
+#: What the retune bought, per site: the plate's mean display luma as a fraction of
+#: the undimmed plate's. Measured on both sources and both binaries — they agree to
+#: three digits (still .3460/.3459, reactive .0491/.0504, scope .0301/.0303), which
+#: is what makes it pinnable at all. It falls a little short of the nominal
+#: `1 - dim` because an eight-bit plate at a gain of a few percent spans under ten
+#: codes and the double rounding (LUT, then the expansion to full range) costs the
+#: rest; that shortfall is why the band is one-sided and not symmetric.
+DIM_GAIN_BAND = {
+    "still": (0.30, 0.38),
+    "reactive": (0.043, 0.056),
+    "scope": (0.026, 0.034),
+}
+
+
+@needs_ffmpeg_filter("lutyuv", "gblur")
+@pytest.mark.parametrize("source", PLATE_SOURCES)
+@pytest.mark.parametrize("site", list(DIM_SITES))
+def test_the_shipped_dims_are_the_ones_that_were_measured(site, source):
+    """The three constants are a MEASUREMENT, and this is what says so.
+
+    Each was solved for by rendering the additive plate that shipped and the
+    multiplicative one replacing it over four photographs and matching the mean
+    display luma; pooled, the retune lands within 3.1% of where the offset left it.
+    Photographs cannot be committed, so what is pinned here is the *gain* the
+    constant produces on a deterministic source — which is the same statistic, one
+    corpus removed. Move a constant without re-measuring and this fails.
+    """
+    _, new, saturation = DIM_SITES[site]
+    undimmed = _plate_luma(source, dim_saturation_lut(saturation=saturation))
+    shipped = _plate_luma(source, dim_saturation_lut(dim=new, saturation=saturation))
+    gain = shipped.mean() / undimmed.mean()
+    lo, hi = DIM_GAIN_BAND[site]
+    assert lo <= gain <= hi, (
+        f"{site}/{source}: the plate comes out at {gain:.4f} of the undimmed one, "
+        f"outside the measured band {lo}-{hi}. The dim is {new}; if that is a "
+        "deliberate new value, re-measure it against the additive plate it replaced "
+        "and move the band with it."
+    )
+    # ...and the constant is what produces it: the gain a scaling applies IS 1 - dim,
+    # short only by the quantisation above. A band alone would still pass if the dim
+    # stopped reaching the pixels.
+    assert 0.75 * (1 - new) <= gain <= 1.05 * (1 - new), (
+        f"{site}/{source}: dim={new} should scale the plate by {1 - new:.4f}; the "
+        f"rendered plate is at {gain:.4f} of the undimmed one."
+    )
+
+
+def test_every_reactive_background_dim_is_a_named_constant():
+    """muvid#70 named three constants to retune. There were four sites.
+
+    `spectrum_visual` passed a bare `bg_dim=0.5` that happened to equal
+    REACTIVE_BG_DIM *and* its own default, so it was invisible in a grep for the
+    constant and a no-op in the diff — and retuning REACTIVE_BG_DIM would silently
+    have left the spectrum plate on the old value. Parsed rather than grepped, and
+    read from the SOURCE, so a new site is caught by structure.
+    """
+    import ast
+
+    source = (
+        Path(__file__).parents[1] / "muvid" / "visualize" / "visuals.py"
+    ).read_text()
+    literals = [
+        node
+        for node in ast.walk(ast.parse(source))
+        if isinstance(node, ast.Call)
+        for kw in node.keywords
+        if kw.arg == "bg_dim" and isinstance(kw.value, ast.Constant)
+        for node in [kw.value]
+    ]
+    assert not literals, (
+        "visuals.py passes bg_dim as a bare number at line(s) "
+        f"{sorted(n.lineno for n in literals)}: {[n.value for n in literals]}. "
+        "Name it, or the next retune will miss this site the way muvid#70 nearly "
+        "missed the spectrum one."
     )
 
 

@@ -50,6 +50,27 @@ FLASH_SATURATION = 0.8
 
 #: Default ``sendcmd`` label for the pulsing lookup table. Distinct per flash, so
 #: one filtergraph can carry several without their commands crossing.
+#:
+#: The label is NOT the ``sendcmd`` target, and reading it as one is how muvid#72
+#: came to report the flash as inert. ``avfilter_graph_send_command`` matches three
+#: things and a bare label is none of them, so the target is the *instance* name —
+#: the whole ``lutyuv@flash`` spelling, which :func:`flash_filter` derives from the
+#: filter it emits rather than composing a second time. Measured on ffmpeg 9.0.1 and
+#: 6.1.6, driving a grey source with one full-strength pulse on frame 5 in a graph
+#: that also carries `background_chain`'s own unlabelled ``lutyuv``:
+#:
+#:     target          the plate         the flash
+#:     lutyuv@flash    unmoved           126 -> 189   <- what muvid sends
+#:     lutyuv          33 -> 67 -> 130   unmoved
+#:     flash           unmoved           unmoved
+#:     all             ffmpeg SIGSEGVs on both builds
+#:
+#: The type name is worse than the "it would flash the plate too" muvid#72 predicted:
+#: ``sendcmd`` dispatches with ``AVFILTER_CMD_FLAG_ONE``, so it reaches only the FIRST
+#: match in graph order — the plate — and the flash stops firing altogether. ``all``
+#: hands ``y <lut expression>`` to every commandable filter in the graph, including
+#: the ``crop`` in `background_chain`, whose ``y`` is a geometry expression; it fails
+#: to parse and the process dies (exit 139, both builds).
 DEFAULT_FLASH_LABEL = "flash"
 
 #: The ffmpeg filters a flash chain is built from. Both are core filters, but a
@@ -223,10 +244,14 @@ def flash_filter(
         return ""
     at_rest = lut_filter(brightness_saturation_lut(), label=label)
     # The sendcmd target is DERIVED from the filter the fragment declares, never
-    # spelled a second time. A command addressed to a filter that is not in the
-    # graph is completely silent — ffmpeg exits 0, logs nothing even at `warning`,
-    # and simply never flashes — so the two spellings drifting apart would cost
-    # the effect with nothing anywhere to say so.
+    # spelled a second time — and what it derives is the whole `lutyuv@flash`
+    # instance name, not the bare label (see DEFAULT_FLASH_LABEL for the three
+    # spellings measured and what each one does). A command addressed to a filter
+    # that is not in the graph is completely silent — ffmpeg exits 0, logs nothing
+    # even at `warning`, and simply never flashes — so the two spellings drifting
+    # apart would cost the effect with nothing anywhere to say so. That is why the
+    # guard is a RENDER: a string test cannot tell a reachable address from an
+    # unreachable one, which is exactly how muvid#72 got its answer.
     target = at_rest.split("=", 1)[0]
     script = _write_flash_script(
         envelope,

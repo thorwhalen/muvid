@@ -50,6 +50,16 @@ white→accent; `""` keeps the visualizer's own colour), `bg_dim`, `bg_saturatio
 `gain`/`overlap`/`color`/`flash`/`flash_brightness`/`flash_saturation` for
 spectrum, `colors`/`mode` for waves/bars).
 
+**`bg_dim` is a SCALING, and the numbers moved because of it** (muvid#70). It used
+to subtract `dim * 255` from the plate's luma, which does not dim a picture — it
+clamps everything under the offset to black, and at the reactive defaults that
+deleted 57–99% of the plate. It now multiplies luma by `1 - dim` about the
+broadcast black, so a shadow gets darker instead of disappearing. The two forms are
+not comparable at the same number: the shipped values grew from 0.25/0.5/0.55 to
+**0.65** (`CoverLayout.dim`, the still cover), **0.945** (`REACTIVE_BG_DIM`) and
+**0.965** (`SCOPE_BG_DIM`) to land the plate at the same mean brightness. A value
+carried over from an older recipe will come out far too bright.
+
 ## Beat-reactivity — the flash seam
 
 **`spectrum` pulses on every onset, and it does so BY DEFAULT.** Nothing else in

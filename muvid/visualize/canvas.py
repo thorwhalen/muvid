@@ -48,6 +48,10 @@ class CoverLayout:
             frame) or ``"color"`` (a flat :attr:`background_color`).
         blur_sigma: Gaussian blur strength for the ``"blur"`` background.
         dim: How much to darken the background, 0 (unchanged) to 1 (black).
+            Multiplicative — the background's luma is *scaled* by ``1 - dim``
+            about black, so a shadow gets darker rather than being deleted. See
+            :func:`dim_saturation_lut`; the constant is not comparable with the
+            additive offset that preceded it (muvid#70).
         saturation: Background saturation (< 1 desaturates, so the sharp cover
             stays the focal point).
         cover_fraction: How much of the frame the sharp cover fills. The cover
@@ -63,7 +67,11 @@ class CoverLayout:
 
     background: str = "blur"
     blur_sigma: float = 30.0
-    dim: float = 0.25
+    #: Measured, not chosen: the multiplicative dim that lands the plate's mean
+    #: DISPLAY luma where the additive `0.25` left it, pooled over four
+    #: photographs (muvid#70). The two forms are not comparable at the same
+    #: nominal value — see :func:`dim_saturation_lut`.
+    dim: float = 0.65
     saturation: float = 0.8
     cover_fraction: float = 0.92
     cover_alpha: float = 1.0
@@ -184,6 +192,22 @@ _FULL_RANGE = (0, 255)
 #: once, here — and pinned by a test that measures the mean, not the max.
 _CHROMA_PIVOT = 127.5
 
+#: The pivot the DIM scales luma about: ``lutyuv``'s own ``minval``, which is the
+#: broadcast black level (measured: 16 on both ffmpeg 9.0.1 and 6.1.6, inside this
+#: module's own plate chain — not just in a toy probe).
+#:
+#: This is the one place :data:`_FULL_RANGE`'s warning does NOT apply, and the
+#: distinction is the whole fix. That warning is about reproducing ``eq``, whose
+#: clip bounds are 0–255. A dim is not a clip: it is a scaling, and a scaling needs
+#: the pivot the picture's black actually sits on. The plate's luma plane is
+#: LIMITED range — every measured source floors at 16 or above — so ``val * gain``
+#: pivots on a black that is not in the data and pushes the whole picture under the
+#: floor, which the next conversion to RGB clamps away. Measured on a real cover at
+#: ``dim=0.9``: pivoting on 0 leaves 78.7% of the plate at display black over 6
+#: distinct levels; pivoting here leaves 8.4% over 20. The naive multiplicative
+#: form reproduces the bug it was meant to fix.
+_DIM_PIVOT = "minval"
+
 
 def brightness_saturation_lut(
     *, brightness: float = 0.0, saturation: float = 1.0
@@ -216,7 +240,7 @@ def brightness_saturation_lut(
         ('clip(val+0,0,255)', 'clip((val-127.5)*1+127.5,0,255)')
     """
     lo, hi = _FULL_RANGE
-    chroma = f"clip((val-{_CHROMA_PIVOT:g})*{saturation:g}+{_CHROMA_PIVOT:g},{lo},{hi})"
+    chroma = _chroma_expr(saturation)
     return {
         "y": f"clip(val{brightness * hi:+g},{lo},{hi})",
         "u": chroma,
@@ -224,8 +248,63 @@ def brightness_saturation_lut(
     }
 
 
+def _chroma_expr(saturation: float) -> str:
+    """``lutyuv`` u/v expression scaling chroma about :data:`_CHROMA_PIVOT`.
+
+    Both LUT builders need it and it is written once: the two are already the two
+    halves of one look, and a second copy of ``eq``'s saturation arithmetic is
+    exactly how the darkened plate and the beat flash would start desaturating by
+    different amounts.
+    """
+    lo, hi = _FULL_RANGE
+    return f"clip((val-{_CHROMA_PIVOT:g})*{saturation:g}+{_CHROMA_PIVOT:g},{lo},{hi})"
+
+
+def dim_saturation_lut(*, dim: float = 0.0, saturation: float = 1.0) -> dict[str, str]:
+    """``lutyuv`` y/u/v expressions that DARKEN luma and desaturate chroma.
+
+    The sibling of :func:`brightness_saturation_lut`, and deliberately not the same
+    arithmetic. ``eq``'s brightness — which this replaces at the one site that wanted
+    to *darken* rather than to *shift* — is an additive offset, and subtracting a
+    constant does not dim a picture: it slides the histogram down and clamps
+    everything below the offset to the floor. The plate's shadows did not get darker,
+    they were deleted, and at the reactive constants that took 57–99% of the plate to
+    display black (muvid#70).
+
+    So luma is *scaled* by ``1 - dim`` about :data:`_DIM_PIVOT`, which preserves the
+    order of every pair of pixels — a shadow stays darker than what is next to it
+    instead of joining it at black. Chroma is untouched by the change and still goes
+    through :func:`_chroma_expr`, so the desaturation half remains ``eq``'s.
+
+    ``dim`` therefore means something different from the additive offset it replaces,
+    and the constants that ship were re-measured rather than converted: see
+    :class:`CoverLayout` and :mod:`muvid.visualize.visuals`.
+
+    Args:
+        dim: How much to darken, 0 (unchanged) to 1 (black).
+        saturation: Chroma scaling about neutral. ``1`` is a no-op.
+
+    Examples:
+        >>> lut = dim_saturation_lut(dim=0.65, saturation=0.8)
+        >>> lut["y"]
+        'clip((val-minval)*0.35+minval,0,255)'
+        >>> lut["u"] == lut["v"] == brightness_saturation_lut(saturation=0.8)["u"]
+        True
+        >>> dim_saturation_lut()["y"]  # 0 is a no-op, and reads as one
+        'clip((val-minval)*1+minval,0,255)'
+    """
+    lo, hi = _FULL_RANGE
+    chroma = _chroma_expr(saturation)
+    gain = 1 - dim
+    return {
+        "y": f"clip((val-{_DIM_PIVOT})*{gain:g}+{_DIM_PIVOT},{lo},{hi})",
+        "u": chroma,
+        "v": chroma,
+    }
+
+
 def lut_filter(exprs: dict[str, str], *, label: str = "") -> str:
-    r"""A ``lutyuv`` filter from :func:`brightness_saturation_lut`'s expressions.
+    r"""A ``lutyuv`` filter from either LUT builder's expressions.
 
     The expressions contain ``,``, which the *filtergraph* parser reads as "next
     filter", so every one goes through :func:`escape_filter_value` — the same
@@ -287,9 +366,10 @@ def background_chain(
 ) -> str:
     """Filter chain turning cover stream ``src`` into a full-frame background.
 
-    The darken/desaturate step is ``lutyuv``, not ``eq``: see
-    :func:`brightness_saturation_lut` for why (``eq`` is GPL-only) and for the
-    exact arithmetic it reproduces.
+    The darken/desaturate step is ``lutyuv``, not ``eq``: ``eq`` is GPL-only
+    (muvid#69). Its luma half is no longer ``eq``'s arithmetic either — a dim has
+    to scale, not subtract, or the plate's shadows are deleted rather than
+    darkened. See :func:`dim_saturation_lut`.
     """
     width, height = size
     if layout.background == "color":
@@ -298,9 +378,7 @@ def background_chain(
             f"drawbox=x=0:y=0:w={width}:h={height}:"
             f"color={layout.background_color}:t=fill[{out}]"
         )
-    lut = lut_filter(
-        brightness_saturation_lut(brightness=-layout.dim, saturation=layout.saturation)
-    )
+    lut = lut_filter(dim_saturation_lut(dim=layout.dim, saturation=layout.saturation))
     return (
         f"[{src}]scale={width}:{height}:force_original_aspect_ratio=increase,"
         f"crop={width}:{height},gblur=sigma={layout.blur_sigma},"

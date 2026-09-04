@@ -56,6 +56,14 @@ REACTIVE_COVER_ALPHA = 0.85
 #: through the cover and in the space around it.
 SCOPE_COVER_ALPHA = 0.72
 
+#: The vectorscope's plate is darker still, so its sparse line-work has the least
+#: competition of any visual. Named rather than spelled at the call site for the
+#: same reason `spectrum_visual`'s is: muvid#70 named three constants to retune and
+#: there were four sites, the fourth being a bare literal nothing pointed at.
+#: Multiplicative like the other two, and measured the same way — the value that
+#: lands the plate where the additive ``0.55`` left it.
+SCOPE_BG_DIM = 0.965
+
 #: Default accent for the line/bar visualizers, applied as a *tint*. Several
 #: ffmpeg visualizers ignore their ``colors`` option (``showfreqs`` draws white
 #: whatever you ask for), so rather than fight each filter we render them white
@@ -69,8 +77,16 @@ DEFAULT_TINT = "colorchannelmixer=rr=0.16:gg=0.80:bb=0.85"
 #: (a bright, saturated blurred cover both tints everything its own colour and,
 #: under the screen blend, washes the accent out to white). The sharp centred
 #: cover still carries the artwork's colour; only the surround is muted.
+#:
+#: The dim is MULTIPLICATIVE (muvid#70), so this value is not comparable with the
+#: additive ``0.5`` it replaces — it is the constant that lands the plate's mean
+#: display luma where the offset left it, measured over four photographs. The
+#: washout this comment warns about was then measured rather than assumed: under
+#: `screen`, out = P + V(1 - P), so the accent's contribution is what a brighter
+#: plate would eat. Rendered over three covers, the accent's added luma moves by
+#: at most 2.5/255 and its chroma by under 5% — it still reads.
 REACTIVE_BG_SATURATION = 0.18
-REACTIVE_BG_DIM = 0.5
+REACTIVE_BG_DIM = 0.945
 
 
 @dataclass(frozen=True)
@@ -312,8 +328,10 @@ def _reactive_plan(
     Args:
         cover_fraction: How much of the frame the centred cover fills.
         cover_alpha: Cover opacity, 0–1; below 1 lets the visualizer show through.
-        bg_dim: Background darkening (``None`` keeps the layout's value). Darker
-            backgrounds make a faint visualizer stand out.
+        bg_dim: Background darkening, 0 (unchanged) to 1 (black) — a *scaling* of
+            the plate's luma by ``1 - bg_dim``, not an offset, so a value carried
+            over from before muvid#70 comes out far too bright. Darker backgrounds
+            make a faint visualizer stand out. (``None`` keeps the layout's value.)
         bg_saturation: Background saturation (``None`` keeps the layout's value).
 
     Options:
@@ -485,7 +503,12 @@ def spectrum_visual(ctx: VisualContext) -> VisualPlan:
             saturation=ctx.options.get("flash_saturation", FLASH_SATURATION),
         )
     # spectrum colours itself, so skip the shared line tint (tint="").
-    return _reactive_plan(ctx, viz, filter_name="showspectrum", bg_dim=0.5, tint="")
+    # bg_dim is named, not spelled: it was a bare `0.5` that happened to equal
+    # REACTIVE_BG_DIM, so retuning the constant would silently have left spectrum
+    # on the old value. muvid#70 lists three constants; there were four sites.
+    return _reactive_plan(
+        ctx, viz, filter_name="showspectrum", bg_dim=REACTIVE_BG_DIM, tint=""
+    )
 
 
 @register_visual("waves")
@@ -533,5 +556,5 @@ def scope_visual(ctx: VisualContext) -> VisualPlan:
         viz,
         filter_name="avectorscope",
         cover_alpha=SCOPE_COVER_ALPHA,
-        bg_dim=0.55,
+        bg_dim=SCOPE_BG_DIM,
     )
