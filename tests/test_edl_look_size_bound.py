@@ -271,6 +271,36 @@ def test_every_looks_effect_muvid_compiles_passes_its_own_bound(canvas):
         _validate(frag, canvas=canvas)  # must not raise
 
 
+@needs_ffmpeg
+def test_the_3x_case_that_MAX_LOOK_SCALE_is_sized_for_is_really_in_the_sweep():
+    """The justification for ``4`` rather than ``2``, asserted instead of assumed.
+
+    ``MAX_LOOK_SCALE``'s docstring says a bound of 2 would refuse a look muvid
+    itself compiles, and names ``stylize(fill, target="1080x1080")`` on a 640x360
+    canvas. If that stopped emitting ``scale=1920:1080``, the sweep above would go
+    on passing for a reason that no longer holds and the constant's rationale
+    would be stale prose. So the shape is pinned where the number is decided.
+    """
+    import looks
+
+    from muvid.footage.look import stylize
+
+    frag = stylize(
+        looks.Look(steps=(looks.Effect(name="fill", params={"target": "1080x1080"}),)),
+        canvas=(640, 360),
+        fps=25,
+        duration_s=3.0,
+    )
+    assert frag.startswith("scale=1920:1080"), frag
+    widths = {px for _, _, axis, _, px in _look_output_sizes(frag) if axis == "width"}
+    assert max(widths) == 3 * 640, "no longer 3x the canvas — re-derive MAX_LOOK_SCALE"
+    _validate(frag, canvas=(640, 360))  # accepted at 4
+    assert MAX_LOOK_SCALE > 3, (
+        "a bound of 3 accepts this exactly on the edge and a bound of 2 refuses "
+        "it outright — either way the seam is one rounding from an outage."
+    )
+
+
 def test_a_look_with_no_size_option_at_all_is_untouched():
     """The grades — the thing the seam is mostly for — are not in this at all."""
     for look in ("hue=s=0", "eq=contrast=1.2", "lut3d=file=/x/y.cube", "null"):
