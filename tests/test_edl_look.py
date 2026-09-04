@@ -587,18 +587,42 @@ def test_a_look_less_render_is_deterministic(tmp_path):
 _HISTORICAL_ARGV = (
     # solo(A): input-side seek, one spare frame of input, exact -frames:v cap
     [
-        "-ss", "0.000000", "-t", "4.040000", "-i", "/tmp/a.mp4",
+        "-ss",
+        "0.000000",
+        "-t",
+        "4.040000",
+        "-i",
+        "/tmp/a.mp4",
         "-vf",
         "scale=640:360:force_original_aspect_ratio=decrease,"
         "pad=640:360:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=25,tpad=stop=-1:stop_mode=clone",
-        "-frames:v", "95",
-        "-an", "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "20",
-        "-preset", "veryfast", "<parts>/part0000.mp4",
+        "-frames:v",
+        "95",
+        "-an",
+        "-c:v",
+        "libx264",
+        "-pix_fmt",
+        "yuv420p",
+        "-crf",
+        "20",
+        "-preset",
+        "veryfast",
+        "<parts>/part0000.mp4",
     ],
     # the blended boundary: TWO decoders, never more, each seeked to the window
     [
-        "-ss", "3.800000", "-t", "0.440000", "-i", "/tmp/a.mp4",
-        "-ss", "3.800000", "-t", "0.440000", "-i", "/tmp/b.mp4",
+        "-ss",
+        "3.800000",
+        "-t",
+        "0.440000",
+        "-i",
+        "/tmp/a.mp4",
+        "-ss",
+        "3.800000",
+        "-t",
+        "0.440000",
+        "-i",
+        "/tmp/b.mp4",
         "-filter_complex",
         "[0:v]scale=640:360:force_original_aspect_ratio=decrease,"
         "pad=640:360:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=25,tpad=stop=-1:stop_mode=clone,"
@@ -607,26 +631,74 @@ _HISTORICAL_ARGV = (
         "pad=640:360:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=25,tpad=stop=-1:stop_mode=clone,"
         "format=yuv420p[b];"
         "[a][b]xfade=transition=fade:duration=0.400000:offset=0[v]",
-        "-map", "[v]", "-frames:v", "10",
-        "-an", "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "20",
-        "-preset", "veryfast", "<parts>/part0001.mp4",
+        "-map",
+        "[v]",
+        "-frames:v",
+        "10",
+        "-an",
+        "-c:v",
+        "libx264",
+        "-pix_fmt",
+        "yuv420p",
+        "-crf",
+        "20",
+        "-preset",
+        "veryfast",
+        "<parts>/part0001.mp4",
     ],
     # solo(B), shortened at the head by its own incoming transition
     [
-        "-ss", "4.200000", "-t", "6.040000", "-i", "/tmp/b.mp4",
+        "-ss",
+        "4.200000",
+        "-t",
+        "6.040000",
+        "-i",
+        "/tmp/b.mp4",
         "-vf",
         "scale=640:360:force_original_aspect_ratio=decrease,"
         "pad=640:360:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=25,tpad=stop=-1:stop_mode=clone",
-        "-frames:v", "145",
-        "-an", "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "20",
-        "-preset", "veryfast", "<parts>/part0002.mp4",
+        "-frames:v",
+        "145",
+        "-an",
+        "-c:v",
+        "libx264",
+        "-pix_fmt",
+        "yuv420p",
+        "-crf",
+        "20",
+        "-preset",
+        "veryfast",
+        "<parts>/part0002.mp4",
     ],
     # concat by STREAM COPY + the clean song, encoded to the delivery contract
     [
-        "-f", "concat", "-i", "<parts>/parts.txt", "-i", "/tmp/song.wav",
-        "-map", "0:v", "-map", "1:a:0", "-t", "10.000000",
-        "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-ac", "2",
-        "-use_editlist", "0", "-movflags", "+faststart", "<out>",
+        "-f",
+        "concat",
+        "-i",
+        "<parts>/parts.txt",
+        "-i",
+        "/tmp/song.wav",
+        "-map",
+        "0:v",
+        "-map",
+        "1:a:0",
+        "-t",
+        "10.000000",
+        "-c:v",
+        "copy",
+        "-c:a",
+        "aac",
+        "-b:a",
+        "192k",
+        "-ar",
+        "48000",
+        "-ac",
+        "2",
+        "-use_editlist",
+        "0",
+        "-movflags",
+        "+faststart",
+        "<out>",
     ],
 )
 
@@ -653,7 +725,12 @@ def test_a_look_less_assemble_emits_the_argv_it_always_did(monkeypatch, tmp_path
     cuts = derive_cuts(entries, [_A, _B], {"A": "/tmp/a.mp4", "B": "/tmp/b.mp4"})
     out = tmp_path / "out.mp4"
     assemble_music_video(
-        cuts, "/tmp/song.wav", str(out), canvas=(640, 360), fps=25, crf=20,
+        cuts,
+        "/tmp/song.wav",
+        str(out),
+        canvas=(640, 360),
+        fps=25,
+        crf=20,
         preset="veryfast",
     )
 
@@ -751,12 +828,23 @@ def test_the_gate_is_what_stops_a_look_writing_a_file(tmp_path):
     # CONTROL — the payload is real on this binary. Same chain, same order.
     canary.write_text(body)
     src = _src(tmp_path, "src", 1.0, size="64x48")
-    chain_ = _part_filter(
-        _cut(clip_path=str(src), look=payload), w=64, h=48, fps=25
-    )
+    chain_ = _part_filter(_cut(clip_path=str(src), look=payload), w=64, h=48, fps=25)
     r = subprocess.run(
-        ["ffmpeg", "-v", "error", "-i", str(src), "-vf", chain_,
-         "-frames:v", "3", "-an", "-f", "null", "-"],
+        [
+            "ffmpeg",
+            "-v",
+            "error",
+            "-i",
+            str(src),
+            "-vf",
+            chain_,
+            "-frames:v",
+            "3",
+            "-an",
+            "-f",
+            "null",
+            "-",
+        ],
         capture_output=True,
     )
     assert r.returncode == 0, r.stderr.decode()[:400]
@@ -789,7 +877,8 @@ def test_no_allowlisted_filter_can_name_a_file():
     def path_options(name):
         r = subprocess.run(
             ["ffmpeg", "-hide_banner", "-h", f"filter={name}"],
-            capture_output=True, text=True,
+            capture_output=True,
+            text=True,
         )
         opts = {
             m.group(1)
@@ -842,6 +931,20 @@ def test_the_allowlist_covers_every_filter_looks_declares():
         for f in impl.requires_filters
     }
     assert declared, "looks declared no ffmpeg filters at all — the probe is wrong"
+    # The MEASURED half, pinned as a literal. Discovering that `fit`/`fill` emit
+    # `pad` and `null` needs ffmpeg; the CONSEQUENCE — that the allowlist must
+    # contain them — does not, and an ffmpeg-less run should still catch their
+    # removal. Without this, dropping "pad" left the whole suite green on a
+    # machine with no ffmpeg (measured: 63 passed / 8 skipped either way), so
+    # half the allowlist had no guard in exactly the environment where the
+    # ffmpeg-backed tests skip.
+    measured = {"null", "pad"}
+    assert measured <= LOOK_FILTERS, (
+        f"{sorted(measured - LOOK_FILTERS)} was removed from LOOK_FILTERS. "
+        "These are emitted by looks' geometry effects but not DECLARED by them, "
+        "so the declared-set check above cannot see their absence — and the "
+        "seam breaks only at render time, on a letterboxed cut."
+    )
     missing = declared - LOOK_FILTERS
     assert not missing, (
         f"looks can now emit {sorted(missing)}, which muvid's gate refuses. Add "
@@ -973,19 +1076,47 @@ def test_an_unclosed_quote_really_does_restructure_the_transition_graph(tmp_path
 
     def solo(look):
         return subprocess.run(
-            ["ffmpeg", "-v", "error", "-i", str(src), "-vf", f"{norm},{look}",
-             "-frames:v", "3", "-an", "-f", "null", "-"],
+            [
+                "ffmpeg",
+                "-v",
+                "error",
+                "-i",
+                str(src),
+                "-vf",
+                f"{norm},{look}",
+                "-frames:v",
+                "3",
+                "-an",
+                "-f",
+                "null",
+                "-",
+            ],
             capture_output=True,
         )
 
     def blend(look):
         return subprocess.run(
-            ["ffmpeg", "-v", "error", "-i", str(src), "-i", str(src),
-             "-filter_complex",
-             f"[0:v]{norm},{look},format=yuv420p[a];"
-             f"[1:v]{norm},{look},format=yuv420p[b];"
-             f"[a][b]xfade=transition=fade:duration=0.1:offset=0[v]",
-             "-map", "[v]", "-frames:v", "2", "-an", "-f", "null", "-"],
+            [
+                "ffmpeg",
+                "-v",
+                "error",
+                "-i",
+                str(src),
+                "-i",
+                str(src),
+                "-filter_complex",
+                f"[0:v]{norm},{look},format=yuv420p[a];"
+                f"[1:v]{norm},{look},format=yuv420p[b];"
+                f"[a][b]xfade=transition=fade:duration=0.1:offset=0[v]",
+                "-map",
+                "[v]",
+                "-frames:v",
+                "2",
+                "-an",
+                "-f",
+                "null",
+                "-",
+            ],
             capture_output=True,
         )
 
@@ -1037,10 +1168,28 @@ def test_a_zero_input_source_cannot_reach_a_look_at_all(tmp_path):
     """
     src = _src(tmp_path, "src", 1.0, size="64x48")
     norm = _part_filter(_cut(clip_path=str(src)), w=64, h=48, fps=25)
-    for tail in (f"movie={src}", f"movie={src},overlay=10:10", "color=black", "nullsrc"):
+    for tail in (
+        f"movie={src}",
+        f"movie={src},overlay=10:10",
+        "color=black",
+        "nullsrc",
+    ):
         r = subprocess.run(
-            ["ffmpeg", "-v", "error", "-i", str(src), "-vf", f"{norm},{tail}",
-             "-frames:v", "3", "-an", "-f", "null", "-"],
+            [
+                "ffmpeg",
+                "-v",
+                "error",
+                "-i",
+                str(src),
+                "-vf",
+                f"{norm},{tail}",
+                "-frames:v",
+                "3",
+                "-an",
+                "-f",
+                "null",
+                "-",
+            ],
             capture_output=True,
         )
         assert r.returncode != 0, f"{tail!r} rendered at the solo site after all"
@@ -1110,8 +1259,13 @@ def test_a_look_survives_the_json_round_trip_verbatim():
 
     caller = [
         {"song_start": 0.0, "song_end": 4.0, "clip_id": "A", "look": _GREY},
-        {"song_start": 4.0, "song_end": 10.0, "clip_id": "A", "look": _WARM,
-         "transition": {"duration_s": 0.4, "curve": "fade"}},
+        {
+            "song_start": 4.0,
+            "song_end": 10.0,
+            "clip_id": "A",
+            "look": _WARM,
+            "transition": {"duration_s": 0.4, "curve": "fade"},
+        },
     ]
     first = validate_edl(caller, [_A], SONG_DUR)
     returned = [_edl_json(e) for e in first]
@@ -1146,3 +1300,72 @@ def test_the_editor_read_skips_a_malformed_look_rather_than_crashing():
     anns[0].body["look"] = {"not": "a string"}
     [back] = edl_from_annotations(anns)
     assert "look" not in back
+
+
+class TestTheNameResolvesTheWayFfmpegResolvesIt:
+    """The gate and the binary must agree about what a fragment SAYS. Where
+    they disagree the gate is guessing, and a guess in either direction is a
+    defect — a false accept lets ffmpeg produce the error instead of the gate,
+    and a false refuse rejects a fragment muvid itself could have written.
+    """
+
+    @pytest.mark.parametrize(
+        "look,expected",
+        [
+            ("hue=s=0", ["hue"]),
+            ("hue =s=0", ["hue"]),  # unescaped space: ffmpeg trims it
+            ("hue\\ =s=0", ["hue "]),  # ESCAPED space: part of the name
+            ("\\ hue=s=0", [" hue"]),
+            ("h\\ue=s=0", ["hue"]),
+            ("'hue'=s=0", ["hue"]),
+            ("hue@grade=s=0", ["hue"]),
+        ],
+    )
+    def test_it_matches(self, look, expected):
+        from muvid.footage.edl import _look_filter_names
+
+        assert _look_filter_names(look) == expected
+
+    @pytest.mark.parametrize("look", ["hue\\ =s=0", "\\ hue=s=0"])
+    def test_ffmpeg_agrees_that_escaped_whitespace_is_part_of_the_name(self, look):
+        """The premise, against the real binary rather than from the docs."""
+        if shutil.which("ffmpeg") is None:
+            pytest.skip("no ffmpeg")
+        proc = subprocess.run(
+            [
+                "ffmpeg",
+                "-v",
+                "error",
+                "-f",
+                "lavfi",
+                "-i",
+                "testsrc2=size=64x48:rate=5:d=1",
+                "-vf",
+                f"fps=25,{look}",
+                "-frames:v",
+                "1",
+                "-f",
+                "null",
+                "-",
+            ],
+            capture_output=True,
+        )
+        assert proc.returncode != 0
+        assert b"No such filter" in proc.stderr
+
+    def test_an_escaped_space_is_refused_by_the_DESIGNED_message(self):
+        """It used to raise `_LookSyntaxError` whose whole message was a single
+        backslash — `.strip()` removed the escaped space and left the backslash
+        that escaped it, and the lexer then raised from OUTSIDE the try/except
+        that produces the readable refusal. Through the MCP tool that backslash
+        reached the caller as the entire explanation."""
+        from muvid.footage.edl import EdlEntry, _validate_look
+
+        with pytest.raises(ValueError, match="which muvid does not offer"):
+            _validate_look(0, EdlEntry(0.0, 1.0, "A", look="hue\\ =s=0"))
+
+    def test_and_a_lone_escaped_space_does_not_crash_the_lexer(self):
+        from muvid.footage.edl import EdlEntry, _validate_look
+
+        with pytest.raises(ValueError, match="which muvid does not offer"):
+            _validate_look(0, EdlEntry(0.0, 1.0, "A", look="\\ =b"))

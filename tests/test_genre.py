@@ -45,7 +45,9 @@ def test_resolve_genre_returns_the_visual_params_envelope():
     assert env["params"] == {"visual": "waves"}
 
 
-def test_factory_creates_a_bucket_and_create_genre_project_round_trips(tmp_path, monkeypatch):
+def test_factory_creates_a_bucket_and_create_genre_project_round_trips(
+    tmp_path, monkeypatch
+):
     monkeypatch.setenv("MUVID_DATA_HOME", str(tmp_path))
     info = nw.create_genre_project(
         "music-visualizer", "user@example.com", "proj-A", template="cqt"

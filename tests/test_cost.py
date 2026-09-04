@@ -499,9 +499,7 @@ def test_an_available_survives_a_broken_install(monkeypatch):
     assert an_available() is False
 
 
-def test_a_subsecond_video_shot_is_priced_at_the_billed_floor(
-    tmp_path, monkeypatch
-):
+def test_a_subsecond_video_shot_is_priced_at_the_billed_floor(tmp_path, monkeypatch):
     """The renderers send `max(1, round(duration))` to fal, so a 0.4 s (or
     zero-duration) i2v/t2v shot bills one full second. Pricing the raw float
     read $0.00-with-nothing-unknown for billable work — the same

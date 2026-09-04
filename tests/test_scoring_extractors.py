@@ -94,14 +94,30 @@ def test_stability_shake_is_jitter_not_pan_magnitude():
 
     def _fp(gdx):
         return FramePass(
-            clip_times=times, sharpness=np.ones(k), exposure=np.ones(k), face=zeros,
-            motion_residual=np.r_[np.nan, np.ones(k - 1)], global_dx=gdx,
-            global_dy=np.r_[np.nan, np.zeros(k - 1)], fps=25.0, n_sampled=k,
+            clip_times=times,
+            sharpness=np.ones(k),
+            exposure=np.ones(k),
+            face=zeros,
+            motion_residual=np.r_[np.nan, np.ones(k - 1)],
+            global_dx=gdx,
+            global_dy=np.r_[np.nan, np.zeros(k - 1)],
+            fps=25.0,
+            n_sampled=k,
         )
 
     n = grid_len(times[-1] + 1, 0.1)
-    steady = {t.metric: t for t in quality_tracks(_fp(pan_dx), clip_id="s", offset_s=0.0, t0=0.0, hop_s=0.1, n=n)}["stability_shake"]
-    jerky = {t.metric: t for t in quality_tracks(_fp(jerky_dx), clip_id="j", offset_s=0.0, t0=0.0, hop_s=0.1, n=n)}["stability_shake"]
+    steady = {
+        t.metric: t
+        for t in quality_tracks(
+            _fp(pan_dx), clip_id="s", offset_s=0.0, t0=0.0, hop_s=0.1, n=n
+        )
+    }["stability_shake"]
+    jerky = {
+        t.metric: t
+        for t in quality_tracks(
+            _fp(jerky_dx), clip_id="j", offset_s=0.0, t0=0.0, hop_s=0.1, n=n
+        )
+    }["stability_shake"]
     # raw stability_shake = jitter (lower_better): a steady pan's raw jitter ≈ 0 << jerky's.
     assert np.nanmean(steady.raw_values) < np.nanmean(jerky.raw_values)
 
@@ -133,9 +149,20 @@ def _clip(tmp_path, song, name, *, a, b, pattern="testsrc"):
     out = tmp_path / f"{name}.mp4"
     subprocess.run(
         [
-            "ffmpeg", "-y", "-loglevel", "error",
-            "-f", "lavfi", "-i", f"{pattern}=size=320x240:rate=25:duration={b - a}",
-            "-i", str(awav), "-shortest", "-pix_fmt", "yuv420p", str(out),
+            "ffmpeg",
+            "-y",
+            "-loglevel",
+            "error",
+            "-f",
+            "lavfi",
+            "-i",
+            f"{pattern}=size=320x240:rate=25:duration={b - a}",
+            "-i",
+            str(awav),
+            "-shortest",
+            "-pix_fmt",
+            "yuv420p",
+            str(out),
         ],
         check=True,
     )
@@ -163,7 +190,12 @@ def test_frame_pass_and_quality_tracks(tmp_path):
     by_metric = {t.metric: t for t in tracks}
     # The metric axis stays fixed whether or not a detector ran — it is persisted in
     # the score manifest and indexes the tensor, so a column never disappears.
-    assert set(by_metric) == {"sharpness", "exposure", "stability_shake", "face_framing"}
+    assert set(by_metric) == {
+        "sharpness",
+        "exposure",
+        "stability_shake",
+        "face_framing",
+    }
     for t in tracks:
         assert t.raw_values.shape == (n,) and t.mask.shape == (n,)
 
@@ -191,8 +223,15 @@ def test_motionbeat_tracks_on_grid(tmp_path):
     fp = sample_clip_frames(str(clip), sample_fps=5.0)
     n = grid_len(6.0, 0.1)
     tracks = motionbeat_tracks(
-        fp, clip_id="A", offset_s=0.0, beat_times=bg.beat_times,
-        onset_env=bg.onset_env, onset_hop_s=bg.onset_hop_s, t0=0.0, hop_s=0.1, n=n,
+        fp,
+        clip_id="A",
+        offset_s=0.0,
+        beat_times=bg.beat_times,
+        onset_env=bg.onset_env,
+        onset_hop_s=bg.onset_hop_s,
+        t0=0.0,
+        hop_s=0.1,
+        n=n,
     )
     metrics = {t.metric for t in tracks}
     assert metrics == {"motion_beat_bas", "motion_onset_xcorr"}
@@ -220,7 +259,9 @@ def test_score_project_end_to_end(tmp_path, monkeypatch):
     proj.add_clip("A", str(ca), ext="mp4")
     proj.add_clip("B", str(cb), ext="mp4")
     aligns = align_footage(
-        str(proj.song_path()), list(proj.clip_paths().items()), song_duration=proj.song_duration()
+        str(proj.song_path()),
+        list(proj.clip_paths().items()),
+        song_duration=proj.song_duration(),
     )
     proj.save_alignments(aligns)
 
@@ -231,7 +272,8 @@ def test_score_project_end_to_end(tmp_path, monkeypatch):
     assert scores_present(proj.root)
     # progress events carry the mirror-contract fields
     assert events and all(
-        {"kind", "stage_index", "stage_count", "current_transform"} <= set(e) for e in events
+        {"kind", "stage_index", "stage_count", "current_transform"} <= set(e)
+        for e in events
     )
     tensor = load_tensor(proj.root)
     assert tensor is not None
@@ -258,13 +300,17 @@ def test_score_then_weighted_select_end_to_end(tmp_path, monkeypatch):
     proj.add_clip("A", str(ca), ext="mp4")
     proj.add_clip("B", str(cb), ext="mp4")
     aligns = align_footage(
-        str(proj.song_path()), list(proj.clip_paths().items()), song_duration=proj.song_duration()
+        str(proj.song_path()),
+        list(proj.clip_paths().items()),
+        song_duration=proj.song_duration(),
     )
     proj.save_alignments(aligns)
     score_project(proj)
 
     tensor = load_tensor(proj.root)
-    manifest = __import__("json").loads((proj.root / "scores" / "manifest.json").read_text())
+    manifest = __import__("json").loads(
+        (proj.root / "scores" / "manifest.json").read_text()
+    )
     ctx = SelectionContext(
         tensor=tensor,
         beat_times=manifest["beats"]["beat_times"],

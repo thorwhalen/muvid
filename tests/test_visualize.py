@@ -715,7 +715,9 @@ def test_the_flash_fragment_renders_from_a_workdir_that_needs_escaping(
     # The filter the script drives, sitting at its identity table until a command
     # arrives. `lutyuv` needs no `eval=frame`: rebuilding the table IS the update.
     assert f",lutyuv@{DEFAULT_FLASH_LABEL}=" in fragment
-    assert lut_filter(brightness_saturation_lut(), label=DEFAULT_FLASH_LABEL) in fragment
+    assert (
+        lut_filter(brightness_saturation_lut(), label=DEFAULT_FLASH_LABEL) in fragment
+    )
 
     script = workdir / f"{DEFAULT_FLASH_LABEL}.cmd"
     assert script.exists()
@@ -850,9 +852,21 @@ def _planes(vf, *, size=(160, 90), frames=1):
     w, h = size
     out = subprocess.run(
         [
-            "ffmpeg", "-hide_banner", "-loglevel", "error",
-            "-f", "lavfi", "-i", f"testsrc2=s={w}x{h}:r=10:d={frames / 10}",
-            "-vf", vf, "-f", "rawvideo", "-pix_fmt", "yuv444p", "-",
+            "ffmpeg",
+            "-hide_banner",
+            "-loglevel",
+            "error",
+            "-f",
+            "lavfi",
+            "-i",
+            f"testsrc2=s={w}x{h}:r=10:d={frames / 10}",
+            "-vf",
+            vf,
+            "-f",
+            "rawvideo",
+            "-pix_fmt",
+            "yuv444p",
+            "-",
         ],
         capture_output=True,
         check=True,

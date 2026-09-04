@@ -44,7 +44,11 @@ def test_curate_character_interactive_with_inline_decisions(tmp_path):
     ]
 
     selected = facade.curate_character_interactive(
-        tmp_path / "p", "alice", decisions=decisions, k=4, present=4,
+        tmp_path / "p",
+        "alice",
+        decisions=decisions,
+        k=4,
+        present=4,
     )
     assert len(selected) == 2
     selected_names = sorted(Path(p).name for p in selected)
@@ -69,7 +73,11 @@ def test_curate_character_interactive_reads_json_file(tmp_path):
     )
 
     selected = facade.curate_character_interactive(
-        tmp_path / "p", "alice", decisions=decisions_path, k=3, present=3,
+        tmp_path / "p",
+        "alice",
+        decisions=decisions_path,
+        k=3,
+        present=3,
     )
     assert len(selected) == 1
     assert Path(selected[0]).name == "img_00.png"
@@ -85,11 +93,13 @@ def test_curate_character_interactive_writes_anchor_card_path(tmp_path):
     paths = _seed_refs(tmp_path / "p", "alice", n=3)
 
     facade.curate_character_interactive(
-        tmp_path / "p", "alice",
+        tmp_path / "p",
+        "alice",
         decisions=[
             {"keep": [_image_id_for(paths[1])], "stop": True},
         ],
-        k=3, present=3,
+        k=3,
+        present=3,
     )
 
     p = MusicVideoProject(tmp_path / "p")

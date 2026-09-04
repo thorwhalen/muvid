@@ -66,10 +66,10 @@ def test_words_from_transcript_filters_non_words():
 def test_lyrics_from_transcript_splits_on_punctuation_and_gaps():
     transcript = {
         "words": [
-            {"text": "hello",  "start": 0.0, "end": 0.4},
+            {"text": "hello", "start": 0.0, "end": 0.4},
             {"text": "world.", "start": 0.4, "end": 0.9},
             # Long gap → new line
-            {"text": "again",  "start": 5.0, "end": 5.5},
+            {"text": "again", "start": 5.0, "end": 5.5},
         ]
     }
     doc = lyrics_from_transcript(transcript)

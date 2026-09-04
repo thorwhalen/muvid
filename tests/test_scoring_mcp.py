@@ -30,7 +30,11 @@ def test_register_tools_includes_scoring():
     from fastmcp import FastMCP
 
     names = mcp.register_tools(FastMCP(name="t"), prefix="muvid_")
-    for t in ("muvid_score_footage", "muvid_footage_score_status", "muvid_footage_scores"):
+    for t in (
+        "muvid_score_footage",
+        "muvid_footage_score_status",
+        "muvid_footage_scores",
+    ):
         assert t in names
     assert len(names) == len(set(names))  # no dup names
     assert mcp.COSTED_TOOLS == []
@@ -74,9 +78,22 @@ def _clip(tmp_path, song, name, *, a, b, pattern="testsrc"):
     wavfile.write(str(awav), SR, (seg / np.max(np.abs(seg)) * 32767).astype(np.int16))
     out = tmp_path / f"{name}.mp4"
     subprocess.run(
-        ["ffmpeg", "-y", "-loglevel", "error", "-f", "lavfi", "-i",
-         f"{pattern}=size=320x240:rate=25:duration={b - a}", "-i", str(awav),
-         "-shortest", "-pix_fmt", "yuv420p", str(out)],
+        [
+            "ffmpeg",
+            "-y",
+            "-loglevel",
+            "error",
+            "-f",
+            "lavfi",
+            "-i",
+            f"{pattern}=size=320x240:rate=25:duration={b - a}",
+            "-i",
+            str(awav),
+            "-shortest",
+            "-pix_fmt",
+            "yuv420p",
+            str(out),
+        ],
         check=True,
     )
     return out
@@ -104,7 +121,9 @@ def test_score_job_flow_and_weighted_assemble(tmp_path, monkeypatch):
     proj.add_clip("A", str(ca), ext="mp4")
     proj.add_clip("B", str(cb), ext="mp4")
     aligns = align_footage(
-        str(proj.song_path()), list(proj.clip_paths().items()), song_duration=proj.song_duration()
+        str(proj.song_path()),
+        list(proj.clip_paths().items()),
+        song_duration=proj.song_duration(),
     )
     proj.save_alignments(aligns)
 
@@ -124,9 +143,12 @@ def test_score_job_flow_and_weighted_assemble(tmp_path, monkeypatch):
 
         # weighted assemble reads the persisted scores (stub the ffmpeg render).
         monkeypatch.setattr(
-            A, "assemble_music_video",
-            lambda cuts, s, out, canvas: (__import__("pathlib").Path(out).write_bytes(b"v"),
-                                          __import__("pathlib").Path(out))[1],
+            A,
+            "assemble_music_video",
+            lambda cuts, s, out, canvas: (
+                __import__("pathlib").Path(out).write_bytes(b"v"),
+                __import__("pathlib").Path(out),
+            )[1],
         )
         monkeypatch.setattr(V, "verify_video", lambda *a, **k: [])
         monkeypatch.setattr(V, "failures", lambda c: [])
@@ -152,8 +174,14 @@ def test_weighted_assemble_without_scores_is_a_clean_error(tmp_path, monkeypatch
     proj.set_song(str(song_p), ext="wav")
     proj.add_clip("A", str(ca), ext="mp4")
     proj.save_alignments(
-        align_footage(str(proj.song_path()), list(proj.clip_paths().items()),
-                      song_duration=proj.song_duration())
+        align_footage(
+            str(proj.song_path()),
+            list(proj.clip_paths().items()),
+            song_duration=proj.song_duration(),
+        )
     )
-    with use_email("u@x.com"), pytest.raises(ToolError, match="scoring first|valid edit"):
+    with (
+        use_email("u@x.com"),
+        pytest.raises(ToolError, match="scoring first|valid edit"),
+    ):
         ft.assemble_music_video("p", strategy="weighted")

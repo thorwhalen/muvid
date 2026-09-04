@@ -127,9 +127,7 @@ def _render_with_meta(proj, render_id, *, ref_n=None):
     return render_id
 
 
-def test_a_spoken_reference_resolves_to_the_same_file_as_the_id(
-    tmp_path, monkeypatch
-):
+def test_a_spoken_reference_resolves_to_the_same_file_as_the_id(tmp_path, monkeypatch):
     monkeypatch.setenv("MUVID_DATA_HOME", str(tmp_path))
     from muvid.footage.workspace import FootageWorkspace
 
@@ -207,8 +205,9 @@ def test_listing_is_how_a_reference_becomes_discoverable(tmp_path, monkeypatch):
 # dol.content_url, it resolves a path and streams it.
 
 
-def _visualizer_render(tmp_path, monkeypatch, *, email="u@x.com", pid="viz",
-                       rid="v" * 12, thumb=False):
+def _visualizer_render(
+    tmp_path, monkeypatch, *, email="u@x.com", pid="viz", rid="v" * 12, thumb=False
+):
     import json
 
     monkeypatch.setenv("MUVID_DATA_HOME", str(tmp_path))
@@ -243,7 +242,7 @@ def test_one_resolver_spans_both_muvid_genres(tmp_path, monkeypatch):
     drawer their project is in — that split is what produced 'no project X for
     you' against a project that existed (muvid#23)."""
     proj, _ = _project_with_render(tmp_path, monkeypatch)  # footage, project "p"
-    _visualizer_render(tmp_path, monkeypatch)              # visualizer, project "viz"
+    _visualizer_render(tmp_path, monkeypatch)  # visualizer, project "viz"
 
     assert resolve("u@x.com", "p", "r1r1r1r1r1r1").meta["muvid_genre"] == "footage"
     assert resolve("u@x.com", "viz", "v" * 12).meta["muvid_genre"] == "visualizer"
@@ -320,9 +319,7 @@ def test_a_never_rendered_project_is_findable_with_zero_deliverables(
     assert row.modified_at is not None
 
 
-def test_rendered_projects_are_counted_and_ordered_newest_first(
-    tmp_path, monkeypatch
-):
+def test_rendered_projects_are_counted_and_ordered_newest_first(tmp_path, monkeypatch):
     import os
     import time
 
@@ -404,15 +401,17 @@ def _footage_project_two_renders(tmp_path, monkeypatch, *, email="u@x.com"):
     return proj
 
 
-def test_an_accepted_title_resolves_and_the_receipt_is_a_reread(
-    tmp_path, monkeypatch
-):
+def test_an_accepted_title_resolves_and_the_receipt_is_a_reread(tmp_path, monkeypatch):
     from muvid.downloads import organise
 
     _footage_project_two_renders(tmp_path, monkeypatch)
     got = organise(
-        "u@x.com", "p", "r1" * 6,
-        title="The Slow Open", tags=["keeper"], note="send this one",
+        "u@x.com",
+        "p",
+        "r1" * 6,
+        title="The Slow Open",
+        tags=["keeper"],
+        note="send this one",
     )
     # The receipt is a re-read: the assigned title is the deliverable's title,
     # tags/note ride meta under the parameter names (the seam's pinning), and
@@ -492,11 +491,15 @@ def test_pipeline_meta_keys_and_organise_state_never_collide(tmp_path, monkeypat
 
     proj = _footage_project_two_renders(tmp_path, monkeypatch)
     meta_path = proj.renders_dir / ("r1" * 6) / "meta.json"
-    meta_path.write_text(json.dumps({
-        "render_id": "r1" * 6,
-        "note": "PIPELINE: re-render with --force after editing",
-        "ref_n": 1,
-    }))
+    meta_path.write_text(
+        json.dumps(
+            {
+                "render_id": "r1" * 6,
+                "note": "PIPELINE: re-render with --force after editing",
+                "ref_n": 1,
+            }
+        )
+    )
 
     # The pipeline note is not a user note.
     assert "note" not in resolve("u@x.com", "p", "r1" * 6).meta
