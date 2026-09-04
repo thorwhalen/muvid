@@ -182,7 +182,39 @@ def escape_filter_value(value: str) -> str:
 #: *broadcast* range (16–235 luma, 16–240 chroma), so reaching for the named
 #: constants instead of these literals would crush blacks and clip highlights that
 #: ``eq`` left untouched. The literals are what reproduces ``eq``.
-_FULL_RANGE = (0, 255)
+_FULL_SCALE = 255
+
+#: The clip bounds, as ``lutyuv`` EXPRESSIONS rather than numbers, because the
+#: chain's bit depth is not known when they are written and the literals are
+#: wrong at any depth but eight.
+#:
+#: A 16-bit cover (``rgb48be``, which design tools export routinely) makes the
+#: plate chain negotiate ``yuv444p16le``, where luma runs 4096..60160.
+#: :data:`_DIM_PIVOT` adapts — it is ``minval`` — but a literal ``255`` ceiling
+#: clamps every pixel, and the plate becomes ONE flat value. Measured through
+#: the real chain, dumped in its own pixel format so nothing rescales on the way
+#: out: 8-bit literals give luma ``min=255 max=255``, **1 distinct level**;
+#: these expressions give ``min=4096 max=6912``, 12 levels. That was muvid#81.
+#:
+#: **The ceiling depends on the range as well as the depth**, which is why it is
+#: a conditional rather than a scale factor. ``maxval`` is the BROADCAST maximum,
+#: so it is 235 for limited-range luma and 255 for full-range — and only the
+#: first needs the 255/235 correction. Measured, all four combinations:
+#:
+#: ==========================  =========
+#: chain                       ceiling
+#: ==========================  =========
+#: ``yuv444p`` (8-bit limited)  255
+#: ``yuvj444p`` (8-bit full)    255
+#: ``yuv444p16le`` (16-bit)     65280
+#: 16-bit source -> ``yuvj444p``  255
+#: ==========================  =========
+#:
+#: Chroma tops out at 240 rather than 235, so it carries its own correction.
+#: The low bound needs none: zero is zero at every depth.
+_CLIP_LO = "0"
+_LUMA_CEIL = "if(eq(minval,0),maxval,maxval*255/235)"
+_CHROMA_CEIL = "if(eq(minval,0),maxval,maxval*255/240)"
 
 #: Chroma neutral, and the pivot saturation scales about. ``vf_eq`` works in 0–1
 #: and pivots on 0.5, which is 127.5 in 8 bits — *not* 128. The naive value never
@@ -190,7 +222,17 @@ _FULL_RANGE = (0, 255)
 #: it; what it does is raise the MEAN chroma error against ``eq`` (~1.3x at the
 #: shipped saturation of 0.8, ~2x at 0.6). Free to get right, so it is written
 #: once, here — and pinned by a test that measures the mean, not the max.
-_CHROMA_PIVOT = 127.5
+#: Chroma neutral is half the full range, at any depth — so the pivot is not a
+#: number either. Expressed as a FRACTION of the ceiling rather than as the
+#: ceiling over two, because the expression that uses it multiplies by
+#: ``(1 - saturation)`` and folding the half in keeps one conditional in the
+#: emitted string instead of three.
+#:
+#: ``vf_eq`` works in 0-1 and pivots on 0.5, which is 127.5 in 8 bits — *not*
+#: 128. The naive value never costs more than ``0.5 * |1 - saturation|`` LSB, so
+#: no max-error bound can catch it; what it does is raise the MEAN chroma error
+#: against ``eq``. Written once, here.
+_CHROMA_PIVOT_SCALE = 0.5
 
 #: The pivot the DIM scales luma about: ``lutyuv``'s own ``minval``, which is the
 #: black level of whichever pixel format the plate chain negotiated.
@@ -209,7 +251,7 @@ _CHROMA_PIVOT = 127.5
 #: goes 7.53 -> 21.58 out of 255 and its floor 3 -> 18 (ffmpeg 9.0.1; 22.59 -> 34.53
 #: and 18 -> 31 on 6.1.6), i.e. grey exactly where the design wants black.
 #:
-#: This is the one place :data:`_FULL_RANGE`'s warning does NOT apply, and the
+#: This is the one place :data:`_LUMA_CEIL`'s warning does NOT apply, and the
 #: distinction is the whole fix. That warning is about reproducing ``eq``, whose
 #: clip bounds are 0–255. A dim is not a clip: it is a scaling, and a scaling needs
 #: the pivot the picture's black actually sits on. On a limited-range plate
@@ -231,7 +273,7 @@ def brightness_saturation_lut(
     reached for it made muvid require a GPL build for what is arithmetic on three
     planes. ``lutyuv`` is LGPL and expresses the same two knobs exactly as ``vf_eq``
     defines them: brightness is an ADDITIVE offset of ``brightness * 255`` on luma,
-    saturation a scaling of chroma about :data:`_CHROMA_PIVOT`.
+    saturation a scaling of chroma about :data:`_CHROMA_PIVOT_SCALE`.
 
     Returns a ``{component: expression}`` mapping rather than a filter string
     because the two callers need different shapes — one composes a filtergraph,
@@ -246,31 +288,37 @@ def brightness_saturation_lut(
     Examples:
         >>> lut = brightness_saturation_lut(brightness=-0.25, saturation=0.8)
         >>> lut["y"]
-        'clip(val-63.75,0,255)'
+        'clip(val-63.75,0,if(eq(minval,0),maxval,maxval*255/235))'
         >>> lut["u"] == lut["v"]
         True
         >>> brightness_saturation_lut()["y"], brightness_saturation_lut()["u"]
-        ('clip(val+0,0,255)', 'clip((val-127.5)*1+127.5,0,255)')
+        ('clip(val+0,0,if(eq(minval,0),maxval,maxval*255/235))', 'clip(val*1+(if(eq(minval,0),maxval,maxval*255/240))*0,0,if(eq(minval,0),maxval,maxval*255/240))')
     """
-    lo, hi = _FULL_RANGE
     chroma = _chroma_expr(saturation)
     return {
-        "y": f"clip(val{brightness * hi:+g},{lo},{hi})",
+        "y": f"clip(val{brightness * _FULL_SCALE:+g},{_CLIP_LO},{_LUMA_CEIL})",
         "u": chroma,
         "v": chroma,
     }
 
 
 def _chroma_expr(saturation: float) -> str:
-    """``lutyuv`` u/v expression scaling chroma about :data:`_CHROMA_PIVOT`.
+    """``lutyuv`` u/v expression scaling chroma about :data:`_CHROMA_PIVOT_SCALE`.
 
     Both LUT builders need it and it is written once: the two are already the two
     halves of one look, and a second copy of ``eq``'s saturation arithmetic is
     exactly how the darkened plate and the beat flash would start desaturating by
     different amounts.
     """
-    lo, hi = _FULL_RANGE
-    return f"clip((val-{_CHROMA_PIVOT:g})*{saturation:g}+{_CHROMA_PIVOT:g},{lo},{hi})"
+    # Written as `val*s + pivot*(1-s)` rather than `(val-pivot)*s + pivot`.
+    # They are the same line — but the pivot is now an EXPRESSION, not a number,
+    # and the second form spells it twice. Measured byte-identical at 8 bits in
+    # both ranges; what it buys is one copy of the conditional instead of two.
+    offset = _CHROMA_PIVOT_SCALE * (1 - saturation)
+    return (
+        f"clip(val*{saturation:g}+({_CHROMA_CEIL})*{offset:g},"
+        f"{_CLIP_LO},{_CHROMA_CEIL})"
+    )
 
 
 def dim_saturation_lut(*, dim: float = 0.0, saturation: float = 1.0) -> dict[str, str]:
@@ -300,17 +348,16 @@ def dim_saturation_lut(*, dim: float = 0.0, saturation: float = 1.0) -> dict[str
     Examples:
         >>> lut = dim_saturation_lut(dim=0.65, saturation=0.8)
         >>> lut["y"]
-        'clip((val-minval)*0.35+minval,0,255)'
+        'clip((val-minval)*0.35+minval,0,if(eq(minval,0),maxval,maxval*255/235))'
         >>> lut["u"] == lut["v"] == brightness_saturation_lut(saturation=0.8)["u"]
         True
         >>> dim_saturation_lut()["y"]  # 0 is a no-op, and reads as one
-        'clip((val-minval)*1+minval,0,255)'
+        'clip((val-minval)*1+minval,0,if(eq(minval,0),maxval,maxval*255/235))'
     """
-    lo, hi = _FULL_RANGE
     chroma = _chroma_expr(saturation)
     gain = 1 - dim
     return {
-        "y": f"clip((val-{_DIM_PIVOT})*{gain:g}+{_DIM_PIVOT},{lo},{hi})",
+        "y": f"clip((val-{_DIM_PIVOT})*{gain:g}+{_DIM_PIVOT},{_CLIP_LO},{_LUMA_CEIL})",
         "u": chroma,
         "v": chroma,
     }

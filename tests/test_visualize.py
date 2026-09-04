@@ -1388,7 +1388,11 @@ class _PlateSource:
     black: int
     white: int
     dump: str
-    as_jpeg: bool = False
+    #: How the member reaches ffmpeg: ``None`` is the lavfi graph itself,
+    #: ``"jpg"`` and ``"png16"`` write a real file first. A STRING rather than a
+    #: second boolean, because the corpus now covers three encodings and a pair
+    #: of flags would admit a meaningless fourth state.
+    encode: str | None = None
 
 
 #: Deterministic, structured, and bit-reproducible on both binaries — measured, not
@@ -1408,14 +1412,36 @@ PLATE_SOURCES = {
         "mandelbrot=s=600x600:r=10:end_pts=1", 16, 235, "yuv444p"
     ),
     "jpeg-cover": _PlateSource(
-        "testsrc2=s=600x600:r=10:d=0.1", 0, 255, "yuvj444p", as_jpeg=True
+        "testsrc2=s=600x600:r=10:d=0.1", 0, 255, "yuvj444p", encode="jpg"
+    ),
+    # SIXTEEN BITS. A cover exported at 16 bits per channel makes the chain
+    # negotiate `yuv444p16le`, where luma runs 4096..60160 — measured identically
+    # on ffmpeg 9.0.1 and 6.1.6. Before muvid#81 the 8-bit clip literals clamped
+    # every pixel here and the plate came out as ONE flat value; the corpus could
+    # not say so, because it contained no such member.
+    "png16-cover": _PlateSource(
+        "testsrc2=s=600x600:r=10:d=0.1", 4096, 60160, "yuv444p16le", encode="png16"
     ),
 }
+
+#: The members whose plate runs at EIGHT bits. The crush the multiplicative dim
+#: replaces is an 8-bit phenomenon: the additive form subtracted `dim * 255`, and
+#: 255 out of a 4096..60160 range is nearly nothing, so on a 16-bit plate the old
+#: form put 0.00% at display black and cannot demonstrate the defect at all. The
+#: crush tests therefore run over these, and the 16-bit member carries its own
+#: property (muvid#81 — that the CLIP does not collapse the plate) in its own test.
+#: The tests' own controls are what said so: they refused to compare on a source
+#: where the thing being replaced does not misbehave.
+EIGHT_BIT_PLATES = [n for n, s in PLATE_SOURCES.items() if "16le" not in s.dump]
 
 #: Broadcast black. `lutyuv`'s `minval` on a LIMITED-range plate, and therefore the
 #: wrong pivot for a full-range one — which is exactly what the pivot control below
 #: feeds each member from the other range.
 BROADCAST_BLACK = 16
+
+#: `lutyuv`'s `minval` on a 16-bit limited-range plate — 16 << 8. The member that
+#: floors here is the one muvid#81 was about.
+DEEP_BLACK = 4096
 
 #: A source that really contains its own black, so "the dim left black where it was"
 #: is a claim the picture can answer. Substituted into a member so it keeps that
@@ -1442,36 +1468,42 @@ def plate_jpegs(tmp_path_factory):
     is — checked on ffmpeg 9.0.1 and 6.1.6.
     """
     out = tmp_path_factory.mktemp("plate-jpegs")
-    graphs = sorted({s.graph for s in PLATE_SOURCES.values() if s.as_jpeg})
-    written: dict[str, Path] = {}
+    graphs = sorted({s.graph for s in PLATE_SOURCES.values() if s.encode})
+    encodings = sorted({s.encode for s in PLATE_SOURCES.values() if s.encode})
+    written: dict[tuple[str, str], Path] = {}
     for index, graph in enumerate([*graphs, BLACK_GRAPH]):
-        path = out / f"cover-{index}.jpg"
-        subprocess.run(
-            [
-                "ffmpeg",
-                "-y",
-                "-loglevel",
-                "error",
-                "-f",
-                "lavfi",
-                "-i",
-                graph,
-                "-frames:v",
-                "1",
-                "-q:v",
-                "2",
-                str(path),
-            ],
-            check=True,
-        )
-        written[graph] = path
+        for encode in encodings:
+            suffix = "jpg" if encode == "jpg" else "png"
+            path = out / f"cover-{index}-{encode}.{suffix}"
+            # `-q:v 2` for JPEG, `rgb48be` for the 16-bit PNG: the encoding IS
+            # what each member is for, so it is chosen per encoding rather than
+            # shared.
+            extra = ["-q:v", "2"] if encode == "jpg" else ["-pix_fmt", "rgb48be"]
+            subprocess.run(
+                [
+                    "ffmpeg",
+                    "-y",
+                    "-loglevel",
+                    "error",
+                    "-f",
+                    "lavfi",
+                    "-i",
+                    graph,
+                    "-frames:v",
+                    "1",
+                    *extra,
+                    str(path),
+                ],
+                check=True,
+            )
+            written[(graph, encode)] = path
     return written
 
 
 def _plate_input(source: _PlateSource, jpegs: dict[str, Path]) -> list[str]:
     """The ffmpeg input arguments for ``source`` — a lavfi graph, or a JPEG of it."""
-    if source.as_jpeg:
-        return ["-i", str(jpegs[source.graph])]
+    if source.encode:
+        return ["-i", str(jpegs[(source.graph, source.encode)])]
     return ["-f", "lavfi", "-i", source.graph]
 
 
@@ -1517,7 +1549,12 @@ def _plate_codes(
         capture_output=True,
         check=True,
     ).stdout
-    return np.frombuffer(out, np.uint8).reshape(3, height, width)[0].astype(float)
+    # DTYPE FROM THE MEMBER'S OWN DUMP FORMAT, not a hardcoded uint8. A 16-bit
+    # member dumps twice the bytes, and reading them as uint8 does not fail
+    # quietly — it fails with a reshape error, which is the good outcome; the
+    # bad one would have been a format whose byte count happened to divide.
+    dtype = np.dtype("<u2") if "16le" in source.dump else np.uint8
+    return np.frombuffer(out, dtype).reshape(3, height, width)[0].astype(float)
 
 
 def _plate_luma(
@@ -1598,22 +1635,24 @@ def test_the_corpus_covers_both_ranges_a_plate_can_run_in():
     to a single value. Measured through the real chain, dumped in its own pixel
     format: unpinned luma `min=255 max=255`, ONE distinct level.
 
-    That is muvid#81 — pre-existing (the merge-base is identically broken) and NOT
-    closed here, so this corpus deliberately does not claim to cover it. The
-    assertion below is `>=` on the two 8-bit ranges rather than an equality that
-    would read as "these are all the ranges there are".
+    Three ranges, not two, and the third is muvid#81: a 16-bit plate floors at
+    4096, where an 8-bit clip literal clamped every pixel and left ONE distinct
+    level. The pivot and the ceiling fail on different members — the pivot on the
+    full-range one, the ceiling on the deep one — so a corpus missing either lets
+    a literal through.
     """
     floors = {s.black for s in PLATE_SOURCES.values()}
-    assert {0, BROADCAST_BLACK} <= floors, (
-        f"the plate corpus floors at {sorted(floors)}. It has to contain both a "
-        "limited-range plate (a PNG cover, minval 16) and a full-range one (a JPEG "
-        "cover, minval 0), or a hardcoded pivot passes. (Subset, not equality: a "
-        "16-bit plate floors at 4096 and belongs here once muvid#81 is fixed.)"
+    assert floors == {0, BROADCAST_BLACK, DEEP_BLACK}, (
+        f"the plate corpus floors at {sorted(floors)}. It has to contain a "
+        "limited-range plate (minval 16), a full-range one (a JPEG cover, "
+        f"minval 0) and a deeper-than-8-bit one (a 16-bit PNG, minval "
+        f"{DEEP_BLACK}) — the first two so a hardcoded PIVOT fails, the third so "
+        "a hardcoded CLIP CEILING does. muvid#81 was the one nothing covered."
     )
 
 
 @needs_ffmpeg_filter("lutyuv", "gblur")
-@pytest.mark.parametrize("name", list(PLATE_SOURCES))
+@pytest.mark.parametrize("name", EIGHT_BIT_PLATES)
 @pytest.mark.parametrize("site", list(DIM_SITES))
 def test_the_dim_darkens_the_plate_instead_of_deleting_its_shadows(
     site, name, plate_jpegs
@@ -1666,7 +1705,7 @@ def test_the_dim_darkens_the_plate_instead_of_deleting_its_shadows(
 
 
 @needs_ffmpeg_filter("lutyuv", "gblur")
-@pytest.mark.parametrize("name", list(PLATE_SOURCES))
+@pytest.mark.parametrize("name", EIGHT_BIT_PLATES)
 @pytest.mark.parametrize("site", list(DIM_SITES))
 def test_the_dim_pivots_on_the_plates_own_black_whatever_that_is(
     site, name, plate_jpegs
@@ -1693,7 +1732,7 @@ def test_the_dim_pivots_on_the_plates_own_black_whatever_that_is(
     # under it" — and only a source that contains black can show that a dim leaves it
     # where it is. Every structured source has its own floor, which is why this half
     # does not use one. It keeps the member's ENCODING, so its black is the member's.
-    black = replace(source, graph=BLACK_GRAPH, as_jpeg=source.as_jpeg)
+    black = replace(source, graph=BLACK_GRAPH, encode=source.encode)
     kept = _plate_codes(
         black, plate_jpegs, dim_saturation_lut(dim=new, saturation=saturation)
     )
@@ -1759,7 +1798,7 @@ DIM_GAIN_BAND = {
 
 
 @needs_ffmpeg_filter("lutyuv", "gblur")
-@pytest.mark.parametrize("name", list(PLATE_SOURCES))
+@pytest.mark.parametrize("name", EIGHT_BIT_PLATES)
 @pytest.mark.parametrize("site", list(DIM_SITES))
 def test_the_shipped_dims_are_the_ones_that_were_measured(site, name, plate_jpegs):
     """The three constants are a MEASUREMENT, and this is what says so.
@@ -1985,3 +2024,90 @@ def test_the_flash_is_still_on_by_default():
     assert 'ctx.options.get("flash", True)' in src, (
         "the spectrum flash is no longer on by default; the skill says it is."
     )
+
+
+#: The members whose plate runs DEEPER than eight bits — the population muvid#81
+#: was about, and the one no corpus member covered when it shipped.
+DEEP_PLATES = [n for n, s in PLATE_SOURCES.items() if "16le" in s.dump]
+
+
+@needs_ffmpeg_filter("lutyuv", "gblur")
+@pytest.mark.parametrize("name", DEEP_PLATES)
+@pytest.mark.parametrize("site", list(DIM_SITES))
+def test_the_dim_does_not_collapse_a_deeper_than_eight_bit_plate(
+    site, name, plate_jpegs
+):
+    """muvid#81: an 8-bit clip literal clamps every pixel of a 16-bit plate.
+
+    `_DIM_PIVOT` was already right here — it is `minval`, so it adapts to 4096 —
+    and that is exactly what made this hard to see: the pivot half of the
+    expression was correct while the CLIP half silently destroyed the picture.
+    Measured before the fix: luma `min=255 max=255`, ONE distinct level, on both
+    ffmpeg builds. A uniform plate, from a cover a user can legitimately upload.
+
+    The control is the assertion's own premise — the undimmed plate must have
+    something to lose — so a source that was already flat could not pass this by
+    being flat.
+    """
+    source = PLATE_SOURCES[name]
+    _old, dim, saturation = DIM_SITES[site]
+
+    plain = _plate_codes(source, plate_jpegs, {"y": "val", "u": "val", "v": "val"})
+    dimmed = _plate_codes(
+        source, plate_jpegs, dim_saturation_lut(dim=dim, saturation=saturation)
+    )
+
+    assert len(np.unique(plain)) > 32, (
+        f"{site}/{name}: the UNDIMMED plate has only {len(np.unique(plain))} "
+        "distinct levels, so 'the dim did not collapse it' is not a claim this "
+        "source can answer."
+    )
+    levels = len(np.unique(dimmed))
+    assert levels > 8, (
+        f"{site}/{name}: the dimmed plate has {levels} distinct luma levels "
+        f"(min {dimmed.min():.0f}, max {dimmed.max():.0f}). An 8-bit clip "
+        "ceiling on a 16-bit chain clamps everything and leaves exactly one — "
+        "that was muvid#81."
+    )
+    assert dimmed.max() > dimmed.min(), f"{site}/{name}: the plate is one flat value"
+
+
+@needs_ffmpeg_filter("lutyuv")
+def test_the_clip_ceiling_adapts_to_depth_and_range():
+    """The four combinations, read back out of the binary rather than asserted.
+
+    The ceiling is a conditional and not a scale factor because `maxval` is the
+    BROADCAST maximum: 235 for limited-range luma and 255 for full-range, so only
+    the first wants the 255/235 correction. Getting that backwards would clip
+    full-range highlights at 276 — above anything representable, i.e. silently
+    never — which is why each case is measured instead of reasoned about.
+    """
+    from muvid.visualize.canvas import _LUMA_CEIL
+
+    expected = {"yuv444p": 255, "yuvj444p": 255, "yuv444p16le": 65280}
+    for fmt, want in expected.items():
+        out = subprocess.run(
+            [
+                "ffmpeg",
+                "-v",
+                "error",
+                "-f",
+                "lavfi",
+                "-i",
+                "testsrc2=s=16x16:r=10:d=0.1",
+                "-vf",
+                f"format={fmt},lutyuv=y='{_LUMA_CEIL}'",
+                "-frames:v",
+                "1",
+                "-f",
+                "rawvideo",
+                "-pix_fmt",
+                fmt,
+                "-",
+            ],
+            capture_output=True,
+            check=True,
+        ).stdout
+        dtype = np.dtype("<u2") if "16le" in fmt else np.uint8
+        got = int(np.frombuffer(out, dtype)[0])
+        assert got == want, f"{fmt}: ceiling reads {got}, expected {want}"
