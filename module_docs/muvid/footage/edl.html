@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.footage.edl &mdash; muvid 0.0.42 documentation</title>
+  <title>muvid.footage.edl &mdash; muvid 0.0.43 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -15,7 +15,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=173d7b4c"></script>
+      <script src="../../../_static/documentation_options.js?v=b345ff55"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -347,13 +347,38 @@ two-place edit and the second place is a measurement of the real binary.</p>
 <p><strong>What this does NOT bound</strong>, stated because a partial claim is worse than
 none. An allowlisted filter can still be given absurd PARAMETERS, and the two
 that matter are measured rather than guessed at:</p>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">scale</span></code> sets the frame size, and the frame size is memory. On ffmpeg 9.0.1,
-<code class="docutils literal notranslate"><span class="pre">scale=320:180</span></code> peaks at 21.7 MB RSS and <code class="docutils literal notranslate"><span class="pre">scale=320:180,scale=8000:8000</span></code>
-at 324.7 MB — 15x, from one caller-supplied number, on a box that has already
-been OOM-killed once (muvid#21/#24). Not closed here because bounding it means
-evaluating ffmpeg expressions (<code class="docutils literal notranslate"><span class="pre">iw*2</span></code> is a legal width), which is a bigger
-piece of work than this gate; it wants its own issue.</p></li>
+<ul>
+<li><p><strong>Frame size is memory, and THREE options set it</strong>, not one. Measured on
+ffmpeg 9.0.1, three frames from a 64x48 source, peak RSS:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>look</p></th>
+<th class="head"><p>peak RSS</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">scale=64:48</span></code></p></td>
+<td><p>10 MB</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">scale=64:48,scale=8000:8000</span></code></p></td>
+<td><p>300 MB</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">zoompan=d=1:s=8000x8000:fps=25</span></code></p></td>
+<td><p>289 MB</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">scale=w='iw*80':h='ih*80'</span></code></p></td>
+<td><p>112 MB</p></td>
+</tr>
+</tbody>
+</table>
+<p>All four are ACCEPTED by this gate. An earlier version of this note named
+only <code class="docutils literal notranslate"><span class="pre">scale</span></code>, which under-enumerated the surface it exists to describe:
+<code class="docutils literal notranslate"><span class="pre">zoompan</span></code>’s <code class="docutils literal notranslate"><span class="pre">s</span></code> is a second lever of the same magnitude, and it is
+allowlisted precisely because <code class="docutils literal notranslate"><span class="pre">muvid.footage.look.punch_in</span></code> needs it.
+Not closed here because a correct bound is RELATIVE TO THE CANVAS — which
+this function is not given — and because <code class="docutils literal notranslate"><span class="pre">iw*80</span></code> is a legal width, so a
+literal cap is not the whole answer. Tracked as muvid#76.</p>
+</li>
 <li><p><code class="docutils literal notranslate"><span class="pre">lut3d=file=</span></code> will <em>attempt</em> to open any path the renderer can read. It
 cannot write, and a non-<code class="docutils literal notranslate"><span class="pre">.cube</span></code> file fails to parse.</p></li>
 </ul>
