@@ -56,6 +56,41 @@ MAX_EDL_ENTRIES = int(os.environ.get("MUVID_FOOTAGE_MAX_EDL_ENTRIES", "500"))
 #: multiple is the whole of the legitimate range.
 MAX_LOOK_SCALE = int(os.environ.get("MUVID_FOOTAGE_MAX_LOOK_SCALE", "4"))
 
+#: How many filter links one look may carry, and how many of those may set a
+#: size. **Bounding the frame does not bound the memory** — that is the half
+#: :data:`MAX_LOOK_SCALE` misses, and it misses it by a factor of ten.
+#:
+#: Measured, ffmpeg 9.0.1, three frames, ``/usr/bin/time -l`` peak RSS, every
+#: link sitting exactly AT the size cap (7680x4320 for a 1920x1080 canvas), so
+#: every fragment below is one :func:`_validate_look_size` accepts:
+#:
+#: =========================  =========
+#: look                       peak RSS
+#: =========================  =========
+#: ``scale=7680:4320`` x1     171 MB
+#: ``scale=7680:4320`` x8     505 MB
+#: ``scale=7680:4320`` x32    1648 MB
+#: ``scale=7680:4320`` x64    3171 MB
+#: =========================  =========
+#:
+#: ~47 MB per additional link, unbounded, on a box that has been OOM-killed at
+#: 30 cuts (muvid#21/#24). The size cap refuses ``scale=8000:8000`` at 241 MB
+#: while accepting thirty-two links of 7680x4320 at 1648 MB — which is the
+#: shape of a bound that measures the wrong quantity.
+#:
+#: TWO caps rather than one, because they bound different things and one number
+#: cannot do both: the total bounds the graph, and the resize count bounds how
+#: many LARGE frames can exist in it. Together the measured worst case is
+#: **292 MB** (2 links at the size cap plus 14 cheap ones) against 3171 MB
+#: today. A single total-link cap loose enough for a rich grade would leave the
+#: multiplicative worst case an order of magnitude higher.
+#:
+#: The values are generous by construction: muvid's own compilers emit **1**
+#: link for ``punch_in`` and **2** for a two-effect ``stylize``, and at most one
+#: of those ever sets a size.
+MAX_LOOK_LINKS = int(os.environ.get("MUVID_FOOTAGE_MAX_LOOK_LINKS", "16"))
+MAX_LOOK_RESIZES = int(os.environ.get("MUVID_FOOTAGE_MAX_LOOK_RESIZES", "2"))
+
 #: The canvas :func:`validate_edl` bounds a look against when its caller names
 #: none: the element-wise maximum of ``workspace.CANVASES``, so the default is
 #: the LOOSEST bound that is still a bound — never an absent one.
@@ -1391,6 +1426,41 @@ def _look_unclassified_options(look: str) -> "list[tuple[str, str, str]]":
     return out
 
 
+def _validate_look_links(i, look: str) -> None:
+    """Bound how many filter links a look carries, and how many resize. Raises.
+
+    The companion to :func:`_validate_look_size`, and the half it misses:
+    bounding the FRAME does not bound the MEMORY. Every fragment this refuses
+    sits entirely inside the size cap — thirty-two links of ``scale=7680:4320``
+    on a 1920x1080 canvas is 1648 MB and was accepted, while the size cap
+    refuses ``scale=8000:8000`` at 241 MB. See :data:`MAX_LOOK_LINKS` for the
+    table.
+
+    Counted through :func:`_look_filter_names`, so the count is the one ffmpeg
+    will make — escaped commas inside an expression are not separators, and a
+    look whose links are spelled with quotes or escapes counts the same.
+    """
+    names = _look_filter_names(look)
+    if len(names) > MAX_LOOK_LINKS:
+        raise ValueError(
+            f"EDL entry {i}: look chains {len(names)} filters, more than the "
+            f"{MAX_LOOK_LINKS} muvid allows. Frame size is not the only thing "
+            "that costs memory — measured, each additional link at the size cap "
+            "adds about 47 MB, and the cap exists so a look cannot reach 3 GB "
+            "one accepted link at a time. muvid's own looks use one or two."
+        )
+    resizes = [n for n in names if n in _LOOK_GEOMETRY_FILTERS]
+    if len(resizes) > MAX_LOOK_RESIZES:
+        raise ValueError(
+            f"EDL entry {i}: look resizes {len(resizes)} times ({', '.join(resizes)}), "
+            f"more than the {MAX_LOOK_RESIZES} muvid allows. Each resize can hold a "
+            f"frame up to {MAX_LOOK_SCALE}x the canvas, so this is the cap that "
+            "bounds how many LARGE frames the graph carries; the total-link cap "
+            "bounds the graph. A look needs one resize, or none — the assembler "
+            "has already conformed the cut to the canvas before the look runs."
+        )
+
+
 def _validate_look_size(i, look: str, canvas) -> None:
     """Bound the frame a look asks for against the delivery canvas. Raises.
 
@@ -1598,6 +1668,7 @@ def _validate_look(i, e, canvas) -> None:
             "filter genuinely belongs on this seam add it to "
             "muvid.footage.edl.LOOK_FILTERS deliberately — it must name no file."
         )
+    _validate_look_links(i, look)
     _validate_look_size(i, look, canvas)
     if e.is_gap:
         raise ValueError(

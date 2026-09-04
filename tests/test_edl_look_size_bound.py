@@ -57,6 +57,9 @@ from muvid.footage.edl import (
     FootageAlignment,
     _look_output_sizes,
     validate_edl,
+    MAX_LOOK_LINKS,
+    MAX_LOOK_RESIZES,
+    _LOOK_GEOMETRY_FILTERS,
 )
 from muvid.footage.look import motion, punch_in
 from tests.ffmpeg_support import needs_ffmpeg
@@ -564,8 +567,10 @@ def test_the_gate_reads_the_same_frame_size_the_binary_produces(tmp_path, vf):
         ("pad=64:48:0:0:black:init:1/30", (64, 1920)),
         # scale's force_original_aspect_ratio after an aspect-changing crop —
         # both declared sizes are plain pixel counts inside the bound
-        ("crop=w=64:h=8,scale=w=256:h=192:force_original_aspect_ratio=increase",
-         (1536, 192)),
+        (
+            "crop=w=64:h=8,scale=w=256:h=192:force_original_aspect_ratio=increase",
+            (1536, 192),
+        ),
     ],
 )
 def test_the_refused_options_really_do_grow_the_frame_on_this_binary(
@@ -585,7 +590,10 @@ def test_the_refused_options_really_do_grow_the_frame_on_this_binary(
     """
     assert _rendered_size(tmp_path, look) == expected
     declared = {axis: px for _, _, axis, _, px in _look_output_sizes(look)}
-    ceiling = (max(declared.get("width") or 0, 64), max(declared.get("height") or 0, 48))
+    ceiling = (
+        max(declared.get("width") or 0, 64),
+        max(declared.get("height") or 0, 48),
+    )
     assert expected[0] > ceiling[0] or expected[1] > ceiling[1], (
         f"{look!r} produced {expected}, which is within the {ceiling} the gate "
         "reads — so it is not a lever and refusing it is pure over-refusal."
@@ -820,3 +828,79 @@ def test_the_render_canvas_reaches_the_gate_including_the_override(
         _assemble_with(
             tmp_path, monkeypatch, "scale=1920:5000", project_id="project_canvas"
         )
+
+
+class TestBoundingTheFrameDoesNotBoundTheMemory:
+    """The half `MAX_LOOK_SCALE` misses, and it misses it by a factor of ten.
+
+    Every fragment in this class sits **entirely inside** the size cap — that
+    is the whole point. A corpus of over-sized fragments could not express this
+    defect, because the size bound already refuses those; the property under
+    test is that a look can reach gigabytes one *accepted* link at a time.
+
+    Measured, ffmpeg 9.0.1, three frames, peak RSS, each link at the size cap
+    for a 1920x1080 canvas: 1 link 171 MB, 8 links 505 MB, 32 links 1648 MB,
+    64 links 3171 MB — against 241 MB for the `scale=8000:8000` the size cap
+    refuses.
+    """
+
+    CANVAS = (1920, 1080)
+
+    def _look(self, i, look):
+        from muvid.footage.edl import EdlEntry, _validate_look
+
+        _validate_look(i, EdlEntry(0.0, 1.0, "A", look=look), self.CANVAS)
+
+    def test_the_attack_the_size_bound_accepts(self):
+        """32 links, every one at 7680x4320 — 1648 MB, and the size bound has
+        no complaint about any of them individually."""
+        from muvid.footage.edl import _validate_look_size
+
+        attack = ",".join(["scale=7680:4320"] * 32)
+        # The premise: the SIZE bound really does accept this.
+        _validate_look_size(0, attack, self.CANVAS)
+        # The link bound is what refuses it.
+        with pytest.raises(ValueError, match="chains 32 filters"):
+            self._look(0, attack)
+
+    def test_a_look_at_the_link_cap_is_allowed(self):
+        self._look(0, ",".join(["hue=s=1"] * MAX_LOOK_LINKS))
+
+    def test_one_past_it_is_refused(self):
+        with pytest.raises(ValueError, match="more than the"):
+            self._look(0, ",".join(["hue=s=1"] * (MAX_LOOK_LINKS + 1)))
+
+    def test_the_resize_cap_is_separate_from_the_total(self):
+        """Three resizes is far under the total cap and still refused — two
+        caps because they bound different things, and one number cannot do
+        both: the total bounds the graph, the resize count bounds how many
+        LARGE frames live in it."""
+        three = "scale=1920:1080,pad=1920:1080,zoompan=d=1:s=1920x1080"
+        assert len(three.split(",")) < MAX_LOOK_LINKS
+        with pytest.raises(ValueError, match="resizes 3 times"):
+            self._look(0, three)
+
+    def test_two_resizes_are_allowed(self):
+        self._look(0, "scale=1920:1080,pad=1920:1080")
+
+    def test_the_count_is_the_one_ffmpeg_WILL_MAKE(self):
+        """Counted through the lexer, so an escaped comma inside an expression
+        is not a link. `looks` emits exactly that (`gamma`'s lutrgb carries
+        `pow(val/maxval\\,1.0)`), so a naive split would over-count a legitimate
+        look and refuse it."""
+        from muvid.footage.edl import _look_filter_names
+
+        expr = "lutrgb=r='pow(val/maxval\\,1.0)':g='pow(val/maxval\\,1.0)'"
+        assert _look_filter_names(expr) == ["lutrgb"]
+        self._look(0, ",".join([expr] * MAX_LOOK_LINKS))
+
+    def test_every_look_muvid_compiles_passes_both_caps(self):
+        """The caps must not refuse the seam they exist to protect."""
+        from muvid.footage.edl import _look_filter_names
+        from muvid.footage.look import punch_in
+
+        compiled = punch_in(canvas=self.CANVAS, fps=25, duration_s=3.0)
+        names = _look_filter_names(compiled)
+        assert len(names) <= MAX_LOOK_LINKS
+        assert sum(1 for n in names if n in _LOOK_GEOMETRY_FILTERS) <= MAX_LOOK_RESIZES
+        self._look(0, compiled)
