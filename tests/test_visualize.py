@@ -1188,12 +1188,17 @@ def test_the_composed_graph_creates_the_flash_before_the_plate(click_track, tmp_
         workdir=tmp_path,
     )
     graph = ";".join(resolve_visual("spectrum", ctx).filters)
-    flash_at = graph.index(f"lutyuv@{DEFAULT_FLASH_LABEL}")
-    plate_at = graph.index(
-        lut_filter(
-            dim_saturation_lut(dim=REACTIVE_BG_DIM, saturation=REACTIVE_BG_SATURATION)
-        )
+    # Found by shape, not by rebuilding either LUT's exact string: the plate's is
+    # the unlabelled `lutyuv=`, the flash's the one carrying an instance name. A
+    # reconstruction would couple this to the plate's dim, and then retuning a
+    # constant would fail an ordering test with a ValueError.
+    instances = [m.start() for m in re.finditer(r"lutyuv@\w+=", graph)]
+    plates = [m.start() for m in re.finditer(r"(?<![@\w])lutyuv=", graph)]
+    assert len(instances) == len(plates) == 1, (
+        f"expected exactly one named and one unnamed lutyuv in the composed "
+        f"spectrum graph; found {len(instances)} and {len(plates)}."
     )
+    flash_at, plate_at = instances[0], plates[0]
     assert flash_at < plate_at, (
         f"the plate's lutyuv is created first now (char {plate_at} against the "
         f"flash's {flash_at}). A `sendcmd` addressed to the bare type name would "
