@@ -614,7 +614,7 @@ _LOOK_FORBIDDEN = "[];"
 #:   allowlisted precisely because ``muvid.footage.look.punch_in`` needs it.
 #:   Not closed here because a correct bound is RELATIVE TO THE CANVAS — which
 #:   this function is not given — and because ``iw*80`` is a legal width, so a
-#:   literal cap is not the whole answer. Tracked as muvid#76.
+#:   literal cap is not the whole answer. Tracked as muvid#75.
 #: - ``lut3d=file=`` will *attempt* to open any path the renderer can read. It
 #:   cannot write, and a non-``.cube`` file fails to parse.
 #:
