@@ -57,20 +57,28 @@ FLASH_SATURATION = 0.8
 #: the whole ``lutyuv@flash`` spelling, which :func:`flash_filter` derives from the
 #: filter it emits rather than composing a second time. Measured on ffmpeg 9.0.1 and
 #: 6.1.6, driving a grey source with one full-strength pulse on frame 5 in a graph
-#: that also carries `background_chain`'s own unlabelled ``lutyuv``:
+#: that also carries `background_chain`'s own unlabelled ``lutyuv`` — and in BOTH
+#: graph orders, because the type name's answer depends on the order:
 #:
-#:     target          the plate         the flash
-#:     lutyuv@flash    unmoved           126 -> 189   <- what muvid sends
-#:     lutyuv          33 -> 67 -> 130   unmoved
-#:     flash           unmoved           unmoved
+#:     target          plate first                  flash first (muvid's own order)
+#:                     plate      flash             plate      flash
+#:     lutyuv@flash    unmoved    126 -> 189        unmoved    126 -> 189  <- shipped
+#:     lutyuv          33 -> 67   unmoved           unmoved    126 -> 189
+#:     flash           unmoved    unmoved           unmoved    unmoved
 #:     all             ffmpeg SIGSEGVs on both builds
 #:
-#: The type name is worse than the "it would flash the plate too" muvid#72 predicted:
-#: ``sendcmd`` dispatches with ``AVFILTER_CMD_FLAG_ONE``, so it reaches only the FIRST
-#: match in graph order — the plate — and the flash stops firing altogether. ``all``
-#: hands ``y <lut expression>`` to every commandable filter in the graph, including
-#: the ``crop`` in `background_chain`, whose ``y`` is a geometry expression; it fails
-#: to parse and the process dies (exit 139, both builds).
+#: ``sendcmd`` dispatches with ``AVFILTER_CMD_FLAG_ONE``, so the type name reaches
+#: only the FIRST ``lutyuv`` the parser created and stops. Which one that is comes
+#: down to where the chains sit in the composed string, and in muvid's real graph
+#: the flash is FIRST — `_reactive_plan` emits ``[aviz]…lutyuv@flash…[_viz]``
+#: before `background_chain` (measured on the composed spectrum graph: char 279
+#: against char 493). So the type name would happen to work today, silently, and
+#: break on any reordering; muvid#72's prediction that it would flash the plate
+#: instead is what happens in the other order. The instance name is the address
+#: that does not depend on the accident — measured identical in both orders above.
+#: ``all`` hands ``y <lut expression>`` to every commandable filter in the graph,
+#: including the ``crop`` in `background_chain`, whose ``y`` is a geometry
+#: expression; it fails to parse and the process dies (exit 139, both builds).
 DEFAULT_FLASH_LABEL = "flash"
 
 #: The ffmpeg filters a flash chain is built from. Both are core filters, but a
@@ -245,8 +253,11 @@ def flash_filter(
     at_rest = lut_filter(brightness_saturation_lut(), label=label)
     # The sendcmd target is DERIVED from the filter the fragment declares, never
     # spelled a second time — and what it derives is the whole `lutyuv@flash`
-    # instance name, not the bare label (see DEFAULT_FLASH_LABEL for the three
-    # spellings measured and what each one does). A command addressed to a filter
+    # instance name, not the bare label and not the bare type (see
+    # DEFAULT_FLASH_LABEL for the three spellings measured, in both graph orders,
+    # and what each one does). An instance name is the only one of the three whose
+    # answer does not depend on where in the composed graph the chains sit.
+    # A command addressed to a filter
     # that is not in the graph is completely silent — ffmpeg exits 0, logs nothing
     # even at `warning`, and simply never flashes — so the two spellings drifting
     # apart would cost the effect with nothing anywhere to say so. That is why the

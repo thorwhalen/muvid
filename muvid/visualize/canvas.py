@@ -193,19 +193,32 @@ _FULL_RANGE = (0, 255)
 _CHROMA_PIVOT = 127.5
 
 #: The pivot the DIM scales luma about: ``lutyuv``'s own ``minval``, which is the
-#: broadcast black level (measured: 16 on both ffmpeg 9.0.1 and 6.1.6, inside this
-#: module's own plate chain — not just in a toy probe).
+#: black level of whichever pixel format the plate chain negotiated.
+#:
+#: **It is not a constant, and deriving it rather than writing 16 is the point.**
+#: Measured by reading it back out of this module's own chain (a LUT whose ``y``
+#: expression *is* ``minval``), identically on ffmpeg 9.0.1 and 6.1.6:
+#:
+#:     cover      the plate chain runs   ``minval``
+#:     PNG        ``yuv444p``            16      <- limited range
+#:     JPEG       ``yuvj420p`` (pc)      0       <- FULL range
+#:
+#: Album art is commonly a JPEG, so both halves are real inputs. A hardcoded ``16``
+#: is invisible on the PNG half — byte-identical, max\\|diff\\| 0.0 — and hazes the
+#: JPEG half: measured end to end on the composed spectrum graph, the plate's mean
+#: goes 7.53 -> 21.58 out of 255 and its floor 3 -> 18 (ffmpeg 9.0.1; 22.59 -> 34.53
+#: and 18 -> 31 on 6.1.6), i.e. grey exactly where the design wants black.
 #:
 #: This is the one place :data:`_FULL_RANGE`'s warning does NOT apply, and the
 #: distinction is the whole fix. That warning is about reproducing ``eq``, whose
 #: clip bounds are 0–255. A dim is not a clip: it is a scaling, and a scaling needs
-#: the pivot the picture's black actually sits on. The plate's luma plane is
-#: LIMITED range — every measured source floors at 16 or above — so ``val * gain``
-#: pivots on a black that is not in the data and pushes the whole picture under the
-#: floor, which the next conversion to RGB clamps away. Measured on a real cover at
-#: ``dim=0.9``: pivoting on 0 leaves 78.7% of the plate at display black over 6
-#: distinct levels; pivoting here leaves 8.4% over 20. The naive multiplicative
-#: form reproduces the bug it was meant to fix.
+#: the pivot the picture's black actually sits on. On a limited-range plate
+#: ``val * gain`` pivots on a black that is not in the data and pushes the whole
+#: picture under the floor, which the next conversion to RGB clamps away. Measured
+#: on a real cover at ``dim=0.9``: pivoting on 0 leaves 78.7% of the plate at
+#: display black over 6 distinct levels; pivoting here leaves 8.4% over 20. The
+#: naive multiplicative form reproduces the bug it was meant to fix — and a
+#: hardcoded 16 reproduces it on the other range instead.
 _DIM_PIVOT = "minval"
 
 
