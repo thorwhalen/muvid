@@ -80,11 +80,19 @@ DEFAULT_TINT = "colorchannelmixer=rr=0.16:gg=0.80:bb=0.85"
 #:
 #: The dim is MULTIPLICATIVE (muvid#70), so this value is not comparable with the
 #: additive ``0.5`` it replaces — it is the constant that lands the plate's mean
-#: display luma where the offset left it, measured over four photographs. The
-#: washout this comment warns about was then measured rather than assumed: under
+#: display luma where the offset left it, measured over four photographs (as PNGs;
+#: on JPEG covers the OLD chain landed somewhere else, because an additive offset
+#: is range-dependent and a scaling is not — see :data:`canvas._DIM_PIVOT`).
+#:
+#: The washout this comment warns about was then measured rather than assumed: under
 #: `screen`, out = P + V(1 - P), so the accent's contribution is what a brighter
-#: plate would eat. Rendered over three covers, the accent's added luma moves by
-#: at most 2.5/255 and its chroma by under 5% — it still reads.
+#: plate would eat. Isolated by rendering the real composed graph twice, once with
+#: the visualizer branch removed — which under `screen` leaves the plate alone — and
+#: differencing: over six covers (three photographs, each as PNG and as JPEG) the
+#: accent's frame-mean added luma moves by at most 0.10/255. State the instrument
+#: with any number here: the accent is sparse, so a frame mean is small and a
+#: mean over the visualizer's own pixels is not, and only the ratio is portable.
+#: It still reads.
 REACTIVE_BG_SATURATION = 0.18
 REACTIVE_BG_DIM = 0.945
 
