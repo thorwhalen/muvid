@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.visualize.canvas &mdash; muvid 0.0.47 documentation</title>
+  <title>muvid.visualize.canvas &mdash; muvid 0.0.48 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=4f34e5f2"></script>
+      <script src="../../../_static/documentation_options.js?v=a72e4630"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -332,7 +332,39 @@
 <span class="c1">#: *broadcast* range (16–235 luma, 16–240 chroma), so reaching for the named</span>
 <span class="c1">#: constants instead of these literals would crush blacks and clip highlights that</span>
 <span class="c1">#: ``eq`` left untouched. The literals are what reproduces ``eq``.</span>
-<span class="n">_FULL_RANGE</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">255</span><span class="p">)</span>
+<span class="n">_FULL_SCALE</span> <span class="o">=</span> <span class="mi">255</span>
+
+<span class="c1">#: The clip bounds, as ``lutyuv`` EXPRESSIONS rather than numbers, because the</span>
+<span class="c1">#: chain's bit depth is not known when they are written and the literals are</span>
+<span class="c1">#: wrong at any depth but eight.</span>
+<span class="c1">#:</span>
+<span class="c1">#: A 16-bit cover (``rgb48be``, which design tools export routinely) makes the</span>
+<span class="c1">#: plate chain negotiate ``yuv444p16le``, where luma runs 4096..60160.</span>
+<span class="c1">#: :data:`_DIM_PIVOT` adapts — it is ``minval`` — but a literal ``255`` ceiling</span>
+<span class="c1">#: clamps every pixel, and the plate becomes ONE flat value. Measured through</span>
+<span class="c1">#: the real chain, dumped in its own pixel format so nothing rescales on the way</span>
+<span class="c1">#: out: 8-bit literals give luma ``min=255 max=255``, **1 distinct level**;</span>
+<span class="c1">#: these expressions give ``min=4096 max=6912``, 12 levels. That was muvid#81.</span>
+<span class="c1">#:</span>
+<span class="c1">#: **The ceiling depends on the range as well as the depth**, which is why it is</span>
+<span class="c1">#: a conditional rather than a scale factor. ``maxval`` is the BROADCAST maximum,</span>
+<span class="c1">#: so it is 235 for limited-range luma and 255 for full-range — and only the</span>
+<span class="c1">#: first needs the 255/235 correction. Measured, all four combinations:</span>
+<span class="c1">#:</span>
+<span class="c1">#: ==========================  =========</span>
+<span class="c1">#: chain                       ceiling</span>
+<span class="c1">#: ==========================  =========</span>
+<span class="c1">#: ``yuv444p`` (8-bit limited)  255</span>
+<span class="c1">#: ``yuvj444p`` (8-bit full)    255</span>
+<span class="c1">#: ``yuv444p16le`` (16-bit)     65280</span>
+<span class="c1">#: 16-bit source -&gt; ``yuvj444p``  255</span>
+<span class="c1">#: ==========================  =========</span>
+<span class="c1">#:</span>
+<span class="c1">#: Chroma tops out at 240 rather than 235, so it carries its own correction.</span>
+<span class="c1">#: The low bound needs none: zero is zero at every depth.</span>
+<span class="n">_CLIP_LO</span> <span class="o">=</span> <span class="s2">"0"</span>
+<span class="n">_LUMA_CEIL</span> <span class="o">=</span> <span class="s2">"if(eq(minval,0),maxval,maxval*255/235)"</span>
+<span class="n">_CHROMA_CEIL</span> <span class="o">=</span> <span class="s2">"if(eq(minval,0),maxval,maxval*255/240)"</span>
 
 <span class="c1">#: Chroma neutral, and the pivot saturation scales about. ``vf_eq`` works in 0–1</span>
 <span class="c1">#: and pivots on 0.5, which is 127.5 in 8 bits — *not* 128. The naive value never</span>
@@ -340,7 +372,17 @@
 <span class="c1">#: it; what it does is raise the MEAN chroma error against ``eq`` (~1.3x at the</span>
 <span class="c1">#: shipped saturation of 0.8, ~2x at 0.6). Free to get right, so it is written</span>
 <span class="c1">#: once, here — and pinned by a test that measures the mean, not the max.</span>
-<span class="n">_CHROMA_PIVOT</span> <span class="o">=</span> <span class="mf">127.5</span>
+<span class="c1">#: Chroma neutral is half the full range, at any depth — so the pivot is not a</span>
+<span class="c1">#: number either. Expressed as a FRACTION of the ceiling rather than as the</span>
+<span class="c1">#: ceiling over two, because the expression that uses it multiplies by</span>
+<span class="c1">#: ``(1 - saturation)`` and folding the half in keeps one conditional in the</span>
+<span class="c1">#: emitted string instead of three.</span>
+<span class="c1">#:</span>
+<span class="c1">#: ``vf_eq`` works in 0-1 and pivots on 0.5, which is 127.5 in 8 bits — *not*</span>
+<span class="c1">#: 128. The naive value never costs more than ``0.5 * |1 - saturation|`` LSB, so</span>
+<span class="c1">#: no max-error bound can catch it; what it does is raise the MEAN chroma error</span>
+<span class="c1">#: against ``eq``. Written once, here.</span>
+<span class="n">_CHROMA_PIVOT_SCALE</span> <span class="o">=</span> <span class="mf">0.5</span>
 
 <span class="c1">#: The pivot the DIM scales luma about: ``lutyuv``'s own ``minval``, which is the</span>
 <span class="c1">#: black level of whichever pixel format the plate chain negotiated.</span>
@@ -359,7 +401,7 @@
 <span class="c1">#: goes 7.53 -&gt; 21.58 out of 255 and its floor 3 -&gt; 18 (ffmpeg 9.0.1; 22.59 -&gt; 34.53</span>
 <span class="c1">#: and 18 -&gt; 31 on 6.1.6), i.e. grey exactly where the design wants black.</span>
 <span class="c1">#:</span>
-<span class="c1">#: This is the one place :data:`_FULL_RANGE`'s warning does NOT apply, and the</span>
+<span class="c1">#: This is the one place :data:`_LUMA_CEIL`'s warning does NOT apply, and the</span>
 <span class="c1">#: distinction is the whole fix. That warning is about reproducing ``eq``, whose</span>
 <span class="c1">#: clip bounds are 0–255. A dim is not a clip: it is a scaling, and a scaling needs</span>
 <span class="c1">#: the pivot the picture's black actually sits on. On a limited-range plate</span>
@@ -383,7 +425,7 @@
 <span class="sd">    reached for it made muvid require a GPL build for what is arithmetic on three</span>
 <span class="sd">    planes. ``lutyuv`` is LGPL and expresses the same two knobs exactly as ``vf_eq``</span>
 <span class="sd">    defines them: brightness is an ADDITIVE offset of ``brightness * 255`` on luma,</span>
-<span class="sd">    saturation a scaling of chroma about :data:`_CHROMA_PIVOT`.</span>
+<span class="sd">    saturation a scaling of chroma about :data:`_CHROMA_PIVOT_SCALE`.</span>
 
 <span class="sd">    Returns a ``{component: expression}`` mapping rather than a filter string</span>
 <span class="sd">    because the two callers need different shapes — one composes a filtergraph,</span>
@@ -398,16 +440,15 @@
 <span class="sd">    Examples:</span>
 <span class="sd">        &gt;&gt;&gt; lut = brightness_saturation_lut(brightness=-0.25, saturation=0.8)</span>
 <span class="sd">        &gt;&gt;&gt; lut["y"]</span>
-<span class="sd">        'clip(val-63.75,0,255)'</span>
+<span class="sd">        'clip(val-63.75,0,if(eq(minval,0),maxval,maxval*255/235))'</span>
 <span class="sd">        &gt;&gt;&gt; lut["u"] == lut["v"]</span>
 <span class="sd">        True</span>
 <span class="sd">        &gt;&gt;&gt; brightness_saturation_lut()["y"], brightness_saturation_lut()["u"]</span>
-<span class="sd">        ('clip(val+0,0,255)', 'clip((val-127.5)*1+127.5,0,255)')</span>
+<span class="sd">        ('clip(val+0,0,if(eq(minval,0),maxval,maxval*255/235))', 'clip(val*1+(if(eq(minval,0),maxval,maxval*255/240))*0,0,if(eq(minval,0),maxval,maxval*255/240))')</span>
 <span class="sd">    """</span>
-    <span class="n">lo</span><span class="p">,</span> <span class="n">hi</span> <span class="o">=</span> <span class="n">_FULL_RANGE</span>
     <span class="n">chroma</span> <span class="o">=</span> <span class="n">_chroma_expr</span><span class="p">(</span><span class="n">saturation</span><span class="p">)</span>
     <span class="k">return</span> <span class="p">{</span>
-        <span class="s2">"y"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"clip(val</span><span class="si">{</span><span class="n">brightness</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">hi</span><span class="si">:</span><span class="s2">+g</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="n">lo</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="n">hi</span><span class="si">}</span><span class="s2">)"</span><span class="p">,</span>
+        <span class="s2">"y"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"clip(val</span><span class="si">{</span><span class="n">brightness</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">_FULL_SCALE</span><span class="si">:</span><span class="s2">+g</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="n">_CLIP_LO</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="n">_LUMA_CEIL</span><span class="si">}</span><span class="s2">)"</span><span class="p">,</span>
         <span class="s2">"u"</span><span class="p">:</span> <span class="n">chroma</span><span class="p">,</span>
         <span class="s2">"v"</span><span class="p">:</span> <span class="n">chroma</span><span class="p">,</span>
     <span class="p">}</span></div>
@@ -415,15 +456,22 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_chroma_expr</span><span class="p">(</span><span class="n">saturation</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""``lutyuv`` u/v expression scaling chroma about :data:`_CHROMA_PIVOT`.</span>
+<span class="w">    </span><span class="sd">"""``lutyuv`` u/v expression scaling chroma about :data:`_CHROMA_PIVOT_SCALE`.</span>
 
 <span class="sd">    Both LUT builders need it and it is written once: the two are already the two</span>
 <span class="sd">    halves of one look, and a second copy of ``eq``'s saturation arithmetic is</span>
 <span class="sd">    exactly how the darkened plate and the beat flash would start desaturating by</span>
 <span class="sd">    different amounts.</span>
 <span class="sd">    """</span>
-    <span class="n">lo</span><span class="p">,</span> <span class="n">hi</span> <span class="o">=</span> <span class="n">_FULL_RANGE</span>
-    <span class="k">return</span> <span class="sa">f</span><span class="s2">"clip((val-</span><span class="si">{</span><span class="n">_CHROMA_PIVOT</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2">)*</span><span class="si">{</span><span class="n">saturation</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2">+</span><span class="si">{</span><span class="n">_CHROMA_PIVOT</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="n">lo</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="n">hi</span><span class="si">}</span><span class="s2">)"</span>
+    <span class="c1"># Written as `val*s + pivot*(1-s)` rather than `(val-pivot)*s + pivot`.</span>
+    <span class="c1"># They are the same line — but the pivot is now an EXPRESSION, not a number,</span>
+    <span class="c1"># and the second form spells it twice. Measured byte-identical at 8 bits in</span>
+    <span class="c1"># both ranges; what it buys is one copy of the conditional instead of two.</span>
+    <span class="n">offset</span> <span class="o">=</span> <span class="n">_CHROMA_PIVOT_SCALE</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">saturation</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s2">"clip(val*</span><span class="si">{</span><span class="n">saturation</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2">+(</span><span class="si">{</span><span class="n">_CHROMA_CEIL</span><span class="si">}</span><span class="s2">)*</span><span class="si">{</span><span class="n">offset</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2">,"</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">_CLIP_LO</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="n">_CHROMA_CEIL</span><span class="si">}</span><span class="s2">)"</span>
+    <span class="p">)</span>
 
 
 <div class="viewcode-block" id="dim_saturation_lut">
@@ -455,17 +503,16 @@
 <span class="sd">    Examples:</span>
 <span class="sd">        &gt;&gt;&gt; lut = dim_saturation_lut(dim=0.65, saturation=0.8)</span>
 <span class="sd">        &gt;&gt;&gt; lut["y"]</span>
-<span class="sd">        'clip((val-minval)*0.35+minval,0,255)'</span>
+<span class="sd">        'clip((val-minval)*0.35+minval,0,if(eq(minval,0),maxval,maxval*255/235))'</span>
 <span class="sd">        &gt;&gt;&gt; lut["u"] == lut["v"] == brightness_saturation_lut(saturation=0.8)["u"]</span>
 <span class="sd">        True</span>
 <span class="sd">        &gt;&gt;&gt; dim_saturation_lut()["y"]  # 0 is a no-op, and reads as one</span>
-<span class="sd">        'clip((val-minval)*1+minval,0,255)'</span>
+<span class="sd">        'clip((val-minval)*1+minval,0,if(eq(minval,0),maxval,maxval*255/235))'</span>
 <span class="sd">    """</span>
-    <span class="n">lo</span><span class="p">,</span> <span class="n">hi</span> <span class="o">=</span> <span class="n">_FULL_RANGE</span>
     <span class="n">chroma</span> <span class="o">=</span> <span class="n">_chroma_expr</span><span class="p">(</span><span class="n">saturation</span><span class="p">)</span>
     <span class="n">gain</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">dim</span>
     <span class="k">return</span> <span class="p">{</span>
-        <span class="s2">"y"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"clip((val-</span><span class="si">{</span><span class="n">_DIM_PIVOT</span><span class="si">}</span><span class="s2">)*</span><span class="si">{</span><span class="n">gain</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2">+</span><span class="si">{</span><span class="n">_DIM_PIVOT</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="n">lo</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="n">hi</span><span class="si">}</span><span class="s2">)"</span><span class="p">,</span>
+        <span class="s2">"y"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"clip((val-</span><span class="si">{</span><span class="n">_DIM_PIVOT</span><span class="si">}</span><span class="s2">)*</span><span class="si">{</span><span class="n">gain</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2">+</span><span class="si">{</span><span class="n">_DIM_PIVOT</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="n">_CLIP_LO</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="n">_LUMA_CEIL</span><span class="si">}</span><span class="s2">)"</span><span class="p">,</span>
         <span class="s2">"u"</span><span class="p">:</span> <span class="n">chroma</span><span class="p">,</span>
         <span class="s2">"v"</span><span class="p">:</span> <span class="n">chroma</span><span class="p">,</span>
     <span class="p">}</span></div>

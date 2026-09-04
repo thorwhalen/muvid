@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.visualize.canvas &mdash; muvid 0.0.47 documentation</title>
+  <title>muvid.visualize.canvas &mdash; muvid 0.0.48 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -15,7 +15,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=4f34e5f2"></script>
+      <script src="../../../_static/documentation_options.js?v=a72e4630"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -404,7 +404,7 @@ darkened. See <a class="reference internal" href="#muvid.visualize.canvas.dim_sa
 reached for it made muvid require a GPL build for what is arithmetic on three
 planes. <code class="docutils literal notranslate"><span class="pre">lutyuv</span></code> is LGPL and expresses the same two knobs exactly as <code class="docutils literal notranslate"><span class="pre">vf_eq</span></code>
 defines them: brightness is an ADDITIVE offset of <code class="docutils literal notranslate"><span class="pre">brightness</span> <span class="pre">*</span> <span class="pre">255</span></code> on luma,
-saturation a scaling of chroma about <code class="xref py py-data docutils literal notranslate"><span class="pre">_CHROMA_PIVOT</span></code>.</p>
+saturation a scaling of chroma about <code class="xref py py-data docutils literal notranslate"><span class="pre">_CHROMA_PIVOT_SCALE</span></code>.</p>
 <p>Returns a <code class="docutils literal notranslate"><span class="pre">{component:</span> <span class="pre">expression}</span></code> mapping rather than a filter string
 because the two callers need different shapes — one composes a filtergraph,
 the other emits one <code class="docutils literal notranslate"><span class="pre">sendcmd</span></code> command per component — and a second copy of
@@ -421,11 +421,11 @@ of full scale). <code class="docutils literal notranslate"><span class="pre">0</
 <p class="rubric">Examples</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">lut</span> <span class="o">=</span> <span class="n">brightness_saturation_lut</span><span class="p">(</span><span class="n">brightness</span><span class="o">=-</span><span class="mf">0.25</span><span class="p">,</span> <span class="n">saturation</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">lut</span><span class="p">[</span><span class="s2">"y"</span><span class="p">]</span>
-<span class="go">'clip(val-63.75,0,255)'</span>
+<span class="go">'clip(val-63.75,0,if(eq(minval,0),maxval,maxval*255/235))'</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">lut</span><span class="p">[</span><span class="s2">"u"</span><span class="p">]</span> <span class="o">==</span> <span class="n">lut</span><span class="p">[</span><span class="s2">"v"</span><span class="p">]</span>
 <span class="go">True</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">brightness_saturation_lut</span><span class="p">()[</span><span class="s2">"y"</span><span class="p">],</span> <span class="n">brightness_saturation_lut</span><span class="p">()[</span><span class="s2">"u"</span><span class="p">]</span>
-<span class="go">('clip(val+0,0,255)', 'clip((val-127.5)*1+127.5,0,255)')</span>
+<span class="go">('clip(val+0,0,if(eq(minval,0),maxval,maxval*255/235))', 'clip(val*1+(if(eq(minval,0),maxval,maxval*255/240))*0,0,if(eq(minval,0),maxval,maxval*255/240))')</span>
 </pre></div>
 </div>
 </dd></dl>
@@ -516,11 +516,11 @@ and the constants that ship were re-measured rather than converted: see
 <p class="rubric">Examples</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">lut</span> <span class="o">=</span> <span class="n">dim_saturation_lut</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mf">0.65</span><span class="p">,</span> <span class="n">saturation</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">lut</span><span class="p">[</span><span class="s2">"y"</span><span class="p">]</span>
-<span class="go">'clip((val-minval)*0.35+minval,0,255)'</span>
+<span class="go">'clip((val-minval)*0.35+minval,0,if(eq(minval,0),maxval,maxval*255/235))'</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">lut</span><span class="p">[</span><span class="s2">"u"</span><span class="p">]</span> <span class="o">==</span> <span class="n">lut</span><span class="p">[</span><span class="s2">"v"</span><span class="p">]</span> <span class="o">==</span> <span class="n">brightness_saturation_lut</span><span class="p">(</span><span class="n">saturation</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)[</span><span class="s2">"u"</span><span class="p">]</span>
 <span class="go">True</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">dim_saturation_lut</span><span class="p">()[</span><span class="s2">"y"</span><span class="p">]</span>  <span class="c1"># 0 is a no-op, and reads as one</span>
-<span class="go">'clip((val-minval)*1+minval,0,255)'</span>
+<span class="go">'clip((val-minval)*1+minval,0,if(eq(minval,0),maxval,maxval*255/235))'</span>
 </pre></div>
 </div>
 </dd></dl>
