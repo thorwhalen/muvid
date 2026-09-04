@@ -53,7 +53,13 @@ free-form, the filters that write the host's disk (``metadata=…:file=``,
 vocabulary and bounds no PARAMETER, so the frame size a look asks for is bounded
 separately against the delivery canvas (muvid#75) — ``scale=8000:8000`` peaks at
 328 MB from a 64x48 source against 19 MB for a look that stays at canvas size,
-and ``pad``/``zoompan`` reach the same magnitude.
+and ``pad``/``zoompan`` reach the same magnitude. **Nor is a size bound a bound on
+the OPTIONS that set one**: ``pad``'s ``aspect`` and ``scale``'s
+``force_original_aspect_ratio`` both move the frame while declaring no dimension
+a bound can read, and on the production canvas both are larger than the case the
+size bound refuses (590 MB and 941 MB against 403 MB). So the four filters that
+can change the output geometry are allowlisted per OPTION and per positional
+slot — see :data:`~muvid.footage.edl._LOOK_GEOMETRY_FILTERS`.
 
 A cut whose look is **time-varying** — a punch-in, a pan, anything reading the
 filter clock — additionally makes :func:`_part_plan` **warn** when the cut borders
@@ -63,6 +69,13 @@ input-side-seeked, so the clock restarts and the move plays again from the start
 (:attr:`~muvid.footage.edl.EdlEntry.look_time_varying`) because the fragment is a
 bare string muvid did not author; rebasing it would mean rewriting an arbitrary
 ffmpeg expression, which is what ``looks``' rule 27 refuses.
+
+**Both of :func:`_part_plan`'s findings go to two places**, and the second half
+was missing until now: a :class:`AssemblyWarning` on stderr, *and* the ``on_note``
+sink the caller's reply is built from. ``assemble_music_video`` is a live
+per-caller MCP tool and its caller has no stderr, so a warning that reached only
+stderr was a hitch the caller was billed for and never told about — the silent
+no-op this module refuses everywhere else. See :func:`_emit`.
 
 Deliberately NOT moviepy (its ``write_videofile`` runs in-process and would escape the
 ``$MUVID_FFMPEG_TIMEOUT_S`` worker guard). Every stage runs through
@@ -126,8 +139,40 @@ class _Part:
     curve: str = "fade"
 
 
+class AssemblyWarning(RuntimeWarning):
+    """A render-plan finding the caller should see — not an error, not silence.
+
+    A ``RuntimeWarning`` subclass, so every existing ``pytest.warns(RuntimeWarning)``
+    and every stderr reader keeps working. It exists so the *reply* half can pick
+    these out: ``warnings.warn`` reaches a developer's stderr and nothing else, and
+    :func:`~muvid.mcp.footage_tools.assemble_music_video` is a live per-caller MCP
+    tool whose caller has no stderr. A warning the caller cannot see is the silent
+    no-op this module refuses everywhere else — so :func:`assemble_music_video`
+    takes an ``on_note`` sink and the tool returns what it collects.
+
+    A distinct class rather than a stderr filter or a ``catch_warnings`` block:
+    ``catch_warnings`` mutates process-global state and the connector serves
+    concurrent callers, so one render could swallow or steal another's warnings.
+    """
+
+
+def _emit(message: str, note=None, *, stacklevel: int = 4) -> None:
+    """Raise an :class:`AssemblyWarning` AND hand it to the reply sink.
+
+    Both, never either: the warning is what a developer sees on stderr and what
+    ``pytest.warns`` catches, and ``note`` is the only thing a remote MCP caller
+    can ever see. Dropping the warning would break every existing stderr reader;
+    dropping the note is the muvid#73 half that shipped unnoticed — the finding
+    landed in the server process and the caller got an ``ok`` render with the
+    hitch in it.
+    """
+    warnings.warn(message, AssemblyWarning, stacklevel=stacklevel)
+    if note is not None:
+        note(message)
+
+
 def _warn_time_varying_looks_on_transitions(
-    cuts: Sequence[AssemblyCut], n_trans: Sequence[int]
+    cuts: Sequence[AssemblyCut], n_trans: Sequence[int], note=None
 ) -> None:
     """Warn per cut whose MOVING look borders a blended boundary (muvid#73).
 
@@ -182,7 +227,7 @@ def _warn_time_varying_looks_on_transitions(
                 else "the next cut blends IN from it"
             )
         )
-        warnings.warn(
+        _emit(
             f"cut {i}: a time-varying look ({cut.look!r}) borders a transition — "
             f"{where}. The blended part is a separate invocation whose inputs are "
             "input-side-seeked, which rebases the filter clock to 0, so the move "
@@ -191,12 +236,12 @@ def _warn_time_varying_looks_on_transitions(
             "Either drop the transition on this boundary or use a static look "
             "(a grade/LUT is unaffected). muvid cannot rebase the fragment — see "
             "muvid#73.",
-            RuntimeWarning,
-            stacklevel=4,
+            note,
+            stacklevel=5,
         )
 
 
-def _part_plan(cuts: Sequence[AssemblyCut], fps: int) -> list[_Part]:
+def _part_plan(cuts: Sequence[AssemblyCut], fps: int, note=None) -> list[_Part]:
     """The ordered ffmpeg jobs for these cuts. Pure — no encoding, no I/O.
 
     **Per CUT, never per boundary.** The per-boundary reading is the tempting one
@@ -226,6 +271,12 @@ def _part_plan(cuts: Sequence[AssemblyCut], fps: int) -> list[_Part]:
     can say either, because both are properties of the render PLAN rather than of
     the EDL: only here is it known that a transitioned boundary becomes a separate
     two-input invocation, and only here is the fps known at all.
+
+    ``note`` is the reply sink — a ``str -> None`` callable that receives the same
+    text. It exists because ``warnings.warn`` reaches a developer's stderr and
+    stops there: the only production caller of either of these findings is a
+    remote MCP caller who has no stderr, so before it, an ``ok`` render came back
+    with the hitch in it and no way to know. See :func:`_emit`.
     """
     counts = _frame_counts(cuts, fps)
 
@@ -237,16 +288,16 @@ def _part_plan(cuts: Sequence[AssemblyCut], fps: int) -> list[_Part]:
         if n == 0:
             # Never a silent no-op: a transition that rounds away at this rate is a
             # direction that did nothing, which is the muvid#44 failure shape.
-            warnings.warn(
+            _emit(
                 f"cut {i}: a {t.duration_s:.3f}s transition rounds to zero frames at "
                 f"{fps} fps and renders as a hard cut.",
-                RuntimeWarning,
-                stacklevel=3,
+                note,
+                stacklevel=4,
             )
         return n
 
     n_trans = [_n_transition(i) for i in range(len(cuts))]
-    _warn_time_varying_looks_on_transitions(cuts, n_trans)
+    _warn_time_varying_looks_on_transitions(cuts, n_trans, note)
     parts: list[_Part] = []
     for i, (cut, n) in enumerate(zip(cuts, counts)):
         d = n_trans[i]
@@ -637,6 +688,7 @@ def assemble_music_video(
     fps: int = DEFAULT_FPS,
     crf: int = 20,
     preset: str = "veryfast",
+    on_note=None,
 ) -> Path:
     """Render ``cuts`` (a validated, contiguous, gap-filled EDL) into ``out_path``.
 
@@ -644,6 +696,18 @@ def assemble_music_video(
     concat, and a final mux of the clean song for ``[cuts[0].song_start,
     cuts[-1].song_end]`` — which, for EDLs produced by ``fill_gaps``, is the whole song.
     Returns ``out_path``.
+
+    Args:
+        on_note: optional ``str -> None`` sink for the render-plan findings
+            :func:`_part_plan` raises (a transition that rounds to zero frames; a
+            time-varying look on a blended boundary — muvid#73). They are ALWAYS
+            raised as :class:`AssemblyWarning` as well; this is the additional
+            path, and the only one a remote caller can see. ``assemble_music_video``
+            is a live per-caller MCP tool, so a finding that reaches only the
+            server's stderr is a hitch the caller is billed for and never told
+            about. A callback rather than a changed return type, because the
+            return type is a public contract and because ``catch_warnings``
+            mutates process-global state that concurrent renders would share.
     """
     from muvid.visualize.ffmpeg import require_ffmpeg, require_filter, run_ffmpeg
 
@@ -662,7 +726,7 @@ def assemble_music_video(
     try:
         # Planned in full BEFORE any encoding, so a transition that does not fit at
         # this fps fails on cut 0 rather than after forty parts are on disk.
-        plan = _part_plan(cuts, fps)
+        plan = _part_plan(cuts, fps, on_note)
         if any(p.kind == "xfade" for p in plan):
             require_filter("xfade", needed_for="EDL transitions")
         names = []

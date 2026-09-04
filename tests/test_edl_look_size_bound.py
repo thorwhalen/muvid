@@ -28,12 +28,24 @@ Two properties this file exists to hold, and they pull in opposite directions:
 - the bound ACCEPTS every look muvid itself compiles, on every canvas muvid
   offers. A gate that refuses the seam it protects is an outage, so that sweep is
   a first-class test and not an afterthought.
+
+**The corpus below is a hand list, and a hand list is what let the first pass
+ship a hole.** Two options move the produced frame while declaring no dimension
+the bound can read — ``pad``'s ``aspect`` and ``scale``'s
+``force_original_aspect_ratio`` — and on the production 1920x1080 canvas both are
+BIGGER than the 403 MB ``scale=8000:8000`` this file refuses: 590 MB and 941 MB.
+Neither was in the list; the test that would have caught them had exactly the
+right shape and simply did not contain them. They are here now, but the guard
+that does not depend on anyone thinking of the next one lives in
+``tests/test_edl_look_options.py``, which reads the option list out of the
+installed binary and drives every option of every allowlisted filter through it.
 """
 
 from __future__ import annotations
 
 import re
 import subprocess
+from pathlib import Path
 
 import pytest
 
@@ -94,6 +106,64 @@ def _validate(look, canvas=CANVAS):
 def test_a_frame_far_larger_than_the_canvas_is_refused(look):
     with pytest.raises(ValueError, match="more than"):
         _validate(look)
+
+
+@pytest.mark.parametrize(
+    "look, produced, peak_mb",
+    [
+        # `pad`'s `aspect` grows w OR h to satisfy a ratio, so BOTH declared sizes
+        # can sit at canvas size and the frame still explodes. Named…
+        ("pad=w=1920:h=1080:aspect=1/30", "1920x57600", 590),
+        ("pad=w=1920:h=1080:aspect=1000/1", "(refused by ffmpeg AFTER asking)", 1784),
+        # …declared alone, w/h left at their `iw`/`ih` defaults…
+        ("pad=aspect=4/1", "4x the input width", 0),
+        # …and reached POSITIONALLY, which is the half a named-option check
+        # misses: `aspect` is pad's SEVENTH slot, and the first pass stopped
+        # offering slots after the fourth and silently DROPPED the rest.
+        ("pad=1920:1080:0:0:black:init:1/30", "1920x57600", 0),
+        # `scale`'s force_original_aspect_ratio derives the frame from the INPUT
+        # aspect, which a preceding crop makes extreme — so both declared sizes
+        # sit exactly ON the 4x bound and the frame is 5.4x wider than that.
+        (
+            "crop=w=1920:h=200,scale=w=7680:h=4320:force_original_aspect_ratio=increase",
+            "41472x4320",
+            941,
+        ),
+        ("scale=w=7680:h=4320:force_original_aspect_ratio=2", "numeric spelling", 0),
+        # …and its rounding companion, which does nothing WITHOUT foar and is
+        # therefore invisible to a one-option-at-a-time sweep.
+        ("scale=w=7680:h=4320:force_divisible_by=64", "rounds the frame up", 0),
+        # eval=frame re-evaluates the size per frame; this gate reads once.
+        ("scale=w=1920:h=1080:eval=frame", "re-evaluated per frame", 0),
+        ("pad=w=1920:h=1080:eval=frame", "re-evaluated per frame", 0),
+        # an option muvid simply has not measured: refused by default, which is
+        # what makes the table an allowlist rather than a list of known levers.
+        ("scale=w=1920:h=1080:threads=4", "unclassified", 0),
+        ("crop=w=1920:h=1080:keep_aspect=1", "unclassified", 0),
+        # a bare argument after a named one — ffmpeg refuses it too (rc=234,
+        # "No option name near '8000'"), so the gate agreeing is the point.
+        ("scale=w=1920:8000", "discarded shorthand", 0),
+    ],
+)
+def test_an_option_that_moves_the_frame_without_declaring_a_size_is_refused(
+    look, produced, peak_mb
+):
+    """The muvid#75 leak, and the shape of it rather than the two instances.
+
+    Every fragment here declares nothing the size bound can read — the first two
+    leave ``w``/``h`` AT canvas size, the middle ones sit exactly ON the bound —
+    and every one of them was ACCEPTED by the first pass and rendered by the live
+    MCP tool. On a 1920x1080 canvas the two headline cases peak at 590 MB and
+    941 MB against 110 MB for a look at canvas size and 403 MB for the
+    ``scale=8000:8000`` the bound does refuse: **the bypasses were larger than
+    the case the bound closed.**
+
+    So the fix is not "add these two names". The four filters that can change the
+    output geometry are allowlisted per OPTION, and per positional SLOT, so an
+    option nobody has measured is refused rather than read as nothing.
+    """
+    with pytest.raises(ValueError, match="does not classify"):
+        _validate(look, canvas=(1920, 1080))
 
 
 @pytest.mark.parametrize(
@@ -190,9 +260,9 @@ def test_crop_is_not_bounded_because_it_cannot_grow_a_frame():
     """``motion``'s constant-size window is ``crop`` with EXPRESSIONS for w/h.
 
     It is the one muvid-compiled fragment whose size options are not literals,
-    and it must keep passing. It does because ``crop`` is deliberately absent
-    from ``_LOOK_SIZE_OPTIONS`` — see the ffmpeg measurement below for why that
-    is safe rather than an omission.
+    and it must keep passing. It does because ``crop``'s ``w``/``h`` are ``free``
+    in ``_LOOK_GEOMETRY_FILTERS`` rather than ``sizes`` — see the ffmpeg
+    measurement below for why that is safe rather than an omission.
     """
     frag = motion(
         [
@@ -479,6 +549,44 @@ def test_the_gate_reads_the_same_frame_size_the_binary_produces(tmp_path, vf):
 
 
 @needs_ffmpeg
+@pytest.mark.parametrize(
+    "look, expected",
+    [
+        # pad's `aspect`, named — w and h left AT the canvas size
+        ("pad=w=64:h=48:aspect=1/30", (64, 1920)),
+        # …and reached positionally, at pad's SEVENTH slot
+        ("pad=64:48:0:0:black:init:1/30", (64, 1920)),
+        # scale's force_original_aspect_ratio after an aspect-changing crop —
+        # both declared sizes are plain pixel counts inside the bound
+        ("crop=w=64:h=8,scale=w=256:h=192:force_original_aspect_ratio=increase",
+         (1536, 192)),
+    ],
+)
+def test_the_refused_options_really_do_grow_the_frame_on_this_binary(
+    tmp_path, look, expected
+):
+    """The premise of the refusals above, against the binary rather than the docs.
+
+    A refusal list is only worth what the proof behind it is worth: if these
+    fragments did NOT grow the frame, refusing them would be pure over-refusal
+    and the allowlist would be costing the seam something for nothing.
+
+    Deliberately scaled DOWN from the production measurement — a 64x48 source and
+    canvas, so the same shapes produce 64x1920 and 1536x192 instead of the
+    1920x57600 (590 MB) and 41472x4320 (941 MB) they produce on a 1920x1080
+    canvas. The property is that the frame grows past what the gate read; paying
+    590 MB inside a test suite to observe it is not part of the property.
+    """
+    assert _rendered_size(tmp_path, look) == expected
+    declared = {axis: px for _, _, axis, _, px in _look_output_sizes(look)}
+    ceiling = (max(declared.get("width") or 0, 64), max(declared.get("height") or 0, 48))
+    assert expected[0] > ceiling[0] or expected[1] > ceiling[1], (
+        f"{look!r} produced {expected}, which is within the {ceiling} the gate "
+        "reads — so it is not a lever and refusing it is pure over-refusal."
+    )
+
+
+@needs_ffmpeg
 def test_crop_really_cannot_grow_a_frame(tmp_path):
     """The premise behind leaving ``crop`` out of the table, on the real binary.
 
@@ -513,6 +621,108 @@ def test_crop_really_cannot_grow_a_frame(tmp_path):
 # -- the canvas has to REACH the gate ----------------------------------------
 
 
+#: The ``validate_edl`` call sites that deliberately pass no canvas, each with
+#: the reason — the ``_LOOK_FILE_OPTIONS`` shape, an acknowledgement rather than
+#: an exemption. A site here must ALSO satisfy the premise the reason rests on,
+#: which the test below checks separately rather than taking on trust.
+CANVASLESS_VALIDATE_EDL_SITES = {
+    "footage/select_score.py": (
+        "the weighted strategy re-validating its OWN output as a self-check "
+        '("tautology by construction"). Its entries are built by `_coalesce` '
+        "from `EdlEntry(s, e, cid)` — three positional fields, no `look` — so "
+        "there is no look for a canvas to bound, and the caller's EDL passes the "
+        "real gate in mcp/footage_tools.py immediately afterwards. Threading a "
+        "canvas here would mean putting one on the SelectionStrategy protocol "
+        "for a value nothing reads."
+    ),
+}
+
+
+def test_every_muvid_call_to_validate_edl_passes_the_canvas():
+    """``DFLT_LOOK_CANVAS``'s docstring claims this; here is the assertion.
+
+    The claim is about CALL SITES, so the guard has to be about call sites too.
+    A behavioural test cannot reach three of the four sites that validate a
+    caller-reachable EDL: they carry machine-generated entries from
+    ``select_edl``, which has no ``look``, so the canvas is unused there *today*
+    and dropping ``canvas=`` from any of them left the whole suite green
+    (measured, all 685 tests). That made "asserted by a test" true of one site
+    and prose about the rest — and it is exactly the claim a future reader would
+    rely on when adding another site, at which point the canvas may well matter.
+
+    Scanned with ``ast`` rather than grepped so a call spread over several lines
+    counts, and so the definition itself is not mistaken for a call. Writing it
+    that way immediately found a FIFTH site nobody had counted
+    (``footage/select_score.py``), which is the argument for the guard.
+    """
+    import ast
+
+    root = Path(__file__).parents[1] / "muvid"
+    sites, missing, seen_canvasless = 0, [], set()
+    for path in sorted(root.rglob("*.py")):
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.Call):
+                continue
+            func = node.func
+            name = (
+                func.id
+                if isinstance(func, ast.Name)
+                else func.attr
+                if isinstance(func, ast.Attribute)
+                else None
+            )
+            if name != "validate_edl":
+                continue
+            sites += 1
+            where = str(path.relative_to(root))
+            if not any(kw.arg == "canvas" for kw in node.keywords):
+                if where not in CANVASLESS_VALIDATE_EDL_SITES:
+                    missing.append(f"{where}:{node.lineno}")
+                seen_canvasless.add(where)
+    assert sites >= 5, (
+        f"found only {sites} validate_edl call sites in muvid/ — the scanner has "
+        "stopped seeing them, so this test would pass with the canvas dropped "
+        "everywhere."
+    )
+    assert not missing, (
+        f"these validate_edl calls do not pass canvas=: {missing}. A look is "
+        f"bounded against the DELIVERY canvas, and the default "
+        f"{DFLT_LOOK_CANVAS} is the loosest one muvid offers — so an omitted "
+        "canvas silently bounds a portrait render against a 1920x1920 square. "
+        "Either pass it, or record the site in CANVASLESS_VALIDATE_EDL_SITES "
+        "with the reason it cannot carry a look."
+    )
+    stale = sorted(set(CANVASLESS_VALIDATE_EDL_SITES) - seen_canvasless)
+    assert not stale, (
+        f"{stale} is recorded as deliberately canvasless and no longer is (or no "
+        "longer calls validate_edl at all) — an acknowledgement that outlived "
+        "what it acknowledged."
+    )
+
+
+def test_the_canvasless_site_really_cannot_carry_a_look():
+    """The premise the exemption above rests on, checked rather than trusted.
+
+    ``select_score``'s self-check needs no canvas only because the entries it
+    validates are its own and have no ``look``. If the weighted strategy ever
+    started emitting one — a punch-in per beat is an obvious future feature —
+    that look would be bounded against ``DFLT_LOOK_CANVAS`` instead of the render
+    canvas, silently, and this exemption would be the reason.
+    """
+    import ast
+
+    src = Path(__file__).parents[1] / "muvid" / "footage" / "select_score.py"
+    for node in ast.walk(ast.parse(src.read_text(encoding="utf-8"))):
+        if isinstance(node, ast.Call) and getattr(node.func, "id", None) == "EdlEntry":
+            assert not node.keywords, (
+                f"select_score.py:{node.lineno} builds an EdlEntry with keyword "
+                f"fields {[k.arg for k in node.keywords]}. If one of them is "
+                "`look`, the canvasless validate_edl call there is no longer a "
+                "tautology — thread the canvas through or drop the exemption."
+            )
+
+
 def _fake_state(tmp_path, monkeypatch, project_id="p"):
     monkeypatch.setenv("MUVID_DATA_HOME", str(tmp_path))
     from muvid.footage.workspace import FootageWorkspace
@@ -544,7 +754,7 @@ def _assemble_with(tmp_path, monkeypatch, look, *, project_id, **kw):
 
     _fake_state(tmp_path, monkeypatch, project_id)
 
-    def _fake_assemble(cuts, song, out, canvas):
+    def _fake_assemble(cuts, song, out, canvas, on_note=None):
         Path(out).write_bytes(b"v")
         return Path(out)
 

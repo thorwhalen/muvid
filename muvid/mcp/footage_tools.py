@@ -598,14 +598,19 @@ def assemble_music_video(
       ``iw*80``, not ``-1``, not ``hd720``) and no more than
       ``muvid.footage.edl.MAX_LOOK_SCALE`` times the render canvas — frame size
       is memory, and ``scale=8000:8000`` costs 328 MB against 19 MB for a look
-      that stays at canvas size. Compile one with ``muvid.footage.look``
+      that stays at canvas size. On those four filters only options muvid has
+      measured may be set at all — ``scale`` w/h/s/size + ``flags``, ``pad``
+      w/h/x/y + ``color``, ``crop`` w/h/x/y, all of ``zoompan`` — because
+      ``pad=aspect`` and ``scale=force_original_aspect_ratio`` move the frame
+      while declaring no size a bound can read (590 MB and 941 MB measured on a
+      1920x1080 canvas). Compile one with ``muvid.footage.look``
       (``punch_in`` / ``motion`` / ``stylize``) rather than hand-writing it.
     - an entry carrying a MOVING look (a punch-in, a pan) should also set
-      ``look_time_varying: true``. It changes no pixels; it lets the renderer
-      warn you that a blended boundary restarts the move's ramp, which it does
-      because the blend is a separate seek (muvid#73). Leave it off — the
-      default — for a grade, a LUT or a posterise, which never read the clock.
-      All five fields survive verbatim in the returned ``edl``.
+      ``look_time_varying: true``. It changes no pixels; it puts a line in the
+      reply's ``warnings`` when a blended boundary restarts the move's ramp,
+      which it does because the blend is a separate seek (muvid#73). Leave it
+      off — the default — for a grade, a LUT or a posterise, which never read the
+      clock. All five fields survive verbatim in the returned ``edl``.
     - ``strategy='weighted'`` (score-driven): the beat-snapped Viterbi selector reads the
       persisted score tracks (run ``score_footage`` first) and the selection config —
       ``preset`` ("energetic"/"contemplative") and/or ``weights`` (per-metric) and/or
@@ -620,6 +625,14 @@ def assemble_music_video(
     scaled onto the canvas (padded, never stretched), gaps render black, and the CLEAN
     song audio runs under it all. Returns the render + the same coverage report
     ``propose_edit`` gives.
+
+    **Read the returned ``warnings`` list.** It is always present and usually
+    empty, and it is what the render PLAN found: a transition that rounded to
+    zero frames at this fps, or a moving look on a blended boundary whose ramp
+    therefore restarts (muvid#73). Neither fails the render — ``ok`` stays true —
+    so this list is the only place either one is ever said. It exists because
+    these findings used to be Python warnings on the server's stderr, which a
+    remote caller has no access to.
     """
     from muvid.footage.assemble import assemble_music_video as _assemble
     from muvid.footage.edl import derive_cuts, fill_gaps, validate_edl
@@ -679,12 +692,20 @@ def assemble_music_video(
     # never renumbers under them (see MusicVideoFootageProject.ensure_render_refs).
     ref_n = proj.next_render_ref()
     render_dir = proj.new_render_dir(render_id)
+    # The render-plan findings, on their way to the CALLER. `_part_plan` raises
+    # them as `AssemblyWarning`s, which reach this process's stderr and stop
+    # there — and on the deployed per-caller connector the caller has no stderr,
+    # so a muvid#73 hitch came back as an `ok` render with nothing said about it.
+    # A warning the caller cannot see is the silent no-op this repo refuses
+    # everywhere else, so the sink is threaded in and its contents are returned.
+    notes: list[str] = []
     try:
         out = _assemble(
             cuts,
             str(proj.song_path()),
             str(render_dir / "final.mp4"),
             canvas=canvas_wh,
+            on_note=notes.append,
         )
         # audio= arms the duration-match check — the one that catches a mis-built
         # filtergraph (muvid#24 B3); correct now BECAUSE every EDL is gap-filled to the
@@ -726,6 +747,15 @@ def assemble_music_video(
         ),
         "ok": not failures(checks),
         "checks": report(checks),
+        # What the render PLAN found: a transition that rounded to zero frames at
+        # this fps, a time-varying look on a blended boundary (muvid#73). Neither
+        # fails the render — `ok` stays true — so this list is the whole of the
+        # caller's ability to know. ALWAYS present, empty when clean: an absent
+        # key makes "old build" and "nothing to report" the same reading, which
+        # is the ambiguity the omit-when-absent rule exists to avoid for EDL
+        # fields whose absent value is meaningful. Here the meaningful value is
+        # "nothing", and a caller has to be able to rely on being told it.
+        "warnings": notes,
         # The retrieval claim: what a host's generic download route (reelee#252) turns
         # into a signed short-lived URL. `video` stays a server-side path — useful to an
         # operator, unreadable to a remote caller; the claim is the caller's handle.

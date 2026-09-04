@@ -659,3 +659,152 @@ def test_the_warning_does_not_change_the_plan():
         a = [(p.kind, p.n_frames, p.clip_in, p.prev_in) for p in _part_plan(moving, 25)]
         b = [(p.kind, p.n_frames, p.clip_in, p.prev_in) for p in _part_plan(static, 25)]
     assert a == b
+
+
+# ---------------------------------------------------------------------------
+# ...and the caller has to be able to SEE it
+# ---------------------------------------------------------------------------
+
+
+def test_the_plan_hands_every_finding_to_the_reply_sink_as_well():
+    """``warnings.warn`` reaches stderr; ``on_note`` reaches the caller.
+
+    Both, never either. The warning is what a developer and ``pytest.warns`` see;
+    the note is the only thing a remote MCP caller can ever see, and until it
+    existed a muvid#73 hitch came back as an ``ok`` render with nothing said
+    about it. The two carry the SAME text, asserted here rather than assumed, so
+    a future edit cannot improve one message and leave the other behind.
+
+    Both kinds of finding are in the corpus -- the zero-frame transition as well
+    as the restarted ramp -- because the sink is one path and a test containing
+    only one of them would pass with the other left on stderr.
+    """
+    cuts = [
+        _cut(song_end=4.0, look=_PUNCH, look_time_varying=True),
+        _cut(
+            song_start=4.0,
+            song_end=8.0,
+            clip_id="B",
+            transition=Transition(0.4, "fade"),
+        ),
+        # 0.02 s at 25 fps rounds to 0 frames: the OTHER finding _part_plan makes
+        _cut(
+            song_start=8.0,
+            song_end=12.0,
+            clip_id="C",
+            transition=Transition(0.02, "fade"),
+        ),
+    ]
+    notes = []
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        _part_plan(cuts, 25, notes.append)
+    assert notes == [str(w.message) for w in caught], (
+        "the sink and the warning must carry the same findings, in the same order"
+    )
+    assert any("time-varying look" in n for n in notes)
+    assert any("rounds to zero frames" in n for n in notes)
+
+
+def test_a_finding_is_an_AssemblyWarning_so_the_reply_half_can_pick_it_out():
+    """And it stays a ``RuntimeWarning``, so every existing catcher keeps working."""
+    from muvid.footage.assemble import AssemblyWarning
+
+    assert issubclass(AssemblyWarning, RuntimeWarning)
+    cuts = [
+        _cut(song_end=4.0, look=_PUNCH, look_time_varying=True),
+        _cut(
+            song_start=4.0,
+            song_end=8.0,
+            clip_id="B",
+            transition=Transition(0.4, "fade"),
+        ),
+    ]
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        _part_plan(cuts, 25)
+    assert caught and all(w.category is AssemblyWarning for w in caught)
+
+
+def test_the_mcp_reply_carries_the_findings_the_render_plan_made(tmp_path, monkeypatch):
+    """End to end through the live tool, with the REAL assembler and no encoding.
+
+    muvid#73's stated purpose is to warn. It did -- into the server process's
+    stderr, which the caller of a per-caller MCP connector has no access to, and
+    ``assemble_music_video``'s reply had no key for it at all. So the finding was
+    served on the developer path only: a remote caller got ``ok: true`` and a
+    video with the hitch in it.
+
+    ``run_ffmpeg`` is stubbed and nothing else is: ``_part_plan`` is the real one,
+    so this asserts the whole path from the plan to the reply rather than the
+    plumbing of a fake. The positive control is the second half -- a plain edit
+    returns the key with an EMPTY list, which is what makes "no warnings" and
+    "an older build" different readings.
+    """
+    pytest.importorskip("fastmcp")
+    import muvid.mcp.footage_tools as ft
+    import muvid.visualize as V
+    import muvid.visualize.ffmpeg as F
+    from muvid.footage.workspace import FootageWorkspace
+    from muvid.mcp.identity import use_email
+
+    monkeypatch.setenv("MUVID_DATA_HOME", str(tmp_path))
+    monkeypatch.setattr(F, "require_ffmpeg", lambda *a, **k: None)
+    monkeypatch.setattr(F, "probe", lambda *a, **k: {})
+    monkeypatch.setattr(F, "run_ffmpeg", lambda args, **k: None)
+    monkeypatch.setattr(V, "verify_video", lambda *a, **k: [])
+    monkeypatch.setattr(V, "failures", lambda c: [])
+    monkeypatch.setattr(V, "report", lambda c: "ok")
+
+    proj = FootageWorkspace.for_email("u@x.com").create_project("warn")
+    (proj.root / "song").mkdir()
+    (proj.root / "song" / "song.wav").write_bytes(b"x")
+    (proj.root / "clips").mkdir()
+    for cid in ("A", "B"):
+        (proj.root / "clips" / f"{cid}.mp4").write_bytes(b"x")
+    m = proj.manifest()
+    m.update(
+        song="song.wav",
+        song_duration=8.0,
+        clips=[{"clip_id": c, "file": f"{c}.mp4", "name": c} for c in ("A", "B")],
+    )
+    proj._write_manifest(m)
+    proj.save_alignments(
+        [
+            FootageAlignment("A", 0.0, 0.9, 20.0, (0.0, 20.0)),
+            FootageAlignment("B", 0.0, 0.9, 20.0, (0.0, 20.0)),
+        ]
+    )
+
+    def _edl(moving):
+        return [
+            {
+                "song_start": 0.0,
+                "song_end": 4.0,
+                "clip_id": "A",
+                "look": _PUNCH,
+                "look_time_varying": moving,
+            },
+            {
+                "song_start": 4.0,
+                "song_end": 8.0,
+                "clip_id": "B",
+                "transition": {"duration_s": 0.4, "curve": "fade"},
+            },
+        ]
+
+    with use_email("u@x.com"), warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        moving = ft.assemble_music_video("warn", edl=_edl(True))
+        static = ft.assemble_music_video("warn", edl=_edl(False))
+
+    assert moving["ok"] is True, "a warning is not a failure -- the render succeeded"
+    assert any("time-varying look" in w for w in moving["warnings"]), moving["warnings"]
+    assert "warnings" in static, (
+        "the key must be PRESENT and empty, never absent -- an absent key makes "
+        "'nothing to report' and 'an older build' the same reading"
+    )
+    assert static["warnings"] == [], (
+        "the positive control: a static look on the same boundary reports nothing, "
+        "so the key is not simply always populated"
+    )

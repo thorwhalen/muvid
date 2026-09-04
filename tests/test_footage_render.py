@@ -518,7 +518,7 @@ def _stub_render(monkeypatch):
 
     seen = {}
 
-    def fake_assemble(cuts, song, out, canvas):
+    def fake_assemble(cuts, song, out, canvas, on_note=None):
         seen["cuts"], seen["canvas"] = cuts, canvas
         Path(out).write_bytes(b"v")
         return Path(out)

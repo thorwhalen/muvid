@@ -226,6 +226,25 @@ What to know (the list is unnumbered on purpose — the count was already wrong)
   against whatever is underneath and a size NAME resolves through ffmpeg's own table
   (`s=whuxga` is a real 7680x4800 frame). muvid's own compilers emit literals, so this
   costs the seam nothing (muvid#75).
+- **…and so are the OPTIONS, because two of them move the frame while declaring no size
+  at all.** On the four filters that can change the output geometry
+  (`scale`/`pad`/`crop`/`zoompan`) only options muvid has measured may be set, and at most
+  the leading positional slots muvid's own compilers emit. That is not a tightening for
+  its own sake: on a 1920x1080 canvas `pad=w=1920:h=1080:aspect=1/30` renders a
+  1920x57600 frame at 590 MB with w and h left AT canvas size, and
+  `crop=w=1920:h=200,scale=w=7680:h=4320:force_original_aspect_ratio=increase` renders
+  41472x4320 at 941 MB with both sizes exactly ON the bound — both bigger than the
+  403 MB `scale=8000:8000` the size rule refuses, and both accepted before this. What you
+  can still write covers everything the compilers emit: `scale` w/h/s/size + `flags`,
+  `pad` w/h/x/y + `color`, `crop` w/h/x/y, all of `zoompan`. Anything else — `aspect`,
+  `force_original_aspect_ratio`, `force_divisible_by`, `eval`, `keep_aspect`, `threads` —
+  is refused with a message naming what is allowed. Compile the look and you will never
+  meet this.
+- **Read the `warnings` list in `assemble_music_video`'s reply.** It is always present,
+  usually empty, and it is the only place the render plan's findings are ever said to
+  you: a transition that rounded to zero frames at the render rate, or the moving-look
+  restart below. Neither fails the render — `ok` stays `true` — so an empty check is not
+  the same as no check.
 - **One sharp edge, measured: a *moving* look restarts its ramp on a transitioned
   boundary** — the blend is a separate invocation whose clock starts at 0 again, so a
   1.12x punch reaching zoom 1.109 on the solo part is redrawn at 1.000 on the blend. A

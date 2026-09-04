@@ -432,6 +432,35 @@ bridge before muvid#37.
   an aspect a preceding `crop` can make extreme, and a size *name* resolves through
   ffmpeg's own table (`s=whuxga` is 7680x4800). That costs nothing only because every
   size muvid's own compilers emit is already a literal — swept, not assumed.
+- **That first pass listed the options that SET a size and read every other option as
+  nothing — a blocklist wearing an allowlist's clothes — and it leaked twice, both
+  bigger than the case it refused.** Measured on the production 1920x1080 canvas with
+  the exact `-vf` the assembler builds: `pad=w=1920:h=1080:aspect=1/30` renders a
+  1920x57600 frame at **590 MB** with w and h sitting AT canvas size, and
+  `crop=w=1920:h=200,scale=w=7680:h=4320:force_original_aspect_ratio=increase` renders
+  41472x4320 at **941 MB** with both sizes sitting exactly ON the bound — against 110 MB
+  at canvas size and 403 MB for the `scale=8000:8000` the bound does refuse. Both were
+  accepted end-to-end by the live tool. A third, `force_divisible_by`, does nothing
+  *without* `force_original_aspect_ratio`, which is why a one-option-at-a-time sweep
+  cannot find it. Three rules carry the fix, and the ordering is the lesson:
+  - **The four filters that can change the output geometry (`scale`/`pad`/`crop`/
+    `zoompan`) are allowlisted per OPTION and per positional SLOT**
+    (`_LOOK_GEOMETRY_FILTERS`). An option muvid has not measured is refused, so the next
+    lever nobody thought of is refused by default rather than read as nothing.
+  - **A positional argument past the classified prefix is refused, never dropped.**
+    `pad`'s `aspect` is its SEVENTH slot, so `pad=1920:1080:0:0:black:init:1/30` reaches
+    it without naming it — silently dropping slot 7 was the second half of the leak. The
+    prefix stops at what muvid's compilers emit rather than carrying the full order,
+    because the two ffmpeg builds this fleet runs do not declare the same option list for
+    `scale`.
+  - **The census read from the binary is an instrument, not the guard.** ffmpeg 6.1.6's
+    `-h filter=scale` omits `s`/`size` while `scale=s=320x240` works there — a table that
+    classified only what the help prints would have had a hole on that binary. So the
+    recorded census (`tests/data/ffmpeg_filter_options.json`) exists to make a NEW ffmpeg
+    option a decision someone records, and `tests/test_edl_look_options.py` drives every
+    option of every allowlisted filter through the real binary asserting the gate never
+    under-reads a growth. The hand corpus that missed both leaks had exactly the right
+    shape and simply did not contain them.
 - **The seam is a bare string, so anything muvid must know about a look has to be its own
   field.** `EdlEntry.look_time_varying` (muvid#73) is the worked example: a moving look
   restarts its ramp on a transitioned boundary (the blend is a separate input-side-seeked

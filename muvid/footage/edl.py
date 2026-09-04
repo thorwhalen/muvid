@@ -19,7 +19,7 @@ from __future__ import annotations
 import os
 import re
 from dataclasses import dataclass
-from typing import Sequence
+from typing import NamedTuple, Sequence
 
 #: Spans shorter than this (seconds) are treated as coincident / zero — guards float noise.
 _EPS = 1e-3
@@ -62,9 +62,19 @@ MAX_LOOK_SCALE = int(os.environ.get("MUVID_FOOTAGE_MAX_LOOK_SCALE", "4"))
 #:
 #: A ``None`` default would have been the smaller diff and the wrong shape: it
 #: makes "nobody threaded the canvas through" indistinguishable from "this look
-#: is fine", which is the silent no-op this module refuses everywhere else. Every
-#: muvid path passes the real canvas (asserted by a test); the default only
-#: covers a direct caller of :func:`validate_edl`. Pinned against
+#: is fine", which is the silent no-op this module refuses everywhere else. The
+#: default only covers a direct caller of :func:`validate_edl`.
+#:
+#: **Every muvid path that can carry a caller's look passes the real canvas, and
+#: that is asserted by an AST scan of the call sites** rather than by behaviour.
+#: The distinction is load-bearing and an earlier version of this comment glossed
+#: it: three of the five sites validate machine-generated entries from
+#: ``select_edl``, which has no ``look``, so deleting ``canvas=`` from any of
+#: them left the whole suite green — the claim was true of one site and prose
+#: about the rest. The scan holds all five (it found the fifth, in
+#: ``select_score``), and the one site that deliberately passes no canvas is
+#: recorded with its reason plus a test of the premise that reason rests on. See
+#: ``tests/test_edl_look_size_bound.py``. Pinned against
 #: ``workspace.CANVASES`` by a test rather than imported from it, because
 #: ``muvid.footage.edl`` is on the import-safe path and ``workspace`` is not on
 #: it for free.
@@ -274,12 +284,13 @@ class EdlEntry:
     #: :func:`_validate_look` gates it against the ALLOWLIST
     #: :data:`LOOK_FILTERS` — not against a list of refusals — and also refuses a
     #: fragment that names a container input, that is more than ONE linear chain,
-    #: that is not lexically closed, or that asks for a frame more than
-    #: :data:`MAX_LOOK_SCALE` times the delivery canvas. The first two of those
-    #: would break the bounded-memory invariant the assembler rests on; the
-    #: allowlist is what keeps a look from writing this machine's disk; and the
-    #: size bound is what keeps an allowlisted filter from spending 300 MB of it
-    #: (muvid#75).
+    #: that is not lexically closed, that sets an option muvid has not classified
+    #: on one of the four filters that can change the output geometry, or that
+    #: asks for a frame more than :data:`MAX_LOOK_SCALE` times the delivery
+    #: canvas. The first two of those would break the bounded-memory invariant
+    #: the assembler rests on; the allowlist is what keeps a look from writing
+    #: this machine's disk; and the last two are what keep an allowlisted filter
+    #: from spending 900 MB of it (muvid#75).
     look: "str | None" = None
     #: Whether :attr:`look` READS THE FILTER CLOCK — a punch-in, a pan, anything
     #: whose expressions mention ``t`` / ``in_time`` / ``n``. ``False`` (the
@@ -516,9 +527,11 @@ def validate_edl(
       ``clip_in + span_duration <= clip_duration`` (the clip actually contains that span);
     - a ``look`` (the ``looks`` seam) names only filters in :data:`LOOK_FILTERS`,
       is ONE lexically-closed linear filter chain, names no container input, is
-      not on a gap, and asks for a frame no more than :data:`MAX_LOOK_SCALE` times
-      ``canvas`` — see :func:`_validate_look`, which is the trust boundary for a
-      caller-supplied filter string;
+      not on a gap, sets only options :data:`_LOOK_GEOMETRY_FILTERS` classifies on
+      the four filters that can change the output frame, and asks for a frame no
+      more than :data:`MAX_LOOK_SCALE` times ``canvas`` — see
+      :func:`_validate_look`, which is the trust boundary for a caller-supplied
+      filter string;
     - ``look_time_varying`` is a boolean, and is not set on an entry with no
       ``look`` (a declaration about a look that is not there is a request that
       cannot be honoured);
@@ -720,9 +733,13 @@ _LOOK_FORBIDDEN = "[];"
 #: two-place edit and the second place is a measurement of the real binary.
 #:
 #: **The frame size an allowlisted filter may ask for is bounded separately**
-#: (muvid#75, closed) — see :data:`_LOOK_SIZE_OPTIONS` and :data:`MAX_LOOK_SCALE`.
+#: (muvid#75) — see :data:`_LOOK_GEOMETRY_FILTERS` and :data:`MAX_LOOK_SCALE`.
 #: The allowlist is a vocabulary; it says nothing about the PARAMETERS a member
-#: is given, and one of those parameters is memory.
+#: is given, and one of those parameters is memory. Nor is a size bound a bound
+#: on the OPTIONS that set a size: ``pad``'s ``aspect`` and ``scale``'s
+#: ``force_original_aspect_ratio`` both move the frame while declaring no
+#: dimension a bound can read, so the four filters that can change the output
+#: geometry are allowlisted per OPTION as well as by name.
 #:
 #: **What this still does NOT bound**, stated because a partial claim is worse
 #: than none: ``lut3d=file=`` will *attempt* to open any path the renderer can
@@ -766,44 +783,177 @@ LOOK_FILTERS = frozenset(
 #: whole of ``looks``' ``lut3d``/``gradient_map`` effect, and loading is a read.
 _LOOK_FILE_OPTIONS = {("lut3d", "file")}
 
-#: Which options of an allowlisted filter set the OUTPUT FRAME SIZE — the one
-#: parameter that is memory. Per filter: the option names that set the WIDTH,
-#: the ones that set the HEIGHT, the ones that set BOTH as a single ``WxH``
-#: image size, and the order ffmpeg reads UNNAMED arguments in.
+
+class _FilterOptions(NamedTuple):
+    """Which options a look may set on one geometry-capable filter."""
+
+    #: option name -> the axis it sets: ``"width"``, ``"height"``, or ``"size"``
+    #: (a single ``WxH``). Bounded against the canvas.
+    sizes: "dict[str, str]"
+    #: accepted and not bounded — measured not to move the output frame.
+    free: frozenset
+    #: the leading UNNAMED slots a look may fill, in libavfilter's order. Short
+    #: on purpose: a positional past the end is REFUSED, never dropped.
+    positional: tuple
+
+
+#: Which options a look may set on a filter that can change the OUTPUT FRAME
+#: GEOMETRY — an allowlist, the same shape and for the same reason
+#: :data:`LOOK_FILTERS` is one, and the correction of the first pass at muvid#75.
 #:
-#: Read off ``ffmpeg -h filter=<name>`` and then MEASURED, because the option
-#: list alone does not say which spellings actually reach the frame size. Every
-#: row below was rendered from a 64x48 source on ffmpeg 9.0.1 and the produced
-#: frame size read back off the output stream:
+#: **The first pass listed the options that SET a size and read the rest as
+#: nothing, which is a blocklist wearing an allowlist's clothes** — and it leaked
+#: twice, both bigger than the ``scale=8000:8000`` it refused. Measured on a
+#: 1920x1080 canvas with the exact ``-vf`` the assembler builds, 3 frames,
+#: ``/usr/bin/time -l`` peak RSS:
 #:
-#: - ``scale``: ``8000:8000`` (positional), ``w=``/``h=``, ``width=``/``height=``
-#:   and ``s=``/``size=`` all produce 8000x8000. Five spellings, one lever.
-#: - ``pad``: positional, ``w``/``h`` and ``width``/``height`` do; there is no
-#:   ``s``. **The issue named three levers and this is the fourth** —
-#:   ``pad=8000:8000`` measures 306.6 MB, the same magnitude as ``scale``'s
-#:   327.6 MB, and ``pad`` is allowlisted because ``looks``' ``fit`` letterboxes
-#:   with it.
-#: - ``zoompan``: only ``s``, and it is an ``<image_size>`` rather than an
-#:   expression — ``s='iw*80'x'ih*80'`` is refused by ffmpeg itself ("Unable to
-#:   parse"). It is reachable positionally (``zoompan=1:0:0:1:8000x8000:25``
-#:   produces 8000x8000), so the positional order is load-bearing here too.
-#: - ``crop`` is deliberately ABSENT: it cannot grow a frame. Both
-#:   ``crop=8000:8000`` and ``crop=w='iw*80':h='ih*80'`` are refused by ffmpeg
-#:   ("Invalid too big or non positive size"), so its output is bounded by its
-#:   input, which at the head of a look chain is the canvas and everywhere else
-#:   is something this table already bounded. That is why ``looks``' constant-size
-#:   ``motion`` — the one muvid-compiled fragment whose size options ARE
-#:   expressions (``crop=w='iw*0.5':h='ih*0.5'``) — needs no exemption.
+#: ==========================================================  ============  =========
+#: fragment                                                    frame         peak RSS
+#: ==========================================================  ============  =========
+#: (look at canvas size)                                       1920x1080      110 MB
+#: ``scale=7680:4320`` — the bound's own stated worst case      7680x4320      268 MB
+#: ``scale=8000:8000`` — REFUSED, the case muvid#75 named       8000x8000      403 MB
+#: ``pad=w=1920:h=1080:aspect=1/30``                           1920x57600      590 MB
+#: ``crop=w=1920:h=200,scale=w=7680:h=4320:``
+#: ``force_original_aspect_ratio=increase``                    41472x4320      941 MB
+#: ==========================================================  ============  =========
 #:
-#: The positional orders follow libavfilter's ``process_options``, which walks
-#: the option list in declaration order skipping aliases, and stops offering
-#: positional slots after the first ``key=value`` argument. Pinned by a test that
-#: renders the all-positional forms.
-_LOOK_SIZE_OPTIONS = {
-    #  filter:   (width-setting, height-setting, WxH-setting, positional order)
-    "scale": (("w", "width"), ("h", "height"), ("s", "size"), ("w", "h")),
-    "pad": (("w", "width"), ("h", "height"), (), ("w", "h")),
-    "zoompan": ((), (), ("s",), ("zoom", "x", "y", "d", "s", "fps")),
+#: Both leaks declare nothing the old table could read: ``pad``'s ``aspect``
+#: grows w *or* h to satisfy a ratio, so both dimensions can sit AT canvas size;
+#: ``scale``'s ``force_original_aspect_ratio`` derives the frame from the input
+#: aspect, which a preceding ``crop`` makes extreme, so both dimensions can sit
+#: exactly ON the bound. A third, ``force_divisible_by``, only acts in
+#: combination with the second — which is why a one-option-at-a-time sweep
+#: cannot find it and the table is an allowlist instead.
+#:
+#: **How this list was arrived at**, because "we named the levers we thought of"
+#: is what produced the first pass: for every option of every one of the 17
+#: filters in :data:`LOOK_FILTERS`, read out of ``ffmpeg -h filter=<name>``, a
+#: value of the option's declared type was rendered from a 64x48 source in three
+#: contexts — alone, beside a size, and beside a size AND
+#: ``force_original_aspect_ratio`` — and the produced frame compared to the
+#: fragment's own baseline. On ffmpeg 9.0.1 and 6.1.6 alike the frame moves for
+#: exactly these: ``crop``'s ``out_w``/``w``/``out_h``/``h``, ``pad``'s
+#: ``width``/``w``/``height``/``h``/``aspect``, ``scale``'s
+#: ``w``/``width``/``h``/``height``/``size``/``s``/
+#: ``force_original_aspect_ratio``/``force_divisible_by``, and ``zoompan``'s
+#: ``s``. Nothing on the other 13 filters moves it, which is why they are absent
+#: here and their options are not checked at all.
+#:
+#: The sweep is an instrument, not the guard. **The guard is that anything not
+#: named here is refused**, because the census the sweep reads is itself
+#: incomplete: ``ffmpeg -h filter=scale`` on 6.1.6 does not print ``s``/``size``
+#: and ``scale=s=320x240`` works there anyway (measured, 320x240). A table that
+#: classified only what the help prints would have had a hole on that binary.
+#:
+#: Two entries that look like omissions and are not:
+#:
+#: - ``crop``'s ``w``/``h`` are ``free``, not sizes. ``crop`` cannot GROW a frame
+#:   — ``crop=8000:8000`` and ``crop=w='iw*80':h='ih*80'`` are both refused by
+#:   ffmpeg ("Invalid too big or non positive size") — so its output is bounded
+#:   by its input, and bounding it would refuse ``looks``' constant-size
+#:   ``motion`` (``crop=w='iw*0.5':h='ih*0.5'``), the one muvid-compiled fragment
+#:   whose size options are expressions.
+#: - the positional prefixes stop at what muvid's own compilers emit, and a
+#:   positional past the end is refused rather than dropped. Dropping it was the
+#:   second half of the ``pad`` leak: ``pad``'s ``aspect`` is its SEVENTH
+#:   positional slot, so ``pad=1920:1080:0:0:black:init:1/30`` reaches it without
+#:   naming it (measured, both binaries: 192x48 from a 64x48 source at
+#:   ``aspect=4/1``, and ``pad=64:48:0:0:black:init:4/1`` likewise). Carrying the
+#:   full order instead would not be safe either, and the reason is measurable:
+#:   the two builds this fleet runs do not declare the same option list for
+#:   ``scale``. On 9.0.1 the fifth slot is ``size`` (``scale=100:100:bicubic:0:X``
+#:   answers "Size and width/height expressions cannot be set at the same time");
+#:   6.1.6's ``-h filter=scale`` does not list ``size``/``s`` at all, so its fifth
+#:   slot is something else. A hardcoded full order would therefore disagree with
+#:   one of the two binaries about what a bare argument SAYS, which is the one
+#:   thing a gate must never do. Stopping short and refusing is version-proof.
+#:
+#:   The two rules overlap on purpose, and the overlap is defence rather than
+#:   redundancy: lengthening ``pad``'s prefix to all seven slots still refuses
+#:   ``pad=1920:1080:0:0:black:init:1/30``, because ``eval`` and ``aspect`` are
+#:   then read as unclassified OPTIONS instead of unclassified SLOTS (verified by
+#:   mutation). What the short prefix adds is that muvid never has to be right
+#:   about a slot it did not measure.
+_LOOK_GEOMETRY_FILTERS = {
+    "scale": _FilterOptions(
+        sizes={
+            "w": "width",
+            "width": "width",
+            "h": "height",
+            "height": "height",
+            "s": "size",
+            "size": "size",
+        },
+        free=frozenset({"flags"}),
+        positional=("w", "h"),
+    ),
+    "pad": _FilterOptions(
+        sizes={"w": "width", "width": "width", "h": "height", "height": "height"},
+        free=frozenset({"x", "y", "color"}),
+        positional=("w", "h", "x", "y"),
+    ),
+    "crop": _FilterOptions(
+        sizes={},
+        free=frozenset({"w", "out_w", "h", "out_h", "x", "y"}),
+        positional=("w", "h", "x", "y"),
+    ),
+    "zoompan": _FilterOptions(
+        sizes={"s": "size"},
+        free=frozenset({"zoom", "z", "x", "y", "d", "fps"}),
+        positional=("zoom", "x", "y", "d", "s", "fps"),
+    ),
+}
+
+#: The measured reason a particular geometry option is refused rather than
+#: bounded, quoted into the refusal so the caller is told what it does and not
+#: merely that it is not allowed. Every other unclassified option gets the
+#: generic message; these four are the ones a bound could plausibly have been
+#: written for, so the reason it was not is recorded where it is enforced.
+#:
+#: All four are refused rather than bounded for one reason: bounding them means
+#: computing the frame this filter will produce from the frame the previous one
+#: produced — libavfilter's geometry negotiation, reimplemented in Python and
+#: kept in agreement with two binaries. That is the same refusal
+#: :func:`_validate_look_size` already makes for an expression, for the same
+#: reason, and it costs the seam nothing: **no fragment muvid compiles sets any
+#: of them** — swept over ``punch_in`` (4 zooms x 4 canvases x 2 rates),
+#: ``motion``, and all 14 ``looks`` effects at 6 targets on 4 canvases, whose
+#: entire emitted vocabulary is ``scale`` w/h positional, ``pad`` w/h/x/y
+#: positional plus ``color``, ``crop`` w/h/x/y positional, ``zoompan``
+#: ``z``/``x``/``y``/``d``/``s``/``fps``, ``lut3d=file``, and the colour filters.
+_LOOK_REFUSED_OPTIONS = {
+    ("pad", "aspect"): (
+        "it pads to fit an ASPECT rather than a resolution, so `w`/`h` can be "
+        "left AT canvas size and the frame still explodes: measured on a "
+        "1920x1080 canvas, `pad=w=1920:h=1080:aspect=1/30` renders a 1920x57600 "
+        "frame at 590 MB peak RSS, against 110 MB for a look that stays at "
+        "canvas size and 403 MB for the `scale=8000:8000` this bound refuses"
+    ),
+    ("scale", "force_original_aspect_ratio"): (
+        "it derives the frame from the INPUT aspect, which a preceding `crop` "
+        "can make extreme, so both declared sizes can sit exactly ON the bound "
+        "and the frame still explodes: measured, "
+        "`crop=w=1920:h=200,scale=w=7680:h=4320:force_original_aspect_ratio="
+        "increase` renders 41472x4320 at 941 MB peak RSS"
+    ),
+    ("scale", "force_divisible_by"): (
+        "it rounds the frame up, and only in combination with "
+        "`force_original_aspect_ratio` — measured on a 64x48 input, "
+        "`scale=w=100:h=100:force_original_aspect_ratio=increase` produces "
+        "133x100 and adding `force_divisible_by=64` makes it 128x128. An option "
+        "that does nothing alone is exactly the one a one-at-a-time sweep misses"
+    ),
+    ("scale", "eval"): (
+        "`eval=frame` re-evaluates the size expressions per frame, and this "
+        "gate reads a fragment once. A size muvid cannot read is refused rather "
+        "than bounded (see the `not a plain pixel count` rule), and a size that "
+        "can CHANGE after it was read is the same problem in time"
+    ),
+    ("pad", "eval"): (
+        "`eval=frame` re-evaluates the size expressions per frame, and this "
+        "gate reads a fragment once — the same reason `scale`'s is refused"
+    ),
 }
 
 #: A size option muvid can bound: a plain pixel count, optionally quoted.
@@ -1035,7 +1185,9 @@ def _look_filter_names(look: str) -> "list[str]":
     return [name for name, _ in _look_links(look)]
 
 
-def _link_options(args: str, positional: "Sequence[str]") -> "dict[str, str]":
+def _link_options(
+    args: str, positional: "Sequence[str]"
+) -> "tuple[dict[str, str], list[tuple[str, bool]]]":
     r"""One link's arguments as ``{option name: raw value}``, ffmpeg's way.
 
     Two rules taken from libavfilter's ``process_options`` rather than from
@@ -1047,8 +1199,19 @@ def _link_options(args: str, positional: "Sequence[str]") -> "dict[str, str]":
       ffmpeg discards the remaining shorthand, so a bare argument after a
       ``key=value`` one is an error there rather than a later slot. Reading it as
       a slot would make this function claim a size the binary never sets.
+      Measured on ffmpeg 9.0.1: ``scale=w=100:8000`` and ``scale=w=8000:100``
+      both exit 234 with "No option name near '8000'", while ``scale=100:h=8000``
+      produces 100x8000.
 
     Later assignments win, as ``av_opt_set`` does.
+
+    Returns ``(options, overflow)``. ``overflow`` is one ``(value, after_named)``
+    per positional argument that found no slot — **reported rather than dropped**,
+    which is the half the first pass got wrong. ``positional`` stops at the slots
+    muvid classifies (see :data:`_LOOK_GEOMETRY_FILTERS`), so a bare argument past
+    the end is not a triviality: ``pad``'s ``aspect`` is its seventh slot, and
+    ``pad=1920:1080:0:0:black:init:1/30`` reaches it without naming it. Silently
+    dropping slot 7 is what let that fragment through.
 
     An EMPTY argument string declares nothing, which is a case rather than a
     triviality: ``scale`` and ``pad`` with no arguments at all are legal ffmpeg
@@ -1059,29 +1222,35 @@ def _link_options(args: str, positional: "Sequence[str]") -> "dict[str, str]":
     width: ''", rc=234) and the gate agreeing is the point.
 
     >>> _link_options("8000:8000", ("w", "h"))
-    {'w': '8000', 'h': '8000'}
+    ({'w': '8000', 'h': '8000'}, [])
     >>> _link_options("w=8000:h=8000", ("w", "h"))
-    {'w': '8000', 'h': '8000'}
-    >>> _link_options("1:0:0:1:640x360:25", ("zoom", "x", "y", "d", "s", "fps"))["s"]
+    ({'w': '8000', 'h': '8000'}, [])
+    >>> _link_options("1:0:0:1:640x360:25", ("zoom", "x", "y", "d", "s", "fps"))[0]["s"]
     '640x360'
     >>> _link_options("", ("w", "h"))
-    {}
+    ({}, [])
+    >>> _link_options("64:48:0:0:black", ("w", "h", "x", "y"))[1]
+    [('black', False)]
+    >>> _link_options("w=100:8000", ("w", "h"))
+    ({'w': '100'}, [('8000', True)])
     """
     out: "dict[str, str]" = {}
+    overflow: "list[tuple[str, bool]]" = []
     if not args:
-        return out
+        return out, overflow
     slot, named_seen = 0, False
     for arg in _split_significant(args, ":"):
         eq = next((j for j, c in _significant(arg) if c == "="), None)
         if eq is None:
             if named_seen or slot >= len(positional):
+                overflow.append((arg, named_seen))
                 continue
             out[positional[slot]] = arg
             slot += 1
             continue
         named_seen = True
         out[_unquote(_strip_unescaped(arg[:eq]))] = arg[eq + 1 :]
-    return out
+    return out, overflow
 
 
 def _look_output_sizes(look: str) -> "list[tuple[str, str, str, str, int | None]]":
@@ -1092,9 +1261,14 @@ def _look_output_sizes(look: str) -> "list[tuple[str, str, str, str, int | None]
     when the value is not a plain pixel count muvid can bound — an expression, a
     negative auto-value, an image-size abbreviation.
 
-    Only options in :data:`_LOOK_SIZE_OPTIONS` are reported; an absent one leaves
-    the frame unchanged (``scale``/``pad`` default to ``iw``/``ih``) and is not a
-    lever.
+    Only the ``sizes`` options of :data:`_LOOK_GEOMETRY_FILTERS` are reported; an
+    absent one leaves the frame unchanged (``scale``/``pad`` default to
+    ``iw``/``ih``) and is not a lever. Every OTHER way of moving the frame —
+    ``pad=aspect``, ``scale=force_original_aspect_ratio``, an unclassified option
+    on a geometry filter, an unclassified positional slot — is not a size this
+    function can report at all, and is refused by
+    :func:`_look_unclassified_options` instead. The two together are the bound;
+    this one alone was the muvid#75 leak.
 
     ``zoompan``'s absent ``s`` is the one documented exception to that last
     sentence: its default is a literal ``hd720``, so a ``zoompan`` with no ``s``
@@ -1114,25 +1288,91 @@ def _look_output_sizes(look: str) -> "list[tuple[str, str, str, str, int | None]
     """
     out = []
     for name, args in _look_links(look):
-        spec = _LOOK_SIZE_OPTIONS.get(name)
+        spec = _LOOK_GEOMETRY_FILTERS.get(name)
         if spec is None:
             continue
-        w_names, h_names, wh_names, positional = spec
-        opts = _link_options(args, positional)
-        for axis, axis_names in (("width", w_names), ("height", h_names)):
-            for opt in axis_names:
-                if opt not in opts:
-                    continue
-                text = _unquote(_strip_unescaped(opts[opt]))
+        opts, _overflow = _link_options(args, spec.positional)
+        for opt, value in opts.items():
+            axis = spec.sizes.get(opt)
+            if axis is None:
+                continue
+            text = _unquote(_strip_unescaped(value))
+            if axis == "size":
+                m = _LOOK_PIXEL_SIZE.match(text)
+                for ax, group in (("width", 1), ("height", 2)):
+                    out.append(
+                        (name, opt, ax, text, int(m.group(group)) if m else None)
+                    )
+            else:
                 px = int(text) if _LOOK_PIXELS.match(text) else None
                 out.append((name, opt, axis, text, px))
-        for opt in wh_names:
-            if opt not in opts:
+    return out
+
+
+def _allowed_options(filt: str) -> "set[str]":
+    """Every option name a look may set on ``filt``. Empty for an unlisted filter.
+
+    >>> sorted(_allowed_options("zoompan"))
+    ['d', 'fps', 's', 'x', 'y', 'z', 'zoom']
+    >>> _allowed_options("hue")
+    set()
+    """
+    spec = _LOOK_GEOMETRY_FILTERS.get(filt)
+    return set() if spec is None else set(spec.sizes) | set(spec.free)
+
+
+def _look_unclassified_options(look: str) -> "list[tuple[str, str, str]]":
+    r"""Every way this chain could move the frame that muvid has NOT classified.
+
+    One ``(filter, what, why)`` per offence, on the filters in
+    :data:`_LOOK_GEOMETRY_FILTERS` only — the four that can change the output
+    geometry at all. The other thirteen allowlisted filters are not
+    option-checked, because no option of any of them moves the frame (measured;
+    see the table's docstring and ``tests/test_edl_look_options.py``, which
+    re-reads the option list out of the installed binary so a new one cannot
+    arrive unnoticed).
+
+    Three offences, and the third is the one a named-option check alone misses:
+
+    - an option with a recorded reason (:data:`_LOOK_REFUSED_OPTIONS`);
+    - an option the allowlist does not name at all;
+    - a POSITIONAL argument past the slots muvid classifies — ``pad``'s
+      ``aspect`` is its seventh slot and needs no name to reach.
+
+    >>> _look_unclassified_options("scale=1920:1080,hue=s=0")
+    []
+    >>> [(f, w) for f, w, _ in _look_unclassified_options("pad=aspect=4/1")]
+    [('pad', "the 'aspect' option")]
+    >>> [(f, w) for f, w, _ in _look_unclassified_options("pad=64:48:0:0:black")]
+    [('pad', "the positional argument 'black'")]
+    """
+    out = []
+    for name, args in _look_links(look):
+        spec = _LOOK_GEOMETRY_FILTERS.get(name)
+        if spec is None:
+            continue
+        opts, overflow = _link_options(args, spec.positional)
+        for opt in opts:
+            if opt in spec.sizes or opt in spec.free:
                 continue
-            text = _unquote(_strip_unescaped(opts[opt]))
-            m = _LOOK_PIXEL_SIZE.match(text)
-            for axis, group in (("width", 1), ("height", 2)):
-                out.append((name, opt, axis, text, int(m.group(group)) if m else None))
+            why = _LOOK_REFUSED_OPTIONS.get((name, opt))
+            out.append((name, f"the {opt!r} option", why or ""))
+        for value, after_named in overflow:
+            why = (
+                "ffmpeg refuses it too — a bare argument after a `key=value` one "
+                "is discarded shorthand there (`scale=w=100:8000` exits 234 with "
+                "\"No option name near '8000'\")"
+                if after_named
+                else (
+                    f"{name} takes {len(spec.positional)} positional arguments in "
+                    "muvid's table and this is one more. The slots past that end "
+                    "are not the same on every ffmpeg build (`scale`'s fifth is "
+                    "`size` on 9.0.1, and 6.1.6 does not declare `size` on "
+                    "`scale` at all) and one of `pad`'s is `aspect`, which grows "
+                    "the frame. Spell the option by name"
+                )
+            )
+            out.append((name, f"the positional argument {value!r}", why))
     return out
 
 
@@ -1149,8 +1389,23 @@ def _validate_look_size(i, look: str, canvas) -> None:
     ``assemble_music_video``'s free-form ``edl=``, on the box muvid#21/#24 was
     OOM-killed on.
 
-    Two rules, and the second is the one a literal cap alone would miss:
+    Three rules. The first is the one a *list of size options* alone misses, and
+    it is what the first pass at this got wrong:
 
+    - **On a filter that can change the geometry, only options muvid classifies
+      may be set** (:data:`_LOOK_GEOMETRY_FILTERS`) — including through an
+      unnamed positional slot. Two options move the frame while DECLARING no
+      dimension the rule below can read, and both are bigger than the case that
+      rule refuses: ``pad=w=1920:h=1080:aspect=1/30`` renders a 1920x57600 frame
+      at 590 MB with w and h sitting at canvas size, and
+      ``crop=w=1920:h=200,scale=w=7680:h=4320:force_original_aspect_ratio=increase``
+      renders 41472x4320 at 941 MB with both sizes sitting exactly on the bound
+      (measured on a 1920x1080 canvas against 110 MB at canvas size and 403 MB
+      for the refused ``scale=8000:8000``). So the classification is an
+      ALLOWLIST: an option muvid has not measured is refused, and the census of
+      what the binary offers is a CI test rather than the guard, because the
+      census is itself incomplete (ffmpeg 6.1.6's ``-h filter=scale`` omits
+      ``s``/``size``, which work there).
     - **A declared dimension may not exceed** :data:`MAX_LOOK_SCALE` **times the
       canvas.** The look is spliced after the assembler's own ``scale``/``pad``,
       so the frame entering it IS the canvas and the frame leaving it is resampled
@@ -1164,24 +1419,45 @@ def _validate_look_size(i, look: str, canvas) -> None:
       ``av_parse_video_size``'s abbreviations (``zoompan=d=1:s=whuxga:fps=25``
       really produces 7680x4800, at 321.2 MB).
 
-    **What stays reachable**, stated because a partial claim is worse than none.
-    A look may still ask for ``MAX_LOOK_SCALE`` x the canvas in BOTH dimensions —
-    16x the area, 184.8 MB measured at 7680x4320 — on every cut of an edit, and
-    the cap is per invocation rather than cumulative, exactly like
-    :data:`MAX_EDL_ENTRIES`. What is closed is the two-orders-of-magnitude ask.
+    **What stays reachable**, stated because a partial claim is worse than none —
+    and this paragraph is the one the first pass overstated, so read it as the
+    correction it is. A look may still ask for ``MAX_LOOK_SCALE`` x the canvas in
+    BOTH dimensions — 16x the area, 268 MB measured at 7680x4320 on a 1920x1080
+    canvas against 110 MB at canvas size — on every cut of an edit, and the cap is
+    per invocation rather than cumulative, exactly like :data:`MAX_EDL_ENTRIES`.
+    What is closed is every way a look can name a frame LARGER than that, in any
+    spelling, on any of the four filters that can set one.
 
-    Refusing an EXPRESSION rather than bounding its multiplier syntactically is
-    also a decision with a measurement behind it: **every size option muvid's own
-    compilers emit is already a literal** — ``looks.compile_motion`` writes
+    Refusing an EXPRESSION rather than bounding its multiplier syntactically —
+    and, for the same reason, refusing an aspect-driven option rather than
+    computing the frame it produces — is a decision with a measurement behind it:
+    **every size option muvid's own compilers emit is already a literal, and none
+    of them sets a refused option** — ``looks.compile_motion`` writes
     ``zoompan=d=1:s=640x360``, ``looks``' geometry effects write ``scale=1280:720``
-    and ``pad=1080:1080:0:236`` — swept over ``punch_in``, ``motion`` and every
-    ``looks`` effect on all four muvid canvases. The only muvid-compiled fragment
-    whose size options are expressions is ``motion``'s constant-size
-    ``crop=w='iw*0.5':h='ih*0.5'``, and ``crop`` is not in
-    :data:`_LOOK_SIZE_OPTIONS` because it structurally cannot grow a frame. So the
-    strict rule costs the seam nothing, where a multiplier grammar would be a
-    second expression parser to keep in agreement with ffmpeg's.
+    and ``pad=1080:1080:0:236:color=0x000000`` — swept over ``punch_in`` (4 zooms
+    x 4 canvases x 2 rates), ``motion``, and every ``looks`` effect at 6 targets on
+    all four muvid canvases. The only muvid-compiled fragment whose size options
+    are expressions is ``motion``'s constant-size ``crop=w='iw*0.5':h='ih*0.5'``,
+    and ``crop``'s ``w``/``h`` are ``free`` rather than sizes because ``crop``
+    structurally cannot grow a frame. So the strict rule costs the seam nothing,
+    where either alternative would be a second copy of libavfilter's geometry
+    negotiation to keep in agreement with two binaries.
     """
+    for filt, what, why in _look_unclassified_options(look):
+        raise ValueError(
+            f"EDL entry {i}: look sets {what} on {filt} ({look!r}), which muvid "
+            f"does not classify. "
+            + (f"That option is refused because {why}. " if why else "")
+            + f"A look may set only {sorted(_allowed_options(filt))} on {filt}, "
+            f"and at most {len(_LOOK_GEOMETRY_FILTERS[filt].positional)} unnamed "
+            f"arguments ({', '.join(_LOOK_GEOMETRY_FILTERS[filt].positional)}). "
+            "The four filters that can change the output frame are allowlisted "
+            "per OPTION, not per name: frame size is memory, this is a live "
+            "per-caller tool on a box that has been OOM-killed, and an option "
+            "muvid has not measured could move the frame without declaring a "
+            "dimension the bound can read (`pad=w=W:h=H:aspect=1/30` renders "
+            "57600 px high with W and H at canvas size)."
+        )
     limits = {"width": MAX_LOOK_SCALE * canvas[0], "height": MAX_LOOK_SCALE * canvas[1]}
     for filt, opt, axis, text, px in _look_output_sizes(look):
         if px is None:
