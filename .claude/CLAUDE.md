@@ -461,6 +461,18 @@ bridge before muvid#37.
     option of every allowlisted filter through the real binary asserting the gate never
     under-reads a growth. The hand corpus that missed both leaks had exactly the right
     shape and simply did not contain them.
+- **The two ffmpeg builds disagree about what a bare argument after a `key=value` one
+  MEANS, and only CI could see it.** `scale=w=8000:100` exits 234 on 9.0.1 ("No option
+  name near '100'" — the shorthand is discarded) and renders **8000x100** on 6.1.6, which
+  fills the next slot. Both measured; CI installs an ffmpeg 6, so a claim pinned only
+  against the local 9.0.1 went red there. Two consequences worth carrying: `_link_options`
+  **refuses** such a fragment rather than reading it, because no single reading is right on
+  both binaries; and dropping that rule is a **hole**, not an over-refusal — the trailing
+  bare value refills slot 0 and *overwrites* the named `w`, so the gate reads 100 and
+  accepts what 6.1.6 renders 8000 px wide. More generally: **run the ffmpeg-dependent
+  suite against both binaries before believing a measurement about the binary**
+  (`PATH=/…/ffmpeg@6/bin:$PATH pytest -q`); a one-build measurement stated as a fact is how
+  this one got in.
 - **The seam is a bare string, so anything muvid must know about a look has to be its own
   field.** `EdlEntry.look_time_varying` (muvid#73) is the worked example: a moving look
   restarts its ramp on a transitioned boundary (the blend is a separate input-side-seeked
