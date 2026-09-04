@@ -37,6 +37,20 @@ Now three bounded stages, memory O(1) in cut count:
 ffmpeg auto-applies each clip's rotation metadata on decode (default ``-autorotate 1``),
 so a display-matrix portrait clip lands upright and pillarboxed, never stretched.
 
+A cut may also carry a **look** — a compiled ``looks`` filter fragment
+(:mod:`muvid.footage.look`) spliced into the per-part chain by :func:`_part_filter`.
+It is the federation seam and it is deliberately the cheapest possible one: a ``-vf``
+fragment adds no ``-i``, so it cannot move the invariant above. That is enforced rather
+than trusted, and by an ALLOWLIST rather than by refusals —
+:func:`~muvid.footage.edl._validate_look` accepts only the filters
+:data:`~muvid.footage.edl.LOOK_FILTERS` names, and refuses a fragment that names a
+container input, that is more than one linear chain, or that is not lexically closed.
+The allowlist is what closes ``movie=``/``amovie=`` (a second container opened from
+*inside* the fragment, which is the invariant leaving by the back door) and, because
+``assemble_music_video`` is a live per-caller MCP tool whose ``edl`` argument is
+free-form, the filters that write the host's disk (``metadata=…:file=``,
+``deshake=filename=``, ``sendcmd``, ``signature``).
+
 Deliberately NOT moviepy (its ``write_videofile`` runs in-process and would escape the
 ``$MUVID_FFMPEG_TIMEOUT_S`` worker guard). Every stage runs through
 :func:`muvid.visualize.ffmpeg.run_ffmpeg`; note the guard is **per invocation** now, so a
@@ -229,6 +243,10 @@ def _crop_filter(cut: "AssemblyCut") -> str:
     entirely its default ``d=90`` (20 input frames -> 1800 out), and ``d=1`` is
     exactly 1:1. So a resizing window is a ``zoompan`` job; a pan at constant size
     is this one, and ``crop`` expresses it with one expression per axis.
+
+    That ``zoompan`` job now has a home: :func:`muvid.footage.look.punch_in` rides
+    in the cut's ``look`` rather than in its ``crop``, which is why this function
+    is still only ever asked for a pan.
     """
     c = cut.crop
     if c is None:
@@ -243,6 +261,56 @@ def _crop_filter(cut: "AssemblyCut") -> str:
     x = f"iw*({c.x:.6f}+({e.x - c.x:.6f})*{prog})"
     y = f"ih*({c.y:.6f}+({e.y - c.y:.6f})*{prog})"
     return f"setpts=PTS-STARTPTS,crop=w='{w}':h='{h}':x='{x}':y='{y}'"
+
+
+def _part_filter(
+    cut: "AssemblyCut", *, w: int, h: int, fps: int, tail: str = ""
+) -> str:
+    """THE per-cut filter chain. ONE implementation, used by BOTH render sites.
+
+    This template used to be written out twice — once in :func:`_render_part` and
+    once inside :func:`_render_transition`'s ``_norm`` — and the two copies are
+    the two sides of a blended boundary. Anything that lands on one and not the
+    other is a **visible seam**: the A side and the B side of a cut disagree
+    exactly where the blend puts them on top of each other. Two copies stayed in
+    agreement while the chain was fixed; a per-cut ``look`` is the first thing
+    that varies, so the copies became one function rather than a comment asking
+    the next reader to keep them equal.
+
+    The order is the contract:
+
+    ``[crop,] scale, pad, setsar, fps, tpad [, look] [, tail]``
+
+    The look is spliced **after** the normalisation and **before** ``tail``, and
+    both halves of that are load-bearing:
+
+    - *After* ``scale``/``pad``/``fps``, the look sees a frame whose geometry is
+      exactly the canvas and whose rate is exactly the delivery rate — so a
+      time-varying look (``muvid.footage.look.punch_in``'s ``zoompan``) can be
+      given exact numbers instead of per-clip probes, and a look's normalised
+      window means a fraction of the canvas rather than a fraction of whichever
+      source happens to be under it. It is also the last pixel stage, which is
+      where ``looks``' own ordering rule wants a quantiser.
+    - *Before* ``tail`` (``format=yuv420p`` on the transition path), because
+      ``xfade`` needs its two sides in one pixel format and that is the tail's
+      whole job.
+
+    ``tail`` is the only difference between the two sites, and it is a parameter
+    rather than a second string.
+
+    With no crop and no look this returns exactly the bytes it always did — the
+    ``look``-absent path is unchanged character for character, which is the
+    property ``tests/test_edl_look.py`` pins.
+    """
+    crop = _crop_filter(cut)
+    return (
+        f"{crop + ',' if crop else ''}"
+        f"scale={w}:{h}:force_original_aspect_ratio=decrease,"
+        f"pad={w}:{h}:(ow-iw)/2:(oh-ih)/2,setsar=1,fps={fps},"
+        f"tpad=stop=-1:stop_mode=clone"
+        f"{',' + cut.look if cut.look else ''}"
+        f"{tail}"
+    )
 
 
 def _video_codec_args(crf: int, preset: str) -> list[str]:
@@ -277,13 +345,7 @@ def _render_part(
     # validates a span past the last video frame, and without tpad that part comes up
     # short, silently desyncing every later cut. Cloning the last frame makes the frame
     # count exact whenever the source yields at least one frame.
-    crop = _crop_filter(cut)
-    vf = (
-        f"{crop + ',' if crop else ''}"
-        f"scale={w}:{h}:force_original_aspect_ratio=decrease,"
-        f"pad={w}:{h}:(ow-iw)/2:(oh-ih)/2,setsar=1,fps={fps},"
-        f"tpad=stop=-1:stop_mode=clone"
-    )
+    vf = _part_filter(cut, w=w, h=h, fps=fps)
     if cut.clip_path:
         args = [
             # Input-side seek: lands on the keyframe before clip_in and decodes forward
@@ -366,13 +428,7 @@ def _render_transition(part, out: Path, *, w, h, fps, crf: int, preset: str) -> 
     # A-side framing to the B-side — the blend would still render, at the wrong
     # framing, which is exactly the kind of failure nothing downstream can see.
     def _norm(cut) -> str:
-        crop = _crop_filter(cut)
-        return (
-            f"{crop + ',' if crop else ''}"
-            f"scale={w}:{h}:force_original_aspect_ratio=decrease,"
-            f"pad={w}:{h}:(ow-iw)/2:(oh-ih)/2,setsar=1,fps={fps},"
-            f"tpad=stop=-1:stop_mode=clone,format=yuv420p"
-        )
+        return _part_filter(cut, w=w, h=h, fps=fps, tail=",format=yuv420p")
 
     n = part.n_frames
     run_ffmpeg(

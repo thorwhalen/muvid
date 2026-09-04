@@ -176,7 +176,18 @@ So the compatibility surface is **not** a schema version. It is two concrete thi
 
 The rule for adding a field, therefore, is not "bump the schema" but **omit-when-None +
 read-by-name**: emit the key only when it is set (so every existing document and body
-stays byte-identical) and read it defensively. `EdlEntry.transition` (muvid#34) is the
+stays byte-identical) and read it defensively.
+
+**Emitting is the half that gets forgotten, so it is now a table rather than an `if`.**
+`transition` was hand-written into `footage_tools._edl_json` and survived; `crop`,
+`crop_end` and `look` were each added to `EdlEntry` and *not* — so a caller's framing
+and grade were accepted, honoured by the renderer, and absent from both the returned
+`edl` and the `meta.json` beside the file they styled, while the tool's own note says
+that list "must feed straight back as the edl= argument and reproduce the same render".
+`_EDL_OPTIONAL_FIELDS` is the emit table and `lacing_bridge._edl_body` is its editor
+twin; the guard is parameterised over `EdlEntry`'s **own dataclass fields** (never over
+the tables, which are the things that forget) plus a literal list, so a new field fails
+the suite until someone classifies it. `EdlEntry.transition` (muvid#34) is the
 worked example, and the two read postures there are deliberately opposite —
 `edl.py`'s `_as_entry` **raises** on a malformed transition because it reads a caller's
 *request*, while `edl_from_annotations` **skips** because it reads a browser's *output*.
@@ -389,6 +400,18 @@ bridge before muvid#37.
   `assemble_music_video` keeps its deployed name for exactly that reason (issue #21).
 - Every tool is **free** (`FREE_TOOLS == TOOL_NAMES`, `COSTED_TOOLS == []`). If a costed
   tool ever appears here, that fact has to change with it.
+- **A free-form tool argument is a trust boundary, and `assemble_music_video`'s `edl`
+  is the one that matters.** It is `list | None` — arbitrary dicts a remote OAuth
+  caller writes — and `edl.py`'s `_as_entry` reads every field out of them by name. Two
+  of those fields (`crop`, `look`) were added after the tool shipped. `look` is
+  **executable ffmpeg**, so it is gated by an **allowlist of filter names**
+  (`edl.LOOK_FILTERS`), not by refusing characters: measured on the muvid#66 branch
+  before the allowlist landed, `look="metadata=mode=print:file=<path>"` passed the gate,
+  rendered, returned `ok`, and truncated that file to zero bytes — outside the caller's
+  own project tree, so workspace scoping did not contain it. The rule to carry forward:
+  **when you widen `_as_entry`, you widen the remote input surface**, and a field whose
+  value is interpreted rather than measured needs a curated vocabulary the way
+  `TRANSITION_CURVES` and the `an` camera table do.
 - Tools resolve the caller through `muvid.mcp.identity.current_email()` and scope every
   path by email. Workspace scoping is the authorization model — `downloads.resolve`
   raises `KeyError` (not `PermissionError`) for another user's render, because saying

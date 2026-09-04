@@ -30,6 +30,14 @@ dependencies = [
     # needs both halves: normalise a pasted share link before fetching, then assert the
     # bytes are media rather than a sign-in page (muvid#23).
     "graze>=0.1.44",
+    # The `looks` seam (muvid.footage.look): a compiled -vf fragment per cut, and the
+    # in-shot punch-in of muvid#66. A CORE dependency rather than an extra because it
+    # declares ZERO dependencies of its own and is stdlib-only, so it costs `import
+    # muvid` nothing — the reason the other optional tiers exist does not apply. 0.0.11
+    # is where `compile_motion` picks crop-vs-zoompan from what the path does and emits
+    # `zoompan` with `d=1` + an explicit `fps`; below it a resizing window is either a
+    # configure-time error or a silently retimed clip, which is the whole muvid#66 fix.
+    "looks>=0.0.11",
 ]
 
 [project.scripts]
