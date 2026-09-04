@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.footage.assemble &mdash; muvid 0.0.41 documentation</title>
+  <title>muvid.footage.assemble &mdash; muvid 0.0.42 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -15,7 +15,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=20c5f126"></script>
+      <script src="../../../_static/documentation_options.js?v=173d7b4c"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -70,6 +70,7 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="edl.html">muvid.footage.edl</a></li>
 <li class="toctree-l1"><a class="reference internal" href="lacing_bridge.html">muvid.footage.lacing_bridge</a></li>
+<li class="toctree-l1"><a class="reference internal" href="look.html">muvid.footage.look</a></li>
 <li class="toctree-l1"><a class="reference internal" href="scoring.html">muvid.footage.scoring</a></li>
 <li class="toctree-l1"><a class="reference internal" href="scoring/_frame_metrics.html">muvid.footage.scoring._frame_metrics</a></li>
 <li class="toctree-l1"><a class="reference internal" href="scoring/frames.html">muvid.footage.scoring.frames</a></li>
@@ -177,6 +178,19 @@ must be a property of the renderer, not of which song the user brought: muvid#24
 </ol>
 <p>ffmpeg auto-applies each clip’s rotation metadata on decode (default <code class="docutils literal notranslate"><span class="pre">-autorotate</span> <span class="pre">1</span></code>),
 so a display-matrix portrait clip lands upright and pillarboxed, never stretched.</p>
+<p>A cut may also carry a <strong>look</strong> — a compiled <code class="docutils literal notranslate"><span class="pre">looks</span></code> filter fragment
+(<a class="reference internal" href="look.html#module-muvid.footage.look" title="muvid.footage.look"><code class="xref py py-mod docutils literal notranslate"><span class="pre">muvid.footage.look</span></code></a>) spliced into the per-part chain by <code class="xref py py-func docutils literal notranslate"><span class="pre">_part_filter()</span></code>.
+It is the federation seam and it is deliberately the cheapest possible one: a <code class="docutils literal notranslate"><span class="pre">-vf</span></code>
+fragment adds no <code class="docutils literal notranslate"><span class="pre">-i</span></code>, so it cannot move the invariant above. That is enforced rather
+than trusted, and by an ALLOWLIST rather than by refusals —
+<code class="xref py py-func docutils literal notranslate"><span class="pre">_validate_look()</span></code> accepts only the filters
+<a class="reference internal" href="edl.html#muvid.footage.edl.LOOK_FILTERS" title="muvid.footage.edl.LOOK_FILTERS"><code class="xref py py-data docutils literal notranslate"><span class="pre">LOOK_FILTERS</span></code></a> names, and refuses a fragment that names a
+container input, that is more than one linear chain, or that is not lexically closed.
+The allowlist is what closes <code class="docutils literal notranslate"><span class="pre">movie=</span></code>/<code class="docutils literal notranslate"><span class="pre">amovie=</span></code> (a second container opened from
+<em>inside</em> the fragment, which is the invariant leaving by the back door) and, because
+<code class="docutils literal notranslate"><span class="pre">assemble_music_video</span></code> is a live per-caller MCP tool whose <code class="docutils literal notranslate"><span class="pre">edl</span></code> argument is
+free-form, the filters that write the host’s disk (<code class="docutils literal notranslate"><span class="pre">metadata=…:file=</span></code>,
+<code class="docutils literal notranslate"><span class="pre">deshake=filename=</span></code>, <code class="docutils literal notranslate"><span class="pre">sendcmd</span></code>, <code class="docutils literal notranslate"><span class="pre">signature</span></code>).</p>
 <p>Deliberately NOT moviepy (its <code class="docutils literal notranslate"><span class="pre">write_videofile</span></code> runs in-process and would escape the
 <code class="docutils literal notranslate"><span class="pre">$MUVID_FFMPEG_TIMEOUT_S</span></code> worker guard). Every stage runs through
 <a class="reference internal" href="../visualize/ffmpeg.html#muvid.visualize.ffmpeg.run_ffmpeg" title="muvid.visualize.ffmpeg.run_ffmpeg"><code class="xref py py-func docutils literal notranslate"><span class="pre">muvid.visualize.ffmpeg.run_ffmpeg()</span></code></a>; note the guard is <strong>per invocation</strong> now, so a

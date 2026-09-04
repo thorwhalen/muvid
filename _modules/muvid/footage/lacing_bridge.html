@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.footage.lacing_bridge &mdash; muvid 0.0.41 documentation</title>
+  <title>muvid.footage.lacing_bridge &mdash; muvid 0.0.42 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=20c5f126"></script>
+      <script src="../../../_static/documentation_options.js?v=173d7b4c"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -62,6 +62,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/assemble.html">muvid.footage.assemble</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/edl.html">muvid.footage.edl</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/lacing_bridge.html">muvid.footage.lacing_bridge</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/look.html">muvid.footage.look</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring.html">muvid.footage.scoring</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring/_frame_metrics.html">muvid.footage.scoring._frame_metrics</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring/frames.html">muvid.footage.scoring.frames</a></li>
@@ -288,11 +289,18 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_edl_body</span><span class="p">(</span><span class="n">e</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""The DECISION body for one entry — ``transition`` present only when set.</span>
+<span class="w">    </span><span class="sd">"""The DECISION body for one entry — each optional field present only when set.</span>
 
-<span class="sd">    Emitting it unconditionally would change the body of every untransitioned</span>
-<span class="sd">    document, which is the difference between an additive field and a format change</span>
-<span class="sd">    a browser surface has to move with. muvid#34.</span>
+<span class="sd">    Emitting one unconditionally would change the body of every document that does</span>
+<span class="sd">    not use it, which is the difference between an additive field and a format</span>
+<span class="sd">    change a browser surface has to move with (muvid#34).</span>
+
+<span class="sd">    **Every optional field has to be here, and that is the contract rather than a</span>
+<span class="sd">    courtesy.** ``.claude/CLAUDE.md``: "Round-trip is a contract: EDL -&gt; annotations</span>
+<span class="sd">    -&gt; EDL must be identity — which is *why* a new ``EdlEntry`` field has to reach</span>
+<span class="sd">    the body. A field the bridge does not carry is a field the editor silently</span>
+<span class="sd">    DROPS on the way back." ``look`` was added to ``EdlEntry`` without reaching</span>
+<span class="sd">    here, so an edit opened in the editor and exported came back ungraded.</span>
 <span class="sd">    """</span>
     <span class="n">body</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"clip_id"</span><span class="p">:</span> <span class="n">e</span><span class="o">.</span><span class="n">clip_id</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">}</span>
     <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="s2">"transition"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -301,6 +309,8 @@
         <span class="n">v</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">body</span><span class="p">[</span><span class="n">field</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
+    <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="s2">"look"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">body</span><span class="p">[</span><span class="s2">"look"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">look</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">body</span>
 
 
@@ -332,8 +342,8 @@
 
 <span class="sd">    The timeline-to-EDL half: whatever the editor did to the DECISION lane — moved,</span>
 <span class="sd">    split, retargeted, deleted — exports as plain ``{song_start, song_end, clip_id}``</span>
-<span class="sd">    dicts (plus ``transition`` where the editor set one) ready for</span>
-<span class="sd">    ``assemble_music_video``. Sorting and validation stay the render</span>
+<span class="sd">    dicts (plus ``transition``/``crop``/``crop_end``/``look`` where the editor set</span>
+<span class="sd">    one) ready for ``assemble_music_video``. Sorting and validation stay the render</span>
 <span class="sd">    path's business (``fill_gaps`` + ``validate_edl``); this is a faithful read.</span>
 
 <span class="sd">    Annotations are untrusted editor input, so anything shaped wrong is SKIPPED rather</span>
@@ -391,6 +401,13 @@
                 <span class="nb">isinstance</span><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">k</span><span class="p">),</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">))</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"x"</span><span class="p">,</span> <span class="s2">"y"</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">,</span> <span class="s2">"h"</span><span class="p">)</span>
             <span class="p">):</span>
                 <span class="n">entry</span><span class="p">[</span><span class="n">field</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">raw</span><span class="p">[</span><span class="n">k</span><span class="p">])</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"x"</span><span class="p">,</span> <span class="s2">"y"</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">,</span> <span class="s2">"h"</span><span class="p">)}</span>
+        <span class="c1"># Same skip-shaped read: a look is a filter fragment, and whether THIS one</span>
+        <span class="c1"># is acceptable is `validate_edl`'s single-gate business on the way back in</span>
+        <span class="c1"># — never this function's, which only settles the type. A non-string is an</span>
+        <span class="c1"># editor bug, not an edit, so it is dropped rather than crashing the export.</span>
+        <span class="n">raw</span> <span class="o">=</span> <span class="n">a</span><span class="o">.</span><span class="n">body</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"look"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">entry</span><span class="p">[</span><span class="s2">"look"</span><span class="p">]</span> <span class="o">=</span> <span class="n">raw</span>
         <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">entry</span><span class="p">)</span>
     <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">e</span><span class="p">:</span> <span class="n">e</span><span class="p">[</span><span class="s2">"song_start"</span><span class="p">])</span></div>
 

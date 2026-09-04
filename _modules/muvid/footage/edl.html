@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.footage.edl &mdash; muvid 0.0.41 documentation</title>
+  <title>muvid.footage.edl &mdash; muvid 0.0.42 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=20c5f126"></script>
+      <script src="../../../_static/documentation_options.js?v=173d7b4c"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -62,6 +62,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/assemble.html">muvid.footage.assemble</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/edl.html">muvid.footage.edl</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/lacing_bridge.html">muvid.footage.lacing_bridge</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/look.html">muvid.footage.look</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring.html">muvid.footage.scoring</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring/_frame_metrics.html">muvid.footage.scoring._frame_metrics</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring/frames.html">muvid.footage.scoring.frames</a></li>
@@ -359,8 +360,31 @@
     <span class="c1">#: across the cut — a pan. Same size as ``crop`` (see :func:`validate_edl`): a</span>
     <span class="c1">#: window that changes size mid-cut resizes the filter's output every frame,</span>
     <span class="c1">#: which is a different and much less robust thing than a pan. A push-in is</span>
-    <span class="c1">#: expressed as a *different* fixed window on the *next* cut.</span>
+    <span class="c1">#: expressed as a *different* fixed window on the *next* cut, or — since the</span>
+    <span class="c1">#: ``looks`` seam below — as a ``look`` carrying a ``zoompan`` ramp, which is</span>
+    <span class="c1">#: the one filter that CAN resize its window mid-cut (muvid#66).</span>
     <span class="n">crop_end</span><span class="p">:</span> <span class="s2">"CropWindow | None"</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1">#: **The ``looks`` seam.** A compiled ffmpeg filter-chain fragment applied to</span>
+    <span class="c1">#: this cut's picture once it has been normalised onto the canvas. ``None``</span>
+    <span class="c1">#: (the default) emits nothing at all, so an EDL written before this field</span>
+    <span class="c1">#: existed renders byte-identically — additive in both directions, like</span>
+    <span class="c1">#: ``transition`` and ``crop``.</span>
+    <span class="c1">#:</span>
+    <span class="c1">#: muvid does not author this string: :mod:`muvid.footage.look` compiles it</span>
+    <span class="c1">#: from a :class:`looks.Look` or from a punch-in request. That split is the</span>
+    <span class="c1">#: whole point of the seam — ``looks`` decides what a pixel becomes, muvid</span>
+    <span class="c1">#: keeps ``-c:v`` and the process shape.</span>
+    <span class="c1">#:</span>
+    <span class="c1">#: **A caller may still hand one over, so this field is a trust boundary.**</span>
+    <span class="c1">#: ``assemble_music_video`` is a live per-caller MCP tool taking free-form</span>
+    <span class="c1">#: ``edl`` dicts, and this string becomes ffmpeg the renderer runs. So</span>
+    <span class="c1">#: :func:`_validate_look` gates it against the ALLOWLIST</span>
+    <span class="c1">#: :data:`LOOK_FILTERS` — not against a list of refusals — and also refuses a</span>
+    <span class="c1">#: fragment that names a container input, that is more than ONE linear chain,</span>
+    <span class="c1">#: or that is not lexically closed. The first two of those would break the</span>
+    <span class="c1">#: bounded-memory invariant the assembler rests on; the allowlist is what</span>
+    <span class="c1">#: keeps a look from writing this machine's disk.</span>
+    <span class="n">look</span><span class="p">:</span> <span class="s2">"str | None"</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">is_gap</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
@@ -390,6 +414,11 @@
     <span class="c1">#: you know the source dimensions, which only ffmpeg knows.</span>
     <span class="n">crop</span><span class="p">:</span> <span class="s2">"CropWindow | None"</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">crop_end</span><span class="p">:</span> <span class="s2">"CropWindow | None"</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1">#: Carried through from the EDL entry, unchanged and already validated — the</span>
+    <span class="c1">#: ``looks`` seam. The assembler splices it into the ONE filter template both</span>
+    <span class="c1">#: of its render sites share, so a look lands identically on a solo cut and on</span>
+    <span class="c1">#: each side of a blended boundary. See :attr:`EdlEntry.look`.</span>
+    <span class="n">look</span><span class="p">:</span> <span class="s2">"str | None"</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">duration</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
@@ -415,6 +444,25 @@
             <span class="sa">f</span><span class="s2">"EDL entry </span><span class="si">{</span><span class="n">field</span><span class="si">}</span><span class="s2"> is malformed (</span><span class="si">{</span><span class="n">raw</span><span class="si">!r}</span><span class="s2">): it must be an object with "</span>
             <span class="s2">"numeric 'x', 'y', 'w' and 'h', as fractions of the source frame."</span>
         <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_as_look</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"str | None"</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Parse the look field. RAISES on a non-string, like the crop read.</span>
+
+<span class="sd">    Same posture and the same reason: ``_as_entry`` serves the caller's explicit</span>
+<span class="sd">    ``edl=`` argument, so dropping a requested look silently is the bug. The</span>
+<span class="sd">    *content* of the string is :func:`_validate_look`'s business — this only</span>
+<span class="sd">    settles the type, because ``validate_edl`` is the ONE gate and a second one</span>
+<span class="sd">    here would be a second place to keep in agreement.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">raw</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"EDL entry look is malformed (</span><span class="si">{</span><span class="n">raw</span><span class="si">!r}</span><span class="s2">): it must be a string — one "</span>
+            <span class="s2">"compiled ffmpeg filter chain, as muvid.footage.look emits."</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">raw</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_as_entry</span><span class="p">(</span><span class="n">e</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EdlEntry</span><span class="p">:</span>
@@ -445,6 +493,7 @@
         <span class="n">transition</span><span class="o">=</span><span class="n">transition</span><span class="p">,</span>
         <span class="n">crop</span><span class="o">=</span><span class="n">_as_crop</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"crop"</span><span class="p">),</span> <span class="s2">"crop"</span><span class="p">),</span>
         <span class="n">crop_end</span><span class="o">=</span><span class="n">_as_crop</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"crop_end"</span><span class="p">),</span> <span class="s2">"crop_end"</span><span class="p">),</span>
+        <span class="n">look</span><span class="o">=</span><span class="n">_as_look</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"look"</span><span class="p">)),</span>
     <span class="p">)</span>
 
 
@@ -517,6 +566,10 @@
 <span class="sd">    - each non-gap span lies within its clip's aligned coverage, AND the derived</span>
 <span class="sd">      ``clip_in = song_start - offset`` satisfies ``0 &lt;= clip_in`` and</span>
 <span class="sd">      ``clip_in + span_duration &lt;= clip_duration`` (the clip actually contains that span);</span>
+<span class="sd">    - a ``look`` (the ``looks`` seam) names only filters in :data:`LOOK_FILTERS`,</span>
+<span class="sd">      is ONE lexically-closed linear filter chain, names no container input, and is</span>
+<span class="sd">      not on a gap — see :func:`_validate_look`, which is the trust boundary for a</span>
+<span class="sd">      caller-supplied filter string;</span>
 <span class="sd">    - a :class:`Transition` is on an entry that HAS a predecessor, names a known curve,</span>
 <span class="sd">      is at least :data:`MIN_TRANSITION_S` long, fits in song time counting BOTH</span>
 <span class="sd">      transitions an entry can carry, and fits in each side's aligned coverage — see</span>
@@ -583,6 +636,8 @@
             <span class="n">_validate_transition</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">prev</span><span class="p">,</span> <span class="n">by_id</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">crop</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">e</span><span class="o">.</span><span class="n">crop_end</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">_validate_crop</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">look</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">_validate_look</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
         <span class="n">prev_end</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">song_end</span>
         <span class="n">prev</span> <span class="o">=</span> <span class="n">e</span>
     <span class="k">return</span> <span class="n">entries</span></div>
@@ -637,7 +692,350 @@
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">"EDL entry </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">: crop_end must be the same SIZE as crop "</span>
             <span class="sa">f</span><span class="s2">"(</span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">crop</span><span class="o">.</span><span class="n">w</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">x</span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">crop</span><span class="o">.</span><span class="n">h</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">, got </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">crop_end</span><span class="o">.</span><span class="n">w</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">x</span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">crop_end</span><span class="o">.</span><span class="n">h</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">). "</span>
-            <span class="s2">"crop_end pans the window; it does not resize it."</span>
+            <span class="s2">"crop_end pans the window; it does not resize it. A window that "</span>
+            <span class="s2">"GROWS is a punch-in: express it as a `look` (muvid.footage.look."</span>
+            <span class="s2">"punch_in), which compiles to `zoompan` — the one filter that can."</span>
+        <span class="p">)</span>
+
+
+<span class="c1">#: Characters a look fragment may not carry as SYNTAX. Each turns the fragment</span>
+<span class="c1">#: from a filter *chain* into a filter *graph*, and the assembler splices it into</span>
+<span class="c1">#: a larger chain with commas — so ``a,b;c,d`` spliced into ``X,&lt;frag&gt;,Y`` becomes</span>
+<span class="c1">#: a different graph than either side wrote. ``[`` and ``]`` are how a graph names</span>
+<span class="c1">#: a pad, which is also how it would reach a second decoder (``[1:v]``) and take</span>
+<span class="c1">#: the bounded-memory invariant with it. ``looks`` escapes all three with a single</span>
+<span class="c1">#: backslash (verified against ``looks.escape_filter_value``), so an escaped one</span>
+<span class="c1">#: inside a path stays legal and only a bare one is refused.</span>
+<span class="n">_LOOK_FORBIDDEN</span> <span class="o">=</span> <span class="s2">"[];"</span>
+
+<span class="c1">#: The filters a ``look`` may name. **An allowlist, because a look is executable</span>
+<span class="c1">#: ffmpeg arriving from a remote caller.**</span>
+<span class="c1">#:</span>
+<span class="c1">#: ``assemble_music_video`` is a live MCP tool on the per-caller reelee AV</span>
+<span class="c1">#: connector and its ``edl`` argument is free-form dicts, so this string is</span>
+<span class="c1">#: attacker-supplied input to a process that can write the host's filesystem.</span>
+<span class="c1">#: Measured, on this branch before the allowlist existed: a look of</span>
+<span class="c1">#: ``metadata=mode=print:file=&lt;any path the renderer can write&gt;`` passed the gate,</span>
+<span class="c1">#: rendered normally, returned a success payload, and truncated the named file to</span>
+<span class="c1">#: zero bytes. ``deshake=filename=`` is a second, structurally different write</span>
+<span class="c1">#: primitive; ``movie=``/``amovie=`` open an unaccounted container; ``sendcmd``,</span>
+<span class="c1">#: ``signature``, ``ssim`` and ``psnr`` each name a file of their own.</span>
+<span class="c1">#:</span>
+<span class="c1">#: A blocklist cannot close that — there are ~481 filters and the dangerous ones</span>
+<span class="c1">#: have nothing lexical in common. So the rule is the one this module already uses</span>
+<span class="c1">#: for :data:`TRANSITION_CURVES` and that ``an``'s camera table uses for moves:</span>
+<span class="c1">#: **a curated vocabulary we own, refused at the gate rather than discovered as an</span>
+<span class="c1">#: ffmpeg side effect three stages later.**</span>
+<span class="c1">#:</span>
+<span class="c1">#: Two groups, and the split is the maintenance rule:</span>
+<span class="c1">#:</span>
+<span class="c1">#: - **Compiled** — every filter the two compilers on this seam can emit:</span>
+<span class="c1">#:   :mod:`muvid.footage.look` (``zoompan``/``crop``/``scale``/``setpts``, via</span>
+<span class="c1">#:   ``looks.compile_motion``) and ``looks``' registered ffmpeg implementations</span>
+<span class="c1">#:   (their declared ``ImplRef.requires_filters``). This set is *pinned against</span>
+<span class="c1">#:   ``looks`` by a test*, deliberately rather than derived from it at import</span>
+<span class="c1">#:   time: deriving would let a new ``looks`` effect widen muvid's remote-input</span>
+<span class="c1">#:   surface silently, where the test makes it a decision someone records here.</span>
+<span class="c1">#: - **Hand-authored** — ``hue``, the one filter this repo's own docstrings reach</span>
+<span class="c1">#:   for and nothing compiles. It is LGPL, takes no path, and is what a person</span>
+<span class="c1">#:   writes when they want "desaturate that shot".</span>
+<span class="c1">#:</span>
+<span class="c1">#: **What earns a place here**, and it is checked by</span>
+<span class="c1">#: ``tests/test_edl_look.py::test_no_allowlisted_filter_can_name_a_file``: the</span>
+<span class="c1">#: filter must declare no filesystem-path option at all. ``lut3d``'s ``file`` is</span>
+<span class="c1">#: the single recorded exception (:data:`_LOOK_FILE_OPTIONS`) — it *loads* a</span>
+<span class="c1">#: ``.cube``, which is how ``looks``' flagship grade reaches its LUT, and it reads</span>
+<span class="c1">#: rather than writes. Nothing else may name a path, so adding a filter here is a</span>
+<span class="c1">#: two-place edit and the second place is a measurement of the real binary.</span>
+<span class="c1">#:</span>
+<span class="c1">#: **What this does NOT bound**, stated because a partial claim is worse than</span>
+<span class="c1">#: none. An allowlisted filter can still be given absurd PARAMETERS, and the two</span>
+<span class="c1">#: that matter are measured rather than guessed at:</span>
+<span class="c1">#:</span>
+<span class="c1">#: - ``scale`` sets the frame size, and the frame size is memory. On ffmpeg 9.0.1,</span>
+<span class="c1">#:   ``scale=320:180`` peaks at 21.7 MB RSS and ``scale=320:180,scale=8000:8000``</span>
+<span class="c1">#:   at 324.7 MB — 15x, from one caller-supplied number, on a box that has already</span>
+<span class="c1">#:   been OOM-killed once (muvid#21/#24). Not closed here because bounding it means</span>
+<span class="c1">#:   evaluating ffmpeg expressions (``iw*2`` is a legal width), which is a bigger</span>
+<span class="c1">#:   piece of work than this gate; it wants its own issue.</span>
+<span class="c1">#: - ``lut3d=file=`` will *attempt* to open any path the renderer can read. It</span>
+<span class="c1">#:   cannot write, and a non-``.cube`` file fails to parse.</span>
+<span class="c1">#:</span>
+<span class="c1">#: Both are failures inside the caller's OWN render. Writing to someone else's</span>
+<span class="c1">#: disk is the class this closes.</span>
+<span class="n">LOOK_FILTERS</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span>
+    <span class="p">{</span>
+        <span class="c1"># -- compiled: muvid.footage.look, via looks.compile_motion --</span>
+        <span class="s2">"zoompan"</span><span class="p">,</span>
+        <span class="s2">"crop"</span><span class="p">,</span>
+        <span class="s2">"scale"</span><span class="p">,</span>
+        <span class="s2">"setpts"</span><span class="p">,</span>
+        <span class="c1"># -- compiled: looks' registered ffmpeg implementations --</span>
+        <span class="s2">"bilateral"</span><span class="p">,</span>
+        <span class="s2">"boxblur"</span><span class="p">,</span>
+        <span class="s2">"colorchannelmixer"</span><span class="p">,</span>
+        <span class="s2">"colorlevels"</span><span class="p">,</span>
+        <span class="s2">"eq"</span><span class="p">,</span>
+        <span class="s2">"gblur"</span><span class="p">,</span>
+        <span class="s2">"lut3d"</span><span class="p">,</span>
+        <span class="s2">"lutrgb"</span><span class="p">,</span>
+        <span class="s2">"lutyuv"</span><span class="p">,</span>
+        <span class="s2">"unsharp"</span><span class="p">,</span>
+        <span class="c1"># `null` and `pad` are emitted by ``looks``' geometry effects and declared</span>
+        <span class="c1"># by NONE of them: ``fill``/``fit``/``stretch`` each declare</span>
+        <span class="c1"># ``requires_filters=("scale",)`` and then compile to `null` when the</span>
+        <span class="c1"># target already IS the clip size, and to `scale,pad=…` when it</span>
+        <span class="c1"># letterboxes. Found by COMPILING every effect, not by reading the</span>
+        <span class="c1"># registry — which is why the drift test is a floor on this set and not a</span>
+        <span class="c1"># definition of it, and why looks' declaration is worth fixing upstream.</span>
+        <span class="s2">"null"</span><span class="p">,</span>
+        <span class="s2">"pad"</span><span class="p">,</span>
+        <span class="c1"># -- hand-authored --</span>
+        <span class="s2">"hue"</span><span class="p">,</span>
+    <span class="p">}</span>
+<span class="p">)</span>
+
+<span class="c1">#: The only ``(filter, option)`` pair on :data:`LOOK_FILTERS` allowed to name a</span>
+<span class="c1">#: path, with the reason it is allowed: ``lut3d`` LOADS a ``.cube``, which is the</span>
+<span class="c1">#: whole of ``looks``' ``lut3d``/``gradient_map`` effect, and loading is a read.</span>
+<span class="n">_LOOK_FILE_OPTIONS</span> <span class="o">=</span> <span class="p">{(</span><span class="s2">"lut3d"</span><span class="p">,</span> <span class="s2">"file"</span><span class="p">)}</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">_LookSyntaxError</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A look fragment that is not lexically CLOSED. Carries the open character."""</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">char</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">char</span> <span class="o">=</span> <span class="n">char</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">char</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_significant</span><span class="p">(</span><span class="n">s</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""Yield ``(index, char)`` for each character ffmpeg reads as SYNTAX.</span>
+
+<span class="sd">    Models both of ffmpeg's escape mechanisms, because modelling only one is a</span>
+<span class="sd">    silent hole: ``av_get_token`` treats ``\`` as escaping the next character</span>
+<span class="sd">    **and** copies everything between single quotes literally — inside quotes a</span>
+<span class="sd">    backslash is an ordinary character and a terminator is swallowed. So</span>
+<span class="sd">    ``crop=x='min(a,b)'`` is ONE filter, not two, and a check that walks only</span>
+<span class="sd">    backslashes splits it in the middle.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        _LookSyntaxError: if the fragment ends inside a quote, or on a dangling</span>
+<span class="sd">            backslash. Neither is a character to refuse — it is the fragment</span>
+<span class="sd">            failing to be CLOSED, which is exactly what "one chain spliceable by</span>
+<span class="sd">            comma" requires: an open quote swallows the ``,format=yuv420p[a];[1:``</span>
+<span class="sd">            the transition site appends, and a trailing backslash escapes the</span>
+<span class="sd">            splice's own comma. Both render fine alone and restructure the graph</span>
+<span class="sd">            beside a transition (measured: ffmpeg exits 234 with</span>
+<span class="sd">            ``No option name near 'v]scale=...'``).</span>
+
+<span class="sd">    Yields every character whose syntactic role ffmpeg will honour — i.e. all of</span>
+<span class="sd">    them except the ones an escape or a quoted run hides:</span>
+
+<span class="sd">    &gt;&gt;&gt; "".join(c for _, c in _significant("scale=2,hue=s=0"))</span>
+<span class="sd">    'scale=2,hue=s=0'</span>
+<span class="sd">    &gt;&gt;&gt; "".join(c for _, c in _significant(r"lut3d=file=a\[b\].cube"))</span>
+<span class="sd">    'lut3d=file=ab.cube'</span>
+<span class="sd">    &gt;&gt;&gt; "".join(c for _, c in _significant("crop=x='min(a,b)'"))</span>
+<span class="sd">    'crop=x='</span>
+<span class="sd">    """</span>
+    <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">while</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">):</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">c</span> <span class="o">==</span> <span class="s2">"</span><span class="se">\\</span><span class="s2">"</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">&gt;=</span> <span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="n">_LookSyntaxError</span><span class="p">(</span><span class="s2">"</span><span class="se">\\</span><span class="s2">"</span><span class="p">)</span>
+            <span class="n">i</span> <span class="o">+=</span> <span class="mi">2</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="n">c</span> <span class="o">==</span> <span class="s2">"'"</span><span class="p">:</span>
+            <span class="n">j</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">"'"</span><span class="p">,</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">_LookSyntaxError</span><span class="p">(</span><span class="s2">"'"</span><span class="p">)</span>
+            <span class="n">i</span> <span class="o">=</span> <span class="n">j</span> <span class="o">+</span> <span class="mi">1</span>
+            <span class="k">continue</span>
+        <span class="k">yield</span> <span class="n">i</span><span class="p">,</span> <span class="n">c</span>
+        <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_unquote</span><span class="p">(</span><span class="n">s</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""``s`` as ffmpeg's tokenizer resolves it — escapes applied, quotes removed.</span>
+
+<span class="sd">    Needed for the *name* half of :func:`_look_filter_names`, and the need is not</span>
+<span class="sd">    cosmetic: ffmpeg resolves ``'metadata'`` and ``\m\e\t\a\d\a\t\a`` to the</span>
+<span class="sd">    filter ``metadata`` (both measured — each truncated a canary file), so an</span>
+<span class="sd">    allowlist that compared the raw text would be bypassed by either spelling.</span>
+
+<span class="sd">    &gt;&gt;&gt; _unquote(r"h\ue")</span>
+<span class="sd">    'hue'</span>
+<span class="sd">    &gt;&gt;&gt; _unquote("'hue'")</span>
+<span class="sd">    'hue'</span>
+<span class="sd">    """</span>
+    <span class="n">out</span><span class="p">,</span> <span class="n">i</span> <span class="o">=</span> <span class="p">[],</span> <span class="mi">0</span>
+    <span class="k">while</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">):</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">c</span> <span class="o">==</span> <span class="s2">"</span><span class="se">\\</span><span class="s2">"</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">&gt;=</span> <span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="n">_LookSyntaxError</span><span class="p">(</span><span class="s2">"</span><span class="se">\\</span><span class="s2">"</span><span class="p">)</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span>
+            <span class="n">i</span> <span class="o">+=</span> <span class="mi">2</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="n">c</span> <span class="o">==</span> <span class="s2">"'"</span><span class="p">:</span>
+            <span class="n">j</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">"'"</span><span class="p">,</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">_LookSyntaxError</span><span class="p">(</span><span class="s2">"'"</span><span class="p">)</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span> <span class="p">:</span> <span class="n">j</span><span class="p">])</span>
+            <span class="n">i</span> <span class="o">=</span> <span class="n">j</span> <span class="o">+</span> <span class="mi">1</span>
+            <span class="k">continue</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+        <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="k">return</span> <span class="s2">""</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_first_unescaped</span><span class="p">(</span><span class="n">s</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">chars</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"str | None"</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""The first character of ``chars`` in ``s`` that ffmpeg would read as syntax.</span>
+
+<span class="sd">    &gt;&gt;&gt; _first_unescaped("scale=2,hue=s=0", "[];") is None</span>
+<span class="sd">    True</span>
+<span class="sd">    &gt;&gt;&gt; _first_unescaped("[0:v]scale=2", "[];")</span>
+<span class="sd">    '['</span>
+<span class="sd">    &gt;&gt;&gt; _first_unescaped(r"lut3d=file=a\[b\].cube", "[];") is None</span>
+<span class="sd">    True</span>
+<span class="sd">    &gt;&gt;&gt; _first_unescaped("lut3d=file='a[b].cube'", "[];") is None</span>
+<span class="sd">    True</span>
+<span class="sd">    """</span>
+    <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">_significant</span><span class="p">(</span><span class="n">s</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">chars</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">c</span>
+    <span class="k">return</span> <span class="kc">None</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_look_filter_names</span><span class="p">(</span><span class="n">look</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"list[str]"</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""The filter each link of the chain names, as ffmpeg will resolve it.</span>
+
+<span class="sd">    Splits on the commas ffmpeg reads as separators (not on the ones inside a</span>
+<span class="sd">    quoted expression), then takes each link's name token — everything before its</span>
+<span class="sd">    first significant ``=``, minus a ``@instance`` label — and resolves it through</span>
+<span class="sd">    :func:`_unquote`. Whitespace around a name is stripped because ffmpeg strips</span>
+<span class="sd">    it too (``hue = s=0`` is a working chain, measured).</span>
+
+<span class="sd">    &gt;&gt;&gt; _look_filter_names("scale=2,hue=s=0")</span>
+<span class="sd">    ['scale', 'hue']</span>
+<span class="sd">    &gt;&gt;&gt; _look_filter_names("crop=x='min(a,b)':y=0,zoompan=d=1")</span>
+<span class="sd">    ['crop', 'zoompan']</span>
+<span class="sd">    &gt;&gt;&gt; _look_filter_names(r"\m\e\t\a\d\a\t\a=mode=print")</span>
+<span class="sd">    ['metadata']</span>
+<span class="sd">    &gt;&gt;&gt; _look_filter_names("hue@grade=s=0")</span>
+<span class="sd">    ['hue']</span>
+<span class="sd">    """</span>
+    <span class="n">breaks</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">_significant</span><span class="p">(</span><span class="n">look</span><span class="p">)</span> <span class="k">if</span> <span class="n">c</span> <span class="o">==</span> <span class="s2">","</span><span class="p">]</span>
+    <span class="n">spans</span><span class="p">,</span> <span class="n">start</span> <span class="o">=</span> <span class="p">[],</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">breaks</span> <span class="o">+</span> <span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">look</span><span class="p">)]:</span>
+        <span class="n">spans</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">look</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">b</span><span class="p">])</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="n">b</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="n">names</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">link</span> <span class="ow">in</span> <span class="n">spans</span><span class="p">:</span>
+        <span class="n">eq</span> <span class="o">=</span> <span class="nb">next</span><span class="p">((</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">_significant</span><span class="p">(</span><span class="n">link</span><span class="p">)</span> <span class="k">if</span> <span class="n">c</span> <span class="o">==</span> <span class="s2">"="</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">link</span><span class="p">))</span>
+        <span class="n">raw</span> <span class="o">=</span> <span class="n">link</span><span class="p">[:</span><span class="n">eq</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="n">at</span> <span class="o">=</span> <span class="nb">next</span><span class="p">((</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">_significant</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span> <span class="k">if</span> <span class="n">c</span> <span class="o">==</span> <span class="s2">"@"</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">raw</span><span class="p">))</span>
+        <span class="n">names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_unquote</span><span class="p">(</span><span class="n">raw</span><span class="p">[:</span><span class="n">at</span><span class="p">])</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+    <span class="k">return</span> <span class="n">names</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_validate_look</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""What a look fragment has to satisfy. Raises ``ValueError``.</span>
+
+<span class="sd">    Split out only for length; it is part of :func:`validate_edl`, which remains</span>
+<span class="sd">    the ONE gate. Nothing else may check these.</span>
+
+<span class="sd">    A look is **executable ffmpeg supplied by a caller**, and</span>
+<span class="sd">    ``assemble_music_video`` is a live per-caller MCP tool, so this is the</span>
+<span class="sd">    trust boundary for the whole seam. Four rules:</span>
+
+<span class="sd">    - **Only filters muvid names.** :data:`LOOK_FILTERS` is an allowlist, and the</span>
+<span class="sd">      constant carries why a blocklist cannot work here.</span>
+<span class="sd">    - **One linear chain.** The fragment is concatenated with commas into a chain</span>
+<span class="sd">      the assembler already builds, so a graph separator or a pad label makes the</span>
+<span class="sd">      result mean something neither side wrote. ``[1:v]`` is also how a filter</span>
+<span class="sd">      reaches a second ``-i``, and a constant number of decoders per invocation is</span>
+<span class="sd">      the whole of the bounded-memory guarantee muvid#21/#24 bought.</span>
+<span class="sd">    - **Lexically closed.** An unterminated quote or a trailing backslash is not a</span>
+<span class="sd">      forbidden character — it is a fragment that means one thing alone and</span>
+<span class="sd">      another thing spliced, which is the same defect one level down.</span>
+<span class="sd">    - **Not on a gap.** A gap has no footage; the assembler builds its black fill</span>
+<span class="sd">      from a synthetic source with its own chain, so a look there would need a</span>
+<span class="sd">      third splice site and would be styling nothing.</span>
+
+<span class="sd">    A look wanting a second SOURCE has nowhere to go, and saying so is the point:</span>
+<span class="sd">    ``movie=`` — which an earlier version of this message advised — is refused,</span>
+<span class="sd">    and would not have worked if it were not. It is a zero-input source filter, so</span>
+<span class="sd">    at the solo site it leaves the preceding chain unconsumed and ffmpeg refuses</span>
+<span class="sd">    the whole simple filtergraph (*"had 1 input(s) and 2 output(s)"*, measured),</span>
+<span class="sd">    and at the transition site it opens a second container from inside the</span>
+<span class="sd">    fragment — the accounting muvid#21/#24 exists to keep. Compositing needs a</span>
+<span class="sd">    second splice site the assembler does not have.</span>
+<span class="sd">    """</span>
+    <span class="n">look</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">look</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">look</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"EDL entry </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2"> has an empty look. Omit the field (or pass null) to "</span>
+            <span class="s2">"render without one — an empty string is a request that cannot be "</span>
+            <span class="s2">"honoured, and honouring nothing quietly is how a direction gets lost."</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="n">look</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="o">!=</span> <span class="n">look</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"EDL entry </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">: look has leading or trailing whitespace (</span><span class="si">{</span><span class="n">look</span><span class="si">!r}</span><span class="s2">). "</span>
+            <span class="s2">"It is spliced verbatim into a filter chain, so trimming it here would "</span>
+            <span class="s2">"be this module quietly editing an ffmpeg expression."</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="n">look</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">","</span><span class="p">)</span> <span class="ow">or</span> <span class="n">look</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">","</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"EDL entry </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">: look starts or ends with a comma (</span><span class="si">{</span><span class="n">look</span><span class="si">!r}</span><span class="s2">). The "</span>
+            <span class="s2">"assembler supplies the separators; a stray one emits an empty filter."</span>
+        <span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">bad</span> <span class="o">=</span> <span class="n">_first_unescaped</span><span class="p">(</span><span class="n">look</span><span class="p">,</span> <span class="n">_LOOK_FORBIDDEN</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">_LookSyntaxError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"EDL entry </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">: look is not lexically closed — it ends "</span>
+            <span class="o">+</span> <span class="p">(</span>
+                <span class="s2">"inside a single-quoted run"</span>
+                <span class="k">if</span> <span class="n">exc</span><span class="o">.</span><span class="n">char</span> <span class="o">==</span> <span class="s2">"'"</span>
+                <span class="k">else</span> <span class="s2">"on a dangling backslash"</span>
+            <span class="p">)</span>
+            <span class="o">+</span> <span class="sa">f</span><span class="s2">" (</span><span class="si">{</span><span class="n">look</span><span class="si">!r}</span><span class="s2">). ffmpeg's tokenizer would swallow whatever the "</span>
+            <span class="s2">"assembler splices after it, so the fragment means one thing on a "</span>
+            <span class="s2">"solo cut and something else on a blended boundary, where it eats "</span>
+            <span class="s2">"the `,format=yuv420p[a];[1:` that follows and builds a different "</span>
+            <span class="s2">"graph. Close it."</span>
+        <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="kc">None</span>
+    <span class="k">if</span> <span class="n">bad</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"EDL entry </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">: look contains an unescaped </span><span class="si">{</span><span class="n">bad</span><span class="si">!r}</span><span class="s2"> (</span><span class="si">{</span><span class="n">look</span><span class="si">!r}</span><span class="s2">). A look "</span>
+            <span class="s2">"must be ONE linear filter chain naming no container input: it is "</span>
+            <span class="s2">"spliced into the per-cut chain, where a pad label or a graph separator "</span>
+            <span class="s2">"silently builds a different graph, and a second input would add a "</span>
+            <span class="s2">"decoder per cut — the shape muvid#21/#24 was OOM-killed for. Escape a "</span>
+            <span class="sa">f</span><span class="s2">"literal </span><span class="si">{</span><span class="n">bad</span><span class="si">!r}</span><span class="s2"> inside a path with a backslash "</span>
+            <span class="s2">"(looks.escape_filter_value does)."</span>
+        <span class="p">)</span>
+    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">_look_filter_names</span><span class="p">(</span><span class="n">look</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">LOOK_FILTERS</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"EDL entry </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">: look names the filter </span><span class="si">{</span><span class="n">name</span><span class="si">!r}</span><span class="s2">, which muvid does not "</span>
+            <span class="sa">f</span><span class="s2">"offer (</span><span class="si">{</span><span class="n">look</span><span class="si">!r}</span><span class="s2">). A look is executable ffmpeg reaching a renderer "</span>
+            <span class="s2">"that can write this machine's disk, and it arrives over a per-caller "</span>
+            <span class="s2">"tool surface, so the filters are an ALLOWLIST rather than a set of "</span>
+            <span class="s2">"refusals: muvid offers "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">LOOK_FILTERS</span><span class="p">)</span><span class="si">}</span><span class="s2">. Compile the look with muvid.footage.look "</span>
+            <span class="s2">"(punch_in / motion / stylize) instead of hand-writing one, and if a "</span>
+            <span class="s2">"filter genuinely belongs on this seam add it to "</span>
+            <span class="s2">"muvid.footage.edl.LOOK_FILTERS deliberately — it must name no file."</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">is_gap</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"EDL entry </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2"> is a gap but carries a look. A gap has no footage to "</span>
+            <span class="s2">"style — the assembler fills it synthetically from its own source."</span>
         <span class="p">)</span>
 
 
@@ -753,6 +1151,7 @@
                     <span class="n">transition</span><span class="o">=</span><span class="n">e</span><span class="o">.</span><span class="n">transition</span><span class="p">,</span>
                     <span class="n">crop</span><span class="o">=</span><span class="n">e</span><span class="o">.</span><span class="n">crop</span><span class="p">,</span>
                     <span class="n">crop_end</span><span class="o">=</span><span class="n">e</span><span class="o">.</span><span class="n">crop_end</span><span class="p">,</span>
+                    <span class="n">look</span><span class="o">=</span><span class="n">e</span><span class="o">.</span><span class="n">look</span><span class="p">,</span>
                 <span class="p">)</span>
             <span class="p">)</span>
             <span class="k">continue</span>
@@ -769,6 +1168,7 @@
                 <span class="n">transition</span><span class="o">=</span><span class="n">e</span><span class="o">.</span><span class="n">transition</span><span class="p">,</span>
                 <span class="n">crop</span><span class="o">=</span><span class="n">e</span><span class="o">.</span><span class="n">crop</span><span class="p">,</span>
                 <span class="n">crop_end</span><span class="o">=</span><span class="n">e</span><span class="o">.</span><span class="n">crop_end</span><span class="p">,</span>
+                <span class="n">look</span><span class="o">=</span><span class="n">e</span><span class="o">.</span><span class="n">look</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="p">)</span>
     <span class="k">return</span> <span class="n">cuts</span></div>

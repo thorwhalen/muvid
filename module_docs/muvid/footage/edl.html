@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.footage.edl &mdash; muvid 0.0.41 documentation</title>
+  <title>muvid.footage.edl &mdash; muvid 0.0.42 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -15,7 +15,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=20c5f126"></script>
+      <script src="../../../_static/documentation_options.js?v=173d7b4c"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -66,6 +66,7 @@
 <li class="toctree-l1 current"><a class="current reference internal" href="#">muvid.footage.edl</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.footage.edl.AssemblyCut"><code class="docutils literal notranslate"><span class="pre">AssemblyCut</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#muvid.footage.edl.AssemblyCut.crop"><code class="docutils literal notranslate"><span class="pre">AssemblyCut.crop</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#muvid.footage.edl.AssemblyCut.look"><code class="docutils literal notranslate"><span class="pre">AssemblyCut.look</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#muvid.footage.edl.AssemblyCut.transition"><code class="docutils literal notranslate"><span class="pre">AssemblyCut.transition</span></code></a></li>
 </ul>
 </li>
@@ -73,6 +74,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#muvid.footage.edl.EdlEntry"><code class="docutils literal notranslate"><span class="pre">EdlEntry</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#muvid.footage.edl.EdlEntry.crop"><code class="docutils literal notranslate"><span class="pre">EdlEntry.crop</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#muvid.footage.edl.EdlEntry.crop_end"><code class="docutils literal notranslate"><span class="pre">EdlEntry.crop_end</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#muvid.footage.edl.EdlEntry.look"><code class="docutils literal notranslate"><span class="pre">EdlEntry.look</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#muvid.footage.edl.EdlEntry.transition"><code class="docutils literal notranslate"><span class="pre">EdlEntry.transition</span></code></a></li>
 </ul>
 </li>
@@ -80,6 +82,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#muvid.footage.edl.FootageAlignment.overlaps"><code class="docutils literal notranslate"><span class="pre">FootageAlignment.overlaps</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.footage.edl.LOOK_FILTERS"><code class="docutils literal notranslate"><span class="pre">LOOK_FILTERS</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.footage.edl.MAX_EDL_ENTRIES"><code class="docutils literal notranslate"><span class="pre">MAX_EDL_ENTRIES</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.footage.edl.MIN_TRANSITION_S"><code class="docutils literal notranslate"><span class="pre">MIN_TRANSITION_S</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.footage.edl.TRANSITION_CURVES"><code class="docutils literal notranslate"><span class="pre">TRANSITION_CURVES</span></code></a></li>
@@ -91,6 +94,7 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="lacing_bridge.html">muvid.footage.lacing_bridge</a></li>
+<li class="toctree-l1"><a class="reference internal" href="look.html">muvid.footage.look</a></li>
 <li class="toctree-l1"><a class="reference internal" href="scoring.html">muvid.footage.scoring</a></li>
 <li class="toctree-l1"><a class="reference internal" href="scoring/_frame_metrics.html">muvid.footage.scoring._frame_metrics</a></li>
 <li class="toctree-l1"><a class="reference internal" href="scoring/frames.html">muvid.footage.scoring.frames</a></li>
@@ -176,7 +180,7 @@ instead of a hard cut (muvid#34). It is an annotation on a boundary that already
 implicitly, so spans stay one-per-song-span and nothing about reading an EDL changes.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="muvid.footage.edl.AssemblyCut">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">muvid.footage.edl.</span></span><span class="sig-name descname"><span class="pre">AssemblyCut</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">song_start</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">song_end</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clip_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clip_in</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clip_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transition</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#muvid.footage.edl.Transition" title="muvid.footage.edl.Transition"><span class="pre">Transition</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crop</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#muvid.footage.edl.CropWindow" title="muvid.footage.edl.CropWindow"><span class="pre">CropWindow</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crop_end</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#muvid.footage.edl.CropWindow" title="muvid.footage.edl.CropWindow"><span class="pre">CropWindow</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/muvid/footage/edl.html#AssemblyCut"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.edl.AssemblyCut" title="Link to this definition"></a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">muvid.footage.edl.</span></span><span class="sig-name descname"><span class="pre">AssemblyCut</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">song_start</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">song_end</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clip_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clip_in</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clip_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transition</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#muvid.footage.edl.Transition" title="muvid.footage.edl.Transition"><span class="pre">Transition</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crop</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#muvid.footage.edl.CropWindow" title="muvid.footage.edl.CropWindow"><span class="pre">CropWindow</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crop_end</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#muvid.footage.edl.CropWindow" title="muvid.footage.edl.CropWindow"><span class="pre">CropWindow</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">look</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/muvid/footage/edl.html#AssemblyCut"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.edl.AssemblyCut" title="Link to this definition"></a></dt>
 <dd><p>A validated cut ready to render: the EDL span + the derived in-point + clip path.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="muvid.footage.edl.AssemblyCut.crop">
@@ -184,6 +188,15 @@ implicitly, so spans stay one-per-song-span and nothing about reading an EDL cha
 <dd><p>Carried through from the EDL entry, unchanged — the assembler compiles these
 to a <code class="docutils literal notranslate"><span class="pre">crop</span></code> filter, because normalised fractions only become pixels once
 you know the source dimensions, which only ffmpeg knows.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="muvid.footage.edl.AssemblyCut.look">
+<span class="sig-name descname"><span class="pre">look</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#muvid.footage.edl.AssemblyCut.look" title="Link to this definition"></a></dt>
+<dd><p>Carried through from the EDL entry, unchanged and already validated — the
+<code class="docutils literal notranslate"><span class="pre">looks</span></code> seam. The assembler splices it into the ONE filter template both
+of its render sites share, so a look lands identically on a solo cut and on
+each side of a blended boundary. See <a class="reference internal" href="#muvid.footage.edl.EdlEntry.look" title="muvid.footage.edl.EdlEntry.look"><code class="xref py py-attr docutils literal notranslate"><span class="pre">EdlEntry.look</span></code></a>.</p>
 </dd></dl>
 
 <dl class="py attribute">
@@ -216,7 +229,7 @@ feet” is a decision per cut, not a default.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="muvid.footage.edl.EdlEntry">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">muvid.footage.edl.</span></span><span class="sig-name descname"><span class="pre">EdlEntry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">song_start</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">song_end</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clip_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transition</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#muvid.footage.edl.Transition" title="muvid.footage.edl.Transition"><span class="pre">Transition</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crop</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#muvid.footage.edl.CropWindow" title="muvid.footage.edl.CropWindow"><span class="pre">CropWindow</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crop_end</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#muvid.footage.edl.CropWindow" title="muvid.footage.edl.CropWindow"><span class="pre">CropWindow</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/muvid/footage/edl.html#EdlEntry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.edl.EdlEntry" title="Link to this definition"></a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">muvid.footage.edl.</span></span><span class="sig-name descname"><span class="pre">EdlEntry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">song_start</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">song_end</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clip_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transition</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#muvid.footage.edl.Transition" title="muvid.footage.edl.Transition"><span class="pre">Transition</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crop</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#muvid.footage.edl.CropWindow" title="muvid.footage.edl.CropWindow"><span class="pre">CropWindow</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crop_end</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#muvid.footage.edl.CropWindow" title="muvid.footage.edl.CropWindow"><span class="pre">CropWindow</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">look</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/muvid/footage/edl.html#EdlEntry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.edl.EdlEntry" title="Link to this definition"></a></dt>
 <dd><p>One cut: show <code class="docutils literal notranslate"><span class="pre">clip_id</span></code> over the song span <code class="docutils literal notranslate"><span class="pre">[song_start,</span> <span class="pre">song_end]</span></code>.</p>
 <p><code class="docutils literal notranslate"><span class="pre">clip_id</span> <span class="pre">==</span> <span class="pre">&quot;&quot;</span></code> is a <strong>gap entry</strong> — no footage covers this span, and the renderer
 fills it (black in v1). Gaps are explicit entries rather than absences so that an EDL
@@ -237,7 +250,32 @@ field existed means — additive in both directions, like <code class="docutils 
 across the cut — a pan. Same size as <code class="docutils literal notranslate"><span class="pre">crop</span></code> (see <a class="reference internal" href="#muvid.footage.edl.validate_edl" title="muvid.footage.edl.validate_edl"><code class="xref py py-func docutils literal notranslate"><span class="pre">validate_edl()</span></code></a>): a
 window that changes size mid-cut resizes the filter’s output every frame,
 which is a different and much less robust thing than a pan. A push-in is
-expressed as a <em>different</em> fixed window on the <em>next</em> cut.</p>
+expressed as a <em>different</em> fixed window on the <em>next</em> cut, or — since the
+<code class="docutils literal notranslate"><span class="pre">looks</span></code> seam below — as a <code class="docutils literal notranslate"><span class="pre">look</span></code> carrying a <code class="docutils literal notranslate"><span class="pre">zoompan</span></code> ramp, which is
+the one filter that CAN resize its window mid-cut (muvid#66).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="muvid.footage.edl.EdlEntry.look">
+<span class="sig-name descname"><span class="pre">look</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#muvid.footage.edl.EdlEntry.look" title="Link to this definition"></a></dt>
+<dd><p><strong>The ``looks`` seam.</strong> A compiled ffmpeg filter-chain fragment applied to
+this cut’s picture once it has been normalised onto the canvas. <code class="docutils literal notranslate"><span class="pre">None</span></code>
+(the default) emits nothing at all, so an EDL written before this field
+existed renders byte-identically — additive in both directions, like
+<code class="docutils literal notranslate"><span class="pre">transition</span></code> and <code class="docutils literal notranslate"><span class="pre">crop</span></code>.</p>
+<p>muvid does not author this string: <a class="reference internal" href="look.html#module-muvid.footage.look" title="muvid.footage.look"><code class="xref py py-mod docutils literal notranslate"><span class="pre">muvid.footage.look</span></code></a> compiles it
+from a <code class="xref py py-class docutils literal notranslate"><span class="pre">looks.Look</span></code> or from a punch-in request. That split is the
+whole point of the seam — <code class="docutils literal notranslate"><span class="pre">looks</span></code> decides what a pixel becomes, muvid
+keeps <code class="docutils literal notranslate"><span class="pre">-c:v</span></code> and the process shape.</p>
+<p><strong>A caller may still hand one over, so this field is a trust boundary.</strong>
+<code class="docutils literal notranslate"><span class="pre">assemble_music_video</span></code> is a live per-caller MCP tool taking free-form
+<code class="docutils literal notranslate"><span class="pre">edl</span></code> dicts, and this string becomes ffmpeg the renderer runs. So
+<code class="xref py py-func docutils literal notranslate"><span class="pre">_validate_look()</span></code> gates it against the ALLOWLIST
+<a class="reference internal" href="#muvid.footage.edl.LOOK_FILTERS" title="muvid.footage.edl.LOOK_FILTERS"><code class="xref py py-data docutils literal notranslate"><span class="pre">LOOK_FILTERS</span></code></a> — not against a list of refusals — and also refuses a
+fragment that names a container input, that is more than ONE linear chain,
+or that is not lexically closed. The first two of those would break the
+bounded-memory invariant the assembler rests on; the allowlist is what
+keeps a look from writing this machine’s disk.</p>
 </dd></dl>
 
 <dl class="py attribute">
@@ -265,6 +303,62 @@ still recorded — a source must never leave the addressable set as a side effec
 of being measured. Selection filters on this; reporting shows it with a reason.</p>
 </dd></dl>
 
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="muvid.footage.edl.LOOK_FILTERS">
+<span class="sig-prename descclassname"><span class="pre">muvid.footage.edl.</span></span><span class="sig-name descname"><span class="pre">LOOK_FILTERS</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">frozenset({'bilateral',</span> <span class="pre">'boxblur',</span> <span class="pre">'colorchannelmixer',</span> <span class="pre">'colorlevels',</span> <span class="pre">'crop',</span> <span class="pre">'eq',</span> <span class="pre">'gblur',</span> <span class="pre">'hue',</span> <span class="pre">'lut3d',</span> <span class="pre">'lutrgb',</span> <span class="pre">'lutyuv',</span> <span class="pre">'null',</span> <span class="pre">'pad',</span> <span class="pre">'scale',</span> <span class="pre">'setpts',</span> <span class="pre">'unsharp',</span> <span class="pre">'zoompan'})</span></span><a class="headerlink" href="#muvid.footage.edl.LOOK_FILTERS" title="Link to this definition"></a></dt>
+<dd><p>The filters a <code class="docutils literal notranslate"><span class="pre">look</span></code> may name. <strong>An allowlist, because a look is executable
+ffmpeg arriving from a remote caller.</strong></p>
+<p><code class="docutils literal notranslate"><span class="pre">assemble_music_video</span></code> is a live MCP tool on the per-caller reelee AV
+connector and its <code class="docutils literal notranslate"><span class="pre">edl</span></code> argument is free-form dicts, so this string is
+attacker-supplied input to a process that can write the host’s filesystem.
+Measured, on this branch before the allowlist existed: a look of
+<code class="docutils literal notranslate"><span class="pre">metadata=mode=print:file=&lt;any</span> <span class="pre">path</span> <span class="pre">the</span> <span class="pre">renderer</span> <span class="pre">can</span> <span class="pre">write&gt;</span></code> passed the gate,
+rendered normally, returned a success payload, and truncated the named file to
+zero bytes. <code class="docutils literal notranslate"><span class="pre">deshake=filename=</span></code> is a second, structurally different write
+primitive; <code class="docutils literal notranslate"><span class="pre">movie=</span></code>/<code class="docutils literal notranslate"><span class="pre">amovie=</span></code> open an unaccounted container; <code class="docutils literal notranslate"><span class="pre">sendcmd</span></code>,
+<code class="docutils literal notranslate"><span class="pre">signature</span></code>, <code class="docutils literal notranslate"><span class="pre">ssim</span></code> and <code class="docutils literal notranslate"><span class="pre">psnr</span></code> each name a file of their own.</p>
+<p>A blocklist cannot close that — there are ~481 filters and the dangerous ones
+have nothing lexical in common. So the rule is the one this module already uses
+for <a class="reference internal" href="#muvid.footage.edl.TRANSITION_CURVES" title="muvid.footage.edl.TRANSITION_CURVES"><code class="xref py py-data docutils literal notranslate"><span class="pre">TRANSITION_CURVES</span></code></a> and that <code class="docutils literal notranslate"><span class="pre">an</span></code>’s camera table uses for moves:
+<strong>a curated vocabulary we own, refused at the gate rather than discovered as an
+ffmpeg side effect three stages later.</strong></p>
+<p>Two groups, and the split is the maintenance rule:</p>
+<ul class="simple">
+<li><p><strong>Compiled</strong> — every filter the two compilers on this seam can emit:
+<a class="reference internal" href="look.html#module-muvid.footage.look" title="muvid.footage.look"><code class="xref py py-mod docutils literal notranslate"><span class="pre">muvid.footage.look</span></code></a> (<code class="docutils literal notranslate"><span class="pre">zoompan</span></code>/<code class="docutils literal notranslate"><span class="pre">crop</span></code>/<code class="docutils literal notranslate"><span class="pre">scale</span></code>/<code class="docutils literal notranslate"><span class="pre">setpts</span></code>, via
+<code class="docutils literal notranslate"><span class="pre">looks.compile_motion</span></code>) and <code class="docutils literal notranslate"><span class="pre">looks</span></code>’ registered ffmpeg implementations
+(their declared <code class="docutils literal notranslate"><span class="pre">ImplRef.requires_filters</span></code>). This set is <em>pinned against
+``looks`` by a test</em>, deliberately rather than derived from it at import
+time: deriving would let a new <code class="docutils literal notranslate"><span class="pre">looks</span></code> effect widen muvid’s remote-input
+surface silently, where the test makes it a decision someone records here.</p></li>
+<li><p><strong>Hand-authored</strong> — <code class="docutils literal notranslate"><span class="pre">hue</span></code>, the one filter this repo’s own docstrings reach
+for and nothing compiles. It is LGPL, takes no path, and is what a person
+writes when they want “desaturate that shot”.</p></li>
+</ul>
+<p><strong>What earns a place here</strong>, and it is checked by
+<code class="docutils literal notranslate"><span class="pre">tests/test_edl_look.py::test_no_allowlisted_filter_can_name_a_file</span></code>: the
+filter must declare no filesystem-path option at all. <code class="docutils literal notranslate"><span class="pre">lut3d</span></code>’s <code class="docutils literal notranslate"><span class="pre">file</span></code> is
+the single recorded exception (<code class="xref py py-data docutils literal notranslate"><span class="pre">_LOOK_FILE_OPTIONS</span></code>) — it <em>loads</em> a
+<code class="docutils literal notranslate"><span class="pre">.cube</span></code>, which is how <code class="docutils literal notranslate"><span class="pre">looks</span></code>’ flagship grade reaches its LUT, and it reads
+rather than writes. Nothing else may name a path, so adding a filter here is a
+two-place edit and the second place is a measurement of the real binary.</p>
+<p><strong>What this does NOT bound</strong>, stated because a partial claim is worse than
+none. An allowlisted filter can still be given absurd PARAMETERS, and the two
+that matter are measured rather than guessed at:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">scale</span></code> sets the frame size, and the frame size is memory. On ffmpeg 9.0.1,
+<code class="docutils literal notranslate"><span class="pre">scale=320:180</span></code> peaks at 21.7 MB RSS and <code class="docutils literal notranslate"><span class="pre">scale=320:180,scale=8000:8000</span></code>
+at 324.7 MB — 15x, from one caller-supplied number, on a box that has already
+been OOM-killed once (muvid#21/#24). Not closed here because bounding it means
+evaluating ffmpeg expressions (<code class="docutils literal notranslate"><span class="pre">iw*2</span></code> is a legal width), which is a bigger
+piece of work than this gate; it wants its own issue.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">lut3d=file=</span></code> will <em>attempt</em> to open any path the renderer can read. It
+cannot write, and a non-<code class="docutils literal notranslate"><span class="pre">.cube</span></code> file fails to parse.</p></li>
+</ul>
+<p>Both are failures inside the caller’s OWN render. Writing to someone else’s
+disk is the class this closes.</p>
 </dd></dl>
 
 <dl class="py data">
@@ -384,6 +478,10 @@ rule; the tests pin both so the coherence stays deliberate.</p>
 <li><p>each non-gap span lies within its clip’s aligned coverage, AND the derived
 <code class="docutils literal notranslate"><span class="pre">clip_in</span> <span class="pre">=</span> <span class="pre">song_start</span> <span class="pre">-</span> <span class="pre">offset</span></code> satisfies <code class="docutils literal notranslate"><span class="pre">0</span> <span class="pre">&lt;=</span> <span class="pre">clip_in</span></code> and
 <code class="docutils literal notranslate"><span class="pre">clip_in</span> <span class="pre">+</span> <span class="pre">span_duration</span> <span class="pre">&lt;=</span> <span class="pre">clip_duration</span></code> (the clip actually contains that span);</p></li>
+<li><p>a <code class="docutils literal notranslate"><span class="pre">look</span></code> (the <code class="docutils literal notranslate"><span class="pre">looks</span></code> seam) names only filters in <a class="reference internal" href="#muvid.footage.edl.LOOK_FILTERS" title="muvid.footage.edl.LOOK_FILTERS"><code class="xref py py-data docutils literal notranslate"><span class="pre">LOOK_FILTERS</span></code></a>,
+is ONE lexically-closed linear filter chain, names no container input, and is
+not on a gap — see <code class="xref py py-func docutils literal notranslate"><span class="pre">_validate_look()</span></code>, which is the trust boundary for a
+caller-supplied filter string;</p></li>
 <li><p>a <a class="reference internal" href="#muvid.footage.edl.Transition" title="muvid.footage.edl.Transition"><code class="xref py py-class docutils literal notranslate"><span class="pre">Transition</span></code></a> is on an entry that HAS a predecessor, names a known curve,
 is at least <a class="reference internal" href="#muvid.footage.edl.MIN_TRANSITION_S" title="muvid.footage.edl.MIN_TRANSITION_S"><code class="xref py py-data docutils literal notranslate"><span class="pre">MIN_TRANSITION_S</span></code></a> long, fits in song time counting BOTH
 transitions an entry can carry, and fits in each side’s aligned coverage — see

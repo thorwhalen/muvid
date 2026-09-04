@@ -1,0 +1,591 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>muvid.footage.look &mdash; muvid 0.0.42 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=173d7b4c"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
+      <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            muvid
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid.html">muvid</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/__main__.html">muvid.__main__</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/align.html">muvid.align</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/characters.html">muvid.characters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/compose.html">muvid.compose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/contracts.html">muvid.contracts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/cost.html">muvid.cost</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/downloads.html">muvid.downloads</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/environments.html">muvid.environments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/events.html">muvid.events</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/facade.html">muvid.facade</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage.html">muvid.footage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/align.html">muvid.footage.align</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/assemble.html">muvid.footage.assemble</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/edl.html">muvid.footage.edl</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/lacing_bridge.html">muvid.footage.lacing_bridge</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/look.html">muvid.footage.look</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring.html">muvid.footage.scoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring/_frame_metrics.html">muvid.footage.scoring._frame_metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring/frames.html">muvid.footage.scoring.frames</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring/grid.html">muvid.footage.scoring.grid</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring/lipsync.html">muvid.footage.scoring.lipsync</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring/motionbeat.html">muvid.footage.scoring.motionbeat</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring/orchestrator.html">muvid.footage.scoring.orchestrator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring/quality.html">muvid.footage.scoring.quality</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring/segment.html">muvid.footage.scoring.segment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/select_score.html">muvid.footage.select_score</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/strategy.html">muvid.footage.strategy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/workspace.html">muvid.footage.workspace</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/genre.html">muvid.genre</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/genre_music_video.html">muvid.genre_music_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyrics.html">muvid.lyrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp.html">muvid.mcp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/_fetch.html">muvid.mcp._fetch</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/_guide.html">muvid.mcp._guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/footage_tools.html">muvid.mcp.footage_tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/identity.html">muvid.mcp.identity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/scoring_tools.html">muvid.mcp.scoring_tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/tools.html">muvid.mcp.tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/workspace.html">muvid.mcp.workspace</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/project.html">muvid.project</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers.html">muvid.renderers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers/_common.html">muvid.renderers._common</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers/_errors.html">muvid.renderers._errors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers/animation.html">muvid.renderers.animation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers/image_to_video.html">muvid.renderers.image_to_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers/lipsync.html">muvid.renderers.lipsync</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers/still.html">muvid.renderers.still</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers/text_to_video.html">muvid.renderers.text_to_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/schema.html">muvid.schema</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/script.html">muvid.script</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/ui.html">muvid.ui</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/ui/app.html">muvid.ui.app</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize.html">muvid.visualize</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/canvas.html">muvid.visualize.canvas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/ffmpeg.html">muvid.visualize.ffmpeg</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/reactive.html">muvid.visualize.reactive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/verify.html">muvid.visualize.verify</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/video.html">muvid.visualize.video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/visuals.html">muvid.visualize.visuals</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">muvid</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">muvid.footage.look</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for muvid.footage.look</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""Compile a ``looks`` artifact into the fragment the assembler splices.</span>
+
+<span class="sd">This is muvid's half of the ``looks`` seam — ``looks``' build-order item 10, and</span>
+<span class="sd">the first real consumer of that package. The division of labour is the whole</span>
+<span class="sd">point and it is worth stating before any code:</span>
+
+<span class="sd">    **``looks`` decides what a pixel becomes. muvid decides which pixels exist,</span>
+<span class="sd">    when they appear, and how the process is run.**</span>
+
+<span class="sd">So ``looks`` emits a ``-vf`` chain fragment and nothing else. It owns no encode</span>
+<span class="sd">setting: ``-c:v``, ``-crf``, ``-preset``, ``-pix_fmt``, the frame counts, the</span>
+<span class="sd">concat, the mux and the per-invocation timeout all stay in</span>
+<span class="sd">:mod:`muvid.footage.assemble`, where the bounded-memory invariant lives. The</span>
+<span class="sd">fragment rides in :attr:`muvid.footage.edl.EdlEntry.look` and is spliced by</span>
+<span class="sd">:func:`muvid.footage.assemble._part_filter`.</span>
+
+<span class="sd">Why a ``-vf`` fragment is the *cheapest possible* seam, which is why it was</span>
+<span class="sd">chosen: it adds no ``-i``. muvid's assembler was rewritten (muvid#21/#24) because</span>
+<span class="sd">one ``-filter_complex`` over all cuts held a decoder per cut and was OOM-killed at</span>
+<span class="sd">30 cuts on a 3.7 GB box; the guarantee it bought is O(1) decoders per invocation.</span>
+<span class="sd">A filter fragment cannot touch that.</span>
+
+<span class="sd">**A look cannot reach a second source at all, and the earlier claim that it could</span>
+<span class="sd">via ``movie=`` was wrong twice over.** ``movie=`` is a zero-input source filter,</span>
+<span class="sd">so at the solo site — a *simple* filtergraph, one input and one output — it leaves</span>
+<span class="sd">the preceding chain unconsumed and ffmpeg refuses the whole graph before decoding</span>
+<span class="sd">a frame (*"had 1 input(s) and 2 output(s)"*, measured on ffmpeg 9.0.1; every</span>
+<span class="sd">composited form, ``movie=X,overlay=10:10`` included, fails identically, and the</span>
+<span class="sd">forms that DO render all need ``[``/``]``/``;``). At the transition site it does</span>
+<span class="sd">run, and what it does there is call ``avformat_open_input`` on a path from inside</span>
+<span class="sd">the fragment — a second container decoder that no invocation accounted for, which</span>
+<span class="sd">is the muvid#21/#24 invariant going out the back door. So</span>
+<span class="sd">:func:`muvid.footage.edl._validate_look` refuses it, along with every other filter</span>
+<span class="sd">outside :data:`muvid.footage.edl.LOOK_FILTERS`. Compositing needs a second splice</span>
+<span class="sd">site the assembler does not have; that is a change to the assembler, not a look.</span>
+
+<span class="sd">Three functions, in the order you are likely to want them:</span>
+
+<span class="sd">- :func:`punch_in` — the in-shot zoom the design partner asked for (muvid#66).</span>
+<span class="sd">- :func:`motion` — an arbitrary camera path over the cut; ``punch_in`` is a</span>
+<span class="sd">  named case of it.</span>
+<span class="sd">- :func:`stylize` — a whole :class:`looks.Look` (grade, LUT, posterise …)</span>
+<span class="sd">  compiled against the binary muvid will actually run.</span>
+
+<span class="sd">:func:`chain` puts two of them on one cut.</span>
+
+<span class="sd">**Which binary.** The fleet has two ffmpegs in routine use and neither is a</span>
+<span class="sd">superset of the other (``looks``' research note 11 §3.4 measured 484 vs 481</span>
+<span class="sd">filters, with ``zscale`` in one and ``drawtext`` in the other). ``looks`` refuses</span>
+<span class="sd">to resolve one — the environment is an argument — and muvid is the party entitled</span>
+<span class="sd">to answer, because muvid owns the invocation. muvid runs the bare name ``ffmpeg``</span>
+<span class="sd">from ``PATH`` (:func:`muvid.visualize.ffmpeg.run_ffmpeg`), so that is what</span>
+<span class="sd">:func:`stylize` probes. Pass ``env=`` to compile against a different one.</span>
+
+<span class="sd">**One limitation, measured rather than guessed at, and not fixable here.** A</span>
+<span class="sd">*time-varying* look on a cut that borders a :class:`~muvid.footage.edl.Transition`</span>
+<span class="sd">**restarts its ramp on the blended part**. The assembler renders a transitioned</span>
+<span class="sd">boundary as a separate two-input invocation whose inputs are input-side-seeked to</span>
+<span class="sd">the blend window, so the filter clock there begins at 0 again instead of</span>
+<span class="sd">continuing the cut's.</span>
+
+<span class="sd">Measured on a 3.0 s cut at 25 fps with a 0.4 s fade and a 1.12x punch: the solo</span>
+<span class="sd">part's last frame is drawn at zoom 1.109 (mean |diff| 23.1/255 against the same</span>
+<span class="sd">frame rendered without the look), while the blend part's first frame is drawn at</span>
+<span class="sd">zoom 1.000 (mean |diff| 0.5/255 against its own unlooked twin — i.e.</span>
+<span class="sd">indistinguishable from no punch at all). The move snaps back for the length of</span>
+<span class="sd">the blend and then the next cut begins.</span>
+
+<span class="sd">A **static** look — a grade, a LUT, a posterise — is unaffected, because it never</span>
+<span class="sd">reads the clock, and it is what the seam is mostly for. For a *moving* look,</span>
+<span class="sd">either keep it off transitioned boundaries or accept the hitch. muvid cannot</span>
+<span class="sd">rebase the fragment without rewriting an arbitrary ffmpeg expression, which is</span>
+<span class="sd">exactly what ``looks`` refuses to do for itself (its rule 27), and a wrong rebase</span>
+<span class="sd">is worse than a documented one: it would exit 0 having moved the effect to a</span>
+<span class="sd">different second of the clip. Tracked as muvid#73.</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">lru_cache</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span>
+
+<span class="c1">#: How far :func:`punch_in` zooms by default. A *slight* move: the design partner</span>
+<span class="c1">#: described what he wanted as a "slight zoom/punch-in jump" (muvid#66), and a</span>
+<span class="c1">#: punch-in is a punctuation mark, not a transition. Larger values magnify the</span>
+<span class="c1">#: source, so a value that looks fine on a 4K clip is soft on a 720p one — which</span>
+<span class="c1">#: is why it is a named constant a caller overrides rather than a hidden literal.</span>
+<span class="n">DEFAULT_PUNCH_ZOOM</span> <span class="o">=</span> <span class="mf">1.12</span>
+
+<span class="c1">#: Where :func:`punch_in` zooms toward, as a fraction of the canvas. Centre.</span>
+<span class="n">DEFAULT_PUNCH_ANCHOR</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="LookError">
+<a class="viewcode-back" href="../../../module_docs/muvid/footage/look.html#muvid.footage.LookError">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">LookError</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A look could not be compiled. Carries what to do about it."""</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_require_looks</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">"""Import ``looks``, translating its absence into an actionable error.</span>
+
+<span class="sd">    ``looks`` is a declared dependency and stdlib-only, so this practically</span>
+<span class="sd">    always succeeds; the branch exists because an ``ImportError`` from three</span>
+<span class="sd">    frames down names a module and not a remedy.</span>
+<span class="sd">    """</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">looks</span>
+    <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>  <span class="c1"># pragma: no cover - a declared dependency</span>
+        <span class="k">raise</span> <span class="n">LookError</span><span class="p">(</span>
+            <span class="s2">"the `looks` package is needed to compile a look, and it is not "</span>
+            <span class="s2">"importable. It is a declared muvid dependency and has no "</span>
+            <span class="s2">"dependencies of its own: `pip install looks`."</span>
+        <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span>
+    <span class="k">return</span> <span class="n">looks</span>
+
+
+<span class="nd">@lru_cache</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_probe</span><span class="p">(</span><span class="n">ffmpeg</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Probe one ffmpeg binary, once per process.</span>
+
+<span class="sd">    Cached because a probe is a subprocess and a score-driven edit compiles a</span>
+<span class="sd">    look per cut — 30-70 of them. Keyed on the binary NAME as given, which is</span>
+<span class="sd">    the same key muvid runs under; ``looks`` caches again on the resolved path.</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="n">_require_looks</span><span class="p">()</span><span class="o">.</span><span class="n">probe</span><span class="p">(</span><span class="n">ffmpeg</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_canvas</span><span class="p">(</span><span class="n">canvas</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"tuple[int, int]"</span><span class="p">:</span>
+    <span class="n">w</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">canvas</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="nb">int</span><span class="p">(</span><span class="n">canvas</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="k">if</span> <span class="n">w</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">h</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">LookError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"canvas must be positive, got </span><span class="si">{</span><span class="n">w</span><span class="si">}</span><span class="s2">x</span><span class="si">{</span><span class="n">h</span><span class="si">}</span><span class="s2">."</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">w</span><span class="p">,</span> <span class="n">h</span>
+
+
+<div class="viewcode-block" id="chain">
+<a class="viewcode-back" href="../../../module_docs/muvid/footage/look.html#muvid.footage.chain">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">chain</span><span class="p">(</span><span class="o">*</span><span class="n">fragments</span><span class="p">:</span> <span class="s2">"Optional[str]"</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"Optional[str]"</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Join look fragments into one, dropping the empty ones.</span>
+
+<span class="sd">    A cut carries at most one look, so two effects on one cut are one chain.</span>
+<span class="sd">    Returns ``None`` when nothing survives, which is the value the EDL field</span>
+<span class="sd">    wants for "no look" — an empty string is refused by ``validate_edl``</span>
+<span class="sd">    deliberately, so this does not produce one.</span>
+
+<span class="sd">    &gt;&gt;&gt; chain("hue=s=0", None, "", "unsharp=5:5:1")</span>
+<span class="sd">    'hue=s=0,unsharp=5:5:1'</span>
+<span class="sd">    &gt;&gt;&gt; chain(None, "") is None</span>
+<span class="sd">    True</span>
+<span class="sd">    """</span>
+    <span class="n">kept</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">fragments</span> <span class="k">if</span> <span class="n">f</span> <span class="ow">and</span> <span class="n">f</span><span class="o">.</span><span class="n">strip</span><span class="p">()]</span>
+    <span class="k">return</span> <span class="s2">","</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">kept</span><span class="p">)</span> <span class="ow">or</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="motion">
+<a class="viewcode-back" href="../../../module_docs/muvid/footage/look.html#muvid.footage.motion">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">motion</span><span class="p">(</span><span class="n">keyframes</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">canvas</span><span class="p">,</span> <span class="n">fps</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""A camera path over the cut, as a filter fragment. ``looks`` picks the filter.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        keyframes: ``(t_seconds, window)`` pairs, or :class:`looks.Keyframe`s.</span>
+<span class="sd">            The window is anything with ``x``/``y``/``w``/``h`` as fractions —</span>
+<span class="sd">            :class:`muvid.footage.edl.CropWindow` satisfies that structurally,</span>
+<span class="sd">            with no adapter, because both packages use ``burns.Rect``'s</span>
+<span class="sd">            convention on purpose.</span>
+<span class="sd">        canvas: ``(width, height)`` — the assembler's delivery canvas.</span>
+<span class="sd">        fps: the assembler's delivery frame rate.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        One linear ffmpeg filter chain, ready for the ``look`` field.</span>
+
+<span class="sd">    **The windows are fractions of the CANVAS, not of the source.** That follows</span>
+<span class="sd">    from where the fragment is spliced: after ``scale``/``pad``, so the frame it</span>
+<span class="sd">    sees is the canvas with the source letterboxed into it. It is also what makes</span>
+<span class="sd">    the move well-defined across a mixed-device edit — the same punch reads the</span>
+<span class="sd">    same on a portrait phone clip and a landscape one, where a source-relative</span>
+<span class="sd">    window would not. Use ``crop``/``crop_end`` on the EDL entry for the</span>
+<span class="sd">    source-relative framing decision; the two compose, crop first.</span>
+
+<span class="sd">    Which ffmpeg filter this becomes is ``looks``' decision and not a matter of</span>
+<span class="sd">    taste: a constant-size window is ``crop``, a resizing one is ``zoompan``, and</span>
+<span class="sd">    ``crop`` cannot resize at all (its ``w``/``h`` are evaluated once, at</span>
+<span class="sd">    configure time, when ``t`` is NAN — it either refuses to configure or, worse,</span>
+<span class="sd">    exits 0 having rendered every frame at one wrong size).</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        LookError: If the path needs something that was not supplied.</span>
+<span class="sd">    """</span>
+    <span class="n">looks</span> <span class="o">=</span> <span class="n">_require_looks</span><span class="p">()</span>
+    <span class="n">w</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="n">_canvas</span><span class="p">(</span><span class="n">canvas</span><span class="p">)</span>
+    <span class="n">frames</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">k</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">looks</span><span class="o">.</span><span class="n">Keyframe</span><span class="p">)</span> <span class="k">else</span> <span class="n">looks</span><span class="o">.</span><span class="n">Keyframe</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">k</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">k</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">keyframes</span>
+    <span class="p">]</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">looks</span><span class="o">.</span><span class="n">compile_motion</span><span class="p">(</span><span class="n">frames</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="n">looks</span><span class="o">.</span><span class="n">Size</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="p">),</span> <span class="n">fps</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">fps</span><span class="p">))</span>
+    <span class="k">except</span> <span class="n">looks</span><span class="o">.</span><span class="n">MotionError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">LookError</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">exc</span><span class="p">))</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span></div>
+
+
+
+<div class="viewcode-block" id="punch_in">
+<a class="viewcode-back" href="../../../module_docs/muvid/footage/look.html#muvid.footage.punch_in">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">punch_in</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">canvas</span><span class="p">,</span>
+    <span class="n">fps</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">duration_s</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">zoom</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">DEFAULT_PUNCH_ZOOM</span><span class="p">,</span>
+    <span class="n">anchor</span><span class="p">:</span> <span class="s2">"tuple[float, float]"</span> <span class="o">=</span> <span class="n">DEFAULT_PUNCH_ANCHOR</span><span class="p">,</span>
+    <span class="n">start_s</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
+    <span class="n">end_s</span><span class="p">:</span> <span class="s2">"Optional[float]"</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""An in-shot punch-in: hold, then push in, WITHOUT leaving the shot (muvid#66).</span>
+
+<span class="sd">    The design partner asked for "roughly 2N" of these and was explicit that it</span>
+<span class="sd">    is **not** a transition between two clips — it stays on the same shot. Before</span>
+<span class="sd">    this there was no punch-in, zoom or Ken Burns move anywhere in the footage</span>
+<span class="sd">    path; the only two mentions of ``zoom`` under ``footage/`` were comments</span>
+<span class="sd">    explaining why ``zoompan`` was unusable, and that reading has since been</span>
+<span class="sd">    measured wrong: ``t`` is undefined inside ``zoompan``, but ``in_time`` works</span>
+<span class="sd">    and ``d=1`` is exactly 1:1 rather than the frame-duplicating default. Both</span>
+<span class="sd">    corrections live in ``looks.compile_motion``, which is why this function is</span>
+<span class="sd">    six lines of geometry and no ffmpeg.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        canvas: ``(width, height)`` — the assembler's delivery canvas.</span>
+<span class="sd">        fps: the assembler's delivery frame rate.</span>
+<span class="sd">        duration_s: the cut's length in seconds. The move ends here by default.</span>
+<span class="sd">        zoom: final magnification. ``1.12`` shows ~89% of the frame.</span>
+<span class="sd">        anchor: what stays put, as a fraction of the canvas. ``(0.5, 0.5)``</span>
+<span class="sd">            centres it; ``(0.5, 0.35)`` pushes toward a face in the upper third.</span>
+<span class="sd">        start_s: hold the full frame until here, then move.</span>
+<span class="sd">        end_s: reach the final framing here and hold. Defaults to ``duration_s``.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        One linear ffmpeg filter chain, ready for the ``look`` field.</span>
+
+<span class="sd">    A move is a ramp between two windows, and the windows are fractions of the</span>
+<span class="sd">    canvas (see :func:`motion`). The end window keeps the canvas's aspect ratio,</span>
+<span class="sd">    which is what lets ``zoompan`` deliver at the canvas size with no stretch and</span>
+<span class="sd">    no reframing crop.</span>
+
+<span class="sd">    &gt;&gt;&gt; frag = punch_in(canvas=(640, 360), fps=25, duration_s=3.0)</span>
+<span class="sd">    &gt;&gt;&gt; frag.startswith("zoompan=d=1:s=640x360:fps=25:")</span>
+<span class="sd">    True</span>
+
+<span class="sd">    A pull-out is this move backwards, so it goes through :func:`motion` with the</span>
+<span class="sd">    windows in the order you want them, rather than a boolean here.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        LookError: If ``zoom``, the timings or the anchor are out of range.</span>
+<span class="sd">    """</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.footage.edl</span><span class="w"> </span><span class="kn">import</span> <span class="n">CropWindow</span>
+
+    <span class="n">w</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="n">_canvas</span><span class="p">(</span><span class="n">canvas</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">zoom</span> <span class="o">&lt;=</span> <span class="mf">1.0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">LookError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"punch_in needs zoom &gt; 1 (got </span><span class="si">{</span><span class="n">zoom</span><span class="si">}</span><span class="s2">); it magnifies. A move that "</span>
+            <span class="s2">"pulls OUT starts zoomed and ends full, which is motion() with the "</span>
+            <span class="s2">"windows in that order — a direction, not a flag."</span>
+        <span class="p">)</span>
+    <span class="n">ax</span><span class="p">,</span> <span class="n">ay</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">anchor</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="nb">float</span><span class="p">(</span><span class="n">anchor</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="mf">0.0</span> <span class="o">&lt;=</span> <span class="n">ax</span> <span class="o">&lt;=</span> <span class="mf">1.0</span> <span class="ow">and</span> <span class="mf">0.0</span> <span class="o">&lt;=</span> <span class="n">ay</span> <span class="o">&lt;=</span> <span class="mf">1.0</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="n">LookError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"punch_in anchor </span><span class="si">{</span><span class="n">anchor</span><span class="si">!r}</span><span class="s2"> is outside the canvas. It is the point "</span>
+            <span class="s2">"that stays put, as fractions: 0 &lt;= x, y &lt;= 1."</span>
+        <span class="p">)</span>
+    <span class="n">end</span> <span class="o">=</span> <span class="n">duration_s</span> <span class="k">if</span> <span class="n">end_s</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">end_s</span>
+    <span class="k">if</span> <span class="n">duration_s</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">LookError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"punch_in needs a positive duration_s (got </span><span class="si">{</span><span class="n">duration_s</span><span class="si">}</span><span class="s2">)."</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="mf">0.0</span> <span class="o">&lt;=</span> <span class="n">start_s</span> <span class="o">&lt;</span> <span class="n">end</span> <span class="o">&lt;=</span> <span class="n">duration_s</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="n">LookError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"punch_in needs 0 &lt;= start_s &lt; end_s &lt;= duration_s (got start_s="</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">start_s</span><span class="si">}</span><span class="s2">, end_s=</span><span class="si">{</span><span class="n">end</span><span class="si">}</span><span class="s2">, duration_s=</span><span class="si">{</span><span class="n">duration_s</span><span class="si">}</span><span class="s2">). A move with no "</span>
+            <span class="s2">"span is a request that renders nothing, which is the silent no-op "</span>
+            <span class="s2">"muvid refuses elsewhere too."</span>
+        <span class="p">)</span>
+    <span class="n">side</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">zoom</span>
+    <span class="c1"># The anchor is the fixed point: it keeps the same canvas fraction before and</span>
+    <span class="c1"># after, which for a window of side `side` puts the window's origin at</span>
+    <span class="c1"># anchor * (1 - side). Centre anchor =&gt; a centred window, corner anchor =&gt; a</span>
+    <span class="c1"># window pinned to that corner, both without a special case.</span>
+    <span class="n">tight</span> <span class="o">=</span> <span class="n">CropWindow</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">ax</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">side</span><span class="p">),</span> <span class="n">y</span><span class="o">=</span><span class="n">ay</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">side</span><span class="p">),</span> <span class="n">w</span><span class="o">=</span><span class="n">side</span><span class="p">,</span> <span class="n">h</span><span class="o">=</span><span class="n">side</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">motion</span><span class="p">(</span>
+        <span class="p">[(</span><span class="n">start_s</span><span class="p">,</span> <span class="n">CropWindow</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)),</span> <span class="p">(</span><span class="n">end</span><span class="p">,</span> <span class="n">tight</span><span class="p">)],</span>
+        <span class="n">canvas</span><span class="o">=</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="p">),</span>
+        <span class="n">fps</span><span class="o">=</span><span class="n">fps</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="stylize">
+<a class="viewcode-back" href="../../../module_docs/muvid/footage/look.html#muvid.footage.stylize">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">stylize</span><span class="p">(</span>
+    <span class="n">look</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">canvas</span><span class="p">,</span>
+    <span class="n">fps</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">duration_s</span><span class="p">:</span> <span class="s2">"Optional[float]"</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">ffmpeg</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"ffmpeg"</span><span class="p">,</span>
+    <span class="n">env</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">policy</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""A :class:`looks.Look` compiled against the binary muvid will run.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        look: a :class:`looks.Look` — an ordered stack of named effects.</span>
+<span class="sd">        canvas: ``(width, height)`` — the assembler's delivery canvas.</span>
+<span class="sd">        fps: the assembler's delivery frame rate.</span>
+<span class="sd">        duration_s: the cut's length, when a step needs to know it.</span>
+<span class="sd">        ffmpeg: which binary to probe. Defaults to the bare name muvid runs.</span>
+<span class="sd">        env: a :class:`looks.FfmpegEnv` to compile against, instead of probing.</span>
+<span class="sd">        policy: a :class:`looks.Policy` — the licence ceiling. ``looks``' default</span>
+<span class="sd">            applies when omitted.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        One linear ffmpeg filter chain, ready for the ``look`` field.</span>
+
+<span class="sd">    **The clip is declared, not measured.** ``looks`` compiles against a</span>
+<span class="sd">    *declared* clip, and at this splice point muvid knows the geometry and the</span>
+<span class="sd">    rate exactly — they are the canvas and the delivery rate the assembler is</span>
+<span class="sd">    about to impose, not properties of whichever source is underneath. That is</span>
+<span class="sd">    the payoff of splicing after ``scale``/``pad``/``fps`` rather than before it.</span>
+
+<span class="sd">    ``origin_s=0.0`` is declared for the same kind of reason and is true for a</span>
+<span class="sd">    stated cause rather than by default: ``looks`` treats a span as being in the</span>
+<span class="sd">    host's decoder time, and *input-side* ``-ss`` rebases the filter timeline to</span>
+<span class="sd">    0 where output-side ``-ss`` does not. :func:`muvid.footage.assemble._render_part`</span>
+<span class="sd">    seeks input-side. Move that seek and this declaration becomes false.</span>
+
+<span class="sd">    **A refusal is the feature.** ``looks`` resolves each step's licence tier</span>
+<span class="sd">    against the probed binary, so a look reaching a GPL-only filter on an</span>
+<span class="sd">    LGPL build is either substituted or refused by name — rather than working on</span>
+<span class="sd">    a laptop and quietly raising the licence tier of a shipped product.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        LookError: If the look cannot be compiled for this binary, this ceiling</span>
+<span class="sd">            or this clip. The message is ``looks``', which names the remedy.</span>
+<span class="sd">    """</span>
+    <span class="n">looks</span> <span class="o">=</span> <span class="n">_require_looks</span><span class="p">()</span>
+    <span class="n">w</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="n">_canvas</span><span class="p">(</span><span class="n">canvas</span><span class="p">)</span>
+    <span class="n">resolved</span> <span class="o">=</span> <span class="n">_probe</span><span class="p">(</span><span class="n">ffmpeg</span><span class="p">)</span> <span class="k">if</span> <span class="n">env</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">env</span>
+    <span class="n">clip</span> <span class="o">=</span> <span class="n">looks</span><span class="o">.</span><span class="n">ClipSpec</span><span class="p">(</span>
+        <span class="n">width</span><span class="o">=</span><span class="n">w</span><span class="p">,</span>
+        <span class="n">height</span><span class="o">=</span><span class="n">h</span><span class="p">,</span>
+        <span class="n">fps</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">fps</span><span class="p">),</span>
+        <span class="n">duration_s</span><span class="o">=</span><span class="n">duration_s</span><span class="p">,</span>
+        <span class="n">origin_s</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">plan</span> <span class="o">=</span> <span class="n">looks</span><span class="o">.</span><span class="n">compile_look</span><span class="p">(</span><span class="n">look</span><span class="p">,</span> <span class="n">clip</span><span class="o">=</span><span class="n">clip</span><span class="p">,</span> <span class="n">env</span><span class="o">=</span><span class="n">resolved</span><span class="p">,</span> <span class="n">policy</span><span class="o">=</span><span class="n">policy</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">looks</span><span class="o">.</span><span class="n">vf</span><span class="p">(</span><span class="n">plan</span><span class="p">)</span>
+    <span class="k">except</span> <span class="p">(</span>
+        <span class="n">looks</span><span class="o">.</span><span class="n">CompileError</span><span class="p">,</span>
+        <span class="n">looks</span><span class="o">.</span><span class="n">LooksLicenceError</span><span class="p">,</span>
+        <span class="n">looks</span><span class="o">.</span><span class="n">SpecError</span><span class="p">,</span>
+        <span class="n">looks</span><span class="o">.</span><span class="n">FfmpegBackendError</span><span class="p">,</span>
+    <span class="p">)</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">LookError</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">exc</span><span class="p">))</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span></div>
+
+
+
+<div class="viewcode-block" id="punch_in_cuts">
+<a class="viewcode-back" href="../../../module_docs/muvid/footage/look.html#muvid.footage.punch_in_cuts">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">punch_in_cuts</span><span class="p">(</span>
+    <span class="n">entries</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">canvas</span><span class="p">,</span>
+    <span class="n">fps</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">every</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
+    <span class="n">zoom</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">DEFAULT_PUNCH_ZOOM</span><span class="p">,</span>
+    <span class="n">anchor</span><span class="p">:</span> <span class="s2">"tuple[float, float]"</span> <span class="o">=</span> <span class="n">DEFAULT_PUNCH_ANCHOR</span><span class="p">,</span>
+    <span class="n">offset</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"list[Any]"</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Put a punch-in on every ``every``-th footage entry — muvid#66's other half.</span>
+
+<span class="sd">    The request was for *roughly 2N* punch-ins "evenly redistributed so they</span>
+<span class="sd">    occur about twice as often", explicitly **not** two extra tacked on the end.</span>
+<span class="sd">    Redistribution is therefore the whole job, and it is a stride over the cuts</span>
+<span class="sd">    rather than a wall-clock interval: cuts are already beat-snapped by the</span>
+<span class="sd">    selector, so a stride lands the moves on musical time for free, where a</span>
+<span class="sd">    seconds-based interval would drift off it.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        entries: validated :class:`~muvid.footage.edl.EdlEntry` objects.</span>
+<span class="sd">        canvas: ``(width, height)`` — the delivery canvas.</span>
+<span class="sd">        fps: the delivery frame rate.</span>
+<span class="sd">        every: stride. ``2`` punches every other footage cut; ``1`` punches all.</span>
+<span class="sd">        zoom: passed to :func:`punch_in`.</span>
+<span class="sd">        anchor: passed to :func:`punch_in`.</span>
+<span class="sd">        offset: which footage cut in each stride gets the move.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A NEW list of entries. Gaps are skipped (they have no footage to punch</span>
+<span class="sd">        into, and ``validate_edl`` refuses a look on one), and an entry that</span>
+<span class="sd">        already carries a look keeps it — this composes with hand-authoring</span>
+<span class="sd">        rather than overwriting it, because silently replacing an authored</span>
+<span class="sd">        direction is the failure this package guards against elsewhere.</span>
+<span class="sd">    """</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">replace</span>
+
+    <span class="k">if</span> <span class="n">every</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">LookError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"`every` must be &gt;= 1 (got </span><span class="si">{</span><span class="n">every</span><span class="si">}</span><span class="s2">); it is a stride."</span><span class="p">)</span>
+    <span class="n">out</span><span class="p">,</span> <span class="n">n</span> <span class="o">=</span> <span class="p">[],</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">entries</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">is_gap</span> <span class="ow">or</span> <span class="n">e</span><span class="o">.</span><span class="n">look</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="n">n</span> <span class="o">%</span> <span class="n">every</span> <span class="o">==</span> <span class="n">offset</span> <span class="o">%</span> <span class="n">every</span><span class="p">:</span>
+            <span class="n">e</span> <span class="o">=</span> <span class="n">replace</span><span class="p">(</span>
+                <span class="n">e</span><span class="p">,</span>
+                <span class="n">look</span><span class="o">=</span><span class="n">punch_in</span><span class="p">(</span>
+                    <span class="n">canvas</span><span class="o">=</span><span class="n">canvas</span><span class="p">,</span>
+                    <span class="n">fps</span><span class="o">=</span><span class="n">fps</span><span class="p">,</span>
+                    <span class="n">duration_s</span><span class="o">=</span><span class="n">e</span><span class="o">.</span><span class="n">song_end</span> <span class="o">-</span> <span class="n">e</span><span class="o">.</span><span class="n">song_start</span><span class="p">,</span>
+                    <span class="n">zoom</span><span class="o">=</span><span class="n">zoom</span><span class="p">,</span>
+                    <span class="n">anchor</span><span class="o">=</span><span class="n">anchor</span><span class="p">,</span>
+                <span class="p">),</span>
+            <span class="p">)</span>
+        <span class="n">n</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">out</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p></p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

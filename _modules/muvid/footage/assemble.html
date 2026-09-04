@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.footage.assemble &mdash; muvid 0.0.41 documentation</title>
+  <title>muvid.footage.assemble &mdash; muvid 0.0.42 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=20c5f126"></script>
+      <script src="../../../_static/documentation_options.js?v=173d7b4c"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -62,6 +62,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/assemble.html">muvid.footage.assemble</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/edl.html">muvid.footage.edl</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/lacing_bridge.html">muvid.footage.lacing_bridge</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/look.html">muvid.footage.look</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring.html">muvid.footage.scoring</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring/_frame_metrics.html">muvid.footage.scoring._frame_metrics</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring/frames.html">muvid.footage.scoring.frames</a></li>
@@ -170,6 +171,20 @@
 
 <span class="sd">ffmpeg auto-applies each clip's rotation metadata on decode (default ``-autorotate 1``),</span>
 <span class="sd">so a display-matrix portrait clip lands upright and pillarboxed, never stretched.</span>
+
+<span class="sd">A cut may also carry a **look** — a compiled ``looks`` filter fragment</span>
+<span class="sd">(:mod:`muvid.footage.look`) spliced into the per-part chain by :func:`_part_filter`.</span>
+<span class="sd">It is the federation seam and it is deliberately the cheapest possible one: a ``-vf``</span>
+<span class="sd">fragment adds no ``-i``, so it cannot move the invariant above. That is enforced rather</span>
+<span class="sd">than trusted, and by an ALLOWLIST rather than by refusals —</span>
+<span class="sd">:func:`~muvid.footage.edl._validate_look` accepts only the filters</span>
+<span class="sd">:data:`~muvid.footage.edl.LOOK_FILTERS` names, and refuses a fragment that names a</span>
+<span class="sd">container input, that is more than one linear chain, or that is not lexically closed.</span>
+<span class="sd">The allowlist is what closes ``movie=``/``amovie=`` (a second container opened from</span>
+<span class="sd">*inside* the fragment, which is the invariant leaving by the back door) and, because</span>
+<span class="sd">``assemble_music_video`` is a live per-caller MCP tool whose ``edl`` argument is</span>
+<span class="sd">free-form, the filters that write the host's disk (``metadata=…:file=``,</span>
+<span class="sd">``deshake=filename=``, ``sendcmd``, ``signature``).</span>
 
 <span class="sd">Deliberately NOT moviepy (its ``write_videofile`` runs in-process and would escape the</span>
 <span class="sd">``$MUVID_FFMPEG_TIMEOUT_S`` worker guard). Every stage runs through</span>
@@ -363,6 +378,10 @@
 <span class="sd">    entirely its default ``d=90`` (20 input frames -&gt; 1800 out), and ``d=1`` is</span>
 <span class="sd">    exactly 1:1. So a resizing window is a ``zoompan`` job; a pan at constant size</span>
 <span class="sd">    is this one, and ``crop`` expresses it with one expression per axis.</span>
+
+<span class="sd">    That ``zoompan`` job now has a home: :func:`muvid.footage.look.punch_in` rides</span>
+<span class="sd">    in the cut's ``look`` rather than in its ``crop``, which is why this function</span>
+<span class="sd">    is still only ever asked for a pan.</span>
 <span class="sd">    """</span>
     <span class="n">c</span> <span class="o">=</span> <span class="n">cut</span><span class="o">.</span><span class="n">crop</span>
     <span class="k">if</span> <span class="n">c</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -377,6 +396,56 @@
     <span class="n">x</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"iw*(</span><span class="si">{</span><span class="n">c</span><span class="o">.</span><span class="n">x</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">+(</span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">x</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">c</span><span class="o">.</span><span class="n">x</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">)*</span><span class="si">{</span><span class="n">prog</span><span class="si">}</span><span class="s2">)"</span>
     <span class="n">y</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"ih*(</span><span class="si">{</span><span class="n">c</span><span class="o">.</span><span class="n">y</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">+(</span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">y</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">c</span><span class="o">.</span><span class="n">y</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">)*</span><span class="si">{</span><span class="n">prog</span><span class="si">}</span><span class="s2">)"</span>
     <span class="k">return</span> <span class="sa">f</span><span class="s2">"setpts=PTS-STARTPTS,crop=w='</span><span class="si">{</span><span class="n">w</span><span class="si">}</span><span class="s2">':h='</span><span class="si">{</span><span class="n">h</span><span class="si">}</span><span class="s2">':x='</span><span class="si">{</span><span class="n">x</span><span class="si">}</span><span class="s2">':y='</span><span class="si">{</span><span class="n">y</span><span class="si">}</span><span class="s2">'"</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_part_filter</span><span class="p">(</span>
+    <span class="n">cut</span><span class="p">:</span> <span class="s2">"AssemblyCut"</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">w</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">h</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">fps</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">tail</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""THE per-cut filter chain. ONE implementation, used by BOTH render sites.</span>
+
+<span class="sd">    This template used to be written out twice — once in :func:`_render_part` and</span>
+<span class="sd">    once inside :func:`_render_transition`'s ``_norm`` — and the two copies are</span>
+<span class="sd">    the two sides of a blended boundary. Anything that lands on one and not the</span>
+<span class="sd">    other is a **visible seam**: the A side and the B side of a cut disagree</span>
+<span class="sd">    exactly where the blend puts them on top of each other. Two copies stayed in</span>
+<span class="sd">    agreement while the chain was fixed; a per-cut ``look`` is the first thing</span>
+<span class="sd">    that varies, so the copies became one function rather than a comment asking</span>
+<span class="sd">    the next reader to keep them equal.</span>
+
+<span class="sd">    The order is the contract:</span>
+
+<span class="sd">    ``[crop,] scale, pad, setsar, fps, tpad [, look] [, tail]``</span>
+
+<span class="sd">    The look is spliced **after** the normalisation and **before** ``tail``, and</span>
+<span class="sd">    both halves of that are load-bearing:</span>
+
+<span class="sd">    - *After* ``scale``/``pad``/``fps``, the look sees a frame whose geometry is</span>
+<span class="sd">      exactly the canvas and whose rate is exactly the delivery rate — so a</span>
+<span class="sd">      time-varying look (``muvid.footage.look.punch_in``'s ``zoompan``) can be</span>
+<span class="sd">      given exact numbers instead of per-clip probes, and a look's normalised</span>
+<span class="sd">      window means a fraction of the canvas rather than a fraction of whichever</span>
+<span class="sd">      source happens to be under it. It is also the last pixel stage, which is</span>
+<span class="sd">      where ``looks``' own ordering rule wants a quantiser.</span>
+<span class="sd">    - *Before* ``tail`` (``format=yuv420p`` on the transition path), because</span>
+<span class="sd">      ``xfade`` needs its two sides in one pixel format and that is the tail's</span>
+<span class="sd">      whole job.</span>
+
+<span class="sd">    ``tail`` is the only difference between the two sites, and it is a parameter</span>
+<span class="sd">    rather than a second string.</span>
+
+<span class="sd">    With no crop and no look this returns exactly the bytes it always did — the</span>
+<span class="sd">    ``look``-absent path is unchanged character for character, which is the</span>
+<span class="sd">    property ``tests/test_edl_look.py`` pins.</span>
+<span class="sd">    """</span>
+    <span class="n">crop</span> <span class="o">=</span> <span class="n">_crop_filter</span><span class="p">(</span><span class="n">cut</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">crop</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="s1">','</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">crop</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">''</span><span class="si">}</span><span class="s2">"</span>
+        <span class="sa">f</span><span class="s2">"scale=</span><span class="si">{</span><span class="n">w</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">h</span><span class="si">}</span><span class="s2">:force_original_aspect_ratio=decrease,"</span>
+        <span class="sa">f</span><span class="s2">"pad=</span><span class="si">{</span><span class="n">w</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">h</span><span class="si">}</span><span class="s2">:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=</span><span class="si">{</span><span class="n">fps</span><span class="si">}</span><span class="s2">,"</span>
+        <span class="sa">f</span><span class="s2">"tpad=stop=-1:stop_mode=clone"</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="s1">','</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">cut</span><span class="o">.</span><span class="n">look</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">cut</span><span class="o">.</span><span class="n">look</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">''</span><span class="si">}</span><span class="s2">"</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">tail</span><span class="si">}</span><span class="s2">"</span>
+    <span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_video_codec_args</span><span class="p">(</span><span class="n">crf</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">preset</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
@@ -411,13 +480,7 @@
     <span class="c1"># validates a span past the last video frame, and without tpad that part comes up</span>
     <span class="c1"># short, silently desyncing every later cut. Cloning the last frame makes the frame</span>
     <span class="c1"># count exact whenever the source yields at least one frame.</span>
-    <span class="n">crop</span> <span class="o">=</span> <span class="n">_crop_filter</span><span class="p">(</span><span class="n">cut</span><span class="p">)</span>
-    <span class="n">vf</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">crop</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="s1">','</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">crop</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">''</span><span class="si">}</span><span class="s2">"</span>
-        <span class="sa">f</span><span class="s2">"scale=</span><span class="si">{</span><span class="n">w</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">h</span><span class="si">}</span><span class="s2">:force_original_aspect_ratio=decrease,"</span>
-        <span class="sa">f</span><span class="s2">"pad=</span><span class="si">{</span><span class="n">w</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">h</span><span class="si">}</span><span class="s2">:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=</span><span class="si">{</span><span class="n">fps</span><span class="si">}</span><span class="s2">,"</span>
-        <span class="sa">f</span><span class="s2">"tpad=stop=-1:stop_mode=clone"</span>
-    <span class="p">)</span>
+    <span class="n">vf</span> <span class="o">=</span> <span class="n">_part_filter</span><span class="p">(</span><span class="n">cut</span><span class="p">,</span> <span class="n">w</span><span class="o">=</span><span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="o">=</span><span class="n">h</span><span class="p">,</span> <span class="n">fps</span><span class="o">=</span><span class="n">fps</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">cut</span><span class="o">.</span><span class="n">clip_path</span><span class="p">:</span>
         <span class="n">args</span> <span class="o">=</span> <span class="p">[</span>
             <span class="c1"># Input-side seek: lands on the keyframe before clip_in and decodes forward</span>
@@ -500,13 +563,7 @@
     <span class="c1"># A-side framing to the B-side — the blend would still render, at the wrong</span>
     <span class="c1"># framing, which is exactly the kind of failure nothing downstream can see.</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_norm</span><span class="p">(</span><span class="n">cut</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="n">crop</span> <span class="o">=</span> <span class="n">_crop_filter</span><span class="p">(</span><span class="n">cut</span><span class="p">)</span>
-        <span class="k">return</span> <span class="p">(</span>
-            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">crop</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="s1">','</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">crop</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">''</span><span class="si">}</span><span class="s2">"</span>
-            <span class="sa">f</span><span class="s2">"scale=</span><span class="si">{</span><span class="n">w</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">h</span><span class="si">}</span><span class="s2">:force_original_aspect_ratio=decrease,"</span>
-            <span class="sa">f</span><span class="s2">"pad=</span><span class="si">{</span><span class="n">w</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">h</span><span class="si">}</span><span class="s2">:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=</span><span class="si">{</span><span class="n">fps</span><span class="si">}</span><span class="s2">,"</span>
-            <span class="sa">f</span><span class="s2">"tpad=stop=-1:stop_mode=clone,format=yuv420p"</span>
-        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">_part_filter</span><span class="p">(</span><span class="n">cut</span><span class="p">,</span> <span class="n">w</span><span class="o">=</span><span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="o">=</span><span class="n">h</span><span class="p">,</span> <span class="n">fps</span><span class="o">=</span><span class="n">fps</span><span class="p">,</span> <span class="n">tail</span><span class="o">=</span><span class="s2">",format=yuv420p"</span><span class="p">)</span>
 
     <span class="n">n</span> <span class="o">=</span> <span class="n">part</span><span class="o">.</span><span class="n">n_frames</span>
     <span class="n">run_ffmpeg</span><span class="p">(</span>

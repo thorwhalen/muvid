@@ -1,0 +1,455 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>muvid.footage.look &mdash; muvid 0.0.42 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=173d7b4c"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
+      <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="muvid.footage.scoring" href="scoring.html" />
+    <link rel="prev" title="muvid.footage.lacing_bridge" href="lacing_bridge.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            muvid
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../muvid.html">muvid</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../__main__.html">muvid.__main__</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../align.html">muvid.align</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../characters.html">muvid.characters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../compose.html">muvid.compose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contracts.html">muvid.contracts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cost.html">muvid.cost</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../downloads.html">muvid.downloads</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../environments.html">muvid.environments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../events.html">muvid.events</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../facade.html">muvid.facade</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../footage.html">muvid.footage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="align.html">muvid.footage.align</a></li>
+<li class="toctree-l1"><a class="reference internal" href="assemble.html">muvid.footage.assemble</a></li>
+<li class="toctree-l1"><a class="reference internal" href="edl.html">muvid.footage.edl</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lacing_bridge.html">muvid.footage.lacing_bridge</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">muvid.footage.look</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.footage.look.DEFAULT_PUNCH_ANCHOR"><code class="docutils literal notranslate"><span class="pre">DEFAULT_PUNCH_ANCHOR</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.footage.look.DEFAULT_PUNCH_ZOOM"><code class="docutils literal notranslate"><span class="pre">DEFAULT_PUNCH_ZOOM</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.footage.look.LookError"><code class="docutils literal notranslate"><span class="pre">LookError</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.footage.look.chain"><code class="docutils literal notranslate"><span class="pre">chain()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.footage.look.motion"><code class="docutils literal notranslate"><span class="pre">motion()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.footage.look.punch_in"><code class="docutils literal notranslate"><span class="pre">punch_in()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.footage.look.punch_in_cuts"><code class="docutils literal notranslate"><span class="pre">punch_in_cuts()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.footage.look.stylize"><code class="docutils literal notranslate"><span class="pre">stylize()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="scoring.html">muvid.footage.scoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="scoring/_frame_metrics.html">muvid.footage.scoring._frame_metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="scoring/frames.html">muvid.footage.scoring.frames</a></li>
+<li class="toctree-l1"><a class="reference internal" href="scoring/grid.html">muvid.footage.scoring.grid</a></li>
+<li class="toctree-l1"><a class="reference internal" href="scoring/lipsync.html">muvid.footage.scoring.lipsync</a></li>
+<li class="toctree-l1"><a class="reference internal" href="scoring/motionbeat.html">muvid.footage.scoring.motionbeat</a></li>
+<li class="toctree-l1"><a class="reference internal" href="scoring/orchestrator.html">muvid.footage.scoring.orchestrator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="scoring/quality.html">muvid.footage.scoring.quality</a></li>
+<li class="toctree-l1"><a class="reference internal" href="scoring/segment.html">muvid.footage.scoring.segment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="select_score.html">muvid.footage.select_score</a></li>
+<li class="toctree-l1"><a class="reference internal" href="strategy.html">muvid.footage.strategy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="workspace.html">muvid.footage.workspace</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../genre.html">muvid.genre</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../genre_music_video.html">muvid.genre_music_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../lyrics.html">muvid.lyrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mcp.html">muvid.mcp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mcp/_fetch.html">muvid.mcp._fetch</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mcp/_guide.html">muvid.mcp._guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mcp/footage_tools.html">muvid.mcp.footage_tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mcp/identity.html">muvid.mcp.identity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mcp/scoring_tools.html">muvid.mcp.scoring_tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mcp/tools.html">muvid.mcp.tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mcp/workspace.html">muvid.mcp.workspace</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../project.html">muvid.project</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../renderers.html">muvid.renderers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../renderers/_common.html">muvid.renderers._common</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../renderers/_errors.html">muvid.renderers._errors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../renderers/animation.html">muvid.renderers.animation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../renderers/image_to_video.html">muvid.renderers.image_to_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../renderers/lipsync.html">muvid.renderers.lipsync</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../renderers/still.html">muvid.renderers.still</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../renderers/text_to_video.html">muvid.renderers.text_to_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../schema.html">muvid.schema</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../script.html">muvid.script</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ui.html">muvid.ui</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ui/app.html">muvid.ui.app</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../visualize.html">muvid.visualize</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../visualize/canvas.html">muvid.visualize.canvas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../visualize/ffmpeg.html">muvid.visualize.ffmpeg</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../visualize/reactive.html">muvid.visualize.reactive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../visualize/verify.html">muvid.visualize.verify</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../visualize/video.html">muvid.visualize.video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../visualize/visuals.html">muvid.visualize.visuals</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">muvid</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">muvid.footage.look</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../_sources/module_docs/muvid/footage/look.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-muvid.footage.look">
+<span id="muvid-footage-look"></span><h1>muvid.footage.look<a class="headerlink" href="#module-muvid.footage.look" title="Link to this heading"></a></h1>
+<p>Compile a <code class="docutils literal notranslate"><span class="pre">looks</span></code> artifact into the fragment the assembler splices.</p>
+<p>This is muvid’s half of the <code class="docutils literal notranslate"><span class="pre">looks</span></code> seam — <code class="docutils literal notranslate"><span class="pre">looks</span></code>’ build-order item 10, and
+the first real consumer of that package. The division of labour is the whole
+point and it is worth stating before any code:</p>
+<blockquote>
+<div><p><strong>``looks`` decides what a pixel becomes. muvid decides which pixels exist,
+when they appear, and how the process is run.</strong></p>
+</div></blockquote>
+<p>So <code class="docutils literal notranslate"><span class="pre">looks</span></code> emits a <code class="docutils literal notranslate"><span class="pre">-vf</span></code> chain fragment and nothing else. It owns no encode
+setting: <code class="docutils literal notranslate"><span class="pre">-c:v</span></code>, <code class="docutils literal notranslate"><span class="pre">-crf</span></code>, <code class="docutils literal notranslate"><span class="pre">-preset</span></code>, <code class="docutils literal notranslate"><span class="pre">-pix_fmt</span></code>, the frame counts, the
+concat, the mux and the per-invocation timeout all stay in
+<a class="reference internal" href="assemble.html#module-muvid.footage.assemble" title="muvid.footage.assemble"><code class="xref py py-mod docutils literal notranslate"><span class="pre">muvid.footage.assemble</span></code></a>, where the bounded-memory invariant lives. The
+fragment rides in <a class="reference internal" href="edl.html#muvid.footage.edl.EdlEntry.look" title="muvid.footage.edl.EdlEntry.look"><code class="xref py py-attr docutils literal notranslate"><span class="pre">muvid.footage.edl.EdlEntry.look</span></code></a> and is spliced by
+<code class="xref py py-func docutils literal notranslate"><span class="pre">muvid.footage.assemble._part_filter()</span></code>.</p>
+<p>Why a <code class="docutils literal notranslate"><span class="pre">-vf</span></code> fragment is the <em>cheapest possible</em> seam, which is why it was
+chosen: it adds no <code class="docutils literal notranslate"><span class="pre">-i</span></code>. muvid’s assembler was rewritten (muvid#21/#24) because
+one <code class="docutils literal notranslate"><span class="pre">-filter_complex</span></code> over all cuts held a decoder per cut and was OOM-killed at
+30 cuts on a 3.7 GB box; the guarantee it bought is O(1) decoders per invocation.
+A filter fragment cannot touch that.</p>
+<p><strong>A look cannot reach a second source at all, and the earlier claim that it could
+via ``movie=`` was wrong twice over.</strong> <code class="docutils literal notranslate"><span class="pre">movie=</span></code> is a zero-input source filter,
+so at the solo site — a <em>simple</em> filtergraph, one input and one output — it leaves
+the preceding chain unconsumed and ffmpeg refuses the whole graph before decoding
+a frame (<em>“had 1 input(s) and 2 output(s)”</em>, measured on ffmpeg 9.0.1; every
+composited form, <code class="docutils literal notranslate"><span class="pre">movie=X,overlay=10:10</span></code> included, fails identically, and the
+forms that DO render all need <code class="docutils literal notranslate"><span class="pre">[</span></code>/<code class="docutils literal notranslate"><span class="pre">]</span></code>/<code class="docutils literal notranslate"><span class="pre">;</span></code>). At the transition site it does
+run, and what it does there is call <code class="docutils literal notranslate"><span class="pre">avformat_open_input</span></code> on a path from inside
+the fragment — a second container decoder that no invocation accounted for, which
+is the muvid#21/#24 invariant going out the back door. So
+<code class="xref py py-func docutils literal notranslate"><span class="pre">muvid.footage.edl._validate_look()</span></code> refuses it, along with every other filter
+outside <a class="reference internal" href="edl.html#muvid.footage.edl.LOOK_FILTERS" title="muvid.footage.edl.LOOK_FILTERS"><code class="xref py py-data docutils literal notranslate"><span class="pre">muvid.footage.edl.LOOK_FILTERS</span></code></a>. Compositing needs a second splice
+site the assembler does not have; that is a change to the assembler, not a look.</p>
+<p>Three functions, in the order you are likely to want them:</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#muvid.footage.look.punch_in" title="muvid.footage.look.punch_in"><code class="xref py py-func docutils literal notranslate"><span class="pre">punch_in()</span></code></a> — the in-shot zoom the design partner asked for (muvid#66).</p></li>
+<li><p><a class="reference internal" href="#muvid.footage.look.motion" title="muvid.footage.look.motion"><code class="xref py py-func docutils literal notranslate"><span class="pre">motion()</span></code></a> — an arbitrary camera path over the cut; <code class="docutils literal notranslate"><span class="pre">punch_in</span></code> is a
+named case of it.</p></li>
+<li><p><a class="reference internal" href="#muvid.footage.look.stylize" title="muvid.footage.look.stylize"><code class="xref py py-func docutils literal notranslate"><span class="pre">stylize()</span></code></a> — a whole <code class="xref py py-class docutils literal notranslate"><span class="pre">looks.Look</span></code> (grade, LUT, posterise …)
+compiled against the binary muvid will actually run.</p></li>
+</ul>
+<p><a class="reference internal" href="#muvid.footage.look.chain" title="muvid.footage.look.chain"><code class="xref py py-func docutils literal notranslate"><span class="pre">chain()</span></code></a> puts two of them on one cut.</p>
+<p><strong>Which binary.</strong> The fleet has two ffmpegs in routine use and neither is a
+superset of the other (<code class="docutils literal notranslate"><span class="pre">looks</span></code>’ research note 11 §3.4 measured 484 vs 481
+filters, with <code class="docutils literal notranslate"><span class="pre">zscale</span></code> in one and <code class="docutils literal notranslate"><span class="pre">drawtext</span></code> in the other). <code class="docutils literal notranslate"><span class="pre">looks</span></code> refuses
+to resolve one — the environment is an argument — and muvid is the party entitled
+to answer, because muvid owns the invocation. muvid runs the bare name <code class="docutils literal notranslate"><span class="pre">ffmpeg</span></code>
+from <code class="docutils literal notranslate"><span class="pre">PATH</span></code> (<a class="reference internal" href="../visualize/ffmpeg.html#muvid.visualize.ffmpeg.run_ffmpeg" title="muvid.visualize.ffmpeg.run_ffmpeg"><code class="xref py py-func docutils literal notranslate"><span class="pre">muvid.visualize.ffmpeg.run_ffmpeg()</span></code></a>), so that is what
+<a class="reference internal" href="#muvid.footage.look.stylize" title="muvid.footage.look.stylize"><code class="xref py py-func docutils literal notranslate"><span class="pre">stylize()</span></code></a> probes. Pass <code class="docutils literal notranslate"><span class="pre">env=</span></code> to compile against a different one.</p>
+<p><strong>One limitation, measured rather than guessed at, and not fixable here.</strong> A
+<em>time-varying</em> look on a cut that borders a <a class="reference internal" href="edl.html#muvid.footage.edl.Transition" title="muvid.footage.edl.Transition"><code class="xref py py-class docutils literal notranslate"><span class="pre">Transition</span></code></a>
+<strong>restarts its ramp on the blended part</strong>. The assembler renders a transitioned
+boundary as a separate two-input invocation whose inputs are input-side-seeked to
+the blend window, so the filter clock there begins at 0 again instead of
+continuing the cut’s.</p>
+<p>Measured on a 3.0 s cut at 25 fps with a 0.4 s fade and a 1.12x punch: the solo
+part’s last frame is drawn at zoom 1.109 (mean <a href="#id1"><span class="problematic" id="id2">|diff|</span></a> 23.1/255 against the same
+frame rendered without the look), while the blend part’s first frame is drawn at
+zoom 1.000 (mean <a href="#id3"><span class="problematic" id="id4">|diff|</span></a> 0.5/255 against its own unlooked twin — i.e.
+indistinguishable from no punch at all). The move snaps back for the length of
+the blend and then the next cut begins.</p>
+<p>A <strong>static</strong> look — a grade, a LUT, a posterise — is unaffected, because it never
+reads the clock, and it is what the seam is mostly for. For a <em>moving</em> look,
+either keep it off transitioned boundaries or accept the hitch. muvid cannot
+rebase the fragment without rewriting an arbitrary ffmpeg expression, which is
+exactly what <code class="docutils literal notranslate"><span class="pre">looks</span></code> refuses to do for itself (its rule 27), and a wrong rebase
+is worse than a documented one: it would exit 0 having moved the effect to a
+different second of the clip. Tracked as muvid#73.</p>
+<dl class="py data">
+<dt class="sig sig-object py" id="muvid.footage.look.DEFAULT_PUNCH_ANCHOR">
+<span class="sig-prename descclassname"><span class="pre">muvid.footage.look.</span></span><span class="sig-name descname"><span class="pre">DEFAULT_PUNCH_ANCHOR</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">(0.5,</span> <span class="pre">0.5)</span></span><a class="headerlink" href="#muvid.footage.look.DEFAULT_PUNCH_ANCHOR" title="Link to this definition"></a></dt>
+<dd><p>Where <a class="reference internal" href="#muvid.footage.look.punch_in" title="muvid.footage.look.punch_in"><code class="xref py py-func docutils literal notranslate"><span class="pre">punch_in()</span></code></a> zooms toward, as a fraction of the canvas. Centre.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="muvid.footage.look.DEFAULT_PUNCH_ZOOM">
+<span class="sig-prename descclassname"><span class="pre">muvid.footage.look.</span></span><span class="sig-name descname"><span class="pre">DEFAULT_PUNCH_ZOOM</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1.12</span></span><a class="headerlink" href="#muvid.footage.look.DEFAULT_PUNCH_ZOOM" title="Link to this definition"></a></dt>
+<dd><p>the design partner
+described what he wanted as a “slight zoom/punch-in jump” (muvid#66), and a
+punch-in is a punctuation mark, not a transition. Larger values magnify the
+source, so a value that looks fine on a 4K clip is soft on a 720p one — which
+is why it is a named constant a caller overrides rather than a hidden literal.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>How far <a class="reference internal" href="#muvid.footage.look.punch_in" title="muvid.footage.look.punch_in"><code class="xref py py-func docutils literal notranslate"><span class="pre">punch_in()</span></code></a> zooms by default. A <em>slight</em> move</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="muvid.footage.look.LookError">
+<span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">muvid.footage.look.</span></span><span class="sig-name descname"><span class="pre">LookError</span></span><a class="reference internal" href="../../../_modules/muvid/footage/look.html#LookError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.look.LookError" title="Link to this definition"></a></dt>
+<dd><p>A look could not be compiled. Carries what to do about it.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.footage.look.chain">
+<span class="sig-prename descclassname"><span class="pre">muvid.footage.look.</span></span><span class="sig-name descname"><span class="pre">chain</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">fragments</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../../../_modules/muvid/footage/look.html#chain"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.look.chain" title="Link to this definition"></a></dt>
+<dd><p>Join look fragments into one, dropping the empty ones.</p>
+<p>A cut carries at most one look, so two effects on one cut are one chain.
+Returns <code class="docutils literal notranslate"><span class="pre">None</span></code> when nothing survives, which is the value the EDL field
+wants for “no look” — an empty string is refused by <code class="docutils literal notranslate"><span class="pre">validate_edl</span></code>
+deliberately, so this does not produce one.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">chain</span><span class="p">(</span><span class="s2">"hue=s=0"</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">""</span><span class="p">,</span> <span class="s2">"unsharp=5:5:1"</span><span class="p">)</span>
+<span class="go">'hue=s=0,unsharp=5:5:1'</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">chain</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span>
+<span class="go">True</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.footage.look.motion">
+<span class="sig-prename descclassname"><span class="pre">muvid.footage.look.</span></span><span class="sig-name descname"><span class="pre">motion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">keyframes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">canvas</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../../_modules/muvid/footage/look.html#motion"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.look.motion" title="Link to this definition"></a></dt>
+<dd><p>A camera path over the cut, as a filter fragment. <code class="docutils literal notranslate"><span class="pre">looks</span></code> picks the filter.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>keyframes</strong> – <code class="docutils literal notranslate"><span class="pre">(t_seconds,</span> <span class="pre">window)</span></code> pairs, or <code class="xref py py-class docutils literal notranslate"><span class="pre">looks.Keyframe`s.</span>
+<span class="pre">The</span> <span class="pre">window</span> <span class="pre">is</span> <span class="pre">anything</span> <span class="pre">with</span> <span class="pre">``x`</span></code>/<code class="docutils literal notranslate"><span class="pre">y</span></code>/<code class="docutils literal notranslate"><span class="pre">w</span></code>/<code class="docutils literal notranslate"><span class="pre">h</span></code> as fractions —
+<a class="reference internal" href="edl.html#muvid.footage.edl.CropWindow" title="muvid.footage.edl.CropWindow"><code class="xref py py-class docutils literal notranslate"><span class="pre">muvid.footage.edl.CropWindow</span></code></a> satisfies that structurally,
+with no adapter, because both packages use <code class="docutils literal notranslate"><span class="pre">burns.Rect</span></code>’s
+convention on purpose.</p></li>
+<li><p><strong>canvas</strong> – <code class="docutils literal notranslate"><span class="pre">(width,</span> <span class="pre">height)</span></code> — the assembler’s delivery canvas.</p></li>
+<li><p><strong>fps</strong> – the assembler’s delivery frame rate.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>One linear ffmpeg filter chain, ready for the <code class="docutils literal notranslate"><span class="pre">look</span></code> field.</p>
+</dd>
+</dl>
+<p><strong>The windows are fractions of the CANVAS, not of the source.</strong> That follows
+from where the fragment is spliced: after <code class="docutils literal notranslate"><span class="pre">scale</span></code>/<code class="docutils literal notranslate"><span class="pre">pad</span></code>, so the frame it
+sees is the canvas with the source letterboxed into it. It is also what makes
+the move well-defined across a mixed-device edit — the same punch reads the
+same on a portrait phone clip and a landscape one, where a source-relative
+window would not. Use <code class="docutils literal notranslate"><span class="pre">crop</span></code>/<code class="docutils literal notranslate"><span class="pre">crop_end</span></code> on the EDL entry for the
+source-relative framing decision; the two compose, crop first.</p>
+<p>Which ffmpeg filter this becomes is <code class="docutils literal notranslate"><span class="pre">looks</span></code>’ decision and not a matter of
+taste: a constant-size window is <code class="docutils literal notranslate"><span class="pre">crop</span></code>, a resizing one is <code class="docutils literal notranslate"><span class="pre">zoompan</span></code>, and
+<code class="docutils literal notranslate"><span class="pre">crop</span></code> cannot resize at all (its <code class="docutils literal notranslate"><span class="pre">w</span></code>/<code class="docutils literal notranslate"><span class="pre">h</span></code> are evaluated once, at
+configure time, when <code class="docutils literal notranslate"><span class="pre">t</span></code> is NAN — it either refuses to configure or, worse,
+exits 0 having rendered every frame at one wrong size).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#muvid.footage.look.LookError" title="muvid.footage.look.LookError"><strong>LookError</strong></a> – If the path needs something that was not supplied.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.footage.look.punch_in">
+<span class="sig-prename descclassname"><span class="pre">muvid.footage.look.</span></span><span class="sig-name descname"><span class="pre">punch_in</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">canvas</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">duration_s</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zoom</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.12</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">anchor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">(0.5,</span> <span class="pre">0.5)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_s</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_s</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../../_modules/muvid/footage/look.html#punch_in"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.look.punch_in" title="Link to this definition"></a></dt>
+<dd><p>An in-shot punch-in: hold, then push in, WITHOUT leaving the shot (muvid#66).</p>
+<p>The design partner asked for “roughly 2N” of these and was explicit that it
+is <strong>not</strong> a transition between two clips — it stays on the same shot. Before
+this there was no punch-in, zoom or Ken Burns move anywhere in the footage
+path; the only two mentions of <code class="docutils literal notranslate"><span class="pre">zoom</span></code> under <code class="docutils literal notranslate"><span class="pre">footage/</span></code> were comments
+explaining why <code class="docutils literal notranslate"><span class="pre">zoompan</span></code> was unusable, and that reading has since been
+measured wrong: <code class="docutils literal notranslate"><span class="pre">t</span></code> is undefined inside <code class="docutils literal notranslate"><span class="pre">zoompan</span></code>, but <code class="docutils literal notranslate"><span class="pre">in_time</span></code> works
+and <code class="docutils literal notranslate"><span class="pre">d=1</span></code> is exactly 1:1 rather than the frame-duplicating default. Both
+corrections live in <code class="docutils literal notranslate"><span class="pre">looks.compile_motion</span></code>, which is why this function is
+six lines of geometry and no ffmpeg.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>canvas</strong> – <code class="docutils literal notranslate"><span class="pre">(width,</span> <span class="pre">height)</span></code> — the assembler’s delivery canvas.</p></li>
+<li><p><strong>fps</strong> – the assembler’s delivery frame rate.</p></li>
+<li><p><strong>duration_s</strong> – the cut’s length in seconds. The move ends here by default.</p></li>
+<li><p><strong>zoom</strong> – final magnification. <code class="docutils literal notranslate"><span class="pre">1.12</span></code> shows ~89% of the frame.</p></li>
+<li><p><strong>anchor</strong> – what stays put, as a fraction of the canvas. <code class="docutils literal notranslate"><span class="pre">(0.5,</span> <span class="pre">0.5)</span></code>
+centres it; <code class="docutils literal notranslate"><span class="pre">(0.5,</span> <span class="pre">0.35)</span></code> pushes toward a face in the upper third.</p></li>
+<li><p><strong>start_s</strong> – hold the full frame until here, then move.</p></li>
+<li><p><strong>end_s</strong> – reach the final framing here and hold. Defaults to <code class="docutils literal notranslate"><span class="pre">duration_s</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>One linear ffmpeg filter chain, ready for the <code class="docutils literal notranslate"><span class="pre">look</span></code> field.</p>
+</dd>
+</dl>
+<p>A move is a ramp between two windows, and the windows are fractions of the
+canvas (see <a class="reference internal" href="#muvid.footage.look.motion" title="muvid.footage.look.motion"><code class="xref py py-func docutils literal notranslate"><span class="pre">motion()</span></code></a>). The end window keeps the canvas’s aspect ratio,
+which is what lets <code class="docutils literal notranslate"><span class="pre">zoompan</span></code> deliver at the canvas size with no stretch and
+no reframing crop.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">frag</span> <span class="o">=</span> <span class="n">punch_in</span><span class="p">(</span><span class="n">canvas</span><span class="o">=</span><span class="p">(</span><span class="mi">640</span><span class="p">,</span> <span class="mi">360</span><span class="p">),</span> <span class="n">fps</span><span class="o">=</span><span class="mi">25</span><span class="p">,</span> <span class="n">duration_s</span><span class="o">=</span><span class="mf">3.0</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">frag</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"zoompan=d=1:s=640x360:fps=25:"</span><span class="p">)</span>
+<span class="go">True</span>
+</pre></div>
+</div>
+<p>A pull-out is this move backwards, so it goes through <a class="reference internal" href="#muvid.footage.look.motion" title="muvid.footage.look.motion"><code class="xref py py-func docutils literal notranslate"><span class="pre">motion()</span></code></a> with the
+windows in the order you want them, rather than a boolean here.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#muvid.footage.look.LookError" title="muvid.footage.look.LookError"><strong>LookError</strong></a> – If <code class="docutils literal notranslate"><span class="pre">zoom</span></code>, the timings or the anchor are out of range.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.footage.look.punch_in_cuts">
+<span class="sig-prename descclassname"><span class="pre">muvid.footage.look.</span></span><span class="sig-name descname"><span class="pre">punch_in_cuts</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entries</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">canvas</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">every</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zoom</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.12</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">anchor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">(0.5,</span> <span class="pre">0.5)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">offset</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../_modules/muvid/footage/look.html#punch_in_cuts"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.look.punch_in_cuts" title="Link to this definition"></a></dt>
+<dd><p>Put a punch-in on every <code class="docutils literal notranslate"><span class="pre">every</span></code>-th footage entry — muvid#66’s other half.</p>
+<p>The request was for <em>roughly 2N</em> punch-ins “evenly redistributed so they
+occur about twice as often”, explicitly <strong>not</strong> two extra tacked on the end.
+Redistribution is therefore the whole job, and it is a stride over the cuts
+rather than a wall-clock interval: cuts are already beat-snapped by the
+selector, so a stride lands the moves on musical time for free, where a
+seconds-based interval would drift off it.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>entries</strong> – validated <a class="reference internal" href="edl.html#muvid.footage.edl.EdlEntry" title="muvid.footage.edl.EdlEntry"><code class="xref py py-class docutils literal notranslate"><span class="pre">EdlEntry</span></code></a> objects.</p></li>
+<li><p><strong>canvas</strong> – <code class="docutils literal notranslate"><span class="pre">(width,</span> <span class="pre">height)</span></code> — the delivery canvas.</p></li>
+<li><p><strong>fps</strong> – the delivery frame rate.</p></li>
+<li><p><strong>every</strong> – stride. <code class="docutils literal notranslate"><span class="pre">2</span></code> punches every other footage cut; <code class="docutils literal notranslate"><span class="pre">1</span></code> punches all.</p></li>
+<li><p><strong>zoom</strong> – passed to <a class="reference internal" href="#muvid.footage.look.punch_in" title="muvid.footage.look.punch_in"><code class="xref py py-func docutils literal notranslate"><span class="pre">punch_in()</span></code></a>.</p></li>
+<li><p><strong>anchor</strong> – passed to <a class="reference internal" href="#muvid.footage.look.punch_in" title="muvid.footage.look.punch_in"><code class="xref py py-func docutils literal notranslate"><span class="pre">punch_in()</span></code></a>.</p></li>
+<li><p><strong>offset</strong> – which footage cut in each stride gets the move.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A NEW list of entries. Gaps are skipped (they have no footage to punch
+into, and <code class="docutils literal notranslate"><span class="pre">validate_edl</span></code> refuses a look on one), and an entry that
+already carries a look keeps it — this composes with hand-authoring
+rather than overwriting it, because silently replacing an authored
+direction is the failure this package guards against elsewhere.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.footage.look.stylize">
+<span class="sig-prename descclassname"><span class="pre">muvid.footage.look.</span></span><span class="sig-name descname"><span class="pre">stylize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">look</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">canvas</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">duration_s</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ffmpeg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'ffmpeg'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">env</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">policy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../../_modules/muvid/footage/look.html#stylize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.look.stylize" title="Link to this definition"></a></dt>
+<dd><p>A <code class="xref py py-class docutils literal notranslate"><span class="pre">looks.Look</span></code> compiled against the binary muvid will run.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>look</strong> – a <code class="xref py py-class docutils literal notranslate"><span class="pre">looks.Look</span></code> — an ordered stack of named effects.</p></li>
+<li><p><strong>canvas</strong> – <code class="docutils literal notranslate"><span class="pre">(width,</span> <span class="pre">height)</span></code> — the assembler’s delivery canvas.</p></li>
+<li><p><strong>fps</strong> – the assembler’s delivery frame rate.</p></li>
+<li><p><strong>duration_s</strong> – the cut’s length, when a step needs to know it.</p></li>
+<li><p><strong>ffmpeg</strong> – which binary to probe. Defaults to the bare name muvid runs.</p></li>
+<li><p><strong>env</strong> – a <code class="xref py py-class docutils literal notranslate"><span class="pre">looks.FfmpegEnv</span></code> to compile against, instead of probing.</p></li>
+<li><p><strong>policy</strong> – a <code class="xref py py-class docutils literal notranslate"><span class="pre">looks.Policy</span></code> — the licence ceiling. <code class="docutils literal notranslate"><span class="pre">looks</span></code>’ default
+applies when omitted.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>One linear ffmpeg filter chain, ready for the <code class="docutils literal notranslate"><span class="pre">look</span></code> field.</p>
+</dd>
+</dl>
+<p><strong>The clip is declared, not measured.</strong> <code class="docutils literal notranslate"><span class="pre">looks</span></code> compiles against a
+<em>declared</em> clip, and at this splice point muvid knows the geometry and the
+rate exactly — they are the canvas and the delivery rate the assembler is
+about to impose, not properties of whichever source is underneath. That is
+the payoff of splicing after <code class="docutils literal notranslate"><span class="pre">scale</span></code>/<code class="docutils literal notranslate"><span class="pre">pad</span></code>/<code class="docutils literal notranslate"><span class="pre">fps</span></code> rather than before it.</p>
+<p><code class="docutils literal notranslate"><span class="pre">origin_s=0.0</span></code> is declared for the same kind of reason and is true for a
+stated cause rather than by default: <code class="docutils literal notranslate"><span class="pre">looks</span></code> treats a span as being in the
+host’s decoder time, and <em>input-side</em> <code class="docutils literal notranslate"><span class="pre">-ss</span></code> rebases the filter timeline to
+0 where output-side <code class="docutils literal notranslate"><span class="pre">-ss</span></code> does not. <code class="xref py py-func docutils literal notranslate"><span class="pre">muvid.footage.assemble._render_part()</span></code>
+seeks input-side. Move that seek and this declaration becomes false.</p>
+<p><strong>A refusal is the feature.</strong> <code class="docutils literal notranslate"><span class="pre">looks</span></code> resolves each step’s licence tier
+against the probed binary, so a look reaching a GPL-only filter on an
+LGPL build is either substituted or refused by name — rather than working on
+a laptop and quietly raising the licence tier of a shipped product.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#muvid.footage.look.LookError" title="muvid.footage.look.LookError"><strong>LookError</strong></a> – If the look cannot be compiled for this binary, this ceiling
+    or this clip. The message is <code class="docutils literal notranslate"><span class="pre">looks</span></code>’, which names the remedy.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="lacing_bridge.html" class="btn btn-neutral float-left" title="muvid.footage.lacing_bridge" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="scoring.html" class="btn btn-neutral float-right" title="muvid.footage.scoring" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p></p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
