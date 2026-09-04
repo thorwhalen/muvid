@@ -1590,12 +1590,25 @@ def test_the_corpus_covers_both_ranges_a_plate_can_run_in():
     Every member could pass its own range check while the corpus held only one range,
     which is the state this branch started in — and the state in which hardcoding
     `_DIM_PIVOT` to 16 passes the entire suite.
+
+    **"Both ranges" is not "every plate a cover can produce."** A 16-bit PNG
+    (`rgb48be`, which design tools export routinely) makes the chain negotiate
+    `yuv444p16le`, where luma runs 4096..60160 — `_DIM_PIVOT` adapts correctly to
+    4096, but `_FULL_RANGE`'s 8-bit clip literals do not, and the plate collapses
+    to a single value. Measured through the real chain, dumped in its own pixel
+    format: unpinned luma `min=255 max=255`, ONE distinct level.
+
+    That is muvid#81 — pre-existing (the merge-base is identically broken) and NOT
+    closed here, so this corpus deliberately does not claim to cover it. The
+    assertion below is `>=` on the two 8-bit ranges rather than an equality that
+    would read as "these are all the ranges there are".
     """
     floors = {s.black for s in PLATE_SOURCES.values()}
-    assert floors == {0, BROADCAST_BLACK}, (
+    assert {0, BROADCAST_BLACK} <= floors, (
         f"the plate corpus floors at {sorted(floors)}. It has to contain both a "
         "limited-range plate (a PNG cover, minval 16) and a full-range one (a JPEG "
-        "cover, minval 0), or a hardcoded pivot passes."
+        "cover, minval 0), or a hardcoded pivot passes. (Subset, not equality: a "
+        "16-bit plate floors at 4096 and belongs here once muvid#81 is fixed.)"
     )
 
 
@@ -1810,16 +1823,37 @@ def test_every_reactive_background_dim_is_a_named_constant():
         for target in node.targets
         if isinstance(target, ast.Name) and target.id.isupper()
     }
+
+    def _is_named(value):
+        return isinstance(value, ast.Name) and value.id in named
+
     unnamed = [
         kw.value
         for node in ast.walk(tree)
         if isinstance(node, ast.Call)
         for kw in node.keywords
-        if kw.arg == "bg_dim"
-        and not (isinstance(kw.value, ast.Name) and kw.value.id in named)
+        if kw.arg == "bg_dim" and not _is_named(kw.value)
     ]
+    # SIGNATURE DEFAULTS TOO. A call keyword is not the only place a bg_dim can
+    # be written: `def _reactive_plan(..., bg_dim: float | None = 0.945)` is an
+    # `ast.arguments.defaults` entry, not an `ast.Call`, so the walk above never
+    # saw it — and that default is exactly where a fourth site would hide, since
+    # a signature default reads as a declaration rather than as a value passed.
+    for node in ast.walk(tree):
+        if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            continue
+        args = node.args
+        pairs = (
+            list(zip(args.args[-len(args.defaults) :], args.defaults))
+            if args.defaults
+            else []
+        )
+        pairs += [
+            (a, d) for a, d in zip(args.kwonlyargs, args.kw_defaults) if d is not None
+        ]
+        unnamed += [d for a, d in pairs if a.arg == "bg_dim" and not _is_named(d)]
     assert not unnamed, (
-        "visuals.py passes bg_dim as something other than a module-level named "
+        "visuals.py writes bg_dim as something other than a module-level named "
         f"constant at line(s) {sorted(n.lineno for n in unnamed)}: "
         f"{[ast.unparse(n) for n in unnamed]}. Name it — a computed or looked-up "
         "value is as invisible to the next retune as the bare literal muvid#70 "
