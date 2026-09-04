@@ -50,7 +50,6 @@ from tests.ffmpeg_support import needs_ffmpeg
 
 SONG_DUR = 20.0
 _A = FootageAlignment("A", 0.0, 0.9, 20.0, (0.0, 20.0))
-_B = FootageAlignment("B", 0.0, 0.9, 20.0, (0.0, 20.0))
 _GREY = "hue=s=0"
 _PUNCH = punch_in(canvas=(640, 360), fps=25, duration_s=3.0)
 
