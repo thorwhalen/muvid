@@ -1364,8 +1364,11 @@ def test_the_dim_darkens_the_plate_instead_of_deleting_its_shadows(site, source)
     shipped = _plate_luma(source, dim_saturation_lut(dim=new, saturation=saturation))
 
     # The control first: the instrument has to be able to SEE the defect, or the
-    # assertion below passes for reasons that have nothing to do with the fix.
-    assert _at_black(additive) > 0.05, (
+    # assertion below passes for reasons that have nothing to do with the fix. The
+    # bar is 2% against a measured 5.99%-80.78% across these sources, because what
+    # it has to establish is "this source clips at all" — a threshold set just under
+    # the smallest measurement would be a flake, not a stronger claim.
+    assert _at_black(additive) > 0.02, (
         f"{site}/{source}: the additive dim this replaces put only "
         f"{100 * _at_black(additive):.2f}% of the plate at display black, so this "
         "source cannot show the crush and the comparison proves nothing."
@@ -1381,9 +1384,13 @@ def test_the_dim_darkens_the_plate_instead_of_deleting_its_shadows(site, source)
     # level by, so std/std is the gain; clipping destroys contrast at a rate that
     # tracks nothing (measured here: 2.7x to 7.3x the nominal gain, and varying by
     # source, because it depends on how much of the picture fell off the bottom).
+    # Measured 1.00-1.37x the nominal gain (the upper end is the quantisation noise
+    # an eight-bit plate at a 3.5% gain adds), against 2.7-7.3x for the additive
+    # form, so the ceiling sits between the two populations rather than on the edge
+    # of one.
     gain = 1 - new
     spread = shipped.std() / undimmed.std()
-    assert 0.90 * gain <= spread <= 1.45 * gain, (
+    assert 0.90 * gain <= spread <= 1.60 * gain, (
         f"{site}/{source}: the plate's contrast is {spread:.4f} of the undimmed "
         f"plate's, where a scaling by {gain:.3f} would give {gain:.3f} (the "
         f"additive dim it replaces gives {additive.std() / undimmed.std():.4f})."
