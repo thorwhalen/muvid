@@ -92,7 +92,10 @@ def test_assemble_meta_carries_the_download_claim(tmp_path, monkeypatch):
     monkeypatch.setattr(
         A,
         "assemble_music_video",
-        lambda cuts, song, out, canvas: (Path(out).write_bytes(b"v"), Path(out))[1],
+        lambda cuts, song, out, canvas, on_note=None: (
+            Path(out).write_bytes(b"v"),
+            Path(out),
+        )[1],
     )
     monkeypatch.setattr(V, "verify_video", lambda *a, **k: [])
     monkeypatch.setattr(V, "failures", lambda c: [])

@@ -145,7 +145,7 @@ def test_score_job_flow_and_weighted_assemble(tmp_path, monkeypatch):
         monkeypatch.setattr(
             A,
             "assemble_music_video",
-            lambda cuts, s, out, canvas: (
+            lambda cuts, s, out, canvas, on_note=None: (
                 __import__("pathlib").Path(out).write_bytes(b"v"),
                 __import__("pathlib").Path(out),
             )[1],

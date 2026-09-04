@@ -1224,7 +1224,13 @@ def test_every_optional_edl_field_is_carried_by_the_returned_edl():
 
     required = {"song_start", "song_end", "clip_id"}
     optional = [f.name for f in dataclasses.fields(EdlEntry) if f.name not in required]
-    assert optional == ["transition", "crop", "crop_end", "look"], (
+    assert optional == [
+        "transition",
+        "crop",
+        "crop_end",
+        "look",
+        "look_time_varying",
+    ], (
         f"EdlEntry grew or lost an optional field ({optional}). Decide whether it "
         "belongs in the returned/persisted edit, add it to "
         "footage_tools._EDL_OPTIONAL_FIELDS and to lacing_bridge._edl_body, then "
@@ -1235,9 +1241,16 @@ def test_every_optional_edl_field_is_carried_by_the_returned_edl():
         "crop": CropWindow(0.0, 0.25, 1.0, 0.5),
         "crop_end": CropWindow(0.0, 0.25, 1.0, 0.5),
         "look": _GREY,
+        # A bool field's ABSENT value is False, not None — so the value that has
+        # to survive the trip is `True`, and a `look` has to accompany it or
+        # `validate_edl` refuses the pair.
+        "look_time_varying": True,
     }
     for field in optional:
-        e = EdlEntry(0.0, 4.0, "A", **{field: values[field]})
+        kwargs = {field: values[field]}
+        if field == "look_time_varying":
+            kwargs["look"] = _GREY
+        e = EdlEntry(0.0, 4.0, "A", **kwargs)
         assert field in _edl_json(e), (
             f"{field!r} is accepted by validate_edl and honoured by the renderer, "
             "but the edl the tool returns and persists does not carry it — so "
@@ -1362,10 +1375,10 @@ class TestTheNameResolvesTheWayFfmpegResolvesIt:
         from muvid.footage.edl import EdlEntry, _validate_look
 
         with pytest.raises(ValueError, match="which muvid does not offer"):
-            _validate_look(0, EdlEntry(0.0, 1.0, "A", look="hue\\ =s=0"))
+            _validate_look(0, EdlEntry(0.0, 1.0, "A", look="hue\\ =s=0"), (640, 360))
 
     def test_and_a_lone_escaped_space_does_not_crash_the_lexer(self):
         from muvid.footage.edl import EdlEntry, _validate_look
 
         with pytest.raises(ValueError, match="which muvid does not offer"):
-            _validate_look(0, EdlEntry(0.0, 1.0, "A", look="\\ =b"))
+            _validate_look(0, EdlEntry(0.0, 1.0, "A", look="\\ =b"), (640, 360))

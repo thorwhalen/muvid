@@ -42,7 +42,10 @@ Three functions, in the order you are likely to want them:
 - :func:`stylize` — a whole :class:`looks.Look` (grade, LUT, posterise …)
   compiled against the binary muvid will actually run.
 
-:func:`chain` puts two of them on one cut.
+:func:`chain` puts two of them on one cut. Each returns a :class:`LookFragment` —
+a ``str`` that also answers :attr:`~LookFragment.time_varying` — except that
+:func:`chain` returns ``None`` when nothing survives. Read the answer back with
+:func:`is_time_varying`, which treats a plain ``str`` as static.
 
 **Which binary.** The fleet has two ffmpegs in routine use and neither is a
 superset of the other (``looks``' research note 11 §3.4 measured 484 vs 481
@@ -52,27 +55,35 @@ to answer, because muvid owns the invocation. muvid runs the bare name ``ffmpeg`
 from ``PATH`` (:func:`muvid.visualize.ffmpeg.run_ffmpeg`), so that is what
 :func:`stylize` probes. Pass ``env=`` to compile against a different one.
 
-**One limitation, measured rather than guessed at, and not fixable here.** A
-*time-varying* look on a cut that borders a :class:`~muvid.footage.edl.Transition`
-**restarts its ramp on the blended part**. The assembler renders a transitioned
-boundary as a separate two-input invocation whose inputs are input-side-seeked to
-the blend window, so the filter clock there begins at 0 again instead of
-continuing the cut's.
+**One limitation, measured rather than guessed at, and not fixable here — but no
+longer silent.** A *time-varying* look on a cut that borders a
+:class:`~muvid.footage.edl.Transition` **restarts its ramp on the blended part**.
+The assembler renders a transitioned boundary as a separate two-input invocation
+whose inputs are input-side-seeked to the blend window, so the filter clock there
+begins at 0 again instead of continuing the cut's.
 
 Measured on a 3.0 s cut at 25 fps with a 0.4 s fade and a 1.12x punch: the solo
-part's last frame is drawn at zoom 1.109 (mean |diff| 23.1/255 against the same
+part's last frame is drawn at zoom 1.109 (mean |diff| 28.1/255 against the same
 frame rendered without the look), while the blend part's first frame is drawn at
-zoom 1.000 (mean |diff| 0.5/255 against its own unlooked twin — i.e.
+zoom 1.000 (mean |diff| 0.7/255 against its own unlooked twin — i.e.
 indistinguishable from no punch at all). The move snaps back for the length of
 the blend and then the next cut begins.
 
 A **static** look — a grade, a LUT, a posterise — is unaffected, because it never
-reads the clock, and it is what the seam is mostly for. For a *moving* look,
-either keep it off transitioned boundaries or accept the hitch. muvid cannot
-rebase the fragment without rewriting an arbitrary ffmpeg expression, which is
+reads the clock, and it is what the seam is mostly for. muvid still cannot rebase
+the fragment: that means rewriting an arbitrary ffmpeg expression, which is
 exactly what ``looks`` refuses to do for itself (its rule 27), and a wrong rebase
-is worse than a documented one: it would exit 0 having moved the effect to a
-different second of the clip. Tracked as muvid#73.
+is worse than a documented one — it would exit 0 having moved the effect to a
+different second of the clip.
+
+What muvid *can* do, and now does (muvid#73), is **say which kind a look is** so
+the assembler can warn instead of rendering the hitch quietly. Every function
+here returns a :class:`LookFragment` — a plain ``str`` that also answers
+``.time_varying`` — and :func:`punch_in_cuts` copies that answer onto
+:attr:`~muvid.footage.edl.EdlEntry.look_time_varying`, which is what the
+assembler reads. A caller assembling entries by hand should do the same; the flag
+defaults to ``False``, so an *undeclared* moving look is still silent, and that
+limit is stated on the field rather than left to be discovered.
 """
 
 from __future__ import annotations
@@ -90,9 +101,89 @@ DEFAULT_PUNCH_ZOOM = 1.12
 #: Where :func:`punch_in` zooms toward, as a fraction of the canvas. Centre.
 DEFAULT_PUNCH_ANCHOR = (0.5, 0.5)
 
+#: ``looks`` effects whose compiled fragment READS THE FILTER CLOCK, so a cut
+#: carrying one is affected by muvid#73's restart on a blended boundary.
+#:
+#: **Pinned here rather than derived from ``looks``, for the same reason
+#: :data:`muvid.footage.edl.LOOK_FILTERS` is** — a new ``looks`` effect must be a
+#: decision someone records, not a silent change to what muvid warns about. The
+#: drift test in ``tests/test_look_time_varying.py`` fails when
+#: ``looks.effects()`` grows,
+#: which is what forces the classification.
+#:
+#: ``ImplRef.timeline`` is NOT this property and must not be mistaken for it: it
+#: says the implementation supports ffmpeg's ``enable=`` option. ``motion`` — the
+#: one genuinely moving effect — declares ``timeline=False``, and every static
+#: grade declares ``True``, so reading it would get every row backwards.
+TIME_VARYING_EFFECTS = frozenset({"motion"})
+
 
 class LookError(ValueError):
     """A look could not be compiled. Carries what to do about it."""
+
+
+class LookFragment(str):
+    """A compiled filter chain that remembers whether it READS THE CLOCK.
+
+    A plain ``str`` in every way that matters — it splices, compares, serialises
+    and JSON-encodes identically, so nothing downstream needs to know it exists —
+    that additionally answers :attr:`time_varying`. That is what lets
+    :func:`punch_in_cuts` set
+    :attr:`muvid.footage.edl.EdlEntry.look_time_varying` *from the fragment*
+    instead of hardcoding a value beside the call that produced it, and what lets
+    :func:`chain` combine two fragments without either caller re-deriving the
+    answer.
+
+    A subclass rather than a ``(str, bool)`` pair because the fragment is already
+    a wire value: the EDL field is a string, the MCP reply is a string, and the
+    ``looks`` API returns a string. Changing that shape would push a rename table
+    into every consumer to carry one bit that only muvid's own compilers can
+    know.
+
+    **The bit does not survive a round trip, and is not meant to.** ``str``
+    operations return plain ``str``, and JSON has no place to put it — the
+    durable home is the EDL entry's own field, which is exactly why muvid#73 put
+    it there. :func:`is_time_varying` reads a fragment of either kind, treating a
+    plain string as static, which is the same default the field has.
+
+    >>> frag = LookFragment("zoompan=d=1:s=64x48:fps=25", time_varying=True)
+    >>> frag.time_varying, frag == "zoompan=d=1:s=64x48:fps=25"
+    (True, True)
+    >>> is_time_varying("hue=s=0")
+    False
+
+    Copyable and picklable, which needs saying because it is not free: ``str``
+    subclasses are reconstructed through ``__new__``, and without
+    ``__getnewargs_ex__`` both ``copy.deepcopy`` and ``pickle`` raise
+    ``TypeError: __new__() missing 1 required keyword-only argument`` — measured.
+    An ``EdlEntry`` carrying one is an ordinary dataclass a caller may well copy.
+
+    >>> import copy, pickle
+    >>> copy.deepcopy(frag).time_varying, pickle.loads(pickle.dumps(frag)) == frag
+    (True, True)
+    """
+
+    def __new__(cls, fragment: str, *, time_varying: bool):
+        obj = super().__new__(cls, fragment)
+        obj.time_varying = bool(time_varying)
+        return obj
+
+    def __getnewargs_ex__(self):
+        return ((str(self),), {"time_varying": self.time_varying})
+
+
+def is_time_varying(fragment) -> bool:
+    """Whether ``fragment`` declares that it reads the clock. Plain strings: no.
+
+    The one place that default lives, so a caller reading a fragment and the EDL
+    field's own default cannot drift apart.
+
+    >>> is_time_varying(LookFragment("zoompan=d=1", time_varying=True))
+    True
+    >>> is_time_varying("hue=s=0"), is_time_varying(None)
+    (False, False)
+    """
+    return bool(getattr(fragment, "time_varying", False))
 
 
 def _require_looks():
@@ -131,7 +222,7 @@ def _canvas(canvas) -> "tuple[int, int]":
     return w, h
 
 
-def chain(*fragments: "Optional[str]") -> "Optional[str]":
+def chain(*fragments: "Optional[str]") -> "Optional[LookFragment]":
     """Join look fragments into one, dropping the empty ones.
 
     A cut carries at most one look, so two effects on one cut are one chain.
@@ -139,16 +230,36 @@ def chain(*fragments: "Optional[str]") -> "Optional[str]":
     wants for "no look" — an empty string is refused by ``validate_edl``
     deliberately, so this does not produce one.
 
+    **The result is time-varying if ANY component is** — the OR, not the AND and
+    not the last one's answer. A chain runs every link on every frame, so one
+    moving link makes the whole fragment move, and muvid#73's restart hits it.
+    Getting this wrong in the safe-looking direction (AND) would silence the
+    warning on exactly the chains most likely to have one: a punch composed with
+    a grade.
+
+    A plain ``str`` component contributes ``False``, matching
+    :func:`is_time_varying` and the EDL field's own default — so hand-writing one
+    half of a chain quietly downgrades only that half's claim, never the other's.
+
     >>> chain("hue=s=0", None, "", "unsharp=5:5:1")
     'hue=s=0,unsharp=5:5:1'
     >>> chain(None, "") is None
     True
+    >>> chain("hue=s=0", LookFragment("zoompan=d=1", time_varying=True)).time_varying
+    True
+    >>> chain("hue=s=0", "unsharp=5:5:1").time_varying
+    False
     """
-    kept = [f.strip() for f in fragments if f and f.strip()]
-    return ",".join(kept) or None
+    kept = [f for f in fragments if f and f.strip()]
+    if not kept:
+        return None
+    return LookFragment(
+        ",".join(f.strip() for f in kept),
+        time_varying=any(is_time_varying(f) for f in kept),
+    )
 
 
-def motion(keyframes: Sequence, *, canvas, fps: float) -> str:
+def motion(keyframes: Sequence, *, canvas, fps: float) -> "LookFragment":
     """A camera path over the cut, as a filter fragment. ``looks`` picks the filter.
 
     Args:
@@ -161,7 +272,13 @@ def motion(keyframes: Sequence, *, canvas, fps: float) -> str:
         fps: the assembler's delivery frame rate.
 
     Returns:
-        One linear ffmpeg filter chain, ready for the ``look`` field.
+        One linear ffmpeg filter chain, ready for the ``look`` field, declaring
+        itself **time-varying** — a camera path is a ramp in the filter's own
+        clock (``in_time`` under ``zoompan``, ``t`` under ``crop``), whichever
+        filter ``looks`` picks, so it is muvid#73's affected kind. A path whose
+        keyframes happen to hold still is still declared moving: the fragment
+        reads the clock either way, and that is the property the warning is
+        about.
 
     **The windows are fractions of the CANVAS, not of the source.** That follows
     from where the fragment is spliced: after ``scale``/``pad``, so the frame it
@@ -187,9 +304,10 @@ def motion(keyframes: Sequence, *, canvas, fps: float) -> str:
         for k in keyframes
     ]
     try:
-        return looks.compile_motion(frames, output=looks.Size(w, h), fps=float(fps))
+        frag = looks.compile_motion(frames, output=looks.Size(w, h), fps=float(fps))
     except looks.MotionError as exc:
         raise LookError(str(exc)) from exc
+    return LookFragment(frag, time_varying=True)
 
 
 def punch_in(
@@ -201,7 +319,7 @@ def punch_in(
     anchor: "tuple[float, float]" = DEFAULT_PUNCH_ANCHOR,
     start_s: float = 0.0,
     end_s: "Optional[float]" = None,
-) -> str:
+) -> "LookFragment":
     """An in-shot punch-in: hold, then push in, WITHOUT leaving the shot (muvid#66).
 
     The design partner asked for "roughly 2N" of these and was explicit that it
@@ -225,7 +343,11 @@ def punch_in(
         end_s: reach the final framing here and hold. Defaults to ``duration_s``.
 
     Returns:
-        One linear ffmpeg filter chain, ready for the ``look`` field.
+        One linear ffmpeg filter chain, ready for the ``look`` field, declaring
+        itself **time-varying** (it goes through :func:`motion`). Put that on the
+        entry as ``look_time_varying`` — :func:`punch_in_cuts` does — or the
+        assembler cannot warn you when the cut borders a transition and the move
+        restarts (muvid#73).
 
     A move is a ramp between two windows, and the windows are fractions of the
     canvas (see :func:`motion`). The end window keeps the canvas's aspect ratio,
@@ -234,6 +356,8 @@ def punch_in(
 
     >>> frag = punch_in(canvas=(640, 360), fps=25, duration_s=3.0)
     >>> frag.startswith("zoompan=d=1:s=640x360:fps=25:")
+    True
+    >>> frag.time_varying
     True
 
     A pull-out is this move backwards, so it goes through :func:`motion` with the
@@ -289,7 +413,7 @@ def stylize(
     ffmpeg: str = "ffmpeg",
     env=None,
     policy=None,
-) -> str:
+) -> "LookFragment":
     """A :class:`looks.Look` compiled against the binary muvid will run.
 
     Args:
@@ -303,7 +427,22 @@ def stylize(
             applies when omitted.
 
     Returns:
-        One linear ffmpeg filter chain, ready for the ``look`` field.
+        One linear ffmpeg filter chain, ready for the ``look`` field, declaring
+        whether it is time-varying **from the compiled plan** rather than by
+        assumption. A grade, a LUT, a posterise is static; two shapes are not,
+        and both are reachable from here:
+
+        - a step naming a :data:`TIME_VARYING_EFFECTS` member — ``motion`` is one
+          of ``looks``' registered effects, so ``stylize`` can emit exactly the
+          ``zoompan`` ramp :func:`punch_in` does (verified by compiling it);
+        - a step with an ``at`` :class:`looks.Span`, which compiles to
+          ``enable='between(t,…)'`` — measured: ``Effect("blur", at=Span(0.5,
+          1.5))`` becomes ``gblur=sigma=2:enable='between(t,0.5,1.5)'``. Reading
+          the clock to decide *whether* to apply is the same restart, and the
+          effect is not on any list of moving ones.
+
+        A blanket ``False`` here — the obvious reading, since ``stylize`` is the
+        grade-shaped door — would have been wrong for both.
 
     **The clip is declared, not measured.** ``looks`` compiles against a
     *declared* clip, and at this splice point muvid knows the geometry and the
@@ -338,7 +477,13 @@ def stylize(
     )
     try:
         plan = looks.compile_look(look, clip=clip, env=resolved, policy=policy)
-        return looks.vf(plan)
+        return LookFragment(
+            looks.vf(plan),
+            time_varying=any(
+                step.at is not None or step.effect in TIME_VARYING_EFFECTS
+                for step in plan.steps
+            ),
+        )
     except (
         looks.CompileError,
         looks.LooksLicenceError,
@@ -382,6 +527,14 @@ def punch_in_cuts(
         already carries a look keeps it — this composes with hand-authoring
         rather than overwriting it, because silently replacing an authored
         direction is the failure this package guards against elsewhere.
+
+        Each punched entry also carries ``look_time_varying``, taken FROM the
+        fragment via :func:`is_time_varying` rather than written as a literal
+        ``True`` beside the ``punch_in`` call. The two would agree today and the
+        literal is the one that would stop agreeing — this is the same reason
+        ``_edl_json`` is a table rather than four ``if``\\ s. Without it the
+        assembler cannot warn that a punch bordering a transition restarts its
+        ramp (muvid#73).
     """
     from dataclasses import replace
 
@@ -393,16 +546,14 @@ def punch_in_cuts(
             out.append(e)
             continue
         if n % every == offset % every:
-            e = replace(
-                e,
-                look=punch_in(
-                    canvas=canvas,
-                    fps=fps,
-                    duration_s=e.song_end - e.song_start,
-                    zoom=zoom,
-                    anchor=anchor,
-                ),
+            frag = punch_in(
+                canvas=canvas,
+                fps=fps,
+                duration_s=e.song_end - e.song_start,
+                zoom=zoom,
+                anchor=anchor,
             )
+            e = replace(e, look=frag, look_time_varying=is_time_varying(frag))
         n += 1
         out.append(e)
     return out

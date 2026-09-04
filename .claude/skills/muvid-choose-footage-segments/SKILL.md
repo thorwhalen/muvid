@@ -180,7 +180,7 @@ grade = stylize(muted, canvas=(1920, 1080), fps=30)
 EdlEntry(3.8, 7.6, "c01", look=chain(punch_in(...), grade))
 ```
 
-Five things to know:
+What to know (the list is unnumbered on purpose — the count was already wrong):
 
 - **Absent means what it always meant.** No look emits no filter at all — verified by
   rendering the same look-less EDL before and after the field existed and comparing
@@ -216,9 +216,56 @@ Five things to know:
   structurally invalid (`had 1 input(s) and 2 output(s)`, measured on ffmpeg 9.0.1) and
   the transition site opens a second container from inside the fragment. Compositing
   needs a splice site the assembler does not have.
+- **The frame size is bounded too, because an allowlist is a vocabulary and says
+  nothing about PARAMETERS.** A `scale`/`pad`/`zoompan` size must be a plain pixel count
+  and no more than `MAX_LOOK_SCALE` (4) times the render canvas. Measured from a 64x48
+  source: `scale=8000:8000` peaks at 328 MB, `zoompan=d=1:s=8000x8000` at 313 MB,
+  `pad=8000:8000` at 307 MB, against 19 MB for a look that stays at canvas size — one
+  number a remote caller writes, on the box that was OOM-killed at 30 cuts. `iw*80`,
+  `-1` and `hd1080` are refused rather than bounded, because a multiplier evaluates
+  against whatever is underneath and a size NAME resolves through ffmpeg's own table
+  (`s=whuxga` is a real 7680x4800 frame). muvid's own compilers emit literals, so this
+  costs the seam nothing (muvid#75).
+- **…and so are the OPTIONS, because two of them move the frame while declaring no size
+  at all.** On the four filters that can change the output geometry
+  (`scale`/`pad`/`crop`/`zoompan`) only options muvid has measured may be set, and at most
+  the leading positional slots muvid's own compilers emit. That is not a tightening for
+  its own sake: on a 1920x1080 canvas `pad=w=1920:h=1080:aspect=1/30` renders a
+  1920x57600 frame at 590 MB with w and h left AT canvas size, and
+  `crop=w=1920:h=200,scale=w=7680:h=4320:force_original_aspect_ratio=increase` renders
+  41472x4320 at 941 MB with both sizes exactly ON the bound — both bigger than the
+  403 MB `scale=8000:8000` the size rule refuses, and both accepted before this. What you
+  can still write covers everything the compilers emit: `scale` w/h/s/size + `flags`,
+  `pad` w/h/x/y + `color`, `crop` w/h/x/y, all of `zoompan`. Anything else — `aspect`,
+  `force_original_aspect_ratio`, `force_divisible_by`, `eval`, `keep_aspect`, `threads` —
+  is refused with a message naming what is allowed. Compile the look and you will never
+  meet this.
+- **Read the `warnings` list in `assemble_music_video`'s reply.** It is always present,
+  usually empty, and it is the only place the render plan's findings are ever said to
+  you: a transition that rounded to zero frames at the render rate, or the moving-look
+  restart below. Neither fails the render — `ok` stays `true` — so an empty check is not
+  the same as no check.
 - **One sharp edge, measured: a *moving* look restarts its ramp on a transitioned
-  boundary** — the blend is a separate invocation whose clock starts at 0 again. A grade
-  or a LUT is unaffected. muvid#73 has the numbers and the options.
+  boundary** — the blend is a separate invocation whose clock starts at 0 again, so a
+  1.12x punch reaching zoom 1.109 on the solo part is redrawn at 1.000 on the blend. A
+  grade or a LUT is unaffected. muvid cannot rebase the fragment (that is rewriting an
+  arbitrary ffmpeg expression — `looks`' rule 27), so **the EDL says which kind a look
+  is** and the assembler warns:
+
+  ```python
+  # punch_in / motion / stylize return a LookFragment — a str that also answers
+  # .time_varying — so the flag is COPIED, never hand-typed beside the call.
+  frag = punch_in(canvas=(1920, 1080), fps=30, duration_s=3.8)
+  EdlEntry(0.0, 3.8, "c01", look=frag, look_time_varying=is_time_varying(frag))
+
+  # punch_in_cuts already does it for you.
+  entries = punch_in_cuts(entries, canvas=(1920, 1080), fps=30, every=2)
+  ```
+
+  Over the wire it is `"look_time_varying": true` on the entry. It changes no pixels and
+  it is omitted when false, so every existing edit is byte-identical. Its known limit is
+  stated rather than hidden: an **undeclared** moving look stays silent, because the
+  alternative is muvid deciding by reading the fragment (muvid#73).
 
 ## Where this plugs into the existing code (IMPLEMENTED v1 — muvid#13)
 
