@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.__main__ &mdash; muvid 0.0.46 documentation</title>
+  <title>muvid.__main__ &mdash; muvid 0.0.47 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=eb4c61eb"></script>
+      <script src="../../_static/documentation_options.js?v=4f34e5f2"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -133,7 +133,7 @@
            <div itemprop="articleBody">
              
   <h1>Source code for muvid.__main__</h1><div class="highlight"><pre>
-<span></span><span class="sd">"""muvid CLI — argh dispatch over the top-level facade.</span>
+<span></span><span class="sd">"""muvid CLI — cw dispatch over the top-level facade.</span>
 
 <span class="sd">Run ``muvid --help`` after install. Every verb is the same Python</span>
 <span class="sd">function the skill and UI call.</span>
@@ -419,36 +419,50 @@
 
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="c1">#: Every CLI verb, in the order they appear in ``muvid --help``. A plain list of</span>
+<span class="c1">#: plain functions: the parser is derived from these signatures and docstrings,</span>
+<span class="c1">#: so the command surface cannot drift from what is defined above.</span>
+<span class="n">COMMANDS</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">init</span><span class="p">,</span>
+    <span class="n">transcribe</span><span class="p">,</span>
+    <span class="n">align</span><span class="p">,</span>
+    <span class="n">character</span><span class="p">,</span>
+    <span class="n">character_images</span><span class="p">,</span>
+    <span class="n">character_generate</span><span class="p">,</span>
+    <span class="n">character_curate</span><span class="p">,</span>
+    <span class="n">character_curate_interactive</span><span class="p">,</span>
+    <span class="n">environment</span><span class="p">,</span>
+    <span class="n">environment_render</span><span class="p">,</span>
+    <span class="n">script</span><span class="p">,</span>
+    <span class="n">script_apply</span><span class="p">,</span>
+    <span class="n">render</span><span class="p">,</span>
+    <span class="n">estimate_cost</span><span class="p">,</span>
+    <span class="n">compose</span><span class="p">,</span>
+    <span class="n">status</span><span class="p">,</span>
+    <span class="n">serve</span><span class="p">,</span>
+<span class="p">]</span>
+
+
+<div class="viewcode-block" id="main">
+<a class="viewcode-back" href="../../module_docs/muvid/__main__.html#muvid.__main__.main">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Dispatch the muvid CLI and return the exit code.</span>
+
+<span class="sd">    ``cw.dispatch`` *returns* the code rather than exiting, so both entry points</span>
+<span class="sd">    have to raise it: the console script through ``sys.exit(main())``, and</span>
+<span class="sd">    ``python -m muvid`` through the guard below. Without that, every argument</span>
+<span class="sd">    error would exit 0.</span>
+<span class="sd">    """</span>
     <span class="k">try</span><span class="p">:</span>
-        <span class="kn">import</span><span class="w"> </span><span class="nn">argh</span>  <span class="c1"># type: ignore</span>
-    <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">SystemExit</span><span class="p">(</span><span class="s2">"muvid CLI requires `argh`. pip install argh."</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
-    <span class="n">argh</span><span class="o">.</span><span class="n">dispatch_commands</span><span class="p">(</span>
-        <span class="p">[</span>
-            <span class="n">init</span><span class="p">,</span>
-            <span class="n">transcribe</span><span class="p">,</span>
-            <span class="n">align</span><span class="p">,</span>
-            <span class="n">character</span><span class="p">,</span>
-            <span class="n">character_images</span><span class="p">,</span>
-            <span class="n">character_generate</span><span class="p">,</span>
-            <span class="n">character_curate</span><span class="p">,</span>
-            <span class="n">character_curate_interactive</span><span class="p">,</span>
-            <span class="n">environment</span><span class="p">,</span>
-            <span class="n">environment_render</span><span class="p">,</span>
-            <span class="n">script</span><span class="p">,</span>
-            <span class="n">script_apply</span><span class="p">,</span>
-            <span class="n">render</span><span class="p">,</span>
-            <span class="n">estimate_cost</span><span class="p">,</span>
-            <span class="n">compose</span><span class="p">,</span>
-            <span class="n">status</span><span class="p">,</span>
-            <span class="n">serve</span><span class="p">,</span>
-        <span class="p">]</span>
-    <span class="p">)</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">cw</span>  <span class="c1"># type: ignore</span>
+    <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>  <span class="c1"># pragma: no cover - cw is a declared dependency</span>
+        <span class="k">raise</span> <span class="ne">SystemExit</span><span class="p">(</span><span class="s2">"muvid CLI requires `cw`. pip install cw."</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+    <span class="k">return</span> <span class="n">cw</span><span class="o">.</span><span class="n">dispatch</span><span class="p">(</span><span class="n">COMMANDS</span><span class="p">)</span></div>
+
 
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
-    <span class="n">main</span><span class="p">()</span>
+    <span class="k">raise</span> <span class="ne">SystemExit</span><span class="p">(</span><span class="n">main</span><span class="p">())</span>
 </pre></div>
 
            </div>
