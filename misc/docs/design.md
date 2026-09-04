@@ -329,14 +329,14 @@ For each shot rendered with `render_strategy: "lipsync"`:
 Every stage is callable three ways from the same Python function:
 
 1. **Python**: `from muvid import init, align, cast_character, render`
-2. **CLI** (`muvid ...`): argh dispatch over the same functions.
+2. **CLI** (`muvid ...`): cw dispatch over the same functions.
 3. **Skill** (Claude Code): `.claude/skills/muvid/SKILL.md` walks Claude
    through the orchestration so a user can sit in a terminal and say
    "make a music video from `song.mp3`" and get walked through the
    stages.
 
 Later, a fourth surface (HTTP / web UI) lights up via the same
-dispatch pattern (the `argh`-style introspection feeds a small
+dispatch pattern (the same signature introspection feeds a small
 FastAPI app — `qh` already does this in this ecosystem).
 
 ## File layout for the package
@@ -344,7 +344,7 @@ FastAPI app — `qh` already does this in this ecosystem).
 ```
 muvid/
   __init__.py            # public surface
-  __main__.py            # CLI (argh)
+  __main__.py            # CLI (cw)
   project.py             # MusicVideoProject (dol-backed mall + SSOT)
   schema.py              # ProjectSchema, SectionSpec, ShotSpec, ...
   song.py                # song probing (duration, bpm if librosa avail)
