@@ -384,7 +384,10 @@ def render_animation(ctx: RenderContext, *, quality: str = "balanced") -> Path:
     scene_dir = ctx.shot_dir / "an_scene"
     scene_dir.mkdir(parents=True, exist_ok=True)
     md = _build_an_scene_md(ctx)
-    (scene_dir / "scene.md").write_text(md)
+    # UTF-8 by contract: the scene markdown embeds the shot's lyric lines
+    # verbatim (see _build_an_scene_md), so its codec cannot come from the
+    # process locale.
+    (scene_dir / "scene.md").write_text(md, encoding="utf-8")
 
     lipsync = _make_lipsync_provider(ctx)
     orchestrate_kwargs = {"lipsync": lipsync} if lipsync is not None else {}

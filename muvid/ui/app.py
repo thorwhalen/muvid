@@ -116,7 +116,7 @@ def create_app(root: str | Path):
 
     @app.get("/", response_class=HTMLResponse)
     def index():
-        return (static_dir / "index.html").read_text()
+        return (static_dir / "index.html").read_text(encoding="utf-8")
 
     @app.get("/api/status")
     def status():
@@ -221,13 +221,14 @@ def create_app(root: str | Path):
         path = _PROJECT_ROOT / "script" / "script.md"
         if not path.exists():
             facade.write_script(str(_PROJECT_ROOT))
-        return {"path": str(path), "content": path.read_text() if path.exists() else ""}
+        content = path.read_text(encoding="utf-8") if path.exists() else ""
+        return {"path": str(path), "content": content}
 
     @app.post("/api/script")
     def set_script(req: ScriptReq):
         path = _PROJECT_ROOT / "script" / "script.md"
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(req.content)
+        path.write_text(req.content, encoding="utf-8")
         facade.parse_script(str(_PROJECT_ROOT))
         _log("script: applied")
         return {"ok": True, "path": str(path)}
