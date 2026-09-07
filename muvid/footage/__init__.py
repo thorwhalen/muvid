@@ -23,6 +23,7 @@ from muvid.footage.edl import (
     FootageAlignment,
     EdlEntry,
     CropWindow,
+    UnreliableAlignmentError,
     validate_edl,
     derive_cuts,
 )
@@ -48,6 +49,7 @@ __all__ = [
     "FootageAlignment",
     "EdlEntry",
     "CropWindow",
+    "UnreliableAlignmentError",
     "validate_edl",
     "derive_cuts",
     "LookError",

@@ -9,6 +9,11 @@ auto/strategy) passes before any cutting, and :func:`derive_cuts` centralizes th
 convention (``clip_in = song_start - offset_s``) so no third-party strategy can desync the
 result. Times are seconds (float).
 
+The gate is a TRUST gate as well as a structural one: an alignment the aligner could
+not vouch for (``FootageAlignment.reliable`` False) is refused here with
+:class:`UnreliableAlignmentError` rather than quietly cut to, because a wrong offset
+does not fail — it renders a video out of sync with the song (muvid#59).
+
 An entry may carry an optional :class:`Transition` — a blend IN from its predecessor
 instead of a hard cut (muvid#34). It is an annotation on a boundary that already exists
 implicitly, so spans stay one-per-song-span and nothing about reading an EDL changes.
@@ -163,6 +168,49 @@ TRANSITION_CURVES = frozenset(
 )
 
 
+class UnreliableAlignmentError(ValueError):
+    """An edit cuts to a clip whose OFFSET the aligner could not vouch for (muvid#59).
+
+    The defect this exists to make impossible: on a rigidly programmed, repetitive
+    track, a whole-clip cross-correlation surface has near-tied peaks spaced at
+    musical periods (measured on one real shoot: second-peak-to-first ratios of
+    0.993, 0.989, 0.987), so the estimator picks the argmax of a coin-flip and
+    reports the coefficient of whichever side it landed on. That number is *low*
+    but never looks like failure — and every stage after it (``derive_cuts``, the
+    score tracks, the assembled mp4) is built on the offset, so the failure
+    presented as a silently desynced video rather than as an error. Three clips
+    came back 83 s, 174 s and 83 s wrong, all with ``overlaps=True``.
+
+    So an offset the aligner cannot vouch for is a **refusal**, not a number: a
+    caller who renders anyway must say so with ``allow_unreliable=True``, exactly
+    as an unpriceable shot must be passed with ``--allow-unpriced`` rather than
+    being read as free. Unknown is not zero, and unknown must force approval.
+
+    A refusal is NOT a removal: the clip keeps its record, its coverage and its
+    place in the project (see :class:`FootageAlignment`). What it loses is the
+    right to be cut to without the caller saying so.
+    """
+
+    def __init__(self, unvouched: "Sequence[FootageAlignment]"):
+        #: The offending clips, in EDL order — so a caller can re-align exactly these.
+        self.alignments = list(unvouched)
+        self.clip_ids = [a.clip_id for a in self.alignments]
+        detail = ", ".join(
+            f"{a.clip_id!r} (confidence {a.confidence:.3f}"
+            + (f", support {a.support:.2f}" if a.support is not None else "")
+            + ")"
+            for a in self.alignments
+        )
+        super().__init__(
+            f"the edit cuts to {len(self.clip_ids)} clip(s) whose alignment is not "
+            f"trustworthy: {detail}. A wrong offset does not fail — it renders a "
+            "video that is out of sync with the song, so it is refused here rather "
+            "than downstream. Re-align (a longer or louder stretch of the song "
+            "helps), drop these clips from the edit, or pass allow_unreliable=True "
+            "to render on them deliberately."
+        )
+
+
 @dataclass(frozen=True)
 class FootageAlignment:
     """Where one uploaded clip sits on the song timeline (muvid's per-clip record).
@@ -180,6 +228,28 @@ class FootageAlignment:
     #: still recorded — a source must never leave the addressable set as a side effect
     #: of being measured. Selection filters on this; reporting shows it with a reason.
     overlaps: bool = True
+    #: Fraction of independently-measured windows of the clip that agree on
+    #: ``offset_s``, when the aligner measured more than one — ``None`` when it
+    #: only ever took a single whole-clip measurement.
+    #:
+    #: **This, not ``confidence``, is the honest number** (muvid#59). A correlation
+    #: coefficient says how well the winning lag scored; it cannot say whether the
+    #: runner-up scored the same, which is the entire failure mode on repetitive
+    #: music. A support fraction says how much of the clip actually agrees — on the
+    #: shoot that produced this issue the three correct offsets carried 10/24, 17/37
+    #: and 45/61, while the confidently-wrong ones the old estimator returned had no
+    #: agreement to speak of at all.
+    support: float | None = None
+    #: Whether the aligner VOUCHES for ``offset_s``. False means "measured, recorded,
+    #: and not to be cut to without the caller saying so" — see
+    #: :class:`UnreliableAlignmentError`, which :func:`validate_edl` raises.
+    #:
+    #: Defaults True, and a record written before the field existed reads back True,
+    #: for the same reason ``overlaps`` does: the field is a *verdict the estimator
+    #: reached*, and a record from before there was a verdict does not carry one.
+    #: Defaulting it False would refuse every project that already exists on disk
+    #: over a measurement nobody ever made.
+    reliable: bool = True
 
     def to_dict(self) -> dict:
         return {
@@ -189,11 +259,14 @@ class FootageAlignment:
             "duration_s": self.duration_s,
             "coverage": list(self.coverage),
             "overlaps": self.overlaps,
+            "support": self.support,
+            "reliable": self.reliable,
         }
 
     @classmethod
     def from_dict(cls, d: dict) -> "FootageAlignment":
         cov = d["coverage"]
+        support = d.get("support")
         return cls(
             clip_id=d["clip_id"],
             offset_s=float(d["offset_s"]),
@@ -203,6 +276,10 @@ class FootageAlignment:
             # Records written before `overlaps` existed were only ever persisted when
             # they overlapped, so absent means True.
             overlaps=bool(d.get("overlaps", True)),
+            # Absent means "this aligner never measured it" (muvid#59) — a distinct
+            # fact from "it measured zero agreement", which is why it stays None.
+            support=None if support is None else float(support),
+            reliable=bool(d.get("reliable", True)),
         )
 
 
@@ -546,6 +623,7 @@ def validate_edl(
     song_duration: float,
     *,
     canvas: "tuple[int, int]" = DFLT_LOOK_CANVAS,
+    allow_unreliable: bool = False,
 ) -> list[EdlEntry]:
     """Validate an EDL (from a strategy OR a caller) — the ONE gate before any cutting.
 
@@ -570,6 +648,11 @@ def validate_edl(
     - ``look_time_varying`` is a boolean, and is not set on an entry with no
       ``look`` (a declaration about a look that is not there is a request that
       cannot be honoured);
+    - every non-gap entry cuts to a clip whose alignment the aligner VOUCHES for
+      (``FootageAlignment.reliable``), unless ``allow_unreliable=True`` — see
+      :class:`UnreliableAlignmentError`. This is a trust check rather than a
+      structural one, so it runs LAST: an EDL that does not even parse should be
+      reported as the malformed EDL it is, not blamed on the footage;
     - a :class:`Transition` is on an entry that HAS a predecessor, names a known curve,
       is at least :data:`MIN_TRANSITION_S` long, fits in song time counting BOTH
       transitions an entry can carry, and fits in each side's aligned coverage — see
@@ -660,7 +743,30 @@ def validate_edl(
             )
         prev_end = e.song_end
         prev = e
+    if not allow_unreliable:
+        _refuse_unvouched(entries, by_id)
     return entries
+
+
+def _refuse_unvouched(entries: Sequence[EdlEntry], by_id: dict) -> None:
+    """Raise :class:`UnreliableAlignmentError` if the edit cuts to an unvouched clip.
+
+    Split out only for length; it is part of :func:`validate_edl`, which remains
+    the ONE gate. Reports EVERY offending clip at once rather than the first —
+    a caller re-aligning a shoot wants the list, and telling them about one clip
+    at a time makes a three-camera shoot three round trips.
+    """
+    seen: set[str] = set()
+    unvouched: list[FootageAlignment] = []
+    for e in entries:
+        if e.is_gap or e.clip_id in seen:
+            continue
+        seen.add(e.clip_id)
+        a = by_id[e.clip_id]
+        if not a.reliable:
+            unvouched.append(a)
+    if unvouched:
+        raise UnreliableAlignmentError(unvouched)
 
 
 def _span(e: EdlEntry) -> float:

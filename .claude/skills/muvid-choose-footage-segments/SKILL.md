@@ -71,6 +71,14 @@ higher = better) + `raw_values[]` + a coverage `mask[]`; grid frame *k* ↔ song
 
 - **Compute-once-on-master:** beats/downbeats and the Demucs vocal stem are the master's;
   everything maps to song time through each clip's offset. Never recompute per clip.
+- **Selection sits on offsets, so an untrusted offset stops it** (muvid#59). Every score
+  track, every cut and the assembled mp4 are built on `offset_s`, and nothing downstream
+  re-measures it — a wrong offset therefore renders a complete, plausible video that is
+  silently out of sync. `FootageAlignment.reliable` carries the aligner's verdict
+  (`align.vouches_for`; `support` beats `confidence`, which cannot tell a clear peak from
+  a coin flip on repetitive music), and `validate_edl` refuses to cut to an unvouched clip
+  unless the caller passes `allow_unreliable=True`. Selection itself does NOT filter on it
+  — a strategy proposes, the gate decides — so do not add a second check in a strategy.
 - **Gate, don't zero:** "no face / no data" is a `mask` = NA, not a 0 score — else
   selection biases toward any-face-on-screen or penalizes valid instrumental footage.
 - **Normalize robustly across clips** (median/IQR, percentile-clipped) so a "motion" peak

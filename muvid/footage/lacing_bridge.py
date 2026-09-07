@@ -319,6 +319,11 @@ def editor_document(proj, *, attributed_to: str = "") -> dict:
                 aligns,
                 song_dur,
                 canvas=proj.canvas(),
+                # This builds the DECISION tier an editor opens and edits; it renders
+                # nothing. An unvouched offset still has to be visible in the editor —
+                # seeing where a clip stops matching is how a human fixes it — and the
+                # refusal happens when that decision comes back to be rendered.
+                allow_unreliable=True,
             )
         except (ValueError, KeyError) as e:
             # The alignment + score-track annotations below are independently good —
