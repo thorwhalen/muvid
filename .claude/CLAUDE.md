@@ -36,7 +36,7 @@ Pipeline: `align → score → select → EDL → assemble`.
 
 | module | owns |
 |---|---|
-| `muvid/footage/align.py` | thin over `mixing.audio.align_clips_to_reference`; per-clip `offset_s`, `confidence`, `coverage`, `overlaps` |
+| `muvid/footage/align.py` | thin over `mixing.audio.align_clips_to_reference`; per-clip `offset_s`, `confidence`, `support`, `coverage`, `overlaps`; re-exports `edl.vouches_for` (muvid#59) |
 | `muvid/footage/edl.py` | `FootageAlignment`, `EdlEntry`, `AssemblyCut`; `fill_gaps`, **`validate_edl`** (the ONE gate), `derive_cuts` (the ONE place `clip_in = song_start - offset_s` is derived) |
 | `muvid/footage/strategy.py` | the `SelectionStrategy` registry — `best_confidence` (`DEFAULT_STRATEGY`), `longest_take`, `fewest_cuts`, plus `weighted` registered **lazily** so `import muvid.footage` stays numpy-free |
 | `muvid/footage/select_score.py` | the `weighted` strategy: beat-snapped semi-Markov Viterbi over the score tensor |
@@ -50,6 +50,37 @@ Pipeline: `align → score → select → EDL → assemble`.
 
 - **A source is never removed by a measurement.** A clip that does not overlap the song
   is recorded with `overlaps=False`, never omitted (`footage/align.py`, `edl.py:40-43`).
+- **An offset nobody vouches for is a REFUSAL, not a number** (muvid#59). A wrong offset
+  is the one failure that does not present as one: `derive_cuts`, every score track and
+  the assembled mp4 are all built on it, nothing re-measures it, and the result is a
+  complete plausible video silently out of sync with the song — three clips of one real
+  shoot came back 83 s, 174 s and 83 s wrong, each reported at a low-but-unalarming
+  confidence and each handed straight back with `overlaps=True`. So `edl.vouches_for`
+  is the ONE place the verdict is reached (defined beside the record it judges and the
+  gate that enforces it; re-exported from `align.py`), it rides on the record
+  (`FootageAlignment.reliable` / `.support`), and `validate_edl` refuses with
+  `UnreliableAlignmentError` unless the caller says `allow_unreliable=True`.
+  **Do not overclaim this as the budget gate's "unknown must force approval".** It is
+  not: where `support` was never measured — every alignment today's `mixing` produces —
+  `vouches_for` falls back to the confidence coefficient, the same instrument muvid#59
+  was filed about, which catches two of that shoot's three wrong offsets and misses the
+  third. The refusal is the half that stops a bad measurement being silent; mixing#30's
+  windowed consensus is the half that makes the measurement good, and only then does
+  the claim become true. A record from disk that predates the fields has its verdict
+  **derived** rather than defaulted, for the same reason: a blanket `True` would render
+  exactly muvid#59's offsets *and* drop them out of the caller-facing weak list, which
+  is quieter than the behaviour the issue was filed against. A refusal is still not a
+  removal: the clip keeps its record and stays addressable, and
+  the tools that render nothing (`propose_edit`, the lacing editor document, the
+  weighted strategy's own structural self-check) pass `allow_unreliable=True` on purpose
+  — refusing there would withhold the diagnosis instead of the render.
+  **`confidence` is the weak instrument, and knowing that is the point**: on repetitive
+  music the top two correlation peaks differ by under 1.3%, so a coefficient cannot tell
+  a winner from a coin flip. `support` (how much of the clip agrees) can, which is why
+  `vouches_for` prefers it and falls back to `confidence` only when the estimator
+  measured no support. The estimator itself belongs in `mixing` (mixing#30) — muvid does
+  not grow a second one; `align_footage` forwards `**estimator_kwargs` so a window
+  parameter the installed `mixing` cannot honour raises rather than being dropped.
 - **`validate_edl` is the single gate.** Both the explicit-`edl` path and every strategy
   pass through it before any cutting. Never validate somewhere else.
 - **A hole is an explicit gap entry, not an absence.** `EdlEntry.clip_id == ""`
@@ -515,9 +546,14 @@ Default root `~/.local/share/muvid`, overridable via `MUVID_DATA_HOME`
 
 Anything that changes the shape of `manifest.json`, `alignments.json`, the score
 manifest, or the `music_video` path segment is a **migration**, and existing users'
-projects are the thing being migrated. `FootageAlignment.from_dict` already carries one
-such compatibility read (`overlaps` defaults True for records written before the field
-existed) — that is the pattern when a field is added.
+projects are the thing being migrated. `FootageAlignment.from_dict` already carries three
+such compatibility reads, and they are three DIFFERENT kinds of read. `overlaps`
+defaults True (a record was only ever persisted when it overlapped). `support`
+defaults `None`, deliberately not `0.0` — a zero would read as a measurement of
+total disagreement that nobody made. `reliable` is not defaulted at all: it is
+**derived** from the record's own `confidence` via `vouches_for`, because a blanket
+`True` would render exactly muvid#59's offsets and drop them out of the weak list
+at the same time. When you add a field here, decide which of those three it is.
 
 Invalidation is deliberate: `set_song` drops `alignments.json` and every score track
 (the song is the alignment reference); `align_footage` only invalidates scores when

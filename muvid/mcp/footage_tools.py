@@ -20,6 +20,7 @@ import uuid
 from pathlib import Path
 from urllib.parse import urlparse
 
+from muvid.footage.align import MIN_CONFIDENCE, MIN_SUPPORT
 from muvid.mcp.identity import current_email
 
 # -- resource caps (env-tunable) --------------------------------------------
@@ -34,13 +35,11 @@ _SONG_MAX_BYTES = int(
 _SONG_MAX_DURATION_S = int(
     os.environ.get("MUVID_FOOTAGE_MAX_SONG_DURATION_S", str(12 * 60))
 )
-#: Below this, an alignment is REPORTED as low-confidence (never dropped — see
-#: align_footage). Calibrated for the clean-master-vs-phone regime the connector actually
-#: sees, on the onset-envelope feature (muvid#15): measured against a studio master, four
-#: provably-correct clips scored 0.173–0.603 while the one genuinely unrelated clip scored
-#: 0.021 — so 0.1 separates them ~2x/5x, where the old 0.3 (a defensible number for the
-#: EASIER clip-to-clip regime) flagged five of six correct alignments as suspect.
-_MIN_CONFIDENCE = float(os.environ.get("MUVID_FOOTAGE_MIN_CONFIDENCE", "0.1"))
+#: Re-exported, not re-declared: the threshold and the verdict it feeds now live with
+#: the aligner (``muvid.footage.align``), because the same number has to decide what
+#: this tool REPORTS and what ``validate_edl`` REFUSES, and two copies of a calibrated
+#: constant is how those two answers drift apart (muvid#59).
+_MIN_CONFIDENCE = MIN_CONFIDENCE
 #: Total-bytes cap for a folder archive (env ``MUVID_FOOTAGE_FOLDER_MAX_BYTES``). A shoot
 #: is several clips, so this is necessarily larger than the per-clip cap.
 _FOLDER_MAX_BYTES = int(
@@ -265,8 +264,17 @@ def add_footage_folder(project_id: str, *, url: str, name_prefix: str = "") -> d
 def align_footage(project_id: str) -> dict:
     """Align every uploaded clip to the song by audio, and persist the result. Free.
 
-    Returns each clip's offset, a confidence in [0,1], and its coverage of the song, plus a
-    ``low_confidence`` list (clips that matched weakly — likely wrong; re-shoot or drop).
+    Returns each clip's offset, a confidence in [0,1], its ``support`` (the fraction of
+    the clip that agrees on that offset, ``null`` when the aligner took a single
+    whole-clip measurement), and its coverage of the song, plus two lists:
+
+    - ``low_confidence`` — clips that matched weakly, for reporting;
+    - ``unreliable`` — clips whose offset the aligner will NOT vouch for. These stay in
+      the project and stay addressable, but ``assemble_music_video`` REFUSES to cut to
+      them unless it is called with ``allow_unreliable=true``, because a wrong offset
+      does not fail — it renders a video out of sync with the song (muvid#59). Re-align,
+      leave them out of the edit, or opt in deliberately.
+
     Run this after adding/removing clips and before assembling.
     """
     from muvid.footage.align import align_footage as _align
@@ -308,8 +316,22 @@ def align_footage(project_id: str) -> dict:
             for a in aligns
             if a.confidence < _MIN_CONFIDENCE
         ],
+        # The list that has TEETH, kept separate from `low_confidence` because they
+        # answer different questions: one is a number to look at, the other is what
+        # the render will refuse. They coincide today for a whole-clip estimator and
+        # deliberately will not once support is measured (muvid#59).
+        "unreliable": [
+            {
+                "clip_id": a.clip_id,
+                "confidence": round(a.confidence, 3),
+                "support": _round_support(a.support),
+            }
+            for a in aligns
+            if not a.reliable
+        ],
         "confidence_metric": "onset-envelope correlation at the waveform's lag",
         "confidence_threshold": _MIN_CONFIDENCE,
+        "support_threshold": MIN_SUPPORT,
         "offset_consensus": _offset_consensus(aligns),
         # Usable-for-an-edit, not present-in-the-project: these clips are still here, still
         # listed, still addressable — they just cover no part of the song.
@@ -443,6 +465,11 @@ def _edl_json(e) -> dict:
     return out
 
 
+def _round_support(support: float | None) -> float | None:
+    """``None`` stays ``None`` over the wire — "not measured" is not "measured zero"."""
+    return None if support is None else round(float(support), 3)
+
+
 def _coverage_report(entries, aligns, song_dur: float) -> dict:
     """What the song's timeline looks like under ``entries`` — covered, weak, and MISSING.
 
@@ -463,15 +490,19 @@ def _coverage_report(entries, aligns, song_dur: float) -> dict:
         cursor = max(cursor, hi)
     if song_dur - cursor > 1e-3:
         gaps.append({"song_start": round(cursor, 2), "song_end": round(song_dur, 2)})
+    # `reliable`, not a bare confidence comparison: the verdict is the aligner's
+    # (muvid.footage.align.vouches_for), so this report says exactly what
+    # validate_edl will refuse rather than a second opinion that can drift from it.
     weak = [
         {
             "song_start": round(e.song_start, 2),
             "song_end": round(e.song_end, 2),
             "clip_id": e.clip_id,
             "confidence": round(by_id[e.clip_id].confidence, 3),
+            "support": _round_support(by_id[e.clip_id].support),
         }
         for e in entries
-        if e.clip_id in by_id and by_id[e.clip_id].confidence < _MIN_CONFIDENCE
+        if e.clip_id in by_id and not by_id[e.clip_id].reliable
     ]
     covered_s = sum(hi - lo for lo, hi in covered)
     return {
@@ -525,6 +556,11 @@ def propose_edit(
             aligns,
             song_dur,
             canvas=proj.canvas(),
+            # This tool renders nothing; refusing here would deny the caller the very
+            # diagnosis they came for, since `coverage.weak_segments` names each
+            # unvouched span and the time it covers. The refusal belongs where the
+            # encode does — `assemble_music_video` (muvid#59).
+            allow_unreliable=True,
         )
     except (ValueError, KeyError) as e:
         raise _tool_error(f"could not build a valid edit: {e}") from e
@@ -565,6 +601,7 @@ def assemble_music_video(
     weights: dict | None = None,
     config: dict | None = None,
     canvas: str = "",
+    allow_unreliable: bool = False,
 ) -> dict:
     """Assemble the music video — auto (a selection ``strategy``) or an explicit ``edl``. Free.
 
@@ -620,6 +657,12 @@ def assemble_music_video(
       ``list_strategies``; default ``best_confidence``) builds the edit from the alignments.
     - ``canvas``: render-time override ("landscape"/"portrait"/"square") — the same edit
       re-rendered in another shape, no new project needed. Default: the project's canvas.
+    - ``allow_unreliable``: render even on clips whose alignment the aligner will not
+      vouch for. **Off by default and it should stay off**: a wrong offset does not
+      fail, it delivers a video out of sync with the song, so the refusal is the only
+      thing standing between a bad measurement and a bad render (muvid#59). Set it when
+      you have checked the offsets yourself, or when a slightly-off cut beats no cut at
+      all. ``align_footage`` names the clips this applies to in its ``unreliable`` list.
 
     The video is EXACTLY the song's duration: each cut is trimmed at its aligned in-point,
     scaled onto the canvas (padded, never stretched), gaps render black, and the CLEAN
@@ -635,7 +678,12 @@ def assemble_music_video(
     remote caller has no access to.
     """
     from muvid.footage.assemble import assemble_music_video as _assemble
-    from muvid.footage.edl import derive_cuts, fill_gaps, validate_edl
+    from muvid.footage.edl import (
+        UnreliableAlignmentError,
+        derive_cuts,
+        fill_gaps,
+        validate_edl,
+    )
     from muvid.footage.strategy import DEFAULT_STRATEGY, select_edl
     from muvid.visualize import failures, report, verify_video
 
@@ -662,7 +710,11 @@ def assemble_music_video(
                     "selection config (preset/weights/config) can't accompany an explicit edl"
                 )
             entries = validate_edl(
-                fill_gaps(edl, song_dur), aligns, song_dur, canvas=canvas_wh
+                fill_gaps(edl, song_dur),
+                aligns,
+                song_dur,
+                canvas=canvas_wh,
+                allow_unreliable=allow_unreliable,
             )
             used_strategy = None
         else:
@@ -681,8 +733,15 @@ def assemble_music_video(
                 aligns,
                 song_dur,
                 canvas=canvas_wh,
+                allow_unreliable=allow_unreliable,
             )
             used_strategy = strat
+    except UnreliableAlignmentError as e:
+        # Named separately from the generic "could not build a valid edit" because the
+        # remedy is different in kind: nothing about the EDL is malformed, and re-writing
+        # it will not help — the OFFSETS are not trustworthy, and the caller has to
+        # re-align, drop those clips, or say they want them anyway.
+        raise _tool_error(f"{e} (clips: {', '.join(e.clip_ids)})") from e
     except (ValueError, KeyError) as e:
         raise _tool_error(f"could not build a valid edit: {e}") from e
 

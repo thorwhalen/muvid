@@ -253,9 +253,13 @@ def run_weighted(
             "raise lambda_switch or l_min_s"
         )
 
-    validated = validate_edl(
-        entries, aligns, song_duration
-    )  # tautology by construction
+    # Tautology by construction — a self-check that what this solver just emitted is
+    # structurally valid. `allow_unreliable=True` because the trust question is not
+    # this call's to answer: a strategy PROPOSES, and the refusal belongs at the gate
+    # the render passes through (muvid#59). Refusing here would also make the weighted
+    # strategy behave differently from every other one, which all return their proposal
+    # and are gated by the caller.
+    validated = validate_edl(entries, aligns, song_duration, allow_unreliable=True)
     meta = {
         "strategy": "weighted",
         "cuts": len(validated),

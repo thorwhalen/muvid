@@ -102,6 +102,8 @@ selectable; `low_confidence` is a list to review, not a list of rejects. Clips t
 part of the song are reported under `no_overlap_with_song` — still present, still
 addressable, just not usable for *this* edit.
 
+**But it does stop a render.** The separate `unreliable` list names the clips whose *offset* the aligner will not vouch for, and `muvid_assemble_music_video` refuses to cut to them (`allow_unreliable=true` overrides it). That refusal exists because a wrong offset is the one failure that does not look like one: it renders a complete, plausible video that is silently out of sync with the song, and nothing downstream re-measures it. On one real shoot three clips came back 83 s, 174 s and 83 s wrong, all reported with a low-but-not-alarming confidence, and the mistake only surfaced in the finished cut. Re-align, leave those clips out of the edit, or opt in on purpose — but do it knowingly.
+
 Scores are there to be used, including by automation: if you want the cut made for you, they
 are what makes that possible. The guarantee is not that nothing is decided automatically —
 it is that a decision produces a *proposal referencing sources and intervals*, so it can be
