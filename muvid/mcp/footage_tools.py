@@ -20,7 +20,7 @@ import uuid
 from pathlib import Path
 from urllib.parse import urlparse
 
-from muvid.footage.align import MIN_CONFIDENCE, MIN_SUPPORT
+from muvid.footage.align import MIN_CONFIDENCE, MIN_SUPPORT, MIN_SUPPORT_WINDOW_S
 from muvid.mcp.identity import current_email
 
 # -- resource caps (env-tunable) --------------------------------------------
@@ -333,6 +333,7 @@ def align_footage(project_id: str) -> dict:
                 "clip_id": a.clip_id,
                 "confidence": round(a.confidence, 3),
                 "support": _round_support(a.support),
+                "window_s": _round_support(a.window_s),
             }
             for a in aligns
             if not a.reliable
@@ -350,9 +351,22 @@ def align_footage(project_id: str) -> dict:
         # rather than enforced; adapting the window to short clips is the actual fix
         # (thorwhalen/mixing#41).
         "no_consensus": [a.clip_id for a in aligns if a.support is None],
+        # Clips whose support WAS measured but on too small a grid to compare against
+        # the threshold — the estimator fits its window to the clip, so a short clip's
+        # support answers a different question from a long clip's. Kept separate from
+        # `no_consensus` because the remedy differs: this one is "the clip is under a
+        # minute", not "the clip could not be voted on at all".
+        "support_not_comparable": [
+            {"clip_id": a.clip_id, "window_s": _round_support(a.window_s)}
+            for a in aligns
+            if a.support is not None
+            and a.window_s is not None
+            and a.window_s < MIN_SUPPORT_WINDOW_S
+        ],
         "confidence_metric": "onset-envelope correlation at the waveform's lag",
         "confidence_threshold": _MIN_CONFIDENCE,
         "support_threshold": MIN_SUPPORT,
+        "support_threshold_window_s": MIN_SUPPORT_WINDOW_S,
         "offset_consensus": _offset_consensus(aligns),
         # Usable-for-an-edit, not present-in-the-project: these clips are still here, still
         # listed, still addressable — they just cover no part of the song.

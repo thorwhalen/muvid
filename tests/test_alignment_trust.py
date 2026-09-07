@@ -46,7 +46,12 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from muvid.footage.align import MIN_CONFIDENCE, MIN_SUPPORT, vouches_for
+from muvid.footage.align import (
+    MIN_CONFIDENCE,
+    MIN_SUPPORT,
+    MIN_SUPPORT_WINDOW_S,
+    vouches_for,
+)
 from muvid.footage.edl import (
     EdlEntry,
     FootageAlignment,
@@ -96,6 +101,63 @@ class TestTheVerdict:
         # ...and once support is measured, all three are refused.
         for support in (0.0, 0.04, 0.1):
             assert not vouches_for(confidence=0.121, support=support)
+
+
+class TestSupportIsOnlyComparableAtItsOwnWindow:
+    """A support measured at a fitted window is a different statistic (muvid#59).
+
+    Since ``mixing>=0.0.48`` the estimator fits its analysis window to the clip, which
+    is what makes short-clip offsets work — and makes the SCALE of ``support`` a
+    per-clip quantity. Measured on the muvid#59 master, eleven clip lengths, every
+    alignment CORRECT: 0.38-0.70 at the 20 s window, and 0.00/0.00/0.40 at the 4 s
+    window a 12 s clip gets. Comparing the second row to a threshold calibrated on the
+    first refuses correct footage.
+    """
+
+    def test_a_full_window_support_is_compared_to_the_threshold(self):
+        assert vouches_for(
+            confidence=0.0, support=MIN_SUPPORT, window_s=MIN_SUPPORT_WINDOW_S
+        )
+        assert not vouches_for(
+            confidence=0.0, support=MIN_SUPPORT / 2, window_s=MIN_SUPPORT_WINDOW_S
+        )
+
+    def test_a_fitted_window_support_is_treated_as_unmeasured(self):
+        small = MIN_SUPPORT_WINDOW_S / 5
+        # Both directions, which is the point: it is not consulted when it would refuse
+        # and it is not consulted when it would vouch. Reading it only when it says yes
+        # would be an instrument used as an excuse.
+        assert vouches_for(confidence=0.9, support=0.0, window_s=small)
+        assert not vouches_for(confidence=0.0, support=1.0, window_s=small)
+
+    def test_an_absent_window_reads_as_comparable(self):
+        # Records written before the field existed were measured at the FIXED default
+        # window, so absent means "comparable", not "unknown scale". Backwards, this
+        # would refuse every project aligned before the upgrade.
+        assert not vouches_for(confidence=0.0, support=MIN_SUPPORT / 2, window_s=None)
+        assert vouches_for(confidence=0.0, support=MIN_SUPPORT, window_s=None)
+
+    def test_the_window_survives_the_round_trip(self):
+        a = FootageAlignment(
+            "A", 0.0, 0.2, 30.0, (0.0, 30.0), True, 0.5, True, 6.67, 3.33
+        )
+        back = FootageAlignment.from_dict(a.to_dict())
+        assert back == a
+        assert (back.window_s, back.hop_s) == (6.67, 3.33)
+
+    def test_a_legacy_record_keeps_its_verdict_when_the_window_is_absent(self):
+        # The compat read that matters most: alignments written by the PREVIOUS muvid
+        # release carry a support measured at the fixed 20 s window and no window field.
+        # They must keep vouching.
+        legacy = {
+            "clip_id": "A",
+            "offset_s": 0.0,
+            "confidence": 0.05,  # under MIN_CONFIDENCE, so support has to be what decides
+            "duration_s": 120.0,
+            "coverage": [0.0, 120.0],
+            "support": 0.55,
+        }
+        assert FootageAlignment.from_dict(legacy).reliable is True
 
 
 class TestTheRecordCarriesIt:
@@ -619,33 +681,38 @@ def test_consensus_recovers_the_offset_and_support_vouches_for_it(tmp_path):
 
 
 @needs_support
-def test_the_vote_boundary_is_window_plus_hop_not_one_window(tmp_path):
-    """Where support starts being measured — pinned, because it was documented wrong.
+def test_the_window_is_fitted_to_the_clip_and_reported_with_the_support(tmp_path):
+    """The scale of ``support`` is now a per-clip quantity, and it travels with it.
 
-    A vote needs two windows far enough apart to be separate opinions, so the boundary
-    is ``window_s + hop_s`` (30 s at mixing's defaults), not the 20 s that "shorter than
-    one window" implies. Ten seconds of ordinary phone footage sits between those two
-    numbers, and everything in that band is judged by the confidence coefficient rather
-    than by evidence — so the size of the band is a fact worth failing over if it moves.
+    ``mixing>=0.0.48`` fits the window to the clip, which is what makes short-clip
+    offsets work. The consequence a consumer has to handle is that two clips' supports
+    are no longer the same measurement — so this pins that the grid is reported, that it
+    tracks the clip, and that it reaches the calibration window exactly where
+    :data:`MIN_SUPPORT_WINDOW_S` starts being meaningful. A support arriving without its
+    window would be a fraction whose denominator nobody can see.
     """
-    from mixing.audio.audio_ops import SPAN_HOP_S, SPAN_WINDOW_S
-
     from muvid.footage.align import align_footage
 
     song_p, song = _repetitive_song(tmp_path)
     song_s = len(song) / SR
-    boundary = SPAN_WINDOW_S + SPAN_HOP_S
 
-    def support_at(seconds: float):
+    def aligned(seconds: float):
         p = _device_recording(
             tmp_path, song, f"len{seconds:g}", at=28.0, seconds=seconds, seed=101
         )
         return align_footage(str(song_p), [("A", str(p))], song_duration=song_s)[0]
 
-    assert support_at(boundary - 1.0).support is None
-    assert support_at(boundary).support is not None
-    # And the whole band below it is unvoted, not just the sliver next to the boundary.
-    assert support_at(SPAN_WINDOW_S + 2.0).support is None
+    short, mid, full = aligned(12.0), aligned(30.0), aligned(60.0)
+
+    # The grid comes back, and the hop is half the window — one knob, not two.
+    for a in (short, mid, full):
+        assert a.window_s is not None and a.hop_s == pytest.approx(a.window_s / 2)
+    # It tracks the clip, and tops out at the window the threshold is calibrated for.
+    assert short.window_s < mid.window_s < full.window_s
+    assert full.window_s == pytest.approx(MIN_SUPPORT_WINDOW_S)
+    # So only the last of the three is judged on its support at all.
+    assert short.reliable is vouches_for(confidence=short.confidence, support=None)
+    assert full.reliable is (full.support >= MIN_SUPPORT)
 
 
 @needs_support
@@ -710,7 +777,10 @@ def test_the_noise_floor_now_clears_min_confidence(tmp_path):
             str(p), SR, (rng.normal(0, 0.3, int(15 * SR)) * 32767).astype(np.int16)
         )
         a = align_footage(str(song_p), [("N", str(p))], song_duration=song_s)[0]
-        assert a.support is None, "15 s is inside the unvoted band; this is that regime"
+        # 15 s fits a 5 s window, so a support IS measured — and is not comparable to
+        # the threshold, so the verdict rests on the coefficient. That is the regime.
+        assert a.window_s is not None and a.window_s < MIN_SUPPORT_WINDOW_S
+        assert a.reliable is vouches_for(confidence=a.confidence, support=None)
         floor.append(a.confidence)
 
     assert max(floor) > MIN_CONFIDENCE, (
@@ -722,17 +792,17 @@ def test_the_noise_floor_now_clears_min_confidence(tmp_path):
 
 @needs_support
 def test_a_clip_too_short_to_vote_reports_no_support(tmp_path):
-    """The known remaining exposure, pinned so it stays visible (thorwhalen/mixing#41).
+    """``support is None`` still exists, and still means one specific thing.
 
-    A clip under ``window_s + hop_s`` (30 s at mixing's defaults) cannot field two
-    independent windows: no second opinion, nothing to arbitrate, so ``support`` is
-    ``None`` — correctly, since
-    inventing 1.0 for a unanimous vote of one would be the strongest possible claim
-    resting on no evidence. What muvid then does is fall back to the confidence
-    coefficient, which is the instrument this issue was filed about.
+    Since ``mixing>=0.0.48`` fits the window, almost everything gets a vote — the window
+    floors at 3 s, so only a clip too short to hold two of those comes back unvoted
+    (measured: 4 s yes, 6 s no). The case is rarer than it was and it has not gone away,
+    so the flag is still worth pinning: ``None`` rather than an invented 1.0, because a
+    unanimous vote of one would be the strongest claim the record can make resting on no
+    evidence at all.
 
-    So this test does not assert that the result is right. It asserts that muvid can
-    still TELL: ``support is None`` is the flag, and ``align_footage``'s
+    This does not assert the result is RIGHT. It asserts muvid can still tell that it
+    does not know — ``support is None`` is the flag, and ``align_footage``'s
     ``no_consensus`` list is where a caller reads it.
     """
     from muvid.footage.align import align_footage
@@ -742,7 +812,7 @@ def test_a_clip_too_short_to_vote_reports_no_support(tmp_path):
     clip = [
         (
             "S",
-            str(_device_recording(tmp_path, song, "s", at=12.0, seconds=6.0, seed=303)),
+            str(_device_recording(tmp_path, song, "s", at=12.0, seconds=4.0, seed=303)),
         )
     ]
     a = align_footage(str(song_p), clip, song_duration=song_s)[0]

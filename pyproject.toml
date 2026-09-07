@@ -35,7 +35,17 @@ dependencies = [
     # `feature='envelope'` and `feature='waveform'` returned byte-identical offsets and
     # a unanimous `support=1.00` could sit on an offset 15 s wrong. 0.0.46 is the first
     # release where support is worth gating on.
-    "mixing>=0.0.46",
+    #
+    # 0.0.48 fits the analysis window to each clip (`min(20, clip/3)`, floored at 3 s)
+    # and reports the `window_s`/`hop_s` the vote was actually held at. The floor is
+    # here for the OFFSETS, which is where it pays: measured on 21 clips of the muvid#59
+    # master in the 12-29 s band, 0.0.46 got 7 of 15 WRONG and left all of them unvoted,
+    # while 0.0.48 got 21/21 right and voted on all of them. The reported window is what
+    # makes that usable — support at a fitted window is not comparable to a threshold
+    # calibrated at 20 s (same 21 correct alignments: 0.00 to 1.00), so
+    # `edl.vouches_for` reads it. Without the field muvid would be comparing numbers
+    # that answer different questions and refusing correct footage for it.
+    "mixing>=0.0.48",
     "numpy",
     # 0.1.44 is where `graze.content_kind` exists alongside `graze.share_links`. muvid
     # needs both halves: normalise a pasted share link before fetching, then assert the
