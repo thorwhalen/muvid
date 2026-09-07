@@ -196,27 +196,61 @@ TRANSITION_CURVES = frozenset(
 #: the decision this leaves open.
 MIN_CONFIDENCE = float(os.environ.get("MUVID_FOOTAGE_MIN_CONFIDENCE", "0.1"))
 
-#: Below this fraction of agreeing windows, a consensus offset does not vouch for
-#: itself (env ``MUVID_FOOTAGE_MIN_SUPPORT``). On the shoot behind muvid#59 the three
-#: verified-correct offsets carried 10/24, 17/37 and 45/61 windows — 0.42, 0.46 and
-#: 0.74 — so 0.25 sits comfortably under the worst correct case while still refusing
-#: an offset that only a handful of windows ever saw. A spurious peak is an accident
-#: of local content and lands at a DIFFERENT lag in each window, so it cannot
-#: accumulate support the way a true offset does.
+#: Support must EXCEED this for a consensus offset to vouch for itself (env
+#: ``MUVID_FOOTAGE_MIN_SUPPORT``). Strictly greater, and that is the whole meaning of
+#: the number rather than a rounding preference: ``mixing`` grades each window's
+#: evidence as 1.0 when that window's own argmax reached the offset and at most
+#: ``BALLOT_VOTE_WEIGHT`` (0.5) when the offset was merely on its ballot, so **0.5 is
+#: exactly the ceiling of ballot-only evidence.** A support of 0.5 means every window
+#: had the offset on the ballot and NOT ONE of them found it unaided; above 0.5 at
+#: least one did. That is the difference between "nothing could separate these
+#: candidates" and "something actually located this one", which is the distinction
+#: muvid#59 is made of.
 #:
-#: **This number is calibrated for the estimator's DEFAULT window, and support is not
-#: normalised across window sizes.** Halving the window roughly thirds the fraction:
-#: measured on three 120 s recordings of the same repetitive master at known offsets,
-#: all three correct, support reads 0.50 / 0.64 / 0.73 at ``mixing``'s default
-#: ``window_s=20`` and 0.17 / 0.15 / 0.21 at ``window_s=5``. So a caller who shrinks
-#: the window through :func:`~muvid.footage.align.align_footage`'s ``**estimator_kwargs``
-#: and leaves this threshold alone has every correct alignment refused. ``mixing``
-#: declines to normalise it on purpose — dividing by something to make the number look
-#: stable would invent a statistic — so the two knobs move together or not at all.
-MIN_SUPPORT = float(os.environ.get("MUVID_FOOTAGE_MIN_SUPPORT", "0.25"))
+#: **Measured rather than derived.** On the muvid#59 master: 24 correct alignments (21
+#: clips across the 12-29 s band at three offsets, plus the shoot's three real
+#: excerpts) against six pure-noise clips as the known-wrong control.
+#:
+#: ===================  =================  ===============
+#: threshold            correct passing    noise passing
+#: ===================  =================  ===============
+#: ``>= 0.25``          24 / 24            **1 / 6**
+#: ``> 0.5``            18 / 24            **0 / 6**
+#: ===================  =================  ===============
+#:
+#: So this is the only cut measured that refuses every known-wrong case. It costs six
+#: correct short clips — they score 0.30-0.38, real but ballot-weight evidence — and
+#: that is the SAFE direction of error: a refusal is visible and recoverable
+#: (``allow_unreliable=True``, re-align, or leave the clip out), while the failure it
+#: prevents is a finished video silently out of sync that nothing downstream
+#: re-measures.
+#:
+#: Do not lower it to recover those six without re-running that table. The confidence
+#: coefficient cannot rescue them either — the noise clips score 0.173, 0.106, 0.143,
+#: 0.040, 0.170 and 0.017, straddling exactly the same band as correct short clips —
+#: so a conjunctive gate buys nothing. Three separate scalars have now failed to
+#: separate this population; the quantity that might is the margin over the runner-up
+#: (thorwhalen/mixing#47), because muvid#59 was near-ties (0.993/0.989/0.987) and no
+#: fraction of anything looks at the runner-up.
+MIN_SUPPORT = float(os.environ.get("MUVID_FOOTAGE_MIN_SUPPORT", "0.5"))
+
+#: ``MIN_SUPPORT`` used to be qualified by the window it was measured at, because an
+#: argmax headcount at a 4 s window was a weaker statistic than the same fraction at
+#: 20 s. **That qualifier is deliberately gone.** ``mixing``'s graded tally
+#: (thorwhalen/mixing#45) is what made a fitted window usable, and keeping a
+#: window-based guard alongside it is not merely redundant — it is HARMFUL, because
+#: the guard routes short clips to the confidence fallback, and that fallback is the
+#: weaker instrument. Measured on six pure-noise clips at a fitted 6.67 s window:
+#: falling back to confidence vouches for FOUR of them (0.173, 0.106, 0.143, 0.170 all
+#: clear ``MIN_CONFIDENCE``), while judging the graded support against
+#: :data:`MIN_SUPPORT` refuses all six. The window is still recorded on every
+#: alignment as a diagnostic (:attr:`FootageAlignment.window_s`); it is no longer part
+#: of the verdict.
 
 
-def vouches_for(*, confidence: float, support: float | None) -> bool:
+def vouches_for(
+    *, confidence: float, support: float | None, window_s: float | None = None
+) -> bool:
     """Does the aligner vouch for this offset? The ONE place that verdict is reached.
 
     Lives here, beside the record it judges and the gate that enforces it, rather than
@@ -234,43 +268,45 @@ def vouches_for(*, confidence: float, support: float | None) -> bool:
     third, which was 83 s out. So this is not "unknown forces approval" — an unmeasured
     support is judged by the weaker test rather than refused outright.
 
-    Since the ``mixing>=0.0.46`` floor, ``support is None`` no longer means "this
-    aligner does not measure support". It means **the estimator could not hold a vote**,
-    and the band where that happens is wider than it sounds. A vote needs two windows
-    far enough apart to be separate opinions, so the boundary is
-    ``window_s + hop_s`` — **30 s** at ``mixing``'s defaults, not the 20 s of "shorter
-    than one window". Measured, clip length against support at those defaults: 12, 18,
-    22, 24, 26, 28 and 29 s all return ``None``; 30 s is the first that returns a
-    fraction. An ordinary phone clip sits inside that band.
+    The estimator fits its window to the clip and grades each window's evidence, so a
+    vote is held and is READABLE for almost everything — ``support is None`` now only
+    for a clip too short to hold two windows at the 3 s floor (measured: 4 s yes, 6 s
+    no). The support is used **at whatever window it was measured at**, which is a
+    deliberate reversal: an earlier revision of this function refused to read a support
+    from a fitted window, on the reasoning that an argmax headcount over few short
+    windows is a weaker statistic than the same fraction at 20 s. That was true of the
+    ungraded tally and is now actively wrong — see the note above
+    :data:`MIN_SUPPORT`. Measured on six pure-noise clips at a fitted 6.67 s window,
+    the window guard vouches for FOUR of them by routing to the coefficient, while
+    reading the graded support refuses all six.
 
-    **Inside it this function is guessing, and the measurements say so plainly.** On
-    heavily degraded cross-device clips of the muvid#59 master under 30 s, the worst
-    CORRECT alignment scored 0.129 while the worst pure-noise clip scored 0.139 — the
-    distributions overlap, so no threshold admits the correct ones and refuses the
-    noise. Worse, of fifteen such clips seven landed on the wrong offset, at 0.183-0.252
-    — *higher* than the correct ones at 0.129-0.133. The real material agrees: of the
-    three 10 s excerpts, the WRONG one carried the highest coefficient of the three
-    (0.834 against 0.566 and 0.621).
+    **Where it still falls back to the coefficient, it is guessing, and the
+    measurements say so plainly.** On heavily degraded cross-device clips of the
+    muvid#59 master, the worst CORRECT alignment scored 0.129 while the worst pure-noise
+    clip scored 0.139 — the distributions overlap, so no threshold admits the correct
+    ones and refuses the noise. Worse, the wrong offsets scored 0.183-0.252, *higher*
+    than the correct ones. The real material agrees: of the three 10 s excerpts, the
+    WRONG one carried the highest coefficient of the three (0.834 against 0.566 and
+    0.621).
 
-    So :data:`MIN_CONFIDENCE` was deliberately NOT re-tuned for this regime. There is no
-    value to tune it to: raising it past the noise floor refuses correct footage, and a
-    number chosen to make a noise-floor test pass would hide that behind a green run.
-    The coefficient is reported (see
-    :func:`~muvid.mcp.footage_tools.align_footage`'s ``no_consensus``), the fix is
-    upstream — thorwhalen/mixing#41 adapts the window so short clips can be voted on —
-    and whether muvid should refuse unvoted clips outright if that band does not shrink
-    is muvid#91.
+    So :data:`MIN_CONFIDENCE` was deliberately NOT re-tuned. There is no value to tune it
+    to: raising it past the noise floor refuses correct footage, and a number chosen to
+    make a noise-floor test pass would hide that behind a green run. That fallback is now
+    reached only by a clip too short to vote at all, which is the narrowest it has been.
 
     Args:
         confidence: The estimator's correlation coefficient at the chosen lag.
-        support: Fraction of independent windows agreeing, or ``None`` if unmeasured.
+        support: Graded fraction of window evidence reaching the offset, or ``None``
+            when no vote could be held.
+        window_s: The window support was measured at. Recorded and reported as a
+            diagnostic; it does **not** enter the verdict, for the reason above.
 
     Returns:
         True when the offset may be cut to without the caller opting in.
     """
-    if support is not None:
-        return support >= MIN_SUPPORT
-    return confidence >= MIN_CONFIDENCE
+    if support is None:
+        return confidence >= MIN_CONFIDENCE
+    return support > MIN_SUPPORT
 
 
 class UnreliableAlignmentError(ValueError):
@@ -342,11 +378,13 @@ class FootageAlignment:
     #: of being measured. Selection filters on this; reporting shows it with a reason.
     overlaps: bool = True
     #: Fraction of the clip's independent analysis windows that agree on ``offset_s``.
-    #: ``None`` means no vote was held: a vote needs two windows far enough apart to
-    #: be separate opinions, so the boundary is ``window_s + hop_s`` — **30 s** at
-    #: mixing's defaults, not the 20 s that "shorter than one window" implies (measured:
-    #: 12/18/22/24/26/28/29 s all return None; 30 s is the first that does not). That is
-    #: a different fact from "the windows disagreed", which is why it is not 0.0.
+    #: ``None`` means no vote was held — since ``mixing>=0.0.48`` fits the window to the
+    #: clip, that is now only a clip too short to hold two windows at the 3 s floor
+    #: (measured: 4 s yes, 6 s no). It is a different fact from "the windows disagreed",
+    #: which is why it is not 0.0. ``window_s`` records the grid it was measured on and
+    #: is reported as a diagnostic; it does NOT qualify the number — see the note above
+    #: :data:`MIN_SUPPORT` for why a window-based qualifier was removed rather than
+    #: re-tuned.
     #:
     #: **This, not ``confidence``, is the honest number** (muvid#59). A correlation
     #: coefficient says how well the winning lag scored; it cannot say whether the
@@ -364,6 +402,16 @@ class FootageAlignment:
     #: the field gets its verdict DERIVED instead (see :meth:`from_dict`), never
     #: assumed.
     reliable: bool = True
+    #: The analysis grid ``support`` was measured on — ``None`` in exactly the cases
+    #: ``support`` is. Recorded because since ``mixing>=0.0.48`` the estimator fits the
+    #: window to the clip, so the SCALE of ``support`` is a per-clip quantity: without
+    #: these, comparing two clips' support means comparing numbers that answer different
+    #: questions. :func:`vouches_for` reads ``window_s``; ``hop_s`` is carried because
+    #: the pair is what makes a support fraction reproducible (which windows were
+    #: eligible to agree depends on the hop), and a record that cannot reproduce its own
+    #: measurement is a record you have to take on faith.
+    window_s: float | None = None
+    hop_s: float | None = None
 
     def to_dict(self) -> dict:
         return {
@@ -375,6 +423,8 @@ class FootageAlignment:
             "overlaps": self.overlaps,
             "support": self.support,
             "reliable": self.reliable,
+            "window_s": self.window_s,
+            "hop_s": self.hop_s,
         }
 
     @classmethod
@@ -384,6 +434,14 @@ class FootageAlignment:
         support = None if support is None else float(support)
         confidence = float(d["confidence"])
         reliable = d.get("reliable")
+        # Absent means the record predates the field, and every such record was measured
+        # at the FIXED default window — so absent reads as "comparable", not as "unknown
+        # scale". Reading it the other way would refuse every project aligned before the
+        # upgrade, which is the mistake `reliable`'s own compat read already records.
+        window_s = d.get("window_s")
+        window_s = None if window_s is None else float(window_s)
+        hop_s = d.get("hop_s")
+        hop_s = None if hop_s is None else float(hop_s)
         return cls(
             clip_id=d["clip_id"],
             offset_s=float(d["offset_s"]),
@@ -406,10 +464,12 @@ class FootageAlignment:
             # writer never wrote. `confidence` has always been required, so this is
             # never a guess about a missing input.
             reliable=(
-                vouches_for(confidence=confidence, support=support)
+                vouches_for(confidence=confidence, support=support, window_s=window_s)
                 if reliable is None
                 else bool(reliable)
             ),
+            window_s=window_s,
+            hop_s=hop_s,
         )
 
 

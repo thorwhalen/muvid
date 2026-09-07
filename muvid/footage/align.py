@@ -45,9 +45,13 @@ __all__ = [
 #: give ``support=0.75`` and a vouched alignment; ``window_s=45`` on the same clip gives
 #: ``support=None``, which drops the verdict onto the confidence coefficient — i.e. the
 #: support gate switches OFF and the caller is told nothing. Widening it far enough
-#: disables the check; narrowing it deflates every support (0.50/0.64/0.73 at the
-#: default, 0.17/0.15/0.21 at ``window_s=5``) so correct alignments fall under the
-#: threshold instead.
+#: disables the check; narrowing it deflates every support — measured across eleven clip
+#: lengths, correct alignments read 0.38-0.70 at a 20 s window and 0.00-1.00 at a 4 s one
+#: — so correct alignments fall under the threshold instead.
+#:
+#: (Since ``mixing>=0.0.48``, passing ``window_s`` alone also pairs it with
+#: ``hop = window/2``, so the two are one knob at the estimator too. Another reason not
+#: to accept half of it through a keyword.)
 #:
 #: Refused rather than merely documented for the reason the rest of this package refuses
 #: things: an argument that quietly turns a safety check off is worse than one that is
@@ -73,6 +77,15 @@ def align_footage(
     ``reliable=False`` rather than being omitted. Nothing may vanish from the record just
     because it matched badly; what a bad match loses is the right to be cut to silently
     (:func:`~muvid.footage.edl.validate_edl` is where that is enforced).
+
+    **A verdict already on disk is never re-judged, and re-aligning is how you re-judge
+    it.** A ``reliable=True`` written by muvid 0.0.52 or earlier was reached against the
+    UNGRADED support scale, where the muvid#59 shoot's own correct offsets scored 0.42
+    and 0.46 — numbers the current threshold refuses. Those records keep their verdicts
+    deliberately (:meth:`~muvid.footage.edl.FootageAlignment.from_dict` derives only an
+    ABSENT verdict), because a stored verdict is a measurement someone's project already
+    depends on, not a value to reinterpret under a scale it never saw. Calling this
+    function again is the supported way to get a verdict on today's terms.
     Heavy deps (mixing.audio → numpy/scipy/pydub) are imported lazily here so importing the
     genre stays light.
 
@@ -136,14 +149,21 @@ def _refuse_window_parameters(estimator_kwargs: dict) -> None:
 def _as_alignment(clip_id: str, a) -> FootageAlignment:
     """One ``mixing.audio.ClipAlignment`` → muvid's record, verdict included.
 
-    ``support`` is read BY NAME, and its absence is ``None`` rather than an error. The
-    read stays defensive even now that the ``mixing>=0.0.46`` floor guarantees the
-    attribute: a floor is a claim about what is *declared*, and this is the one line
-    that would turn a wrong claim into an ``AttributeError`` mid-shoot rather than a
-    clip that quietly aligns.
+    ``support``, ``window_s`` and ``hop_s`` are read BY NAME, and absence is ``None``
+    rather than an error. The read stays defensive even though the ``mixing>=0.0.48``
+    floor guarantees all three: a floor is a claim about what pip *declared*, and this
+    is the one line that would turn a wrong claim into an ``AttributeError`` mid-shoot
+    rather than into a clip that quietly aligns. The grid comes with the number because
+    the estimator fits its window to the clip, so ``support`` without ``window_s`` is a
+    fraction whose denominator nobody can see.
     """
-    support = getattr(a, "support", None)
-    support = None if support is None else float(support)
+
+    def read(name: str) -> "float | None":
+        v = getattr(a, name, None)
+        return None if v is None else float(v)
+
+    support = read("support")
+    window_s = read("window_s")
     return FootageAlignment(
         clip_id=clip_id,
         offset_s=a.offset_s,
@@ -155,5 +175,9 @@ def _as_alignment(clip_id: str, a) -> FootageAlignment:
         # A clip that does not overlap the song has no offset worth vouching for, but
         # it is `overlaps` that says so — stacking a second False on it would make two
         # different facts read as one, and the caller-facing report distinguishes them.
-        reliable=vouches_for(confidence=a.confidence, support=support),
+        reliable=vouches_for(
+            confidence=a.confidence, support=support, window_s=window_s
+        ),
+        window_s=window_s,
+        hop_s=read("hop_s"),
     )

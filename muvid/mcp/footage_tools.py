@@ -274,14 +274,13 @@ def align_footage(project_id: str) -> dict:
       them unless it is called with ``allow_unreliable=true``, because a wrong offset
       does not fail — it renders a video out of sync with the song (muvid#59). Re-align,
       leave them out of the edit, or opt in deliberately;
-    - ``no_consensus`` — clips whose offset was never put to a vote, because they are
-      under about 30 s, which is where the estimator stops having two independent
-      opinions to compare. Their offset rests on a single measurement — the estimator
-      muvid#59 was filed about — and the confidence score does NOT rank correctness
-      there (measured on that shoot: the wrong offset scored highest of the three).
-      Nothing is refused on this basis, because refusing would take the correct short
-      clips with it, but if a short clip looks out of sync in the render this list is
-      the first place to look.
+    - ``no_consensus`` — clips whose offset was never put to a vote at all, which now
+      means only a clip too short to hold two analysis windows (a few seconds). Their
+      offset rests on a single measurement — the estimator muvid#59 was filed about —
+      and the confidence score does NOT rank correctness there (measured on that shoot,
+      the wrong offset scored highest of the three). Nothing is refused on this basis,
+      because refusing would take the correct short clips with it, but if such a clip
+      looks out of sync in the render this list is the first place to look.
 
     Run this after adding/removing clips and before assembling.
     """
@@ -333,15 +332,16 @@ def align_footage(project_id: str) -> dict:
                 "clip_id": a.clip_id,
                 "confidence": round(a.confidence, 3),
                 "support": _round_support(a.support),
+                "window_s": _round_support(a.window_s),
             }
             for a in aligns
             if not a.reliable
         ],
         # REPORTED, never enforced — the same posture as `offset_consensus` below, and
         # for the same reason. `support: null` means the estimator could not hold a vote
-        # (the clip is under `window_s + hop_s` — about 30 s at mixing's defaults — so
-        # there are not two independent windows to compare), and the offset therefore
-        # rests on a single measurement
+        # at all: it fits its window to the clip down to a 3 s floor, so this is only a
+        # clip too short to hold two of those (measured: 4 s yes, 6 s no). The offset
+        # then rests on a single measurement
         # and the trust verdict falls back to the confidence coefficient. That fallback
         # is the weak one: measured on the muvid#59 material, one such clip is 102 s
         # wrong at confidence 0.834 while the two correct ones score 0.566 and 0.621 —
@@ -352,7 +352,10 @@ def align_footage(project_id: str) -> dict:
         "no_consensus": [a.clip_id for a in aligns if a.support is None],
         "confidence_metric": "onset-envelope correlation at the waveform's lag",
         "confidence_threshold": _MIN_CONFIDENCE,
+        # Support must EXCEED this, and the strictness is the meaning: at exactly this
+        # value every window had the offset on its ballot and none found it unaided.
         "support_threshold": MIN_SUPPORT,
+        "support_threshold_is_exclusive": True,
         "offset_consensus": _offset_consensus(aligns),
         # Usable-for-an-edit, not present-in-the-project: these clips are still here, still
         # listed, still addressable — they just cover no part of the song.
