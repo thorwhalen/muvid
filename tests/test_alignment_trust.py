@@ -9,12 +9,20 @@ silently desynced video rather than as an error.
 
 What is pinned here is that "we are not sure" now STOPS the render:
 
-- the verdict lives in one place (``align.vouches_for``) and rides on the record
+- the verdict lives in one place (``edl.vouches_for``) and rides on the record
   (``FootageAlignment.reliable`` / ``.support``), so a persisted alignment carries it;
 - ``validate_edl`` — the ONE gate — refuses to cut to an unvouched clip, and the escape
   (``allow_unreliable=True``) has to be said out loud, the way an unpriceable shot has to
   be passed with ``--allow-unpriced`` rather than being read as free;
-- a refusal is not a removal: the clip keeps its record and stays addressable.
+- a refusal is not a removal: the clip keeps its record and stays addressable;
+- a record from before the fields existed has its verdict DERIVED, not assumed —
+  otherwise the upgrade would quietly un-flag the very alignments the issue is about.
+
+What is deliberately NOT pinned here is that the verdict is *correct*. Where ``support``
+was never measured — every alignment today's ``mixing`` produces — ``vouches_for`` falls
+back to the confidence coefficient, which on this shoot caught two of the three wrong
+offsets and missed the third. That gap is thorwhalen/mixing#30's to close; this module
+pins only that a verdict, once reached, stops the render.
 
 Everything here is offline. The end-to-end cases synthesise their own audio; the real
 shoot's footage is verification material, not a fixture.
@@ -94,9 +102,12 @@ class TestTheRecordCarriesIt:
         a = _align("A", support=None)
         assert FootageAlignment.from_dict(a.to_dict()).support is None
 
-    def test_a_record_written_before_the_fields_existed_reads_back_vouched(self):
-        # Same compatibility posture as `overlaps`: defaulting to False would refuse
-        # every project already on disk over a measurement nobody ever made.
+    def test_a_record_written_before_the_fields_existed_gets_a_DERIVED_verdict(self):
+        # Not a default — a derivation. Blanket-defaulting True would have been a
+        # regression: an alignments.json written before this PR holds exactly the
+        # offsets muvid#59 is about, so a blanket True would render them AND drop them
+        # out of the caller-facing weak list, which is quieter than the behaviour the
+        # issue was filed against.
         legacy = {
             "clip_id": "A",
             "offset_s": 1.0,
@@ -104,8 +115,43 @@ class TestTheRecordCarriesIt:
             "duration_s": 10.0,
             "coverage": [1.0, 11.0],
         }
-        a = FootageAlignment.from_dict(legacy)
-        assert a.reliable is True and a.support is None
+        good = FootageAlignment.from_dict(legacy)
+        assert good.reliable is True and good.support is None
+
+        bad = FootageAlignment.from_dict({**legacy, "confidence": 0.086})
+        assert bad.reliable is False and bad.support is None
+
+    def test_a_legacy_low_confidence_record_is_refused_by_the_gate(self):
+        legacy = {
+            "clip_id": "A",
+            "offset_s": 0.0,
+            "confidence": 0.086,  # muvid#59's own c01/c03
+            "duration_s": SONG_S,
+            "coverage": [0.0, SONG_S],
+        }
+        aligns = [FootageAlignment.from_dict(legacy)]
+        with pytest.raises(UnreliableAlignmentError):
+            validate_edl([EdlEntry(0.0, SONG_S, "A")], aligns, SONG_S)
+
+    def test_a_legacy_high_confidence_record_still_renders(self):
+        # The other half of the derivation: a project that was fine before this PR is
+        # still fine after it. Nobody's working edit breaks on upgrade.
+        legacy = {
+            "clip_id": "A",
+            "offset_s": 0.0,
+            "confidence": 0.6,
+            "duration_s": SONG_S,
+            "coverage": [0.0, SONG_S],
+        }
+        aligns = [FootageAlignment.from_dict(legacy)]
+        entries = validate_edl([EdlEntry(0.0, SONG_S, "A")], aligns, SONG_S)
+        assert [e.clip_id for e in entries] == ["A"]
+
+    def test_an_explicit_verdict_is_never_overridden_by_the_derivation(self):
+        # A record that DOES carry the field is authoritative — the aligner may have
+        # refused it for a reason no coefficient can reconstruct.
+        d = _align("A", confidence=0.9, support=None, reliable=False).to_dict()
+        assert FootageAlignment.from_dict(d).reliable is False
 
 
 class TestTheGateRefuses:
@@ -313,7 +359,9 @@ class TestTheToolSurface:
         proj = FootageWorkspace.for_email("u@x.com").create_project("p")
         proj.set_song(str(song_p), ext="wav")
         proj.add_clip(
-            "JUNK", str(_clip(tmp_path, rng.normal(0, 1.0, int(8 * SR)), "j")), ext="mp4"
+            "JUNK",
+            str(_clip(tmp_path, rng.normal(0, 1.0, int(8 * SR)), "j")),
+            ext="mp4",
         )
         with use_email("u@x.com"):
             out = ft.align_footage("p")
