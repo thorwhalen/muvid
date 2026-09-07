@@ -164,6 +164,7 @@ def _as_alignment(clip_id: str, a) -> FootageAlignment:
 
     support = read("support")
     window_s = read("window_s")
+    margin = read("margin")
     return FootageAlignment(
         clip_id=clip_id,
         offset_s=a.offset_s,
@@ -176,8 +177,12 @@ def _as_alignment(clip_id: str, a) -> FootageAlignment:
         # it is `overlaps` that says so — stacking a second False on it would make two
         # different facts read as one, and the caller-facing report distinguishes them.
         reliable=vouches_for(
-            confidence=a.confidence, support=support, window_s=window_s
+            confidence=a.confidence,
+            support=support,
+            margin=margin,
+            window_s=window_s,
         ),
         window_s=window_s,
         hop_s=read("hop_s"),
+        margin=margin,
     )

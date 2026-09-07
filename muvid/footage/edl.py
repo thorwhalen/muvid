@@ -196,43 +196,65 @@ TRANSITION_CURVES = frozenset(
 #: the decision this leaves open.
 MIN_CONFIDENCE = float(os.environ.get("MUVID_FOOTAGE_MIN_CONFIDENCE", "0.1"))
 
-#: Support must EXCEED this for a consensus offset to vouch for itself (env
-#: ``MUVID_FOOTAGE_MIN_SUPPORT``). Strictly greater, and that is the whole meaning of
-#: the number rather than a rounding preference: ``mixing`` grades each window's
-#: evidence as 1.0 when that window's own argmax reached the offset and at most
-#: ``BALLOT_VOTE_WEIGHT`` (0.5) when the offset was merely on its ballot, so **0.5 is
-#: exactly the ceiling of ballot-only evidence.** A support of 0.5 means every window
-#: had the offset on the ballot and NOT ONE of them found it unaided; above 0.5 at
-#: least one did. That is the difference between "nothing could separate these
-#: candidates" and "something actually located this one", which is the distinction
-#: muvid#59 is made of.
+#: Support must EXCEED this for an offset to be vouched for — a FLOOR on how much
+#: evidence reached it (env ``MUVID_FOOTAGE_MIN_SUPPORT``). It is not the separator;
+#: :data:`MIN_MARGIN` is. Support says how much of the clip's evidence reaches this
+#: offset, and that is a different question from whether anything disputes it.
 #:
-#: **Measured rather than derived.** On the muvid#59 master: 24 correct alignments (21
-#: clips across the 12-29 s band at three offsets, plus the shoot's three real
-#: excerpts) against six pure-noise clips as the known-wrong control.
+#: **0.25 was measured, not chosen.** On the muvid#59 master — 24 correct alignments
+#: (21 clips across the 12-29 s band at three offsets, plus the shoot's three real
+#: excerpts) against six pure-noise clips as the known-wrong control:
 #:
-#: ===================  =================  ===============
-#: threshold            correct passing    noise passing
-#: ===================  =================  ===============
-#: ``>= 0.25``          24 / 24            **1 / 6**
-#: ``> 0.5``            18 / 24            **0 / 6**
-#: ===================  =================  ===============
+#: ==================================  =================  ===============
+#: gate                                correct passing    noise passing
+#: ==================================  =================  ===============
+#: ``support > 0.5`` (muvid 0.0.53)    18 / 24            0 / 6
+#: ``support > 0.5 and margin > 0``    18 / 24            0 / 6
+#: ``margin > 0`` alone                **24 / 24**        **0 / 6**
+#: ``support > 0.25 and margin > 0``   **24 / 24**        **0 / 6**
+#: ==================================  =================  ===============
 #:
-#: So this is the only cut measured that refuses every known-wrong case. It costs six
-#: correct short clips — they score 0.30-0.38, real but ballot-weight evidence — and
-#: that is the SAFE direction of error: a refusal is visible and recoverable
-#: (``allow_unreliable=True``, re-align, or leave the clip out), while the failure it
-#: prevents is a finished video silently out of sync that nothing downstream
-#: re-measures.
+#: So margin is not an addition to a support threshold — it is a BETTER gate than one,
+#: and the conjunction with 0.5 adds nothing because margin never refuses what that
+#: threshold passes. Dropping the floor to 0.25 recovers all six correct short clips
+#: 0.5 was turning away (they score 0.30-0.38) without admitting a noise clip.
 #:
-#: Do not lower it to recover those six without re-running that table. The confidence
-#: coefficient cannot rescue them either — the noise clips score 0.173, 0.106, 0.143,
-#: 0.040, 0.170 and 0.017, straddling exactly the same band as correct short clips —
-#: so a conjunctive gate buys nothing. Three separate scalars have now failed to
-#: separate this population; the quantity that might is the margin over the runner-up
-#: (thorwhalen/mixing#47), because muvid#59 was near-ties (0.993/0.989/0.987) and no
-#: fraction of anything looks at the runner-up.
-MIN_SUPPORT = float(os.environ.get("MUVID_FOOTAGE_MIN_SUPPORT", "0.5"))
+#: **The floor is kept rather than gating on margin alone, for two measured reasons.**
+#: The noise clip that comes closest scores ``margin == +0.000`` exactly — refused by a
+#: tie no draw guarantees — and two correct passes sit at ``+0.014`` and ``+0.029`` with
+#: support 0.34-0.35, which is thin evidence that happens to be undisputed. With the
+#: floor in place, five of the six noise clips fail on support independently, so that
+#: exact tie is not the only thing standing between the gate and pure noise.
+#:
+#: Thirty cases is encouraging and not proof. Re-run that table before moving either
+#: number.
+MIN_SUPPORT = float(os.environ.get("MUVID_FOOTAGE_MIN_SUPPORT", "0.25"))
+
+#: Margin must EXCEED this for an offset to be vouched for (env
+#: ``MUVID_FOOTAGE_MIN_MARGIN``). This is the SEPARATOR, and zero is the meaningful
+#: value rather than a tunable one: ``mixing``'s margin is the graded tally at the
+#: chosen offset minus the tally at the best offset outside the tolerance, so
+#: ``> 0`` means "the clip's own evidence prefers THIS offset over every other one it
+#: considered", ``== 0`` means it is indifferent, and ``< 0`` means **the evidence
+#: actually prefers somewhere else**.
+#:
+#: A negative margin is therefore a refusal in its own right, not merely a failure to
+#: endorse — and it is the cleanest signal measured anywhere in muvid#59: five of six
+#: pure-noise clips came back negative (-0.167, -0.172, -0.176, -0.218, -0.317) and not
+#: one correct alignment did.
+#:
+#: **Why this is the quantity that was missing.** muvid#59's diagnosis was near-tied
+#: peaks — the second-to-first ratios on that shoot measured 0.993, 0.989 and 0.987 —
+#: and no support fraction, however graded, can see a runner-up at all. Three scalars
+#: failed to separate this population before this one: the raw coefficient, the
+#: envelope coefficient, and support.
+#:
+#: One boundary worth knowing before tuning it: a rival closer than ``mixing``'s
+#: ``offset_tolerance_s`` is the same hypothesis by construction and never subtracts
+#: (measured upstream: a rival 0.20 s away leaves the margin at 1.000, one 0.30 s away
+#: takes it to 0.505). **Margin separates different offsets; it is not a precision
+#: claim about the one it chose.**
+MIN_MARGIN = float(os.environ.get("MUVID_FOOTAGE_MIN_MARGIN", "0.0"))
 
 #: ``MIN_SUPPORT`` used to be qualified by the window it was measured at, because an
 #: argmax headcount at a 4 s window was a weaker statistic than the same fraction at
@@ -249,7 +271,11 @@ MIN_SUPPORT = float(os.environ.get("MUVID_FOOTAGE_MIN_SUPPORT", "0.5"))
 
 
 def vouches_for(
-    *, confidence: float, support: float | None, window_s: float | None = None
+    *,
+    confidence: float,
+    support: float | None,
+    margin: float | None = None,
+    window_s: float | None = None,
 ) -> bool:
     """Does the aligner vouch for this offset? The ONE place that verdict is reached.
 
@@ -294,10 +320,38 @@ def vouches_for(
     make a noise-floor test pass would hide that behind a green run. That fallback is now
     reached only by a clip too short to vote at all, which is the narrowest it has been.
 
+    **Two numbers, asking different questions.** :data:`MIN_SUPPORT` is a FLOOR — did
+    enough of the clip's evidence reach this offset — and :data:`MIN_MARGIN` is the
+    SEPARATOR — does that evidence prefer this offset over every other one it
+    considered. Measured on the muvid#59 master, the separator does the work:
+    ``margin > 0`` alone passes 24/24 correct and 0/6 noise, where a support threshold
+    at 0.5 passes 18/24. The floor is kept anyway, so the one noise clip whose margin
+    lands on an exact ``+0.000`` is not held out by a tie alone.
+
+    **What muvid#91 becomes.** Since the estimator fits its window down to a 3 s floor,
+    the regime with no vote at all is now exactly clips shorter than
+    ``window_floor + hop`` — measured, **4.5 s**: 4.4 s gives ``support is None`` and
+    4.5 s is the first with a number. Those still fall back to the coefficient, which
+    produces an inversion worth naming: a 4.4 s clip is VOUCHED while a 4.5 s one is
+    refused, because falling off the bottom of the vote hands the decision to the weaker
+    instrument. That is not defensible on its own terms, and it is left alone HERE only
+    because changing it means separating a fresh verdict from a DERIVED one — a record
+    predating these fields also has ``support is None``, and refusing those would
+    re-break what muvid#87 fixed. muvid#91 is now that specific decision, over a band too
+    short to be usable music-video footage, rather than the open question about a third
+    of a shoot that it started as.
+
     Args:
         confidence: The estimator's correlation coefficient at the chosen lag.
         support: Graded fraction of window evidence reaching the offset, or ``None``
             when no vote could be held.
+        margin: That tally minus the tally at the best offset outside the tolerance.
+            ``None`` on exactly the same quorum as ``support``. Required to vouch when a
+            vote WAS held: an aligner reporting support without it has not answered the
+            separating question, and unknown does not vouch. The ``mixing>=0.0.51`` floor
+            guarantees both, and ``tests/test_ci_extras_canary.py`` asserts the
+            capability so a mis-resolved floor fails loudly rather than quietly refusing
+            every clip.
         window_s: The window support was measured at. Recorded and reported as a
             diagnostic; it does **not** enter the verdict, for the reason above.
 
@@ -306,7 +360,9 @@ def vouches_for(
     """
     if support is None:
         return confidence >= MIN_CONFIDENCE
-    return support > MIN_SUPPORT
+    if margin is None:
+        return False
+    return support > MIN_SUPPORT and margin > MIN_MARGIN
 
 
 class UnreliableAlignmentError(ValueError):
@@ -412,6 +468,16 @@ class FootageAlignment:
     #: measurement is a record you have to take on faith.
     window_s: float | None = None
     hop_s: float | None = None
+    #: How far ``support``'s tally for this offset sits ABOVE the tally for the best
+    #: offset outside the tolerance — ``None`` on the same quorum as ``support``.
+    #:
+    #: ``support`` says how much evidence reaches this offset; this says whether
+    #: anything disputes it, and they are different questions. A NEGATIVE value means
+    #: the clip's own evidence prefers somewhere else, which is a refusal rather than a
+    #: weak endorsement. See :data:`MIN_MARGIN` — this is the number muvid#59 was
+    #: actually missing, since its near-ties (0.993/0.989/0.987) are invisible to any
+    #: fraction that does not look at the runner-up.
+    margin: float | None = None
 
     def to_dict(self) -> dict:
         return {
@@ -425,6 +491,7 @@ class FootageAlignment:
             "reliable": self.reliable,
             "window_s": self.window_s,
             "hop_s": self.hop_s,
+            "margin": self.margin,
         }
 
     @classmethod
@@ -442,6 +509,8 @@ class FootageAlignment:
         window_s = None if window_s is None else float(window_s)
         hop_s = d.get("hop_s")
         hop_s = None if hop_s is None else float(hop_s)
+        margin = d.get("margin")
+        margin = None if margin is None else float(margin)
         return cls(
             clip_id=d["clip_id"],
             offset_s=float(d["offset_s"]),
@@ -464,12 +533,18 @@ class FootageAlignment:
             # writer never wrote. `confidence` has always been required, so this is
             # never a guess about a missing input.
             reliable=(
-                vouches_for(confidence=confidence, support=support, window_s=window_s)
+                vouches_for(
+                    confidence=confidence,
+                    support=support,
+                    margin=margin,
+                    window_s=window_s,
+                )
                 if reliable is None
                 else bool(reliable)
             ),
             window_s=window_s,
             hop_s=hop_s,
+            margin=margin,
         )
 
 
