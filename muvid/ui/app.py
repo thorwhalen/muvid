@@ -17,10 +17,67 @@ import threading
 from pathlib import Path
 from typing import Any, Optional
 
+try:
+    from pydantic import BaseModel  # type: ignore
+except ImportError as e:
+    raise RuntimeError(
+        "muvid UI requires `fastapi` and `uvicorn`. "
+        "pip install fastapi uvicorn pydantic"
+    ) from e
+
 
 _PROJECT_ROOT: Optional[Path] = None
 _LOG_LOCK = threading.Lock()
 _LOG_LINES: list[str] = []
+
+
+class TranscribeReq(BaseModel):
+    api_key: Optional[str] = None
+
+
+class AlignReq(BaseModel):
+    pass
+
+
+class CharacterReq(BaseModel):
+    name: str
+    description: str = ""
+    voice_id: str = ""
+    reference_audio_url: str = ""
+
+
+class GenerateImagesReq(BaseModel):
+    name: str
+    n: int = 6
+    quality: str = "balanced"
+
+
+class CurateReq(BaseModel):
+    name: str
+    k: int = 8
+    recipe: str = "person_mock"
+
+
+class EnvironmentReq(BaseModel):
+    name: str
+    description: str = ""
+    time_of_day: str = ""
+    lighting: str = ""
+
+
+class ScriptReq(BaseModel):
+    content: str
+
+
+class RenderReq(BaseModel):
+    shot_id: Optional[str] = None
+    quality: str = "balanced"
+    force: bool = False
+
+
+class ComposeReq(BaseModel):
+    out_name: str = "final.mp4"
+    use_song_audio: bool = True
 
 
 def _log(msg: str) -> None:
@@ -42,7 +99,6 @@ def create_app(root: str | Path):
         from fastapi import FastAPI, HTTPException  # type: ignore
         from fastapi.responses import HTMLResponse, FileResponse, PlainTextResponse  # type: ignore
         from fastapi.staticfiles import StaticFiles  # type: ignore
-        from pydantic import BaseModel  # type: ignore
     except ImportError as e:
         raise RuntimeError(
             "muvid UI requires `fastapi` and `uvicorn`. "
@@ -71,9 +127,6 @@ def create_app(root: str | Path):
         with _LOG_LOCK:
             return "\n".join(_LOG_LINES[-200:])
 
-    class TranscribeReq(BaseModel):
-        api_key: Optional[str] = None
-
     @app.post("/api/transcribe")
     def transcribe(req: TranscribeReq):
         _log("transcribe: starting")
@@ -84,9 +137,6 @@ def create_app(root: str | Path):
         except Exception as e:
             _log(f"transcribe: ERROR {e}")
             raise HTTPException(500, str(e))
-
-    class AlignReq(BaseModel):
-        pass
 
     @app.post("/api/align")
     def align(_: AlignReq):
@@ -99,12 +149,6 @@ def create_app(root: str | Path):
             _log(f"align: ERROR {e}")
             raise HTTPException(500, str(e))
 
-    class CharacterReq(BaseModel):
-        name: str
-        description: str = ""
-        voice_id: str = ""
-        reference_audio_url: str = ""
-
     @app.post("/api/character")
     def character(req: CharacterReq):
         out = facade.add_character(
@@ -116,11 +160,6 @@ def create_app(root: str | Path):
         )
         _log(f"character: upserted {req.name!r}")
         return out
-
-    class GenerateImagesReq(BaseModel):
-        name: str
-        n: int = 6
-        quality: str = "balanced"
 
     @app.post("/api/character/generate")
     def character_generate(req: GenerateImagesReq):
@@ -138,11 +177,6 @@ def create_app(root: str | Path):
             _log(f"character.generate: ERROR {e}")
             raise HTTPException(500, str(e))
 
-    class CurateReq(BaseModel):
-        name: str
-        k: int = 8
-        recipe: str = "person_mock"
-
     @app.post("/api/character/curate")
     def character_curate(req: CurateReq):
         _log(f"character.curate: {req.name} k={req.k}")
@@ -158,12 +192,6 @@ def create_app(root: str | Path):
         except Exception as e:
             _log(f"character.curate: ERROR {e}")
             raise HTTPException(500, str(e))
-
-    class EnvironmentReq(BaseModel):
-        name: str
-        description: str = ""
-        time_of_day: str = ""
-        lighting: str = ""
 
     @app.post("/api/environment")
     def environment(req: EnvironmentReq):
@@ -195,9 +223,6 @@ def create_app(root: str | Path):
             facade.write_script(str(_PROJECT_ROOT))
         return {"path": str(path), "content": path.read_text() if path.exists() else ""}
 
-    class ScriptReq(BaseModel):
-        content: str
-
     @app.post("/api/script")
     def set_script(req: ScriptReq):
         path = _PROJECT_ROOT / "script" / "script.md"
@@ -206,11 +231,6 @@ def create_app(root: str | Path):
         facade.parse_script(str(_PROJECT_ROOT))
         _log("script: applied")
         return {"ok": True, "path": str(path)}
-
-    class RenderReq(BaseModel):
-        shot_id: Optional[str] = None
-        quality: str = "balanced"
-        force: bool = False
 
     @app.post("/api/render")
     def render(req: RenderReq):
@@ -235,10 +255,6 @@ def create_app(root: str | Path):
         except Exception as e:
             _log(f"render: ERROR {e}")
             raise HTTPException(500, str(e))
-
-    class ComposeReq(BaseModel):
-        out_name: str = "final.mp4"
-        use_song_audio: bool = True
 
     @app.post("/api/compose")
     def compose(req: ComposeReq):
