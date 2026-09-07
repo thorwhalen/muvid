@@ -18,11 +18,17 @@ What is pinned here is that "we are not sure" now STOPS the render:
 - a record from before the fields existed has its verdict DERIVED, not assumed —
   otherwise the upgrade would quietly un-flag the very alignments the issue is about.
 
-What is deliberately NOT pinned here is that the verdict is *correct*. Where ``support``
-was never measured — every alignment today's ``mixing`` produces — ``vouches_for`` falls
-back to the confidence coefficient, which on this shoot caught two of the three wrong
-offsets and missed the third. That gap is thorwhalen/mixing#30's to close; this module
-pins only that a verdict, once reached, stops the render.
+Since the ``mixing>=0.0.46`` floor the estimator puts each clip's windows to a vote and
+reports how much of the clip agreed, so the verdict rests on ``support`` rather than on a
+coefficient. The end-to-end cases here build a loop track that defeats the whole-clip
+argmax — asserted, in its own test, so the fixture cannot quietly stop being adversarial
+— and then show consensus recovering the offset with support above the threshold.
+
+What is still NOT pinned is that the verdict is always right. A clip shorter than one
+analysis window has no second opinion, ``support`` is ``None``, and ``vouches_for`` falls
+back to the coefficient — measured on the real shoot, one such clip is 102 s wrong at
+confidence 0.834. That case has its own test asserting only that muvid can TELL, and the
+fix it waits on is thorwhalen/mixing#41.
 
 Everything here is offline. The end-to-end cases synthesise their own audio; the real
 shoot's footage is verification material, not a fixture.
@@ -346,7 +352,19 @@ class TestTheToolSurface:
         assert weak[0]["support"] == 0.05
 
     @needs_pipeline
-    def test_align_footage_reports_the_unreliable_list(self, tmp_path, monkeypatch):
+    def test_align_footage_reports_agree_with_the_records_they_summarise(
+        self, tmp_path, monkeypatch
+    ):
+        """The two report lists say exactly what the records say — no second opinion.
+
+        Asserted as a PROPERTY rather than against a hardcoded verdict on purpose. The
+        first version of this test pinned "8 s of noise is unreliable", which was true
+        under the old estimator and false under the new one: the same clip scores 0.113
+        with consensus against a ``MIN_CONFIDENCE`` of 0.1, so the test failed for a
+        reason that had nothing to do with the reporting it claims to cover. A summary
+        can only be wrong by disagreeing with what it summarises, and that is what this
+        checks — it cannot flip when an estimator is swapped underneath it.
+        """
         pytest.importorskip("fastmcp")
         import muvid.mcp.footage_tools as ft
         from muvid.mcp.identity import use_email
@@ -359,15 +377,268 @@ class TestTheToolSurface:
         proj = FootageWorkspace.for_email("u@x.com").create_project("p")
         proj.set_song(str(song_p), ext="wav")
         proj.add_clip(
+            "REAL", str(_clip(tmp_path, song[: int(10 * SR)], "r")), ext="mp4"
+        )
+        proj.add_clip(
             "JUNK",
             str(_clip(tmp_path, rng.normal(0, 1.0, int(8 * SR)), "j")),
             ext="mp4",
         )
         with use_email("u@x.com"):
             out = ft.align_footage("p")
-        assert [u["clip_id"] for u in out["unreliable"]] == ["JUNK"]
-        assert out["unreliable"][0]["support"] is None  # not measured, not zero
+
+        by_id = {a["clip_id"]: a for a in out["alignments"]}
+        assert set(by_id) == {"REAL", "JUNK"}  # nothing is dropped by a measurement
+        assert {u["clip_id"] for u in out["unreliable"]} == {
+            cid for cid, a in by_id.items() if not a["reliable"]
+        }
+        assert set(out["no_consensus"]) == {
+            cid for cid, a in by_id.items() if a["support"] is None
+        }
         assert out["support_threshold"] == MIN_SUPPORT
+        for u in out["unreliable"]:
+            assert u["support"] == by_id[u["clip_id"]]["support"]
+
+
+def _has_support() -> bool:
+    """Does the installed ``mixing`` report a consensus support fraction at all?"""
+    try:
+        import dataclasses
+
+        from mixing.audio import ClipAlignment
+    except Exception:  # pragma: no cover - absence is what is being detected
+        return False
+    return "support" in {f.name for f in dataclasses.fields(ClipAlignment)}
+
+
+#: A capability guard, not a version comparison — a floor says what pip resolved, this
+#: says what got imported. `tests/test_ci_extras_canary.py` asserts the same capability
+#: WITHOUT a skip, so a CI whose resolver picked an older mixing fails loudly instead of
+#: skipping these and reporting green over an estimator muvid#59 was filed about.
+needs_support = pytest.mark.skipif(
+    not (HAS_FFMPEG and HAS_ALIGNER and _has_support()),
+    reason="needs mixing>=0.0.46 (ClipAlignment.support)",
+)
+
+#: The loop: a 2 s bar, 45 of them, hits on the dembow 3+3+2 of eight slots.
+_BAR_S = 2.0
+_BARS = 45
+_SLOTS = 8
+_DEMBOW = (0, 3, 6)
+#: Roots the bar cycles through, and the seed for its per-bar fill.
+_ROOTS = (110, 98, 131, 116)
+_FILL_SEED = 59
+
+
+def _struck(seconds: float, f0: float) -> np.ndarray:
+    """One percussive, harmonically rich hit — a plucked chord, decaying."""
+    t = np.arange(int(seconds * SR)) / SR
+    y = np.zeros_like(t)
+    for k, mul in enumerate((1, 2, 3, 5)):
+        y += np.exp(-14 * t) * (0.85**k) * np.sin(2 * np.pi * f0 * mul * t)
+    return y
+
+
+def _repetitive_song(tmp_path: Path) -> tuple[Path, np.ndarray]:
+    """90 s of loop music: one bar, 45 times, with per-bar variation. Repetitive, not tiled.
+
+    Getting this fixture right took three tries and each failure was informative, so the
+    reasoning is here rather than in a commit nobody will find:
+
+    - A **through-composed** reference (the 20 s sweep in ``_song`` above) has one
+      unambiguous correlation peak. Nothing about muvid#59 can happen on it.
+    - A **perfectly tiled** reference is the opposite mistake and a worse one: every
+      offset differing by a whole bar is *equally correct*, so there is no answer to get
+      right. A first version of this fixture tiled one motif and the test duly "failed"
+      at −9.26 s against a "truth" of 28 s that had never been the only right answer.
+      Consensus cannot invent an answer the signal does not contain, and demanding that
+      it does is a test asserting a fantasy.
+    - **Real loop music is neither.** A dembow bar repeats verbatim — same hits, same
+      grid, so the correlation surface really is near-tied at musical periods — while
+      fills and harmonic motion still make any twenty seconds of it individually
+      identifiable. That second property is what a window needs to have an opinion
+      worth voting with, and it is exactly what pure tiling removes.
+
+    So: a fixed 3+3+2 bar (the ties), plus one extra hit per bar at a position drawn from
+    a seeded sequence and a root cycling through four chords (the identity). Measured on
+    the result, the whole-clip estimator lands **48 s wrong at confidence 0.29** while the
+    windowed consensus lands within 10 ms — which is muvid#59, reproduced from scratch
+    with no copyrighted audio and nothing on disk.
+    """
+    from scipy.io import wavfile
+
+    rng = np.random.default_rng(_FILL_SEED)
+    n_bar = int(_BAR_S * SR)
+    slot = n_bar // _SLOTS
+    x = np.zeros(n_bar * _BARS)
+
+    def place(sample: np.ndarray, at: int) -> None:
+        x[at : at + len(sample)] += sample[: len(x) - at]
+
+    for bar in range(_BARS):
+        root = _ROOTS[bar % len(_ROOTS)]
+        for s in _DEMBOW:
+            place(_struck(0.5, root), bar * n_bar + s * slot)
+        # The fill: one hit an octave up, wherever this bar's draw puts it.
+        place(
+            0.55 * _struck(0.3, root * 4),
+            bar * n_bar + int(rng.integers(1, _SLOTS)) * slot,
+        )
+
+    x /= np.max(np.abs(x))
+    p = tmp_path / "loop.wav"
+    wavfile.write(str(p), SR, (x * 32767).astype(np.int16))
+    return p, x
+
+
+def _device_recording(
+    tmp_path: Path, song: np.ndarray, name: str, *, at: float, seconds: float, seed: int
+) -> Path:
+    """``seconds`` of ``song`` from ``at``, as a second device would have caught it.
+
+    Band-limited and run through a DENSE random room tail, because that is what
+    destroys raw-waveform similarity between two microphones in a room while leaving
+    onsets where they are — the whole reason the aligner works on an onset envelope.
+    A bright single echo would leave the waveform correlated and test nothing.
+
+    ``seed`` is explicit rather than derived from ``name``: ``hash()`` of a string is
+    salted per process, so seeding a room impulse response from it makes the room —
+    and therefore every number measured through it — different on every run. That is
+    how this test first "failed", reporting a support of 0.0 for a run whose material
+    no earlier run had ever aligned.
+
+    Written as audio rather than muxed into a video: the aligner reads the audio track
+    either way, and encoding a minute of video per case buys the test nothing.
+    """
+    from scipy.io import wavfile
+    from scipy.signal import butter, lfilter
+
+    rng = np.random.default_rng(seed)
+    seg = song[int(at * SR) : int((at + seconds) * SR)].copy()
+    b, a = butter(4, [200 / (SR / 2), 4500 / (SR / 2)], btype="band")
+    seg = lfilter(b, a, seg)
+    n_ir = int(0.25 * SR)
+    ir = rng.normal(0, 1, n_ir) * np.exp(-np.arange(n_ir) / (0.06 * SR))
+    ir[0] += 3.0
+    seg = np.convolve(seg, ir)[: len(seg)]
+    seg = seg / (np.max(np.abs(seg)) or 1.0) * 0.5 + rng.normal(0, 0.08, len(seg))
+    p = tmp_path / f"{name}.wav"
+    wavfile.write(str(p), SR, (np.clip(seg, -1, 1) * 32767).astype(np.int16))
+    return p
+
+
+@needs_support
+def test_the_old_estimator_is_confidently_wrong_on_this_fixture(tmp_path):
+    """The fixture is adversarial — asserted, not assumed (muvid#59).
+
+    The control for the test below. If the whole-clip argmax ever aligns this material
+    correctly, the fixture has stopped reproducing the defect and the consensus test
+    underneath it is measuring an easy alignment while crediting the fix.
+    ``consensus=False`` is a documented contract ("restores the single whole-clip
+    correlation exactly"), so this pins a property of the FIXTURE, not the survival of
+    a bug. It also exercises the estimator-kwargs seam on a value ``mixing`` honours.
+    """
+    from muvid.footage.align import align_footage
+
+    song_p, song = _repetitive_song(tmp_path)
+    clip = [
+        (
+            "A",
+            str(
+                _device_recording(tmp_path, song, "a", at=28.0, seconds=50.0, seed=101)
+            ),
+        )
+    ]
+    a = align_footage(str(song_p), clip, song_duration=len(song) / SR, consensus=False)[
+        0
+    ]
+
+    assert abs(a.offset_s - 28.0) > 1.0, (
+        "the whole-clip estimator aligned the fixture correctly, so the fixture no "
+        "longer reproduces muvid#59 and the consensus test below is vacuous"
+    )
+    # And it does not know that it is wrong: the wrong answer clears the confidence
+    # threshold, which is the entire reason `support` had to exist.
+    assert a.confidence > MIN_CONFIDENCE
+    assert a.support is None  # nothing was put to a vote
+
+
+@needs_support
+def test_consensus_recovers_the_offset_and_support_vouches_for_it(tmp_path):
+    """The end of the wiring: a vote is held, muvid reads it, and it decides.
+
+    Same fixture the test above shows the old estimator failing on, so what is measured
+    here is the fix rather than an easy alignment.
+    """
+    from muvid.footage.align import align_footage
+
+    song_p, song = _repetitive_song(tmp_path)
+    song_s = len(song) / SR
+    # Both clips run several analysis windows long. A clip shorter than one window has
+    # no second opinion and comes back support=None — correctly, and that case is the
+    # next test rather than something smuggled in here.
+    clips = [
+        (
+            "A",
+            str(
+                _device_recording(tmp_path, song, "a", at=28.0, seconds=50.0, seed=101)
+            ),
+        ),
+        (
+            "B",
+            str(
+                _device_recording(tmp_path, song, "b", at=40.0, seconds=45.0, seed=202)
+            ),
+        ),
+    ]
+    by = {a.clip_id: a for a in align_footage(str(song_p), clips, song_duration=song_s)}
+
+    for cid, truth in (("A", 28.0), ("B", 40.0)):
+        a = by[cid]
+        assert a.offset_s == pytest.approx(truth, abs=0.1), f"{cid} landed on a repeat"
+        # The vote happened and muvid read it — what the floor bump buys.
+        assert a.support is not None, f"{cid} has no support; is mixing too old?"
+        assert a.support >= MIN_SUPPORT
+        assert a.reliable is True
+        # muvid DERIVES the verdict from what mixing reported rather than forming a
+        # second opinion — the property that keeps this one gate rather than two.
+        assert a.reliable is vouches_for(confidence=a.confidence, support=a.support)
+
+    # And the gate lets the edit through, which is what a caller actually feels.
+    assert validate_edl([EdlEntry(28.0, 40.0, "A")], list(by.values()), song_s)
+
+
+@needs_support
+def test_a_clip_too_short_to_vote_reports_no_support(tmp_path):
+    """The known remaining exposure, pinned so it stays visible (thorwhalen/mixing#41).
+
+    A clip shorter than the estimator's analysis window is ONE window: no second
+    opinion, nothing to arbitrate, so ``support`` is ``None`` — correctly, since
+    inventing 1.0 for a unanimous vote of one would be the strongest possible claim
+    resting on no evidence. What muvid then does is fall back to the confidence
+    coefficient, which is the instrument this issue was filed about.
+
+    So this test does not assert that the result is right. It asserts that muvid can
+    still TELL: ``support is None`` is the flag, and ``align_footage``'s
+    ``no_consensus`` list is where a caller reads it.
+    """
+    from muvid.footage.align import align_footage
+
+    song_p, song = _repetitive_song(tmp_path)
+    song_s = len(song) / SR
+    clip = [
+        (
+            "S",
+            str(_device_recording(tmp_path, song, "s", at=12.0, seconds=6.0, seed=303)),
+        )
+    ]
+    a = align_footage(str(song_p), clip, song_duration=song_s)[0]
+
+    # None, not 0.0 — "no vote was held" and "the windows disagreed" are different
+    # facts, and collapsing them would make an unvoted clip look like a refused one.
+    assert a.support is None
+    # The verdict therefore rests on the coefficient, which is what the exposure IS.
+    assert a.reliable is vouches_for(confidence=a.confidence, support=None)
 
 
 @needs_pipeline

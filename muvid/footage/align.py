@@ -70,6 +70,13 @@ def align_footage(
             ``mixing`` does not accept raises :class:`TypeError` from ``mixing`` naming
             it. That failure is the point: a window parameter silently ignored is a
             caller believing they tuned an estimator that never saw the value.
+
+            **``window_s`` and ``MIN_SUPPORT`` are one setting in two places.** Support
+            is a fraction of windows and is not normalised across window sizes, so
+            shrinking the window shrinks every support with it — measured, three correct
+            alignments of the same material: 0.50/0.64/0.73 at the default ``window_s``
+            and 0.17/0.15/0.21 at ``window_s=5``. Passing ``window_s`` here without
+            moving :data:`~muvid.footage.edl.MIN_SUPPORT` refuses correct alignments.
     """
     from mixing.audio import align_clips_to_reference  # lazy: heavy
 
@@ -88,12 +95,11 @@ def align_footage(
 def _as_alignment(clip_id: str, a) -> FootageAlignment:
     """One ``mixing.audio.ClipAlignment`` → muvid's record, verdict included.
 
-    ``support`` is read BY NAME off whatever ``mixing`` returned, and its absence is
-    ``None`` rather than an error: an estimator that takes a single whole-clip
-    measurement has no support to report, and that is a supported estimator, not a
-    broken one. Reading it this way is also the wiring: when ``mixing``'s consensus
-    estimator starts reporting a support fraction, muvid picks it up and
-    :func:`vouches_for` switches to the stronger test with no change here.
+    ``support`` is read BY NAME, and its absence is ``None`` rather than an error. The
+    read stays defensive even now that the ``mixing>=0.0.46`` floor guarantees the
+    attribute: a floor is a claim about what is *declared*, and this is the one line
+    that would turn a wrong claim into an ``AttributeError`` mid-shoot rather than a
+    clip that quietly aligns.
     """
     support = getattr(a, "support", None)
     support = None if support is None else float(support)

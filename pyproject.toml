@@ -21,10 +21,21 @@ authors = [
 # `muvid.visualize` (and downstreams like `yb`) stay lightweight.
 dependencies = [
     "cw>=0.1.1,<0.2",
-    # 0.0.34 is where align_clips_to_reference scores on the onset envelope rather than
-    # the raw waveform. Below it, every clip of a real multi-device shoot scores under
-    # the confidence gate and the music-video path yields nothing (muvid#15).
-    "mixing>=0.0.34",
+    # 0.0.46 is where `align_clips_to_reference` puts each clip's analysis WINDOWS to a
+    # vote instead of taking one argmax over the whole clip, and reports how much of the
+    # clip agreed as `ClipAlignment.support` (muvid#59, thorwhalen/mixing#30). Below it
+    # there is no support to read, so muvid's trust verdict falls back to the confidence
+    # coefficient — which on the shoot behind muvid#59 refuses two of the three wrong
+    # offsets and passes the third, 83 s out.
+    #
+    # Two earlier floors are subsumed and kept only as history: 0.0.34 is where the
+    # confidence scored on the onset ENVELOPE rather than the raw waveform (below it
+    # every clip of a real multi-device shoot fell under the gate — muvid#15), and
+    # 0.0.44 is where support first appeared but was located on the waveform, so
+    # `feature='envelope'` and `feature='waveform'` returned byte-identical offsets and
+    # a unanimous `support=1.00` could sit on an offset 15 s wrong. 0.0.46 is the first
+    # release where support is worth gating on.
+    "mixing>=0.0.46",
     "numpy",
     # 0.1.44 is where `graze.content_kind` exists alongside `graze.share_links`. muvid
     # needs both halves: normalise a pasted share link before fetching, then assert the

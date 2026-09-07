@@ -191,6 +191,16 @@ MIN_CONFIDENCE = float(os.environ.get("MUVID_FOOTAGE_MIN_CONFIDENCE", "0.1"))
 #: an offset that only a handful of windows ever saw. A spurious peak is an accident
 #: of local content and lands at a DIFFERENT lag in each window, so it cannot
 #: accumulate support the way a true offset does.
+#:
+#: **This number is calibrated for the estimator's DEFAULT window, and support is not
+#: normalised across window sizes.** Halving the window roughly thirds the fraction:
+#: measured on three 120 s recordings of the same repetitive master at known offsets,
+#: all three correct, support reads 0.50 / 0.64 / 0.73 at ``mixing``'s default
+#: ``window_s=20`` and 0.17 / 0.15 / 0.21 at ``window_s=5``. So a caller who shrinks
+#: the window through :func:`~muvid.footage.align.align_footage`'s ``**estimator_kwargs``
+#: and leaves this threshold alone has every correct alignment refused. ``mixing``
+#: declines to normalise it on purpose — dividing by something to make the number look
+#: stable would invent a statistic — so the two knobs move together or not at all.
 MIN_SUPPORT = float(os.environ.get("MUVID_FOOTAGE_MIN_SUPPORT", "0.25"))
 
 
@@ -210,12 +220,24 @@ def vouches_for(*, confidence: float, support: float | None) -> bool:
     known to be inadequate.** It is the same instrument muvid#59 was filed about: on
     that shoot it would have refused two of the three wrong offsets and passed the
     third, which was 83 s out. So this is not "unknown forces approval" — an unmeasured
-    support is judged by the weaker test rather than refused outright, because refusing
-    every alignment today's ``mixing`` produces would take the whole feature offline
-    over a measurement that does not exist yet. The gap closes when the windowed
-    consensus lands (thorwhalen/mixing#30) and ``support`` starts arriving; until then
-    the honest statement is that a *reported* offset is checked as well as it can be,
-    not that it is trustworthy.
+    support is judged by the weaker test rather than refused outright.
+
+    Since the ``mixing>=0.0.46`` floor, ``support is None`` no longer means "this
+    aligner does not measure support". It means something narrower and more useful:
+    **the estimator could not hold a vote** — the clip was shorter than one analysis
+    window, or its windows overlapped too heavily to be separate opinions. That is the
+    remaining exposure, and it is measured rather than hypothetical: a 10 s clip against
+    a 250 s reference is one window, and on the muvid#59 material one such clip comes
+    back 102 s wrong at ``confidence=0.834`` with ``support=None``, so this function
+    vouches for it. No confidence threshold rescues that case — the *wrong* offset
+    carried the HIGHEST coefficient of the three (0.834 against 0.566 and 0.621).
+
+    Refusing every unvoted clip instead would refuse the two correct ones alongside it,
+    with nothing to tell them apart, and would make ``allow_unreliable=True`` the normal
+    way to use short footage — which is how a gate stops being read. So the exposure is
+    reported (:func:`~muvid.mcp.footage_tools.align_footage` names such clips) and left
+    for the fix that actually resolves it: adapting the window to short clips, which is
+    thorwhalen/mixing#41.
 
     Args:
         confidence: The estimator's correlation coefficient at the chosen lag.
@@ -297,9 +319,10 @@ class FootageAlignment:
     #: still recorded — a source must never leave the addressable set as a side effect
     #: of being measured. Selection filters on this; reporting shows it with a reason.
     overlaps: bool = True
-    #: Fraction of independently-measured windows of the clip that agree on
-    #: ``offset_s``, when the aligner measured more than one — ``None`` when it
-    #: only ever took a single whole-clip measurement.
+    #: Fraction of the clip's independent analysis windows that agree on ``offset_s``.
+    #: ``None`` means no vote was held — the clip was shorter than one window, or its
+    #: windows overlapped too heavily to be separate opinions — which is a different
+    #: fact from "the windows disagreed", and is why it is not 0.0.
     #:
     #: **This, not ``confidence``, is the honest number** (muvid#59). A correlation
     #: coefficient says how well the winning lag scored; it cannot say whether the
