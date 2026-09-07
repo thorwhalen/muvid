@@ -273,7 +273,15 @@ def align_footage(project_id: str) -> dict:
       the project and stay addressable, but ``assemble_music_video`` REFUSES to cut to
       them unless it is called with ``allow_unreliable=true``, because a wrong offset
       does not fail — it renders a video out of sync with the song (muvid#59). Re-align,
-      leave them out of the edit, or opt in deliberately.
+      leave them out of the edit, or opt in deliberately;
+    - ``no_consensus`` — clips whose offset was never put to a vote, because they are
+      under about 30 s, which is where the estimator stops having two independent
+      opinions to compare. Their offset rests on a single measurement — the estimator
+      muvid#59 was filed about — and the confidence score does NOT rank correctness
+      there (measured on that shoot: the wrong offset scored highest of the three).
+      Nothing is refused on this basis, because refusing would take the correct short
+      clips with it, but if a short clip looks out of sync in the render this list is
+      the first place to look.
 
     Run this after adding/removing clips and before assembling.
     """
@@ -329,6 +337,19 @@ def align_footage(project_id: str) -> dict:
             for a in aligns
             if not a.reliable
         ],
+        # REPORTED, never enforced — the same posture as `offset_consensus` below, and
+        # for the same reason. `support: null` means the estimator could not hold a vote
+        # (the clip is under `window_s + hop_s` — about 30 s at mixing's defaults — so
+        # there are not two independent windows to compare), and the offset therefore
+        # rests on a single measurement
+        # and the trust verdict falls back to the confidence coefficient. That fallback
+        # is the weak one: measured on the muvid#59 material, one such clip is 102 s
+        # wrong at confidence 0.834 while the two correct ones score 0.566 and 0.621 —
+        # the wrong offset had the HIGHEST coefficient, so no threshold separates them.
+        # Refusing every unvoted clip would refuse those two as well, so this is said
+        # rather than enforced; adapting the window to short clips is the actual fix
+        # (thorwhalen/mixing#41).
+        "no_consensus": [a.clip_id for a in aligns if a.support is None],
         "confidence_metric": "onset-envelope correlation at the waveform's lag",
         "confidence_threshold": _MIN_CONFIDENCE,
         "support_threshold": MIN_SUPPORT,

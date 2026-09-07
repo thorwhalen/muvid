@@ -61,12 +61,30 @@ Pipeline: `align → score → select → EDL → assemble`.
   (`FootageAlignment.reliable` / `.support`), and `validate_edl` refuses with
   `UnreliableAlignmentError` unless the caller says `allow_unreliable=True`.
   **Do not overclaim this as the budget gate's "unknown must force approval".** It is
-  not: where `support` was never measured — every alignment today's `mixing` produces —
-  `vouches_for` falls back to the confidence coefficient, the same instrument muvid#59
-  was filed about, which catches two of that shoot's three wrong offsets and misses the
-  third. The refusal is the half that stops a bad measurement being silent; mixing#30's
-  windowed consensus is the half that makes the measurement good, and only then does
-  the claim become true. A record from disk that predates the fields has its verdict
+  not: where `support` was never measured, `vouches_for` falls back to the confidence
+  coefficient — the same instrument muvid#59 was filed about, which catches two of that
+  shoot's three wrong offsets and misses the third.
+  Since the **`mixing>=0.0.46`** floor (mixing#30's windowed consensus) that fallback is
+  narrow but not gone: `support is None` now means *the estimator could not hold a vote*
+  — which happens for any clip under `window_s + hop_s`, i.e. **30 s** at mixing's
+  defaults, NOT the 20 s that "shorter than one window" suggests (measured: 22, 26 and
+  29 s clips all come back unvoted). Ordinary phone footage sits in that band. Measured
+  on the real shoot, one such clip comes back **102 s wrong at confidence 0.834**, so
+  `vouches_for` vouches for it — and the coefficient does not rank correctness there at
+  all: worst correct 0.129 against worst pure-noise 0.139, with the WRONG offsets
+  scoring 0.183-0.252, above both.
+  Refusing every unvoted clip instead would refuse the correct short clips alongside it
+  with nothing to tell them apart, and would make `allow_unreliable=True` the normal way
+  to use short footage — which is how a gate stops being read. So it is REPORTED
+  (`align_footage`'s `no_consensus` list) and the fix is **mixing#41**, adapting the
+  window to short clips. Two further couplings, both measured: **`support` is not
+  normalised across window sizes** (the same three correct alignments read 0.50/0.64/0.73
+  at the default `window_s` and 0.17/0.15/0.21 at `window_s=5`), so `MIN_SUPPORT=0.25`
+  is calibrated for the DEFAULT window only and `**estimator_kwargs` can silently
+  de-calibrate it; and **`MIN_CONFIDENCE` was calibrated against the pre-consensus
+  estimator** — under consensus the coefficient is a median over the winning window
+  group, a different statistic, and 8 s of white noise that used to score below 0.1 now
+  scores 0.113. A record from disk that predates the fields has its verdict
   **derived** rather than defaulted, for the same reason: a blanket `True` would render
   exactly muvid#59's offsets *and* drop them out of the caller-facing weak list, which
   is quieter than the behaviour the issue was filed against. A refusal is still not a
@@ -240,10 +258,23 @@ written, for a field almost none of them use; it is measured rather than reasone
 
 ### It depends on `mixing`
 
-Core dependency, floor `mixing>=0.0.34` (below that, `align_clips_to_reference` scores on
-the raw waveform instead of the onset envelope and **every** clip of a real multi-device
-shoot falls under the confidence gate — muvid#15). `mixing[beats]>=0.0.30` supplies
-`beat_grid` in the `scoring` extra.
+Core dependency, floor **`mixing>=0.0.46`** — where `align_clips_to_reference` puts each
+clip's analysis WINDOWS to a vote instead of taking one argmax over the whole clip, and
+reports how much of the clip agreed as `ClipAlignment.support` (muvid#59, mixing#30).
+Below it there is no support to read and muvid's trust verdict silently falls back to the
+confidence coefficient, which is the whole defect. Two superseded floors, kept because
+their reasons still explain the code: `0.0.34` scored the confidence on the onset envelope
+rather than the raw waveform (below it every clip of a real multi-device shoot fell under
+the gate — muvid#15), and `0.0.44` first shipped `support` but still LOCATED on the
+waveform, so `feature='envelope'` and `feature='waveform'` returned byte-identical offsets
+and a unanimous `support=1.00` could sit on an offset 15 s wrong. `mixing[beats]>=0.0.30`
+supplies `beat_grid` in the `scoring` extra.
+
+**A floor is a claim about what pip resolved, not about what got imported**, and this one
+degrades silently rather than crashing: `_as_alignment` reads `support` by name and treats
+its absence as "not measured". So `tests/test_ci_extras_canary.py` asserts the CAPABILITY
+(`ClipAlignment` has a `support` field) with no skip guard inside CI — same shape as the
+extras canary next to it, and for the same reason.
 
 **Never wrap a `mixing` call in a broad `except`.** A `mixing` regression that reaches
 muvid must surface as a traceback, not as a silent fallback: muvid#15 (confidence measured
@@ -574,7 +605,7 @@ in the pipeline.
 | `editor` | the lacing bridge | `lacing` |
 | `ui` | the local single-page UI | `fastapi`, `uvicorn`, `pydantic` |
 
-Core (`pip install muvid`) is `argh`, `mixing>=0.0.34`, `numpy`, `graze>=0.1.44`.
+Core (`pip install muvid`) is `argh`, `mixing>=0.0.46`, `numpy`, `graze>=0.1.44`.
 **`import muvid` must never pull any extra** — `muvid/__init__.py` is a PEP 562 lazy
 facade, `muvid.footage.scoring.__init__` is lazy the same way, and the genre modules
 import only `nw`. This is tested by subprocess import-safety checks that assert the
