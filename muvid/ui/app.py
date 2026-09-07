@@ -18,9 +18,6 @@ from pathlib import Path
 from typing import Any, Optional
 
 try:
-    from fastapi import FastAPI, HTTPException  # type: ignore
-    from fastapi.responses import HTMLResponse, FileResponse, PlainTextResponse  # type: ignore
-    from fastapi.staticfiles import StaticFiles  # type: ignore
     from pydantic import BaseModel  # type: ignore
 except ImportError as e:
     raise RuntimeError(
@@ -98,6 +95,16 @@ def _now() -> str:
 
 
 def create_app(root: str | Path):
+    try:
+        from fastapi import FastAPI, HTTPException  # type: ignore
+        from fastapi.responses import HTMLResponse, FileResponse, PlainTextResponse  # type: ignore
+        from fastapi.staticfiles import StaticFiles  # type: ignore
+    except ImportError as e:
+        raise RuntimeError(
+            "muvid UI requires `fastapi` and `uvicorn`. "
+            "pip install fastapi uvicorn pydantic"
+        ) from e
+
     global _PROJECT_ROOT
     _PROJECT_ROOT = Path(root).expanduser().resolve()
 

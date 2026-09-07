@@ -55,20 +55,32 @@ def client(tmp_path, monkeypatch):
     return TestClient(create_app(root))
 
 
-@pytest.mark.parametrize(
-    "path, body",
-    [
-        ("/api/transcribe", {}),
-        ("/api/align", {}),
-        ("/api/character", {"name": "Alice"}),
-        ("/api/character/generate", {"name": "Alice"}),
-        ("/api/character/curate", {"name": "Alice"}),
-        ("/api/environment", {"name": "cafe"}),
-        ("/api/script", {"content": "# hi"}),
-        ("/api/render", {}),
-        ("/api/compose", {}),
-    ],
-)
+#: One JSON body per fixed-path POST route (excludes ``/api/environment/{name}/render``,
+#: which takes no body and is path-parameterized).
+_POST_BODIES = {
+    "/api/transcribe": {},
+    "/api/align": {},
+    "/api/character": {"name": "Alice"},
+    "/api/character/generate": {"name": "Alice"},
+    "/api/character/curate": {"name": "Alice"},
+    "/api/environment": {"name": "cafe"},
+    "/api/script": {"content": "# hi"},
+    "/api/render": {},
+    "/api/compose": {},
+}
+
+
+def test_post_bodies_cover_every_fixed_path_post_route(client):
+    """A newly added POST route must get a case here, not be silently skipped."""
+    post_paths = {
+        route.path
+        for route in client.app.routes
+        if "POST" in getattr(route, "methods", set()) and "{" not in route.path
+    }
+    assert post_paths == set(_POST_BODIES)
+
+
+@pytest.mark.parametrize("path, body", sorted(_POST_BODIES.items()))
 def test_post_endpoint_accepts_its_json_body(client, path, body):
     """Every documented POST body reaches the handler, not a 422 on `req`."""
     resp = client.post(path, json=body)
