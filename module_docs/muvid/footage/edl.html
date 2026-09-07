@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.footage.edl &mdash; muvid 0.0.49 documentation</title>
+  <title>muvid.footage.edl &mdash; muvid 0.0.50 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -15,7 +15,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=0356c229"></script>
+      <script src="../../../_static/documentation_options.js?v=e072a57b"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -83,19 +83,28 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.footage.edl.FootageAlignment"><code class="docutils literal notranslate"><span class="pre">FootageAlignment</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#muvid.footage.edl.FootageAlignment.overlaps"><code class="docutils literal notranslate"><span class="pre">FootageAlignment.overlaps</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#muvid.footage.edl.FootageAlignment.reliable"><code class="docutils literal notranslate"><span class="pre">FootageAlignment.reliable</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#muvid.footage.edl.FootageAlignment.support"><code class="docutils literal notranslate"><span class="pre">FootageAlignment.support</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.footage.edl.LOOK_FILTERS"><code class="docutils literal notranslate"><span class="pre">LOOK_FILTERS</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.footage.edl.MAX_EDL_ENTRIES"><code class="docutils literal notranslate"><span class="pre">MAX_EDL_ENTRIES</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.footage.edl.MAX_LOOK_LINKS"><code class="docutils literal notranslate"><span class="pre">MAX_LOOK_LINKS</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.footage.edl.MAX_LOOK_SCALE"><code class="docutils literal notranslate"><span class="pre">MAX_LOOK_SCALE</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.footage.edl.MIN_CONFIDENCE"><code class="docutils literal notranslate"><span class="pre">MIN_CONFIDENCE</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.footage.edl.MIN_SUPPORT"><code class="docutils literal notranslate"><span class="pre">MIN_SUPPORT</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.footage.edl.MIN_TRANSITION_S"><code class="docutils literal notranslate"><span class="pre">MIN_TRANSITION_S</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.footage.edl.TRANSITION_CURVES"><code class="docutils literal notranslate"><span class="pre">TRANSITION_CURVES</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.footage.edl.TRANSITION_SPLIT"><code class="docutils literal notranslate"><span class="pre">TRANSITION_SPLIT</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.footage.edl.Transition"><code class="docutils literal notranslate"><span class="pre">Transition</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.footage.edl.UnreliableAlignmentError"><code class="docutils literal notranslate"><span class="pre">UnreliableAlignmentError</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#muvid.footage.edl.UnreliableAlignmentError.alignments"><code class="docutils literal notranslate"><span class="pre">UnreliableAlignmentError.alignments</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.footage.edl.derive_cuts"><code class="docutils literal notranslate"><span class="pre">derive_cuts()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.footage.edl.fill_gaps"><code class="docutils literal notranslate"><span class="pre">fill_gaps()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.footage.edl.validate_edl"><code class="docutils literal notranslate"><span class="pre">validate_edl()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.footage.edl.vouches_for"><code class="docutils literal notranslate"><span class="pre">vouches_for()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="lacing_bridge.html">muvid.footage.lacing_bridge</a></li>
@@ -180,6 +189,10 @@ become gap entries); <a class="reference internal" href="#muvid.footage.edl.vali
 auto/strategy) passes before any cutting, and <a class="reference internal" href="#muvid.footage.edl.derive_cuts" title="muvid.footage.edl.derive_cuts"><code class="xref py py-func docutils literal notranslate"><span class="pre">derive_cuts()</span></code></a> centralizes the sign
 convention (<code class="docutils literal notranslate"><span class="pre">clip_in</span> <span class="pre">=</span> <span class="pre">song_start</span> <span class="pre">-</span> <span class="pre">offset_s</span></code>) so no third-party strategy can desync the
 result. Times are seconds (float).</p>
+<p>The gate is a TRUST gate as well as a structural one: an alignment the aligner could
+not vouch for (<code class="docutils literal notranslate"><span class="pre">FootageAlignment.reliable</span></code> False) is refused here with
+<a class="reference internal" href="#muvid.footage.edl.UnreliableAlignmentError" title="muvid.footage.edl.UnreliableAlignmentError"><code class="xref py py-class docutils literal notranslate"><span class="pre">UnreliableAlignmentError</span></code></a> rather than quietly cut to, because a wrong offset
+does not fail — it renders a video out of sync with the song (muvid#59).</p>
 <p>An entry may carry an optional <a class="reference internal" href="#muvid.footage.edl.Transition" title="muvid.footage.edl.Transition"><code class="xref py py-class docutils literal notranslate"><span class="pre">Transition</span></code></a> — a blend IN from its predecessor
 instead of a hard cut (muvid#34). It is an annotation on a boundary that already exists
 implicitly, so spans stay one-per-song-span and nothing about reading an EDL changes.</p>
@@ -372,7 +385,7 @@ cuts — degraded, never wrong, in both directions.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="muvid.footage.edl.FootageAlignment">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">muvid.footage.edl.</span></span><span class="sig-name descname"><span class="pre">FootageAlignment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">clip_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">offset_s</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">confidence</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">duration_s</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coverage</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overlaps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/muvid/footage/edl.html#FootageAlignment"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.edl.FootageAlignment" title="Link to this definition"></a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">muvid.footage.edl.</span></span><span class="sig-name descname"><span class="pre">FootageAlignment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">clip_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">offset_s</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">confidence</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">duration_s</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coverage</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overlaps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">support</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reliable</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/muvid/footage/edl.html#FootageAlignment"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.edl.FootageAlignment" title="Link to this definition"></a></dt>
 <dd><p>Where one uploaded clip sits on the song timeline (muvid’s per-clip record).</p>
 <p>Mirrors <code class="docutils literal notranslate"><span class="pre">mixing.audio.ClipAlignment</span></code> but keyed by the caller-facing <code class="docutils literal notranslate"><span class="pre">clip_id</span></code> and
 JSON-round-trippable (persisted in the project manifest).</p>
@@ -382,6 +395,32 @@ JSON-round-trippable (persisted in the project manifest).</p>
 <dd><p>Whether the clip intersects the song timeline at all. A clip that does NOT is
 still recorded — a source must never leave the addressable set as a side effect
 of being measured. Selection filters on this; reporting shows it with a reason.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="muvid.footage.edl.FootageAlignment.reliable">
+<span class="sig-name descname"><span class="pre">reliable</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></span><a class="headerlink" href="#muvid.footage.edl.FootageAlignment.reliable" title="Link to this definition"></a></dt>
+<dd><p>Whether the aligner VOUCHES for <code class="docutils literal notranslate"><span class="pre">offset_s</span></code>. False means “measured, recorded,
+and not to be cut to without the caller saying so” — see
+<a class="reference internal" href="#muvid.footage.edl.UnreliableAlignmentError" title="muvid.footage.edl.UnreliableAlignmentError"><code class="xref py py-class docutils literal notranslate"><span class="pre">UnreliableAlignmentError</span></code></a>, which <a class="reference internal" href="#muvid.footage.edl.validate_edl" title="muvid.footage.edl.validate_edl"><code class="xref py py-func docutils literal notranslate"><span class="pre">validate_edl()</span></code></a> raises.</p>
+<p>Defaults True for a record built in code; a record read from disk that predates
+the field gets its verdict DERIVED instead (see <code class="xref py py-meth docutils literal notranslate"><span class="pre">from_dict()</span></code>), never
+assumed.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="muvid.footage.edl.FootageAlignment.support">
+<span class="sig-name descname"><span class="pre">support</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#muvid.footage.edl.FootageAlignment.support" title="Link to this definition"></a></dt>
+<dd><p>Fraction of independently-measured windows of the clip that agree on
+<code class="docutils literal notranslate"><span class="pre">offset_s</span></code>, when the aligner measured more than one — <code class="docutils literal notranslate"><span class="pre">None</span></code> when it
+only ever took a single whole-clip measurement.</p>
+<p><strong>This, not ``confidence``, is the honest number</strong> (muvid#59). A correlation
+coefficient says how well the winning lag scored; it cannot say whether the
+runner-up scored the same, which is the entire failure mode on repetitive
+music. A support fraction says how much of the clip actually agrees — on the
+shoot that produced this issue the three correct offsets carried 10/24, 17/37
+and 45/61, while the confidently-wrong ones the old estimator returned had no
+agreement to speak of at all.</p>
 </dd></dl>
 
 </dd></dl>
@@ -524,6 +563,36 @@ multiple is the whole of the legitimate range.</p>
 </dd></dl>
 
 <dl class="py data">
+<dt class="sig sig-object py" id="muvid.footage.edl.MIN_CONFIDENCE">
+<span class="sig-prename descclassname"><span class="pre">muvid.footage.edl.</span></span><span class="sig-name descname"><span class="pre">MIN_CONFIDENCE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.1</span></span><a class="headerlink" href="#muvid.footage.edl.MIN_CONFIDENCE" title="Link to this definition"></a></dt>
+<dd><p>Below this, a whole-clip correlation coefficient does not vouch for its offset
+(env <code class="docutils literal notranslate"><span class="pre">MUVID_FOOTAGE_MIN_CONFIDENCE</span></code>). Calibrated for the clean-master-vs-phone
+regime the connector actually sees, on the onset-envelope feature (muvid#15):
+measured against a studio master, four provably-correct clips scored 0.173-0.603
+while the one genuinely unrelated clip scored 0.021 — so 0.1 separates them ~2x/5x,
+where the old 0.3 (a defensible number for the EASIER clip-to-clip regime) flagged
+five of six correct alignments as suspect.</p>
+<p><strong>Read it as the weak instrument it is.</strong> muvid#59 is the demonstration: on a
+repetitive track the three wrong offsets scored 0.086, 0.121 and 0.086, so this
+threshold catches two of the three and lets the third — 83 s wrong — through. A
+coefficient cannot see the runner-up peak that makes it a coin flip; only
+<a class="reference internal" href="#muvid.footage.edl.FootageAlignment.support" title="muvid.footage.edl.FootageAlignment.support"><code class="xref py py-data docutils literal notranslate"><span class="pre">FootageAlignment.support</span></code></a> can. This is the fallback for an aligner that
+reports no support, not the measure of record.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="muvid.footage.edl.MIN_SUPPORT">
+<span class="sig-prename descclassname"><span class="pre">muvid.footage.edl.</span></span><span class="sig-name descname"><span class="pre">MIN_SUPPORT</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.25</span></span><a class="headerlink" href="#muvid.footage.edl.MIN_SUPPORT" title="Link to this definition"></a></dt>
+<dd><p>Below this fraction of agreeing windows, a consensus offset does not vouch for
+itself (env <code class="docutils literal notranslate"><span class="pre">MUVID_FOOTAGE_MIN_SUPPORT</span></code>). On the shoot behind muvid#59 the three
+verified-correct offsets carried 10/24, 17/37 and 45/61 windows — 0.42, 0.46 and
+0.74 — so 0.25 sits comfortably under the worst correct case while still refusing
+an offset that only a handful of windows ever saw. A spurious peak is an accident
+of local content and lands at a DIFFERENT lag in each window, so it cannot
+accumulate support the way a true offset does.</p>
+</dd></dl>
+
+<dl class="py data">
 <dt class="sig sig-object py" id="muvid.footage.edl.MIN_TRANSITION_S">
 <span class="sig-prename descclassname"><span class="pre">muvid.footage.edl.</span></span><span class="sig-name descname"><span class="pre">MIN_TRANSITION_S</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.04</span></span><a class="headerlink" href="#muvid.footage.edl.MIN_TRANSITION_S" title="Link to this definition"></a></dt>
 <dd><p>Shortest transition that is not a lie. Below roughly one frame the xfade emits
@@ -584,6 +653,41 @@ predecessor to blend from, so it is a request that cannot be honoured, and
 honouring nothing quietly is how a direction gets lost.</p>
 </dd></dl>
 
+<dl class="py exception">
+<dt class="sig sig-object py" id="muvid.footage.edl.UnreliableAlignmentError">
+<span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">muvid.footage.edl.</span></span><span class="sig-name descname"><span class="pre">UnreliableAlignmentError</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">unvouched</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#muvid.footage.edl.FootageAlignment" title="muvid.footage.edl.FootageAlignment"><span class="pre">FootageAlignment</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/muvid/footage/edl.html#UnreliableAlignmentError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.edl.UnreliableAlignmentError" title="Link to this definition"></a></dt>
+<dd><p>An edit cuts to a clip whose OFFSET the aligner could not vouch for (muvid#59).</p>
+<p>The defect this exists to make impossible: on a rigidly programmed, repetitive
+track, a whole-clip cross-correlation surface has near-tied peaks spaced at
+musical periods (measured on one real shoot: second-peak-to-first ratios of
+0.993, 0.989, 0.987), so the estimator picks the argmax of a coin-flip and
+reports the coefficient of whichever side it landed on. That number is <em>low</em>
+but never looks like failure — and every stage after it (<code class="docutils literal notranslate"><span class="pre">derive_cuts</span></code>, the
+score tracks, the assembled mp4) is built on the offset, so the failure
+presented as a silently desynced video rather than as an error. Three clips
+came back 83 s, 174 s and 83 s wrong, all with <code class="docutils literal notranslate"><span class="pre">overlaps=True</span></code>.</p>
+<p>So an offset the aligner will not vouch for is a <strong>refusal</strong>, not a number: a
+caller who renders anyway must say so with <code class="docutils literal notranslate"><span class="pre">allow_unreliable=True</span></code>, exactly
+as an unpriceable shot must be passed with <code class="docutils literal notranslate"><span class="pre">--allow-unpriced</span></code> rather than
+being read as free.</p>
+<p>Note what this does NOT yet claim. The verdict is only as good as
+<a class="reference internal" href="#muvid.footage.edl.vouches_for" title="muvid.footage.edl.vouches_for"><code class="xref py py-func docutils literal notranslate"><span class="pre">vouches_for()</span></code></a>, which falls back to the confidence coefficient wherever
+<code class="docutils literal notranslate"><span class="pre">support</span></code> was never measured — which is every alignment today’s <code class="docutils literal notranslate"><span class="pre">mixing</span></code>
+produces. That fallback would have caught two of muvid#59’s three wrong
+offsets and missed the third. The refusal is the half that makes a bad
+measurement stop being silent; the half that makes the measurement good is
+the windowed consensus in thorwhalen/mixing#30.</p>
+<p>A refusal is NOT a removal: the clip keeps its record, its coverage and its
+place in the project (see <a class="reference internal" href="#muvid.footage.edl.FootageAlignment" title="muvid.footage.edl.FootageAlignment"><code class="xref py py-class docutils literal notranslate"><span class="pre">FootageAlignment</span></code></a>). What it loses is the
+right to be cut to without the caller saying so.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="muvid.footage.edl.UnreliableAlignmentError.alignments">
+<span class="sig-name descname"><span class="pre">alignments</span></span><a class="headerlink" href="#muvid.footage.edl.UnreliableAlignmentError.alignments" title="Link to this definition"></a></dt>
+<dd><p>The offending clips, in EDL order — so a caller can re-align exactly these.</p>
+</dd></dl>
+
+</dd></dl>
+
 <dl class="py function">
 <dt class="sig sig-object py" id="muvid.footage.edl.derive_cuts">
 <span class="sig-prename descclassname"><span class="pre">muvid.footage.edl.</span></span><span class="sig-name descname"><span class="pre">derive_cuts</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">edl</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#muvid.footage.edl.EdlEntry" title="muvid.footage.edl.EdlEntry"><span class="pre">EdlEntry</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alignments</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#muvid.footage.edl.FootageAlignment" title="muvid.footage.edl.FootageAlignment"><span class="pre">FootageAlignment</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clip_paths</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#muvid.footage.edl.AssemblyCut" title="muvid.footage.edl.AssemblyCut"><span class="pre">AssemblyCut</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../_modules/muvid/footage/edl.html#derive_cuts"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.edl.derive_cuts" title="Link to this definition"></a></dt>
@@ -615,7 +719,7 @@ rule; the tests pin both so the coherence stays deliberate.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="muvid.footage.edl.validate_edl">
-<span class="sig-prename descclassname"><span class="pre">muvid.footage.edl.</span></span><span class="sig-name descname"><span class="pre">validate_edl</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">edl</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alignments</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#muvid.footage.edl.FootageAlignment" title="muvid.footage.edl.FootageAlignment"><span class="pre">FootageAlignment</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">song_duration</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">canvas</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">(1920,</span> <span class="pre">1920)</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#muvid.footage.edl.EdlEntry" title="muvid.footage.edl.EdlEntry"><span class="pre">EdlEntry</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../_modules/muvid/footage/edl.html#validate_edl"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.edl.validate_edl" title="Link to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">muvid.footage.edl.</span></span><span class="sig-name descname"><span class="pre">validate_edl</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">edl</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alignments</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#muvid.footage.edl.FootageAlignment" title="muvid.footage.edl.FootageAlignment"><span class="pre">FootageAlignment</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">song_duration</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">canvas</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">(1920,</span> <span class="pre">1920)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">allow_unreliable</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#muvid.footage.edl.EdlEntry" title="muvid.footage.edl.EdlEntry"><span class="pre">EdlEntry</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../_modules/muvid/footage/edl.html#validate_edl"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.edl.validate_edl" title="Link to this definition"></a></dt>
 <dd><p>Validate an EDL (from a strategy OR a caller) — the ONE gate before any cutting.</p>
 <p>Enforces, raising <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> with a specific message otherwise:</p>
 <ul class="simple">
@@ -638,6 +742,11 @@ filter string;</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">look_time_varying</span></code> is a boolean, and is not set on an entry with no
 <code class="docutils literal notranslate"><span class="pre">look</span></code> (a declaration about a look that is not there is a request that
 cannot be honoured);</p></li>
+<li><p>every non-gap entry cuts to a clip whose alignment the aligner VOUCHES for
+(<code class="docutils literal notranslate"><span class="pre">FootageAlignment.reliable</span></code>), unless <code class="docutils literal notranslate"><span class="pre">allow_unreliable=True</span></code> — see
+<a class="reference internal" href="#muvid.footage.edl.UnreliableAlignmentError" title="muvid.footage.edl.UnreliableAlignmentError"><code class="xref py py-class docutils literal notranslate"><span class="pre">UnreliableAlignmentError</span></code></a>. This is a trust check rather than a
+structural one, so it runs LAST: an EDL that does not even parse should be
+reported as the malformed EDL it is, not blamed on the footage;</p></li>
 <li><p>a <a class="reference internal" href="#muvid.footage.edl.Transition" title="muvid.footage.edl.Transition"><code class="xref py py-class docutils literal notranslate"><span class="pre">Transition</span></code></a> is on an entry that HAS a predecessor, names a known curve,
 is at least <a class="reference internal" href="#muvid.footage.edl.MIN_TRANSITION_S" title="muvid.footage.edl.MIN_TRANSITION_S"><code class="xref py py-data docutils literal notranslate"><span class="pre">MIN_TRANSITION_S</span></code></a> long, fits in song time counting BOTH
 transitions an entry can carry, and fits in each side’s aligned coverage — see
@@ -649,6 +758,40 @@ spliced after the assembler’s own <code class="docutils literal notranslate"><
 passes the real one; <a class="reference internal" href="#muvid.footage.edl.DFLT_LOOK_CANVAS" title="muvid.footage.edl.DFLT_LOOK_CANVAS"><code class="xref py py-data docutils literal notranslate"><span class="pre">DFLT_LOOK_CANVAS</span></code></a> covers a direct caller and is
 the loosest bound rather than an absent one.</p>
 <p>Returns the normalized list of <a class="reference internal" href="#muvid.footage.edl.EdlEntry" title="muvid.footage.edl.EdlEntry"><code class="xref py py-class docutils literal notranslate"><span class="pre">EdlEntry</span></code></a>.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.footage.edl.vouches_for">
+<span class="sig-prename descclassname"><span class="pre">muvid.footage.edl.</span></span><span class="sig-name descname"><span class="pre">vouches_for</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">confidence</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">support</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../../../_modules/muvid/footage/edl.html#vouches_for"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.edl.vouches_for" title="Link to this definition"></a></dt>
+<dd><p>Does the aligner vouch for this offset? The ONE place that verdict is reached.</p>
+<p>Lives here, beside the record it judges and the gate that enforces it, rather than
+with the aligner: <code class="xref py py-meth docutils literal notranslate"><span class="pre">FootageAlignment.from_dict()</span></code> has to reach it to derive a
+verdict for a record written before the field existed, and a module that owns a
+dataclass should not need its own consumer to interpret one.</p>
+<p><code class="docutils literal notranslate"><span class="pre">support</span></code> (how much of the clip agrees) decides when the aligner measured it,
+because it is the only one of the two numbers that can tell a clear winner from a
+coin flip — see <a class="reference internal" href="#muvid.footage.edl.FootageAlignment.support" title="muvid.footage.edl.FootageAlignment.support"><code class="xref py py-attr docutils literal notranslate"><span class="pre">FootageAlignment.support</span></code></a>.</p>
+<p><strong>When support is absent, this falls back to ``confidence``, and that fallback is
+known to be inadequate.</strong> It is the same instrument muvid#59 was filed about: on
+that shoot it would have refused two of the three wrong offsets and passed the
+third, which was 83 s out. So this is not “unknown forces approval” — an unmeasured
+support is judged by the weaker test rather than refused outright, because refusing
+every alignment today’s <code class="docutils literal notranslate"><span class="pre">mixing</span></code> produces would take the whole feature offline
+over a measurement that does not exist yet. The gap closes when the windowed
+consensus lands (thorwhalen/mixing#30) and <code class="docutils literal notranslate"><span class="pre">support</span></code> starts arriving; until then
+the honest statement is that a <em>reported</em> offset is checked as well as it can be,
+not that it is trustworthy.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>confidence</strong> – The estimator’s correlation coefficient at the chosen lag.</p></li>
+<li><p><strong>support</strong> – Fraction of independent windows agreeing, or <code class="docutils literal notranslate"><span class="pre">None</span></code> if unmeasured.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>True when the offset may be cut to without the caller opting in.</p>
+</dd>
+</dl>
 </dd></dl>
 
 </section>

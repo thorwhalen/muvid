@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.footage.align &mdash; muvid 0.0.49 documentation</title>
+  <title>muvid.footage.align &mdash; muvid 0.0.50 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -15,7 +15,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=0356c229"></script>
+      <script src="../../../_static/documentation_options.js?v=e072a57b"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -64,6 +64,7 @@
 <li class="toctree-l1 current"><a class="current reference internal" href="#">muvid.footage.align</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.footage.align.ALIGN_SAMPLE_RATE"><code class="docutils literal notranslate"><span class="pre">ALIGN_SAMPLE_RATE</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.footage.align.align_footage"><code class="docutils literal notranslate"><span class="pre">align_footage()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.footage.align.vouches_for"><code class="docutils literal notranslate"><span class="pre">vouches_for()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="assemble.html">muvid.footage.assemble</a></li>
@@ -146,6 +147,13 @@
 what we align. <code class="docutils literal notranslate"><span class="pre">mixing.audio.align_clips_to_reference</span></code> loads each clip’s audio via
 pydub/ffmpeg (so a video path works directly — no separate extraction, no moviepy), and
 returns offsets + a scale-invariant confidence + coverage clamped to the song timeline.</p>
+<p>muvid does not estimate offsets itself — the estimator lives in <code class="docutils literal notranslate"><span class="pre">mixing</span></code>, which is
+where the multi-device primitive and its measurements belong — but muvid is the one that
+turns a measurement into a cut, so muvid is where “we are not sure” stops being a number
+and becomes a refusal (muvid#59). The <strong>verdict</strong> that makes that possible is
+<a class="reference internal" href="edl.html#muvid.footage.edl.vouches_for" title="muvid.footage.edl.vouches_for"><code class="xref py py-func docutils literal notranslate"><span class="pre">vouches_for()</span></code></a>, re-exported here beside the aligner that applies
+it; it is defined in <a class="reference internal" href="edl.html#module-muvid.footage.edl" title="muvid.footage.edl"><code class="xref py py-mod docutils literal notranslate"><span class="pre">muvid.footage.edl</span></code></a>, beside the record it judges and the gate
+(<a class="reference internal" href="edl.html#muvid.footage.edl.validate_edl" title="muvid.footage.edl.validate_edl"><code class="xref py py-func docutils literal notranslate"><span class="pre">validate_edl()</span></code></a>) that enforces it.</p>
 <dl class="py data">
 <dt class="sig sig-object py" id="muvid.footage.align.ALIGN_SAMPLE_RATE">
 <span class="sig-prename descclassname"><span class="pre">muvid.footage.align.</span></span><span class="sig-name descname"><span class="pre">ALIGN_SAMPLE_RATE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">16000</span></span><a class="headerlink" href="#muvid.footage.align.ALIGN_SAMPLE_RATE" title="Link to this definition"></a></dt>
@@ -154,13 +162,67 @@ returns offsets + a scale-invariant confidence + coverage clamped to the song ti
 
 <dl class="py function">
 <dt class="sig sig-object py" id="muvid.footage.align.align_footage">
-<span class="sig-prename descclassname"><span class="pre">muvid.footage.align.</span></span><span class="sig-name descname"><span class="pre">align_footage</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">song_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clips</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">song_duration</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_rate</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">16000</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="edl.html#muvid.footage.edl.FootageAlignment" title="muvid.footage.edl.FootageAlignment"><span class="pre">FootageAlignment</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../_modules/muvid/footage/align.html#align_footage"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.align.align_footage" title="Link to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">muvid.footage.align.</span></span><span class="sig-name descname"><span class="pre">align_footage</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">song_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clips</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">song_duration</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_rate</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">16000</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">estimator_kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="edl.html#muvid.footage.edl.FootageAlignment" title="muvid.footage.edl.FootageAlignment"><span class="pre">FootageAlignment</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../_modules/muvid/footage/align.html#align_footage"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.align.align_footage" title="Link to this definition"></a></dt>
 <dd><p>Align <code class="docutils literal notranslate"><span class="pre">clips</span></code> (<code class="docutils literal notranslate"><span class="pre">[(clip_id,</span> <span class="pre">clip_path),</span> <span class="pre">...]</span></code>) to the song at <code class="docutils literal notranslate"><span class="pre">song_path</span></code>.</p>
 <p>Returns one <a class="reference internal" href="edl.html#muvid.footage.edl.FootageAlignment" title="muvid.footage.edl.FootageAlignment"><code class="xref py py-class docutils literal notranslate"><span class="pre">FootageAlignment</span></code></a> per clip, keyed by <code class="docutils literal notranslate"><span class="pre">clip_id</span></code>
 — including clips that do not overlap the song, which carry <code class="docutils literal notranslate"><span class="pre">overlaps=False</span></code> rather
-than being omitted. Nothing may vanish from the record just because it matched badly.
+than being omitted, and clips the aligner could not vouch for, which carry
+<code class="docutils literal notranslate"><span class="pre">reliable=False</span></code> rather than being omitted. Nothing may vanish from the record just
+because it matched badly; what a bad match loses is the right to be cut to silently
+(<a class="reference internal" href="edl.html#muvid.footage.edl.validate_edl" title="muvid.footage.edl.validate_edl"><code class="xref py py-func docutils literal notranslate"><span class="pre">validate_edl()</span></code></a> is where that is enforced).
 Heavy deps (mixing.audio → numpy/scipy/pydub) are imported lazily here so importing the
 genre stays light.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>song_path</strong> – The clean master every clip is aligned to.</p></li>
+<li><p><strong>clips</strong> – <code class="docutils literal notranslate"><span class="pre">(clip_id,</span> <span class="pre">clip_path)</span></code> pairs; a video path works directly.</p></li>
+<li><p><strong>song_duration</strong> – The song timeline length; probed from <code class="docutils literal notranslate"><span class="pre">song_path</span></code> when omitted.</p></li>
+<li><p><strong>sample_rate</strong> – Analysis sample rate (mono).</p></li>
+<li><p><strong>**estimator_kwargs</strong> – Passed straight to <code class="docutils literal notranslate"><span class="pre">mixing.audio.align_clips_to_reference</span></code>
+— the seam for the windowed-consensus estimator’s parameters (muvid#59).
+Forwarding rather than enumerating keeps muvid out of the business of
+tracking <code class="docutils literal notranslate"><span class="pre">mixing</span></code>’s estimator vocabulary, and an argument the installed
+<code class="docutils literal notranslate"><span class="pre">mixing</span></code> does not accept raises <code class="xref py py-class docutils literal notranslate"><span class="pre">TypeError</span></code> from <code class="docutils literal notranslate"><span class="pre">mixing</span></code> naming
+it. That failure is the point: a window parameter silently ignored is a
+caller believing they tuned an estimator that never saw the value.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.footage.align.vouches_for">
+<span class="sig-prename descclassname"><span class="pre">muvid.footage.align.</span></span><span class="sig-name descname"><span class="pre">vouches_for</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">confidence</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">support</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../../../_modules/muvid/footage/edl.html#vouches_for"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.align.vouches_for" title="Link to this definition"></a></dt>
+<dd><p>Does the aligner vouch for this offset? The ONE place that verdict is reached.</p>
+<p>Lives here, beside the record it judges and the gate that enforces it, rather than
+with the aligner: <code class="xref py py-meth docutils literal notranslate"><span class="pre">FootageAlignment.from_dict()</span></code> has to reach it to derive a
+verdict for a record written before the field existed, and a module that owns a
+dataclass should not need its own consumer to interpret one.</p>
+<p><code class="docutils literal notranslate"><span class="pre">support</span></code> (how much of the clip agrees) decides when the aligner measured it,
+because it is the only one of the two numbers that can tell a clear winner from a
+coin flip — see <code class="xref py py-attr docutils literal notranslate"><span class="pre">FootageAlignment.support</span></code>.</p>
+<p><strong>When support is absent, this falls back to ``confidence``, and that fallback is
+known to be inadequate.</strong> It is the same instrument muvid#59 was filed about: on
+that shoot it would have refused two of the three wrong offsets and passed the
+third, which was 83 s out. So this is not “unknown forces approval” — an unmeasured
+support is judged by the weaker test rather than refused outright, because refusing
+every alignment today’s <code class="docutils literal notranslate"><span class="pre">mixing</span></code> produces would take the whole feature offline
+over a measurement that does not exist yet. The gap closes when the windowed
+consensus lands (thorwhalen/mixing#30) and <code class="docutils literal notranslate"><span class="pre">support</span></code> starts arriving; until then
+the honest statement is that a <em>reported</em> offset is checked as well as it can be,
+not that it is trustworthy.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>confidence</strong> – The estimator’s correlation coefficient at the chosen lag.</p></li>
+<li><p><strong>support</strong> – Fraction of independent windows agreeing, or <code class="docutils literal notranslate"><span class="pre">None</span></code> if unmeasured.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>True when the offset may be cut to without the caller opting in.</p>
+</dd>
+</dl>
 </dd></dl>
 
 </section>

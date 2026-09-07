@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.footage.align &mdash; muvid 0.0.49 documentation</title>
+  <title>muvid.footage.align &mdash; muvid 0.0.50 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=0356c229"></script>
+      <script src="../../../_static/documentation_options.js?v=e072a57b"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -139,16 +139,39 @@
 <span class="sd">what we align. ``mixing.audio.align_clips_to_reference`` loads each clip's audio via</span>
 <span class="sd">pydub/ffmpeg (so a video path works directly — no separate extraction, no moviepy), and</span>
 <span class="sd">returns offsets + a scale-invariant confidence + coverage clamped to the song timeline.</span>
+
+<span class="sd">muvid does not estimate offsets itself — the estimator lives in ``mixing``, which is</span>
+<span class="sd">where the multi-device primitive and its measurements belong — but muvid is the one that</span>
+<span class="sd">turns a measurement into a cut, so muvid is where "we are not sure" stops being a number</span>
+<span class="sd">and becomes a refusal (muvid#59). The **verdict** that makes that possible is</span>
+<span class="sd">:func:`~muvid.footage.edl.vouches_for`, re-exported here beside the aligner that applies</span>
+<span class="sd">it; it is defined in :mod:`muvid.footage.edl`, beside the record it judges and the gate</span>
+<span class="sd">(:func:`~muvid.footage.edl.validate_edl`) that enforces it.</span>
 <span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sequence</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">muvid.footage.edl</span><span class="w"> </span><span class="kn">import</span> <span class="n">FootageAlignment</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">muvid.footage.edl</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">MIN_CONFIDENCE</span><span class="p">,</span>
+    <span class="n">MIN_SUPPORT</span><span class="p">,</span>
+    <span class="n">FootageAlignment</span><span class="p">,</span>
+    <span class="n">vouches_for</span><span class="p">,</span>
+<span class="p">)</span>
 
 <span class="c1">#: Analysis sample rate for alignment (mono). 16 kHz is plenty for offset precision.</span>
 <span class="n">ALIGN_SAMPLE_RATE</span> <span class="o">=</span> <span class="mi">16000</span>
+
+<span class="c1">#: Re-exported so ``muvid.footage.align`` reads as the whole alignment story — the</span>
+<span class="c1">#: measurement AND the verdict — without either of them having two definitions.</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">"ALIGN_SAMPLE_RATE"</span><span class="p">,</span>
+    <span class="s2">"MIN_CONFIDENCE"</span><span class="p">,</span>
+    <span class="s2">"MIN_SUPPORT"</span><span class="p">,</span>
+    <span class="s2">"align_footage"</span><span class="p">,</span>
+    <span class="s2">"vouches_for"</span><span class="p">,</span>
+<span class="p">]</span>
 
 
 <div class="viewcode-block" id="align_footage">
@@ -159,14 +182,31 @@
     <span class="o">*</span><span class="p">,</span>
     <span class="n">song_duration</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">sample_rate</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">ALIGN_SAMPLE_RATE</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">estimator_kwargs</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">FootageAlignment</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">"""Align ``clips`` (``[(clip_id, clip_path), ...]``) to the song at ``song_path``.</span>
 
 <span class="sd">    Returns one :class:`~muvid.footage.edl.FootageAlignment` per clip, keyed by ``clip_id``</span>
 <span class="sd">    — including clips that do not overlap the song, which carry ``overlaps=False`` rather</span>
-<span class="sd">    than being omitted. Nothing may vanish from the record just because it matched badly.</span>
+<span class="sd">    than being omitted, and clips the aligner could not vouch for, which carry</span>
+<span class="sd">    ``reliable=False`` rather than being omitted. Nothing may vanish from the record just</span>
+<span class="sd">    because it matched badly; what a bad match loses is the right to be cut to silently</span>
+<span class="sd">    (:func:`~muvid.footage.edl.validate_edl` is where that is enforced).</span>
 <span class="sd">    Heavy deps (mixing.audio → numpy/scipy/pydub) are imported lazily here so importing the</span>
 <span class="sd">    genre stays light.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        song_path: The clean master every clip is aligned to.</span>
+<span class="sd">        clips: ``(clip_id, clip_path)`` pairs; a video path works directly.</span>
+<span class="sd">        song_duration: The song timeline length; probed from ``song_path`` when omitted.</span>
+<span class="sd">        sample_rate: Analysis sample rate (mono).</span>
+<span class="sd">        **estimator_kwargs: Passed straight to ``mixing.audio.align_clips_to_reference``</span>
+<span class="sd">            — the seam for the windowed-consensus estimator's parameters (muvid#59).</span>
+<span class="sd">            Forwarding rather than enumerating keeps muvid out of the business of</span>
+<span class="sd">            tracking ``mixing``'s estimator vocabulary, and an argument the installed</span>
+<span class="sd">            ``mixing`` does not accept raises :class:`TypeError` from ``mixing`` naming</span>
+<span class="sd">            it. That failure is the point: a window parameter silently ignored is a</span>
+<span class="sd">            caller believing they tuned an estimator that never saw the value.</span>
 <span class="sd">    """</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">mixing.audio</span><span class="w"> </span><span class="kn">import</span> <span class="n">align_clips_to_reference</span>  <span class="c1"># lazy: heavy</span>
 
@@ -177,19 +217,37 @@
         <span class="n">clip_paths</span><span class="p">,</span>
         <span class="n">reference_duration</span><span class="o">=</span><span class="n">song_duration</span><span class="p">,</span>
         <span class="n">sample_rate</span><span class="o">=</span><span class="n">sample_rate</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">estimator_kwargs</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="k">return</span> <span class="p">[</span>
-        <span class="n">FootageAlignment</span><span class="p">(</span>
-            <span class="n">clip_id</span><span class="o">=</span><span class="n">clip_ids</span><span class="p">[</span><span class="n">a</span><span class="o">.</span><span class="n">index</span><span class="p">],</span>
-            <span class="n">offset_s</span><span class="o">=</span><span class="n">a</span><span class="o">.</span><span class="n">offset_s</span><span class="p">,</span>
-            <span class="n">confidence</span><span class="o">=</span><span class="n">a</span><span class="o">.</span><span class="n">confidence</span><span class="p">,</span>
-            <span class="n">duration_s</span><span class="o">=</span><span class="n">a</span><span class="o">.</span><span class="n">duration_s</span><span class="p">,</span>
-            <span class="n">coverage</span><span class="o">=</span><span class="n">a</span><span class="o">.</span><span class="n">coverage</span><span class="p">,</span>
-            <span class="n">overlaps</span><span class="o">=</span><span class="n">a</span><span class="o">.</span><span class="n">overlaps</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">aligned</span>
-    <span class="p">]</span></div>
+    <span class="k">return</span> <span class="p">[</span><span class="n">_as_alignment</span><span class="p">(</span><span class="n">clip_ids</span><span class="p">[</span><span class="n">a</span><span class="o">.</span><span class="n">index</span><span class="p">],</span> <span class="n">a</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">aligned</span><span class="p">]</span></div>
 
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_as_alignment</span><span class="p">(</span><span class="n">clip_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">a</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FootageAlignment</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""One ``mixing.audio.ClipAlignment`` → muvid's record, verdict included.</span>
+
+<span class="sd">    ``support`` is read BY NAME off whatever ``mixing`` returned, and its absence is</span>
+<span class="sd">    ``None`` rather than an error: an estimator that takes a single whole-clip</span>
+<span class="sd">    measurement has no support to report, and that is a supported estimator, not a</span>
+<span class="sd">    broken one. Reading it this way is also the wiring: when ``mixing``'s consensus</span>
+<span class="sd">    estimator starts reporting a support fraction, muvid picks it up and</span>
+<span class="sd">    :func:`vouches_for` switches to the stronger test with no change here.</span>
+<span class="sd">    """</span>
+    <span class="n">support</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="s2">"support"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">support</span> <span class="o">=</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">support</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="n">support</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">FootageAlignment</span><span class="p">(</span>
+        <span class="n">clip_id</span><span class="o">=</span><span class="n">clip_id</span><span class="p">,</span>
+        <span class="n">offset_s</span><span class="o">=</span><span class="n">a</span><span class="o">.</span><span class="n">offset_s</span><span class="p">,</span>
+        <span class="n">confidence</span><span class="o">=</span><span class="n">a</span><span class="o">.</span><span class="n">confidence</span><span class="p">,</span>
+        <span class="n">duration_s</span><span class="o">=</span><span class="n">a</span><span class="o">.</span><span class="n">duration_s</span><span class="p">,</span>
+        <span class="n">coverage</span><span class="o">=</span><span class="n">a</span><span class="o">.</span><span class="n">coverage</span><span class="p">,</span>
+        <span class="n">overlaps</span><span class="o">=</span><span class="n">a</span><span class="o">.</span><span class="n">overlaps</span><span class="p">,</span>
+        <span class="n">support</span><span class="o">=</span><span class="n">support</span><span class="p">,</span>
+        <span class="c1"># A clip that does not overlap the song has no offset worth vouching for, but</span>
+        <span class="c1"># it is `overlaps` that says so — stacking a second False on it would make two</span>
+        <span class="c1"># different facts read as one, and the caller-facing report distinguishes them.</span>
+        <span class="n">reliable</span><span class="o">=</span><span class="n">vouches_for</span><span class="p">(</span><span class="n">confidence</span><span class="o">=</span><span class="n">a</span><span class="o">.</span><span class="n">confidence</span><span class="p">,</span> <span class="n">support</span><span class="o">=</span><span class="n">support</span><span class="p">),</span>
+    <span class="p">)</span>
 </pre></div>
 
            </div>

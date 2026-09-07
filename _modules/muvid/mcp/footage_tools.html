@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.mcp.footage_tools &mdash; muvid 0.0.49 documentation</title>
+  <title>muvid.mcp.footage_tools &mdash; muvid 0.0.50 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=0356c229"></script>
+      <script src="../../../_static/documentation_options.js?v=e072a57b"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -156,6 +156,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">urllib.parse</span><span class="w"> </span><span class="kn">import</span> <span class="n">urlparse</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">muvid.footage.align</span><span class="w"> </span><span class="kn">import</span> <span class="n">MIN_CONFIDENCE</span><span class="p">,</span> <span class="n">MIN_SUPPORT</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.mcp.identity</span><span class="w"> </span><span class="kn">import</span> <span class="n">current_email</span>
 
 <span class="c1"># -- resource caps (env-tunable) --------------------------------------------</span>
@@ -170,13 +171,11 @@
 <span class="n">_SONG_MAX_DURATION_S</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span>
     <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"MUVID_FOOTAGE_MAX_SONG_DURATION_S"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="mi">12</span> <span class="o">*</span> <span class="mi">60</span><span class="p">))</span>
 <span class="p">)</span>
-<span class="c1">#: Below this, an alignment is REPORTED as low-confidence (never dropped — see</span>
-<span class="c1">#: align_footage). Calibrated for the clean-master-vs-phone regime the connector actually</span>
-<span class="c1">#: sees, on the onset-envelope feature (muvid#15): measured against a studio master, four</span>
-<span class="c1">#: provably-correct clips scored 0.173–0.603 while the one genuinely unrelated clip scored</span>
-<span class="c1">#: 0.021 — so 0.1 separates them ~2x/5x, where the old 0.3 (a defensible number for the</span>
-<span class="c1">#: EASIER clip-to-clip regime) flagged five of six correct alignments as suspect.</span>
-<span class="n">_MIN_CONFIDENCE</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"MUVID_FOOTAGE_MIN_CONFIDENCE"</span><span class="p">,</span> <span class="s2">"0.1"</span><span class="p">))</span>
+<span class="c1">#: Re-exported, not re-declared: the threshold and the verdict it feeds now live with</span>
+<span class="c1">#: the aligner (``muvid.footage.align``), because the same number has to decide what</span>
+<span class="c1">#: this tool REPORTS and what ``validate_edl`` REFUSES, and two copies of a calibrated</span>
+<span class="c1">#: constant is how those two answers drift apart (muvid#59).</span>
+<span class="n">_MIN_CONFIDENCE</span> <span class="o">=</span> <span class="n">MIN_CONFIDENCE</span>
 <span class="c1">#: Total-bytes cap for a folder archive (env ``MUVID_FOOTAGE_FOLDER_MAX_BYTES``). A shoot</span>
 <span class="c1">#: is several clips, so this is necessarily larger than the per-clip cap.</span>
 <span class="n">_FOLDER_MAX_BYTES</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span>
@@ -412,8 +411,17 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">align_footage</span><span class="p">(</span><span class="n">project_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Align every uploaded clip to the song by audio, and persist the result. Free.</span>
 
-<span class="sd">    Returns each clip's offset, a confidence in [0,1], and its coverage of the song, plus a</span>
-<span class="sd">    ``low_confidence`` list (clips that matched weakly — likely wrong; re-shoot or drop).</span>
+<span class="sd">    Returns each clip's offset, a confidence in [0,1], its ``support`` (the fraction of</span>
+<span class="sd">    the clip that agrees on that offset, ``null`` when the aligner took a single</span>
+<span class="sd">    whole-clip measurement), and its coverage of the song, plus two lists:</span>
+
+<span class="sd">    - ``low_confidence`` — clips that matched weakly, for reporting;</span>
+<span class="sd">    - ``unreliable`` — clips whose offset the aligner will NOT vouch for. These stay in</span>
+<span class="sd">      the project and stay addressable, but ``assemble_music_video`` REFUSES to cut to</span>
+<span class="sd">      them unless it is called with ``allow_unreliable=true``, because a wrong offset</span>
+<span class="sd">      does not fail — it renders a video out of sync with the song (muvid#59). Re-align,</span>
+<span class="sd">      leave them out of the edit, or opt in deliberately.</span>
+
 <span class="sd">    Run this after adding/removing clips and before assembling.</span>
 <span class="sd">    """</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.footage.align</span><span class="w"> </span><span class="kn">import</span> <span class="n">align_footage</span> <span class="k">as</span> <span class="n">_align</span>
@@ -455,8 +463,22 @@
             <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">aligns</span>
             <span class="k">if</span> <span class="n">a</span><span class="o">.</span><span class="n">confidence</span> <span class="o">&lt;</span> <span class="n">_MIN_CONFIDENCE</span>
         <span class="p">],</span>
+        <span class="c1"># The list that has TEETH, kept separate from `low_confidence` because they</span>
+        <span class="c1"># answer different questions: one is a number to look at, the other is what</span>
+        <span class="c1"># the render will refuse. They coincide today for a whole-clip estimator and</span>
+        <span class="c1"># deliberately will not once support is measured (muvid#59).</span>
+        <span class="s2">"unreliable"</span><span class="p">:</span> <span class="p">[</span>
+            <span class="p">{</span>
+                <span class="s2">"clip_id"</span><span class="p">:</span> <span class="n">a</span><span class="o">.</span><span class="n">clip_id</span><span class="p">,</span>
+                <span class="s2">"confidence"</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">confidence</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+                <span class="s2">"support"</span><span class="p">:</span> <span class="n">_round_support</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">support</span><span class="p">),</span>
+            <span class="p">}</span>
+            <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">aligns</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">a</span><span class="o">.</span><span class="n">reliable</span>
+        <span class="p">],</span>
         <span class="s2">"confidence_metric"</span><span class="p">:</span> <span class="s2">"onset-envelope correlation at the waveform's lag"</span><span class="p">,</span>
         <span class="s2">"confidence_threshold"</span><span class="p">:</span> <span class="n">_MIN_CONFIDENCE</span><span class="p">,</span>
+        <span class="s2">"support_threshold"</span><span class="p">:</span> <span class="n">MIN_SUPPORT</span><span class="p">,</span>
         <span class="s2">"offset_consensus"</span><span class="p">:</span> <span class="n">_offset_consensus</span><span class="p">(</span><span class="n">aligns</span><span class="p">),</span>
         <span class="c1"># Usable-for-an-edit, not present-in-the-project: these clips are still here, still</span>
         <span class="c1"># listed, still addressable — they just cover no part of the song.</span>
@@ -594,6 +616,11 @@
     <span class="k">return</span> <span class="n">out</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_round_support</span><span class="p">(</span><span class="n">support</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""``None`` stays ``None`` over the wire — "not measured" is not "measured zero"."""</span>
+    <span class="k">return</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">support</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">support</span><span class="p">),</span> <span class="mi">3</span><span class="p">)</span>
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">_coverage_report</span><span class="p">(</span><span class="n">entries</span><span class="p">,</span> <span class="n">aligns</span><span class="p">,</span> <span class="n">song_dur</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""What the song's timeline looks like under ``entries`` — covered, weak, and MISSING.</span>
 
@@ -614,15 +641,19 @@
         <span class="n">cursor</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">cursor</span><span class="p">,</span> <span class="n">hi</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">song_dur</span> <span class="o">-</span> <span class="n">cursor</span> <span class="o">&gt;</span> <span class="mf">1e-3</span><span class="p">:</span>
         <span class="n">gaps</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">"song_start"</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">cursor</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="s2">"song_end"</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">song_dur</span><span class="p">,</span> <span class="mi">2</span><span class="p">)})</span>
+    <span class="c1"># `reliable`, not a bare confidence comparison: the verdict is the aligner's</span>
+    <span class="c1"># (muvid.footage.align.vouches_for), so this report says exactly what</span>
+    <span class="c1"># validate_edl will refuse rather than a second opinion that can drift from it.</span>
     <span class="n">weak</span> <span class="o">=</span> <span class="p">[</span>
         <span class="p">{</span>
             <span class="s2">"song_start"</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">song_start</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>
             <span class="s2">"song_end"</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">song_end</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>
             <span class="s2">"clip_id"</span><span class="p">:</span> <span class="n">e</span><span class="o">.</span><span class="n">clip_id</span><span class="p">,</span>
             <span class="s2">"confidence"</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">by_id</span><span class="p">[</span><span class="n">e</span><span class="o">.</span><span class="n">clip_id</span><span class="p">]</span><span class="o">.</span><span class="n">confidence</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+            <span class="s2">"support"</span><span class="p">:</span> <span class="n">_round_support</span><span class="p">(</span><span class="n">by_id</span><span class="p">[</span><span class="n">e</span><span class="o">.</span><span class="n">clip_id</span><span class="p">]</span><span class="o">.</span><span class="n">support</span><span class="p">),</span>
         <span class="p">}</span>
         <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">entries</span>
-        <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">clip_id</span> <span class="ow">in</span> <span class="n">by_id</span> <span class="ow">and</span> <span class="n">by_id</span><span class="p">[</span><span class="n">e</span><span class="o">.</span><span class="n">clip_id</span><span class="p">]</span><span class="o">.</span><span class="n">confidence</span> <span class="o">&lt;</span> <span class="n">_MIN_CONFIDENCE</span>
+        <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">clip_id</span> <span class="ow">in</span> <span class="n">by_id</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">by_id</span><span class="p">[</span><span class="n">e</span><span class="o">.</span><span class="n">clip_id</span><span class="p">]</span><span class="o">.</span><span class="n">reliable</span>
     <span class="p">]</span>
     <span class="n">covered_s</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">hi</span> <span class="o">-</span> <span class="n">lo</span> <span class="k">for</span> <span class="n">lo</span><span class="p">,</span> <span class="n">hi</span> <span class="ow">in</span> <span class="n">covered</span><span class="p">)</span>
     <span class="k">return</span> <span class="p">{</span>
@@ -678,6 +709,11 @@
             <span class="n">aligns</span><span class="p">,</span>
             <span class="n">song_dur</span><span class="p">,</span>
             <span class="n">canvas</span><span class="o">=</span><span class="n">proj</span><span class="o">.</span><span class="n">canvas</span><span class="p">(),</span>
+            <span class="c1"># This tool renders nothing; refusing here would deny the caller the very</span>
+            <span class="c1"># diagnosis they came for, since `coverage.weak_segments` names each</span>
+            <span class="c1"># unvouched span and the time it covers. The refusal belongs where the</span>
+            <span class="c1"># encode does — `assemble_music_video` (muvid#59).</span>
+            <span class="n">allow_unreliable</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">KeyError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
         <span class="k">raise</span> <span class="n">_tool_error</span><span class="p">(</span><span class="sa">f</span><span class="s2">"could not build a valid edit: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
@@ -721,6 +757,7 @@
     <span class="n">weights</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">config</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">canvas</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">,</span>
+    <span class="n">allow_unreliable</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Assemble the music video — auto (a selection ``strategy``) or an explicit ``edl``. Free.</span>
 
@@ -776,6 +813,12 @@
 <span class="sd">      ``list_strategies``; default ``best_confidence``) builds the edit from the alignments.</span>
 <span class="sd">    - ``canvas``: render-time override ("landscape"/"portrait"/"square") — the same edit</span>
 <span class="sd">      re-rendered in another shape, no new project needed. Default: the project's canvas.</span>
+<span class="sd">    - ``allow_unreliable``: render even on clips whose alignment the aligner will not</span>
+<span class="sd">      vouch for. **Off by default and it should stay off**: a wrong offset does not</span>
+<span class="sd">      fail, it delivers a video out of sync with the song, so the refusal is the only</span>
+<span class="sd">      thing standing between a bad measurement and a bad render (muvid#59). Set it when</span>
+<span class="sd">      you have checked the offsets yourself, or when a slightly-off cut beats no cut at</span>
+<span class="sd">      all. ``align_footage`` names the clips this applies to in its ``unreliable`` list.</span>
 
 <span class="sd">    The video is EXACTLY the song's duration: each cut is trimmed at its aligned in-point,</span>
 <span class="sd">    scaled onto the canvas (padded, never stretched), gaps render black, and the CLEAN</span>
@@ -791,7 +834,12 @@
 <span class="sd">    remote caller has no access to.</span>
 <span class="sd">    """</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.footage.assemble</span><span class="w"> </span><span class="kn">import</span> <span class="n">assemble_music_video</span> <span class="k">as</span> <span class="n">_assemble</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.footage.edl</span><span class="w"> </span><span class="kn">import</span> <span class="n">derive_cuts</span><span class="p">,</span> <span class="n">fill_gaps</span><span class="p">,</span> <span class="n">validate_edl</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.footage.edl</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+        <span class="n">UnreliableAlignmentError</span><span class="p">,</span>
+        <span class="n">derive_cuts</span><span class="p">,</span>
+        <span class="n">fill_gaps</span><span class="p">,</span>
+        <span class="n">validate_edl</span><span class="p">,</span>
+    <span class="p">)</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.footage.strategy</span><span class="w"> </span><span class="kn">import</span> <span class="n">DEFAULT_STRATEGY</span><span class="p">,</span> <span class="n">select_edl</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.visualize</span><span class="w"> </span><span class="kn">import</span> <span class="n">failures</span><span class="p">,</span> <span class="n">report</span><span class="p">,</span> <span class="n">verify_video</span>
 
@@ -818,7 +866,11 @@
                     <span class="s2">"selection config (preset/weights/config) can't accompany an explicit edl"</span>
                 <span class="p">)</span>
             <span class="n">entries</span> <span class="o">=</span> <span class="n">validate_edl</span><span class="p">(</span>
-                <span class="n">fill_gaps</span><span class="p">(</span><span class="n">edl</span><span class="p">,</span> <span class="n">song_dur</span><span class="p">),</span> <span class="n">aligns</span><span class="p">,</span> <span class="n">song_dur</span><span class="p">,</span> <span class="n">canvas</span><span class="o">=</span><span class="n">canvas_wh</span>
+                <span class="n">fill_gaps</span><span class="p">(</span><span class="n">edl</span><span class="p">,</span> <span class="n">song_dur</span><span class="p">),</span>
+                <span class="n">aligns</span><span class="p">,</span>
+                <span class="n">song_dur</span><span class="p">,</span>
+                <span class="n">canvas</span><span class="o">=</span><span class="n">canvas_wh</span><span class="p">,</span>
+                <span class="n">allow_unreliable</span><span class="o">=</span><span class="n">allow_unreliable</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="n">used_strategy</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">else</span><span class="p">:</span>
@@ -837,8 +889,15 @@
                 <span class="n">aligns</span><span class="p">,</span>
                 <span class="n">song_dur</span><span class="p">,</span>
                 <span class="n">canvas</span><span class="o">=</span><span class="n">canvas_wh</span><span class="p">,</span>
+                <span class="n">allow_unreliable</span><span class="o">=</span><span class="n">allow_unreliable</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="n">used_strategy</span> <span class="o">=</span> <span class="n">strat</span>
+    <span class="k">except</span> <span class="n">UnreliableAlignmentError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="c1"># Named separately from the generic "could not build a valid edit" because the</span>
+        <span class="c1"># remedy is different in kind: nothing about the EDL is malformed, and re-writing</span>
+        <span class="c1"># it will not help — the OFFSETS are not trustworthy, and the caller has to</span>
+        <span class="c1"># re-align, drop those clips, or say they want them anyway.</span>
+        <span class="k">raise</span> <span class="n">_tool_error</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2"> (clips: </span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">clip_ids</span><span class="p">)</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
     <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">KeyError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
         <span class="k">raise</span> <span class="n">_tool_error</span><span class="p">(</span><span class="sa">f</span><span class="s2">"could not build a valid edit: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
 

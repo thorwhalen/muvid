@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.footage.edl &mdash; muvid 0.0.49 documentation</title>
+  <title>muvid.footage.edl &mdash; muvid 0.0.50 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=0356c229"></script>
+      <script src="../../../_static/documentation_options.js?v=e072a57b"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -143,6 +143,11 @@
 <span class="sd">auto/strategy) passes before any cutting, and :func:`derive_cuts` centralizes the sign</span>
 <span class="sd">convention (``clip_in = song_start - offset_s``) so no third-party strategy can desync the</span>
 <span class="sd">result. Times are seconds (float).</span>
+
+<span class="sd">The gate is a TRUST gate as well as a structural one: an alignment the aligner could</span>
+<span class="sd">not vouch for (``FootageAlignment.reliable`` False) is refused here with</span>
+<span class="sd">:class:`UnreliableAlignmentError` rather than quietly cut to, because a wrong offset</span>
+<span class="sd">does not fail — it renders a video out of sync with the song (muvid#59).</span>
 
 <span class="sd">An entry may carry an optional :class:`Transition` — a blend IN from its predecessor</span>
 <span class="sd">instead of a hard cut (muvid#34). It is an annotation on a boundary that already exists</span>
@@ -298,6 +303,124 @@
 <span class="p">)</span>
 
 
+<span class="c1">#: Below this, a whole-clip correlation coefficient does not vouch for its offset</span>
+<span class="c1">#: (env ``MUVID_FOOTAGE_MIN_CONFIDENCE``). Calibrated for the clean-master-vs-phone</span>
+<span class="c1">#: regime the connector actually sees, on the onset-envelope feature (muvid#15):</span>
+<span class="c1">#: measured against a studio master, four provably-correct clips scored 0.173-0.603</span>
+<span class="c1">#: while the one genuinely unrelated clip scored 0.021 — so 0.1 separates them ~2x/5x,</span>
+<span class="c1">#: where the old 0.3 (a defensible number for the EASIER clip-to-clip regime) flagged</span>
+<span class="c1">#: five of six correct alignments as suspect.</span>
+<span class="c1">#:</span>
+<span class="c1">#: **Read it as the weak instrument it is.** muvid#59 is the demonstration: on a</span>
+<span class="c1">#: repetitive track the three wrong offsets scored 0.086, 0.121 and 0.086, so this</span>
+<span class="c1">#: threshold catches two of the three and lets the third — 83 s wrong — through. A</span>
+<span class="c1">#: coefficient cannot see the runner-up peak that makes it a coin flip; only</span>
+<span class="c1">#: :data:`FootageAlignment.support` can. This is the fallback for an aligner that</span>
+<span class="c1">#: reports no support, not the measure of record.</span>
+<span class="n">MIN_CONFIDENCE</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"MUVID_FOOTAGE_MIN_CONFIDENCE"</span><span class="p">,</span> <span class="s2">"0.1"</span><span class="p">))</span>
+
+<span class="c1">#: Below this fraction of agreeing windows, a consensus offset does not vouch for</span>
+<span class="c1">#: itself (env ``MUVID_FOOTAGE_MIN_SUPPORT``). On the shoot behind muvid#59 the three</span>
+<span class="c1">#: verified-correct offsets carried 10/24, 17/37 and 45/61 windows — 0.42, 0.46 and</span>
+<span class="c1">#: 0.74 — so 0.25 sits comfortably under the worst correct case while still refusing</span>
+<span class="c1">#: an offset that only a handful of windows ever saw. A spurious peak is an accident</span>
+<span class="c1">#: of local content and lands at a DIFFERENT lag in each window, so it cannot</span>
+<span class="c1">#: accumulate support the way a true offset does.</span>
+<span class="n">MIN_SUPPORT</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"MUVID_FOOTAGE_MIN_SUPPORT"</span><span class="p">,</span> <span class="s2">"0.25"</span><span class="p">))</span>
+
+
+<div class="viewcode-block" id="vouches_for">
+<a class="viewcode-back" href="../../../module_docs/muvid/footage/edl.html#muvid.footage.vouches_for">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">vouches_for</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">confidence</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">support</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Does the aligner vouch for this offset? The ONE place that verdict is reached.</span>
+
+<span class="sd">    Lives here, beside the record it judges and the gate that enforces it, rather than</span>
+<span class="sd">    with the aligner: :meth:`FootageAlignment.from_dict` has to reach it to derive a</span>
+<span class="sd">    verdict for a record written before the field existed, and a module that owns a</span>
+<span class="sd">    dataclass should not need its own consumer to interpret one.</span>
+
+<span class="sd">    ``support`` (how much of the clip agrees) decides when the aligner measured it,</span>
+<span class="sd">    because it is the only one of the two numbers that can tell a clear winner from a</span>
+<span class="sd">    coin flip — see :attr:`FootageAlignment.support`.</span>
+
+<span class="sd">    **When support is absent, this falls back to ``confidence``, and that fallback is</span>
+<span class="sd">    known to be inadequate.** It is the same instrument muvid#59 was filed about: on</span>
+<span class="sd">    that shoot it would have refused two of the three wrong offsets and passed the</span>
+<span class="sd">    third, which was 83 s out. So this is not "unknown forces approval" — an unmeasured</span>
+<span class="sd">    support is judged by the weaker test rather than refused outright, because refusing</span>
+<span class="sd">    every alignment today's ``mixing`` produces would take the whole feature offline</span>
+<span class="sd">    over a measurement that does not exist yet. The gap closes when the windowed</span>
+<span class="sd">    consensus lands (thorwhalen/mixing#30) and ``support`` starts arriving; until then</span>
+<span class="sd">    the honest statement is that a *reported* offset is checked as well as it can be,</span>
+<span class="sd">    not that it is trustworthy.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        confidence: The estimator's correlation coefficient at the chosen lag.</span>
+<span class="sd">        support: Fraction of independent windows agreeing, or ``None`` if unmeasured.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        True when the offset may be cut to without the caller opting in.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">support</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">support</span> <span class="o">&gt;=</span> <span class="n">MIN_SUPPORT</span>
+    <span class="k">return</span> <span class="n">confidence</span> <span class="o">&gt;=</span> <span class="n">MIN_CONFIDENCE</span></div>
+
+
+
+<div class="viewcode-block" id="UnreliableAlignmentError">
+<a class="viewcode-back" href="../../../module_docs/muvid/footage/edl.html#muvid.footage.UnreliableAlignmentError">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">UnreliableAlignmentError</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""An edit cuts to a clip whose OFFSET the aligner could not vouch for (muvid#59).</span>
+
+<span class="sd">    The defect this exists to make impossible: on a rigidly programmed, repetitive</span>
+<span class="sd">    track, a whole-clip cross-correlation surface has near-tied peaks spaced at</span>
+<span class="sd">    musical periods (measured on one real shoot: second-peak-to-first ratios of</span>
+<span class="sd">    0.993, 0.989, 0.987), so the estimator picks the argmax of a coin-flip and</span>
+<span class="sd">    reports the coefficient of whichever side it landed on. That number is *low*</span>
+<span class="sd">    but never looks like failure — and every stage after it (``derive_cuts``, the</span>
+<span class="sd">    score tracks, the assembled mp4) is built on the offset, so the failure</span>
+<span class="sd">    presented as a silently desynced video rather than as an error. Three clips</span>
+<span class="sd">    came back 83 s, 174 s and 83 s wrong, all with ``overlaps=True``.</span>
+
+<span class="sd">    So an offset the aligner will not vouch for is a **refusal**, not a number: a</span>
+<span class="sd">    caller who renders anyway must say so with ``allow_unreliable=True``, exactly</span>
+<span class="sd">    as an unpriceable shot must be passed with ``--allow-unpriced`` rather than</span>
+<span class="sd">    being read as free.</span>
+
+<span class="sd">    Note what this does NOT yet claim. The verdict is only as good as</span>
+<span class="sd">    :func:`vouches_for`, which falls back to the confidence coefficient wherever</span>
+<span class="sd">    ``support`` was never measured — which is every alignment today's ``mixing``</span>
+<span class="sd">    produces. That fallback would have caught two of muvid#59's three wrong</span>
+<span class="sd">    offsets and missed the third. The refusal is the half that makes a bad</span>
+<span class="sd">    measurement stop being silent; the half that makes the measurement good is</span>
+<span class="sd">    the windowed consensus in thorwhalen/mixing#30.</span>
+
+<span class="sd">    A refusal is NOT a removal: the clip keeps its record, its coverage and its</span>
+<span class="sd">    place in the project (see :class:`FootageAlignment`). What it loses is the</span>
+<span class="sd">    right to be cut to without the caller saying so.</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">unvouched</span><span class="p">:</span> <span class="s2">"Sequence[FootageAlignment]"</span><span class="p">):</span>
+        <span class="c1">#: The offending clips, in EDL order — so a caller can re-align exactly these.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">alignments</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">unvouched</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">clip_ids</span> <span class="o">=</span> <span class="p">[</span><span class="n">a</span><span class="o">.</span><span class="n">clip_id</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">alignments</span><span class="p">]</span>
+        <span class="n">detail</span> <span class="o">=</span> <span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">a</span><span class="o">.</span><span class="n">clip_id</span><span class="si">!r}</span><span class="s2"> (confidence </span><span class="si">{</span><span class="n">a</span><span class="o">.</span><span class="n">confidence</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">"</span>
+            <span class="o">+</span> <span class="p">(</span><span class="sa">f</span><span class="s2">", support </span><span class="si">{</span><span class="n">a</span><span class="o">.</span><span class="n">support</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">"</span> <span class="k">if</span> <span class="n">a</span><span class="o">.</span><span class="n">support</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s2">""</span><span class="p">)</span>
+            <span class="o">+</span> <span class="s2">")"</span>
+            <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">alignments</span>
+        <span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"the edit cuts to </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">clip_ids</span><span class="p">)</span><span class="si">}</span><span class="s2"> clip(s) whose alignment is not "</span>
+            <span class="sa">f</span><span class="s2">"trustworthy: </span><span class="si">{</span><span class="n">detail</span><span class="si">}</span><span class="s2">. A wrong offset does not fail — it renders a "</span>
+            <span class="s2">"video that is out of sync with the song, so it is refused here rather "</span>
+            <span class="s2">"than downstream. Re-align (a longer or louder stretch of the song "</span>
+            <span class="s2">"helps), drop these clips from the edit, or pass allow_unreliable=True "</span>
+            <span class="s2">"to render on them deliberately."</span>
+        <span class="p">)</span></div>
+
+
+
 <div class="viewcode-block" id="FootageAlignment">
 <a class="viewcode-back" href="../../../module_docs/muvid/footage/edl.html#muvid.footage.FootageAlignment">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -317,6 +440,26 @@
     <span class="c1">#: still recorded — a source must never leave the addressable set as a side effect</span>
     <span class="c1">#: of being measured. Selection filters on this; reporting shows it with a reason.</span>
     <span class="n">overlaps</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="c1">#: Fraction of independently-measured windows of the clip that agree on</span>
+    <span class="c1">#: ``offset_s``, when the aligner measured more than one — ``None`` when it</span>
+    <span class="c1">#: only ever took a single whole-clip measurement.</span>
+    <span class="c1">#:</span>
+    <span class="c1">#: **This, not ``confidence``, is the honest number** (muvid#59). A correlation</span>
+    <span class="c1">#: coefficient says how well the winning lag scored; it cannot say whether the</span>
+    <span class="c1">#: runner-up scored the same, which is the entire failure mode on repetitive</span>
+    <span class="c1">#: music. A support fraction says how much of the clip actually agrees — on the</span>
+    <span class="c1">#: shoot that produced this issue the three correct offsets carried 10/24, 17/37</span>
+    <span class="c1">#: and 45/61, while the confidently-wrong ones the old estimator returned had no</span>
+    <span class="c1">#: agreement to speak of at all.</span>
+    <span class="n">support</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1">#: Whether the aligner VOUCHES for ``offset_s``. False means "measured, recorded,</span>
+    <span class="c1">#: and not to be cut to without the caller saying so" — see</span>
+    <span class="c1">#: :class:`UnreliableAlignmentError`, which :func:`validate_edl` raises.</span>
+    <span class="c1">#:</span>
+    <span class="c1">#: Defaults True for a record built in code; a record read from disk that predates</span>
+    <span class="c1">#: the field gets its verdict DERIVED instead (see :meth:`from_dict`), never</span>
+    <span class="c1">#: assumed.</span>
+    <span class="n">reliable</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">{</span>
@@ -326,20 +469,43 @@
             <span class="s2">"duration_s"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">duration_s</span><span class="p">,</span>
             <span class="s2">"coverage"</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">coverage</span><span class="p">),</span>
             <span class="s2">"overlaps"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">overlaps</span><span class="p">,</span>
+            <span class="s2">"support"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">support</span><span class="p">,</span>
+            <span class="s2">"reliable"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">reliable</span><span class="p">,</span>
         <span class="p">}</span>
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">from_dict</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">d</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"FootageAlignment"</span><span class="p">:</span>
         <span class="n">cov</span> <span class="o">=</span> <span class="n">d</span><span class="p">[</span><span class="s2">"coverage"</span><span class="p">]</span>
+        <span class="n">support</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"support"</span><span class="p">)</span>
+        <span class="n">support</span> <span class="o">=</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">support</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="n">support</span><span class="p">)</span>
+        <span class="n">confidence</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s2">"confidence"</span><span class="p">])</span>
+        <span class="n">reliable</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"reliable"</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span>
             <span class="n">clip_id</span><span class="o">=</span><span class="n">d</span><span class="p">[</span><span class="s2">"clip_id"</span><span class="p">],</span>
             <span class="n">offset_s</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s2">"offset_s"</span><span class="p">]),</span>
-            <span class="n">confidence</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s2">"confidence"</span><span class="p">]),</span>
+            <span class="n">confidence</span><span class="o">=</span><span class="n">confidence</span><span class="p">,</span>
             <span class="n">duration_s</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s2">"duration_s"</span><span class="p">]),</span>
             <span class="n">coverage</span><span class="o">=</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">cov</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="nb">float</span><span class="p">(</span><span class="n">cov</span><span class="p">[</span><span class="mi">1</span><span class="p">])),</span>
             <span class="c1"># Records written before `overlaps` existed were only ever persisted when</span>
             <span class="c1"># they overlapped, so absent means True.</span>
             <span class="n">overlaps</span><span class="o">=</span><span class="nb">bool</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"overlaps"</span><span class="p">,</span> <span class="kc">True</span><span class="p">)),</span>
+            <span class="c1"># Absent means "this aligner never measured it" (muvid#59) — a distinct</span>
+            <span class="c1"># fact from "it measured zero agreement", which is why it stays None.</span>
+            <span class="n">support</span><span class="o">=</span><span class="n">support</span><span class="p">,</span>
+            <span class="c1"># A verdict is DERIVED for a record that predates the field, not assumed.</span>
+            <span class="c1"># Defaulting it True was a regression: an alignments.json written before</span>
+            <span class="c1"># this existed holds exactly the offsets muvid#59 is about, and a blanket</span>
+            <span class="c1"># True would both render them and drop them out of the caller-facing weak</span>
+            <span class="c1"># list — quieter than the behaviour the issue was filed against. Deriving</span>
+            <span class="c1"># gives such a record the same verdict a fresh alignment of the same clip</span>
+            <span class="c1"># would get today, which is the only defensible reading of a field the</span>
+            <span class="c1"># writer never wrote. `confidence` has always been required, so this is</span>
+            <span class="c1"># never a guess about a missing input.</span>
+            <span class="n">reliable</span><span class="o">=</span><span class="p">(</span>
+                <span class="n">vouches_for</span><span class="p">(</span><span class="n">confidence</span><span class="o">=</span><span class="n">confidence</span><span class="p">,</span> <span class="n">support</span><span class="o">=</span><span class="n">support</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">reliable</span> <span class="ow">is</span> <span class="kc">None</span>
+                <span class="k">else</span> <span class="nb">bool</span><span class="p">(</span><span class="n">reliable</span><span class="p">)</span>
+            <span class="p">),</span>
         <span class="p">)</span></div>
 
 
@@ -701,6 +867,7 @@
     <span class="n">song_duration</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">canvas</span><span class="p">:</span> <span class="s2">"tuple[int, int]"</span> <span class="o">=</span> <span class="n">DFLT_LOOK_CANVAS</span><span class="p">,</span>
+    <span class="n">allow_unreliable</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">EdlEntry</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">"""Validate an EDL (from a strategy OR a caller) — the ONE gate before any cutting.</span>
 
@@ -725,6 +892,11 @@
 <span class="sd">    - ``look_time_varying`` is a boolean, and is not set on an entry with no</span>
 <span class="sd">      ``look`` (a declaration about a look that is not there is a request that</span>
 <span class="sd">      cannot be honoured);</span>
+<span class="sd">    - every non-gap entry cuts to a clip whose alignment the aligner VOUCHES for</span>
+<span class="sd">      (``FootageAlignment.reliable``), unless ``allow_unreliable=True`` — see</span>
+<span class="sd">      :class:`UnreliableAlignmentError`. This is a trust check rather than a</span>
+<span class="sd">      structural one, so it runs LAST: an EDL that does not even parse should be</span>
+<span class="sd">      reported as the malformed EDL it is, not blamed on the footage;</span>
 <span class="sd">    - a :class:`Transition` is on an entry that HAS a predecessor, names a known curve,</span>
 <span class="sd">      is at least :data:`MIN_TRANSITION_S` long, fits in song time counting BOTH</span>
 <span class="sd">      transitions an entry can carry, and fits in each side's aligned coverage — see</span>
@@ -815,8 +987,31 @@
             <span class="p">)</span>
         <span class="n">prev_end</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">song_end</span>
         <span class="n">prev</span> <span class="o">=</span> <span class="n">e</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">allow_unreliable</span><span class="p">:</span>
+        <span class="n">_refuse_unvouched</span><span class="p">(</span><span class="n">entries</span><span class="p">,</span> <span class="n">by_id</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">entries</span></div>
 
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_refuse_unvouched</span><span class="p">(</span><span class="n">entries</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">EdlEntry</span><span class="p">],</span> <span class="n">by_id</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Raise :class:`UnreliableAlignmentError` if the edit cuts to an unvouched clip.</span>
+
+<span class="sd">    Split out only for length; it is part of :func:`validate_edl`, which remains</span>
+<span class="sd">    the ONE gate. Reports EVERY offending clip at once rather than the first —</span>
+<span class="sd">    a caller re-aligning a shoot wants the list, and telling them about one clip</span>
+<span class="sd">    at a time makes a three-camera shoot three round trips.</span>
+<span class="sd">    """</span>
+    <span class="n">seen</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="n">unvouched</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">FootageAlignment</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">entries</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">is_gap</span> <span class="ow">or</span> <span class="n">e</span><span class="o">.</span><span class="n">clip_id</span> <span class="ow">in</span> <span class="n">seen</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">seen</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">clip_id</span><span class="p">)</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="n">by_id</span><span class="p">[</span><span class="n">e</span><span class="o">.</span><span class="n">clip_id</span><span class="p">]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">a</span><span class="o">.</span><span class="n">reliable</span><span class="p">:</span>
+            <span class="n">unvouched</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">unvouched</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">UnreliableAlignmentError</span><span class="p">(</span><span class="n">unvouched</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_span</span><span class="p">(</span><span class="n">e</span><span class="p">:</span> <span class="n">EdlEntry</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
