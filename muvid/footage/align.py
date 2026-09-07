@@ -77,6 +77,15 @@ def align_footage(
     ``reliable=False`` rather than being omitted. Nothing may vanish from the record just
     because it matched badly; what a bad match loses is the right to be cut to silently
     (:func:`~muvid.footage.edl.validate_edl` is where that is enforced).
+
+    **A verdict already on disk is never re-judged, and re-aligning is how you re-judge
+    it.** A ``reliable=True`` written by muvid 0.0.52 or earlier was reached against the
+    UNGRADED support scale, where the muvid#59 shoot's own correct offsets scored 0.42
+    and 0.46 — numbers the current threshold refuses. Those records keep their verdicts
+    deliberately (:meth:`~muvid.footage.edl.FootageAlignment.from_dict` derives only an
+    ABSENT verdict), because a stored verdict is a measurement someone's project already
+    depends on, not a value to reinterpret under a scale it never saw. Calling this
+    function again is the supported way to get a verdict on today's terms.
     Heavy deps (mixing.audio → numpy/scipy/pydub) are imported lazily here so importing the
     genre stays light.
 

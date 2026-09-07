@@ -153,14 +153,17 @@ def test_score_job_flow_and_weighted_assemble(tmp_path, monkeypatch):
         monkeypatch.setattr(V, "verify_video", lambda *a, **k: [])
         monkeypatch.setattr(V, "failures", lambda c: [])
         monkeypatch.setattr(V, "report", lambda c: "ok")
-        # `allow_unreliable` because this fixture's clips are the SONG'S OWN AUDIO over
-        # six seconds of it, and the trust gate correctly declines to vouch for that:
-        # measured, both clips align to the right offset at confidence 0.999 and support
-        # exactly 0.500 — the ceiling of ballot-only evidence, i.e. not one analysis
-        # window could separate that lag from its rivals unaided, which is what a short
-        # self-similar tone gives you. The gate is doing its job; this test is about the
-        # scoring job and the weighted strategy, so it opts in rather than pretending
-        # its material is something the gate should vouch for (muvid#59).
+        # `allow_unreliable` because the gate is RIGHT to refuse this fixture, and it is
+        # worth knowing why rather than treating the flag as boilerplate. `_song` gates
+        # two tones with a 2 Hz square, so the audio is a pulse train that repeats every
+        # 0.5 s; the clips are `song[0:6]`, whose true offset is 0.0. Measured, both land
+        # on **-1.0 s** — exactly two gate periods out, a repeat — at confidence 0.9989
+        # and support 0.49994, a hair under the ballot-only ceiling. That is muvid#59's
+        # own failure mode in miniature: a self-similar reference where the correlation
+        # ties at musical periods, a near-perfect coefficient on the wrong answer, and a
+        # graded vote that declines to vouch for it. This test is about the scoring job
+        # and the weighted strategy, so it opts in — but it is opting in to a KNOWN-WRONG
+        # offset, not to a good one the gate happens to distrust.
         out = ft.assemble_music_video(
             "p", strategy="weighted", preset="energetic", allow_unreliable=True
         )

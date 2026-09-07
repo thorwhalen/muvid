@@ -137,6 +137,66 @@ class TestTheThresholdIsTheBallotCeiling:
         for support in (0.30, 0.32, 0.35, 0.36, 0.37, 0.38):
             assert not vouches_for(confidence=0.9, support=support)
 
+    def test_on_short_repetitive_clips_vouched_and_correct_are_the_same_set(
+        self, tmp_path
+    ):
+        """The threshold's whole claim, on adversarial material: vouched IFF correct.
+
+        The direction the floor bump bought cannot be committed — it was measured on the
+        muvid#59 master, where 21 clips in the 12-29 s band went from 7-of-15 wrong under
+        the pre-fit estimator to 21 of 21 correct once the window is fitted per clip. So
+        this reproduces the *property* on the loop fixture instead, sweeping clip lengths
+        rather than picking one.
+
+        Measured across this sweep: seven lengths land on the right offset with support
+        0.57-0.80, and two (10 s and 14 s) land on a REPEAT — and those two score 0.487
+        and 0.451, both under the ballot-only ceiling, so the gate refuses exactly them.
+
+        The assertion is the biconditional, not either list. It stays true if a future
+        estimator rescues the two wrong ones (they become correct AND vouched); it fails
+        if the gate ever vouches for a repeat or refuses a good alignment. Asserting
+        "10 s is wrong" would have pinned the bug instead of the guarantee, and picking
+        the one length that passed would have been fitting the test to the outcome.
+        """
+        if not (HAS_FFMPEG and HAS_ALIGNER and _has_support()):
+            pytest.skip("needs ffmpeg + mixing>=0.0.49")
+        from muvid.footage.align import align_footage
+
+        song_p, song = _repetitive_song(tmp_path)
+        song_s = len(song) / SR
+        clips = [
+            (
+                f"L{seconds}",
+                str(
+                    _device_recording(
+                        tmp_path,
+                        song,
+                        f"L{seconds}",
+                        at=28.0,
+                        seconds=seconds,
+                        seed=101,
+                    )
+                ),
+            )
+            for seconds in (8.0, 10.0, 12.0, 14.0, 16.0, 20.0)
+        ]
+        aligned = align_footage(str(song_p), clips, song_duration=song_s)
+
+        for a in aligned:
+            correct = abs(a.offset_s - 28.0) < 0.1
+            assert a.reliable is correct, (
+                f"{a.clip_id}: offset {a.offset_s:.3f} is "
+                f"{'correct' if correct else 'a repeat'} but the gate says "
+                f"reliable={a.reliable} (support {a.support}) — the threshold has "
+                "stopped separating correct from repeated on this fixture"
+            )
+        # And the fixture is still adversarial: if everything lands correct, this test
+        # only proves the gate does not refuse good clips, which is half its job.
+        assert not all(abs(a.offset_s - 28.0) < 0.1 for a in aligned), (
+            "no clip landed on a repeat, so the fixture no longer exercises the refusal "
+            "half — widen the sweep before trusting this as a separation test"
+        )
+
     def test_the_noise_clip_that_predates_this_release_is_still_refused(self):
         """0.33 is the fixture to check before ever loosening this threshold.
 
@@ -664,9 +724,9 @@ def test_consensus_recovers_the_offset_and_support_vouches_for_it(tmp_path):
 
     song_p, song = _repetitive_song(tmp_path)
     song_s = len(song) / SR
-    # Both clips clear the `window_s + hop_s` vote boundary. A shorter one has no second
-    # opinion and comes back support=None — correctly, and that case has its own tests
-    # rather than being smuggled in here.
+    # Both clips are long enough for the estimator to hold a vote. Only a clip too
+    # short for two windows at the 3 s floor comes back support=None — correctly, and
+    # that case has its own test rather than being smuggled in here.
     clips = [
         (
             "A",

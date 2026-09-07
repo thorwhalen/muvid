@@ -339,9 +339,9 @@ def align_footage(project_id: str) -> dict:
         ],
         # REPORTED, never enforced — the same posture as `offset_consensus` below, and
         # for the same reason. `support: null` means the estimator could not hold a vote
-        # (the clip is under `window_s + hop_s` — about 30 s at mixing's defaults — so
-        # there are not two independent windows to compare), and the offset therefore
-        # rests on a single measurement
+        # at all: it fits its window to the clip down to a 3 s floor, so this is only a
+        # clip too short to hold two of those (measured: 4 s yes, 6 s no). The offset
+        # then rests on a single measurement
         # and the trust verdict falls back to the confidence coefficient. That fallback
         # is the weak one: measured on the muvid#59 material, one such clip is 102 s
         # wrong at confidence 0.834 while the two correct ones score 0.566 and 0.621 —

@@ -381,9 +381,10 @@ class FootageAlignment:
     #: ``None`` means no vote was held — since ``mixing>=0.0.48`` fits the window to the
     #: clip, that is now only a clip too short to hold two windows at the 3 s floor
     #: (measured: 4 s yes, 6 s no). It is a different fact from "the windows disagreed",
-    #: which is why it is not 0.0. Read it together with ``window_s``: a support measured
-    #: at a fitted window is a weaker statistic, not a smaller one (see
-    #: :data:`MIN_SUPPORT_WINDOW_S`).
+    #: which is why it is not 0.0. ``window_s`` records the grid it was measured on and
+    #: is reported as a diagnostic; it does NOT qualify the number — see the note above
+    #: :data:`MIN_SUPPORT` for why a window-based qualifier was removed rather than
+    #: re-tuned.
     #:
     #: **This, not ``confidence``, is the honest number** (muvid#59). A correlation
     #: coefficient says how well the winning lag scored; it cannot say whether the
