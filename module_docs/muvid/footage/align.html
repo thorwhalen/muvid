@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.footage.align &mdash; muvid 0.0.51 documentation</title>
+  <title>muvid.footage.align &mdash; muvid 0.0.52 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -15,7 +15,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=440a2162"></script>
+      <script src="../../../_static/documentation_options.js?v=73f2ab08"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -170,9 +170,12 @@ in both directions. Measured on one 50 s clip against a 90 s reference: the defa
 give <code class="docutils literal notranslate"><span class="pre">support=0.75</span></code> and a vouched alignment; <code class="docutils literal notranslate"><span class="pre">window_s=45</span></code> on the same clip gives
 <code class="docutils literal notranslate"><span class="pre">support=None</span></code>, which drops the verdict onto the confidence coefficient — i.e. the
 support gate switches OFF and the caller is told nothing. Widening it far enough
-disables the check; narrowing it deflates every support (0.50/0.64/0.73 at the
-default, 0.17/0.15/0.21 at <code class="docutils literal notranslate"><span class="pre">window_s=5</span></code>) so correct alignments fall under the
-threshold instead.</p>
+disables the check; narrowing it deflates every support — measured across eleven clip
+lengths, correct alignments read 0.38-0.70 at a 20 s window and 0.00-1.00 at a 4 s one
+— so correct alignments fall under the threshold instead.</p>
+<p>(Since <code class="docutils literal notranslate"><span class="pre">mixing&gt;=0.0.48</span></code>, passing <code class="docutils literal notranslate"><span class="pre">window_s</span></code> alone also pairs it with
+<code class="docutils literal notranslate"><span class="pre">hop</span> <span class="pre">=</span> <span class="pre">window/2</span></code>, so the two are one knob at the estimator too. Another reason not
+to accept half of it through a keyword.)</p>
 <p>Refused rather than merely documented for the reason the rest of this package refuses
 things: an argument that quietly turns a safety check off is worse than one that is
 not accepted at all. Tuning the window is legitimate — it just has to move
@@ -189,7 +192,15 @@ loud rather than a side effect of a keyword.</p>
 than being omitted, and clips the aligner could not vouch for, which carry
 <code class="docutils literal notranslate"><span class="pre">reliable=False</span></code> rather than being omitted. Nothing may vanish from the record just
 because it matched badly; what a bad match loses is the right to be cut to silently
-(<a class="reference internal" href="edl.html#muvid.footage.edl.validate_edl" title="muvid.footage.edl.validate_edl"><code class="xref py py-func docutils literal notranslate"><span class="pre">validate_edl()</span></code></a> is where that is enforced).
+(<a class="reference internal" href="edl.html#muvid.footage.edl.validate_edl" title="muvid.footage.edl.validate_edl"><code class="xref py py-func docutils literal notranslate"><span class="pre">validate_edl()</span></code></a> is where that is enforced).</p>
+<p><strong>A verdict already on disk is never re-judged, and re-aligning is how you re-judge
+it.</strong> A <code class="docutils literal notranslate"><span class="pre">reliable=True</span></code> written by muvid 0.0.52 or earlier was reached against the
+UNGRADED support scale, where the muvid#59 shoot’s own correct offsets scored 0.42
+and 0.46 — numbers the current threshold refuses. Those records keep their verdicts
+deliberately (<code class="xref py py-meth docutils literal notranslate"><span class="pre">from_dict()</span></code> derives only an
+ABSENT verdict), because a stored verdict is a measurement someone’s project already
+depends on, not a value to reinterpret under a scale it never saw. Calling this
+function again is the supported way to get a verdict on today’s terms.
 Heavy deps (mixing.audio → numpy/scipy/pydub) are imported lazily here so importing the
 genre stays light.</p>
 <dl class="field-list simple">
@@ -217,7 +228,7 @@ the gate that reads it, in both directions and silently.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="muvid.footage.align.vouches_for">
-<span class="sig-prename descclassname"><span class="pre">muvid.footage.align.</span></span><span class="sig-name descname"><span class="pre">vouches_for</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">confidence</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">support</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../../../_modules/muvid/footage/edl.html#vouches_for"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.align.vouches_for" title="Link to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">muvid.footage.align.</span></span><span class="sig-name descname"><span class="pre">vouches_for</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">confidence</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">support</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">window_s</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../../../_modules/muvid/footage/edl.html#vouches_for"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.align.vouches_for" title="Link to this definition"></a></dt>
 <dd><p>Does the aligner vouch for this offset? The ONE place that verdict is reached.</p>
 <p>Lives here, beside the record it judges and the gate that enforces it, rather than
 with the aligner: <code class="xref py py-meth docutils literal notranslate"><span class="pre">FootageAlignment.from_dict()</span></code> has to reach it to derive a
@@ -231,35 +242,37 @@ known to be inadequate.</strong> It is the same instrument muvid#59 was filed ab
 that shoot it would have refused two of the three wrong offsets and passed the
 third, which was 83 s out. So this is not “unknown forces approval” — an unmeasured
 support is judged by the weaker test rather than refused outright.</p>
-<p>Since the <code class="docutils literal notranslate"><span class="pre">mixing&gt;=0.0.46</span></code> floor, <code class="docutils literal notranslate"><span class="pre">support</span> <span class="pre">is</span> <span class="pre">None</span></code> no longer means “this
-aligner does not measure support”. It means <strong>the estimator could not hold a vote</strong>,
-and the band where that happens is wider than it sounds. A vote needs two windows
-far enough apart to be separate opinions, so the boundary is
-<code class="docutils literal notranslate"><span class="pre">window_s</span> <span class="pre">+</span> <span class="pre">hop_s</span></code> — <strong>30 s</strong> at <code class="docutils literal notranslate"><span class="pre">mixing</span></code>’s defaults, not the 20 s of “shorter
-than one window”. Measured, clip length against support at those defaults: 12, 18,
-22, 24, 26, 28 and 29 s all return <code class="docutils literal notranslate"><span class="pre">None</span></code>; 30 s is the first that returns a
-fraction. An ordinary phone clip sits inside that band.</p>
-<p><strong>Inside it this function is guessing, and the measurements say so plainly.</strong> On
-heavily degraded cross-device clips of the muvid#59 master under 30 s, the worst
-CORRECT alignment scored 0.129 while the worst pure-noise clip scored 0.139 — the
-distributions overlap, so no threshold admits the correct ones and refuses the
-noise. Worse, of fifteen such clips seven landed on the wrong offset, at 0.183-0.252
-— <em>higher</em> than the correct ones at 0.129-0.133. The real material agrees: of the
-three 10 s excerpts, the WRONG one carried the highest coefficient of the three
-(0.834 against 0.566 and 0.621).</p>
-<p>So <code class="xref py py-data docutils literal notranslate"><span class="pre">MIN_CONFIDENCE</span></code> was deliberately NOT re-tuned for this regime. There is no
-value to tune it to: raising it past the noise floor refuses correct footage, and a
-number chosen to make a noise-floor test pass would hide that behind a green run.
-The coefficient is reported (see
-<a class="reference internal" href="../mcp/footage_tools.html#muvid.mcp.footage_tools.align_footage" title="muvid.mcp.footage_tools.align_footage"><code class="xref py py-func docutils literal notranslate"><span class="pre">align_footage()</span></code></a>’s <code class="docutils literal notranslate"><span class="pre">no_consensus</span></code>), the fix is
-upstream — thorwhalen/mixing#41 adapts the window so short clips can be voted on —
-and whether muvid should refuse unvoted clips outright if that band does not shrink
-is muvid#91.</p>
+<p>The estimator fits its window to the clip and grades each window’s evidence, so a
+vote is held and is READABLE for almost everything — <code class="docutils literal notranslate"><span class="pre">support</span> <span class="pre">is</span> <span class="pre">None</span></code> now only
+for a clip too short to hold two windows at the 3 s floor (measured: 4 s yes, 6 s
+no). The support is used <strong>at whatever window it was measured at</strong>, which is a
+deliberate reversal: an earlier revision of this function refused to read a support
+from a fitted window, on the reasoning that an argmax headcount over few short
+windows is a weaker statistic than the same fraction at 20 s. That was true of the
+ungraded tally and is now actively wrong — see the note above
+<code class="xref py py-data docutils literal notranslate"><span class="pre">MIN_SUPPORT</span></code>. Measured on six pure-noise clips at a fitted 6.67 s window,
+the window guard vouches for FOUR of them by routing to the coefficient, while
+reading the graded support refuses all six.</p>
+<p><strong>Where it still falls back to the coefficient, it is guessing, and the
+measurements say so plainly.</strong> On heavily degraded cross-device clips of the
+muvid#59 master, the worst CORRECT alignment scored 0.129 while the worst pure-noise
+clip scored 0.139 — the distributions overlap, so no threshold admits the correct
+ones and refuses the noise. Worse, the wrong offsets scored 0.183-0.252, <em>higher</em>
+than the correct ones. The real material agrees: of the three 10 s excerpts, the
+WRONG one carried the highest coefficient of the three (0.834 against 0.566 and
+0.621).</p>
+<p>So <code class="xref py py-data docutils literal notranslate"><span class="pre">MIN_CONFIDENCE</span></code> was deliberately NOT re-tuned. There is no value to tune it
+to: raising it past the noise floor refuses correct footage, and a number chosen to
+make a noise-floor test pass would hide that behind a green run. That fallback is now
+reached only by a clip too short to vote at all, which is the narrowest it has been.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>confidence</strong> – The estimator’s correlation coefficient at the chosen lag.</p></li>
-<li><p><strong>support</strong> – Fraction of independent windows agreeing, or <code class="docutils literal notranslate"><span class="pre">None</span></code> if unmeasured.</p></li>
+<li><p><strong>support</strong> – Graded fraction of window evidence reaching the offset, or <code class="docutils literal notranslate"><span class="pre">None</span></code>
+when no vote could be held.</p></li>
+<li><p><strong>window_s</strong> – The window support was measured at. Recorded and reported as a
+diagnostic; it does <strong>not</strong> enter the verdict, for the reason above.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>

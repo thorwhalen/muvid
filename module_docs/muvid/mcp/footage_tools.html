@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.mcp.footage_tools &mdash; muvid 0.0.51 documentation</title>
+  <title>muvid.mcp.footage_tools &mdash; muvid 0.0.52 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -15,7 +15,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=440a2162"></script>
+      <script src="../../../_static/documentation_options.js?v=73f2ab08"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -199,14 +199,13 @@ the project and stay addressable, but <code class="docutils literal notranslate"
 them unless it is called with <code class="docutils literal notranslate"><span class="pre">allow_unreliable=true</span></code>, because a wrong offset
 does not fail — it renders a video out of sync with the song (muvid#59). Re-align,
 leave them out of the edit, or opt in deliberately;</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">no_consensus</span></code> — clips whose offset was never put to a vote, because they are
-under about 30 s, which is where the estimator stops having two independent
-opinions to compare. Their offset rests on a single measurement — the estimator
-muvid#59 was filed about — and the confidence score does NOT rank correctness
-there (measured on that shoot: the wrong offset scored highest of the three).
-Nothing is refused on this basis, because refusing would take the correct short
-clips with it, but if a short clip looks out of sync in the render this list is
-the first place to look.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">no_consensus</span></code> — clips whose offset was never put to a vote at all, which now
+means only a clip too short to hold two analysis windows (a few seconds). Their
+offset rests on a single measurement — the estimator muvid#59 was filed about —
+and the confidence score does NOT rank correctness there (measured on that shoot,
+the wrong offset scored highest of the three). Nothing is refused on this basis,
+because refusing would take the correct short clips with it, but if such a clip
+looks out of sync in the render this list is the first place to look.</p></li>
 </ul>
 <p>Run this after adding/removing clips and before assembling.</p>
 </dd></dl>
