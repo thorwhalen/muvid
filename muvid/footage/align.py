@@ -124,8 +124,12 @@ def _refuse_window_parameters(estimator_kwargs: dict) -> None:
         f"what MIN_SUPPORT is calibrated against, so changing it here would re-scale "
         f"the trust gate without saying so — widening it far enough turns the gate off "
         f"entirely (support becomes None and the verdict silently falls back to the "
-        f"confidence coefficient). Set MUVID_FOOTAGE_MIN_SUPPORT for the window you "
-        f"want, then call mixing.audio.align_clips_to_reference directly."
+        f"confidence coefficient). There is no in-pipeline escape: the window is not "
+        f"tunable through this entry point, deliberately. If what you want is a "
+        f"different THRESHOLD, set MUVID_FOOTAGE_MIN_SUPPORT. If you genuinely need a "
+        f"different window, call mixing.audio.align_clips_to_reference yourself and "
+        f"build your own FootageAlignment records from what it returns — you are then "
+        f"outside this gate, and choosing a threshold for that window is on you."
     )
 
 
