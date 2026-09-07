@@ -330,8 +330,18 @@ def _produced(src, look):
     )
     proc = subprocess.run(
         [
-            "ffmpeg", "-hide_banner", "-nostdin", "-i", str(src),
-            "-vf", vf, "-frames:v", "1", "-f", "null", "-",
+            "ffmpeg",
+            "-hide_banner",
+            "-nostdin",
+            "-i",
+            str(src),
+            "-vf",
+            vf,
+            "-frames:v",
+            "1",
+            "-f",
+            "null",
+            "-",
         ],
         capture_output=True,
         text=True,
@@ -346,9 +356,21 @@ def sweep_source(tmp_path_factory):
     src = tmp_path_factory.mktemp("look_options") / "src.mp4"
     subprocess.run(
         [
-            "ffmpeg", "-v", "error", "-nostdin",
-            "-f", "lavfi", "-i", f"testsrc2=size={SRC_W}x{SRC_H}:rate=25:d=1",
-            "-frames:v", "3", "-c:v", "libx264", "-pix_fmt", "yuv420p", str(src),
+            "ffmpeg",
+            "-v",
+            "error",
+            "-nostdin",
+            "-f",
+            "lavfi",
+            "-i",
+            f"testsrc2=size={SRC_W}x{SRC_H}:rate=25:d=1",
+            "-frames:v",
+            "3",
+            "-c:v",
+            "libx264",
+            "-pix_fmt",
+            "yuv420p",
+            str(src),
         ],
         check=True,
         capture_output=True,
@@ -537,7 +559,6 @@ def test_zoompan_with_no_size_really_is_the_fixed_hd720_the_gate_ignores(sweep_s
     assert not _look_output_sizes("zoompan=d=1"), "the premise: the gate reads nothing"
 
 
-
 def test_the_edl_modules_own_doctests_actually_run():
     """`testpaths = ["tests"]` and no `--doctest-modules`, so nothing collects them.
 
@@ -563,6 +584,7 @@ def test_the_edl_modules_own_doctests_actually_run():
         f"only {result.attempted} doctest examples ran in muvid.footage.edl -- the "
         "module's examples have been deleted or this call stopped finding them."
     )
+
 
 def _refresh_snapshot() -> None:  # pragma: no cover - a maintenance helper
     """Regenerate ``tests/data/ffmpeg_filter_options.json`` from THIS binary.

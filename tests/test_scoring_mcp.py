@@ -153,7 +153,17 @@ def test_score_job_flow_and_weighted_assemble(tmp_path, monkeypatch):
         monkeypatch.setattr(V, "verify_video", lambda *a, **k: [])
         monkeypatch.setattr(V, "failures", lambda c: [])
         monkeypatch.setattr(V, "report", lambda c: "ok")
-        out = ft.assemble_music_video("p", strategy="weighted", preset="energetic")
+        # `allow_unreliable` because this fixture's clips are the SONG'S OWN AUDIO over
+        # six seconds of it, and the trust gate correctly declines to vouch for that:
+        # measured, both clips align to the right offset at confidence 0.999 and support
+        # exactly 0.500 — the ceiling of ballot-only evidence, i.e. not one analysis
+        # window could separate that lag from its rivals unaided, which is what a short
+        # self-similar tone gives you. The gate is doing its job; this test is about the
+        # scoring job and the weighted strategy, so it opts in rather than pretending
+        # its material is something the gate should vouch for (muvid#59).
+        out = ft.assemble_music_video(
+            "p", strategy="weighted", preset="energetic", allow_unreliable=True
+        )
         assert out["strategy"] == "weighted" and out["ok"] is True
 
 

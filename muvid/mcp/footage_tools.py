@@ -20,7 +20,7 @@ import uuid
 from pathlib import Path
 from urllib.parse import urlparse
 
-from muvid.footage.align import MIN_CONFIDENCE, MIN_SUPPORT, MIN_SUPPORT_WINDOW_S
+from muvid.footage.align import MIN_CONFIDENCE, MIN_SUPPORT
 from muvid.mcp.identity import current_email
 
 # -- resource caps (env-tunable) --------------------------------------------
@@ -274,14 +274,13 @@ def align_footage(project_id: str) -> dict:
       them unless it is called with ``allow_unreliable=true``, because a wrong offset
       does not fail — it renders a video out of sync with the song (muvid#59). Re-align,
       leave them out of the edit, or opt in deliberately;
-    - ``no_consensus`` — clips whose offset was never put to a vote, because they are
-      under about 30 s, which is where the estimator stops having two independent
-      opinions to compare. Their offset rests on a single measurement — the estimator
-      muvid#59 was filed about — and the confidence score does NOT rank correctness
-      there (measured on that shoot: the wrong offset scored highest of the three).
-      Nothing is refused on this basis, because refusing would take the correct short
-      clips with it, but if a short clip looks out of sync in the render this list is
-      the first place to look.
+    - ``no_consensus`` — clips whose offset was never put to a vote at all, which now
+      means only a clip too short to hold two analysis windows (a few seconds). Their
+      offset rests on a single measurement — the estimator muvid#59 was filed about —
+      and the confidence score does NOT rank correctness there (measured on that shoot,
+      the wrong offset scored highest of the three). Nothing is refused on this basis,
+      because refusing would take the correct short clips with it, but if such a clip
+      looks out of sync in the render this list is the first place to look.
 
     Run this after adding/removing clips and before assembling.
     """
@@ -351,22 +350,12 @@ def align_footage(project_id: str) -> dict:
         # rather than enforced; adapting the window to short clips is the actual fix
         # (thorwhalen/mixing#41).
         "no_consensus": [a.clip_id for a in aligns if a.support is None],
-        # Clips whose support WAS measured but on too small a grid to compare against
-        # the threshold — the estimator fits its window to the clip, so a short clip's
-        # support answers a different question from a long clip's. Kept separate from
-        # `no_consensus` because the remedy differs: this one is "the clip is under a
-        # minute", not "the clip could not be voted on at all".
-        "support_not_comparable": [
-            {"clip_id": a.clip_id, "window_s": _round_support(a.window_s)}
-            for a in aligns
-            if a.support is not None
-            and a.window_s is not None
-            and a.window_s < MIN_SUPPORT_WINDOW_S
-        ],
         "confidence_metric": "onset-envelope correlation at the waveform's lag",
         "confidence_threshold": _MIN_CONFIDENCE,
+        # Support must EXCEED this, and the strictness is the meaning: at exactly this
+        # value every window had the offset on its ballot and none found it unaided.
         "support_threshold": MIN_SUPPORT,
-        "support_threshold_window_s": MIN_SUPPORT_WINDOW_S,
+        "support_threshold_is_exclusive": True,
         "offset_consensus": _offset_consensus(aligns),
         # Usable-for-an-edit, not present-in-the-project: these clips are still here, still
         # listed, still addressable — they just cover no part of the song.

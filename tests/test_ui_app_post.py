@@ -38,9 +38,7 @@ def client(tmp_path, monkeypatch):
     monkeypatch.setattr(
         facade, "generate_character_images", lambda root, name, **kw: ["a.png"]
     )
-    monkeypatch.setattr(
-        facade, "curate_character", lambda root, name, **kw: ["a.png"]
-    )
+    monkeypatch.setattr(facade, "curate_character", lambda root, name, **kw: ["a.png"])
     monkeypatch.setattr(
         facade, "add_environment", lambda root, name, **kw: {"name": name}
     )

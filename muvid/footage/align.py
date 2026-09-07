@@ -21,7 +21,6 @@ from typing import Sequence
 from muvid.footage.edl import (
     MIN_CONFIDENCE,
     MIN_SUPPORT,
-    MIN_SUPPORT_WINDOW_S,
     FootageAlignment,
     vouches_for,
 )
@@ -35,7 +34,6 @@ __all__ = [
     "ALIGN_SAMPLE_RATE",
     "MIN_CONFIDENCE",
     "MIN_SUPPORT",
-    "MIN_SUPPORT_WINDOW_S",
     "WINDOW_PARAMETERS",
     "align_footage",
     "vouches_for",

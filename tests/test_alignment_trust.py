@@ -18,20 +18,22 @@ What is pinned here is that "we are not sure" now STOPS the render:
 - a record from before the fields existed has its verdict DERIVED, not assumed —
   otherwise the upgrade would quietly un-flag the very alignments the issue is about.
 
-Since the ``mixing>=0.0.46`` floor the estimator puts each clip's windows to a vote and
-reports how much of the clip agreed, so the verdict rests on ``support`` rather than on a
+The estimator puts each clip's windows to a vote, fits the window to the clip, and
+GRADES each window's evidence, so the verdict rests on ``support`` rather than on a
 coefficient. The end-to-end cases here build a loop track that defeats the whole-clip
 argmax — asserted, in its own test, so the fixture cannot quietly stop being adversarial
 — and then show consensus recovering the offset with support above the threshold.
 
-What is still NOT pinned is that the verdict is always right. A clip under
-``window_s + hop_s`` — 30 s at mixing's defaults, which is ordinary phone footage —
-cannot field two independent windows, so ``support`` is ``None`` and ``vouches_for``
-falls back to the coefficient. Measured on the real shoot, one such clip is 102 s wrong
-at confidence 0.834; and in that band the coefficient does not rank correctness at all
-(worst correct 0.129 against worst pure noise 0.139). Those cases have their own tests,
-which assert only that muvid can TELL. The fix is thorwhalen/mixing#41, and what muvid
-should do if it does not arrive is muvid#91.
+``MIN_SUPPORT`` is 0.5 EXCLUSIVE because 0.5 is the ceiling of ballot-only evidence:
+above it, at least one window found the offset unaided. Measured on the real master, 24
+correct alignments against six pure-noise clips, that cut passes 18/24 correct and 0/6
+noise, where 0.25 passes 24/24 and 1/6.
+
+What is still NOT pinned is that the verdict is always right. A clip too short to hold
+two windows has ``support is None`` and falls back to the coefficient, which does not
+rank correctness there (worst correct 0.129 against worst pure noise 0.139; on the real
+shoot the WRONG offset scored highest of three). That case has its own test, asserting
+only that muvid can TELL. What muvid should do about it is muvid#91.
 
 Everything here is offline. The end-to-end cases synthesise their own audio; the real
 shoot's footage is verification material, not a fixture.
@@ -46,12 +48,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from muvid.footage.align import (
-    MIN_CONFIDENCE,
-    MIN_SUPPORT,
-    MIN_SUPPORT_WINDOW_S,
-    vouches_for,
-)
+from muvid.footage.align import MIN_CONFIDENCE, MIN_SUPPORT, vouches_for
 from muvid.footage.edl import (
     EdlEntry,
     FootageAlignment,
@@ -87,7 +84,7 @@ class TestTheVerdict:
         # A high coefficient does not rescue an offset only a tenth of the clip agrees
         # with — that combination IS muvid#59's failure mode.
         assert not vouches_for(confidence=0.99, support=MIN_SUPPORT / 2)
-        assert vouches_for(confidence=0.01, support=MIN_SUPPORT)
+        assert vouches_for(confidence=0.01, support=1.0)
 
     def test_confidence_decides_only_when_support_is_absent(self):
         assert vouches_for(confidence=MIN_CONFIDENCE, support=None)
@@ -103,39 +100,53 @@ class TestTheVerdict:
             assert not vouches_for(confidence=0.121, support=support)
 
 
-class TestSupportIsOnlyComparableAtItsOwnWindow:
-    """A support measured at a fitted window is a different statistic (muvid#59).
+class TestTheThresholdIsTheBallotCeiling:
+    """``MIN_SUPPORT`` is 0.5 exclusive because 0.5 is what ballot-only evidence tops out at.
 
-    Since ``mixing>=0.0.48`` the estimator fits its analysis window to the clip, which
-    is what makes short-clip offsets work — and makes the SCALE of ``support`` a
-    per-clip quantity. Measured on the muvid#59 master, eleven clip lengths, every
-    alignment CORRECT: 0.38-0.70 at the 20 s window, and 0.00/0.00/0.40 at the 4 s
-    window a 12 s clip gets. Comparing the second row to a threshold calibrated on the
-    first refuses correct footage.
+    ``mixing`` grades each window: 1.0 where that window's own argmax reached the
+    offset, at most ``BALLOT_VOTE_WEIGHT`` (0.5) where the offset was merely on its
+    ballot. So a support of exactly 0.5 is the case where every window had it on the
+    ballot and NOT ONE found it unaided — the ambiguous case by construction — and
+    anything above it means at least one did.
+
+    Measured on the muvid#59 master, 24 correct alignments against six pure-noise
+    clips: ``> 0.5`` passes 18/24 correct and **0/6** noise, while ``>= 0.25`` passes
+    24/24 correct and **1/6** noise. This is the only cut measured that refuses every
+    known-wrong case.
     """
 
-    def test_a_full_window_support_is_compared_to_the_threshold(self):
-        assert vouches_for(
-            confidence=0.0, support=MIN_SUPPORT, window_s=MIN_SUPPORT_WINDOW_S
-        )
-        assert not vouches_for(
-            confidence=0.0, support=MIN_SUPPORT / 2, window_s=MIN_SUPPORT_WINDOW_S
-        )
+    def test_exactly_the_ballot_ceiling_does_not_vouch(self):
+        # The strictness IS the semantics: at 0.5 nothing found the offset unaided.
+        assert not vouches_for(confidence=0.0, support=0.5)
+        assert vouches_for(confidence=0.0, support=0.5 + 1e-9)
 
-    def test_a_fitted_window_support_is_treated_as_unmeasured(self):
-        small = MIN_SUPPORT_WINDOW_S / 5
-        # Both directions, which is the point: it is not consulted when it would refuse
-        # and it is not consulted when it would vouch. Reading it only when it says yes
-        # would be an instrument used as an excuse.
-        assert vouches_for(confidence=0.9, support=0.0, window_s=small)
-        assert not vouches_for(confidence=0.0, support=1.0, window_s=small)
+    def test_the_window_does_not_enter_the_verdict(self):
+        # Deliberately reversed. An earlier revision refused to read a support from a
+        # fitted window; measured on six noise clips at a 6.67 s window, that guard
+        # routes them to the confidence fallback and VOUCHES for four of them, while
+        # reading the graded support refuses all six. The window is a diagnostic now.
+        for window_s in (None, 3.0, 6.67, 20.0, 60.0):
+            assert vouches_for(confidence=0.0, support=0.8, window_s=window_s)
+            assert not vouches_for(confidence=0.0, support=0.3, window_s=window_s)
 
-    def test_an_absent_window_reads_as_comparable(self):
-        # Records written before the field existed were measured at the FIXED default
-        # window, so absent means "comparable", not "unknown scale". Backwards, this
-        # would refuse every project aligned before the upgrade.
-        assert not vouches_for(confidence=0.0, support=MIN_SUPPORT / 2, window_s=None)
-        assert vouches_for(confidence=0.0, support=MIN_SUPPORT, window_s=None)
+    def test_the_noise_floor_this_threshold_was_chosen_against(self):
+        # The six pure-noise clips, graded, at a fitted window — every one refused.
+        for support in (0.16, 0.16, 0.17, 0.12, 0.33, 0.02):
+            assert not vouches_for(confidence=0.9, support=support)
+        # ...and the six correct short clips it costs, recorded so the trade is visible.
+        for support in (0.30, 0.32, 0.35, 0.36, 0.37, 0.38):
+            assert not vouches_for(confidence=0.9, support=support)
+
+    def test_the_noise_clip_that_predates_this_release_is_still_refused(self):
+        """0.33 is the fixture to check before ever loosening this threshold.
+
+        One of the six noise clips scored 0.33 BOTH before and after grading — it was
+        already clearing the old 0.25 threshold, for reasons that have nothing to do
+        with the release that prompted this number. So it is the case that says whether
+        a future, lower threshold has quietly re-admitted pure noise: grading did not
+        put it there and grading will not take it away.
+        """
+        assert not vouches_for(confidence=0.9, support=0.33)
 
     def test_the_window_survives_the_round_trip(self):
         a = FootageAlignment(
@@ -145,19 +156,21 @@ class TestSupportIsOnlyComparableAtItsOwnWindow:
         assert back == a
         assert (back.window_s, back.hop_s) == (6.67, 3.33)
 
-    def test_a_legacy_record_keeps_its_verdict_when_the_window_is_absent(self):
-        # The compat read that matters most: alignments written by the PREVIOUS muvid
-        # release carry a support measured at the fixed 20 s window and no window field.
-        # They must keep vouching.
-        legacy = {
+    def test_a_stored_verdict_is_never_re_judged_against_the_new_threshold(self):
+        # The compat read that matters most here. Alignments written by muvid 0.0.51/52
+        # carry an UNGRADED support — the shoot's own correct offsets were 0.42 and 0.46
+        # on that scale — which this threshold would refuse. They are never re-judged,
+        # because `reliable` was persisted and only an ABSENT verdict is derived.
+        stored = {
             "clip_id": "A",
             "offset_s": 0.0,
-            "confidence": 0.05,  # under MIN_CONFIDENCE, so support has to be what decides
+            "confidence": 0.05,
             "duration_s": 120.0,
             "coverage": [0.0, 120.0],
-            "support": 0.55,
+            "support": 0.42,  # correct, on the pre-grading scale
+            "reliable": True,
         }
-        assert FootageAlignment.from_dict(legacy).reliable is True
+        assert FootageAlignment.from_dict(stored).reliable is True
 
 
 class TestTheRecordCarriesIt:
@@ -462,7 +475,12 @@ class TestTheToolSurface:
         }
         assert out["support_threshold"] == MIN_SUPPORT
         for u in out["unreliable"]:
-            assert u["support"] == by_id[u["clip_id"]]["support"]
+            # The report rounds for legibility; the record keeps full precision. What
+            # must agree is the VALUE, not its formatting — comparing them raw made
+            # this fail on 0.124 vs 0.12375..., which is the test being wrong about
+            # what it was checking rather than a disagreement worth catching.
+            recorded = by_id[u["clip_id"]]["support"]
+            assert u["support"] == pytest.approx(recorded, abs=5e-4)
 
 
 def _has_support() -> bool:
@@ -670,7 +688,7 @@ def test_consensus_recovers_the_offset_and_support_vouches_for_it(tmp_path):
         assert a.offset_s == pytest.approx(truth, abs=0.1), f"{cid} landed on a repeat"
         # The vote happened and muvid read it — what the floor bump buys.
         assert a.support is not None, f"{cid} has no support; is mixing too old?"
-        assert a.support >= MIN_SUPPORT
+        assert a.support > MIN_SUPPORT
         assert a.reliable is True
         # muvid DERIVES the verdict from what mixing reported rather than forming a
         # second opinion — the property that keeps this one gate rather than two.
@@ -687,9 +705,10 @@ def test_the_window_is_fitted_to_the_clip_and_reported_with_the_support(tmp_path
     ``mixing>=0.0.48`` fits the window to the clip, which is what makes short-clip
     offsets work. The consequence a consumer has to handle is that two clips' supports
     are no longer the same measurement — so this pins that the grid is reported, that it
-    tracks the clip, and that it reaches the calibration window exactly where
-    :data:`MIN_SUPPORT_WINDOW_S` starts being meaningful. A support arriving without its
-    window would be a fraction whose denominator nobody can see.
+    tracks the clip. The window no longer enters the VERDICT (see
+    :class:`TestTheThresholdIsTheBallotCeiling`) but it is still what tells a caller
+    which grid a support was measured on, and a support arriving without it would be a
+    fraction whose denominator nobody can see.
     """
     from muvid.footage.align import align_footage
 
@@ -707,12 +726,12 @@ def test_the_window_is_fitted_to_the_clip_and_reported_with_the_support(tmp_path
     # The grid comes back, and the hop is half the window — one knob, not two.
     for a in (short, mid, full):
         assert a.window_s is not None and a.hop_s == pytest.approx(a.window_s / 2)
-    # It tracks the clip, and tops out at the window the threshold is calibrated for.
+    # It tracks the clip, and tops out where mixing caps it.
     assert short.window_s < mid.window_s < full.window_s
-    assert full.window_s == pytest.approx(MIN_SUPPORT_WINDOW_S)
-    # So only the last of the three is judged on its support at all.
-    assert short.reliable is vouches_for(confidence=short.confidence, support=None)
-    assert full.reliable is (full.support >= MIN_SUPPORT)
+    assert full.window_s == pytest.approx(mid.window_s * 2)
+    # And all three are judged on their support, whatever grid it came from.
+    for a in (short, mid, full):
+        assert a.reliable is (a.support > MIN_SUPPORT)
 
 
 @needs_support
@@ -777,10 +796,9 @@ def test_the_noise_floor_now_clears_min_confidence(tmp_path):
             str(p), SR, (rng.normal(0, 0.3, int(15 * SR)) * 32767).astype(np.int16)
         )
         a = align_footage(str(song_p), [("N", str(p))], song_duration=song_s)[0]
-        # 15 s fits a 5 s window, so a support IS measured — and is not comparable to
-        # the threshold, so the verdict rests on the coefficient. That is the regime.
-        assert a.window_s is not None and a.window_s < MIN_SUPPORT_WINDOW_S
-        assert a.reliable is vouches_for(confidence=a.confidence, support=None)
+        # 15 s fits a 5 s window, so a support IS measured and IS what decides.
+        assert a.window_s is not None
+        assert a.reliable is (a.support > MIN_SUPPORT)
         floor.append(a.confidence)
 
     assert max(floor) > MIN_CONFIDENCE, (

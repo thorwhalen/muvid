@@ -36,16 +36,19 @@ dependencies = [
     # a unanimous `support=1.00` could sit on an offset 15 s wrong. 0.0.46 is the first
     # release where support is worth gating on.
     #
-    # 0.0.48 fits the analysis window to each clip (`min(20, clip/3)`, floored at 3 s)
-    # and reports the `window_s`/`hop_s` the vote was actually held at. The floor is
-    # here for the OFFSETS, which is where it pays: measured on 21 clips of the muvid#59
+    # 0.0.48 fits the analysis window to each clip (`min(20, clip/3)`, floored at 3 s),
+    # which is what makes short-clip offsets work: measured on 21 clips of the muvid#59
     # master in the 12-29 s band, 0.0.46 got 7 of 15 WRONG and left all of them unvoted,
-    # while 0.0.48 got 21/21 right and voted on all of them. The reported window is what
-    # makes that usable — support at a fitted window is not comparable to a threshold
-    # calibrated at 20 s (same 21 correct alignments: 0.00 to 1.00), so
-    # `edl.vouches_for` reads it. Without the field muvid would be comparing numbers
-    # that answer different questions and refusing correct footage for it.
-    "mixing>=0.0.48",
+    # while 0.0.48 got 21/21 right and voted on all of them.
+    #
+    # 0.0.49 is the floor because it GRADES that vote (thorwhalen/mixing#45): a window
+    # contributes 1.0 when its own argmax reached the offset and at most 0.5 when the
+    # offset was merely on its ballot. That is what makes `support` readable at a fitted
+    # window, and it is why `edl.MIN_SUPPORT` is 0.5 exclusive rather than 0.25 — 0.5 is
+    # the ceiling of ballot-only evidence. The two must move together: measured on six
+    # pure-noise clips, judging graded support against 0.5 refuses all six, while the
+    # 0.25 threshold this floor replaces passes one of them.
+    "mixing>=0.0.49",
     "numpy",
     # 0.1.44 is where `graze.content_kind` exists alongside `graze.share_links`. muvid
     # needs both halves: normalise a pasted share link before fetching, then assert the
