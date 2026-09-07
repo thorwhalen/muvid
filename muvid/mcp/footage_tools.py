@@ -275,10 +275,13 @@ def align_footage(project_id: str) -> dict:
       does not fail — it renders a video out of sync with the song (muvid#59). Re-align,
       leave them out of the edit, or opt in deliberately;
     - ``no_consensus`` — clips whose offset was never put to a vote, because they are
-      shorter than the estimator's analysis window. Their offset rests on a single
-      measurement, which is the estimator that muvid#59 was filed about. Nothing is
-      refused on this basis (the same short clips are usually right), but if a short
-      clip looks out of sync in the render, this list is where to look first.
+      under about 30 s, which is where the estimator stops having two independent
+      opinions to compare. Their offset rests on a single measurement — the estimator
+      muvid#59 was filed about — and the confidence score does NOT rank correctness
+      there (measured on that shoot: the wrong offset scored highest of the three).
+      Nothing is refused on this basis, because refusing would take the correct short
+      clips with it, but if a short clip looks out of sync in the render this list is
+      the first place to look.
 
     Run this after adding/removing clips and before assembling.
     """
@@ -336,8 +339,9 @@ def align_footage(project_id: str) -> dict:
         ],
         # REPORTED, never enforced — the same posture as `offset_consensus` below, and
         # for the same reason. `support: null` means the estimator could not hold a vote
-        # (the clip is shorter than one analysis window, or its windows overlap too
-        # heavily to be separate opinions), so the offset rests on a single measurement
+        # (the clip is under `window_s + hop_s` — about 30 s at mixing's defaults — so
+        # there are not two independent windows to compare), and the offset therefore
+        # rests on a single measurement
         # and the trust verdict falls back to the confidence coefficient. That fallback
         # is the weak one: measured on the muvid#59 material, one such clip is 102 s
         # wrong at confidence 0.834 while the two correct ones score 0.566 and 0.621 —

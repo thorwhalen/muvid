@@ -34,9 +34,27 @@ __all__ = [
     "ALIGN_SAMPLE_RATE",
     "MIN_CONFIDENCE",
     "MIN_SUPPORT",
+    "WINDOW_PARAMETERS",
     "align_footage",
     "vouches_for",
 ]
+
+#: Estimator parameters :func:`align_footage` refuses to forward, because changing them
+#: changes what :data:`~muvid.footage.edl.MIN_SUPPORT` MEANS — and the failure is silent
+#: in both directions. Measured on one 50 s clip against a 90 s reference: the defaults
+#: give ``support=0.75`` and a vouched alignment; ``window_s=45`` on the same clip gives
+#: ``support=None``, which drops the verdict onto the confidence coefficient — i.e. the
+#: support gate switches OFF and the caller is told nothing. Widening it far enough
+#: disables the check; narrowing it deflates every support (0.50/0.64/0.73 at the
+#: default, 0.17/0.15/0.21 at ``window_s=5``) so correct alignments fall under the
+#: threshold instead.
+#:
+#: Refused rather than merely documented for the reason the rest of this package refuses
+#: things: an argument that quietly turns a safety check off is worse than one that is
+#: not accepted at all. Tuning the window is legitimate — it just has to move
+#: ``MUVID_FOOTAGE_MIN_SUPPORT`` with it, which is a decision someone has to make out
+#: loud rather than a side effect of a keyword.
+WINDOW_PARAMETERS = ("window_s", "hop_s")
 
 
 def align_footage(
@@ -71,15 +89,13 @@ def align_footage(
             it. That failure is the point: a window parameter silently ignored is a
             caller believing they tuned an estimator that never saw the value.
 
-            **``window_s`` and ``MIN_SUPPORT`` are one setting in two places.** Support
-            is a fraction of windows and is not normalised across window sizes, so
-            shrinking the window shrinks every support with it — measured, three correct
-            alignments of the same material: 0.50/0.64/0.73 at the default ``window_s``
-            and 0.17/0.15/0.21 at ``window_s=5``. Passing ``window_s`` here without
-            moving :data:`~muvid.footage.edl.MIN_SUPPORT` refuses correct alignments.
+            **The window parameters are the exception and are REFUSED** — see
+            :data:`WINDOW_PARAMETERS`. They do not tune the estimator so much as re-scale
+            the gate that reads it, in both directions and silently.
     """
     from mixing.audio import align_clips_to_reference  # lazy: heavy
 
+    _refuse_window_parameters(estimator_kwargs)
     clip_ids = [cid for cid, _ in clips]
     clip_paths = [str(p) for _, p in clips]
     aligned = align_clips_to_reference(
@@ -90,6 +106,27 @@ def align_footage(
         **estimator_kwargs,
     )
     return [_as_alignment(clip_ids[a.index], a) for a in aligned]
+
+
+def _refuse_window_parameters(estimator_kwargs: dict) -> None:
+    """Refuse the kwargs that silently re-scale the support gate — see
+    :data:`WINDOW_PARAMETERS`.
+
+    Raises ``TypeError``, matching what ``mixing`` itself raises for a keyword it does
+    not accept, so a caller sweeping estimator parameters meets one failure mode rather
+    than two.
+    """
+    named = [k for k in WINDOW_PARAMETERS if k in estimator_kwargs]
+    if not named:
+        return
+    raise TypeError(
+        f"align_footage() will not forward {', '.join(named)}: the analysis window is "
+        f"what MIN_SUPPORT is calibrated against, so changing it here would re-scale "
+        f"the trust gate without saying so — widening it far enough turns the gate off "
+        f"entirely (support becomes None and the verdict silently falls back to the "
+        f"confidence coefficient). Set MUVID_FOOTAGE_MIN_SUPPORT for the window you "
+        f"want, then call mixing.audio.align_clips_to_reference directly."
+    )
 
 
 def _as_alignment(clip_id: str, a) -> FootageAlignment:

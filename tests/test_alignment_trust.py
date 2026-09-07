@@ -24,11 +24,14 @@ coefficient. The end-to-end cases here build a loop track that defeats the whole
 argmax — asserted, in its own test, so the fixture cannot quietly stop being adversarial
 — and then show consensus recovering the offset with support above the threshold.
 
-What is still NOT pinned is that the verdict is always right. A clip shorter than one
-analysis window has no second opinion, ``support`` is ``None``, and ``vouches_for`` falls
-back to the coefficient — measured on the real shoot, one such clip is 102 s wrong at
-confidence 0.834. That case has its own test asserting only that muvid can TELL, and the
-fix it waits on is thorwhalen/mixing#41.
+What is still NOT pinned is that the verdict is always right. A clip under
+``window_s + hop_s`` — 30 s at mixing's defaults, which is ordinary phone footage —
+cannot field two independent windows, so ``support`` is ``None`` and ``vouches_for``
+falls back to the coefficient. Measured on the real shoot, one such clip is 102 s wrong
+at confidence 0.834; and in that band the coefficient does not rank correctness at all
+(worst correct 0.129 against worst pure noise 0.139). Those cases have their own tests,
+which assert only that muvid can TELL. The fix is thorwhalen/mixing#41, and what muvid
+should do if it does not arrive is muvid#91.
 
 Everything here is offline. The end-to-end cases synthesise their own audio; the real
 shoot's footage is verification material, not a fixture.
@@ -492,7 +495,14 @@ def _repetitive_song(tmp_path: Path) -> tuple[Path, np.ndarray]:
 
 
 def _device_recording(
-    tmp_path: Path, song: np.ndarray, name: str, *, at: float, seconds: float, seed: int
+    tmp_path: Path,
+    song: np.ndarray,
+    name: str,
+    *,
+    at: float,
+    seconds: float,
+    seed: int,
+    noise: float = 0.08,
 ) -> Path:
     """``seconds`` of ``song`` from ``at``, as a second device would have caught it.
 
@@ -574,9 +584,9 @@ def test_consensus_recovers_the_offset_and_support_vouches_for_it(tmp_path):
 
     song_p, song = _repetitive_song(tmp_path)
     song_s = len(song) / SR
-    # Both clips run several analysis windows long. A clip shorter than one window has
-    # no second opinion and comes back support=None — correctly, and that case is the
-    # next test rather than something smuggled in here.
+    # Both clips clear the `window_s + hop_s` vote boundary. A shorter one has no second
+    # opinion and comes back support=None — correctly, and that case has its own tests
+    # rather than being smuggled in here.
     clips = [
         (
             "A",
@@ -609,11 +619,114 @@ def test_consensus_recovers_the_offset_and_support_vouches_for_it(tmp_path):
 
 
 @needs_support
+def test_the_vote_boundary_is_window_plus_hop_not_one_window(tmp_path):
+    """Where support starts being measured — pinned, because it was documented wrong.
+
+    A vote needs two windows far enough apart to be separate opinions, so the boundary
+    is ``window_s + hop_s`` (30 s at mixing's defaults), not the 20 s that "shorter than
+    one window" implies. Ten seconds of ordinary phone footage sits between those two
+    numbers, and everything in that band is judged by the confidence coefficient rather
+    than by evidence — so the size of the band is a fact worth failing over if it moves.
+    """
+    from mixing.audio.audio_ops import SPAN_HOP_S, SPAN_WINDOW_S
+
+    from muvid.footage.align import align_footage
+
+    song_p, song = _repetitive_song(tmp_path)
+    song_s = len(song) / SR
+    boundary = SPAN_WINDOW_S + SPAN_HOP_S
+
+    def support_at(seconds: float):
+        p = _device_recording(
+            tmp_path, song, f"len{seconds:g}", at=28.0, seconds=seconds, seed=101
+        )
+        return align_footage(str(song_p), [("A", str(p))], song_duration=song_s)[0]
+
+    assert support_at(boundary - 1.0).support is None
+    assert support_at(boundary).support is not None
+    # And the whole band below it is unvoted, not just the sliver next to the boundary.
+    assert support_at(SPAN_WINDOW_S + 2.0).support is None
+
+
+@needs_support
+def test_a_wider_window_is_refused_because_it_would_turn_the_gate_off(tmp_path):
+    """Measured: ``window_s=45`` on a 50 s clip takes support from 0.75 to None.
+
+    That is the support gate switching off — the verdict silently falls back to the
+    confidence coefficient — from a keyword that reads like a tuning knob. An argument
+    that quietly disables a safety check is refused rather than documented.
+    """
+    from muvid.footage.align import align_footage
+
+    song_p, song = _repetitive_song(tmp_path)
+    clip = [
+        (
+            "A",
+            str(
+                _device_recording(tmp_path, song, "a", at=28.0, seconds=50.0, seed=101)
+            ),
+        )
+    ]
+    for kwargs in ({"window_s": 45.0}, {"hop_s": 22.5}):
+        with pytest.raises(TypeError, match="MIN_SUPPORT"):
+            align_footage(str(song_p), clip, song_duration=len(song) / SR, **kwargs)
+
+
+@needs_support
+def test_the_noise_floor_now_clears_min_confidence(tmp_path):
+    """Characterisation: in the unvoted band, the coefficient no longer excludes noise.
+
+    ``MIN_CONFIDENCE = 0.1`` was calibrated (muvid#15) against the whole-clip estimator.
+    Consensus changed what the number IS — a median over the winning window group — and
+    pure noise now reaches past it. This records that, because it is the premise behind
+    two decisions someone will otherwise re-litigate: why the unvoted band is described
+    as unguarded, and why ``MIN_CONFIDENCE`` was nevertheless left alone.
+
+    **It was left alone because raising it does not work**, and that measurement needs
+    the real material rather than this fixture: on clips of the muvid#59 master under the
+    30 s vote boundary, the worst CORRECT alignment scored 0.129 while the worst noise
+    clip scored 0.139 — overlapping, so every threshold either admits noise or refuses
+    real footage. This fixture is *easier* than that (its correct alignments sit at
+    ~0.32), so it can honestly pin the noise floor and not the overlap; asserting the
+    overlap here would mean degrading the fixture until it appeared, which is fitting a
+    fixture to a conclusion. Whether muvid should stop vouching for unvoted clips
+    altogether is muvid#91.
+
+    Expect this to fail the day the estimator or the threshold changes. That is the
+    point — it is the note that says which measurement to redo.
+    """
+    from scipy.io import wavfile
+
+    from muvid.footage.align import align_footage
+
+    song_p, song = _repetitive_song(tmp_path)
+    song_s = len(song) / SR
+    rng = np.random.default_rng(59)
+
+    floor = []
+    for seed in range(6):
+        p = tmp_path / f"noise{seed}.wav"
+        wavfile.write(
+            str(p), SR, (rng.normal(0, 0.3, int(15 * SR)) * 32767).astype(np.int16)
+        )
+        a = align_footage(str(song_p), [("N", str(p))], song_duration=song_s)[0]
+        assert a.support is None, "15 s is inside the unvoted band; this is that regime"
+        floor.append(a.confidence)
+
+    assert max(floor) > MIN_CONFIDENCE, (
+        f"noise topped out at {max(floor):.3f}, under MIN_CONFIDENCE={MIN_CONFIDENCE} "
+        "— the coefficient excludes noise again, so the unvoted band may no longer be "
+        "unguarded and muvid#91 should be re-read before this test is deleted"
+    )
+
+
+@needs_support
 def test_a_clip_too_short_to_vote_reports_no_support(tmp_path):
     """The known remaining exposure, pinned so it stays visible (thorwhalen/mixing#41).
 
-    A clip shorter than the estimator's analysis window is ONE window: no second
-    opinion, nothing to arbitrate, so ``support`` is ``None`` — correctly, since
+    A clip under ``window_s + hop_s`` (30 s at mixing's defaults) cannot field two
+    independent windows: no second opinion, nothing to arbitrate, so ``support`` is
+    ``None`` — correctly, since
     inventing 1.0 for a unanimous vote of one would be the strongest possible claim
     resting on no evidence. What muvid then does is fall back to the confidence
     coefficient, which is the instrument this issue was filed about.

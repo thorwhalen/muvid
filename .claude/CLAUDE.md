@@ -66,8 +66,13 @@ Pipeline: `align → score → select → EDL → assemble`.
   shoot's three wrong offsets and misses the third.
   Since the **`mixing>=0.0.46`** floor (mixing#30's windowed consensus) that fallback is
   narrow but not gone: `support is None` now means *the estimator could not hold a vote*
-  — the clip is shorter than one analysis window. Measured on the real shoot, one such
-  clip comes back **102 s wrong at confidence 0.834**, so `vouches_for` vouches for it.
+  — which happens for any clip under `window_s + hop_s`, i.e. **30 s** at mixing's
+  defaults, NOT the 20 s that "shorter than one window" suggests (measured: 22, 26 and
+  29 s clips all come back unvoted). Ordinary phone footage sits in that band. Measured
+  on the real shoot, one such clip comes back **102 s wrong at confidence 0.834**, so
+  `vouches_for` vouches for it — and the coefficient does not rank correctness there at
+  all: worst correct 0.129 against worst pure-noise 0.139, with the WRONG offsets
+  scoring 0.183-0.252, above both.
   Refusing every unvoted clip instead would refuse the correct short clips alongside it
   with nothing to tell them apart, and would make `allow_unreliable=True` the normal way
   to use short footage — which is how a gate stops being read. So it is REPORTED
