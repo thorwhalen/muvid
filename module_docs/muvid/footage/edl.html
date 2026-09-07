@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.footage.edl &mdash; muvid 0.0.50 documentation</title>
+  <title>muvid.footage.edl &mdash; muvid 0.0.51 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -15,7 +15,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=e072a57b"></script>
+      <script src="../../../_static/documentation_options.js?v=440a2162"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -411,9 +411,12 @@ assumed.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="muvid.footage.edl.FootageAlignment.support">
 <span class="sig-name descname"><span class="pre">support</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#muvid.footage.edl.FootageAlignment.support" title="Link to this definition"></a></dt>
-<dd><p>Fraction of independently-measured windows of the clip that agree on
-<code class="docutils literal notranslate"><span class="pre">offset_s</span></code>, when the aligner measured more than one — <code class="docutils literal notranslate"><span class="pre">None</span></code> when it
-only ever took a single whole-clip measurement.</p>
+<dd><p>Fraction of the clip’s independent analysis windows that agree on <code class="docutils literal notranslate"><span class="pre">offset_s</span></code>.
+<code class="docutils literal notranslate"><span class="pre">None</span></code> means no vote was held: a vote needs two windows far enough apart to
+be separate opinions, so the boundary is <code class="docutils literal notranslate"><span class="pre">window_s</span> <span class="pre">+</span> <span class="pre">hop_s</span></code> — <strong>30 s</strong> at
+mixing’s defaults, not the 20 s that “shorter than one window” implies (measured:
+12/18/22/24/26/28/29 s all return None; 30 s is the first that does not). That is
+a different fact from “the windows disagreed”, which is why it is not 0.0.</p>
 <p><strong>This, not ``confidence``, is the honest number</strong> (muvid#59). A correlation
 coefficient says how well the winning lag scored; it cannot say whether the
 runner-up scored the same, which is the entire failure mode on repetitive
@@ -578,6 +581,17 @@ threshold catches two of the three and lets the third — 83 s wrong — through
 coefficient cannot see the runner-up peak that makes it a coin flip; only
 <a class="reference internal" href="#muvid.footage.edl.FootageAlignment.support" title="muvid.footage.edl.FootageAlignment.support"><code class="xref py py-data docutils literal notranslate"><span class="pre">FootageAlignment.support</span></code></a> can. This is the fallback for an aligner that
 reports no support, not the measure of record.</p>
+<p><strong>0.1 is kept, not re-derived, and that is a deliberate refusal to invent a number.</strong>
+The consensus estimator changed what the coefficient IS — a median over the winning
+window group rather than one whole-clip argmax’s score — so the muvid#15 calibration
+no longer describes it, and 8 s of white noise that used to fall under 0.1 now scores
+0.102-0.139 across ten seeds. The obvious response is to raise the threshold past
+that floor. <strong>It does not work</strong>, measured on clips of the muvid#59 master under the
+30 s vote boundary: worst CORRECT alignment 0.129, worst NOISE 0.139. The two
+distributions overlap, so every threshold either admits noise or refuses correct
+footage, and one picked to pass a noise-floor test would refuse real clips while
+looking green. See <a class="reference internal" href="#muvid.footage.edl.vouches_for" title="muvid.footage.edl.vouches_for"><code class="xref py py-func docutils literal notranslate"><span class="pre">vouches_for()</span></code></a> for the rest of the evidence and muvid#91 for
+the decision this leaves open.</p>
 </dd></dl>
 
 <dl class="py data">
@@ -590,6 +604,15 @@ verified-correct offsets carried 10/24, 17/37 and 45/61 windows — 0.42, 0.46 a
 an offset that only a handful of windows ever saw. A spurious peak is an accident
 of local content and lands at a DIFFERENT lag in each window, so it cannot
 accumulate support the way a true offset does.</p>
+<p><strong>This number is calibrated for the estimator’s DEFAULT window, and support is not
+normalised across window sizes.</strong> Halving the window roughly thirds the fraction:
+measured on three 120 s recordings of the same repetitive master at known offsets,
+all three correct, support reads 0.50 / 0.64 / 0.73 at <code class="docutils literal notranslate"><span class="pre">mixing</span></code>’s default
+<code class="docutils literal notranslate"><span class="pre">window_s=20</span></code> and 0.17 / 0.15 / 0.21 at <code class="docutils literal notranslate"><span class="pre">window_s=5</span></code>. So a caller who shrinks
+the window through <a class="reference internal" href="align.html#muvid.footage.align.align_footage" title="muvid.footage.align.align_footage"><code class="xref py py-func docutils literal notranslate"><span class="pre">align_footage()</span></code></a>’s <code class="docutils literal notranslate"><span class="pre">**estimator_kwargs</span></code>
+and leaves this threshold alone has every correct alignment refused. <code class="docutils literal notranslate"><span class="pre">mixing</span></code>
+declines to normalise it on purpose — dividing by something to make the number look
+stable would invent a statistic — so the two knobs move together or not at all.</p>
 </dd></dl>
 
 <dl class="py data">
@@ -775,12 +798,31 @@ coin flip — see <a class="reference internal" href="#muvid.footage.edl.Footage
 known to be inadequate.</strong> It is the same instrument muvid#59 was filed about: on
 that shoot it would have refused two of the three wrong offsets and passed the
 third, which was 83 s out. So this is not “unknown forces approval” — an unmeasured
-support is judged by the weaker test rather than refused outright, because refusing
-every alignment today’s <code class="docutils literal notranslate"><span class="pre">mixing</span></code> produces would take the whole feature offline
-over a measurement that does not exist yet. The gap closes when the windowed
-consensus lands (thorwhalen/mixing#30) and <code class="docutils literal notranslate"><span class="pre">support</span></code> starts arriving; until then
-the honest statement is that a <em>reported</em> offset is checked as well as it can be,
-not that it is trustworthy.</p>
+support is judged by the weaker test rather than refused outright.</p>
+<p>Since the <code class="docutils literal notranslate"><span class="pre">mixing&gt;=0.0.46</span></code> floor, <code class="docutils literal notranslate"><span class="pre">support</span> <span class="pre">is</span> <span class="pre">None</span></code> no longer means “this
+aligner does not measure support”. It means <strong>the estimator could not hold a vote</strong>,
+and the band where that happens is wider than it sounds. A vote needs two windows
+far enough apart to be separate opinions, so the boundary is
+<code class="docutils literal notranslate"><span class="pre">window_s</span> <span class="pre">+</span> <span class="pre">hop_s</span></code> — <strong>30 s</strong> at <code class="docutils literal notranslate"><span class="pre">mixing</span></code>’s defaults, not the 20 s of “shorter
+than one window”. Measured, clip length against support at those defaults: 12, 18,
+22, 24, 26, 28 and 29 s all return <code class="docutils literal notranslate"><span class="pre">None</span></code>; 30 s is the first that returns a
+fraction. An ordinary phone clip sits inside that band.</p>
+<p><strong>Inside it this function is guessing, and the measurements say so plainly.</strong> On
+heavily degraded cross-device clips of the muvid#59 master under 30 s, the worst
+CORRECT alignment scored 0.129 while the worst pure-noise clip scored 0.139 — the
+distributions overlap, so no threshold admits the correct ones and refuses the
+noise. Worse, of fifteen such clips seven landed on the wrong offset, at 0.183-0.252
+— <em>higher</em> than the correct ones at 0.129-0.133. The real material agrees: of the
+three 10 s excerpts, the WRONG one carried the highest coefficient of the three
+(0.834 against 0.566 and 0.621).</p>
+<p>So <a class="reference internal" href="#muvid.footage.edl.MIN_CONFIDENCE" title="muvid.footage.edl.MIN_CONFIDENCE"><code class="xref py py-data docutils literal notranslate"><span class="pre">MIN_CONFIDENCE</span></code></a> was deliberately NOT re-tuned for this regime. There is no
+value to tune it to: raising it past the noise floor refuses correct footage, and a
+number chosen to make a noise-floor test pass would hide that behind a green run.
+The coefficient is reported (see
+<a class="reference internal" href="../mcp/footage_tools.html#muvid.mcp.footage_tools.align_footage" title="muvid.mcp.footage_tools.align_footage"><code class="xref py py-func docutils literal notranslate"><span class="pre">align_footage()</span></code></a>’s <code class="docutils literal notranslate"><span class="pre">no_consensus</span></code>), the fix is
+upstream — thorwhalen/mixing#41 adapts the window so short clips can be voted on —
+and whether muvid should refuse unvoted clips outright if that band does not shrink
+is muvid#91.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">

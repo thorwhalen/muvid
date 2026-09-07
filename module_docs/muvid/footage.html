@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.footage &mdash; muvid 0.0.50 documentation</title>
+  <title>muvid.footage &mdash; muvid 0.0.51 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -15,7 +15,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=e072a57b"></script>
+      <script src="../../_static/documentation_options.js?v=440a2162"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -335,9 +335,12 @@ assumed.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="muvid.footage.FootageAlignment.support">
 <span class="sig-name descname"><span class="pre">support</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#muvid.footage.FootageAlignment.support" title="Link to this definition"></a></dt>
-<dd><p>Fraction of independently-measured windows of the clip that agree on
-<code class="docutils literal notranslate"><span class="pre">offset_s</span></code>, when the aligner measured more than one — <code class="docutils literal notranslate"><span class="pre">None</span></code> when it
-only ever took a single whole-clip measurement.</p>
+<dd><p>Fraction of the clip’s independent analysis windows that agree on <code class="docutils literal notranslate"><span class="pre">offset_s</span></code>.
+<code class="docutils literal notranslate"><span class="pre">None</span></code> means no vote was held: a vote needs two windows far enough apart to
+be separate opinions, so the boundary is <code class="docutils literal notranslate"><span class="pre">window_s</span> <span class="pre">+</span> <span class="pre">hop_s</span></code> — <strong>30 s</strong> at
+mixing’s defaults, not the 20 s that “shorter than one window” implies (measured:
+12/18/22/24/26/28/29 s all return None; 30 s is the first that does not). That is
+a different fact from “the windows disagreed”, which is why it is not 0.0.</p>
 <p><strong>This, not ``confidence``, is the honest number</strong> (muvid#59). A correlation
 coefficient says how well the winning lag scored; it cannot say whether the
 runner-up scored the same, which is the entire failure mode on repetitive

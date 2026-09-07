@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.mcp.footage_tools &mdash; muvid 0.0.50 documentation</title>
+  <title>muvid.mcp.footage_tools &mdash; muvid 0.0.51 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=e072a57b"></script>
+      <script src="../../../_static/documentation_options.js?v=440a2162"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -420,7 +420,15 @@
 <span class="sd">      the project and stay addressable, but ``assemble_music_video`` REFUSES to cut to</span>
 <span class="sd">      them unless it is called with ``allow_unreliable=true``, because a wrong offset</span>
 <span class="sd">      does not fail — it renders a video out of sync with the song (muvid#59). Re-align,</span>
-<span class="sd">      leave them out of the edit, or opt in deliberately.</span>
+<span class="sd">      leave them out of the edit, or opt in deliberately;</span>
+<span class="sd">    - ``no_consensus`` — clips whose offset was never put to a vote, because they are</span>
+<span class="sd">      under about 30 s, which is where the estimator stops having two independent</span>
+<span class="sd">      opinions to compare. Their offset rests on a single measurement — the estimator</span>
+<span class="sd">      muvid#59 was filed about — and the confidence score does NOT rank correctness</span>
+<span class="sd">      there (measured on that shoot: the wrong offset scored highest of the three).</span>
+<span class="sd">      Nothing is refused on this basis, because refusing would take the correct short</span>
+<span class="sd">      clips with it, but if a short clip looks out of sync in the render this list is</span>
+<span class="sd">      the first place to look.</span>
 
 <span class="sd">    Run this after adding/removing clips and before assembling.</span>
 <span class="sd">    """</span>
@@ -476,6 +484,19 @@
             <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">aligns</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">a</span><span class="o">.</span><span class="n">reliable</span>
         <span class="p">],</span>
+        <span class="c1"># REPORTED, never enforced — the same posture as `offset_consensus` below, and</span>
+        <span class="c1"># for the same reason. `support: null` means the estimator could not hold a vote</span>
+        <span class="c1"># (the clip is under `window_s + hop_s` — about 30 s at mixing's defaults — so</span>
+        <span class="c1"># there are not two independent windows to compare), and the offset therefore</span>
+        <span class="c1"># rests on a single measurement</span>
+        <span class="c1"># and the trust verdict falls back to the confidence coefficient. That fallback</span>
+        <span class="c1"># is the weak one: measured on the muvid#59 material, one such clip is 102 s</span>
+        <span class="c1"># wrong at confidence 0.834 while the two correct ones score 0.566 and 0.621 —</span>
+        <span class="c1"># the wrong offset had the HIGHEST coefficient, so no threshold separates them.</span>
+        <span class="c1"># Refusing every unvoted clip would refuse those two as well, so this is said</span>
+        <span class="c1"># rather than enforced; adapting the window to short clips is the actual fix</span>
+        <span class="c1"># (thorwhalen/mixing#41).</span>
+        <span class="s2">"no_consensus"</span><span class="p">:</span> <span class="p">[</span><span class="n">a</span><span class="o">.</span><span class="n">clip_id</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">aligns</span> <span class="k">if</span> <span class="n">a</span><span class="o">.</span><span class="n">support</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">],</span>
         <span class="s2">"confidence_metric"</span><span class="p">:</span> <span class="s2">"onset-envelope correlation at the waveform's lag"</span><span class="p">,</span>
         <span class="s2">"confidence_threshold"</span><span class="p">:</span> <span class="n">_MIN_CONFIDENCE</span><span class="p">,</span>
         <span class="s2">"support_threshold"</span><span class="p">:</span> <span class="n">MIN_SUPPORT</span><span class="p">,</span>
