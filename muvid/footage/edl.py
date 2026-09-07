@@ -242,7 +242,25 @@ MIN_SUPPORT = float(os.environ.get("MUVID_FOOTAGE_MIN_SUPPORT", "0.25"))
 #: threshold meant for the top rows would refuse about a third of the bottom ones. The
 #: window reaches 20 s at a 60 s clip, which is therefore where this gate starts to bite.
 #: Why ``support`` is weak at a small window — an argmax tally over few, short windows —
-#: is thorwhalen/mixing#45; when that lands, re-measure this table before lowering it.
+#: is thorwhalen/mixing#45.
+#:
+#: **This rule is a complete defence only while ``support`` is that argmax tally, which
+#: is what ``mixing`` 0.0.48 reports and what every number above was measured against.**
+#: The window is the only axis that moves an argmax headcount, so bounding the window
+#: bounds the statistic. mixing#45 re-grades ``support`` to give partial credit for
+#: ballot-only evidence, and that moves the number at ``window_s=20`` as well —
+#: measured upstream, a 60 s clip of a repeating reference goes 0.00 to ~0.50 at the
+#: full window. Against that release this rule stays NECESSARY and stops being
+#: SUFFICIENT: ballot-only evidence caps at 0.5, so a threshold at or under 0.5 can be
+#: cleared with no window having found the offset unaided, and 0.25 is well inside that.
+#:
+#: So do not re-point this at a graded release — **re-measure against it.** That means
+#: the 21 real cases and the shoot's own three offsets, whose 0.42/0.46/0.74 were taken
+#: ungraded and two of which sit under 0.5. If correct footage still lands below the
+#: boundary after grading, no cut point on this axis works and the question is muvid#91's
+#: rather than a threshold's — with mixing#47's runner-up margin the likelier answer,
+#: since muvid#59 was made of near-ties (0.993/0.989/0.987) that no support fraction can
+#: see.
 MIN_SUPPORT_WINDOW_S = float(
     os.environ.get("MUVID_FOOTAGE_MIN_SUPPORT_WINDOW_S", "20.0")
 )
