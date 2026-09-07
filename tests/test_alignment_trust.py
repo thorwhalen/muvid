@@ -244,8 +244,13 @@ def test_a_matching_clip_is_vouched_for_and_an_unrelated_one_is_not(tmp_path):
     assert set(by) == {"REAL", "JUNK"}
     assert by["JUNK"].reliable is False
 
+    # Cut to it over a span it genuinely covers — the offset an unrelated clip lands on
+    # is arbitrary, so reading the span off the record is the only stable way to make
+    # the EDL structurally valid and leave the refusal as the only thing under test.
+    lo, hi = by["JUNK"].coverage
+    span = EdlEntry(lo, min(lo + 1.0, hi), "JUNK")
     with pytest.raises(UnreliableAlignmentError):
-        validate_edl([EdlEntry(0.0, 5.0, "JUNK")], list(by.values()), SONG_S)
+        validate_edl([span], list(by.values()), SONG_S)
 
 
 class TestTheToolSurface:
