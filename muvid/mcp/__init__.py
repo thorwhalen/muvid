@@ -65,6 +65,11 @@ FOOTAGE_TOOLS = [
     # edited DECISION lane → an ``edl=`` argument). Both free and read-only.
     "footage_editor_document",
     "footage_edl_from_annotations",
+    # Clip lifecycle (muvid#22): the way back to a lost project_id, and the way a
+    # mistaken upload stops being permanent. Both free; remove_footage invalidates
+    # the alignment the same way set_song does.
+    "list_music_video_projects",
+    "remove_footage",
 ]
 
 #: The footage SCORING tools (muvid.mcp.scoring_tools) — the background scoring job + the
