@@ -33,7 +33,7 @@ from __future__ import annotations
 
 import os
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import NamedTuple, Sequence
 
 #: Spans shorter than this (seconds) are treated as coincident / zero — guards float noise.
@@ -1012,11 +1012,7 @@ def validate_edl(
                 )
         if not e.is_gap:
             a = by_id[e.clip_id]
-            clip_in = e.song_start - a.offset_s
-            if (
-                clip_in < -_EPS
-                or clip_in + (e.song_end - e.song_start) > a.duration_s + _EPS
-            ):
+            if not _clip_contains(a, e.song_start, e.song_end):
                 raise ValueError(
                     f"EDL entry {i}: clip {e.clip_id!r} does not contain song span "
                     f"[{e.song_start:.3f}, {e.song_end:.3f}] (its coverage is "
@@ -1063,10 +1059,19 @@ def _refuse_unvouched(entries: Sequence[EdlEntry], by_id: dict) -> None:
         raise UnreliableAlignmentError(unvouched)
 
 
-#: Why a span was set aside by :func:`exclude_unvouched` — the only reason today, named
-#: rather than spelled inline so a caller can match on it and a second reason (should one
-#: ever exist) has somewhere to go.
-UNVOUCHED_REASON = "unreliable_alignment"
+#: The span had no alternative: nothing the aligner vouches for covers it at all. The
+#: honest answer is a gap, and the remedy is to re-align or re-shoot.
+NO_VOUCHED_COVERAGE = "no_vouched_coverage"
+
+#: A vouched clip DOES cover the span and the strategy cut to an unvouched one anyway —
+#: so the loss is the SELECTOR's, not the footage's. The two are separate values because
+#: they were measured to be separate events and they have different remedies: this one
+#: says try another strategy or another selection config. ``weighted`` produces it
+#: structurally — see :func:`_absorb_neighbour`, which repairs the repairable half.
+UNVOUCHED_SELECTION = "unvouched_selection"
+
+#: Every reason :func:`exclude_unvouched` can give, for a caller matching on the value.
+EXCLUSION_REASONS = (NO_VOUCHED_COVERAGE, UNVOUCHED_SELECTION)
 
 
 @dataclass(frozen=True)
@@ -1083,7 +1088,7 @@ class ExcludedSpan:
     clip_id: str
     song_start: float
     song_end: float
-    reason: str = UNVOUCHED_REASON
+    reason: str = NO_VOUCHED_COVERAGE
     confidence: float = 0.0
     support: float | None = None
     margin: float | None = None
@@ -1128,30 +1133,139 @@ def exclude_unvouched(
     plausible-artifact failure muvid#59 is about, one level up. A *smaller* edit is a
     recovery; an *empty* one is the same wrong answer wearing a coverage report.
 
+    **A gap is the last resort, not the first.** Before dropping an entry it is offered
+    to its neighbours: if the cut on either side is a vouched clip that ALREADY covers the
+    span, the span is absorbed into that cut instead. That case is not hypothetical and it
+    is not the aligner's fault — ``weighted``'s DP produces it structurally. Its
+    transition window is capped at ``max_seg_s`` (4x ``l_max``, a performance bound) and
+    consecutive segments must be different clips, so a single vouched take longer than the
+    cap CANNOT be one segment and the optimizer is forced to cut away and back. Measured
+    on a 60 s song under the DEFAULT config, a 2 s opener plus one 58 s vouched clip
+    yields ``[(0,2,O), (2,34,V), (34,36,BAD), (36,60,V)]`` — and gapping that 2 s would
+    punch an avoidable black hole through the middle of a continuous take, blamed on an
+    alignment that had nothing to do with it. A caller-raised ``l_max_overrun_penalty``
+    does the same thing at every ``l_max`` boundary. Absorbing loses nothing: the frames
+    come from a clip the aligner vouches for, which the caller's own edit already used on
+    both sides, and ``validate_edl`` re-checks containment afterwards either way.
+
+    Absorption is refused into a cut whose meaning depends on its length or on the
+    boundary it starts at — one carrying a ``transition``, a ``crop_end`` pan or a
+    ``look`` — and across a following ``transition``, since the blend's other side would
+    change clip underneath it. Strategies emit none of those, so the auto path always
+    absorbs; a hand-written EDL degrades to the gap rather than to a silently restretched
+    pan.
+
     Returns ``(entries, excluded)``.
     """
     by_id = {a.clip_id: a for a in alignments}
     entries = [_as_entry(e) for e in edl]
     kept: list[EdlEntry] = []
     excluded: list[ExcludedSpan] = []
-    for e in entries:
+    for i, e in enumerate(entries):
         a = None if e.is_gap else by_id.get(e.clip_id)
-        if a is not None and not a.reliable:
-            excluded.append(
-                ExcludedSpan(
-                    clip_id=e.clip_id,
-                    song_start=e.song_start,
-                    song_end=e.song_end,
-                    confidence=a.confidence,
-                    support=a.support,
-                    margin=a.margin,
-                )
-            )
-        else:
+        if a is None or a.reliable:
             kept.append(e)
-    if not excluded or not any(not e.is_gap for e in kept):
+            continue
+        if _absorb_neighbour(e, kept, entries, i, by_id):
+            continue
+        excluded.append(
+            ExcludedSpan(
+                clip_id=e.clip_id,
+                song_start=e.song_start,
+                song_end=e.song_end,
+                reason=_exclusion_reason(e, alignments),
+                confidence=a.confidence,
+                support=a.support,
+                margin=a.margin,
+            )
+        )
+    if not any(not e.is_gap for e in kept):
         return entries, []
-    return kept, excluded
+    return _coalesce_absorbed(kept), excluded
+
+
+def _clip_contains(a: FootageAlignment, start: float, end: float) -> bool:
+    """Does clip ``a`` actually hold the song span ``[start, end]``?
+
+    The containment arithmetic :func:`validate_edl` enforces, in one place so a caller
+    that reshapes an edit (:func:`exclude_unvouched`) tests exactly what the gate will.
+    """
+    clip_in = start - a.offset_s
+    return clip_in >= -_EPS and clip_in + (end - start) <= a.duration_s + _EPS
+
+
+def _absorbable(e: "EdlEntry | None", by_id: dict) -> bool:
+    """Is ``e`` a plain vouched cut that can simply be made longer?"""
+    if e is None or e.is_gap or e.clip_id not in by_id:
+        return False
+    if not by_id[e.clip_id].reliable:
+        return False
+    return e.transition is None and e.crop_end is None and e.look is None
+
+
+def _absorb_neighbour(e, kept: list, entries: list, i: int, by_id: dict) -> bool:
+    """Hand ``e``'s span to a vouched neighbour that already covers it; ``True`` if done.
+
+    Tries the preceding cut first (extend its end), then the following one (extend its
+    start), which is what turns ``weighted``'s forced cut-away-and-back into the single
+    long take it should have been. Mutates ``kept``/``entries`` in place — ``entries[i+1]``
+    is rewritten so the extension is visible when the loop reaches it.
+    """
+    prev = kept[-1] if kept else None
+    nxt = entries[i + 1] if i + 1 < len(entries) else None
+    # Absorbing into `prev` leaves the boundary at `e.song_end` in place but changes the
+    # clip on its left, so a blend hanging off it would be blending from somewhere else.
+    if (
+        _absorbable(prev, by_id)
+        and (nxt is None or nxt.transition is None)
+        and _clip_contains(by_id[prev.clip_id], prev.song_start, e.song_end)
+    ):
+        kept[-1] = replace(prev, song_end=e.song_end)
+        return True
+    if _absorbable(nxt, by_id) and _clip_contains(
+        by_id[nxt.clip_id], e.song_start, nxt.song_end
+    ):
+        entries[i + 1] = replace(nxt, song_start=e.song_start)
+        return True
+    return False
+
+
+def _coalesce_absorbed(entries: list) -> list:
+    """Merge adjacent cuts absorption left identical and touching — one take, one entry.
+
+    Only where every field but the span agrees, so two differently-graded cuts of one clip
+    stay two cuts.
+    """
+    out: list[EdlEntry] = []
+    for e in entries:
+        prev = out[-1] if out else None
+        if (
+            prev is not None
+            and not e.is_gap
+            and prev.clip_id == e.clip_id
+            and abs(prev.song_end - e.song_start) <= _EPS
+            and e.transition is None
+            and (prev.crop, prev.crop_end, prev.look, prev.look_time_varying)
+            == (e.crop, e.crop_end, e.look, e.look_time_varying)
+        ):
+            out[-1] = replace(prev, song_end=e.song_end)
+        else:
+            out.append(e)
+    return out
+
+
+def _exclusion_reason(e, alignments: Sequence[FootageAlignment]) -> str:
+    """Whose loss was it — the footage's, or the selector's?
+
+    :data:`UNVOUCHED_SELECTION` when some vouched clip could have held the span and the
+    strategy did not use it (after absorption, that means a non-adjacent one). Reporting
+    both as :data:`NO_VOUCHED_COVERAGE` would tell a caller to re-shoot footage they
+    already have.
+    """
+    for a in alignments:
+        if a.reliable and _clip_contains(a, e.song_start, e.song_end):
+            return UNVOUCHED_SELECTION
+    return NO_VOUCHED_COVERAGE
 
 
 def _span(e: EdlEntry) -> float:

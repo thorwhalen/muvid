@@ -569,7 +569,35 @@ def _coverage_report(entries, aligns, song_dur: float, *, excluded=()) -> dict:
     }
 
 
-def _auto_edl(proj, aligns, song_dur: float, strat, context, *, recover: bool):
+def _exclusion_note(x) -> str:
+    """One ``warnings`` line per span the recovery gave up (muvid#88).
+
+    The reply's own contract says ``warnings`` is the whole of a caller's ability to know
+    what the render PLAN found, and a hole in the video is the largest such finding there
+    is. Nesting it only under ``coverage.excluded`` meant an agent reading ``ok`` and
+    ``warnings`` — which is what the docstring tells it to read — could ship a black
+    stretch without ever seeing why.
+    """
+    from muvid.footage.edl import UNVOUCHED_SELECTION
+
+    why = (
+        "a clip the aligner vouches for covers that span, but the selection did not use "
+        "it — try another strategy or selection config"
+        if x.reason == UNVOUCHED_SELECTION
+        else "no clip the aligner vouches for covers that span — re-align or re-shoot"
+    )
+    numbers = f"confidence {x.confidence:.3f}"
+    if x.support is not None:
+        numbers += f", support {x.support:.2f}"
+    if x.margin is not None:
+        numbers += f", margin {x.margin:+.2f}"
+    return (
+        f"set aside {x.song_end - x.song_start:.1f} s of clip {x.clip_id!r} at "
+        f"{x.song_start:.1f}-{x.song_end:.1f} s ({numbers}): {why}. It renders as a gap."
+    )
+
+
+def _auto_edl(aligns, song_dur: float, *, strategy, context, recover: bool):
     """The auto path, in one place: select -> set aside -> gap-fill (muvid#88).
 
     Both tools that build an edit from a strategy go through this, so ``propose_edit``
@@ -587,7 +615,7 @@ def _auto_edl(proj, aligns, song_dur: float, strat, context, *, recover: bool):
     from muvid.footage.edl import exclude_unvouched, fill_gaps
     from muvid.footage.strategy import select_edl
 
-    selected = select_edl(strat, aligns, song_dur, context=context)
+    selected = select_edl(strategy, aligns, song_dur, context=context)
     excluded = []
     if recover:
         selected, excluded = exclude_unvouched(selected, aligns)
@@ -632,7 +660,7 @@ def propose_edit(
     try:
         context = _selection_context(proj, strat, preset, weights, config)
         proposal, excluded = _auto_edl(
-            proj, aligns, song_dur, strat, context, recover=True
+            aligns, song_dur, strategy=strat, context=context, recover=True
         )
         entries = validate_edl(
             proposal,
@@ -656,13 +684,38 @@ def propose_edit(
         "project_id": project_id,
         "strategy": strat,
         "edl": [_edl_json(e) for e in entries],
+        "assemble_refusal": _assemble_refusal(entries, aligns, song_dur, proj.canvas()),
         "coverage": _coverage_report(
             [e for e in entries if not e.is_gap],
             aligns,
             song_dur,
             excluded=excluded,
         ),
+        "warnings": [_exclusion_note(x) for x in excluded],
     }
+
+
+def _assemble_refusal(entries, aligns, song_dur: float, canvas) -> "dict | None":
+    """``None`` if assembling this proposal would render; the refusal if it would not.
+
+    ``propose_edit`` validates with ``allow_unreliable=True`` so it can diagnose rather
+    than refuse — which left one case indistinguishable from success: a shoot where NO
+    clip is trustworthy comes back as a full unvouched edit with ``excluded`` empty, and
+    nothing in the reply said the render would be refused. So the question is put to the
+    GATE rather than answered by re-implementing its predicate here; two gates that can
+    disagree is the thing muvid#88 exists to avoid.
+    """
+    from muvid.footage.edl import UnreliableAlignmentError, validate_edl
+
+    try:
+        validate_edl(entries, aligns, song_dur, canvas=canvas)
+    except UnreliableAlignmentError as e:
+        return {
+            "error": "unreliable_alignment",
+            "clip_ids": e.clip_ids,
+            "message": str(e),
+        }
+    return None
 
 
 def _resolve_canvas(proj, canvas: str) -> tuple[int, int]:
@@ -834,11 +887,10 @@ def assemble_music_video(
                 )
             context = _selection_context(proj, strat, preset, weights, config)
             proposal, excluded = _auto_edl(
-                proj,
                 aligns,
                 song_dur,
-                strat,
-                context,
+                strategy=strat,
+                context=context,
                 # A caller who opted in wants the footage rendered, not set aside.
                 recover=not allow_unreliable,
             )
@@ -871,7 +923,7 @@ def assemble_music_video(
     # so a muvid#73 hitch came back as an `ok` render with nothing said about it.
     # A warning the caller cannot see is the silent no-op this repo refuses
     # everywhere else, so the sink is threaded in and its contents are returned.
-    notes: list[str] = []
+    notes: list[str] = [_exclusion_note(x) for x in excluded]
     try:
         out = _assemble(
             cuts,

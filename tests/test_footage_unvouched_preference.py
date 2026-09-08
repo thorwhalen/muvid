@@ -23,7 +23,16 @@ and drop a source from the edit on the strength of a measurement:
   :class:`~muvid.footage.edl.UnreliableAlignmentError` when nothing trustworthy covers
   the song, because a black video reported as success is muvid#59's failure one level up;
 - ``weighted`` carries the same preference as a reward penalty larger than the whole
-  composite range, so no weighting can buy an unvouched clip a span another clip covers.
+  composite range, so no METRIC can buy an unvouched clip a span another clip covers —
+  but two of the DP's terms are not metrics, and both were measured producing a cutaway
+  to an unvouched clip over a span a vouched one covers: a caller-raised
+  ``l_max_overrun_penalty``, and the ``max_seg_s`` transition window, which forces a
+  vouched take longer than the cap to cut away and back. Gapping those would punch an
+  avoidable hole through a continuous take and blame an alignment for it, so the recovery
+  ABSORBS such a span into the vouched cut beside it — losslessly, since that clip
+  already covers it — and only gaps what nothing vouched-for covers;
+- an excluded span says WHOSE loss it was: ``no_vouched_coverage`` (re-align or re-shoot)
+  or ``unvouched_selection`` (the footage exists; the selection did not use it).
 
 Everything here is synthetic: alignment records and score tensors, no audio, no ffmpeg.
 """
@@ -36,7 +45,8 @@ import numpy as np
 import pytest
 
 from muvid.footage.edl import (
-    UNVOUCHED_REASON,
+    NO_VOUCHED_COVERAGE,
+    UNVOUCHED_SELECTION,
     EdlEntry,
     ExcludedSpan,
     FootageAlignment,
@@ -140,7 +150,7 @@ class TestTheRecovery:
         x = excluded[0]
         assert isinstance(x, ExcludedSpan)
         assert (x.clip_id, x.song_start, x.song_end) == ("BAD", 20.0, 30.0)
-        assert x.reason == UNVOUCHED_REASON
+        assert x.reason == NO_VOUCHED_COVERAGE
         # The three numbers the verdict rests on ride along, so the report and the gate
         # can never disagree about WHY — and `support`/`margin` stay measurements.
         assert (x.confidence, x.support, x.margin) == (0.99, 0.2, -0.3)
@@ -324,7 +334,7 @@ class TestTheToolSurface:
                 "clip_id": "BAD",
                 "song_start": 20.0,
                 "song_end": 30.0,
-                "reason": UNVOUCHED_REASON,
+                "reason": NO_VOUCHED_COVERAGE,
                 "confidence": 0.99,
                 "support": 0.2,
                 "margin": -0.3,
@@ -411,3 +421,140 @@ class TestTheToolSurface:
         cov = ft.propose_edit("p")["coverage"]
         assert cov["excluded"] == []
         assert sorted(w["clip_id"] for w in cov["weak_segments"]) == ["X", "Y"]
+
+
+class TestTheSelectorArtifact:
+    """A gap is the last resort: a span a vouched neighbour covers is absorbed, not lost.
+
+    Both fixtures are the reviewer's, reproduced before the fix and pinned after it. They
+    are ``weighted``'s own doing, not the aligner's — the DP's non-composite terms force a
+    cut away from a vouched clip and back, over a span that clip covers. Left as gaps they
+    would be avoidable black holes in a continuous take, labelled as an alignment problem.
+    """
+
+    SONG = 60.0
+    HOP = 0.1
+
+    def _run(self, aligns, comp, cfg):
+        from muvid.footage.select_score import SelectionContext
+
+        from tests.test_scoring_select import make_tensor
+
+        n = int(np.ceil(self.SONG / self.HOP)) + 1
+        ctx = SelectionContext(
+            tensor=make_tensor(aligns, comp, hop=self.HOP, n=n),
+            beat_times=np.arange(0.0, self.SONG + 1e-9, 1.0),
+            config=cfg,
+        )
+        return S.select_edl("weighted", aligns, self.SONG, context=ctx)
+
+    def _times(self):
+        n = int(np.ceil(self.SONG / self.HOP)) + 1
+        return n, np.arange(n) * self.HOP
+
+    def test_the_transition_window_cannot_punch_a_hole_in_a_long_take(self):
+        """DEFAULT config: a 2 s opener + one 58 s vouched take (max_seg_s = 32 s)."""
+        from muvid.footage.select_score import WeightedSelectionConfig
+
+        n, t = self._times()
+        aligns = [
+            _align("O", 0.0, 2.0),
+            _align("V", 2.0, 60.0),
+            _align("BAD", 0.0, 60.0, reliable=False, support=0.2, margin=-0.3),
+        ]
+        comp = {
+            "O": np.where(t < 2.0, 0.9, np.nan),
+            "V": np.where(t >= 2.0, 0.9, np.nan),
+            "BAD": np.full(n, 0.9),
+        }
+        raw = self._run(aligns, comp, WeightedSelectionConfig(weights={"m": 1.0}))
+        # The DP really does cut away and back — if this stops being true the fixture has
+        # stopped being adversarial and the assertion below proves nothing.
+        assert "BAD" in {e.clip_id for e in raw}
+        kept, excluded = exclude_unvouched(raw, aligns)
+        assert [(e.song_start, e.song_end, e.clip_id) for e in kept] == [
+            (0.0, 2.0, "O"),
+            (2.0, 60.0, "V"),
+        ]
+        assert excluded == []
+
+    def test_a_caller_raised_overrun_penalty_cannot_either(self):
+        """``l_max_overrun_penalty=0.9`` cuts away from a lone 40 s take every 10 s."""
+        from muvid.footage.select_score import WeightedSelectionConfig
+
+        n, _ = self._times()
+        aligns = [
+            _align("V", 0.0, 40.0),
+            _align("BAD", 0.0, 40.0, reliable=False, support=0.2, margin=-0.3),
+        ]
+        comp = {"V": np.full(n, 0.9), "BAD": np.full(n, 0.9)}
+        raw = self._run(
+            aligns,
+            comp,
+            WeightedSelectionConfig(weights={"m": 1.0}, l_max_overrun_penalty=0.9),
+        )
+        assert "BAD" in {e.clip_id for e in raw}
+        kept, excluded = exclude_unvouched(raw, aligns)
+        assert [(e.song_start, e.song_end, e.clip_id) for e in kept] == [(0.0, 40.0, "V")]
+        assert excluded == []
+
+    def test_absorption_never_reaches_past_what_the_neighbour_holds(self):
+        """The neighbour must actually contain the span — else it is a gap, as before."""
+        aligns = [
+            _align("A", 0.0, 10.0),
+            _align("BAD", 10.0, 20.0, reliable=False, support=0.2, margin=-0.3),
+            _align("B", 20.0, 30.0),
+        ]
+        edl = [
+            EdlEntry(0.0, 10.0, "A"),
+            EdlEntry(10.0, 20.0, "BAD"),
+            EdlEntry(20.0, 30.0, "B"),
+        ]
+        kept, excluded = exclude_unvouched(edl, aligns)
+        assert [(e.song_start, e.song_end, e.clip_id) for e in kept] == [
+            (0.0, 10.0, "A"),
+            (20.0, 30.0, "B"),
+        ]
+        assert [x.reason for x in excluded] == [NO_VOUCHED_COVERAGE]
+
+    def test_a_cut_whose_meaning_depends_on_its_length_is_not_stretched(self):
+        """A pan or a moving look would be silently re-timed, so absorption declines."""
+        from muvid.footage.edl import CropWindow
+
+        aligns = [
+            _align("V", 0.0, 30.0),
+            _align("BAD", 0.0, 30.0, reliable=False, support=0.2, margin=-0.3),
+        ]
+        pan = EdlEntry(
+            0.0,
+            10.0,
+            "V",
+            crop=CropWindow(0.0, 0.0, 1.0, 0.5),
+            crop_end=CropWindow(0.0, 0.5, 1.0, 0.5),
+        )
+        edl = [pan, EdlEntry(10.0, 12.0, "BAD"), EdlEntry(12.0, 30.0, "V")]
+        kept, excluded = exclude_unvouched(edl, aligns)
+        # The FOLLOWING plain cut takes it instead — lossless, and nothing was re-timed.
+        assert [(e.song_start, e.song_end, e.clip_id) for e in kept] == [
+            (0.0, 10.0, "V"),
+            (10.0, 30.0, "V"),
+        ]
+        assert kept[0].crop_end is not None and excluded == []
+
+    def test_a_span_a_non_adjacent_vouched_clip_covers_is_named_as_a_selection_loss(self):
+        """Whose loss it was decides the remedy, so the record has to distinguish them."""
+        aligns = [
+            _align("A", 0.0, 10.0),
+            _align("FAR", 10.0, 20.0),
+            _align("B", 20.0, 30.0),
+            _align("BAD", 0.0, 30.0, reliable=False, support=0.2, margin=-0.3),
+        ]
+        # A hand-written edit; no built-in would choose BAD here (that is the preference).
+        edl = [
+            EdlEntry(0.0, 10.0, "A"),
+            EdlEntry(10.0, 20.0, "BAD"),
+            EdlEntry(20.0, 30.0, "B"),
+        ]
+        kept, excluded = exclude_unvouched(edl, aligns)
+        assert [e.clip_id for e in kept] == ["A", "B"]
+        assert [x.reason for x in excluded] == [UNVOUCHED_SELECTION]
