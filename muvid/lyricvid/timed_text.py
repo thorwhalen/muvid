@@ -41,6 +41,7 @@ __all__ = [
     "Section",
     "TimedText",
     "from_alignment_store",
+    "from_alignment_result",
     "from_subtitles",
     "from_lyrics_and_audio",
     "from_words",
@@ -130,8 +131,13 @@ class TimedText:
 
     @property
     def measured(self) -> bool:
-        """True when every word time was measured rather than interpolated."""
-        return all(w.measured for w in self.words())
+        """True when every word time was measured rather than interpolated.
+
+        False for an empty text: "all of nothing was measured" is the kind of
+        vacuous truth that reads as reassurance in a report.
+        """
+        ws = list(self.words())
+        return bool(ws) and all(w.measured for w in ws)
 
     def section_for(self, t: float) -> Section | None:
         for s in self.sections:
@@ -152,12 +158,8 @@ class TimedText:
                             "index": l.index,
                             "text": l.text,
                             "words": [
-                                {
-                                    "text": w.text,
-                                    "start": w.start,
-                                    "end": w.end,
-                                    "measured": w.measured,
-                                }
+                                {"text": w.text, "start": w.start, "end": w.end,
+                                 "measured": w.measured}
                                 for w in l.words
                             ],
                         }
@@ -247,11 +249,18 @@ def from_subtitles(path: Path | str, *, duration: float = 0.0) -> TimedText:
     ``measured=False``.
     """
     path = Path(path)
-    text = path.read_text(encoding="utf-8", errors="replace")
+    # utf-8-sig: a byte-order mark otherwise survives into the first cue's
+    # index line, which then fails the isdigit() filter and leaks "﻿1"
+    # into the rendered text of the first line.
+    text = path.read_text(encoding="utf-8-sig", errors="replace")
     suffix = path.suffix.lower()
 
     lines: list[Line] = []
-    if suffix == ".srt" or "-->" in text:
+    # The extension decides when it can; the sniff is only for an unknown one.
+    # (An LRC whose lyric contains "-->" used to be parsed as SRT — and came back
+    # empty.)
+    is_srt = suffix == ".srt" or (suffix != ".lrc" and bool(_SRT_TIME.search(text)))
+    if is_srt:
         blocks = re.split(r"\n\s*\n", text.strip())
         for block in blocks:
             m = _SRT_TIME.search(block)
@@ -260,35 +269,46 @@ def from_subtitles(path: Path | str, *, duration: float = 0.0) -> TimedText:
             start = _hms(*m.group(1, 2, 3, 4))
             end = _hms(*m.group(5, 6, 7, 8))
             body = "\n".join(
-                l
-                for l in block.splitlines()
+                l for l in block.splitlines()
                 if not _SRT_TIME.search(l) and not l.strip().isdigit()
             ).strip()
             body = re.sub(r"<[^>]+>", "", body)
             if body:
                 lines.append(
-                    Line(
-                        words=_spread_words_over(body.replace("\n", " "), start, end),
-                        index=len(lines),
-                    )
+                    Line(words=_spread_words_over(body.replace("\n", " "), start, end),
+                         index=len(lines))
                 )
         source = "srt"
     else:
         stamped: list[tuple[float, str]] = []
         for raw in text.splitlines():
-            m = _LRC_LINE.match(raw.strip())
-            if not m:
-                continue
-            stamped.append((_hms("0", m.group(1), m.group(2), m.group(3)), m.group(4)))
+            line = raw.strip()
+            # A line may carry SEVERAL leading stamps ("[00:01.00][00:05.00]repeat
+            # me" — the same words sung twice). Peel them all; each is a line.
+            times: list[float] = []
+            while True:
+                m = _LRC_LINE.match(line)
+                if not m:
+                    break
+                times.append(_hms("0", m.group(1), m.group(2), m.group(3)))
+                line = m.group(4)
+                if not _LRC_LINE.match(line):
+                    break
+            for t in times:
+                stamped.append((t, line))
+        stamped.sort(key=lambda p: p[0])
         source = "lrc"
         for i, (start, body) in enumerate(stamped):
-            end = (
-                stamped[i + 1][0] if i + 1 < len(stamped) else (duration or start + 3.0)
-            )
+            end = stamped[i + 1][0] if i + 1 < len(stamped) else (duration or start + 3.0)
             word_stamps = list(_LRC_WORD.finditer(body))
             if word_stamps:
                 source = "lrc-enhanced"
                 ws: list[Word] = []
+                # text BEFORE the first <stamp> belongs to the line's own time
+                lead_text = body[: word_stamps[0].start()].strip()
+                if lead_text:
+                    first_word_t = _hms("0", *word_stamps[0].group(1, 2, 3))
+                    ws.extend(_spread_words_over(lead_text, start, first_word_t))
                 for j, wm in enumerate(word_stamps):
                     w_start = _hms("0", wm.group(1), wm.group(2), wm.group(3))
                     w_end = (
@@ -304,9 +324,7 @@ def from_subtitles(path: Path | str, *, duration: float = 0.0) -> TimedText:
                 body = re.sub(r"<[^>]+>", "", body).strip()
                 if body:
                     lines.append(
-                        Line(
-                            words=_spread_words_over(body, start, end), index=len(lines)
-                        )
+                        Line(words=_spread_words_over(body, start, end), index=len(lines))
                     )
 
     if not lines:
@@ -318,9 +336,7 @@ def from_subtitles(path: Path | str, *, duration: float = 0.0) -> TimedText:
     )
 
 
-def from_alignment_store(
-    project_root: Path | str, *, duration: float = 0.0
-) -> TimedText:
+def from_alignment_store(project_root: Path | str, *, duration: float = 0.0) -> TimedText:
     """Read muvid's own three-tier alignment (sections / lines / words).
 
     muvid already declares itself the word-timing SSOT — ``muvid.align`` writes
@@ -331,13 +347,147 @@ def from_alignment_store(
     from muvid.project import MusicVideoProject
 
     project = MusicVideoProject(Path(project_root))
-    song = getattr(project, "song_path", None)
-    if not duration and song and Path(song).exists():
-        from muvid.visualize.ffmpeg import media_duration
+    if not duration:
+        # song_path() is a METHOD that raises when no song is registered; the
+        # first cut read it as a property and handed a bound method to Path().
+        try:
+            song = project.song_path()
+        except RuntimeError:
+            song = None
+        if song is not None and Path(song).exists():
+            from muvid.visualize.ffmpeg import media_duration
 
-        duration = media_duration(song)
+            duration = media_duration(song)
     timings = list(word_timings_for_window(project, 0.0, duration or 1e9))
     return from_words(timings, duration=duration, source="muvid-alignment")
+
+
+#: The same token boundaries ``muvid.align._tokenize`` uses (it lowercases, then
+#: matches this), so a ``WordAlignment.token_index`` addresses the same token
+#: here. Kept in sync by the doctest below rather than by importing a private.
+_LYRIC_TOKEN_RE = re.compile(r"[a-z0-9']+")
+
+
+def _lyric_tokens(text: str) -> list[str]:
+    """The line's tokens, in the lyric's OWN case, at ``muvid.align``'s boundaries.
+
+    >>> _lyric_tokens("Don't stop, Me now!")
+    ["Don't", 'stop', 'Me', 'now']
+    """
+    lowered = text.lower()
+    if len(lowered) != len(text):  # a case-fold that changed length; be safe
+        return _LYRIC_TOKEN_RE.findall(lowered)
+    return [text[m.start():m.end()] for m in _LYRIC_TOKEN_RE.finditer(lowered)]
+
+
+def _line_words_from_alignment(ln) -> tuple[Word, ...]:
+    """One line's words: the LYRIC's text, with the aligner's times where it has them.
+
+    ``WordAlignment.text`` is the transcript's word, not the lyric's — an ASR
+    that heard "Apple" for a lyric that says "apple" would otherwise change
+    the rendered text. The lyric document is what the user committed to, so
+    its tokens win and the alignment contributes only the timing.
+
+    Tokens the aligner did not match are interpolated between the nearest
+    measured neighbours (or the line's own span) and marked ``measured=False``
+    *individually*, so a line that is half-matched reports half-measured
+    rather than all-or-nothing.
+    """
+    tokens = _lyric_tokens(ln.text or "")
+    if not tokens:
+        return ()
+    timed: dict[int, tuple[float, float]] = {}
+    for wa in ln.word_alignments or ():
+        i = int(wa.token_index)
+        if 0 <= i < len(tokens) and wa.start_s is not None and wa.end_s is not None:
+            timed[i] = (float(wa.start_s), float(wa.end_s))
+
+    line_start = ln.start_s if ln.start_s is not None else (
+        min(s for s, _ in timed.values()) if timed else None)
+    line_end = ln.end_s if ln.end_s is not None else (
+        max(e for _, e in timed.values()) if timed else None)
+    if line_start is None or line_end is None:
+        return ()  # nothing measured and nothing to interpolate from
+
+    out: list[Word] = []
+    i = 0
+    n = len(tokens)
+    while i < n:
+        if i in timed:
+            s, e = timed[i]
+            out.append(Word(text=tokens[i], start=s, end=e, measured=True))
+            i += 1
+            continue
+        # an unmeasured run: spread it between the neighbouring measured bounds
+        j = i
+        while j < n and j not in timed:
+            j += 1
+        lo = timed[i - 1][1] if i > 0 and (i - 1) in timed else float(line_start)
+        hi = timed[j][0] if j < n else float(line_end)
+        if hi <= lo:
+            hi = lo + 1e-3 * (j - i)
+        out.extend(_spread_words_over(" ".join(tokens[i:j]), lo, hi))
+        i = j
+    return tuple(out)
+
+
+def from_alignment_result(result, *, duration: float = 0.0, source: str = "muvid-align") -> TimedText:
+    """Convert a :class:`muvid.align.AlignmentResult` into a timed tree.
+
+    Keeps the sections and lines the aligner found — which is strictly better
+    than flattening to words and re-splitting on gaps, because the lyrics
+    document already *knows* where the lines are.
+
+    A line whose words the aligner could not match still has a ``[start, end]``
+    (interpolated by the aligner from its neighbours); its words are spread
+    across that span and marked ``measured=False``, so downstream can see the
+    difference between a measured onset and a guessed one.
+
+    >>> from types import SimpleNamespace as NS
+    >>> w = NS(text='hi', start_s=0.0, end_s=0.4, token_index=0)
+    >>> ln = NS(line_index=0, text='hi there', start_s=0.0, end_s=1.0,
+    ...         word_alignments=(w,))
+    >>> sec = NS(label='verse', lines=(ln,))
+    >>> tt = from_alignment_result(NS(sections=(sec,)), duration=1.0)
+    >>> [(x.text, x.measured) for x in tt.words()]
+    [('hi', True), ('there', False)]
+    >>> tt.sections[0].label
+    'verse'
+    """
+    sections: list[Section] = []
+    for sec in result.sections:
+        lines: list[Line] = []
+        for ln in sec.lines:
+            words = _line_words_from_alignment(ln)
+            if words:
+                lines.append(Line(words=words, index=int(ln.line_index), text=ln.text))
+        if lines:
+            sections.append(Section(label=sec.label or "*", lines=tuple(lines)))
+    dur = duration or max((l.end for s in sections for l in s.lines), default=0.0)
+    return TimedText(sections=tuple(sections), duration=dur, source=source)
+
+
+def _has(module: str) -> bool:
+    from importlib.util import find_spec
+
+    return find_spec(module) is not None
+
+
+def _transcribe_words_offline(audio: Path) -> list[tuple[str, float, float]]:
+    """Word timings straight from ``faster-whisper``, for the no-lyrics case."""
+    from faster_whisper import WhisperModel
+
+    model = WhisperModel("small", device="cpu", compute_type="int8")
+    segments, _info = model.transcribe(
+        str(audio), word_timestamps=True, condition_on_previous_text=False
+    )
+    out: list[tuple[str, float, float]] = []
+    for seg in segments:
+        for w in seg.words or ():
+            text = w.word.strip()
+            if text:
+                out.append((text, float(w.start), float(w.end)))
+    return out
 
 
 def from_lyrics_and_audio(
@@ -347,31 +497,67 @@ def from_lyrics_and_audio(
     aligner: str | None = None,
     duration: float = 0.0,
 ) -> TimedText:
-    """Align ``lyrics`` to ``audio`` using muvid's registered aligner.
+    """Align ``lyrics`` to ``audio`` through muvid's aligner registry.
 
-    ``aligner=None`` uses muvid's default. This deliberately goes through
-    ``muvid.align``'s registry rather than calling an ASR directly, so a better
-    singing-grade aligner registered later is picked up here for free.
+    Goes through :func:`muvid.align.align_lyrics` rather than calling an ASR
+    directly, so a singing-grade aligner registered later is picked up here
+    for free. The aligner is chosen honestly by what is installed:
+
+    * ``whisperx-lite`` — offline, free, needs ``faster-whisper``. **Default
+      when available.** Runs on the audio itself.
+    * ``scribe-greedy`` — needs a Scribe transcript, which costs money and an
+      ElevenLabs key; only reached when asked for by name, never as a silent
+      fallback that spends.
+
+    With no ``lyrics`` at all there is nothing to align *to*; the transcript's
+    own words become the text (``source='transcript'``).
+
+    ``aligner`` may be any registered name; unknown names raise from
+    ``muvid.align`` with the registered list.
     """
     from muvid.visualize.ffmpeg import media_duration
 
     audio = Path(audio)
+    if not audio.exists():
+        raise FileNotFoundError(f"audio not found: {audio}")
     duration = duration or media_duration(audio)
 
-    from muvid import align as align_mod
+    if lyrics is None:
+        if not _has("faster_whisper"):
+            raise RuntimeError(
+                "No lyrics were given, so the words must be transcribed — but "
+                "faster-whisper is not installed. Either `pip install "
+                "faster-whisper` (offline, free), or pass --lyrics / --subtitles."
+            )
+        return from_words(_transcribe_words_offline(audio), duration=duration,
+                          source="transcript")
 
-    resolve = getattr(align_mod, "resolve_aligner", None)
-    if resolve is None:  # pragma: no cover - depends on muvid.align's shape
-        raise RuntimeError(
-            "muvid.align exposes no aligner registry on this version; pass a "
-            "subtitle file instead, or upgrade muvid."
-        )
-    fn = (
-        resolve(aligner)
-        if aligner
-        else resolve(getattr(align_mod, "DEFAULT_ALIGNER", None))
+    from muvid import align as align_mod
+    from muvid.lyrics import parse_lyrics_md
+
+    doc = parse_lyrics_md(Path(lyrics).read_text(encoding="utf-8"))
+    if not doc.lines:
+        raise ValueError(f"no lyric lines found in {lyrics}")
+
+    name = aligner
+    kwargs: dict = {}
+    if name is None:
+        if _has("faster_whisper"):
+            name = "whisperx-lite"
+        else:
+            raise RuntimeError(
+                "No offline aligner is available: install faster-whisper "
+                "(`pip install faster-whisper`), pass --subtitles with timed "
+                "lines, or choose an aligner by name (see muvid.align.list_aligners)."
+            )
+    transcript: dict = {}
+    if name == "whisperx-lite":
+        kwargs["audio_path"] = str(audio)
+    elif name == "scribe-greedy":
+        from muvid.lyrics import transcribe  # ElevenLabs Scribe: paid, keyed
+
+        transcript = transcribe(audio)
+    result = align_mod.align_lyrics(
+        doc, transcript, duration_s=duration, aligner=name, **kwargs
     )
-    words = fn(audio=audio, lyrics=Path(lyrics) if lyrics else None)
-    return from_words(
-        words, duration=duration, source=f"aligner:{aligner or 'default'}"
-    )
+    return from_alignment_result(result, duration=duration, source=f"aligner:{name}")

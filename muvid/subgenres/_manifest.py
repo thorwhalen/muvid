@@ -16,8 +16,12 @@ manifest module is expected to do the same, so importing it costs microseconds.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from typing import Any, Mapping, Sequence
+
+#: What a slug may look like. It is a path segment and a contract value.
+SLUG_RE = re.compile(r"[a-z0-9][a-z0-9-]*")
 
 #: Bumped when the manifest shape or the renderer contract changes
 #: incompatibly. A plugin declares the versions it supports via
@@ -44,6 +48,9 @@ class Example:
 
     description: str
     params: Mapping[str, Any] = field(default_factory=dict)
+    #: Inputs for this example, when they can be stated without a local path.
+    #: The conformance kit uses the first Example's inputs for its trial render.
+    inputs: Mapping[str, Any] = field(default_factory=dict)
     #: Optional path, relative to the plugin package, of a short sample render.
     preview: str | None = None
 
@@ -85,22 +92,41 @@ class Subgenre:
     #: Which distribution provided this, filled in by the loader for
     #: entry-point plugins. ``None`` for in-process registrations.
     provider: str | None = None
-    api_versions: Sequence[str] = (API_VERSION,)
+    #: REQUIRED. No default on purpose: a default bound at muvid's import time
+    #: would make a plugin that never stated a version "declare" whichever
+    #: version happens to be running — vacuous for the careless, and it left
+    #: the careful plugin that pinned "1" refused on a v2 host while the one
+    #: that pinned nothing sailed through. A plugin states what it was written
+    #: against; the host decides.
+    api_versions: Sequence[str] = ()
 
     def __post_init__(self) -> None:
-        if not self.slug or not self.slug.strip():
-            raise ValueError("Subgenre.slug must be a non-empty string")
+        # The slug is a persisted PATH SEGMENT. Anything a path parser could
+        # read as more than one segment — "../x", "a/b", a space — is refused
+        # here, at the public ramp, not only in the conformance kit.
+        if not SLUG_RE.fullmatch(self.slug or ""):
+            raise ValueError(
+                f"Subgenre.slug {self.slug!r} must match {SLUG_RE.pattern!r}: "
+                "lowercase letters, digits and hyphens, starting with a letter "
+                "or digit — it is used as a path segment."
+            )
         if ":" not in self.render:
             raise ValueError(
                 f"Subgenre({self.slug!r}).render must be 'module:function', "
                 f"got {self.render!r} — the point of the string is that the "
                 "renderer is not imported until it is used."
             )
-        if API_VERSION not in tuple(self.api_versions):
+        declared = tuple(str(v) for v in (self.api_versions or ()))
+        if not declared:
             raise ValueError(
-                f"Subgenre({self.slug!r}) declares api_versions="
-                f"{tuple(self.api_versions)!r}, which does not include the "
-                f"running API_VERSION {API_VERSION!r}."
+                f"Subgenre({self.slug!r}) must declare api_versions — e.g. "
+                f"api_versions=({API_VERSION!r},) — so a host can tell what it was "
+                "written against instead of assuming."
+            )
+        if API_VERSION not in declared:
+            raise ValueError(
+                f"Subgenre({self.slug!r}) declares api_versions={declared!r}, which "
+                f"does not include the running API_VERSION {API_VERSION!r}."
             )
 
     def to_dict(self) -> dict[str, Any]:
@@ -113,15 +139,13 @@ class Subgenre:
             "params_schema": dict(self.params_schema),
             "produces": self.produces,
             "examples": [
-                {
-                    "description": e.description,
-                    "params": dict(e.params),
-                    "preview": e.preview,
-                }
+                {"description": e.description, "params": dict(e.params),
+                 "inputs": dict(e.inputs), "preview": e.preview}
                 for e in self.examples
             ],
             "intake_kinds": list(self.intake_kinds),
             "cost_profile": self.cost_profile,
             "provider": self.provider,
-            "api_version": API_VERSION,
+            # what the PLUGIN declared; the running version is a catalogue-level fact
+            "api_versions": list(self.api_versions),
         }

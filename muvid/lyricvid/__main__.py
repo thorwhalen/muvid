@@ -83,9 +83,24 @@ def validate(treatment: str) -> None:
     """Validate a treatment JSON file (or a JSON string), and report repairs."""
     from pathlib import Path
 
-    p = Path(treatment)
-    payload = p.read_text(encoding="utf-8") if p.exists() else treatment
-    _emit(_tools.validate_treatment(payload))
+    _emit(_tools.validate_treatment(_treatment_arg(treatment)))
+
+
+def _treatment_arg(value: str) -> str:
+    """A path to a JSON file, or inline JSON. Inline first: a long JSON string
+    handed to ``Path(...).exists()`` raises ENAMETOOLONG rather than False."""
+    from pathlib import Path
+
+    stripped = value.strip()
+    if stripped.startswith("{"):
+        return stripped
+    p = Path(value)
+    try:
+        if p.exists():
+            return p.read_text(encoding="utf-8")
+    except OSError:
+        pass
+    return value
 
 
 def render(
@@ -108,10 +123,7 @@ def render(
     """Render a lyric video from AUDIO to OUTPUT."""
     from pathlib import Path
 
-    treat = None
-    if treatment:
-        p = Path(treatment)
-        treat = _json.loads(p.read_text(encoding="utf-8") if p.exists() else treatment)
+    treat = _json.loads(_treatment_arg(treatment)) if treatment else None
     _emit(
         _tools.render_lyric_video(
             audio,

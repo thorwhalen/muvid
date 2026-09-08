@@ -18,6 +18,7 @@ backend by name never falls back -- it fails loudly.
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from typing import Any, Callable
 
@@ -47,6 +48,53 @@ RENDERERS: dict[str, str] = {
 }
 
 DEFAULT_RENDERER = "auto"
+
+
+#: Resource bounds, env-configurable like ``MUVID_FOOTAGE_*``. These exist
+#: because the muvid#75/#76 scar is exactly this shape: an allowlisted operation
+#: asked for a 590 MB frame. A caller-supplied ``width``/``height``/``fps`` on a
+#: caller-supplied song length is the same lever, and the visualizer already
+#: bounds duration (``MUVID_MAX_DURATION_S``) — the lyric video bounded nothing.
+MAX_PIXELS = int(os.environ.get("MUVID_LYRICVID_MAX_PIXELS", str(3840 * 2160)))
+MAX_FPS = int(os.environ.get("MUVID_LYRICVID_MAX_FPS", "60"))
+MAX_DURATION_S = int(os.environ.get("MUVID_MAX_DURATION_S", str(15 * 60)))
+#: The web renderer writes one PNG per frame; this bounds the disk it may take.
+MAX_FRAMES = int(os.environ.get("MUVID_LYRICVID_MAX_FRAMES", str(15 * 60 * 30)))
+
+
+def check_render_bounds(canvas: Canvas, duration_s: float) -> None:
+    """Refuse a render that would exceed the resource bounds. Refuse, not clamp.
+
+    A clamped request silently produces a different video than the one asked
+    for; a refusal tells the caller the bound.
+
+    >>> check_render_bounds(Canvas(width=1920, height=1080, fps=30), 200.0)
+    >>> check_render_bounds(Canvas(width=30000, height=30000, fps=30), 10.0)
+    Traceback (most recent call last):
+    ...
+    ValueError: canvas 30000x30000 is 900000000 px/frame; the bound is 8294400 (MUVID_LYRICVID_MAX_PIXELS)
+    """
+    px = canvas.width * canvas.height
+    if canvas.width < 16 or canvas.height < 16:
+        raise ValueError(f"canvas {canvas.width}x{canvas.height} is too small")
+    if px > MAX_PIXELS:
+        raise ValueError(
+            f"canvas {canvas.width}x{canvas.height} is {px} px/frame; the bound is "
+            f"{MAX_PIXELS} (MUVID_LYRICVID_MAX_PIXELS)"
+        )
+    if not 1 <= canvas.fps <= MAX_FPS:
+        raise ValueError(f"fps {canvas.fps} is outside 1..{MAX_FPS} (MUVID_LYRICVID_MAX_FPS)")
+    if duration_s > MAX_DURATION_S:
+        raise ValueError(
+            f"audio is {duration_s:.0f}s; the render limit is {MAX_DURATION_S}s "
+            "(MUVID_MAX_DURATION_S)"
+        )
+    frames = int(round(duration_s * canvas.fps))
+    if frames > MAX_FRAMES:
+        raise ValueError(
+            f"{frames} frames ({duration_s:.0f}s at {canvas.fps} fps) exceeds "
+            f"{MAX_FRAMES} (MUVID_LYRICVID_MAX_FRAMES)"
+        )
 
 
 def register_renderer(name: str, target: str) -> None:
@@ -163,6 +211,7 @@ def render(request: RenderRequest) -> RenderResult:
         aligner=params.get("aligner"),
     )
 
+    repair_notes: list[str] = []
     treatment_in = params.get("treatment")
     if treatment_in is None:
         from muvid.lyricvid.director import propose_treatments
@@ -176,14 +225,20 @@ def render(request: RenderRequest) -> RenderResult:
         )[0]
         treatment_source = "proposed"
     else:
-        treatment, _notes = spec_mod.coerce(treatment_in)
+        treatment, repair_notes = spec_mod.coerce(treatment_in)
         treatment_source = "supplied"
+        if params.get("strict") and repair_notes:
+            # A caller who wants exactly what they asked for, or nothing.
+            raise ValueError(
+                "treatment needed repairs and strict=True: " + "; ".join(repair_notes)
+            )
 
     canvas = Canvas(
         width=int(params.get("width", 1920)),
         height=int(params.get("height", 1080)),
         fps=int(params.get("fps", 30)),
     )
+    check_render_bounds(canvas, timed.duration)
     scene = compile_scene(treatment, timed, canvas=canvas)
 
     requested = params.get("renderer", DEFAULT_RENDERER)
@@ -200,13 +255,21 @@ def render(request: RenderRequest) -> RenderResult:
     spec_path.write_text(treatment.to_json(), encoding="utf-8")
 
     meta: dict[str, Any] = {
+        **dict(result.meta),
+        # AFTER the backend's meta, so the choice `auto` made is recorded in one
+        # vocabulary ("ass"/"web") rather than whatever the backend calls itself
         "renderer": backend_name,
         "renderer_requested": requested,
         "treatment_source": treatment_source,
         "timing_source": timed.source,
         "timing_measured": timed.measured,
-        **dict(result.meta),
     }
+    # A repaired treatment renders something other than what was asked for.
+    # That is fine — but only if the caller can SEE it. Omit-when-empty.
+    if repair_notes:
+        meta["treatment_repairs"] = list(repair_notes)
+    if scene.meta.get("uncovered_sections"):
+        meta["uncovered_sections"] = scene.meta["uncovered_sections"]
     return RenderResult(
         output=result.output,
         duration_s=result.duration_s

@@ -84,6 +84,12 @@ Homepage = "https://github.com/thorwhalen/muvid"
 Repository = "https://github.com/thorwhalen/muvid"
 Documentation = "https://thorwhalen.github.io/muvid"
 
+# muvid's own subgenre is registered through the SAME entry-point mechanism a
+# third party uses — the reference plugin has to be ON the mechanism it is the
+# first of, or a host reading the documented catalogue sees an empty muvid.
+[project.entry-points."muvid.subgenres.v1"]
+lyric-video = "muvid.lyricvid.manifest:LYRIC_VIDEO"
+
 [project.optional-dependencies]
 # The AI narrative pipeline (muvid.facade / muvid.renderers): image/video
 # generation, lyric alignment, character/environment assets.
@@ -261,13 +267,19 @@ doctest_optionflags = [
 # audio slicing). Declaring it here makes CI install it so the render tests run.
 # Windows is intentionally omitted: the wads installer crashes emitting a "✓"
 # on Windows' cp1252 console, and the ffmpeg-backed tests skip without it anyway.
+# The check is CAPABILITY-based, not presence-based: a binary on PATH that lacks the
+# `subtitles` filter (libass) is exactly the ffmpeg Homebrew ships since it slimmed the
+# formula in Jan 2026 (homebrew-core#261303 dropped libass, libfreetype/drawtext, webp,
+# zimg). `which ffmpeg` would call that a pass and the lyric-video ASS renderer and
+# drawtext would then fail at first use. Ubuntu's `ffmpeg` package still depends on
+# libass9, so apt is fine; on macOS the full build is the keg-only `ffmpeg-full`.
 [tool.wads.ops.ffmpeg]
-description = "Multimedia framework for video/audio processing"
+description = "Multimedia framework for video/audio processing (a build with libass + freetype)"
 url = "https://ffmpeg.org/"
-check.linux = "which ffmpeg"
-check.macos = "which ffmpeg"
+check.linux = "ffmpeg -hide_banner -filters 2>/dev/null | grep -q ' subtitles '"
+check.macos = "ffmpeg -hide_banner -filters 2>/dev/null | grep -q ' subtitles '"
 install.linux = ["sudo apt-get update", "sudo apt-get install -y ffmpeg"]
-install.macos = "brew install ffmpeg"
+install.macos = "brew install ffmpeg-full && echo 'ffmpeg-full is keg-only: prepend /opt/homebrew/opt/ffmpeg-full/bin to PATH'"
 
 [tool.wads.ci]
 project_name = ""

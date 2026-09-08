@@ -50,7 +50,7 @@ def register_subgenre(subgenre: Subgenre) -> Subgenre:
     >>> from muvid.subgenres import Subgenre, register_subgenre, list_subgenres
     >>> sg = register_subgenre(Subgenre(
     ...     slug='demo-doctest', title='Demo', description='.',
-    ...     render='muvid.subgenres.testing:echo_renderer'))
+    ...     render='muvid.subgenres.testing:echo_renderer', api_versions=("1",)))
     >>> 'demo-doctest' in list_subgenres()
     True
     >>> unregister_subgenre('demo-doctest')
@@ -59,6 +59,15 @@ def register_subgenre(subgenre: Subgenre) -> Subgenre:
         raise ValueError(
             f"subgenre {subgenre.slug!r} is already registered. Slugs are "
             "persisted path segments and public contract values; pick another."
+        )
+    installed = _discover().get(subgenre.slug)
+    if installed is not None:
+        # The same collision rule for an INSTALLED plugin: an in-process
+        # registration used to shadow it silently, which is exactly the
+        # two-plugins-fighting-over-a-directory case the rule exists for.
+        raise ValueError(
+            f"subgenre {subgenre.slug!r} is already provided by the installed "
+            f"distribution {installed.provider!r}; pick another slug."
         )
     _SUBGENRES[subgenre.slug] = subgenre
     return subgenre

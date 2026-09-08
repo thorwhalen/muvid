@@ -41,6 +41,7 @@ def demo() -> Subgenre:
         description="A demo subgenre.",
         render="muvid.subgenres.testing:echo_renderer",
         inputs={"type": "object", "properties": {"audio": {"type": "string"}}},
+        api_versions=("1",),
     )
     register_subgenre(sg)
     yield sg
@@ -65,7 +66,7 @@ def test_a_slug_cannot_be_silently_reused(demo):
 def test_render_string_is_required_to_be_a_reference():
     """The whole design rests on the renderer being named, not imported."""
     with pytest.raises(ValueError, match="module:function"):
-        Subgenre(slug="x", title="X", description="d", render="not_a_reference")
+        Subgenre(slug="x", title="X", description="d", render="not_a_reference", api_versions=("1",))
 
 
 def test_api_version_mismatch_fails_loudly_at_declaration():
@@ -120,6 +121,7 @@ def test_conformance_kit_catches_a_renderer_that_lies(tmp_path):
     sg = Subgenre(
         slug="liar", title="Liar", description="Writes nothing.",
         render="muvid.subgenres.testing:_liar",
+        api_versions=("1",),
     )
     report = check_subgenre_conformance(sg, workdir=tmp_path)
     assert not report.ok
@@ -133,6 +135,7 @@ def test_conformance_kit_catches_a_wrong_return_type(tmp_path):
     sg = Subgenre(
         slug="wrong", title="Wrong", description="Returns a dict.",
         render="muvid.subgenres.testing:_wrong",
+        api_versions=("1",),
     )
     report = check_subgenre_conformance(sg, workdir=tmp_path)
     assert not report.ok
@@ -158,10 +161,7 @@ def test_listing_imports_no_renderer(tmp_path):
         """
         import sys, json
         from muvid.subgenres import subgenre_catalog
-        import muvid.lyricvid.manifest as m
-        from muvid.subgenres import register_subgenre
-        register_subgenre(m.LYRIC_VIDEO)
-        cat = subgenre_catalog()
+        cat = subgenre_catalog()   # lyric-video arrives via its entry point
         assert any(s['slug'] == 'lyric-video' for s in cat['subgenres']), cat
         heavy = sorted(
             n for n in sys.modules
@@ -178,7 +178,22 @@ def test_listing_imports_no_renderer(tmp_path):
     assert json.loads(proc.stdout.strip()) == []
 
 
-def test_a_broken_plugin_does_not_take_the_catalogue_down(monkeypatch):
+@pytest.fixture
+def discovery_snapshot():
+    """Snapshot the discovery cache so a test that fakes entry points cannot
+    leave `_DISCOVERED = {}` behind and hide every real plugin from the rest
+    of the session (that is exactly what the first version of the test below
+    did — its 'restore' ran while the monkeypatch was still active)."""
+    import muvid.subgenres._registry as reg
+
+    saved = (reg._DISCOVERED, dict(reg._LOAD_ERRORS))
+    yield
+    reg._DISCOVERED = None  # force a real re-discovery on next use
+    reg._LOAD_ERRORS.clear()
+    reg._LOAD_ERRORS.update(saved[1])
+
+
+def test_a_broken_plugin_does_not_take_the_catalogue_down(monkeypatch, discovery_snapshot):
     """A plugin whose entry point raises is recorded and skipped, never raised."""
     from importlib.metadata import EntryPoint
 
@@ -189,7 +204,7 @@ def test_a_broken_plugin_does_not_take_the_catalogue_down(monkeypatch):
             raise ImportError("no such optional dependency")
 
     broken = _Boom(name="broken", value="nope:nope", group=reg.ENTRY_POINT_GROUP)
-    monkeypatch.setattr(reg, "entry_points", lambda **_: [broken], raising=False)
+    # _discover imports entry_points locally from importlib.metadata
     monkeypatch.setattr(
         "importlib.metadata.entry_points", lambda **kw: [broken] if kw else []
     )
@@ -198,13 +213,39 @@ def test_a_broken_plugin_does_not_take_the_catalogue_down(monkeypatch):
     assert "broken" in cat["load_errors"]
     # and the catalogue still serves
     assert isinstance(cat["subgenres"], list)
-    subgenre_catalog(refresh=True)  # restore
+
+
+def test_muvids_own_subgenre_is_discovered_through_the_entry_point():
+    """The reference plugin is ON the mechanism it is the first of.
+
+    No hand-registration anywhere: a host reading the documented catalogue
+    sees lyric-video because pyproject.toml declares it in the
+    `muvid.subgenres.v1` group, exactly as a third party would.
+    """
+    cat = subgenre_catalog(refresh=True)
+    slugs = {s["slug"]: s for s in cat["subgenres"]}
+    assert "lyric-video" in slugs, cat
+    assert slugs["lyric-video"]["provider"] == "muvid"
+    assert slugs["lyric-video"]["api_versions"] == ["1"]
+
+
+def test_a_slug_that_is_not_a_clean_path_segment_is_refused():
+    for bad in ("../../etc", "a/b", "Has Space", "UPPER", "-lead", ""):
+        with pytest.raises(ValueError, match="slug"):
+            Subgenre(slug=bad, title="x", description="d", render="m:f",
+                     api_versions=("1",))
+
+
+def test_a_manifest_must_state_its_api_version():
+    with pytest.raises(ValueError, match="must declare api_versions"):
+        Subgenre(slug="x", title="x", description="d", render="m:f")
 
 
 def test_resolve_renderer_explains_a_missing_dependency(demo):
     sg = Subgenre(
         slug="needs-dep", title="Needs dep", description="d",
         render="a_module_that_does_not_exist:render",
+        api_versions=("1",),
     )
     register_subgenre(sg)
     try:

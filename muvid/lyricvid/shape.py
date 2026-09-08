@@ -347,6 +347,11 @@ def _svg_ink(u: Any, v: Any, value: str, *, curve_samples: int = CURVE_SAMPLES) 
     return _even_odd(u, v, polys)
 
 
+#: Largest mask image ``mask_image`` will open. A silhouette at 4k is plenty.
+MAX_MASK_PIXELS = int(__import__("os").environ.get(
+    "MUVID_LYRICVID_MAX_MASK_PIXELS", str(4096 * 4096)))
+
+
 def _image_ink(
     u: Any, v: Any, value: str, *, threshold: int = 128, invert: bool = False
 ) -> Any:
@@ -366,7 +371,16 @@ def _image_ink(
         ) from e
     import numpy as np
 
+    # A mask only needs to be big enough to rasterise a silhouette; anything
+    # past this is either a mistake or a decompression bomb. Pillow's own
+    # default (89 Mpx) is not muvid's decision to rely on.
     with Image.open(value) as im:
+        w0, h0 = im.size
+        if w0 * h0 > MAX_MASK_PIXELS:
+            raise ValueError(
+                f"mask image is {w0}x{h0} ({w0 * h0} px); the bound is "
+                f"{MAX_MASK_PIXELS} px (MUVID_LYRICVID_MAX_MASK_PIXELS)"
+            )
         im.load()
         if "A" in im.getbands():
             ink = np.asarray(im.getchannel("A"), dtype=np.uint8) >= threshold
