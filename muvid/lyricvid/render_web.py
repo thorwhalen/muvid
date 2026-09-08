@@ -571,8 +571,18 @@ def _capture(page: Path, frames: Path, *, scene: Scene, scale: int) -> int:
     return n
 
 
-def _encode(frames: Path, audio: Path, output: Path, *, fps: int, crf: int) -> None:
-    """PNG frames + the song → an H.264/AAC mp4 every platform accepts."""
+def _encode(
+    frames: Path, audio: Path, output: Path, *, fps: int, crf: int, duration: float
+) -> None:
+    """PNG frames + the song → an H.264/AAC mp4 every platform accepts.
+
+    ``-t duration`` bounds the OUTPUT to the scene's length: the capture rounds
+    ``duration * fps`` up to a whole frame, and ``-shortest`` alone still let the
+    video run one or two frames past the audio (2.2 s of video over 2.0 s of
+    song at 10 fps). Nothing reported it because it sat inside
+    ``verify_video``'s tolerance — but a lyric video is by definition the length
+    of its song.
+    """
     output.parent.mkdir(parents=True, exist_ok=True)
     run_ffmpeg(
         [
@@ -580,20 +590,37 @@ def _encode(frames: Path, audio: Path, output: Path, *, fps: int, crf: int) -> N
             str(fps),
             "-i",
             str(frames / FRAME_PATTERN),
+            # INPUT-side -t on the song bounds what the AAC encoder is given to
+            # the scene's length. It is not what fixed the 2-frame overshoot
+            # (that was the muxer, see -movflags below) but it is the honest
+            # bound, and it is stable across ffmpeg 6 and 9 where the muxer
+            # flag `-fflags +shortest` is not.
+            "-t",
+            f"{max(0.0, duration):.3f}",
             "-i",
             str(audio),
             "-map",
             "0:v:0",
             "-map",
             "1:a:0",
+            "-t",
+            f"{max(0.0, duration):.3f}",
             *VIDEO_CODEC_ARGS,
             "-crf",
             str(crf),
             "-g",
             str(fps * 2),
             *AUDIO_CODEC_ARGS,
+            # +faststart for streaming; +negative_cts_offsets WITH -use_editlist 0
+            # is the pair render_ass uses and the one that matters here: with
+            # B-frames (x264's default reorder delay of two frames) and no edit
+            # list, the muxer otherwise shifts every video pts UP by the delay,
+            # so the video started 2 frames late and the audio was front-padded
+            # to match — the container came out exactly 2 frames longer than
+            # the song at every fps (0.2 s at 10, 0.067 s at 30). Negative CTS
+            # offsets let the first frame present at 0 without an elst box.
             "-movflags",
-            "+faststart",
+            "+faststart+negative_cts_offsets",
             # -use_editlist 0: keep ffmpeg from writing the elst boxes some
             # platforms (YouTube) trip on.
             "-use_editlist",
@@ -652,9 +679,24 @@ def render(
     frames.mkdir(parents=True)
     try:
         n_frames = _capture(page, frames, scene=scene, scale=scale)
-        _encode(frames, audio, output, fps=scene.canvas.fps, crf=crf)
+        _encode(
+            frames,
+            audio,
+            output,
+            fps=scene.canvas.fps,
+            crf=crf,
+            duration=scene.duration,
+        )
     finally:
         shutil.rmtree(frames, ignore_errors=True)
+
+    # Self-check the way render_ass does, and REPORT rather than raise: the file
+    # exists and plays; a failed check is something the caller should see in
+    # meta, not a reason to throw away a render.
+    from muvid.visualize.verify import verify_video
+
+    checks = verify_video(output, audio=audio)
+    verify_failures = [c.name for c in checks if not c.ok]
 
     return RenderResult(
         output=output,
@@ -662,6 +704,7 @@ def render(
         artifacts={"page": page},
         meta={
             "backend": "web",
+            "verify_failures": verify_failures,
             "frames": n_frames,
             "fps": scene.canvas.fps,
             "width": scene.canvas.width,

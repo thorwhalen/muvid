@@ -177,8 +177,9 @@ three it skips cleanly rather than scoring zero.
 `muvid.footage.workspace.FootageWorkspace` — a stateful per-user project (one song, N
 clips, a persisted alignment, score tracks, renders) under `~/.local/share/muvid`
 (`MUVID_DATA_HOME` to relocate). `muvid.mcp.footage_tools` and `muvid.mcp.scoring_tools`
-expose it as MCP tools (`set_song`, `add_footage`, `align_footage`, `propose_edit`,
-`footage_timeline`, `score_footage`, `assemble_music_video`, …), all free.
+expose it as MCP tools (`set_song`, `add_footage`, `remove_footage`, `align_footage`,
+`propose_edit`, `footage_timeline`, `score_footage`, `assemble_music_video`,
+`list_music_video_projects`, …), all free.
 
 **As an editor document.** `pip install 'muvid[editor]'` adds
 `muvid.footage.lacing_bridge`, which exports a project as

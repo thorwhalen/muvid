@@ -108,7 +108,7 @@ def check_subgenre_conformance(
     >>> import tempfile
     >>> sg = Subgenre(slug='conformance-demo', title='Demo',
     ...               description='A demo.',
-    ...               render='muvid.subgenres.testing:echo_renderer')
+    ...               render='muvid.subgenres.testing:echo_renderer', api_versions=("1",))
     >>> with tempfile.TemporaryDirectory() as d:
     ...     rep = check_subgenre_conformance(sg, workdir=d)
     >>> rep.ok
@@ -118,12 +118,14 @@ def check_subgenre_conformance(
     report = ConformanceReport(slug=subgenre.slug)
 
     # --- manifest ---------------------------------------------------------
-    if subgenre.slug != subgenre.slug.strip().lower():
-        report.failures.append("slug must be lowercase and unpadded")
-    elif " " in subgenre.slug:
-        report.failures.append("slug must not contain spaces")
+    # Subgenre.__post_init__ already refuses a bad slug at construction — the
+    # kit re-states the rule so a report reads on its own.
+    from muvid.subgenres._manifest import SLUG_RE
+
+    if SLUG_RE.fullmatch(subgenre.slug or ""):
+        report.passed.append("slug is a clean path segment")
     else:
-        report.passed.append("slug is well-formed")
+        report.failures.append(f"slug {subgenre.slug!r} is not a clean path segment")
 
     if not subgenre.description.strip():
         report.failures.append("description is empty — it is what an agent chooses on")
@@ -179,15 +181,50 @@ def check_subgenre_conformance(
         report.skipped.append("render not attempted (render=False)")
         return report
 
+    # Inputs: the caller's, else the first Example's. A manifest whose required
+    # inputs cannot be satisfied from either is SKIPPED honestly, not failed —
+    # muvid's own lyric-video needs a real audio file, which no manifest can
+    # carry. (It used to fail with "needs inputs['audio']", which made the
+    # README's one-liner fail on the reference plugin.)
+    trial_inputs = (
+        dict(inputs)
+        if inputs is not None
+        else (dict(subgenre.examples[0].inputs) if subgenre.examples else {})
+    )
+    trial_params = (
+        dict(params)
+        if params is not None
+        else (dict(subgenre.examples[0].params) if subgenre.examples else {})
+    )
+    required = list((subgenre.inputs or {}).get("required") or [])
+    missing = [k for k in required if k not in trial_inputs]
+    if missing:
+        report.skipped.append(
+            f"render not attempted: required inputs {missing} were not supplied "
+            "(pass inputs=..., or give the first Example inputs)"
+        )
+        return report
+    from muvid.subgenres._schema import validate as _validate
+
+    problems = _validate(trial_inputs, subgenre.inputs, where="inputs")
+    problems += _validate(trial_params, subgenre.params_schema, where="params")
+    if problems:
+        report.failures.append(
+            "trial inputs/params do not satisfy the manifest's own "
+            "schema: " + "; ".join(problems)
+        )
+        return report
+    report.passed.append("trial inputs/params satisfy the declared schema")
+
     wd = workdir / "conformance"
-    wd.mkdir(parents=True, exist_ok=True)
+    wd.mkdir(parents=True, exist_ok=True)  # the HOST keeps the workdir promise
     out = wd / "out.bin"
     try:
         result = fn(
             RenderRequest(
                 subgenre=subgenre.slug,
-                inputs=inputs or {},
-                params=params or {},
+                inputs=trial_inputs,
+                params=trial_params,
                 workdir=wd,
                 output=out,
             )

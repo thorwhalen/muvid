@@ -382,6 +382,7 @@ def test_every_public_tool_function_is_registered():
     import muvid.mcp.footage_tools as footage_tools
     import muvid.mcp.lyricvid_tools as lyricvid_tools
     import muvid.mcp.scoring_tools as scoring_tools
+    import muvid.mcp.subgenre_tools as subgenre_tools
     import muvid.mcp.tools as visualizer_tools
 
     for module, declared in (
@@ -389,6 +390,7 @@ def test_every_public_tool_function_is_registered():
         (scoring_tools, mcp.SCORING_TOOLS),
         (footage_tools, mcp.FOOTAGE_TOOLS),
         (lyricvid_tools, mcp.LYRICVID_TOOLS),
+        (subgenre_tools, mcp.SUBGENRE_TOOLS),
     ):
         public = {
             name
