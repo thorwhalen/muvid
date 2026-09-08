@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.lyricvid.spec &mdash; muvid 0.0.57 documentation</title>
+  <title>muvid.lyricvid.spec &mdash; muvid 0.0.58 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -15,7 +15,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=2bfb35b6"></script>
+      <script src="../../../_static/documentation_options.js?v=c3e19674"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -81,6 +81,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../genre.html">muvid.genre</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../genre_lyric_video.html">muvid.genre_lyric_video</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../genre_music_video.html">muvid.genre_music_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../genre_subgenres.html">muvid.genre_subgenres</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../lyrics.html">muvid.lyrics</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../lyricvid.html">muvid.lyricvid</a></li>
 <li class="toctree-l1"><a class="reference internal" href="__main__.html">muvid.lyricvid.__main__</a></li>
@@ -94,10 +95,12 @@
 <li class="toctree-l1 current"><a class="current reference internal" href="#">muvid.lyricvid.spec</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.lyricvid.spec.ARCHETYPES"><code class="docutils literal notranslate"><span class="pre">ARCHETYPES</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.lyricvid.spec.Direction"><code class="docutils literal notranslate"><span class="pre">Direction</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.lyricvid.spec.INLINE_SHAPE_KINDS"><code class="docutils literal notranslate"><span class="pre">INLINE_SHAPE_KINDS</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.lyricvid.spec.MOTIONS"><code class="docutils literal notranslate"><span class="pre">MOTIONS</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.lyricvid.spec.PERSISTENCE"><code class="docutils literal notranslate"><span class="pre">PERSISTENCE</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.lyricvid.spec.Palette"><code class="docutils literal notranslate"><span class="pre">Palette</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.lyricvid.spec.QUANTIZE"><code class="docutils literal notranslate"><span class="pre">QUANTIZE</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.lyricvid.spec.SHAPE_KINDS"><code class="docutils literal notranslate"><span class="pre">SHAPE_KINDS</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.lyricvid.spec.Scene"><code class="docutils literal notranslate"><span class="pre">Scene</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.lyricvid.spec.ShapeRef"><code class="docutils literal notranslate"><span class="pre">ShapeRef</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.lyricvid.spec.Timing"><code class="docutils literal notranslate"><span class="pre">Timing</span></code></a><ul>
@@ -107,6 +110,7 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.lyricvid.spec.TreatmentSpec"><code class="docutils literal notranslate"><span class="pre">TreatmentSpec</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#muvid.lyricvid.spec.TreatmentSpec.from_dict"><code class="docutils literal notranslate"><span class="pre">TreatmentSpec.from_dict()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#muvid.lyricvid.spec.TreatmentSpec.to_dict"><code class="docutils literal notranslate"><span class="pre">TreatmentSpec.to_dict()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.lyricvid.spec.Typography"><code class="docutils literal notranslate"><span class="pre">Typography</span></code></a></li>
@@ -126,6 +130,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../mcp/identity.html">muvid.mcp.identity</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../mcp/lyricvid_tools.html">muvid.mcp.lyricvid_tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../mcp/scoring_tools.html">muvid.mcp.scoring_tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mcp/subgenre_tools.html">muvid.mcp.subgenre_tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../mcp/tools.html">muvid.mcp.tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../mcp/workspace.html">muvid.mcp.workspace</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../project.html">muvid.project</a></li>
@@ -143,6 +148,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../subgenres/_contract.html">muvid.subgenres._contract</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../subgenres/_manifest.html">muvid.subgenres._manifest</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../subgenres/_registry.html">muvid.subgenres._registry</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../subgenres/_schema.html">muvid.subgenres._schema</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../subgenres/testing.html">muvid.subgenres.testing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../ui.html">muvid.ui</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../ui/app.html">muvid.ui.app</a></li>
@@ -228,6 +234,14 @@ only names the family and its knobs.</p>
 </dd></dl>
 
 <dl class="py data">
+<dt class="sig sig-object py" id="muvid.lyricvid.spec.INLINE_SHAPE_KINDS">
+<span class="sig-prename descclassname"><span class="pre">muvid.lyricvid.spec.</span></span><span class="sig-name descname"><span class="pre">INLINE_SHAPE_KINDS</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">frozenset</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">frozenset({'named',</span> <span class="pre">'svg_path'})</span></span><a class="headerlink" href="#muvid.lyricvid.spec.INLINE_SHAPE_KINDS" title="Link to this definition"></a></dt>
+<dd><p>The shape kinds that carry no reference to anything outside the spec. A
+surface serving untrusted callers (the MCP tools) admits ONLY these unless it
+has itself fetched and scoped the image.</p>
+</dd></dl>
+
+<dl class="py data">
 <dt class="sig sig-object py" id="muvid.lyricvid.spec.MOTIONS">
 <span class="sig-prename descclassname"><span class="pre">muvid.lyricvid.spec.</span></span><span class="sig-name descname"><span class="pre">MOTIONS</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'cut':</span> <span class="pre">'Appears</span> <span class="pre">instantly.</span> <span class="pre">Hardest,</span> <span class="pre">most</span> <span class="pre">rhythmic.',</span> <span class="pre">'fade':</span> <span class="pre">'Fades</span> <span class="pre">up</span> <span class="pre">over</span> <span class="pre">a</span> <span class="pre">fraction</span> <span class="pre">of</span> <span class="pre">a</span> <span class="pre">beat.',</span> <span class="pre">'pop':</span> <span class="pre">'Fades</span> <span class="pre">up</span> <span class="pre">with</span> <span class="pre">a</span> <span class="pre">slight</span> <span class="pre">overshoot</span> <span class="pre">in</span> <span class="pre">scale,</span> <span class="pre">then</span> <span class="pre">settles.',</span> <span class="pre">'rise':</span> <span class="pre">'Fades</span> <span class="pre">up</span> <span class="pre">while</span> <span class="pre">moving</span> <span class="pre">a</span> <span class="pre">short</span> <span class="pre">distance</span> <span class="pre">upward.',</span> <span class="pre">'typewriter':</span> <span class="pre">&quot;Letters</span> <span class="pre">appear</span> <span class="pre">one</span> <span class="pre">at</span> <span class="pre">a</span> <span class="pre">time</span> <span class="pre">across</span> <span class="pre">the</span> <span class="pre">word's</span> <span class="pre">duration.&quot;,</span> <span class="pre">'wipe':</span> <span class="pre">'Revealed</span> <span class="pre">left-to-right,</span> <span class="pre">like</span> <span class="pre">a</span> <span class="pre">karaoke</span> <span class="pre">wipe.'}</span></span><a class="headerlink" href="#muvid.lyricvid.spec.MOTIONS" title="Link to this definition"></a></dt>
 <dd><p>How a single word arrives. Composable with the archetype rather than part of it.</p>
@@ -250,6 +264,18 @@ only names the family and its knobs.</p>
 <span class="sig-prename descclassname"><span class="pre">muvid.lyricvid.spec.</span></span><span class="sig-name descname"><span class="pre">QUANTIZE</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'beat':</span> <span class="pre">'Snapped</span> <span class="pre">to</span> <span class="pre">the</span> <span class="pre">nearest</span> <span class="pre">beat.</span> <span class="pre">Rhythmic,</span> <span class="pre">forgiving</span> <span class="pre">of</span> <span class="pre">alignment</span> <span class="pre">error.',</span> <span class="pre">'downbeat':</span> <span class="pre">'Snapped</span> <span class="pre">to</span> <span class="pre">the</span> <span class="pre">nearest</span> <span class="pre">bar</span> <span class="pre">start.</span> <span class="pre">Slow,</span> <span class="pre">deliberate.',</span> <span class="pre">'line':</span> <span class="pre">&quot;The</span> <span class="pre">whole</span> <span class="pre">line</span> <span class="pre">arrives</span> <span class="pre">together,</span> <span class="pre">at</span> <span class="pre">the</span> <span class="pre">line's</span> <span class="pre">start.&quot;,</span> <span class="pre">'syllable':</span> <span class="pre">'Sub-word</span> <span class="pre">timing,</span> <span class="pre">where</span> <span class="pre">the</span> <span class="pre">aligner</span> <span class="pre">provides</span> <span class="pre">it.',</span> <span class="pre">'word':</span> <span class="pre">'Each</span> <span class="pre">word</span> <span class="pre">ignites</span> <span class="pre">at</span> <span class="pre">its</span> <span class="pre">own</span> <span class="pre">measured</span> <span class="pre">onset.</span> <span class="pre">Tightest</span> <span class="pre">sync.'}</span></span><a class="headerlink" href="#muvid.lyricvid.spec.QUANTIZE" title="Link to this definition"></a></dt>
 <dd><p>What the animation clock is quantised to. The MODEL picks one of these; the
 numbers behind them always come from measurement, never from the model.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="muvid.lyricvid.spec.SHAPE_KINDS">
+<span class="sig-prename descclassname"><span class="pre">muvid.lyricvid.spec.</span></span><span class="sig-name descname"><span class="pre">SHAPE_KINDS</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'mask_image':</span> <span class="pre">'An</span> <span class="pre">image</span> <span class="pre">whose</span> <span class="pre">dark</span> <span class="pre">ink</span> <span class="pre">(or</span> <span class="pre">alpha)</span> <span class="pre">is</span> <span class="pre">the</span> <span class="pre">outline.</span> <span class="pre">Trusted</span> <span class="pre">callers</span> <span class="pre">only:</span> <span class="pre">the</span> <span class="pre">value</span> <span class="pre">names</span> <span class="pre">a</span> <span class="pre">file.',</span> <span class="pre">'named':</span> <span class="pre">'A</span> <span class="pre">built-in</span> <span class="pre">outline:</span> <span class="pre">circle,</span> <span class="pre">heart,</span> <span class="pre">star,</span> <span class="pre">apple,</span> <span class="pre">square.',</span> <span class="pre">'svg_path':</span> <span class="pre">'An</span> <span class="pre">SVG</span> <span class="pre">path</span> <span class="pre">string</span> <span class="pre">(M/L/H/V/C/S/Q/T/Z)</span> <span class="pre">supplied</span> <span class="pre">inline.'}</span></span><a class="headerlink" href="#muvid.lyricvid.spec.SHAPE_KINDS" title="Link to this definition"></a></dt>
+<dd><p>Where a shape outline may come from. A closed set for the same reason the
+others are — and additionally because <code class="docutils literal notranslate"><span class="pre">value</span></code> is INTERPRETED by the
+renderer, which makes <code class="docutils literal notranslate"><span class="pre">kind</span></code> a trust boundary: <code class="docutils literal notranslate"><span class="pre">mask_image</span></code> names a file
+to open, and a treatment that arrives from a remote caller must not be able
+to point that at a host path. The spec only admits the kinds; where a
+<code class="docutils literal notranslate"><span class="pre">mask_image</span></code> value is allowed to come FROM is the caller-facing surface’s
+decision (see <code class="docutils literal notranslate"><span class="pre">MASK_IMAGE_TRUSTED</span></code>).</p>
 </dd></dl>
 
 <dl class="py class">
@@ -303,7 +329,34 @@ model may name a shape, but it never draws one.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="muvid.lyricvid.spec.TreatmentSpec.from_dict">
 <span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">d</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Mapping</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#muvid.lyricvid.spec.TreatmentSpec" title="muvid.lyricvid.spec.TreatmentSpec"><span class="pre">TreatmentSpec</span></a></span></span><a class="reference internal" href="../../../_modules/muvid/lyricvid/spec.html#TreatmentSpec.from_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.lyricvid.spec.TreatmentSpec.from_dict" title="Link to this definition"></a></dt>
-<dd><p>Build from a plain mapping, tolerating missing keys (they default).</p>
+<dd><p>Build from a plain mapping — TOTAL over what a model or a remote caller sends.</p>
+<p>Missing keys default. Wrong-shaped values are coerced toward the field’s
+type rather than raised on: a string where a list was expected becomes
+a one-element list (<code class="docutils literal notranslate"><span class="pre">applies_to:</span> <span class="pre">&quot;chorus&quot;</span></code> used to become
+<code class="docutils literal notranslate"><span class="pre">('c','h','o','r','u','s')</span></code>), a numeric string becomes a number, an
+unknown key is dropped, a <code class="docutils literal notranslate"><span class="pre">None</span></code> sub-object is the default. What
+cannot be coerced falls to the default and <a class="reference internal" href="#muvid.lyricvid.spec.repair" title="muvid.lyricvid.spec.repair"><code class="xref py py-func docutils literal notranslate"><span class="pre">repair()</span></code></a> reports the
+enum-level substitutions afterwards.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">s</span> <span class="o">=</span> <span class="n">TreatmentSpec</span><span class="o">.</span><span class="n">from_dict</span><span class="p">({</span><span class="s1">'scenes'</span><span class="p">:</span> <span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">{</span><span class="s1">'applies_to'</span><span class="p">:</span> <span class="s1">'chorus'</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="s1">'timing'</span><span class="p">:</span> <span class="s1">'fast'</span><span class="p">,</span> <span class="s1">'shape'</span><span class="p">:</span> <span class="s1">'circle'</span><span class="p">}],</span>
+<span class="gp">... </span>    <span class="s1">'direction'</span><span class="p">:</span> <span class="p">{</span><span class="s1">'palette'</span><span class="p">:</span> <span class="p">{</span><span class="s1">'foo'</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">'bg'</span><span class="p">:</span> <span class="s1">'#000000'</span><span class="p">},</span>
+<span class="gp">... </span>                  <span class="s1">'motion_vocabulary'</span><span class="p">:</span> <span class="s1">'pop'</span><span class="p">,</span>
+<span class="gp">... </span>                  <span class="s1">'typography'</span><span class="p">:</span> <span class="p">{</span><span class="s1">'weight'</span><span class="p">:</span> <span class="s1">'700'</span><span class="p">,</span> <span class="s1">'tracking'</span><span class="p">:</span> <span class="kc">None</span><span class="p">}}})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">s</span><span class="o">.</span><span class="n">scenes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">applies_to</span><span class="p">,</span> <span class="n">s</span><span class="o">.</span><span class="n">direction</span><span class="o">.</span><span class="n">motion_vocabulary</span>
+<span class="go">(('chorus',), ('pop',))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">s</span><span class="o">.</span><span class="n">direction</span><span class="o">.</span><span class="n">typography</span><span class="o">.</span><span class="n">weight</span><span class="p">,</span> <span class="n">s</span><span class="o">.</span><span class="n">direction</span><span class="o">.</span><span class="n">typography</span><span class="o">.</span><span class="n">tracking</span>
+<span class="go">(700, 0.0)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">s</span><span class="o">.</span><span class="n">direction</span><span class="o">.</span><span class="n">palette</span><span class="o">.</span><span class="n">bg</span><span class="p">,</span> <span class="n">s</span><span class="o">.</span><span class="n">scenes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span>
+<span class="go">('#000000', None)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="muvid.lyricvid.spec.TreatmentSpec.to_dict">
+<span class="sig-name descname"><span class="pre">to_dict</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../_modules/muvid/lyricvid/spec.html#TreatmentSpec.to_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.lyricvid.spec.TreatmentSpec.to_dict" title="Link to this definition"></a></dt>
+<dd><p>A JSON-native dict: tuples become lists, so what this emits is
+exactly what <a class="reference internal" href="#muvid.lyricvid.spec.json_schema" title="muvid.lyricvid.spec.json_schema"><code class="xref py py-func docutils literal notranslate"><span class="pre">json_schema()</span></code></a> validates and what a file round-trips.</p>
 </dd></dl>
 
 </dd></dl>

@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.lyricvid.timed_text &mdash; muvid 0.0.57 documentation</title>
+  <title>muvid.lyricvid.timed_text &mdash; muvid 0.0.58 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -15,7 +15,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=2bfb35b6"></script>
+      <script src="../../../_static/documentation_options.js?v=c3e19674"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -81,6 +81,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../genre.html">muvid.genre</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../genre_lyric_video.html">muvid.genre_lyric_video</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../genre_music_video.html">muvid.genre_music_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../genre_subgenres.html">muvid.genre_subgenres</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../lyrics.html">muvid.lyrics</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../lyricvid.html">muvid.lyricvid</a></li>
 <li class="toctree-l1"><a class="reference internal" href="__main__.html">muvid.lyricvid.__main__</a></li>
@@ -104,6 +105,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#muvid.lyricvid.timed_text.Word.measured"><code class="docutils literal notranslate"><span class="pre">Word.measured</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.lyricvid.timed_text.from_alignment_result"><code class="docutils literal notranslate"><span class="pre">from_alignment_result()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.lyricvid.timed_text.from_alignment_store"><code class="docutils literal notranslate"><span class="pre">from_alignment_store()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.lyricvid.timed_text.from_lyrics_and_audio"><code class="docutils literal notranslate"><span class="pre">from_lyrics_and_audio()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.lyricvid.timed_text.from_subtitles"><code class="docutils literal notranslate"><span class="pre">from_subtitles()</span></code></a></li>
@@ -118,6 +120,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../mcp/identity.html">muvid.mcp.identity</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../mcp/lyricvid_tools.html">muvid.mcp.lyricvid_tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../mcp/scoring_tools.html">muvid.mcp.scoring_tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mcp/subgenre_tools.html">muvid.mcp.subgenre_tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../mcp/tools.html">muvid.mcp.tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../mcp/workspace.html">muvid.mcp.workspace</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../project.html">muvid.project</a></li>
@@ -135,6 +138,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../subgenres/_contract.html">muvid.subgenres._contract</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../subgenres/_manifest.html">muvid.subgenres._manifest</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../subgenres/_registry.html">muvid.subgenres._registry</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../subgenres/_schema.html">muvid.subgenres._schema</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../subgenres/testing.html">muvid.subgenres.testing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../ui.html">muvid.ui</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../ui/app.html">muvid.ui.app</a></li>
@@ -237,6 +241,8 @@ ASR are imported inside the functions that need them.</p>
 <dt class="sig sig-object py" id="muvid.lyricvid.timed_text.TimedText.measured">
 <span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">measured</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><a class="headerlink" href="#muvid.lyricvid.timed_text.TimedText.measured" title="Link to this definition"></a></dt>
 <dd><p>True when every word time was measured rather than interpolated.</p>
+<p>False for an empty text: “all of nothing was measured” is the kind of
+vacuous truth that reads as reassurance in a report.</p>
 </dd></dl>
 
 <dl class="py attribute">
@@ -260,6 +266,31 @@ ASR are imported inside the functions that need them.</p>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="muvid.lyricvid.timed_text.from_alignment_result">
+<span class="sig-prename descclassname"><span class="pre">muvid.lyricvid.timed_text.</span></span><span class="sig-name descname"><span class="pre">from_alignment_result</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">result</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">duration</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">source</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'muvid-align'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#muvid.lyricvid.timed_text.TimedText" title="muvid.lyricvid.timed_text.TimedText"><span class="pre">TimedText</span></a></span></span><a class="reference internal" href="../../../_modules/muvid/lyricvid/timed_text.html#from_alignment_result"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.lyricvid.timed_text.from_alignment_result" title="Link to this definition"></a></dt>
+<dd><p>Convert a <a class="reference internal" href="../align.html#muvid.align.AlignmentResult" title="muvid.align.AlignmentResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">muvid.align.AlignmentResult</span></code></a> into a timed tree.</p>
+<p>Keeps the sections and lines the aligner found — which is strictly better
+than flattening to words and re-splitting on gaps, because the lyrics
+document already <em>knows</em> where the lines are.</p>
+<p>A line whose words the aligner could not match still has a <code class="docutils literal notranslate"><span class="pre">[start,</span> <span class="pre">end]</span></code>
+(interpolated by the aligner from its neighbours); its words are spread
+across that span and marked <code class="docutils literal notranslate"><span class="pre">measured=False</span></code>, so downstream can see the
+difference between a measured onset and a guessed one.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">types</span><span class="w"> </span><span class="kn">import</span> <span class="n">SimpleNamespace</span> <span class="k">as</span> <span class="n">NS</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">w</span> <span class="o">=</span> <span class="n">NS</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="s1">'hi'</span><span class="p">,</span> <span class="n">start_s</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">end_s</span><span class="o">=</span><span class="mf">0.4</span><span class="p">,</span> <span class="n">token_index</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ln</span> <span class="o">=</span> <span class="n">NS</span><span class="p">(</span><span class="n">line_index</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s1">'hi there'</span><span class="p">,</span> <span class="n">start_s</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">end_s</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+<span class="gp">... </span>        <span class="n">word_alignments</span><span class="o">=</span><span class="p">(</span><span class="n">w</span><span class="p">,))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sec</span> <span class="o">=</span> <span class="n">NS</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s1">'verse'</span><span class="p">,</span> <span class="n">lines</span><span class="o">=</span><span class="p">(</span><span class="n">ln</span><span class="p">,))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">tt</span> <span class="o">=</span> <span class="n">from_alignment_result</span><span class="p">(</span><span class="n">NS</span><span class="p">(</span><span class="n">sections</span><span class="o">=</span><span class="p">(</span><span class="n">sec</span><span class="p">,)),</span> <span class="n">duration</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="p">[(</span><span class="n">x</span><span class="o">.</span><span class="n">text</span><span class="p">,</span> <span class="n">x</span><span class="o">.</span><span class="n">measured</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">tt</span><span class="o">.</span><span class="n">words</span><span class="p">()]</span>
+<span class="go">[('hi', True), ('there', False)]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">tt</span><span class="o">.</span><span class="n">sections</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">label</span>
+<span class="go">'verse'</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="muvid.lyricvid.timed_text.from_alignment_store">
 <span class="sig-prename descclassname"><span class="pre">muvid.lyricvid.timed_text.</span></span><span class="sig-name descname"><span class="pre">from_alignment_store</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">project_root</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">duration</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#muvid.lyricvid.timed_text.TimedText" title="muvid.lyricvid.timed_text.TimedText"><span class="pre">TimedText</span></a></span></span><a class="reference internal" href="../../../_modules/muvid/lyricvid/timed_text.html#from_alignment_store"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.lyricvid.timed_text.from_alignment_store" title="Link to this definition"></a></dt>
 <dd><p>Read muvid’s own three-tier alignment (sections / lines / words).</p>
@@ -271,10 +302,21 @@ that store rather than growing a second transcription path.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="muvid.lyricvid.timed_text.from_lyrics_and_audio">
 <span class="sig-prename descclassname"><span class="pre">muvid.lyricvid.timed_text.</span></span><span class="sig-name descname"><span class="pre">from_lyrics_and_audio</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">audio</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">lyrics</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">aligner</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">duration</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#muvid.lyricvid.timed_text.TimedText" title="muvid.lyricvid.timed_text.TimedText"><span class="pre">TimedText</span></a></span></span><a class="reference internal" href="../../../_modules/muvid/lyricvid/timed_text.html#from_lyrics_and_audio"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.lyricvid.timed_text.from_lyrics_and_audio" title="Link to this definition"></a></dt>
-<dd><p>Align <code class="docutils literal notranslate"><span class="pre">lyrics</span></code> to <code class="docutils literal notranslate"><span class="pre">audio</span></code> using muvid’s registered aligner.</p>
-<p><code class="docutils literal notranslate"><span class="pre">aligner=None</span></code> uses muvid’s default. This deliberately goes through
-<code class="docutils literal notranslate"><span class="pre">muvid.align</span></code>’s registry rather than calling an ASR directly, so a better
-singing-grade aligner registered later is picked up here for free.</p>
+<dd><p>Align <code class="docutils literal notranslate"><span class="pre">lyrics</span></code> to <code class="docutils literal notranslate"><span class="pre">audio</span></code> through muvid’s aligner registry.</p>
+<p>Goes through <a class="reference internal" href="../align.html#muvid.align.align_lyrics" title="muvid.align.align_lyrics"><code class="xref py py-func docutils literal notranslate"><span class="pre">muvid.align.align_lyrics()</span></code></a> rather than calling an ASR
+directly, so a singing-grade aligner registered later is picked up here
+for free. The aligner is chosen honestly by what is installed:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">whisperx-lite</span></code> — offline, free, needs <code class="docutils literal notranslate"><span class="pre">faster-whisper</span></code>. <strong>Default
+when available.</strong> Runs on the audio itself.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">scribe-greedy</span></code> — needs a Scribe transcript, which costs money and an
+ElevenLabs key; only reached when asked for by name, never as a silent
+fallback that spends.</p></li>
+</ul>
+<p>With no <code class="docutils literal notranslate"><span class="pre">lyrics</span></code> at all there is nothing to align <em>to</em>; the transcript’s
+own words become the text (<code class="docutils literal notranslate"><span class="pre">source='transcript'</span></code>).</p>
+<p><code class="docutils literal notranslate"><span class="pre">aligner</span></code> may be any registered name; unknown names raise from
+<code class="docutils literal notranslate"><span class="pre">muvid.align</span></code> with the registered list.</p>
 </dd></dl>
 
 <dl class="py function">

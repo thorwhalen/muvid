@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.lyricvid.tools &mdash; muvid 0.0.57 documentation</title>
+  <title>muvid.lyricvid.tools &mdash; muvid 0.0.58 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=2bfb35b6"></script>
+      <script src="../../../_static/documentation_options.js?v=c3e19674"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -78,6 +78,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/genre.html">muvid.genre</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/genre_lyric_video.html">muvid.genre_lyric_video</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/genre_music_video.html">muvid.genre_music_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/genre_subgenres.html">muvid.genre_subgenres</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyrics.html">muvid.lyrics</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyricvid.html">muvid.lyricvid</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyricvid/__main__.html">muvid.lyricvid.__main__</a></li>
@@ -98,6 +99,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/identity.html">muvid.mcp.identity</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/lyricvid_tools.html">muvid.mcp.lyricvid_tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/scoring_tools.html">muvid.mcp.scoring_tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/subgenre_tools.html">muvid.mcp.subgenre_tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/tools.html">muvid.mcp.tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/workspace.html">muvid.mcp.workspace</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/project.html">muvid.project</a></li>
@@ -115,6 +117,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/subgenres/_contract.html">muvid.subgenres._contract</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/subgenres/_manifest.html">muvid.subgenres._manifest</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/subgenres/_registry.html">muvid.subgenres._registry</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/subgenres/_schema.html">muvid.subgenres._schema</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/subgenres/testing.html">muvid.subgenres.testing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/ui.html">muvid.ui</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/ui/app.html">muvid.ui.app</a></li>
@@ -193,18 +196,11 @@
 <span class="sd">    """</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.subgenres</span><span class="w"> </span><span class="kn">import</span> <span class="n">subgenre_catalog</span>
 
-    <span class="n">_ensure_registered</span><span class="p">()</span>
+    <span class="c1"># muvid's own subgenre arrives the same way a third party's does: through</span>
+    <span class="c1"># the `muvid.subgenres.v1` entry point declared in pyproject.toml. No</span>
+    <span class="c1"># hand-registration here — the reference plugin is ON the mechanism.</span>
     <span class="k">return</span> <span class="n">subgenre_catalog</span><span class="p">()</span></div>
 
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_ensure_registered</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Register muvid's own subgenres, idempotently."""</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.subgenres</span><span class="w"> </span><span class="kn">import</span> <span class="n">list_subgenres</span><span class="p">,</span> <span class="n">register_subgenre</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.lyricvid.manifest</span><span class="w"> </span><span class="kn">import</span> <span class="n">LYRIC_VIDEO</span>
-
-    <span class="k">if</span> <span class="n">LYRIC_VIDEO</span><span class="o">.</span><span class="n">slug</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">list_subgenres</span><span class="p">():</span>
-        <span class="n">register_subgenre</span><span class="p">(</span><span class="n">LYRIC_VIDEO</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="vocabulary">
@@ -265,6 +261,12 @@
         <span class="n">project</span><span class="o">=</span><span class="n">project</span><span class="p">,</span>
         <span class="n">aligner</span><span class="o">=</span><span class="n">aligner</span><span class="p">,</span>
     <span class="p">)</span>
+    <span class="k">return</span> <span class="n">_describe</span><span class="p">(</span><span class="n">tt</span><span class="p">,</span> <span class="n">max_lines</span><span class="o">=</span><span class="n">max_lines</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_describe</span><span class="p">(</span><span class="n">tt</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">max_lines</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">40</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""The analysis payload for an already-built TimedText (built ONCE)."""</span>
     <span class="n">words</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">tt</span><span class="o">.</span><span class="n">words</span><span class="p">())</span>
     <span class="n">lines</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">tt</span><span class="o">.</span><span class="n">lines</span><span class="p">())</span>
     <span class="n">span</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mf">1e-6</span><span class="p">,</span> <span class="n">tt</span><span class="o">.</span><span class="n">duration</span><span class="p">)</span>
@@ -295,8 +297,7 @@
             <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">[:</span><span class="n">max_lines</span><span class="p">]</span>
         <span class="p">],</span>
         <span class="s2">"lines_truncated"</span><span class="p">:</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span> <span class="o">-</span> <span class="n">max_lines</span><span class="p">),</span>
-    <span class="p">}</span></div>
-
+    <span class="p">}</span>
 
 
 <div class="viewcode-block" id="propose_treatments">
@@ -343,9 +344,9 @@
     <span class="p">)</span>
     <span class="n">ranked</span> <span class="o">=</span> <span class="n">rank_treatments</span><span class="p">(</span><span class="n">specs</span><span class="p">,</span> <span class="n">tt</span><span class="p">)</span>
     <span class="k">return</span> <span class="p">{</span>
-        <span class="s2">"song"</span><span class="p">:</span> <span class="n">analyze_song</span><span class="p">(</span>
-            <span class="n">audio</span><span class="p">,</span> <span class="n">lyrics</span><span class="o">=</span><span class="n">lyrics</span><span class="p">,</span> <span class="n">subtitles</span><span class="o">=</span><span class="n">subtitles</span><span class="p">,</span> <span class="n">project</span><span class="o">=</span><span class="n">project</span><span class="p">,</span> <span class="n">max_lines</span><span class="o">=</span><span class="mi">0</span>
-        <span class="p">),</span>
+        <span class="c1"># the same TimedText the options were built from — not a second</span>
+        <span class="c1"># alignment/transcription of the same song</span>
+        <span class="s2">"song"</span><span class="p">:</span> <span class="n">_describe</span><span class="p">(</span><span class="n">tt</span><span class="p">,</span> <span class="n">max_lines</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span>
         <span class="s2">"options"</span><span class="p">:</span> <span class="p">[</span>
             <span class="p">{</span>
                 <span class="s2">"rank"</span><span class="p">:</span> <span class="n">i</span><span class="p">,</span>

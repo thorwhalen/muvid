@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.lyricvid.render_web &mdash; muvid 0.0.57 documentation</title>
+  <title>muvid.lyricvid.render_web &mdash; muvid 0.0.58 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=2bfb35b6"></script>
+      <script src="../../../_static/documentation_options.js?v=c3e19674"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -78,6 +78,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/genre.html">muvid.genre</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/genre_lyric_video.html">muvid.genre_lyric_video</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/genre_music_video.html">muvid.genre_music_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/genre_subgenres.html">muvid.genre_subgenres</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyrics.html">muvid.lyrics</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyricvid.html">muvid.lyricvid</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyricvid/__main__.html">muvid.lyricvid.__main__</a></li>
@@ -98,6 +99,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/identity.html">muvid.mcp.identity</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/lyricvid_tools.html">muvid.mcp.lyricvid_tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/scoring_tools.html">muvid.mcp.scoring_tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/subgenre_tools.html">muvid.mcp.subgenre_tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/tools.html">muvid.mcp.tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/workspace.html">muvid.mcp.workspace</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/project.html">muvid.project</a></li>
@@ -115,6 +117,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/subgenres/_contract.html">muvid.subgenres._contract</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/subgenres/_manifest.html">muvid.subgenres._manifest</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/subgenres/_registry.html">muvid.subgenres._registry</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/subgenres/_schema.html">muvid.subgenres._schema</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/subgenres/testing.html">muvid.subgenres.testing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/ui.html">muvid.ui</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/ui/app.html">muvid.ui.app</a></li>
@@ -271,27 +274,18 @@
 
 <span class="c1">#: H.264 High / yuv420p — the profile every platform accepts.</span>
 <span class="n">VIDEO_CODEC_ARGS</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="s2">"-c:v"</span><span class="p">,</span>
-    <span class="s2">"libx264"</span><span class="p">,</span>
-    <span class="s2">"-preset"</span><span class="p">,</span>
-    <span class="s2">"slow"</span><span class="p">,</span>
-    <span class="s2">"-pix_fmt"</span><span class="p">,</span>
-    <span class="s2">"yuv420p"</span><span class="p">,</span>
-    <span class="s2">"-profile:v"</span><span class="p">,</span>
-    <span class="s2">"high"</span><span class="p">,</span>
-    <span class="s2">"-level"</span><span class="p">,</span>
-    <span class="s2">"4.1"</span><span class="p">,</span>
+    <span class="s2">"-c:v"</span><span class="p">,</span> <span class="s2">"libx264"</span><span class="p">,</span>
+    <span class="s2">"-preset"</span><span class="p">,</span> <span class="s2">"slow"</span><span class="p">,</span>
+    <span class="s2">"-pix_fmt"</span><span class="p">,</span> <span class="s2">"yuv420p"</span><span class="p">,</span>
+    <span class="s2">"-profile:v"</span><span class="p">,</span> <span class="s2">"high"</span><span class="p">,</span>
+    <span class="s2">"-level"</span><span class="p">,</span> <span class="s2">"4.1"</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="c1">#: AAC, 48 kHz, stereo.</span>
 <span class="n">AUDIO_CODEC_ARGS</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="s2">"-c:a"</span><span class="p">,</span>
-    <span class="s2">"aac"</span><span class="p">,</span>
-    <span class="s2">"-b:a"</span><span class="p">,</span>
-    <span class="s2">"320k"</span><span class="p">,</span>
-    <span class="s2">"-ar"</span><span class="p">,</span>
-    <span class="s2">"48000"</span><span class="p">,</span>
-    <span class="s2">"-ac"</span><span class="p">,</span>
-    <span class="s2">"2"</span><span class="p">,</span>
+    <span class="s2">"-c:a"</span><span class="p">,</span> <span class="s2">"aac"</span><span class="p">,</span>
+    <span class="s2">"-b:a"</span><span class="p">,</span> <span class="s2">"320k"</span><span class="p">,</span>
+    <span class="s2">"-ar"</span><span class="p">,</span> <span class="s2">"48000"</span><span class="p">,</span>
+    <span class="s2">"-ac"</span><span class="p">,</span> <span class="s2">"2"</span><span class="p">,</span>
 <span class="p">)</span>
 
 <span class="n">_HEX</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="s2">"0123456789abcdefABCDEF"</span><span class="p">)</span>
@@ -370,9 +364,7 @@
         <span class="s2">"t_gone"</span><span class="p">:</span> <span class="n">cue</span><span class="o">.</span><span class="n">t_gone</span><span class="p">,</span>
         <span class="s2">"colour"</span><span class="p">:</span> <span class="n">_colour</span><span class="p">(</span><span class="n">cue</span><span class="o">.</span><span class="n">colour</span><span class="p">,</span> <span class="n">what</span><span class="o">=</span><span class="s2">"cue.colour"</span><span class="p">),</span>
         <span class="s2">"dim_colour"</span><span class="p">:</span> <span class="p">(</span>
-            <span class="kc">None</span>
-            <span class="k">if</span> <span class="n">cue</span><span class="o">.</span><span class="n">dim_colour</span> <span class="ow">is</span> <span class="kc">None</span>
-            <span class="k">else</span> <span class="n">_colour</span><span class="p">(</span><span class="n">cue</span><span class="o">.</span><span class="n">dim_colour</span><span class="p">,</span> <span class="n">what</span><span class="o">=</span><span class="s2">"cue.dim_colour"</span><span class="p">)</span>
+            <span class="kc">None</span> <span class="k">if</span> <span class="n">cue</span><span class="o">.</span><span class="n">dim_colour</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">_colour</span><span class="p">(</span><span class="n">cue</span><span class="o">.</span><span class="n">dim_colour</span><span class="p">,</span> <span class="n">what</span><span class="o">=</span><span class="s2">"cue.dim_colour"</span><span class="p">)</span>
         <span class="p">),</span>
         <span class="s2">"dim_from"</span><span class="p">:</span> <span class="n">cue</span><span class="o">.</span><span class="n">dim_from</span><span class="p">,</span>
         <span class="c1"># per-word karaoke wipe window / concrete-page ignition, when the</span>
@@ -731,33 +723,48 @@
     <span class="k">return</span> <span class="n">n</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_encode</span><span class="p">(</span><span class="n">frames</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">audio</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">fps</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">crf</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""PNG frames + the song → an H.264/AAC mp4 every platform accepts."""</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_encode</span><span class="p">(</span><span class="n">frames</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">audio</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">fps</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">crf</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+            <span class="n">duration</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""PNG frames + the song → an H.264/AAC mp4 every platform accepts.</span>
+
+<span class="sd">    ``-t duration`` bounds the OUTPUT to the scene's length: the capture rounds</span>
+<span class="sd">    ``duration * fps`` up to a whole frame, and ``-shortest`` alone still let the</span>
+<span class="sd">    video run one or two frames past the audio (2.2 s of video over 2.0 s of</span>
+<span class="sd">    song at 10 fps). Nothing reported it because it sat inside</span>
+<span class="sd">    ``verify_video``'s tolerance — but a lyric video is by definition the length</span>
+<span class="sd">    of its song.</span>
+<span class="sd">    """</span>
     <span class="n">output</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">run_ffmpeg</span><span class="p">(</span>
         <span class="p">[</span>
-            <span class="s2">"-framerate"</span><span class="p">,</span>
-            <span class="nb">str</span><span class="p">(</span><span class="n">fps</span><span class="p">),</span>
-            <span class="s2">"-i"</span><span class="p">,</span>
-            <span class="nb">str</span><span class="p">(</span><span class="n">frames</span> <span class="o">/</span> <span class="n">FRAME_PATTERN</span><span class="p">),</span>
-            <span class="s2">"-i"</span><span class="p">,</span>
-            <span class="nb">str</span><span class="p">(</span><span class="n">audio</span><span class="p">),</span>
-            <span class="s2">"-map"</span><span class="p">,</span>
-            <span class="s2">"0:v:0"</span><span class="p">,</span>
-            <span class="s2">"-map"</span><span class="p">,</span>
-            <span class="s2">"1:a:0"</span><span class="p">,</span>
+            <span class="s2">"-framerate"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">fps</span><span class="p">),</span>
+            <span class="s2">"-i"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">frames</span> <span class="o">/</span> <span class="n">FRAME_PATTERN</span><span class="p">),</span>
+            <span class="c1"># INPUT-side -t on the song bounds what the AAC encoder is given to</span>
+            <span class="c1"># the scene's length. It is not what fixed the 2-frame overshoot</span>
+            <span class="c1"># (that was the muxer, see -movflags below) but it is the honest</span>
+            <span class="c1"># bound, and it is stable across ffmpeg 6 and 9 where the muxer</span>
+            <span class="c1"># flag `-fflags +shortest` is not.</span>
+            <span class="s2">"-t"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">max</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="n">duration</span><span class="p">)</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="s2">"-i"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">audio</span><span class="p">),</span>
+            <span class="s2">"-map"</span><span class="p">,</span> <span class="s2">"0:v:0"</span><span class="p">,</span>
+            <span class="s2">"-map"</span><span class="p">,</span> <span class="s2">"1:a:0"</span><span class="p">,</span>
+            <span class="s2">"-t"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">max</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="n">duration</span><span class="p">)</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
             <span class="o">*</span><span class="n">VIDEO_CODEC_ARGS</span><span class="p">,</span>
-            <span class="s2">"-crf"</span><span class="p">,</span>
-            <span class="nb">str</span><span class="p">(</span><span class="n">crf</span><span class="p">),</span>
-            <span class="s2">"-g"</span><span class="p">,</span>
-            <span class="nb">str</span><span class="p">(</span><span class="n">fps</span> <span class="o">*</span> <span class="mi">2</span><span class="p">),</span>
+            <span class="s2">"-crf"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">crf</span><span class="p">),</span>
+            <span class="s2">"-g"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">fps</span> <span class="o">*</span> <span class="mi">2</span><span class="p">),</span>
             <span class="o">*</span><span class="n">AUDIO_CODEC_ARGS</span><span class="p">,</span>
-            <span class="s2">"-movflags"</span><span class="p">,</span>
-            <span class="s2">"+faststart"</span><span class="p">,</span>
+            <span class="c1"># +faststart for streaming; +negative_cts_offsets WITH -use_editlist 0</span>
+            <span class="c1"># is the pair render_ass uses and the one that matters here: with</span>
+            <span class="c1"># B-frames (x264's default reorder delay of two frames) and no edit</span>
+            <span class="c1"># list, the muxer otherwise shifts every video pts UP by the delay,</span>
+            <span class="c1"># so the video started 2 frames late and the audio was front-padded</span>
+            <span class="c1"># to match — the container came out exactly 2 frames longer than</span>
+            <span class="c1"># the song at every fps (0.2 s at 10, 0.067 s at 30). Negative CTS</span>
+            <span class="c1"># offsets let the first frame present at 0 without an elst box.</span>
+            <span class="s2">"-movflags"</span><span class="p">,</span> <span class="s2">"+faststart+negative_cts_offsets"</span><span class="p">,</span>
             <span class="c1"># -use_editlist 0: keep ffmpeg from writing the elst boxes some</span>
             <span class="c1"># platforms (YouTube) trip on.</span>
-            <span class="s2">"-use_editlist"</span><span class="p">,</span>
-            <span class="s2">"0"</span><span class="p">,</span>
+            <span class="s2">"-use_editlist"</span><span class="p">,</span> <span class="s2">"0"</span><span class="p">,</span>
             <span class="s2">"-shortest"</span><span class="p">,</span>
             <span class="nb">str</span><span class="p">(</span><span class="n">output</span><span class="p">),</span>
         <span class="p">]</span>
@@ -814,9 +821,18 @@
     <span class="n">frames</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">n_frames</span> <span class="o">=</span> <span class="n">_capture</span><span class="p">(</span><span class="n">page</span><span class="p">,</span> <span class="n">frames</span><span class="p">,</span> <span class="n">scene</span><span class="o">=</span><span class="n">scene</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">)</span>
-        <span class="n">_encode</span><span class="p">(</span><span class="n">frames</span><span class="p">,</span> <span class="n">audio</span><span class="p">,</span> <span class="n">output</span><span class="p">,</span> <span class="n">fps</span><span class="o">=</span><span class="n">scene</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">fps</span><span class="p">,</span> <span class="n">crf</span><span class="o">=</span><span class="n">crf</span><span class="p">)</span>
+        <span class="n">_encode</span><span class="p">(</span><span class="n">frames</span><span class="p">,</span> <span class="n">audio</span><span class="p">,</span> <span class="n">output</span><span class="p">,</span> <span class="n">fps</span><span class="o">=</span><span class="n">scene</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">fps</span><span class="p">,</span> <span class="n">crf</span><span class="o">=</span><span class="n">crf</span><span class="p">,</span>
+                <span class="n">duration</span><span class="o">=</span><span class="n">scene</span><span class="o">.</span><span class="n">duration</span><span class="p">)</span>
     <span class="k">finally</span><span class="p">:</span>
         <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">frames</span><span class="p">,</span> <span class="n">ignore_errors</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># Self-check the way render_ass does, and REPORT rather than raise: the file</span>
+    <span class="c1"># exists and plays; a failed check is something the caller should see in</span>
+    <span class="c1"># meta, not a reason to throw away a render.</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.visualize.verify</span><span class="w"> </span><span class="kn">import</span> <span class="n">verify_video</span>
+
+    <span class="n">checks</span> <span class="o">=</span> <span class="n">verify_video</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="n">audio</span><span class="o">=</span><span class="n">audio</span><span class="p">)</span>
+    <span class="n">verify_failures</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">checks</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">c</span><span class="o">.</span><span class="n">ok</span><span class="p">]</span>
 
     <span class="k">return</span> <span class="n">RenderResult</span><span class="p">(</span>
         <span class="n">output</span><span class="o">=</span><span class="n">output</span><span class="p">,</span>
@@ -824,6 +840,7 @@
         <span class="n">artifacts</span><span class="o">=</span><span class="p">{</span><span class="s2">"page"</span><span class="p">:</span> <span class="n">page</span><span class="p">},</span>
         <span class="n">meta</span><span class="o">=</span><span class="p">{</span>
             <span class="s2">"backend"</span><span class="p">:</span> <span class="s2">"web"</span><span class="p">,</span>
+            <span class="s2">"verify_failures"</span><span class="p">:</span> <span class="n">verify_failures</span><span class="p">,</span>
             <span class="s2">"frames"</span><span class="p">:</span> <span class="n">n_frames</span><span class="p">,</span>
             <span class="s2">"fps"</span><span class="p">:</span> <span class="n">scene</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">fps</span><span class="p">,</span>
             <span class="s2">"width"</span><span class="p">:</span> <span class="n">scene</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">width</span><span class="p">,</span>

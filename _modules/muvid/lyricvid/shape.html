@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.lyricvid.shape &mdash; muvid 0.0.57 documentation</title>
+  <title>muvid.lyricvid.shape &mdash; muvid 0.0.58 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=2bfb35b6"></script>
+      <script src="../../../_static/documentation_options.js?v=c3e19674"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -78,6 +78,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/genre.html">muvid.genre</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/genre_lyric_video.html">muvid.genre_lyric_video</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/genre_music_video.html">muvid.genre_music_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/genre_subgenres.html">muvid.genre_subgenres</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyrics.html">muvid.lyrics</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyricvid.html">muvid.lyricvid</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyricvid/__main__.html">muvid.lyricvid.__main__</a></li>
@@ -98,6 +99,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/identity.html">muvid.mcp.identity</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/lyricvid_tools.html">muvid.mcp.lyricvid_tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/scoring_tools.html">muvid.mcp.scoring_tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/subgenre_tools.html">muvid.mcp.subgenre_tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/tools.html">muvid.mcp.tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/workspace.html">muvid.mcp.workspace</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/project.html">muvid.project</a></li>
@@ -115,6 +117,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/subgenres/_contract.html">muvid.subgenres._contract</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/subgenres/_manifest.html">muvid.subgenres._manifest</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/subgenres/_registry.html">muvid.subgenres._registry</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/subgenres/_schema.html">muvid.subgenres._schema</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/subgenres/testing.html">muvid.subgenres.testing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/ui.html">muvid.ui</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/ui/app.html">muvid.ui.app</a></li>
@@ -513,6 +516,11 @@
     <span class="k">return</span> <span class="n">_even_odd</span><span class="p">(</span><span class="n">u</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">polys</span><span class="p">)</span>
 
 
+<span class="c1">#: Largest mask image ``mask_image`` will open. A silhouette at 4k is plenty.</span>
+<span class="n">MAX_MASK_PIXELS</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">__import__</span><span class="p">(</span><span class="s2">"os"</span><span class="p">)</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+    <span class="s2">"MUVID_LYRICVID_MAX_MASK_PIXELS"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="mi">4096</span> <span class="o">*</span> <span class="mi">4096</span><span class="p">)))</span>
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">_image_ink</span><span class="p">(</span>
     <span class="n">u</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">threshold</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">128</span><span class="p">,</span> <span class="n">invert</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
@@ -532,7 +540,16 @@
         <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
 <span class="w">    </span><span class="kn">import</span> <span class="n">numpy</span> <span class="k">as</span> <span class="n">np</span>
 
+    <span class="c1"># A mask only needs to be big enough to rasterise a silhouette; anything</span>
+    <span class="c1"># past this is either a mistake or a decompression bomb. Pillow's own</span>
+    <span class="c1"># default (89 Mpx) is not muvid's decision to rely on.</span>
     <span class="k">with</span> <span class="n">Image</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="k">as</span> <span class="n">im</span><span class="p">:</span>
+        <span class="n">w0</span><span class="p">,</span> <span class="n">h0</span> <span class="o">=</span> <span class="n">im</span><span class="o">.</span><span class="n">size</span>
+        <span class="k">if</span> <span class="n">w0</span> <span class="o">*</span> <span class="n">h0</span> <span class="o">&gt;</span> <span class="n">MAX_MASK_PIXELS</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"mask image is </span><span class="si">{</span><span class="n">w0</span><span class="si">}</span><span class="s2">x</span><span class="si">{</span><span class="n">h0</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">w0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">h0</span><span class="si">}</span><span class="s2"> px); the bound is "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">MAX_MASK_PIXELS</span><span class="si">}</span><span class="s2"> px (MUVID_LYRICVID_MAX_MASK_PIXELS)"</span>
+            <span class="p">)</span>
         <span class="n">im</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
         <span class="k">if</span> <span class="s2">"A"</span> <span class="ow">in</span> <span class="n">im</span><span class="o">.</span><span class="n">getbands</span><span class="p">():</span>
             <span class="n">ink</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">im</span><span class="o">.</span><span class="n">getchannel</span><span class="p">(</span><span class="s2">"A"</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">threshold</span>

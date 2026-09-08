@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.subgenres.testing &mdash; muvid 0.0.57 documentation</title>
+  <title>muvid.subgenres.testing &mdash; muvid 0.0.58 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -15,7 +15,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=2bfb35b6"></script>
+      <script src="../../../_static/documentation_options.js?v=c3e19674"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -25,7 +25,7 @@
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
     <link rel="next" title="muvid.ui" href="../ui.html" />
-    <link rel="prev" title="muvid.subgenres._registry" href="_registry.html" /> 
+    <link rel="prev" title="muvid.subgenres._schema" href="_schema.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -81,6 +81,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../genre.html">muvid.genre</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../genre_lyric_video.html">muvid.genre_lyric_video</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../genre_music_video.html">muvid.genre_music_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../genre_subgenres.html">muvid.genre_subgenres</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../lyrics.html">muvid.lyrics</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../lyricvid.html">muvid.lyricvid</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../lyricvid/__main__.html">muvid.lyricvid.__main__</a></li>
@@ -101,6 +102,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../mcp/identity.html">muvid.mcp.identity</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../mcp/lyricvid_tools.html">muvid.mcp.lyricvid_tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../mcp/scoring_tools.html">muvid.mcp.scoring_tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mcp/subgenre_tools.html">muvid.mcp.subgenre_tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../mcp/tools.html">muvid.mcp.tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../mcp/workspace.html">muvid.mcp.workspace</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../project.html">muvid.project</a></li>
@@ -118,6 +120,7 @@
 <li class="toctree-l1"><a class="reference internal" href="_contract.html">muvid.subgenres._contract</a></li>
 <li class="toctree-l1"><a class="reference internal" href="_manifest.html">muvid.subgenres._manifest</a></li>
 <li class="toctree-l1"><a class="reference internal" href="_registry.html">muvid.subgenres._registry</a></li>
+<li class="toctree-l1"><a class="reference internal" href="_schema.html">muvid.subgenres._schema</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">muvid.subgenres.testing</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.subgenres.testing.ConformanceReport"><code class="docutils literal notranslate"><span class="pre">ConformanceReport</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.subgenres.testing.check_subgenre_conformance"><code class="docutils literal notranslate"><span class="pre">check_subgenre_conformance()</span></code></a></li>
@@ -192,7 +195,7 @@ used by muvid’s own tests and by this module’s doctests.</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">tempfile</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">sg</span> <span class="o">=</span> <span class="n">Subgenre</span><span class="p">(</span><span class="n">slug</span><span class="o">=</span><span class="s1">'conformance-demo'</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s1">'Demo'</span><span class="p">,</span>
 <span class="gp">... </span>              <span class="n">description</span><span class="o">=</span><span class="s1">'A demo.'</span><span class="p">,</span>
-<span class="gp">... </span>              <span class="n">render</span><span class="o">=</span><span class="s1">'muvid.subgenres.testing:echo_renderer'</span><span class="p">)</span>
+<span class="gp">... </span>              <span class="n">render</span><span class="o">=</span><span class="s1">'muvid.subgenres.testing:echo_renderer'</span><span class="p">,</span> <span class="n">api_versions</span><span class="o">=</span><span class="p">(</span><span class="s2">"1"</span><span class="p">,))</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">TemporaryDirectory</span><span class="p">()</span> <span class="k">as</span> <span class="n">d</span><span class="p">:</span>
 <span class="gp">... </span>    <span class="n">rep</span> <span class="o">=</span> <span class="n">check_subgenre_conformance</span><span class="p">(</span><span class="n">sg</span><span class="p">,</span> <span class="n">workdir</span><span class="o">=</span><span class="n">d</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">rep</span><span class="o">.</span><span class="n">ok</span>
@@ -215,7 +218,7 @@ fixture every conformance check runs against.</p>
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="_registry.html" class="btn btn-neutral float-left" title="muvid.subgenres._registry" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="_schema.html" class="btn btn-neutral float-left" title="muvid.subgenres._schema" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
         <a href="../ui.html" class="btn btn-neutral float-right" title="muvid.ui" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 

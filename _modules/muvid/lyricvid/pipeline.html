@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.lyricvid.pipeline &mdash; muvid 0.0.57 documentation</title>
+  <title>muvid.lyricvid.pipeline &mdash; muvid 0.0.58 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=2bfb35b6"></script>
+      <script src="../../../_static/documentation_options.js?v=c3e19674"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -78,6 +78,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/genre.html">muvid.genre</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/genre_lyric_video.html">muvid.genre_lyric_video</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/genre_music_video.html">muvid.genre_music_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/genre_subgenres.html">muvid.genre_subgenres</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyrics.html">muvid.lyrics</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyricvid.html">muvid.lyricvid</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyricvid/__main__.html">muvid.lyricvid.__main__</a></li>
@@ -98,6 +99,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/identity.html">muvid.mcp.identity</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/lyricvid_tools.html">muvid.mcp.lyricvid_tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/scoring_tools.html">muvid.mcp.scoring_tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/subgenre_tools.html">muvid.mcp.subgenre_tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/tools.html">muvid.mcp.tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/workspace.html">muvid.mcp.workspace</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/project.html">muvid.project</a></li>
@@ -115,6 +117,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/subgenres/_contract.html">muvid.subgenres._contract</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/subgenres/_manifest.html">muvid.subgenres._manifest</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/subgenres/_registry.html">muvid.subgenres._registry</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/subgenres/_schema.html">muvid.subgenres._schema</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/subgenres/testing.html">muvid.subgenres.testing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/ui.html">muvid.ui</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/ui/app.html">muvid.ui.app</a></li>
@@ -172,6 +175,7 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span>
 
@@ -201,6 +205,53 @@
 <span class="p">}</span>
 
 <span class="n">DEFAULT_RENDERER</span> <span class="o">=</span> <span class="s2">"auto"</span>
+
+
+<span class="c1">#: Resource bounds, env-configurable like ``MUVID_FOOTAGE_*``. These exist</span>
+<span class="c1">#: because the muvid#75/#76 scar is exactly this shape: an allowlisted operation</span>
+<span class="c1">#: asked for a 590 MB frame. A caller-supplied ``width``/``height``/``fps`` on a</span>
+<span class="c1">#: caller-supplied song length is the same lever, and the visualizer already</span>
+<span class="c1">#: bounds duration (``MUVID_MAX_DURATION_S``) — the lyric video bounded nothing.</span>
+<span class="n">MAX_PIXELS</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"MUVID_LYRICVID_MAX_PIXELS"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="mi">3840</span> <span class="o">*</span> <span class="mi">2160</span><span class="p">)))</span>
+<span class="n">MAX_FPS</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"MUVID_LYRICVID_MAX_FPS"</span><span class="p">,</span> <span class="s2">"60"</span><span class="p">))</span>
+<span class="n">MAX_DURATION_S</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"MUVID_MAX_DURATION_S"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="mi">15</span> <span class="o">*</span> <span class="mi">60</span><span class="p">)))</span>
+<span class="c1">#: The web renderer writes one PNG per frame; this bounds the disk it may take.</span>
+<span class="n">MAX_FRAMES</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"MUVID_LYRICVID_MAX_FRAMES"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="mi">15</span> <span class="o">*</span> <span class="mi">60</span> <span class="o">*</span> <span class="mi">30</span><span class="p">)))</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">check_render_bounds</span><span class="p">(</span><span class="n">canvas</span><span class="p">:</span> <span class="n">Canvas</span><span class="p">,</span> <span class="n">duration_s</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Refuse a render that would exceed the resource bounds. Refuse, not clamp.</span>
+
+<span class="sd">    A clamped request silently produces a different video than the one asked</span>
+<span class="sd">    for; a refusal tells the caller the bound.</span>
+
+<span class="sd">    &gt;&gt;&gt; check_render_bounds(Canvas(width=1920, height=1080, fps=30), 200.0)</span>
+<span class="sd">    &gt;&gt;&gt; check_render_bounds(Canvas(width=30000, height=30000, fps=30), 10.0)</span>
+<span class="sd">    Traceback (most recent call last):</span>
+<span class="sd">    ...</span>
+<span class="sd">    ValueError: canvas 30000x30000 is 900000000 px/frame; the bound is 8294400 (MUVID_LYRICVID_MAX_PIXELS)</span>
+<span class="sd">    """</span>
+    <span class="n">px</span> <span class="o">=</span> <span class="n">canvas</span><span class="o">.</span><span class="n">width</span> <span class="o">*</span> <span class="n">canvas</span><span class="o">.</span><span class="n">height</span>
+    <span class="k">if</span> <span class="n">canvas</span><span class="o">.</span><span class="n">width</span> <span class="o">&lt;</span> <span class="mi">16</span> <span class="ow">or</span> <span class="n">canvas</span><span class="o">.</span><span class="n">height</span> <span class="o">&lt;</span> <span class="mi">16</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"canvas </span><span class="si">{</span><span class="n">canvas</span><span class="o">.</span><span class="n">width</span><span class="si">}</span><span class="s2">x</span><span class="si">{</span><span class="n">canvas</span><span class="o">.</span><span class="n">height</span><span class="si">}</span><span class="s2"> is too small"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">px</span> <span class="o">&gt;</span> <span class="n">MAX_PIXELS</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"canvas </span><span class="si">{</span><span class="n">canvas</span><span class="o">.</span><span class="n">width</span><span class="si">}</span><span class="s2">x</span><span class="si">{</span><span class="n">canvas</span><span class="o">.</span><span class="n">height</span><span class="si">}</span><span class="s2"> is </span><span class="si">{</span><span class="n">px</span><span class="si">}</span><span class="s2"> px/frame; the bound is "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">MAX_PIXELS</span><span class="si">}</span><span class="s2"> (MUVID_LYRICVID_MAX_PIXELS)"</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="mi">1</span> <span class="o">&lt;=</span> <span class="n">canvas</span><span class="o">.</span><span class="n">fps</span> <span class="o">&lt;=</span> <span class="n">MAX_FPS</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"fps </span><span class="si">{</span><span class="n">canvas</span><span class="o">.</span><span class="n">fps</span><span class="si">}</span><span class="s2"> is outside 1..</span><span class="si">{</span><span class="n">MAX_FPS</span><span class="si">}</span><span class="s2"> (MUVID_LYRICVID_MAX_FPS)"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">duration_s</span> <span class="o">&gt;</span> <span class="n">MAX_DURATION_S</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"audio is </span><span class="si">{</span><span class="n">duration_s</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2">s; the render limit is </span><span class="si">{</span><span class="n">MAX_DURATION_S</span><span class="si">}</span><span class="s2">s "</span>
+            <span class="s2">"(MUVID_MAX_DURATION_S)"</span>
+        <span class="p">)</span>
+    <span class="n">frames</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">duration_s</span> <span class="o">*</span> <span class="n">canvas</span><span class="o">.</span><span class="n">fps</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">frames</span> <span class="o">&gt;</span> <span class="n">MAX_FRAMES</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">frames</span><span class="si">}</span><span class="s2"> frames (</span><span class="si">{</span><span class="n">duration_s</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2">s at </span><span class="si">{</span><span class="n">canvas</span><span class="o">.</span><span class="n">fps</span><span class="si">}</span><span class="s2"> fps) exceeds "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">MAX_FRAMES</span><span class="si">}</span><span class="s2"> (MUVID_LYRICVID_MAX_FRAMES)"</span>
+        <span class="p">)</span>
 
 
 <div class="viewcode-block" id="register_renderer">
@@ -331,6 +382,7 @@
         <span class="n">aligner</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"aligner"</span><span class="p">),</span>
     <span class="p">)</span>
 
+    <span class="n">repair_notes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">treatment_in</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"treatment"</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">treatment_in</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.lyricvid.director</span><span class="w"> </span><span class="kn">import</span> <span class="n">propose_treatments</span>
@@ -344,14 +396,20 @@
         <span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
         <span class="n">treatment_source</span> <span class="o">=</span> <span class="s2">"proposed"</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="n">treatment</span><span class="p">,</span> <span class="n">_notes</span> <span class="o">=</span> <span class="n">spec_mod</span><span class="o">.</span><span class="n">coerce</span><span class="p">(</span><span class="n">treatment_in</span><span class="p">)</span>
+        <span class="n">treatment</span><span class="p">,</span> <span class="n">repair_notes</span> <span class="o">=</span> <span class="n">spec_mod</span><span class="o">.</span><span class="n">coerce</span><span class="p">(</span><span class="n">treatment_in</span><span class="p">)</span>
         <span class="n">treatment_source</span> <span class="o">=</span> <span class="s2">"supplied"</span>
+        <span class="k">if</span> <span class="n">params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"strict"</span><span class="p">)</span> <span class="ow">and</span> <span class="n">repair_notes</span><span class="p">:</span>
+            <span class="c1"># A caller who wants exactly what they asked for, or nothing.</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"treatment needed repairs and strict=True: "</span> <span class="o">+</span> <span class="s2">"; "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">repair_notes</span><span class="p">)</span>
+            <span class="p">)</span>
 
     <span class="n">canvas</span> <span class="o">=</span> <span class="n">Canvas</span><span class="p">(</span>
         <span class="n">width</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"width"</span><span class="p">,</span> <span class="mi">1920</span><span class="p">)),</span>
         <span class="n">height</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"height"</span><span class="p">,</span> <span class="mi">1080</span><span class="p">)),</span>
         <span class="n">fps</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"fps"</span><span class="p">,</span> <span class="mi">30</span><span class="p">)),</span>
     <span class="p">)</span>
+    <span class="n">check_render_bounds</span><span class="p">(</span><span class="n">canvas</span><span class="p">,</span> <span class="n">timed</span><span class="o">.</span><span class="n">duration</span><span class="p">)</span>
     <span class="n">scene</span> <span class="o">=</span> <span class="n">compile_scene</span><span class="p">(</span><span class="n">treatment</span><span class="p">,</span> <span class="n">timed</span><span class="p">,</span> <span class="n">canvas</span><span class="o">=</span><span class="n">canvas</span><span class="p">)</span>
 
     <span class="n">requested</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"renderer"</span><span class="p">,</span> <span class="n">DEFAULT_RENDERER</span><span class="p">)</span>
@@ -368,13 +426,21 @@
     <span class="n">spec_path</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">treatment</span><span class="o">.</span><span class="n">to_json</span><span class="p">(),</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span>
 
     <span class="n">meta</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="o">**</span><span class="nb">dict</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">meta</span><span class="p">),</span>
+        <span class="c1"># AFTER the backend's meta, so the choice `auto` made is recorded in one</span>
+        <span class="c1"># vocabulary ("ass"/"web") rather than whatever the backend calls itself</span>
         <span class="s2">"renderer"</span><span class="p">:</span> <span class="n">backend_name</span><span class="p">,</span>
         <span class="s2">"renderer_requested"</span><span class="p">:</span> <span class="n">requested</span><span class="p">,</span>
         <span class="s2">"treatment_source"</span><span class="p">:</span> <span class="n">treatment_source</span><span class="p">,</span>
         <span class="s2">"timing_source"</span><span class="p">:</span> <span class="n">timed</span><span class="o">.</span><span class="n">source</span><span class="p">,</span>
         <span class="s2">"timing_measured"</span><span class="p">:</span> <span class="n">timed</span><span class="o">.</span><span class="n">measured</span><span class="p">,</span>
-        <span class="o">**</span><span class="nb">dict</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">meta</span><span class="p">),</span>
     <span class="p">}</span>
+    <span class="c1"># A repaired treatment renders something other than what was asked for.</span>
+    <span class="c1"># That is fine — but only if the caller can SEE it. Omit-when-empty.</span>
+    <span class="k">if</span> <span class="n">repair_notes</span><span class="p">:</span>
+        <span class="n">meta</span><span class="p">[</span><span class="s2">"treatment_repairs"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">repair_notes</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">scene</span><span class="o">.</span><span class="n">meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"uncovered_sections"</span><span class="p">):</span>
+        <span class="n">meta</span><span class="p">[</span><span class="s2">"uncovered_sections"</span><span class="p">]</span> <span class="o">=</span> <span class="n">scene</span><span class="o">.</span><span class="n">meta</span><span class="p">[</span><span class="s2">"uncovered_sections"</span><span class="p">]</span>
     <span class="k">return</span> <span class="n">RenderResult</span><span class="p">(</span>
         <span class="n">output</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">output</span><span class="p">,</span>
         <span class="n">duration_s</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">duration_s</span>

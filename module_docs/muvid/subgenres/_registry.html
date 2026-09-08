@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.subgenres._registry &mdash; muvid 0.0.57 documentation</title>
+  <title>muvid.subgenres._registry &mdash; muvid 0.0.58 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -15,7 +15,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=2bfb35b6"></script>
+      <script src="../../../_static/documentation_options.js?v=c3e19674"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -24,7 +24,7 @@
     <script src="../../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
-    <link rel="next" title="muvid.subgenres.testing" href="testing.html" />
+    <link rel="next" title="muvid.subgenres._schema" href="_schema.html" />
     <link rel="prev" title="muvid.subgenres._manifest" href="_manifest.html" /> 
 </head>
 
@@ -81,6 +81,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../genre.html">muvid.genre</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../genre_lyric_video.html">muvid.genre_lyric_video</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../genre_music_video.html">muvid.genre_music_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../genre_subgenres.html">muvid.genre_subgenres</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../lyrics.html">muvid.lyrics</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../lyricvid.html">muvid.lyricvid</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../lyricvid/__main__.html">muvid.lyricvid.__main__</a></li>
@@ -101,6 +102,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../mcp/identity.html">muvid.mcp.identity</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../mcp/lyricvid_tools.html">muvid.mcp.lyricvid_tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../mcp/scoring_tools.html">muvid.mcp.scoring_tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mcp/subgenre_tools.html">muvid.mcp.subgenre_tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../mcp/tools.html">muvid.mcp.tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../mcp/workspace.html">muvid.mcp.workspace</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../project.html">muvid.project</a></li>
@@ -127,6 +129,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#muvid.subgenres._registry.unregister_subgenre"><code class="docutils literal notranslate"><span class="pre">unregister_subgenre()</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="_schema.html">muvid.subgenres._schema</a></li>
 <li class="toctree-l1"><a class="reference internal" href="testing.html">muvid.subgenres.testing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../ui.html">muvid.ui</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../ui/app.html">muvid.ui.app</a></li>
@@ -211,7 +214,7 @@ contract value, so silently replacing one is never the kind thing to do.</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">muvid.subgenres</span><span class="w"> </span><span class="kn">import</span> <span class="n">Subgenre</span><span class="p">,</span> <span class="n">register_subgenre</span><span class="p">,</span> <span class="n">list_subgenres</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">sg</span> <span class="o">=</span> <span class="n">register_subgenre</span><span class="p">(</span><span class="n">Subgenre</span><span class="p">(</span>
 <span class="gp">... </span>    <span class="n">slug</span><span class="o">=</span><span class="s1">'demo-doctest'</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s1">'Demo'</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s1">'.'</span><span class="p">,</span>
-<span class="gp">... </span>    <span class="n">render</span><span class="o">=</span><span class="s1">'muvid.subgenres.testing:echo_renderer'</span><span class="p">))</span>
+<span class="gp">... </span>    <span class="n">render</span><span class="o">=</span><span class="s1">'muvid.subgenres.testing:echo_renderer'</span><span class="p">,</span> <span class="n">api_versions</span><span class="o">=</span><span class="p">(</span><span class="s2">"1"</span><span class="p">,)))</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="s1">'demo-doctest'</span> <span class="ow">in</span> <span class="n">list_subgenres</span><span class="p">()</span>
 <span class="go">True</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">unregister_subgenre</span><span class="p">(</span><span class="s1">'demo-doctest'</span><span class="p">)</span>
@@ -249,7 +252,7 @@ visible to whoever is choosing, not silently absent.</p>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="_manifest.html" class="btn btn-neutral float-left" title="muvid.subgenres._manifest" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="testing.html" class="btn btn-neutral float-right" title="muvid.subgenres.testing" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="_schema.html" class="btn btn-neutral float-right" title="muvid.subgenres._schema" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.mcp &mdash; muvid 0.0.57 documentation</title>
+  <title>muvid.mcp &mdash; muvid 0.0.58 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=2bfb35b6"></script>
+      <script src="../../_static/documentation_options.js?v=c3e19674"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -78,6 +78,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/genre.html">muvid.genre</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/genre_lyric_video.html">muvid.genre_lyric_video</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/genre_music_video.html">muvid.genre_music_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/genre_subgenres.html">muvid.genre_subgenres</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/lyrics.html">muvid.lyrics</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/lyricvid.html">muvid.lyricvid</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/lyricvid/__main__.html">muvid.lyricvid.__main__</a></li>
@@ -98,6 +99,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/mcp/identity.html">muvid.mcp.identity</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/mcp/lyricvid_tools.html">muvid.mcp.lyricvid_tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/mcp/scoring_tools.html">muvid.mcp.scoring_tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/mcp/subgenre_tools.html">muvid.mcp.subgenre_tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/mcp/tools.html">muvid.mcp.tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/mcp/workspace.html">muvid.mcp.workspace</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/project.html">muvid.project</a></li>
@@ -115,6 +117,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/subgenres/_contract.html">muvid.subgenres._contract</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/subgenres/_manifest.html">muvid.subgenres._manifest</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/subgenres/_registry.html">muvid.subgenres._registry</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/subgenres/_schema.html">muvid.subgenres._schema</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/subgenres/testing.html">muvid.subgenres.testing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/ui.html">muvid.ui</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/ui/app.html">muvid.ui.app</a></li>
@@ -173,6 +176,13 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.mcp.identity</span><span class="w"> </span><span class="kn">import</span> <span class="n">current_email</span><span class="p">,</span> <span class="n">token_email</span><span class="p">,</span> <span class="n">use_email</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.mcp.workspace</span><span class="w"> </span><span class="kn">import</span> <span class="n">VisualizerWorkspace</span><span class="p">,</span> <span class="n">data_root</span>
 
+<span class="c1">#: The generic subgenre transport (muvid.mcp.subgenre_tools): ANY installed</span>
+<span class="c1">#: subgenre plugin is listable and renderable here without muvid knowing it.</span>
+<span class="n">SUBGENRE_TOOLS</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">"list_subgenres"</span><span class="p">,</span>
+    <span class="s2">"render_subgenre"</span><span class="p">,</span>
+<span class="p">]</span>
+
 <span class="c1">#: The ``lyric-video`` genre tools (muvid.mcp.lyricvid_tools). Five free, one costed.</span>
 <span class="n">LYRICVID_TOOLS</span> <span class="o">=</span> <span class="p">[</span>
     <span class="s2">"list_archetypes"</span><span class="p">,</span>
@@ -223,7 +233,8 @@
 <span class="p">]</span>
 
 <span class="c1">#: All tools this package exposes (all free). Bare names; a host may prefix them.</span>
-<span class="n">TOOL_NAMES</span> <span class="o">=</span> <span class="n">VISUALIZER_TOOLS</span> <span class="o">+</span> <span class="n">FOOTAGE_TOOLS</span> <span class="o">+</span> <span class="n">SCORING_TOOLS</span> <span class="o">+</span> <span class="n">LYRICVID_TOOLS</span>
+<span class="n">TOOL_NAMES</span> <span class="o">=</span> <span class="p">(</span><span class="n">VISUALIZER_TOOLS</span> <span class="o">+</span> <span class="n">FOOTAGE_TOOLS</span> <span class="o">+</span> <span class="n">SCORING_TOOLS</span> <span class="o">+</span> <span class="n">LYRICVID_TOOLS</span>
+              <span class="o">+</span> <span class="n">SUBGENRE_TOOLS</span><span class="p">)</span>
 
 <span class="c1">#: Alias — muvid has no costed tools.</span>
 <span class="n">FREE_TOOLS</span> <span class="o">=</span> <span class="p">[</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">TOOL_NAMES</span> <span class="k">if</span> <span class="n">n</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">LYRICVID_COSTED</span><span class="p">]</span>
@@ -234,6 +245,7 @@
 <span class="n">TOOL_REFS</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">name</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"muvid.mcp.footage_tools:</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">FOOTAGE_TOOLS</span><span class="p">})</span>
 <span class="n">TOOL_REFS</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">name</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"muvid.mcp.scoring_tools:</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">SCORING_TOOLS</span><span class="p">})</span>
 <span class="n">TOOL_REFS</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">name</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"muvid.mcp.lyricvid_tools:</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">LYRICVID_TOOLS</span><span class="p">})</span>
+<span class="n">TOOL_REFS</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">name</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"muvid.mcp.subgenre_tools:</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">SUBGENRE_TOOLS</span><span class="p">})</span>
 
 
 <div class="viewcode-block" id="register_tools">

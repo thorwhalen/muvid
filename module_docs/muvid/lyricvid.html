@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.lyricvid &mdash; muvid 0.0.57 documentation</title>
+  <title>muvid.lyricvid &mdash; muvid 0.0.58 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -15,7 +15,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=2bfb35b6"></script>
+      <script src="../../_static/documentation_options.js?v=c3e19674"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -81,6 +81,7 @@
 <li class="toctree-l1"><a class="reference internal" href="genre.html">muvid.genre</a></li>
 <li class="toctree-l1"><a class="reference internal" href="genre_lyric_video.html">muvid.genre_lyric_video</a></li>
 <li class="toctree-l1"><a class="reference internal" href="genre_music_video.html">muvid.genre_music_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="genre_subgenres.html">muvid.genre_subgenres</a></li>
 <li class="toctree-l1"><a class="reference internal" href="lyrics.html">muvid.lyrics</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">muvid.lyricvid</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.lyricvid.Canvas"><code class="docutils literal notranslate"><span class="pre">Canvas</span></code></a></li>
@@ -95,6 +96,7 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.lyricvid.TreatmentSpec"><code class="docutils literal notranslate"><span class="pre">TreatmentSpec</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#muvid.lyricvid.TreatmentSpec.from_dict"><code class="docutils literal notranslate"><span class="pre">TreatmentSpec.from_dict()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#muvid.lyricvid.TreatmentSpec.to_dict"><code class="docutils literal notranslate"><span class="pre">TreatmentSpec.to_dict()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.lyricvid.compile_scene"><code class="docutils literal notranslate"><span class="pre">compile_scene()</span></code></a></li>
@@ -119,6 +121,7 @@
 <li class="toctree-l1"><a class="reference internal" href="mcp/identity.html">muvid.mcp.identity</a></li>
 <li class="toctree-l1"><a class="reference internal" href="mcp/lyricvid_tools.html">muvid.mcp.lyricvid_tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="mcp/scoring_tools.html">muvid.mcp.scoring_tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mcp/subgenre_tools.html">muvid.mcp.subgenre_tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="mcp/tools.html">muvid.mcp.tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="mcp/workspace.html">muvid.mcp.workspace</a></li>
 <li class="toctree-l1"><a class="reference internal" href="project.html">muvid.project</a></li>
@@ -136,6 +139,7 @@
 <li class="toctree-l1"><a class="reference internal" href="subgenres/_contract.html">muvid.subgenres._contract</a></li>
 <li class="toctree-l1"><a class="reference internal" href="subgenres/_manifest.html">muvid.subgenres._manifest</a></li>
 <li class="toctree-l1"><a class="reference internal" href="subgenres/_registry.html">muvid.subgenres._registry</a></li>
+<li class="toctree-l1"><a class="reference internal" href="subgenres/_schema.html">muvid.subgenres._schema</a></li>
 <li class="toctree-l1"><a class="reference internal" href="subgenres/testing.html">muvid.subgenres.testing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="ui.html">muvid.ui</a></li>
 <li class="toctree-l1"><a class="reference internal" href="ui/app.html">muvid.ui.app</a></li>
@@ -235,6 +239,8 @@ pulls nothing heavy, and each attribute is resolved on first use.</p>
 <dt class="sig sig-object py" id="muvid.lyricvid.TimedText.measured">
 <span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">measured</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><a class="headerlink" href="#muvid.lyricvid.TimedText.measured" title="Link to this definition"></a></dt>
 <dd><p>True when every word time was measured rather than interpolated.</p>
+<p>False for an empty text: “all of nothing was measured” is the kind of
+vacuous truth that reads as reassurance in a report.</p>
 </dd></dl>
 
 <dl class="py attribute">
@@ -259,7 +265,34 @@ pulls nothing heavy, and each attribute is resolved on first use.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="muvid.lyricvid.TreatmentSpec.from_dict">
 <span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">d</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Mapping</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="lyricvid/spec.html#muvid.lyricvid.spec.TreatmentSpec" title="muvid.lyricvid.spec.TreatmentSpec"><span class="pre">TreatmentSpec</span></a></span></span><a class="reference internal" href="../../_modules/muvid/lyricvid/spec.html#TreatmentSpec.from_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.lyricvid.TreatmentSpec.from_dict" title="Link to this definition"></a></dt>
-<dd><p>Build from a plain mapping, tolerating missing keys (they default).</p>
+<dd><p>Build from a plain mapping — TOTAL over what a model or a remote caller sends.</p>
+<p>Missing keys default. Wrong-shaped values are coerced toward the field’s
+type rather than raised on: a string where a list was expected becomes
+a one-element list (<code class="docutils literal notranslate"><span class="pre">applies_to:</span> <span class="pre">&quot;chorus&quot;</span></code> used to become
+<code class="docutils literal notranslate"><span class="pre">('c','h','o','r','u','s')</span></code>), a numeric string becomes a number, an
+unknown key is dropped, a <code class="docutils literal notranslate"><span class="pre">None</span></code> sub-object is the default. What
+cannot be coerced falls to the default and <code class="xref py py-func docutils literal notranslate"><span class="pre">repair()</span></code> reports the
+enum-level substitutions afterwards.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">s</span> <span class="o">=</span> <span class="n">TreatmentSpec</span><span class="o">.</span><span class="n">from_dict</span><span class="p">({</span><span class="s1">'scenes'</span><span class="p">:</span> <span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">{</span><span class="s1">'applies_to'</span><span class="p">:</span> <span class="s1">'chorus'</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="s1">'timing'</span><span class="p">:</span> <span class="s1">'fast'</span><span class="p">,</span> <span class="s1">'shape'</span><span class="p">:</span> <span class="s1">'circle'</span><span class="p">}],</span>
+<span class="gp">... </span>    <span class="s1">'direction'</span><span class="p">:</span> <span class="p">{</span><span class="s1">'palette'</span><span class="p">:</span> <span class="p">{</span><span class="s1">'foo'</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">'bg'</span><span class="p">:</span> <span class="s1">'#000000'</span><span class="p">},</span>
+<span class="gp">... </span>                  <span class="s1">'motion_vocabulary'</span><span class="p">:</span> <span class="s1">'pop'</span><span class="p">,</span>
+<span class="gp">... </span>                  <span class="s1">'typography'</span><span class="p">:</span> <span class="p">{</span><span class="s1">'weight'</span><span class="p">:</span> <span class="s1">'700'</span><span class="p">,</span> <span class="s1">'tracking'</span><span class="p">:</span> <span class="kc">None</span><span class="p">}}})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">s</span><span class="o">.</span><span class="n">scenes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">applies_to</span><span class="p">,</span> <span class="n">s</span><span class="o">.</span><span class="n">direction</span><span class="o">.</span><span class="n">motion_vocabulary</span>
+<span class="go">(('chorus',), ('pop',))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">s</span><span class="o">.</span><span class="n">direction</span><span class="o">.</span><span class="n">typography</span><span class="o">.</span><span class="n">weight</span><span class="p">,</span> <span class="n">s</span><span class="o">.</span><span class="n">direction</span><span class="o">.</span><span class="n">typography</span><span class="o">.</span><span class="n">tracking</span>
+<span class="go">(700, 0.0)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">s</span><span class="o">.</span><span class="n">direction</span><span class="o">.</span><span class="n">palette</span><span class="o">.</span><span class="n">bg</span><span class="p">,</span> <span class="n">s</span><span class="o">.</span><span class="n">scenes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span>
+<span class="go">('#000000', None)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="muvid.lyricvid.TreatmentSpec.to_dict">
+<span class="sig-name descname"><span class="pre">to_dict</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/muvid/lyricvid/spec.html#TreatmentSpec.to_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.lyricvid.TreatmentSpec.to_dict" title="Link to this definition"></a></dt>
+<dd><p>A JSON-native dict: tuples become lists, so what this emits is
+exactly what <code class="xref py py-func docutils literal notranslate"><span class="pre">json_schema()</span></code> validates and what a file round-trips.</p>
 </dd></dl>
 
 </dd></dl>

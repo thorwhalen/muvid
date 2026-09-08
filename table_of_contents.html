@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>&lt;no title&gt; &mdash; muvid 0.0.57 documentation</title>
+  <title>&lt;no title&gt; &mdash; muvid 0.0.58 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
@@ -15,7 +15,7 @@
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=2bfb35b6"></script>
+      <script src="_static/documentation_options.js?v=c3e19674"></script>
       <script src="_static/doctools.js?v=fd6eb6e6"></script>
       <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -79,6 +79,7 @@
 <li class="toctree-l1"><a class="reference internal" href="module_docs/muvid/genre.html">muvid.genre</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/muvid/genre_lyric_video.html">muvid.genre_lyric_video</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/muvid/genre_music_video.html">muvid.genre_music_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="module_docs/muvid/genre_subgenres.html">muvid.genre_subgenres</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/muvid/lyrics.html">muvid.lyrics</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/muvid/lyricvid.html">muvid.lyricvid</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/muvid/lyricvid/__main__.html">muvid.lyricvid.__main__</a></li>
@@ -99,6 +100,7 @@
 <li class="toctree-l1"><a class="reference internal" href="module_docs/muvid/mcp/identity.html">muvid.mcp.identity</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/muvid/mcp/lyricvid_tools.html">muvid.mcp.lyricvid_tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/muvid/mcp/scoring_tools.html">muvid.mcp.scoring_tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="module_docs/muvid/mcp/subgenre_tools.html">muvid.mcp.subgenre_tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/muvid/mcp/tools.html">muvid.mcp.tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/muvid/mcp/workspace.html">muvid.mcp.workspace</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/muvid/project.html">muvid.project</a></li>
@@ -116,6 +118,7 @@
 <li class="toctree-l1"><a class="reference internal" href="module_docs/muvid/subgenres/_contract.html">muvid.subgenres._contract</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/muvid/subgenres/_manifest.html">muvid.subgenres._manifest</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/muvid/subgenres/_registry.html">muvid.subgenres._registry</a></li>
+<li class="toctree-l1"><a class="reference internal" href="module_docs/muvid/subgenres/_schema.html">muvid.subgenres._schema</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/muvid/subgenres/testing.html">muvid.subgenres.testing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/muvid/ui.html">muvid.ui</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/muvid/ui/app.html">muvid.ui.app</a></li>
@@ -443,6 +446,7 @@
 <li class="toctree-l1"><a class="reference internal" href="module_docs/muvid/genre.html">muvid.genre</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/muvid/genre_lyric_video.html">muvid.genre_lyric_video</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/muvid/genre_music_video.html">muvid.genre_music_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="module_docs/muvid/genre_subgenres.html">muvid.genre_subgenres</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/muvid/lyrics.html">muvid.lyrics</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/lyrics.html#muvid.lyrics.LyricLine"><code class="docutils literal notranslate"><span class="pre">LyricLine</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/lyrics.html#muvid.lyrics.LyricSection"><code class="docutils literal notranslate"><span class="pre">LyricSection</span></code></a></li>
@@ -541,10 +545,12 @@
 <li class="toctree-l1"><a class="reference internal" href="module_docs/muvid/lyricvid/spec.html">muvid.lyricvid.spec</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/lyricvid/spec.html#muvid.lyricvid.spec.ARCHETYPES"><code class="docutils literal notranslate"><span class="pre">ARCHETYPES</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/lyricvid/spec.html#muvid.lyricvid.spec.Direction"><code class="docutils literal notranslate"><span class="pre">Direction</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/lyricvid/spec.html#muvid.lyricvid.spec.INLINE_SHAPE_KINDS"><code class="docutils literal notranslate"><span class="pre">INLINE_SHAPE_KINDS</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/lyricvid/spec.html#muvid.lyricvid.spec.MOTIONS"><code class="docutils literal notranslate"><span class="pre">MOTIONS</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/lyricvid/spec.html#muvid.lyricvid.spec.PERSISTENCE"><code class="docutils literal notranslate"><span class="pre">PERSISTENCE</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/lyricvid/spec.html#muvid.lyricvid.spec.Palette"><code class="docutils literal notranslate"><span class="pre">Palette</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/lyricvid/spec.html#muvid.lyricvid.spec.QUANTIZE"><code class="docutils literal notranslate"><span class="pre">QUANTIZE</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/lyricvid/spec.html#muvid.lyricvid.spec.SHAPE_KINDS"><code class="docutils literal notranslate"><span class="pre">SHAPE_KINDS</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/lyricvid/spec.html#muvid.lyricvid.spec.Scene"><code class="docutils literal notranslate"><span class="pre">Scene</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/lyricvid/spec.html#muvid.lyricvid.spec.ShapeRef"><code class="docutils literal notranslate"><span class="pre">ShapeRef</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/lyricvid/spec.html#muvid.lyricvid.spec.Timing"><code class="docutils literal notranslate"><span class="pre">Timing</span></code></a></li>
@@ -562,6 +568,7 @@
 <li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/lyricvid/timed_text.html#muvid.lyricvid.timed_text.Section"><code class="docutils literal notranslate"><span class="pre">Section</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/lyricvid/timed_text.html#muvid.lyricvid.timed_text.TimedText"><code class="docutils literal notranslate"><span class="pre">TimedText</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/lyricvid/timed_text.html#muvid.lyricvid.timed_text.Word"><code class="docutils literal notranslate"><span class="pre">Word</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/lyricvid/timed_text.html#muvid.lyricvid.timed_text.from_alignment_result"><code class="docutils literal notranslate"><span class="pre">from_alignment_result()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/lyricvid/timed_text.html#muvid.lyricvid.timed_text.from_alignment_store"><code class="docutils literal notranslate"><span class="pre">from_alignment_store()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/lyricvid/timed_text.html#muvid.lyricvid.timed_text.from_lyrics_and_audio"><code class="docutils literal notranslate"><span class="pre">from_lyrics_and_audio()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/lyricvid/timed_text.html#muvid.lyricvid.timed_text.from_subtitles"><code class="docutils literal notranslate"><span class="pre">from_subtitles()</span></code></a></li>
@@ -634,6 +641,7 @@
 <li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/mcp/scoring_tools.html#muvid.mcp.scoring_tools.score_footage"><code class="docutils literal notranslate"><span class="pre">score_footage()</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="module_docs/muvid/mcp/subgenre_tools.html">muvid.mcp.subgenre_tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/muvid/mcp/tools.html">muvid.mcp.tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/muvid/mcp/workspace.html">muvid.mcp.workspace</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/mcp/workspace.html#muvid.mcp.workspace.DATA_HOME_ENV_VAR"><code class="docutils literal notranslate"><span class="pre">DATA_HOME_ENV_VAR</span></code></a></li>
@@ -718,6 +726,7 @@
 <li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/subgenres/_manifest.html#muvid.subgenres._manifest.API_VERSION"><code class="docutils literal notranslate"><span class="pre">API_VERSION</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/subgenres/_manifest.html#muvid.subgenres._manifest.ENTRY_POINT_GROUP"><code class="docutils literal notranslate"><span class="pre">ENTRY_POINT_GROUP</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/subgenres/_manifest.html#muvid.subgenres._manifest.Example"><code class="docutils literal notranslate"><span class="pre">Example</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/subgenres/_manifest.html#muvid.subgenres._manifest.SLUG_RE"><code class="docutils literal notranslate"><span class="pre">SLUG_RE</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/subgenres/_manifest.html#muvid.subgenres._manifest.Subgenre"><code class="docutils literal notranslate"><span class="pre">Subgenre</span></code></a></li>
 </ul>
 </li>
@@ -729,6 +738,12 @@
 <li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/subgenres/_registry.html#muvid.subgenres._registry.resolve_renderer"><code class="docutils literal notranslate"><span class="pre">resolve_renderer()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/subgenres/_registry.html#muvid.subgenres._registry.subgenre_catalog"><code class="docutils literal notranslate"><span class="pre">subgenre_catalog()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/subgenres/_registry.html#muvid.subgenres._registry.unregister_subgenre"><code class="docutils literal notranslate"><span class="pre">unregister_subgenre()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="module_docs/muvid/subgenres/_schema.html">muvid.subgenres._schema</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/subgenres/_schema.html#muvid.subgenres._schema.ENFORCED_KEYWORDS"><code class="docutils literal notranslate"><span class="pre">ENFORCED_KEYWORDS</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/subgenres/_schema.html#muvid.subgenres._schema.SchemaError"><code class="docutils literal notranslate"><span class="pre">SchemaError</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="module_docs/muvid/subgenres/_schema.html#muvid.subgenres._schema.validate"><code class="docutils literal notranslate"><span class="pre">validate()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/muvid/subgenres/testing.html">muvid.subgenres.testing</a><ul>
