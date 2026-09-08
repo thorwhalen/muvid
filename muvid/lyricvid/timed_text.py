@@ -41,6 +41,7 @@ __all__ = [
     "Section",
     "TimedText",
     "from_alignment_store",
+    "from_alignment_result",
     "from_subtitles",
     "from_lyrics_and_audio",
     "from_words",
@@ -243,7 +244,10 @@ def from_subtitles(path: Path | str, *, duration: float = 0.0) -> TimedText:
     ``measured=False``.
     """
     path = Path(path)
-    text = path.read_text(encoding="utf-8", errors="replace")
+    # utf-8-sig: a byte-order mark otherwise survives into the first cue's
+    # index line, which then fails the isdigit() filter and leaks "﻿1"
+    # into the rendered text of the first line.
+    text = path.read_text(encoding="utf-8-sig", errors="replace")
     suffix = path.suffix.lower()
 
     lines: list[Line] = []
@@ -327,6 +331,134 @@ def from_alignment_store(project_root: Path | str, *, duration: float = 0.0) -> 
     return from_words(timings, duration=duration, source="muvid-alignment")
 
 
+#: The same token boundaries ``muvid.align._tokenize`` uses (it lowercases, then
+#: matches this), so a ``WordAlignment.token_index`` addresses the same token
+#: here. Kept in sync by the doctest below rather than by importing a private.
+_LYRIC_TOKEN_RE = re.compile(r"[a-z0-9']+")
+
+
+def _lyric_tokens(text: str) -> list[str]:
+    """The line's tokens, in the lyric's OWN case, at ``muvid.align``'s boundaries.
+
+    >>> _lyric_tokens("Don't stop, Me now!")
+    ["Don't", 'stop', 'Me', 'now']
+    """
+    lowered = text.lower()
+    if len(lowered) != len(text):  # a case-fold that changed length; be safe
+        return _LYRIC_TOKEN_RE.findall(lowered)
+    return [text[m.start():m.end()] for m in _LYRIC_TOKEN_RE.finditer(lowered)]
+
+
+def _line_words_from_alignment(ln) -> tuple[Word, ...]:
+    """One line's words: the LYRIC's text, with the aligner's times where it has them.
+
+    ``WordAlignment.text`` is the transcript's word, not the lyric's — an ASR
+    that heard "Apple" for a lyric that says "apple" would otherwise change
+    the rendered text. The lyric document is what the user committed to, so
+    its tokens win and the alignment contributes only the timing.
+
+    Tokens the aligner did not match are interpolated between the nearest
+    measured neighbours (or the line's own span) and marked ``measured=False``
+    *individually*, so a line that is half-matched reports half-measured
+    rather than all-or-nothing.
+    """
+    tokens = _lyric_tokens(ln.text or "")
+    if not tokens:
+        return ()
+    timed: dict[int, tuple[float, float]] = {}
+    for wa in ln.word_alignments or ():
+        i = int(wa.token_index)
+        if 0 <= i < len(tokens) and wa.start_s is not None and wa.end_s is not None:
+            timed[i] = (float(wa.start_s), float(wa.end_s))
+
+    line_start = ln.start_s if ln.start_s is not None else (
+        min(s for s, _ in timed.values()) if timed else None)
+    line_end = ln.end_s if ln.end_s is not None else (
+        max(e for _, e in timed.values()) if timed else None)
+    if line_start is None or line_end is None:
+        return ()  # nothing measured and nothing to interpolate from
+
+    out: list[Word] = []
+    i = 0
+    n = len(tokens)
+    while i < n:
+        if i in timed:
+            s, e = timed[i]
+            out.append(Word(text=tokens[i], start=s, end=e, measured=True))
+            i += 1
+            continue
+        # an unmeasured run: spread it between the neighbouring measured bounds
+        j = i
+        while j < n and j not in timed:
+            j += 1
+        lo = timed[i - 1][1] if i > 0 and (i - 1) in timed else float(line_start)
+        hi = timed[j][0] if j < n else float(line_end)
+        if hi <= lo:
+            hi = lo + 1e-3 * (j - i)
+        out.extend(_spread_words_over(" ".join(tokens[i:j]), lo, hi))
+        i = j
+    return tuple(out)
+
+
+def from_alignment_result(result, *, duration: float = 0.0, source: str = "muvid-align") -> TimedText:
+    """Convert a :class:`muvid.align.AlignmentResult` into a timed tree.
+
+    Keeps the sections and lines the aligner found — which is strictly better
+    than flattening to words and re-splitting on gaps, because the lyrics
+    document already *knows* where the lines are.
+
+    A line whose words the aligner could not match still has a ``[start, end]``
+    (interpolated by the aligner from its neighbours); its words are spread
+    across that span and marked ``measured=False``, so downstream can see the
+    difference between a measured onset and a guessed one.
+
+    >>> from types import SimpleNamespace as NS
+    >>> w = NS(text='hi', start_s=0.0, end_s=0.4, token_index=0)
+    >>> ln = NS(line_index=0, text='hi there', start_s=0.0, end_s=1.0,
+    ...         word_alignments=(w,))
+    >>> sec = NS(label='verse', lines=(ln,))
+    >>> tt = from_alignment_result(NS(sections=(sec,)), duration=1.0)
+    >>> [(x.text, x.measured) for x in tt.words()]
+    [('hi', True), ('there', False)]
+    >>> tt.sections[0].label
+    'verse'
+    """
+    sections: list[Section] = []
+    for sec in result.sections:
+        lines: list[Line] = []
+        for ln in sec.lines:
+            words = _line_words_from_alignment(ln)
+            if words:
+                lines.append(Line(words=words, index=int(ln.line_index), text=ln.text))
+        if lines:
+            sections.append(Section(label=sec.label or "*", lines=tuple(lines)))
+    dur = duration or max((l.end for s in sections for l in s.lines), default=0.0)
+    return TimedText(sections=tuple(sections), duration=dur, source=source)
+
+
+def _has(module: str) -> bool:
+    from importlib.util import find_spec
+
+    return find_spec(module) is not None
+
+
+def _transcribe_words_offline(audio: Path) -> list[tuple[str, float, float]]:
+    """Word timings straight from ``faster-whisper``, for the no-lyrics case."""
+    from faster_whisper import WhisperModel
+
+    model = WhisperModel("small", device="cpu", compute_type="int8")
+    segments, _info = model.transcribe(
+        str(audio), word_timestamps=True, condition_on_previous_text=False
+    )
+    out: list[tuple[str, float, float]] = []
+    for seg in segments:
+        for w in seg.words or ():
+            text = w.word.strip()
+            if text:
+                out.append((text, float(w.start), float(w.end)))
+    return out
+
+
 def from_lyrics_and_audio(
     audio: Path | str,
     *,
@@ -334,25 +466,67 @@ def from_lyrics_and_audio(
     aligner: str | None = None,
     duration: float = 0.0,
 ) -> TimedText:
-    """Align ``lyrics`` to ``audio`` using muvid's registered aligner.
+    """Align ``lyrics`` to ``audio`` through muvid's aligner registry.
 
-    ``aligner=None`` uses muvid's default. This deliberately goes through
-    ``muvid.align``'s registry rather than calling an ASR directly, so a better
-    singing-grade aligner registered later is picked up here for free.
+    Goes through :func:`muvid.align.align_lyrics` rather than calling an ASR
+    directly, so a singing-grade aligner registered later is picked up here
+    for free. The aligner is chosen honestly by what is installed:
+
+    * ``whisperx-lite`` — offline, free, needs ``faster-whisper``. **Default
+      when available.** Runs on the audio itself.
+    * ``scribe-greedy`` — needs a Scribe transcript, which costs money and an
+      ElevenLabs key; only reached when asked for by name, never as a silent
+      fallback that spends.
+
+    With no ``lyrics`` at all there is nothing to align *to*; the transcript's
+    own words become the text (``source='transcript'``).
+
+    ``aligner`` may be any registered name; unknown names raise from
+    ``muvid.align`` with the registered list.
     """
     from muvid.visualize.ffmpeg import media_duration
 
     audio = Path(audio)
+    if not audio.exists():
+        raise FileNotFoundError(f"audio not found: {audio}")
     duration = duration or media_duration(audio)
 
-    from muvid import align as align_mod
+    if lyrics is None:
+        if not _has("faster_whisper"):
+            raise RuntimeError(
+                "No lyrics were given, so the words must be transcribed — but "
+                "faster-whisper is not installed. Either `pip install "
+                "faster-whisper` (offline, free), or pass --lyrics / --subtitles."
+            )
+        return from_words(_transcribe_words_offline(audio), duration=duration,
+                          source="transcript")
 
-    resolve = getattr(align_mod, "resolve_aligner", None)
-    if resolve is None:  # pragma: no cover - depends on muvid.align's shape
-        raise RuntimeError(
-            "muvid.align exposes no aligner registry on this version; pass a "
-            "subtitle file instead, or upgrade muvid."
-        )
-    fn = resolve(aligner) if aligner else resolve(getattr(align_mod, "DEFAULT_ALIGNER", None))
-    words = fn(audio=audio, lyrics=Path(lyrics) if lyrics else None)
-    return from_words(words, duration=duration, source=f"aligner:{aligner or 'default'}")
+    from muvid import align as align_mod
+    from muvid.lyrics import parse_lyrics_md
+
+    doc = parse_lyrics_md(Path(lyrics).read_text(encoding="utf-8"))
+    if not doc.lines:
+        raise ValueError(f"no lyric lines found in {lyrics}")
+
+    name = aligner
+    kwargs: dict = {}
+    if name is None:
+        if _has("faster_whisper"):
+            name = "whisperx-lite"
+        else:
+            raise RuntimeError(
+                "No offline aligner is available: install faster-whisper "
+                "(`pip install faster-whisper`), pass --subtitles with timed "
+                "lines, or choose an aligner by name (see muvid.align.list_aligners)."
+            )
+    transcript: dict = {}
+    if name == "whisperx-lite":
+        kwargs["audio_path"] = str(audio)
+    elif name == "scribe-greedy":
+        from muvid.lyrics import transcribe  # ElevenLabs Scribe: paid, keyed
+
+        transcript = transcribe(audio)
+    result = align_mod.align_lyrics(
+        doc, transcript, duration_s=duration, aligner=name, **kwargs
+    )
+    return from_alignment_result(result, duration=duration, source=f"aligner:{name}")
