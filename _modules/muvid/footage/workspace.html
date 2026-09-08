@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.footage.workspace &mdash; muvid 0.0.58 documentation</title>
+  <title>muvid.footage.workspace &mdash; muvid 0.0.59 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=c3e19674"></script>
+      <script src="../../../_static/documentation_options.js?v=6799126d"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -170,6 +170,12 @@
 <span class="sd">- ``.../clips/{clip_id}.&lt;ext&gt;`` — an uploaded footage clip</span>
 <span class="sd">- ``.../alignments.json`` — the persisted per-clip alignment</span>
 <span class="sd">- ``.../renders/{render_id}/`` — an assembled music video</span>
+
+<span class="sd">Invalidation is deliberate and lives here, beside the state it protects: ``set_song``</span>
+<span class="sd">and ``remove_clip`` both drop ``alignments.json`` and every persisted score track,</span>
+<span class="sd">because the alignment is a measurement of exactly the song and the clip set that were</span>
+<span class="sd">present when it was taken (muvid#22 — a removed clip's offset must not outlive the</span>
+<span class="sd">clip, and the score tensor is keyed on that alignment's fingerprint).</span>
 <span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
@@ -318,6 +324,56 @@
         <span class="n">clips</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">"clip_id"</span><span class="p">:</span> <span class="n">cid</span><span class="p">,</span> <span class="s2">"file"</span><span class="p">:</span> <span class="n">dest</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="s2">"name"</span><span class="p">:</span> <span class="n">name</span> <span class="ow">or</span> <span class="n">cid</span><span class="p">})</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_write_manifest</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">cid</span></div>
+
+
+<div class="viewcode-block" id="MusicVideoFootageProject.remove_clip">
+<a class="viewcode-back" href="../../../module_docs/muvid/footage/workspace.html#muvid.footage.workspace.MusicVideoFootageProject.remove_clip">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">remove_clip</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">clip_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Delete one clip — its file(s) and its manifest entry — and invalidate what</span>
+<span class="sd">        was measured against it (muvid#22).</span>
+
+<span class="sd">        A removal changes the clip SET the alignment describes, so ``alignments.json``</span>
+<span class="sd">        is dropped and, with it, every persisted score track — the same invalidation</span>
+<span class="sd">        ``set_song`` performs, and for the same reason: scores are keyed on the alignment</span>
+<span class="sd">        fingerprint, which no longer matches. Whole-artifact, not surgical: pruning one</span>
+<span class="sd">        record from the alignment would still move the fingerprint and strand the</span>
+<span class="sd">        score manifest, and editing that manifest in place is a migration-surface change</span>
+<span class="sd">        this method deliberately does not make.</span>
+
+<span class="sd">        The steps run in an order where every crash-intermediate state is a valid</span>
+<span class="sd">        project: alignment and scores go first (leaving "present, unaligned"), then the</span>
+<span class="sd">        manifest (leaving at worst an orphan file ``add_clip`` would sweep), then the</span>
+<span class="sd">        file — never a manifest entry pointing at a file that is gone.</span>
+
+<span class="sd">        Returns what happened: ``{clip_id, name, files, alignment_invalidated,</span>
+<span class="sd">        scores_invalidated}``. Raises ``KeyError`` for a ``clip_id`` the manifest does</span>
+<span class="sd">        not hold; the MCP tool turns that into a refusal naming the known ids.</span>
+<span class="sd">        """</span>
+        <span class="n">cid</span> <span class="o">=</span> <span class="n">safe_component</span><span class="p">(</span><span class="n">clip_id</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"clip_id"</span><span class="p">)</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">manifest</span><span class="p">()</span>
+        <span class="n">clips</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"clips"</span><span class="p">,</span> <span class="p">[]))</span>
+        <span class="n">entry</span> <span class="o">=</span> <span class="nb">next</span><span class="p">((</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">clips</span> <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"clip_id"</span><span class="p">)</span> <span class="o">==</span> <span class="n">cid</span><span class="p">),</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">entry</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="n">cid</span><span class="p">)</span>
+        <span class="n">alignment</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">root</span> <span class="o">/</span> <span class="s2">"alignments.json"</span>
+        <span class="n">had_alignment</span> <span class="o">=</span> <span class="n">alignment</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+        <span class="n">alignment</span><span class="o">.</span><span class="n">unlink</span><span class="p">(</span><span class="n">missing_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">had_scores</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span> <span class="o">/</span> <span class="s2">"scores"</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">invalidate_scores</span><span class="p">()</span>
+        <span class="n">m</span><span class="p">[</span><span class="s2">"clips"</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">clips</span> <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"clip_id"</span><span class="p">)</span> <span class="o">!=</span> <span class="n">cid</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_write_manifest</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+        <span class="n">removed_files</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="c1"># The same sweep add_clip uses: any extension this id was ever stored under.</span>
+        <span class="k">for</span> <span class="n">old</span> <span class="ow">in</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span> <span class="o">/</span> <span class="s2">"clips"</span><span class="p">)</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">cid</span><span class="si">}</span><span class="s2">.*"</span><span class="p">):</span>
+            <span class="n">old</span><span class="o">.</span><span class="n">unlink</span><span class="p">()</span>
+            <span class="n">removed_files</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">old</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">"clip_id"</span><span class="p">:</span> <span class="n">cid</span><span class="p">,</span>
+            <span class="s2">"name"</span><span class="p">:</span> <span class="n">entry</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"name"</span><span class="p">,</span> <span class="n">cid</span><span class="p">),</span>
+            <span class="s2">"files"</span><span class="p">:</span> <span class="n">removed_files</span><span class="p">,</span>
+            <span class="s2">"alignment_invalidated"</span><span class="p">:</span> <span class="n">had_alignment</span><span class="p">,</span>
+            <span class="s2">"scores_invalidated"</span><span class="p">:</span> <span class="n">had_scores</span><span class="p">,</span>
+        <span class="p">}</span></div>
 
 
     <span class="k">def</span><span class="w"> </span><span class="nf">clip_paths</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>

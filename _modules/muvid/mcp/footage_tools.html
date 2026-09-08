@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.mcp.footage_tools &mdash; muvid 0.0.58 documentation</title>
+  <title>muvid.mcp.footage_tools &mdash; muvid 0.0.59 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=c3e19674"></script>
+      <script src="../../../_static/documentation_options.js?v=6799126d"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -169,6 +169,9 @@
 
 <span class="sd">Workflow: ``create_project(genre='music_video')`` → ``set_song`` → ``add_footage`` ×N →</span>
 <span class="sd">``align_footage`` → (``footage_timeline`` to inspect) → ``assemble_music_video``.</span>
+<span class="sd">Lifecycle around it (muvid#22): ``list_music_video_projects`` finds a project whose id</span>
+<span class="sd">was lost, and ``remove_footage`` takes a clip back out — which invalidates the</span>
+<span class="sd">alignment, exactly as ``set_song`` does.</span>
 <span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
@@ -1242,6 +1245,108 @@
         <span class="s2">"renders"</span><span class="p">:</span> <span class="n">proj</span><span class="o">.</span><span class="n">list_renders</span><span class="p">(),</span>
     <span class="p">}</span></div>
 
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_alignment_covers_clips</span><span class="p">(</span><span class="n">proj</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Whether a persisted alignment exists AND has a record for every current clip.</span>
+
+<span class="sd">    "Aligned" is a claim about the clip SET, not about a file: a clip added after</span>
+<span class="sd">    ``align_footage`` has no offset, the auto edit would silently pass it over, and the</span>
+<span class="sd">    file on disk would still say "aligned". Reading it this way makes the listing's next</span>
+<span class="sd">    action honest — false means "run align_footage", whichever way it became false.</span>
+<span class="sd">    """</span>
+    <span class="n">clip_ids</span> <span class="o">=</span> <span class="p">{</span><span class="n">c</span><span class="p">[</span><span class="s2">"clip_id"</span><span class="p">]</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">proj</span><span class="o">.</span><span class="n">list_clips</span><span class="p">()}</span>
+    <span class="n">aligned_ids</span> <span class="o">=</span> <span class="p">{</span><span class="n">a</span><span class="o">.</span><span class="n">clip_id</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">proj</span><span class="o">.</span><span class="n">load_alignments</span><span class="p">()}</span>
+    <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">clip_ids</span><span class="p">)</span> <span class="ow">and</span> <span class="n">clip_ids</span> <span class="o">&lt;=</span> <span class="n">aligned_ids</span>
+
+
+<div class="viewcode-block" id="list_music_video_projects">
+<a class="viewcode-back" href="../../../module_docs/muvid/mcp/footage_tools.html#muvid.mcp.footage_tools.list_music_video_projects">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">list_music_video_projects</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""List YOUR music_video (footage) projects, newest-modified first. Free.</span>
+
+<span class="sd">    The way back to a lost ``project_id`` (muvid#22): ``list_projects`` spans both</span>
+<span class="sd">    muvid genres but says nothing about a footage project's progress, and every other</span>
+<span class="sd">    footage tool needs the id first. Each row carries where the project is in the</span>
+<span class="sd">    workflow — ``has_song``, ``n_clips``, ``aligned``, ``n_renders`` — so the next call</span>
+<span class="sd">    reads off the listing without a ``footage_status`` per project:</span>
+
+<span class="sd">    - ``aligned`` is true only when the persisted alignment covers every current clip.</span>
+<span class="sd">      An ``add_footage`` or ``remove_footage`` after ``align_footage`` makes it false</span>
+<span class="sd">      again until you re-align.</span>
+<span class="sd">    - ``n_renders`` counts what ``footage_status`` lists under ``renders``; ``0`` is a</span>
+<span class="sd">      positive answer ("no cut yet"), never an omitted project.</span>
+
+<span class="sd">    ``[]`` means you have no footage projects; a visualizer project is not one and</span>
+<span class="sd">    shows up in ``list_projects`` instead.</span>
+<span class="sd">    """</span>
+    <span class="n">ws</span> <span class="o">=</span> <span class="n">_workspace</span><span class="p">()</span>
+    <span class="n">rows</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">ws</span><span class="o">.</span><span class="n">list_projects</span><span class="p">():</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">proj</span> <span class="o">=</span> <span class="n">ws</span><span class="o">.</span><span class="n">open_project</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s2">"project_id"</span><span class="p">])</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">FileNotFoundError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+            <span class="k">continue</span>  <span class="c1"># vanished mid-scan — genuinely absent</span>
+        <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="s2">"project_id"</span><span class="p">:</span> <span class="n">r</span><span class="p">[</span><span class="s2">"project_id"</span><span class="p">],</span>
+                <span class="s2">"title"</span><span class="p">:</span> <span class="n">r</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"title"</span><span class="p">)</span> <span class="ow">or</span> <span class="n">r</span><span class="p">[</span><span class="s2">"project_id"</span><span class="p">],</span>
+                <span class="s2">"has_song"</span><span class="p">:</span> <span class="n">proj</span><span class="o">.</span><span class="n">has_song</span><span class="p">(),</span>
+                <span class="s2">"n_clips"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">proj</span><span class="o">.</span><span class="n">list_clips</span><span class="p">()),</span>
+                <span class="s2">"aligned"</span><span class="p">:</span> <span class="n">_alignment_covers_clips</span><span class="p">(</span><span class="n">proj</span><span class="p">),</span>
+                <span class="s2">"n_renders"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">proj</span><span class="o">.</span><span class="n">list_renders</span><span class="p">()),</span>
+                <span class="s2">"created"</span><span class="p">:</span> <span class="n">r</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"created"</span><span class="p">),</span>
+                <span class="s2">"modified"</span><span class="p">:</span> <span class="n">r</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"modified"</span><span class="p">),</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s2">"projects"</span><span class="p">:</span> <span class="n">rows</span><span class="p">}</span></div>
+
+
+
+<div class="viewcode-block" id="remove_footage">
+<a class="viewcode-back" href="../../../module_docs/muvid/mcp/footage_tools.html#muvid.mcp.footage_tools.remove_footage">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">remove_footage</span><span class="p">(</span><span class="n">project_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">clip_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Remove one footage clip from the project — its stored file and its entry. Free.</span>
+
+<span class="sd">    Irreversible for the clip (re-add it from its URL if it was a mistake); existing</span>
+<span class="sd">    renders are untouched. Removal INVALIDATES the alignment and every persisted score</span>
+<span class="sd">    track, exactly as ``set_song`` does (muvid#22) — the alignment describes the clip set</span>
+<span class="sd">    it was measured on, and a removed clip's offset must not outlive the clip. So run</span>
+<span class="sd">    ``align_footage`` again before ``propose_edit`` / ``assemble_music_video``; until</span>
+<span class="sd">    then ``footage_status`` reports the project unaligned and this project's</span>
+<span class="sd">    ``aligned`` flag in ``list_music_video_projects`` is false.</span>
+
+<span class="sd">    An unknown ``clip_id`` is refused, naming the clip ids the project holds, and a</span>
+<span class="sd">    refusal changes nothing on disk. Returns what was removed, the clips that remain,</span>
+<span class="sd">    and whether an alignment / score tracks were actually dropped.</span>
+<span class="sd">    """</span>
+    <span class="n">proj</span> <span class="o">=</span> <span class="n">_open</span><span class="p">(</span><span class="n">project_id</span><span class="p">)</span>
+    <span class="n">known</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">list_clips</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">clip_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span><span class="n">c</span><span class="p">[</span><span class="s2">"clip_id"</span><span class="p">]</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">known</span><span class="p">}:</span>
+        <span class="k">raise</span> <span class="n">_tool_error</span><span class="p">(</span><span class="n">_unknown_clip_message</span><span class="p">(</span><span class="n">clip_id</span><span class="p">,</span> <span class="n">known</span><span class="p">))</span>
+    <span class="n">removed</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">remove_clip</span><span class="p">(</span><span class="n">clip_id</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">"project_id"</span><span class="p">:</span> <span class="n">project_id</span><span class="p">,</span>
+        <span class="s2">"removed"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"clip_id"</span><span class="p">:</span> <span class="n">removed</span><span class="p">[</span><span class="s2">"clip_id"</span><span class="p">],</span> <span class="s2">"name"</span><span class="p">:</span> <span class="n">removed</span><span class="p">[</span><span class="s2">"name"</span><span class="p">]},</span>
+        <span class="s2">"clips"</span><span class="p">:</span> <span class="n">proj</span><span class="o">.</span><span class="n">list_clips</span><span class="p">(),</span>
+        <span class="s2">"alignment_invalidated"</span><span class="p">:</span> <span class="n">removed</span><span class="p">[</span><span class="s2">"alignment_invalidated"</span><span class="p">],</span>
+        <span class="s2">"scores_invalidated"</span><span class="p">:</span> <span class="n">removed</span><span class="p">[</span><span class="s2">"scores_invalidated"</span><span class="p">],</span>
+    <span class="p">}</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_unknown_clip_message</span><span class="p">(</span><span class="n">clip_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">known</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">known</span><span class="p">:</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"unknown clip_id </span><span class="si">{</span><span class="n">clip_id</span><span class="si">!r}</span><span class="s2"> — this project has no clips (add_footage first)"</span>
+    <span class="n">listed</span> <span class="o">=</span> <span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+        <span class="p">(</span>
+            <span class="n">c</span><span class="p">[</span><span class="s2">"clip_id"</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"name"</span><span class="p">,</span> <span class="n">c</span><span class="p">[</span><span class="s2">"clip_id"</span><span class="p">])</span> <span class="o">==</span> <span class="n">c</span><span class="p">[</span><span class="s2">"clip_id"</span><span class="p">]</span>
+            <span class="k">else</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">c</span><span class="p">[</span><span class="s1">'clip_id'</span><span class="p">]</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">c</span><span class="p">[</span><span class="s1">'name'</span><span class="p">]</span><span class="si">}</span><span class="s2">)"</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">known</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">"unknown clip_id </span><span class="si">{</span><span class="n">clip_id</span><span class="si">!r}</span><span class="s2"> — this project's clips are: </span><span class="si">{</span><span class="n">listed</span><span class="si">}</span><span class="s2">"</span>
 
 
 <div class="viewcode-block" id="list_strategies">

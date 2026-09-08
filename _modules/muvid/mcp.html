@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.mcp &mdash; muvid 0.0.58 documentation</title>
+  <title>muvid.mcp &mdash; muvid 0.0.59 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=c3e19674"></script>
+      <script src="../../_static/documentation_options.js?v=6799126d"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -222,6 +222,11 @@
     <span class="c1"># edited DECISION lane → an ``edl=`` argument). Both free and read-only.</span>
     <span class="s2">"footage_editor_document"</span><span class="p">,</span>
     <span class="s2">"footage_edl_from_annotations"</span><span class="p">,</span>
+    <span class="c1"># Clip lifecycle (muvid#22): the way back to a lost project_id, and the way a</span>
+    <span class="c1"># mistaken upload stops being permanent. Both free; remove_footage invalidates</span>
+    <span class="c1"># the alignment the same way set_song does.</span>
+    <span class="s2">"list_music_video_projects"</span><span class="p">,</span>
+    <span class="s2">"remove_footage"</span><span class="p">,</span>
 <span class="p">]</span>
 
 <span class="c1">#: The footage SCORING tools (muvid.mcp.scoring_tools) — the background scoring job + the</span>
@@ -233,8 +238,9 @@
 <span class="p">]</span>
 
 <span class="c1">#: All tools this package exposes (all free). Bare names; a host may prefix them.</span>
-<span class="n">TOOL_NAMES</span> <span class="o">=</span> <span class="p">(</span><span class="n">VISUALIZER_TOOLS</span> <span class="o">+</span> <span class="n">FOOTAGE_TOOLS</span> <span class="o">+</span> <span class="n">SCORING_TOOLS</span> <span class="o">+</span> <span class="n">LYRICVID_TOOLS</span>
-              <span class="o">+</span> <span class="n">SUBGENRE_TOOLS</span><span class="p">)</span>
+<span class="n">TOOL_NAMES</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">VISUALIZER_TOOLS</span> <span class="o">+</span> <span class="n">FOOTAGE_TOOLS</span> <span class="o">+</span> <span class="n">SCORING_TOOLS</span> <span class="o">+</span> <span class="n">LYRICVID_TOOLS</span> <span class="o">+</span> <span class="n">SUBGENRE_TOOLS</span>
+<span class="p">)</span>
 
 <span class="c1">#: Alias — muvid has no costed tools.</span>
 <span class="n">FREE_TOOLS</span> <span class="o">=</span> <span class="p">[</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">TOOL_NAMES</span> <span class="k">if</span> <span class="n">n</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">LYRICVID_COSTED</span><span class="p">]</span>

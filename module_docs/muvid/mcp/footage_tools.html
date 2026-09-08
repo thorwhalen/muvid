@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.mcp.footage_tools &mdash; muvid 0.0.58 documentation</title>
+  <title>muvid.mcp.footage_tools &mdash; muvid 0.0.59 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -15,7 +15,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=c3e19674"></script>
+      <script src="../../../_static/documentation_options.js?v=6799126d"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -107,8 +107,10 @@
 <li class="toctree-l2"><a class="reference internal" href="#muvid.mcp.footage_tools.footage_edl_from_annotations"><code class="docutils literal notranslate"><span class="pre">footage_edl_from_annotations()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.mcp.footage_tools.footage_status"><code class="docutils literal notranslate"><span class="pre">footage_status()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.mcp.footage_tools.footage_timeline"><code class="docutils literal notranslate"><span class="pre">footage_timeline()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.mcp.footage_tools.list_music_video_projects"><code class="docutils literal notranslate"><span class="pre">list_music_video_projects()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.mcp.footage_tools.list_strategies"><code class="docutils literal notranslate"><span class="pre">list_strategies()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.mcp.footage_tools.propose_edit"><code class="docutils literal notranslate"><span class="pre">propose_edit()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.mcp.footage_tools.remove_footage"><code class="docutils literal notranslate"><span class="pre">remove_footage()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.mcp.footage_tools.set_song"><code class="docutils literal notranslate"><span class="pre">set_song()</span></code></a></li>
 </ul>
 </li>
@@ -182,7 +184,10 @@ disk); alignment + assembly are bounded by hard resource caps and
 <code class="docutils literal notranslate"><span class="pre">$MUVID_FFMPEG_TIMEOUT_S</span></code> (assembly runs one bounded single-input ffmpeg per cut, so
 memory does not grow with cut count) — the connector renders synchronously over HTTP.</p>
 <p>Workflow: <code class="docutils literal notranslate"><span class="pre">create_project(genre='music_video')</span></code> → <code class="docutils literal notranslate"><span class="pre">set_song</span></code> → <code class="docutils literal notranslate"><span class="pre">add_footage</span></code> ×N →
-<code class="docutils literal notranslate"><span class="pre">align_footage</span></code> → (<code class="docutils literal notranslate"><span class="pre">footage_timeline</span></code> to inspect) → <code class="docutils literal notranslate"><span class="pre">assemble_music_video</span></code>.</p>
+<code class="docutils literal notranslate"><span class="pre">align_footage</span></code> → (<code class="docutils literal notranslate"><span class="pre">footage_timeline</span></code> to inspect) → <code class="docutils literal notranslate"><span class="pre">assemble_music_video</span></code>.
+Lifecycle around it (muvid#22): <code class="docutils literal notranslate"><span class="pre">list_music_video_projects</span></code> finds a project whose id
+was lost, and <code class="docutils literal notranslate"><span class="pre">remove_footage</span></code> takes a clip back out — which invalidates the
+alignment, exactly as <code class="docutils literal notranslate"><span class="pre">set_song</span></code> does.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="muvid.mcp.footage_tools.add_footage">
 <span class="sig-prename descclassname"><span class="pre">muvid.mcp.footage_tools.</span></span><span class="sig-name descname"><span class="pre">add_footage</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">project_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">url</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="../../../_modules/muvid/mcp/footage_tools.html#add_footage"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.mcp.footage_tools.add_footage" title="Link to this definition"></a></dt>
@@ -368,6 +373,26 @@ the persisted alignment (run <code class="docutils literal notranslate"><span cl
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="muvid.mcp.footage_tools.list_music_video_projects">
+<span class="sig-prename descclassname"><span class="pre">muvid.mcp.footage_tools.</span></span><span class="sig-name descname"><span class="pre">list_music_video_projects</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="../../../_modules/muvid/mcp/footage_tools.html#list_music_video_projects"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.mcp.footage_tools.list_music_video_projects" title="Link to this definition"></a></dt>
+<dd><p>List YOUR music_video (footage) projects, newest-modified first. Free.</p>
+<p>The way back to a lost <code class="docutils literal notranslate"><span class="pre">project_id</span></code> (muvid#22): <code class="docutils literal notranslate"><span class="pre">list_projects</span></code> spans both
+muvid genres but says nothing about a footage project’s progress, and every other
+footage tool needs the id first. Each row carries where the project is in the
+workflow — <code class="docutils literal notranslate"><span class="pre">has_song</span></code>, <code class="docutils literal notranslate"><span class="pre">n_clips</span></code>, <code class="docutils literal notranslate"><span class="pre">aligned</span></code>, <code class="docutils literal notranslate"><span class="pre">n_renders</span></code> — so the next call
+reads off the listing without a <code class="docutils literal notranslate"><span class="pre">footage_status</span></code> per project:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">aligned</span></code> is true only when the persisted alignment covers every current clip.
+An <code class="docutils literal notranslate"><span class="pre">add_footage</span></code> or <code class="docutils literal notranslate"><span class="pre">remove_footage</span></code> after <code class="docutils literal notranslate"><span class="pre">align_footage</span></code> makes it false
+again until you re-align.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">n_renders</span></code> counts what <code class="docutils literal notranslate"><span class="pre">footage_status</span></code> lists under <code class="docutils literal notranslate"><span class="pre">renders</span></code>; <code class="docutils literal notranslate"><span class="pre">0</span></code> is a
+positive answer (“no cut yet”), never an omitted project.</p></li>
+</ul>
+<p><code class="docutils literal notranslate"><span class="pre">[]</span></code> means you have no footage projects; a visualizer project is not one and
+shows up in <code class="docutils literal notranslate"><span class="pre">list_projects</span></code> instead.</p>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="muvid.mcp.footage_tools.list_strategies">
 <span class="sig-prename descclassname"><span class="pre">muvid.mcp.footage_tools.</span></span><span class="sig-name descname"><span class="pre">list_strategies</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="../../../_modules/muvid/mcp/footage_tools.html#list_strategies"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.mcp.footage_tools.list_strategies" title="Link to this definition"></a></dt>
 <dd><p>The selection strategies available for full-auto assembly. Free.</p>
@@ -388,6 +413,22 @@ footage covers as explicit gap entries, <code class="docutils literal notranslat
 the song and every segment that made the cut despite weak alignment. Same arguments as
 <code class="docutils literal notranslate"><span class="pre">assemble_music_video</span></code>’s auto path, and the same edit it would build — including the
 <code class="docutils literal notranslate"><span class="pre">coverage.excluded</span></code> recovery described there.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.mcp.footage_tools.remove_footage">
+<span class="sig-prename descclassname"><span class="pre">muvid.mcp.footage_tools.</span></span><span class="sig-name descname"><span class="pre">remove_footage</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">project_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">clip_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="../../../_modules/muvid/mcp/footage_tools.html#remove_footage"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.mcp.footage_tools.remove_footage" title="Link to this definition"></a></dt>
+<dd><p>Remove one footage clip from the project — its stored file and its entry. Free.</p>
+<p>Irreversible for the clip (re-add it from its URL if it was a mistake); existing
+renders are untouched. Removal INVALIDATES the alignment and every persisted score
+track, exactly as <code class="docutils literal notranslate"><span class="pre">set_song</span></code> does (muvid#22) — the alignment describes the clip set
+it was measured on, and a removed clip’s offset must not outlive the clip. So run
+<code class="docutils literal notranslate"><span class="pre">align_footage</span></code> again before <code class="docutils literal notranslate"><span class="pre">propose_edit</span></code> / <code class="docutils literal notranslate"><span class="pre">assemble_music_video</span></code>; until
+then <code class="docutils literal notranslate"><span class="pre">footage_status</span></code> reports the project unaligned and this project’s
+<code class="docutils literal notranslate"><span class="pre">aligned</span></code> flag in <code class="docutils literal notranslate"><span class="pre">list_music_video_projects</span></code> is false.</p>
+<p>An unknown <code class="docutils literal notranslate"><span class="pre">clip_id</span></code> is refused, naming the clip ids the project holds, and a
+refusal changes nothing on disk. Returns what was removed, the clips that remain,
+and whether an alignment / score tracks were actually dropped.</p>
 </dd></dl>
 
 <dl class="py function">
