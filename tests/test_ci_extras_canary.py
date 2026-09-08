@@ -87,6 +87,20 @@ _FILTERS_REQUIRED_IN_CI = [
 def test_ffmpeg_filters_are_present_in_ci(filter_name, needed_for):
     if not os.environ.get("CI"):
         pytest.skip("canary only bites in CI — a local slim ffmpeg is legitimate")
+    import platform
+    import shutil
+
+    if platform.system() == "Windows":
+        # Deliberate, and recorded in pyproject's [tool.wads.ops.ffmpeg]: the
+        # Windows runner gets no ffmpeg (the installer crashes on its cp1252
+        # console) and every ffmpeg-backed test skips there by design. A canary
+        # that fires on a policy is not a canary.
+        pytest.skip("ffmpeg is intentionally not installed on the Windows runner")
+    assert shutil.which("ffmpeg"), (
+        "CI's runner has no ffmpeg at all, so every ffmpeg-backed test is silently "
+        "skipped. The wads install step ([tool.wads.ops.ffmpeg]) should have put one "
+        "on PATH — check .github/workflows/ci.yml."
+    )
     from muvid.visualize.ffmpeg import has_filter
 
     assert has_filter(filter_name), (
