@@ -92,7 +92,7 @@ def transcribe(
     if out_path is not None:
         out_path = Path(out_path)
         out_path.parent.mkdir(parents=True, exist_ok=True)
-        with out_path.open("w") as f:
+        with out_path.open("w", encoding="utf-8") as f:
             json.dump(response, f, indent=2)
     return response
 
@@ -264,16 +264,23 @@ def lyrics_from_transcript(transcript: dict[str, Any]) -> LyricsDoc:
 
 # --- file helpers ---------------------------------------------------------
 
+# Every read/write below pins ``encoding="utf-8"``. Lyrics are non-ASCII by
+# nature, and an unqualified ``read_text``/``write_text``/``open`` takes its
+# codec from the process locale — ASCII under ``LC_ALL=C`` (a container with no
+# locale, cron, a systemd unit), cp1252 on Windows. So the on-disk format is
+# UTF-8 *by contract*, which is what these files already are everywhere muvid
+# has run; the ambient setting no longer gets a vote.
+
 
 def write_lyrics_md(path: str | Path, doc: LyricsDoc) -> None:
     p = Path(path)
     p.parent.mkdir(parents=True, exist_ok=True)
-    p.write_text(render_lyrics_md(doc))
+    p.write_text(render_lyrics_md(doc), encoding="utf-8")
 
 
 def read_lyrics_md(path: str | Path) -> LyricsDoc:
-    return parse_lyrics_md(Path(path).read_text())
+    return parse_lyrics_md(Path(path).read_text(encoding="utf-8"))
 
 
 def read_transcript(path: str | Path) -> dict[str, Any]:
-    return json.loads(Path(path).read_text())
+    return json.loads(Path(path).read_text(encoding="utf-8"))

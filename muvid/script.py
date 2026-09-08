@@ -219,7 +219,11 @@ def write_script(project: MusicVideoProject) -> Path:
     md = render_script(spec.sections, spec.shots)
     target = project.root / "script" / "script.md"
     target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(md)
+    # UTF-8 by contract, like lyrics.md: the rendered markdown carries a literal
+    # "→" in every section header, and shot directions carry whatever the song
+    # is in. Leaving the codec to the process locale makes both unwritable under
+    # LC_ALL=C.
+    target.write_text(md, encoding="utf-8")
     return target
 
 
@@ -231,7 +235,7 @@ def parse_and_apply(project: MusicVideoProject, *, path: Path | None = None) -> 
     path = path or (project.root / "script" / "script.md")
     if not path.exists():
         raise FileNotFoundError(path)
-    sections, shots = parse_script(path.read_text())
+    sections, shots = parse_script(path.read_text(encoding="utf-8"))
     for sec in sections:
         project.upsert_section(sec)
     for sh in shots:
