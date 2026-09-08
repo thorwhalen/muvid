@@ -41,14 +41,23 @@ dependencies = [
     # master in the 12-29 s band, 0.0.46 got 7 of 15 WRONG and left all of them unvoted,
     # while 0.0.48 got 21/21 right and voted on all of them.
     #
-    # 0.0.49 is the floor because it GRADES that vote (thorwhalen/mixing#45): a window
-    # contributes 1.0 when its own argmax reached the offset and at most 0.5 when the
-    # offset was merely on its ballot. That is what makes `support` readable at a fitted
-    # window, and it is why `edl.MIN_SUPPORT` is 0.5 exclusive rather than 0.25 — 0.5 is
-    # the ceiling of ballot-only evidence. The two must move together: measured on six
-    # pure-noise clips, judging graded support against 0.5 refuses all six, while the
-    # 0.25 threshold this floor replaces passes one of them.
-    "mixing>=0.0.49",
+    # 0.0.49 GRADES that vote (thorwhalen/mixing#45): a window contributes 1.0 when its
+    # own argmax reached the offset and at most 0.5 when the offset was merely on its
+    # ballot, which is what makes `support` readable at a fitted window.
+    #
+    # 0.0.51 is the floor because it adds `ClipAlignment.margin` (thorwhalen/mixing#47) —
+    # the same graded tally at the answer minus the tally at the best offset OUTSIDE the
+    # tolerance. `support` says how much evidence reaches this offset; `margin` says
+    # whether anything disputes it, which is the quantity muvid#59 was actually made of
+    # (its near-tied peaks scored 0.993/0.989/0.987 and no fraction can see a runner-up).
+    # It is required IN ADDITION to `edl.MIN_SUPPORT`, not instead of it. On 24 correct
+    # alignments against six pure-NOISE clips `margin > 0` alone scored 24/24 and 0/6
+    # where the support threshold scored 18/24, which argued for lowering the floor —
+    # but that set contained no ALIASES, and on a repeating reference a bar-multiple
+    # repeat can carry a positive margin (measured: an offset 7.97 s wrong at support
+    # 0.487, margin +0.115). So the floor stays at 0.5 and margin is the second
+    # condition. See `edl.MIN_SUPPORT` for the full table.
+    "mixing>=0.0.51",
     "numpy",
     # 0.1.44 is where `graze.content_kind` exists alongside `graze.share_links`. muvid
     # needs both halves: normalise a pasted share link before fetching, then assert the

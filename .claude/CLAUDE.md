@@ -64,17 +64,30 @@ Pipeline: `align → score → select → EDL → assemble`.
   not: where `support` was never measured, `vouches_for` falls back to the confidence
   coefficient — the same instrument muvid#59 was filed about, which catches two of that
   shoot's three wrong offsets and misses the third.
-  Since the **`mixing>=0.0.49`** floor that fallback is narrow: the estimator fits its
+  Since the **`mixing>=0.0.51`** floor that fallback is narrow: the estimator fits its
   window per clip and GRADES each window's evidence, so a vote is held and readable for
   everything except a clip too short for two windows. `support is None` means only that.
-  **`MIN_SUPPORT` is `0.5` EXCLUSIVE, and the strictness is the meaning**: a window
-  contributes 1.0 when its own argmax reached the offset and at most 0.5 when the offset
-  was merely on its ballot, so 0.5 is the ceiling of ballot-only evidence — at exactly
-  0.5 nothing found the offset unaided. Measured on the real master, 24 correct
-  alignments against six pure-noise clips: `> 0.5` passes **18/24 correct, 0/6 noise**;
-  the old `>= 0.25` passed 24/24 and **1/6**. The six correct short clips it costs score
-  0.30-0.38, and refusing them is the safe direction — a refusal is visible and
-  recoverable, a wrong render is not.
+  **The gate is `support > 0.5` AND `margin > 0`, and it needs both.** `MIN_SUPPORT` is
+  a ceiling-of-ballot-only-evidence threshold (a window contributes 1.0 when its own
+  argmax reached the offset, at most 0.5 when it was merely on the ballot, so at exactly
+  0.5 nothing found it unaided). `MIN_MARGIN` is the SEPARATOR — the same tally minus
+  the tally at the best offset outside tolerance — and it is the quantity muvid#59 was
+  actually made of, since near-ties (0.993/0.989/0.987) are invisible to any fraction
+  that ignores the runner-up.
+  **The measurement that nearly went wrong is the one to remember.** On 24 correct real
+  alignments against six pure-NOISE clips, `margin > 0` alone scored 24/24 and 0/6 where
+  `support > 0.5` scored 18/24 — so dropping the floor to 0.25 looked strictly better.
+  It is not: every wrong case in that set was noise, and **none was an ALIAS** (a
+  bar-multiple repeat), which is the case this issue is about. On a tiled fixture a 10 s
+  clip lands on a repeat 7.97 s out with **support 0.487 and margin +0.115 — both
+  positive**, so a 0.25 floor vouches for it while 0.5 refuses it. A second repeat at
+  14 s IS caught (margin −0.349), so margin catches some aliases and not others.
+  Across both sets: `support > 0.25 and margin > 0` → 11/11 real correct, 0/6 noise, but
+  **1 of 2 repeats admitted**; `support > 0.5 and margin > 0` → 5/11, 0/6, **0 of 2**.
+  The floor is load-bearing on repeating references. It costs six correct short clips
+  (support 0.30-0.38) and that is the safe direction — a refusal is visible and
+  recoverable, a repeat rendered as if true is not. **If you re-run this, make sure the
+  set contains aliases and not only noise; that omission is what nearly lowered it.**
   **Do not add a window-based guard back.** An earlier revision refused to read a support
   from a fitted window; measured, that guard routes short clips to the confidence
   fallback and VOUCHES for four of six pure-noise clips (0.017-0.173 against a 0.1
@@ -260,7 +273,8 @@ written, for a field almost none of them use; it is measured rather than reasone
 
 ### It depends on `mixing`
 
-Core dependency, floor **`mixing>=0.0.49`** — where the windowed vote is GRADED, which
+Core dependency, floor **`mixing>=0.0.51`** — where `ClipAlignment.margin` exists (mixing#47), the
+separator the gate needs alongside the graded vote of 0.0.49, which
 is what `edl.MIN_SUPPORT`'s exclusive `0.5` is calibrated against (see the invariant
 above; the floor and that threshold must move together or the gate reads the bottom half
 of a range as if it meant the top). Three superseded floors below it, kept because their
@@ -613,7 +627,7 @@ in the pipeline.
 | `editor` | the lacing bridge | `lacing` |
 | `ui` | the local single-page UI | `fastapi`, `uvicorn`, `pydantic` |
 
-Core (`pip install muvid`) is `argh`, `mixing>=0.0.49`, `numpy`, `graze>=0.1.44`.
+Core (`pip install muvid`) is `argh`, `mixing>=0.0.51`, `numpy`, `graze>=0.1.44`.
 **`import muvid` must never pull any extra** — `muvid/__init__.py` is a PEP 562 lazy
 facade, `muvid.footage.scoring.__init__` is lazy the same way, and the genre modules
 import only `nw`. This is tested by subprocess import-safety checks that assert the

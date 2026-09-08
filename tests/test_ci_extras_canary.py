@@ -56,7 +56,14 @@ def test_the_installed_mixing_reports_alignment_support_in_ci():
 
     from mixing.audio import ClipAlignment
 
-    assert "support" in {f.name for f in dataclasses.fields(ClipAlignment)}, (
+    fields = {f.name for f in dataclasses.fields(ClipAlignment)}
+    assert "margin" in fields, (
+        "the installed mixing has no ClipAlignment.margin, so muvid's gate loses its "
+        "SEPARATOR — and `vouches_for` refuses every voted clip rather than degrading "
+        "quietly, which is the right failure but a total outage. Raise the mixing floor "
+        "in pyproject.toml, or find out why the resolver picked an older one."
+    )
+    assert "support" in fields, (
         "the installed mixing has no ClipAlignment.support, so muvid's alignment trust "
         "verdict has silently fallen back to the confidence coefficient — the very "
         "instrument muvid#59 is about. Raise the mixing floor in pyproject.toml, or "
