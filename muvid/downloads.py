@@ -507,25 +507,13 @@ def organise(
 
     # Atomic replace: meta.json carries PIPELINE-critical keys (ref_n, edl,
     # download, ...) — a truncate-then-write interrupted mid-write would
-    # corrupt refs and status for this render, so never write in place.
-    import os
-    import tempfile
+    # corrupt refs and status for this render, so never write in place. The
+    # dance is the workspace's (muvid#17 item 4): this was its second copy.
+    from muvid.footage.workspace import atomic_write_text
 
     meta_path = proj.renders_dir / render_id / "meta.json"
     meta_path.parent.mkdir(parents=True, exist_ok=True)
-    fd, tmp = tempfile.mkstemp(
-        dir=str(meta_path.parent), prefix=".meta.", suffix=".tmp"
-    )
-    try:
-        with os.fdopen(fd, "w") as f:
-            f.write(json.dumps(meta, indent=2))
-        os.replace(tmp, meta_path)
-    except BaseException:
-        try:
-            os.unlink(tmp)
-        except OSError:
-            pass
-        raise
+    atomic_write_text(meta_path, json.dumps(meta, indent=2))
 
     # The receipt: re-read from storage, never echo the request.
     return _deliverable(

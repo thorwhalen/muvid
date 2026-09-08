@@ -198,3 +198,38 @@ def test_manifest_written_last_signals_completeness(tmp_path):
     from muvid.footage.scoring.grid import scores_present
 
     assert scores_present(tmp_path)
+
+
+def test_torn_manifest_write_keeps_the_previous_scores(tmp_path, monkeypatch):
+    # The manifest is written LAST through the workspace's shared atomic dance
+    # (muvid#17 item 4): tear the final rename and the PRIOR complete scores must be
+    # what loads — never a torn manifest, never a temp left beside it.
+    import errno
+    import os
+
+    n = grid_len(1.0, 0.1)
+    kw = dict(t0=0.0, hop_s=0.1, n=n, metrics=["sharp"])
+    save_scores(
+        tmp_path,
+        {"A": [_track("A", "sharp", np.ones(n, np.float32))]},
+        song_hash="v1",
+        **kw,
+    )
+    real = os.replace
+
+    def torn(src, dst, *a, **k):
+        if os.path.basename(dst) == "manifest.json":
+            raise OSError(errno.EIO, "simulated torn write")
+        return real(src, dst, *a, **k)
+
+    monkeypatch.setattr(os, "replace", torn)
+    with pytest.raises(OSError):
+        save_scores(
+            tmp_path,
+            {"A": [_track("A", "sharp", np.zeros(n, np.float32))]},
+            song_hash="v2",
+            **kw,
+        )
+    manifest = json.loads((tmp_path / "scores" / "manifest.json").read_text())
+    assert manifest["song_hash"] == "v1"
+    assert not [p for p in (tmp_path / "scores").iterdir() if p.name.startswith(".")]
