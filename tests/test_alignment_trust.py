@@ -179,8 +179,17 @@ class TestTheMeasuredTable:
         assert [r[0] for r in _MEASURED if r[4] and not r[3]] == []
 
     def test_the_cost_of_the_floor_is_exactly_these_six(self):
-        refused_but_correct = [r[0] for r in _MEASURED if r[3] and not r[4]]
-        assert len(refused_but_correct) == 6, refused_but_correct
+        # Named, not counted. A count is satisfied by ANY six rows carrying
+        # expected=False, so flipping which six pay the price would still pass — and
+        # which clips a gate turns away is the whole substance of the trade-off.
+        assert [r[0] for r in _MEASURED if r[3] and not r[4]] == [
+            "12s@29",
+            "12s@96",
+            "15s@29",
+            "20s@29",
+            "25s@29",
+            "26s@29",
+        ]
 
     def test_neither_number_alone_is_enough_and_the_table_says_which_fails_how(self):
         """The two failure modes, each demonstrated by a row this table contains."""
@@ -989,9 +998,9 @@ def test_the_noise_floor_now_clears_min_confidence(tmp_path):
 def test_a_clip_too_short_to_vote_reports_no_support(tmp_path):
     """``support is None`` still exists, and still means one specific thing.
 
-    Since ``mixing>=0.0.48`` fits the window, almost everything gets a vote — the window
-    floors at 3 s, so only a clip too short to hold two of those comes back unvoted
-    (measured: 4 s yes, 6 s no). The case is rarer than it was and it has not gone away,
+    Since the estimator fits the window, almost everything gets a vote — the window
+    floors at 3 s, so only a clip shorter than ``window_floor + hop`` = 4.5 s comes back
+    unvoted (measured: 4.4 s unvoted, 4.5 s the first with a number). The case is rarer than it was and it has not gone away,
     so the flag is still worth pinning: ``None`` rather than an invented 1.0, because a
     unanimous vote of one would be the strongest claim the record can make resting on no
     evidence at all.

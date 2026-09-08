@@ -274,13 +274,15 @@ def align_footage(project_id: str) -> dict:
       them unless it is called with ``allow_unreliable=true``, because a wrong offset
       does not fail — it renders a video out of sync with the song (muvid#59). Re-align,
       leave them out of the edit, or opt in deliberately;
-    - ``no_consensus`` — clips whose offset was never put to a vote at all, which now
-      means only a clip too short to hold two analysis windows (a few seconds). Their
-      offset rests on a single measurement — the estimator muvid#59 was filed about —
-      and the confidence score does NOT rank correctness there (measured on that shoot,
-      the wrong offset scored highest of the three). Nothing is refused on this basis,
-      because refusing would take the correct short clips with it, but if such a clip
-      looks out of sync in the render this list is the first place to look.
+    - ``no_consensus`` — clips too short to be put to a vote at all (under about 4.5 s).
+      **A clip in this list can be marked reliable and still be wrong**, and no other
+      field will say so: its offset rests on one measurement, judged by a confidence
+      score that does not rank correctness in this band — measured on the muvid#59
+      shoot, the WRONG offset scored highest of three (0.834 against 0.566 and 0.621),
+      and on a repeating fixture a 4.4 s clip landing 8 s out is vouched at 0.381.
+      Nothing is refused on this basis, because refusing would take the correct short
+      clips with it. So if a short clip looks out of sync in the render, this list is
+      the first place to look — and muvid#91 is where that trade-off is being decided.
 
     Run this after adding/removing clips and before assembling.
     """
@@ -340,18 +342,22 @@ def align_footage(project_id: str) -> dict:
             for a in aligns
             if not a.reliable
         ],
-        # REPORTED, never enforced — the same posture as `offset_consensus` below, and
-        # for the same reason. `support: null` means the estimator could not hold a vote
-        # at all: it fits its window to the clip down to a 3 s floor, so this is only a
-        # clip too short to hold two of those (measured: 4 s yes, 6 s no). The offset
-        # then rests on a single measurement
-        # and the trust verdict falls back to the confidence coefficient. That fallback
-        # is the weak one: measured on the muvid#59 material, one such clip is 102 s
-        # wrong at confidence 0.834 while the two correct ones score 0.566 and 0.621 —
-        # the wrong offset had the HIGHEST coefficient, so no threshold separates them.
-        # Refusing every unvoted clip would refuse those two as well, so this is said
-        # rather than enforced; adapting the window to short clips is the actual fix
-        # (thorwhalen/mixing#41).
+        # REPORTED, never enforced — the same posture as `offset_consensus` below.
+        # `support: null` means the estimator could not hold a vote at all: it fits its
+        # window to the clip down to a 3 s floor, so this is only a clip shorter than
+        # `window_floor + hop` = 4.5 s (measured: 4.4 s unvoted, 4.5 s the first with a
+        # number). The offset then rests on a single measurement and the verdict falls
+        # back to the confidence coefficient.
+        #
+        # SAY THE HAZARD, because this list is the only place it is visible: a clip in
+        # here can be `reliable: true` AND WRONG. Measured on a repeating fixture, a
+        # 4.4 s clip landing 7.99 s out is vouched at confidence 0.381, while the same
+        # material at 4.5 s — one vote away — is refused (margin -0.252). The
+        # coefficient does not rank correctness in this band (on the muvid#59 shoot the
+        # WRONG offset scored highest of three, 0.834 against 0.566 and 0.621), so
+        # nothing else flags it. Refusing the whole band would take the correct short
+        # clips with it and re-break the compatibility read muvid#87 fixed, so the band
+        # is named rather than gated — muvid#91 owns that decision.
         "no_consensus": [a.clip_id for a in aligns if a.support is None],
         "confidence_metric": "onset-envelope correlation at the waveform's lag",
         "confidence_threshold": _MIN_CONFIDENCE,

@@ -454,8 +454,8 @@ class FootageAlignment:
     overlaps: bool = True
     #: Fraction of the clip's independent analysis windows that agree on ``offset_s``.
     #: ``None`` means no vote was held — since ``mixing>=0.0.48`` fits the window to the
-    #: clip, that is now only a clip too short to hold two windows at the 3 s floor
-    #: (measured: 4 s yes, 6 s no). It is a different fact from "the windows disagreed",
+    #: clip, that is now only a clip shorter than ``window_floor + hop`` = 4.5 s
+    #: (measured: 4.4 s unvoted, 4.5 s the first with a number). It is a different fact from "the windows disagreed",
     #: which is why it is not 0.0. ``window_s`` records the grid it was measured on and
     #: is reported as a diagnostic; it does NOT qualify the number — see the note above
     #: :data:`MIN_SUPPORT` for why a window-based qualifier was removed rather than
