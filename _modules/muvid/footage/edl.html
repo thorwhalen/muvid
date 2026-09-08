@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.footage.edl &mdash; muvid 0.0.52 documentation</title>
+  <title>muvid.footage.edl &mdash; muvid 0.0.53 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=73f2ab08"></script>
+      <script src="../../../_static/documentation_options.js?v=d78a2f11"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -331,43 +331,80 @@
 <span class="c1">#: the decision this leaves open.</span>
 <span class="n">MIN_CONFIDENCE</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"MUVID_FOOTAGE_MIN_CONFIDENCE"</span><span class="p">,</span> <span class="s2">"0.1"</span><span class="p">))</span>
 
-<span class="c1">#: Support must EXCEED this for a consensus offset to vouch for itself (env</span>
-<span class="c1">#: ``MUVID_FOOTAGE_MIN_SUPPORT``). Strictly greater, and that is the whole meaning of</span>
-<span class="c1">#: the number rather than a rounding preference: ``mixing`` grades each window's</span>
-<span class="c1">#: evidence as 1.0 when that window's own argmax reached the offset and at most</span>
+<span class="c1">#: Support must EXCEED this for an offset to be vouched for (env</span>
+<span class="c1">#: ``MUVID_FOOTAGE_MIN_SUPPORT``). Strictly greater, and the value is the meaning:</span>
+<span class="c1">#: ``mixing`` grades a window 1.0 when its own argmax reached the offset and at most</span>
 <span class="c1">#: ``BALLOT_VOTE_WEIGHT`` (0.5) when the offset was merely on its ballot, so **0.5 is</span>
-<span class="c1">#: exactly the ceiling of ballot-only evidence.** A support of 0.5 means every window</span>
-<span class="c1">#: had the offset on the ballot and NOT ONE of them found it unaided; above 0.5 at</span>
-<span class="c1">#: least one did. That is the difference between "nothing could separate these</span>
-<span class="c1">#: candidates" and "something actually located this one", which is the distinction</span>
-<span class="c1">#: muvid#59 is made of.</span>
+<span class="c1">#: exactly the ceiling of ballot-only evidence** — at 0.5 nothing found the offset</span>
+<span class="c1">#: unaided; above it, something did.</span>
 <span class="c1">#:</span>
-<span class="c1">#: **Measured rather than derived.** On the muvid#59 master: 24 correct alignments (21</span>
-<span class="c1">#: clips across the 12-29 s band at three offsets, plus the shoot's three real</span>
-<span class="c1">#: excerpts) against six pure-noise clips as the known-wrong control.</span>
+<span class="c1">#: **This nearly went to 0.25, and the measurement that stopped it is the one worth</span>
+<span class="c1">#: keeping.** On the muvid#59 master — 24 correct alignments against six pure-noise</span>
+<span class="c1">#: clips — ``margin &gt; 0`` alone scored 24/24 and 0/6 where this threshold scores 18/24,</span>
+<span class="c1">#: so dropping the floor and letting :data:`MIN_MARGIN` separate looked strictly better.</span>
+<span class="c1">#: It is not. **Every wrong case in that set was pure NOISE; not one was an ALIAS** — a</span>
+<span class="c1">#: bar-multiple repeat of the true offset — which is the case muvid#59 is actually made</span>
+<span class="c1">#: of. Measured on a tiled fixture, clips of the same source at a true offset of 28.0 s:</span>
 <span class="c1">#:</span>
-<span class="c1">#: ===================  =================  ===============</span>
-<span class="c1">#: threshold            correct passing    noise passing</span>
-<span class="c1">#: ===================  =================  ===============</span>
-<span class="c1">#: ``&gt;= 0.25``          24 / 24            **1 / 6**</span>
-<span class="c1">#: ``&gt; 0.5``            18 / 24            **0 / 6**</span>
-<span class="c1">#: ===================  =================  ===============</span>
+<span class="c1">#: ========  ==========  =========  ==========  ==========</span>
+<span class="c1">#: clip      offset      correct?   support     margin</span>
+<span class="c1">#: ========  ==========  =========  ==========  ==========</span>
+<span class="c1">#: 8 s       27.988      yes        0.572       +0.237</span>
+<span class="c1">#: **10 s**  **35.974**  **NO**     **0.487**   **+0.115**</span>
+<span class="c1">#: 12 s      27.990      yes        0.659       +0.217</span>
+<span class="c1">#: **14 s**  **11.956**  **NO**     0.451       **-0.349**</span>
+<span class="c1">#: 16 s      27.986      yes        0.722       +0.353</span>
+<span class="c1">#: 20 s      27.990      yes        0.638       +0.197</span>
+<span class="c1">#: ========  ==========  =========  ==========  ==========</span>
 <span class="c1">#:</span>
-<span class="c1">#: So this is the only cut measured that refuses every known-wrong case. It costs six</span>
-<span class="c1">#: correct short clips — they score 0.30-0.38, real but ballot-weight evidence — and</span>
-<span class="c1">#: that is the SAFE direction of error: a refusal is visible and recoverable</span>
-<span class="c1">#: (``allow_unreliable=True``, re-align, or leave the clip out), while the failure it</span>
-<span class="c1">#: prevents is a finished video silently out of sync that nothing downstream</span>
-<span class="c1">#: re-measures.</span>
+<span class="c1">#: The 10 s clip lands on a repeat with BOTH numbers positive, so a 0.25 floor vouches</span>
+<span class="c1">#: for an offset 7.97 s wrong that this one refuses. The 14 s repeat *is* caught by a</span>
+<span class="c1">#: negative margin — margin catches some aliases and not others, which is worse than a</span>
+<span class="c1">#: clean signal because it looks like one. Across both data sets:</span>
 <span class="c1">#:</span>
-<span class="c1">#: Do not lower it to recover those six without re-running that table. The confidence</span>
-<span class="c1">#: coefficient cannot rescue them either — the noise clips score 0.173, 0.106, 0.143,</span>
-<span class="c1">#: 0.040, 0.170 and 0.017, straddling exactly the same band as correct short clips —</span>
-<span class="c1">#: so a conjunctive gate buys nothing. Three separate scalars have now failed to</span>
-<span class="c1">#: separate this population; the quantity that might is the margin over the runner-up</span>
-<span class="c1">#: (thorwhalen/mixing#47), because muvid#59 was near-ties (0.993/0.989/0.987) and no</span>
-<span class="c1">#: fraction of anything looks at the runner-up.</span>
+<span class="c1">#: ================================  =============  ===========  ==================</span>
+<span class="c1">#: gate                              real correct   real noise   synthetic REPEATS</span>
+<span class="c1">#: ================================  =============  ===========  ==================</span>
+<span class="c1">#: ``support &gt; 0.25 and margin &gt; 0``  11 / 11       0 / 6        **1 of 2 admitted**</span>
+<span class="c1">#: ``margin &gt; 0`` alone               11 / 11       0 / 6        **1 of 2 admitted**</span>
+<span class="c1">#: ``support &gt; 0.5 and margin &gt; 0``   5 / 11        0 / 6        0 of 2</span>
+<span class="c1">#: ================================  =============  ===========  ==================</span>
+<span class="c1">#:</span>
+<span class="c1">#: So the floor is load-bearing on repeating references, which is the material this</span>
+<span class="c1">#: whole issue is about, and it costs six correct short clips (support 0.30-0.38) to</span>
+<span class="c1">#: keep. That is the safe direction: a refusal is visible and recoverable, a repeat</span>
+<span class="c1">#: rendered as if true is the failure muvid#59 exists to prevent.</span>
+<span class="c1">#:</span>
+<span class="c1">#: Thirty real cases and six synthetic ones is encouraging and not proof. Re-run BOTH</span>
+<span class="c1">#: tables before moving this — and make sure the set you re-run contains aliases, not</span>
+<span class="c1">#: only noise, which is the mistake that nearly lowered it.</span>
 <span class="n">MIN_SUPPORT</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"MUVID_FOOTAGE_MIN_SUPPORT"</span><span class="p">,</span> <span class="s2">"0.5"</span><span class="p">))</span>
+
+<span class="c1">#: Margin must EXCEED this for an offset to be vouched for (env</span>
+<span class="c1">#: ``MUVID_FOOTAGE_MIN_MARGIN``). This is the SEPARATOR, and zero is the meaningful</span>
+<span class="c1">#: value rather than a tunable one: ``mixing``'s margin is the graded tally at the</span>
+<span class="c1">#: chosen offset minus the tally at the best offset outside the tolerance, so</span>
+<span class="c1">#: ``&gt; 0`` means "the clip's own evidence prefers THIS offset over every other one it</span>
+<span class="c1">#: considered", ``== 0`` means it is indifferent, and ``&lt; 0`` means **the evidence</span>
+<span class="c1">#: actually prefers somewhere else**.</span>
+<span class="c1">#:</span>
+<span class="c1">#: A negative margin is therefore a refusal in its own right, not merely a failure to</span>
+<span class="c1">#: endorse — and it is the cleanest signal measured anywhere in muvid#59: five of six</span>
+<span class="c1">#: pure-noise clips came back negative (-0.167, -0.172, -0.176, -0.218, -0.317) and not</span>
+<span class="c1">#: one correct alignment did.</span>
+<span class="c1">#:</span>
+<span class="c1">#: **Why this is the quantity that was missing.** muvid#59's diagnosis was near-tied</span>
+<span class="c1">#: peaks — the second-to-first ratios on that shoot measured 0.993, 0.989 and 0.987 —</span>
+<span class="c1">#: and no support fraction, however graded, can see a runner-up at all. Three scalars</span>
+<span class="c1">#: failed to separate this population before this one: the raw coefficient, the</span>
+<span class="c1">#: envelope coefficient, and support.</span>
+<span class="c1">#:</span>
+<span class="c1">#: One boundary worth knowing before tuning it: a rival closer than ``mixing``'s</span>
+<span class="c1">#: ``offset_tolerance_s`` is the same hypothesis by construction and never subtracts</span>
+<span class="c1">#: (measured upstream: a rival 0.20 s away leaves the margin at 1.000, one 0.30 s away</span>
+<span class="c1">#: takes it to 0.505). **Margin separates different offsets; it is not a precision</span>
+<span class="c1">#: claim about the one it chose.**</span>
+<span class="n">MIN_MARGIN</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"MUVID_FOOTAGE_MIN_MARGIN"</span><span class="p">,</span> <span class="s2">"0.0"</span><span class="p">))</span>
 
 <span class="c1">#: ``MIN_SUPPORT`` used to be qualified by the window it was measured at, because an</span>
 <span class="c1">#: argmax headcount at a 4 s window was a weaker statistic than the same fraction at</span>
@@ -386,7 +423,11 @@
 <div class="viewcode-block" id="vouches_for">
 <a class="viewcode-back" href="../../../module_docs/muvid/footage/edl.html#muvid.footage.vouches_for">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">vouches_for</span><span class="p">(</span>
-    <span class="o">*</span><span class="p">,</span> <span class="n">confidence</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">support</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">window_s</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">confidence</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">support</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">margin</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">window_s</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Does the aligner vouch for this offset? The ONE place that verdict is reached.</span>
 
@@ -431,10 +472,42 @@
 <span class="sd">    make a noise-floor test pass would hide that behind a green run. That fallback is now</span>
 <span class="sd">    reached only by a clip too short to vote at all, which is the narrowest it has been.</span>
 
+<span class="sd">    **Two numbers, asking different questions, and BOTH are required.**</span>
+<span class="sd">    :data:`MIN_SUPPORT` asks whether enough of the clip's evidence reached this offset;</span>
+<span class="sd">    :data:`MIN_MARGIN` asks whether that evidence prefers this offset over every other</span>
+<span class="sd">    one it considered. Neither subsumes the other, and the measurement that proves it is</span>
+<span class="sd">    in :data:`MIN_SUPPORT`'s note: margin alone scores 24/24 on real material where the</span>
+<span class="sd">    support threshold scores 18/24, and then vouches for a bar-multiple REPEAT that the</span>
+<span class="sd">    support threshold refuses. Aliases and noise fail differently; margin catches noise</span>
+<span class="sd">    and only some aliases.</span>
+
+<span class="sd">    So this is a strict tightening of what muvid 0.0.53 shipped — it can only refuse</span>
+<span class="sd">    more, never less.</span>
+
+<span class="sd">    **What muvid#91 becomes.** Since the estimator fits its window down to a 3 s floor,</span>
+<span class="sd">    the regime with no vote at all is now exactly clips shorter than</span>
+<span class="sd">    ``window_floor + hop`` — measured, **4.5 s**: 4.4 s gives ``support is None`` and</span>
+<span class="sd">    4.5 s is the first with a number. Those still fall back to the coefficient, which</span>
+<span class="sd">    produces an inversion worth naming: a 4.4 s clip is VOUCHED while a 4.5 s one is</span>
+<span class="sd">    refused, because falling off the bottom of the vote hands the decision to the weaker</span>
+<span class="sd">    instrument. That is not defensible on its own terms, and it is left alone HERE only</span>
+<span class="sd">    because changing it means separating a fresh verdict from a DERIVED one — a record</span>
+<span class="sd">    predating these fields also has ``support is None``, and refusing those would</span>
+<span class="sd">    re-break what muvid#87 fixed. muvid#91 is now that specific decision, over a band too</span>
+<span class="sd">    short to be usable music-video footage, rather than the open question about a third</span>
+<span class="sd">    of a shoot that it started as.</span>
+
 <span class="sd">    Args:</span>
 <span class="sd">        confidence: The estimator's correlation coefficient at the chosen lag.</span>
 <span class="sd">        support: Graded fraction of window evidence reaching the offset, or ``None``</span>
 <span class="sd">            when no vote could be held.</span>
+<span class="sd">        margin: That tally minus the tally at the best offset outside the tolerance.</span>
+<span class="sd">            ``None`` on exactly the same quorum as ``support``. Required to vouch when a</span>
+<span class="sd">            vote WAS held: an aligner reporting support without it has not answered the</span>
+<span class="sd">            separating question, and unknown does not vouch. The ``mixing&gt;=0.0.51`` floor</span>
+<span class="sd">            guarantees both, and ``tests/test_ci_extras_canary.py`` asserts the</span>
+<span class="sd">            capability so a mis-resolved floor fails loudly rather than quietly refusing</span>
+<span class="sd">            every clip.</span>
 <span class="sd">        window_s: The window support was measured at. Recorded and reported as a</span>
 <span class="sd">            diagnostic; it does **not** enter the verdict, for the reason above.</span>
 
@@ -443,7 +516,9 @@
 <span class="sd">    """</span>
     <span class="k">if</span> <span class="n">support</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">confidence</span> <span class="o">&gt;=</span> <span class="n">MIN_CONFIDENCE</span>
-    <span class="k">return</span> <span class="n">support</span> <span class="o">&gt;</span> <span class="n">MIN_SUPPORT</span></div>
+    <span class="k">if</span> <span class="n">margin</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">return</span> <span class="n">support</span> <span class="o">&gt;</span> <span class="n">MIN_SUPPORT</span> <span class="ow">and</span> <span class="n">margin</span> <span class="o">&gt;</span> <span class="n">MIN_MARGIN</span></div>
 
 
 
@@ -522,8 +597,8 @@
     <span class="n">overlaps</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
     <span class="c1">#: Fraction of the clip's independent analysis windows that agree on ``offset_s``.</span>
     <span class="c1">#: ``None`` means no vote was held — since ``mixing&gt;=0.0.48`` fits the window to the</span>
-    <span class="c1">#: clip, that is now only a clip too short to hold two windows at the 3 s floor</span>
-    <span class="c1">#: (measured: 4 s yes, 6 s no). It is a different fact from "the windows disagreed",</span>
+    <span class="c1">#: clip, that is now only a clip shorter than ``window_floor + hop`` = 4.5 s</span>
+    <span class="c1">#: (measured: 4.4 s unvoted, 4.5 s the first with a number). It is a different fact from "the windows disagreed",</span>
     <span class="c1">#: which is why it is not 0.0. ``window_s`` records the grid it was measured on and</span>
     <span class="c1">#: is reported as a diagnostic; it does NOT qualify the number — see the note above</span>
     <span class="c1">#: :data:`MIN_SUPPORT` for why a window-based qualifier was removed rather than</span>
@@ -555,6 +630,16 @@
     <span class="c1">#: measurement is a record you have to take on faith.</span>
     <span class="n">window_s</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">hop_s</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1">#: How far ``support``'s tally for this offset sits ABOVE the tally for the best</span>
+    <span class="c1">#: offset outside the tolerance — ``None`` on the same quorum as ``support``.</span>
+    <span class="c1">#:</span>
+    <span class="c1">#: ``support`` says how much evidence reaches this offset; this says whether</span>
+    <span class="c1">#: anything disputes it, and they are different questions. A NEGATIVE value means</span>
+    <span class="c1">#: the clip's own evidence prefers somewhere else, which is a refusal rather than a</span>
+    <span class="c1">#: weak endorsement. See :data:`MIN_MARGIN` — this is the number muvid#59 was</span>
+    <span class="c1">#: actually missing, since its near-ties (0.993/0.989/0.987) are invisible to any</span>
+    <span class="c1">#: fraction that does not look at the runner-up.</span>
+    <span class="n">margin</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">{</span>
@@ -568,6 +653,7 @@
             <span class="s2">"reliable"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">reliable</span><span class="p">,</span>
             <span class="s2">"window_s"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">window_s</span><span class="p">,</span>
             <span class="s2">"hop_s"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">hop_s</span><span class="p">,</span>
+            <span class="s2">"margin"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">margin</span><span class="p">,</span>
         <span class="p">}</span>
 
     <span class="nd">@classmethod</span>
@@ -585,6 +671,8 @@
         <span class="n">window_s</span> <span class="o">=</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">window_s</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="n">window_s</span><span class="p">)</span>
         <span class="n">hop_s</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"hop_s"</span><span class="p">)</span>
         <span class="n">hop_s</span> <span class="o">=</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">hop_s</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="n">hop_s</span><span class="p">)</span>
+        <span class="n">margin</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"margin"</span><span class="p">)</span>
+        <span class="n">margin</span> <span class="o">=</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">margin</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="n">margin</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span>
             <span class="n">clip_id</span><span class="o">=</span><span class="n">d</span><span class="p">[</span><span class="s2">"clip_id"</span><span class="p">],</span>
             <span class="n">offset_s</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s2">"offset_s"</span><span class="p">]),</span>
@@ -607,12 +695,18 @@
             <span class="c1"># writer never wrote. `confidence` has always been required, so this is</span>
             <span class="c1"># never a guess about a missing input.</span>
             <span class="n">reliable</span><span class="o">=</span><span class="p">(</span>
-                <span class="n">vouches_for</span><span class="p">(</span><span class="n">confidence</span><span class="o">=</span><span class="n">confidence</span><span class="p">,</span> <span class="n">support</span><span class="o">=</span><span class="n">support</span><span class="p">,</span> <span class="n">window_s</span><span class="o">=</span><span class="n">window_s</span><span class="p">)</span>
+                <span class="n">vouches_for</span><span class="p">(</span>
+                    <span class="n">confidence</span><span class="o">=</span><span class="n">confidence</span><span class="p">,</span>
+                    <span class="n">support</span><span class="o">=</span><span class="n">support</span><span class="p">,</span>
+                    <span class="n">margin</span><span class="o">=</span><span class="n">margin</span><span class="p">,</span>
+                    <span class="n">window_s</span><span class="o">=</span><span class="n">window_s</span><span class="p">,</span>
+                <span class="p">)</span>
                 <span class="k">if</span> <span class="n">reliable</span> <span class="ow">is</span> <span class="kc">None</span>
                 <span class="k">else</span> <span class="nb">bool</span><span class="p">(</span><span class="n">reliable</span><span class="p">)</span>
             <span class="p">),</span>
             <span class="n">window_s</span><span class="o">=</span><span class="n">window_s</span><span class="p">,</span>
             <span class="n">hop_s</span><span class="o">=</span><span class="n">hop_s</span><span class="p">,</span>
+            <span class="n">margin</span><span class="o">=</span><span class="n">margin</span><span class="p">,</span>
         <span class="p">)</span></div>
 
 

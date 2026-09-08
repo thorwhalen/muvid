@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.footage.edl &mdash; muvid 0.0.52 documentation</title>
+  <title>muvid.footage.edl &mdash; muvid 0.0.53 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -15,7 +15,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=73f2ab08"></script>
+      <script src="../../../_static/documentation_options.js?v=d78a2f11"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -82,6 +82,7 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.footage.edl.FootageAlignment"><code class="docutils literal notranslate"><span class="pre">FootageAlignment</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#muvid.footage.edl.FootageAlignment.margin"><code class="docutils literal notranslate"><span class="pre">FootageAlignment.margin</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#muvid.footage.edl.FootageAlignment.overlaps"><code class="docutils literal notranslate"><span class="pre">FootageAlignment.overlaps</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#muvid.footage.edl.FootageAlignment.reliable"><code class="docutils literal notranslate"><span class="pre">FootageAlignment.reliable</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#muvid.footage.edl.FootageAlignment.support"><code class="docutils literal notranslate"><span class="pre">FootageAlignment.support</span></code></a></li>
@@ -93,6 +94,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#muvid.footage.edl.MAX_LOOK_LINKS"><code class="docutils literal notranslate"><span class="pre">MAX_LOOK_LINKS</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.footage.edl.MAX_LOOK_SCALE"><code class="docutils literal notranslate"><span class="pre">MAX_LOOK_SCALE</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.footage.edl.MIN_CONFIDENCE"><code class="docutils literal notranslate"><span class="pre">MIN_CONFIDENCE</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.footage.edl.MIN_MARGIN"><code class="docutils literal notranslate"><span class="pre">MIN_MARGIN</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.footage.edl.MIN_SUPPORT"><code class="docutils literal notranslate"><span class="pre">MIN_SUPPORT</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.footage.edl.MIN_TRANSITION_S"><code class="docutils literal notranslate"><span class="pre">MIN_TRANSITION_S</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.footage.edl.TRANSITION_CURVES"><code class="docutils literal notranslate"><span class="pre">TRANSITION_CURVES</span></code></a></li>
@@ -386,10 +388,23 @@ cuts — degraded, never wrong, in both directions.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="muvid.footage.edl.FootageAlignment">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">muvid.footage.edl.</span></span><span class="sig-name descname"><span class="pre">FootageAlignment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">clip_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">offset_s</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">confidence</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">duration_s</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coverage</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overlaps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">support</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reliable</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">window_s</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hop_s</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/muvid/footage/edl.html#FootageAlignment"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.edl.FootageAlignment" title="Link to this definition"></a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">muvid.footage.edl.</span></span><span class="sig-name descname"><span class="pre">FootageAlignment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">clip_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">offset_s</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">confidence</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">duration_s</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coverage</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overlaps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">support</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reliable</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">window_s</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hop_s</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">margin</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/muvid/footage/edl.html#FootageAlignment"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.edl.FootageAlignment" title="Link to this definition"></a></dt>
 <dd><p>Where one uploaded clip sits on the song timeline (muvid’s per-clip record).</p>
 <p>Mirrors <code class="docutils literal notranslate"><span class="pre">mixing.audio.ClipAlignment</span></code> but keyed by the caller-facing <code class="docutils literal notranslate"><span class="pre">clip_id</span></code> and
 JSON-round-trippable (persisted in the project manifest).</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="muvid.footage.edl.FootageAlignment.margin">
+<span class="sig-name descname"><span class="pre">margin</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#muvid.footage.edl.FootageAlignment.margin" title="Link to this definition"></a></dt>
+<dd><p>How far <code class="docutils literal notranslate"><span class="pre">support</span></code>’s tally for this offset sits ABOVE the tally for the best
+offset outside the tolerance — <code class="docutils literal notranslate"><span class="pre">None</span></code> on the same quorum as <code class="docutils literal notranslate"><span class="pre">support</span></code>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">support</span></code> says how much evidence reaches this offset; this says whether
+anything disputes it, and they are different questions. A NEGATIVE value means
+the clip’s own evidence prefers somewhere else, which is a refusal rather than a
+weak endorsement. See <a class="reference internal" href="#muvid.footage.edl.MIN_MARGIN" title="muvid.footage.edl.MIN_MARGIN"><code class="xref py py-data docutils literal notranslate"><span class="pre">MIN_MARGIN</span></code></a> — this is the number muvid#59 was
+actually missing, since its near-ties (0.993/0.989/0.987) are invisible to any
+fraction that does not look at the runner-up.</p>
+</dd></dl>
+
 <dl class="py attribute">
 <dt class="sig sig-object py" id="muvid.footage.edl.FootageAlignment.overlaps">
 <span class="sig-name descname"><span class="pre">overlaps</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></span><a class="headerlink" href="#muvid.footage.edl.FootageAlignment.overlaps" title="Link to this definition"></a></dt>
@@ -414,8 +429,8 @@ assumed.</p>
 <span class="sig-name descname"><span class="pre">support</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#muvid.footage.edl.FootageAlignment.support" title="Link to this definition"></a></dt>
 <dd><p>Fraction of the clip’s independent analysis windows that agree on <code class="docutils literal notranslate"><span class="pre">offset_s</span></code>.
 <code class="docutils literal notranslate"><span class="pre">None</span></code> means no vote was held — since <code class="docutils literal notranslate"><span class="pre">mixing&gt;=0.0.48</span></code> fits the window to the
-clip, that is now only a clip too short to hold two windows at the 3 s floor
-(measured: 4 s yes, 6 s no). It is a different fact from “the windows disagreed”,
+clip, that is now only a clip shorter than <code class="docutils literal notranslate"><span class="pre">window_floor</span> <span class="pre">+</span> <span class="pre">hop</span></code> = 4.5 s
+(measured: 4.4 s unvoted, 4.5 s the first with a number). It is a different fact from “the windows disagreed”,
 which is why it is not 0.0. <code class="docutils literal notranslate"><span class="pre">window_s</span></code> records the grid it was measured on and
 is reported as a diagnostic; it does NOT qualify the number — see the note above
 <a class="reference internal" href="#muvid.footage.edl.MIN_SUPPORT" title="muvid.footage.edl.MIN_SUPPORT"><code class="xref py py-data docutils literal notranslate"><span class="pre">MIN_SUPPORT</span></code></a> for why a window-based qualifier was removed rather than
@@ -611,52 +626,106 @@ the decision this leaves open.</p>
 </dd></dl>
 
 <dl class="py data">
+<dt class="sig sig-object py" id="muvid.footage.edl.MIN_MARGIN">
+<span class="sig-prename descclassname"><span class="pre">muvid.footage.edl.</span></span><span class="sig-name descname"><span class="pre">MIN_MARGIN</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.0</span></span><a class="headerlink" href="#muvid.footage.edl.MIN_MARGIN" title="Link to this definition"></a></dt>
+<dd><p>Margin must EXCEED this for an offset to be vouched for (env
+<code class="docutils literal notranslate"><span class="pre">MUVID_FOOTAGE_MIN_MARGIN</span></code>). This is the SEPARATOR, and zero is the meaningful
+value rather than a tunable one: <code class="docutils literal notranslate"><span class="pre">mixing</span></code>’s margin is the graded tally at the
+chosen offset minus the tally at the best offset outside the tolerance, so
+<code class="docutils literal notranslate"><span class="pre">&gt;</span> <span class="pre">0</span></code> means “the clip’s own evidence prefers THIS offset over every other one it
+considered”, <code class="docutils literal notranslate"><span class="pre">==</span> <span class="pre">0</span></code> means it is indifferent, and <code class="docutils literal notranslate"><span class="pre">&lt;</span> <span class="pre">0</span></code> means <strong>the evidence
+actually prefers somewhere else</strong>.</p>
+<p>A negative margin is therefore a refusal in its own right, not merely a failure to
+endorse — and it is the cleanest signal measured anywhere in muvid#59: five of six
+pure-noise clips came back negative (-0.167, -0.172, -0.176, -0.218, -0.317) and not
+one correct alignment did.</p>
+<p><strong>Why this is the quantity that was missing.</strong> muvid#59’s diagnosis was near-tied
+peaks — the second-to-first ratios on that shoot measured 0.993, 0.989 and 0.987 —
+and no support fraction, however graded, can see a runner-up at all. Three scalars
+failed to separate this population before this one: the raw coefficient, the
+envelope coefficient, and support.</p>
+<p>One boundary worth knowing before tuning it: a rival closer than <code class="docutils literal notranslate"><span class="pre">mixing</span></code>’s
+<code class="docutils literal notranslate"><span class="pre">offset_tolerance_s</span></code> is the same hypothesis by construction and never subtracts
+(measured upstream: a rival 0.20 s away leaves the margin at 1.000, one 0.30 s away
+takes it to 0.505). <strong>Margin separates different offsets; it is not a precision
+claim about the one it chose.</strong></p>
+</dd></dl>
+
+<dl class="py data">
 <dt class="sig sig-object py" id="muvid.footage.edl.MIN_SUPPORT">
 <span class="sig-prename descclassname"><span class="pre">muvid.footage.edl.</span></span><span class="sig-name descname"><span class="pre">MIN_SUPPORT</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.5</span></span><a class="headerlink" href="#muvid.footage.edl.MIN_SUPPORT" title="Link to this definition"></a></dt>
-<dd><p>Support must EXCEED this for a consensus offset to vouch for itself (env
-<code class="docutils literal notranslate"><span class="pre">MUVID_FOOTAGE_MIN_SUPPORT</span></code>). Strictly greater, and that is the whole meaning of
-the number rather than a rounding preference: <code class="docutils literal notranslate"><span class="pre">mixing</span></code> grades each window’s
-evidence as 1.0 when that window’s own argmax reached the offset and at most
+<dd><p>Support must EXCEED this for an offset to be vouched for (env
+<code class="docutils literal notranslate"><span class="pre">MUVID_FOOTAGE_MIN_SUPPORT</span></code>). Strictly greater, and the value is the meaning:
+<code class="docutils literal notranslate"><span class="pre">mixing</span></code> grades a window 1.0 when its own argmax reached the offset and at most
 <code class="docutils literal notranslate"><span class="pre">BALLOT_VOTE_WEIGHT</span></code> (0.5) when the offset was merely on its ballot, so <strong>0.5 is
-exactly the ceiling of ballot-only evidence.</strong> A support of 0.5 means every window
-had the offset on the ballot and NOT ONE of them found it unaided; above 0.5 at
-least one did. That is the difference between “nothing could separate these
-candidates” and “something actually located this one”, which is the distinction
-muvid#59 is made of.</p>
-<p><strong>Measured rather than derived.</strong> On the muvid#59 master: 24 correct alignments (21
-clips across the 12-29 s band at three offsets, plus the shoot’s three real
-excerpts) against six pure-noise clips as the known-wrong control.</p>
+exactly the ceiling of ballot-only evidence</strong> — at 0.5 nothing found the offset
+unaided; above it, something did.</p>
+<p><strong>This nearly went to 0.25, and the measurement that stopped it is the one worth
+keeping.</strong> On the muvid#59 master — 24 correct alignments against six pure-noise
+clips — <code class="docutils literal notranslate"><span class="pre">margin</span> <span class="pre">&gt;</span> <span class="pre">0</span></code> alone scored 24/24 and 0/6 where this threshold scores 18/24,
+so dropping the floor and letting <a class="reference internal" href="#muvid.footage.edl.MIN_MARGIN" title="muvid.footage.edl.MIN_MARGIN"><code class="xref py py-data docutils literal notranslate"><span class="pre">MIN_MARGIN</span></code></a> separate looked strictly better.
+It is not. <strong>Every wrong case in that set was pure NOISE; not one was an ALIAS</strong> — a
+bar-multiple repeat of the true offset — which is the case muvid#59 is actually made
+of. Measured on a tiled fixture, clips of the same source at a true offset of 28.0 s:</p>
 <table class="docutils align-default">
 <thead>
-<tr class="row-odd"><th class="head"><p>threshold</p></th>
-<th class="head"><p>correct passing</p></th>
-<th class="head"><p>noise passing</p></th>
+<tr class="row-odd"><th class="head"><p>clip</p></th>
+<th class="head"><p>offset</p></th>
+<th class="head"><p>correct?</p></th>
+<th class="head"><p>support</p></th>
+<th class="head"><p>margin</p></th>
 </tr>
 </thead>
 <tbody>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">&gt;=</span> <span class="pre">0.25</span></code></p></td>
-<td><p>24 / 24</p></td>
-<td><p><strong>1 / 6</strong></p></td>
+<tr class="row-even"><td><p>8 s</p></td>
+<td><p>27.988</p></td>
+<td><p>yes</p></td>
+<td><p>0.572</p></td>
+<td><p>+0.237</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">&gt;</span> <span class="pre">0.5</span></code></p></td>
-<td><p>18 / 24</p></td>
-<td><p><strong>0 / 6</strong></p></td>
+<tr class="row-odd"><td><p><strong>10 s</strong></p></td>
+<td><p><strong>35.974</strong></p></td>
+<td><p><strong>NO</strong></p></td>
+<td><p><strong>0.487</strong></p></td>
+<td><p><strong>+0.115</strong></p></td>
+</tr>
+<tr class="row-even"><td><p>12 s</p></td>
+<td><p>27.990</p></td>
+<td><p>yes</p></td>
+<td><p>0.659</p></td>
+<td><p>+0.217</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>14 s</strong></p></td>
+<td><p><strong>11.956</strong></p></td>
+<td><p><strong>NO</strong></p></td>
+<td><p>0.451</p></td>
+<td><p><strong>-0.349</strong></p></td>
+</tr>
+<tr class="row-even"><td><p>16 s</p></td>
+<td><p>27.986</p></td>
+<td><p>yes</p></td>
+<td><p>0.722</p></td>
+<td><p>+0.353</p></td>
+</tr>
+<tr class="row-odd"><td><p>20 s</p></td>
+<td><p>27.990</p></td>
+<td><p>yes</p></td>
+<td><p>0.638</p></td>
+<td><p>+0.197</p></td>
 </tr>
 </tbody>
 </table>
-<p>So this is the only cut measured that refuses every known-wrong case. It costs six
-correct short clips — they score 0.30-0.38, real but ballot-weight evidence — and
-that is the SAFE direction of error: a refusal is visible and recoverable
-(<code class="docutils literal notranslate"><span class="pre">allow_unreliable=True</span></code>, re-align, or leave the clip out), while the failure it
-prevents is a finished video silently out of sync that nothing downstream
-re-measures.</p>
-<p>Do not lower it to recover those six without re-running that table. The confidence
-coefficient cannot rescue them either — the noise clips score 0.173, 0.106, 0.143,
-0.040, 0.170 and 0.017, straddling exactly the same band as correct short clips —
-so a conjunctive gate buys nothing. Three separate scalars have now failed to
-separate this population; the quantity that might is the margin over the runner-up
-(thorwhalen/mixing#47), because muvid#59 was near-ties (0.993/0.989/0.987) and no
-fraction of anything looks at the runner-up.</p>
+<p>The 10 s clip lands on a repeat with BOTH numbers positive, so a 0.25 floor vouches
+for an offset 7.97 s wrong that this one refuses. The 14 s repeat <em>is</em> caught by a
+negative margin — margin catches some aliases and not others, which is worse than a
+clean signal because it looks like one. Across both data sets:</p>
+<p>So the floor is load-bearing on repeating references, which is the material this
+whole issue is about, and it costs six correct short clips (support 0.30-0.38) to
+keep. That is the safe direction: a refusal is visible and recoverable, a repeat
+rendered as if true is the failure muvid#59 exists to prevent.</p>
+<p>Thirty real cases and six synthetic ones is encouraging and not proof. Re-run BOTH
+tables before moving this — and make sure the set you re-run contains aliases, not
+only noise, which is the mistake that nearly lowered it.</p>
 </dd></dl>
 
 <dl class="py data">
@@ -829,7 +898,7 @@ the loosest bound rather than an absent one.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="muvid.footage.edl.vouches_for">
-<span class="sig-prename descclassname"><span class="pre">muvid.footage.edl.</span></span><span class="sig-name descname"><span class="pre">vouches_for</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">confidence</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">support</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">window_s</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../../../_modules/muvid/footage/edl.html#vouches_for"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.edl.vouches_for" title="Link to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">muvid.footage.edl.</span></span><span class="sig-name descname"><span class="pre">vouches_for</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">confidence</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">support</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">margin</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">window_s</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../../../_modules/muvid/footage/edl.html#vouches_for"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.edl.vouches_for" title="Link to this definition"></a></dt>
 <dd><p>Does the aligner vouch for this offset? The ONE place that verdict is reached.</p>
 <p>Lives here, beside the record it judges and the gate that enforces it, rather than
 with the aligner: <code class="xref py py-meth docutils literal notranslate"><span class="pre">FootageAlignment.from_dict()</span></code> has to reach it to derive a
@@ -866,12 +935,41 @@ WRONG one carried the highest coefficient of the three (0.834 against 0.566 and
 to: raising it past the noise floor refuses correct footage, and a number chosen to
 make a noise-floor test pass would hide that behind a green run. That fallback is now
 reached only by a clip too short to vote at all, which is the narrowest it has been.</p>
+<p><strong>Two numbers, asking different questions, and BOTH are required.</strong>
+<a class="reference internal" href="#muvid.footage.edl.MIN_SUPPORT" title="muvid.footage.edl.MIN_SUPPORT"><code class="xref py py-data docutils literal notranslate"><span class="pre">MIN_SUPPORT</span></code></a> asks whether enough of the clip’s evidence reached this offset;
+<a class="reference internal" href="#muvid.footage.edl.MIN_MARGIN" title="muvid.footage.edl.MIN_MARGIN"><code class="xref py py-data docutils literal notranslate"><span class="pre">MIN_MARGIN</span></code></a> asks whether that evidence prefers this offset over every other
+one it considered. Neither subsumes the other, and the measurement that proves it is
+in <a class="reference internal" href="#muvid.footage.edl.MIN_SUPPORT" title="muvid.footage.edl.MIN_SUPPORT"><code class="xref py py-data docutils literal notranslate"><span class="pre">MIN_SUPPORT</span></code></a>’s note: margin alone scores 24/24 on real material where the
+support threshold scores 18/24, and then vouches for a bar-multiple REPEAT that the
+support threshold refuses. Aliases and noise fail differently; margin catches noise
+and only some aliases.</p>
+<p>So this is a strict tightening of what muvid 0.0.53 shipped — it can only refuse
+more, never less.</p>
+<p><strong>What muvid#91 becomes.</strong> Since the estimator fits its window down to a 3 s floor,
+the regime with no vote at all is now exactly clips shorter than
+<code class="docutils literal notranslate"><span class="pre">window_floor</span> <span class="pre">+</span> <span class="pre">hop</span></code> — measured, <strong>4.5 s</strong>: 4.4 s gives <code class="docutils literal notranslate"><span class="pre">support</span> <span class="pre">is</span> <span class="pre">None</span></code> and
+4.5 s is the first with a number. Those still fall back to the coefficient, which
+produces an inversion worth naming: a 4.4 s clip is VOUCHED while a 4.5 s one is
+refused, because falling off the bottom of the vote hands the decision to the weaker
+instrument. That is not defensible on its own terms, and it is left alone HERE only
+because changing it means separating a fresh verdict from a DERIVED one — a record
+predating these fields also has <code class="docutils literal notranslate"><span class="pre">support</span> <span class="pre">is</span> <span class="pre">None</span></code>, and refusing those would
+re-break what muvid#87 fixed. muvid#91 is now that specific decision, over a band too
+short to be usable music-video footage, rather than the open question about a third
+of a shoot that it started as.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>confidence</strong> – The estimator’s correlation coefficient at the chosen lag.</p></li>
 <li><p><strong>support</strong> – Graded fraction of window evidence reaching the offset, or <code class="docutils literal notranslate"><span class="pre">None</span></code>
 when no vote could be held.</p></li>
+<li><p><strong>margin</strong> – That tally minus the tally at the best offset outside the tolerance.
+<code class="docutils literal notranslate"><span class="pre">None</span></code> on exactly the same quorum as <code class="docutils literal notranslate"><span class="pre">support</span></code>. Required to vouch when a
+vote WAS held: an aligner reporting support without it has not answered the
+separating question, and unknown does not vouch. The <code class="docutils literal notranslate"><span class="pre">mixing&gt;=0.0.51</span></code> floor
+guarantees both, and <code class="docutils literal notranslate"><span class="pre">tests/test_ci_extras_canary.py</span></code> asserts the
+capability so a mis-resolved floor fails loudly rather than quietly refusing
+every clip.</p></li>
 <li><p><strong>window_s</strong> – The window support was measured at. Recorded and reported as a
 diagnostic; it does <strong>not</strong> enter the verdict, for the reason above.</p></li>
 </ul>

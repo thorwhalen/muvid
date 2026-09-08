@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.mcp.footage_tools &mdash; muvid 0.0.52 documentation</title>
+  <title>muvid.mcp.footage_tools &mdash; muvid 0.0.53 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=73f2ab08"></script>
+      <script src="../../../_static/documentation_options.js?v=d78a2f11"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -156,7 +156,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">urllib.parse</span><span class="w"> </span><span class="kn">import</span> <span class="n">urlparse</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">muvid.footage.align</span><span class="w"> </span><span class="kn">import</span> <span class="n">MIN_CONFIDENCE</span><span class="p">,</span> <span class="n">MIN_SUPPORT</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">muvid.footage.align</span><span class="w"> </span><span class="kn">import</span> <span class="n">MIN_CONFIDENCE</span><span class="p">,</span> <span class="n">MIN_MARGIN</span><span class="p">,</span> <span class="n">MIN_SUPPORT</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.mcp.identity</span><span class="w"> </span><span class="kn">import</span> <span class="n">current_email</span>
 
 <span class="c1"># -- resource caps (env-tunable) --------------------------------------------</span>
@@ -421,13 +421,15 @@
 <span class="sd">      them unless it is called with ``allow_unreliable=true``, because a wrong offset</span>
 <span class="sd">      does not fail — it renders a video out of sync with the song (muvid#59). Re-align,</span>
 <span class="sd">      leave them out of the edit, or opt in deliberately;</span>
-<span class="sd">    - ``no_consensus`` — clips whose offset was never put to a vote at all, which now</span>
-<span class="sd">      means only a clip too short to hold two analysis windows (a few seconds). Their</span>
-<span class="sd">      offset rests on a single measurement — the estimator muvid#59 was filed about —</span>
-<span class="sd">      and the confidence score does NOT rank correctness there (measured on that shoot,</span>
-<span class="sd">      the wrong offset scored highest of the three). Nothing is refused on this basis,</span>
-<span class="sd">      because refusing would take the correct short clips with it, but if such a clip</span>
-<span class="sd">      looks out of sync in the render this list is the first place to look.</span>
+<span class="sd">    - ``no_consensus`` — clips too short to be put to a vote at all (under about 4.5 s).</span>
+<span class="sd">      **A clip in this list can be marked reliable and still be wrong**, and no other</span>
+<span class="sd">      field will say so: its offset rests on one measurement, judged by a confidence</span>
+<span class="sd">      score that does not rank correctness in this band — measured on the muvid#59</span>
+<span class="sd">      shoot, the WRONG offset scored highest of three (0.834 against 0.566 and 0.621),</span>
+<span class="sd">      and on a repeating fixture a 4.4 s clip landing 8 s out is vouched at 0.381.</span>
+<span class="sd">      Nothing is refused on this basis, because refusing would take the correct short</span>
+<span class="sd">      clips with it. So if a short clip looks out of sync in the render, this list is</span>
+<span class="sd">      the first place to look — and muvid#91 is where that trade-off is being decided.</span>
 
 <span class="sd">    Run this after adding/removing clips and before assembling.</span>
 <span class="sd">    """</span>
@@ -479,30 +481,43 @@
                 <span class="s2">"clip_id"</span><span class="p">:</span> <span class="n">a</span><span class="o">.</span><span class="n">clip_id</span><span class="p">,</span>
                 <span class="s2">"confidence"</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">confidence</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
                 <span class="s2">"support"</span><span class="p">:</span> <span class="n">_round_support</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">support</span><span class="p">),</span>
+                <span class="c1"># The separator, and the one to read first: negative means the clip's</span>
+                <span class="c1"># own evidence prefers a DIFFERENT offset, which is why it was refused.</span>
+                <span class="s2">"margin"</span><span class="p">:</span> <span class="n">_round_support</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">margin</span><span class="p">),</span>
                 <span class="s2">"window_s"</span><span class="p">:</span> <span class="n">_round_support</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">window_s</span><span class="p">),</span>
             <span class="p">}</span>
             <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">aligns</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">a</span><span class="o">.</span><span class="n">reliable</span>
         <span class="p">],</span>
-        <span class="c1"># REPORTED, never enforced — the same posture as `offset_consensus` below, and</span>
-        <span class="c1"># for the same reason. `support: null` means the estimator could not hold a vote</span>
-        <span class="c1"># at all: it fits its window to the clip down to a 3 s floor, so this is only a</span>
-        <span class="c1"># clip too short to hold two of those (measured: 4 s yes, 6 s no). The offset</span>
-        <span class="c1"># then rests on a single measurement</span>
-        <span class="c1"># and the trust verdict falls back to the confidence coefficient. That fallback</span>
-        <span class="c1"># is the weak one: measured on the muvid#59 material, one such clip is 102 s</span>
-        <span class="c1"># wrong at confidence 0.834 while the two correct ones score 0.566 and 0.621 —</span>
-        <span class="c1"># the wrong offset had the HIGHEST coefficient, so no threshold separates them.</span>
-        <span class="c1"># Refusing every unvoted clip would refuse those two as well, so this is said</span>
-        <span class="c1"># rather than enforced; adapting the window to short clips is the actual fix</span>
-        <span class="c1"># (thorwhalen/mixing#41).</span>
+        <span class="c1"># REPORTED, never enforced — the same posture as `offset_consensus` below.</span>
+        <span class="c1"># `support: null` means the estimator could not hold a vote at all: it fits its</span>
+        <span class="c1"># window to the clip down to a 3 s floor, so this is only a clip shorter than</span>
+        <span class="c1"># `window_floor + hop` = 4.5 s (measured: 4.4 s unvoted, 4.5 s the first with a</span>
+        <span class="c1"># number). The offset then rests on a single measurement and the verdict falls</span>
+        <span class="c1"># back to the confidence coefficient.</span>
+        <span class="c1">#</span>
+        <span class="c1"># SAY THE HAZARD, because this list is the only place it is visible: a clip in</span>
+        <span class="c1"># here can be `reliable: true` AND WRONG. Measured on a repeating fixture, a</span>
+        <span class="c1"># 4.4 s clip landing 7.99 s out is vouched at confidence 0.381, while the same</span>
+        <span class="c1"># material at 4.5 s — one vote away — is refused (margin -0.252). The</span>
+        <span class="c1"># coefficient does not rank correctness in this band (on the muvid#59 shoot the</span>
+        <span class="c1"># WRONG offset scored highest of three, 0.834 against 0.566 and 0.621), so</span>
+        <span class="c1"># nothing else flags it. Refusing the whole band would take the correct short</span>
+        <span class="c1"># clips with it and re-break the compatibility read muvid#87 fixed, so the band</span>
+        <span class="c1"># is named rather than gated — muvid#91 owns that decision.</span>
         <span class="s2">"no_consensus"</span><span class="p">:</span> <span class="p">[</span><span class="n">a</span><span class="o">.</span><span class="n">clip_id</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">aligns</span> <span class="k">if</span> <span class="n">a</span><span class="o">.</span><span class="n">support</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">],</span>
         <span class="s2">"confidence_metric"</span><span class="p">:</span> <span class="s2">"onset-envelope correlation at the waveform's lag"</span><span class="p">,</span>
         <span class="s2">"confidence_threshold"</span><span class="p">:</span> <span class="n">_MIN_CONFIDENCE</span><span class="p">,</span>
         <span class="c1"># Support must EXCEED this, and the strictness is the meaning: at exactly this</span>
         <span class="c1"># value every window had the offset on its ballot and none found it unaided.</span>
+        <span class="c1"># A FLOOR on how much evidence reached the offset...</span>
         <span class="s2">"support_threshold"</span><span class="p">:</span> <span class="n">MIN_SUPPORT</span><span class="p">,</span>
         <span class="s2">"support_threshold_is_exclusive"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="c1"># ...and the SEPARATOR, which is what actually does the work: measured on the</span>
+        <span class="c1"># muvid#59 material, margin&gt;0 passes 24/24 correct and 0/6 noise where a support</span>
+        <span class="c1"># threshold alone passed 18/24. Negative margin = the evidence prefers elsewhere.</span>
+        <span class="s2">"margin_threshold"</span><span class="p">:</span> <span class="n">MIN_MARGIN</span><span class="p">,</span>
+        <span class="s2">"margin_threshold_is_exclusive"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
         <span class="s2">"offset_consensus"</span><span class="p">:</span> <span class="n">_offset_consensus</span><span class="p">(</span><span class="n">aligns</span><span class="p">),</span>
         <span class="c1"># Usable-for-an-edit, not present-in-the-project: these clips are still here, still</span>
         <span class="c1"># listed, still addressable — they just cover no part of the song.</span>
@@ -675,6 +690,7 @@
             <span class="s2">"clip_id"</span><span class="p">:</span> <span class="n">e</span><span class="o">.</span><span class="n">clip_id</span><span class="p">,</span>
             <span class="s2">"confidence"</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">by_id</span><span class="p">[</span><span class="n">e</span><span class="o">.</span><span class="n">clip_id</span><span class="p">]</span><span class="o">.</span><span class="n">confidence</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
             <span class="s2">"support"</span><span class="p">:</span> <span class="n">_round_support</span><span class="p">(</span><span class="n">by_id</span><span class="p">[</span><span class="n">e</span><span class="o">.</span><span class="n">clip_id</span><span class="p">]</span><span class="o">.</span><span class="n">support</span><span class="p">),</span>
+            <span class="s2">"margin"</span><span class="p">:</span> <span class="n">_round_support</span><span class="p">(</span><span class="n">by_id</span><span class="p">[</span><span class="n">e</span><span class="o">.</span><span class="n">clip_id</span><span class="p">]</span><span class="o">.</span><span class="n">margin</span><span class="p">),</span>
         <span class="p">}</span>
         <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">entries</span>
         <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">clip_id</span> <span class="ow">in</span> <span class="n">by_id</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">by_id</span><span class="p">[</span><span class="n">e</span><span class="o">.</span><span class="n">clip_id</span><span class="p">]</span><span class="o">.</span><span class="n">reliable</span>
