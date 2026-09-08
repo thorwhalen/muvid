@@ -48,7 +48,12 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from muvid.footage.align import MIN_CONFIDENCE, MIN_SUPPORT, vouches_for
+from muvid.footage.align import (
+    MIN_CONFIDENCE,
+    MIN_MARGIN,
+    MIN_SUPPORT,
+    vouches_for,
+)
 from muvid.footage.edl import (
     EdlEntry,
     FootageAlignment,
@@ -83,8 +88,8 @@ class TestTheVerdict:
     def test_support_decides_when_it_was_measured(self):
         # A high coefficient does not rescue an offset only a tenth of the clip agrees
         # with — that combination IS muvid#59's failure mode.
-        assert not vouches_for(confidence=0.99, support=MIN_SUPPORT / 2)
-        assert vouches_for(confidence=0.01, support=1.0)
+        assert not vouches_for(confidence=0.99, support=MIN_SUPPORT / 2, margin=0.9)
+        assert vouches_for(confidence=0.01, support=1.0, margin=0.9)
 
     def test_confidence_decides_only_when_support_is_absent(self):
         assert vouches_for(confidence=MIN_CONFIDENCE, support=None)
@@ -98,6 +103,112 @@ class TestTheVerdict:
         # ...and once support is measured, all three are refused.
         for support in (0.0, 0.04, 0.1):
             assert not vouches_for(confidence=0.121, support=support)
+
+
+#: The measurement the gate rests on (muvid#59), as a table. Two populations, because
+#: they fail differently and only using both caught the mistake:
+#:
+#: - REAL, from the muvid#59 master — correct alignments and pure-noise controls;
+#: - SYNTHETIC, from the tiled loop fixture — correct alignments and ALIASES, i.e.
+#:   bar-multiple repeats of the true offset, which is the case muvid#59 is made of.
+#:
+#: ================================  =============  ===========  ==================
+#: gate                              real correct   real noise   synthetic REPEATS
+#: ================================  =============  ===========  ==================
+#: ``support > 0.25 and margin > 0``  11 / 11       0 / 6        **1 of 2 admitted**
+#: ``margin > 0`` alone               11 / 11       0 / 6        **1 of 2 admitted**
+#: ``support > 0.5 and margin > 0``   5 / 11        0 / 6        0 of 2
+#: ================================  =============  ===========  ==================
+#:
+#: A set containing only noise says to drop the floor to 0.25; adding one alias says
+#: not to. Thirty real cases and six synthetic ones is encouraging and not proof.
+_MEASURED = [
+    # REAL: correct alignments
+    # (label, support, margin, correct?, should the gate PASS it?) — the last two
+    # differ for exactly the six clips the 0.5 floor costs, and saying so is the point:
+    # the cost is documented rather than discovered.
+    ("12s@29", 0.300, +0.100, True, False),
+    ("12s@96", 0.380, +0.180, True, False),
+    ("15s@29", 0.321, +0.121, True, False),
+    ("20s@29", 0.348, +0.014, True, False),
+    ("22s@29", 0.520, +0.173, True, True),
+    ("25s@29", 0.374, +0.124, True, False),
+    ("26s@29", 0.363, +0.029, True, False),
+    ("20s@96", 1.000, +0.843, True, True),
+    ("exc c01", 1.000, +0.875, True, True),  # the shoot's own three
+    ("exc c02", 0.673, +0.423, True, True),
+    ("exc c03", 0.714, +0.464, True, True),
+    # REAL: pure noise. Five of six carry a NEGATIVE margin.
+    ("noise1", 0.161, -0.172, False, False),
+    ("noise2", 0.158, -0.176, False, False),
+    ("noise3", 0.166, -0.167, False, False),
+    ("noise4", 0.115, -0.218, False, False),
+    ("noise5", 0.333, +0.000, False, False),  # refused by an EXACT tie
+    ("noise6", 0.016, -0.317, False, False),
+    # SYNTHETIC: correct on the tiled fixture...
+    ("loop 8s", 0.572, +0.237, True, True),
+    ("loop 12s", 0.659, +0.217, True, True),
+    ("loop 16s", 0.722, +0.353, True, True),
+    ("loop 20s", 0.638, +0.197, True, True),
+    # ...and the two ALIASES, which is why the floor stayed at 0.5. The first has BOTH
+    # numbers positive: margin does not see a bar repeat as a different offset.
+    ("loop 10s repeat", 0.487, +0.115, False, False),
+    ("loop 14s repeat", 0.451, -0.349, False, False),
+]
+
+
+class TestTheMeasuredTable:
+    """The gate is `support > 0.5 AND margin > 0`, and this is the evidence for both."""
+
+    @pytest.mark.parametrize("label,support,margin,correct,expected", _MEASURED)
+    def test_the_gate_matches_the_measurement(
+        self, label, support, margin, correct, expected
+    ):
+        got = vouches_for(confidence=0.9, support=support, margin=margin)
+        assert got is expected, (
+            f"{label}: support={support} margin={margin} "
+            f"({'correct' if correct else 'wrong/noise/alias'}) — gate said {got}"
+        )
+
+    def test_nothing_wrong_is_ever_vouched_for(self):
+        """The safety half, stated separately from the cost half.
+
+        Six rows are correct alignments the gate refuses — that is the price of the
+        floor and it is written down. What must never happen is the other direction.
+        """
+        assert [r[0] for r in _MEASURED if r[4] and not r[3]] == []
+
+    def test_the_cost_of_the_floor_is_exactly_these_six(self):
+        refused_but_correct = [r[0] for r in _MEASURED if r[3] and not r[4]]
+        assert len(refused_but_correct) == 6, refused_but_correct
+
+    def test_neither_number_alone_is_enough_and_the_table_says_which_fails_how(self):
+        """The two failure modes, each demonstrated by a row this table contains."""
+        floor_only = [r[0] for r in _MEASURED if not r[3] and r[1] > MIN_SUPPORT]
+        margin_only = [r[0] for r in _MEASURED if not r[3] and r[2] > MIN_MARGIN]
+        # The floor alone would admit nothing here — but only because the aliases in
+        # this table happen to sit under it; that is what makes it load-bearing.
+        assert floor_only == []
+        # The separator alone WOULD admit a bar repeat, which is muvid#59's own defect.
+        assert margin_only == ["loop 10s repeat"]
+
+    def test_a_negative_margin_is_refused_however_strong_the_support(self):
+        # A negative margin means the clip's own evidence prefers a DIFFERENT offset —
+        # a refusal in its own right, not a weak endorsement. Five of six noise clips
+        # and one of the two aliases arrive this way.
+        for support in (0.6, 0.9, 1.0):
+            assert not vouches_for(confidence=0.9, support=support, margin=-0.001)
+
+    def test_an_exactly_zero_margin_is_refused(self):
+        # noise5 lands here. A tie is not evidence, and no draw guarantees it falls on
+        # the refusing side, which is one reason the floor is not the only guard.
+        assert not vouches_for(confidence=0.9, support=0.9, margin=0.0)
+
+    def test_margin_is_required_once_a_vote_was_held(self):
+        # An aligner reporting support without margin has not answered the separating
+        # question. Unknown does not vouch — and the CI canary keeps that a loud
+        # failure rather than an outage nobody notices.
+        assert not vouches_for(confidence=0.9, support=1.0, margin=None)
 
 
 class TestTheThresholdIsTheBallotCeiling:
@@ -117,8 +228,8 @@ class TestTheThresholdIsTheBallotCeiling:
 
     def test_exactly_the_ballot_ceiling_does_not_vouch(self):
         # The strictness IS the semantics: at 0.5 nothing found the offset unaided.
-        assert not vouches_for(confidence=0.0, support=0.5)
-        assert vouches_for(confidence=0.0, support=0.5 + 1e-9)
+        assert not vouches_for(confidence=0.0, support=0.5, margin=0.9)
+        assert vouches_for(confidence=0.0, support=0.5 + 1e-9, margin=0.9)
 
     def test_the_window_does_not_enter_the_verdict(self):
         # Deliberately reversed. An earlier revision refused to read a support from a
@@ -126,8 +237,12 @@ class TestTheThresholdIsTheBallotCeiling:
         # routes them to the confidence fallback and VOUCHES for four of them, while
         # reading the graded support refuses all six. The window is a diagnostic now.
         for window_s in (None, 3.0, 6.67, 20.0, 60.0):
-            assert vouches_for(confidence=0.0, support=0.8, window_s=window_s)
-            assert not vouches_for(confidence=0.0, support=0.3, window_s=window_s)
+            assert vouches_for(
+                confidence=0.0, support=0.8, margin=0.9, window_s=window_s
+            )
+            assert not vouches_for(
+                confidence=0.0, support=0.3, margin=0.9, window_s=window_s
+            )
 
     def test_the_noise_floor_this_threshold_was_chosen_against(self):
         # The six pure-noise clips, graded, at a fitted window — every one refused.
@@ -752,7 +867,9 @@ def test_consensus_recovers_the_offset_and_support_vouches_for_it(tmp_path):
         assert a.reliable is True
         # muvid DERIVES the verdict from what mixing reported rather than forming a
         # second opinion — the property that keeps this one gate rather than two.
-        assert a.reliable is vouches_for(confidence=a.confidence, support=a.support)
+        assert a.reliable is vouches_for(
+            confidence=a.confidence, support=a.support, margin=a.margin
+        )
 
     # And the gate lets the edit through, which is what a caller actually feels.
     assert validate_edl([EdlEntry(28.0, 40.0, "A")], list(by.values()), song_s)
@@ -791,7 +908,7 @@ def test_the_window_is_fitted_to_the_clip_and_reported_with_the_support(tmp_path
     assert full.window_s == pytest.approx(mid.window_s * 2)
     # And all three are judged on their support, whatever grid it came from.
     for a in (short, mid, full):
-        assert a.reliable is (a.support > MIN_SUPPORT)
+        assert a.reliable is (a.support > MIN_SUPPORT and a.margin > MIN_MARGIN)
 
 
 @needs_support
@@ -858,7 +975,7 @@ def test_the_noise_floor_now_clears_min_confidence(tmp_path):
         a = align_footage(str(song_p), [("N", str(p))], song_duration=song_s)[0]
         # 15 s fits a 5 s window, so a support IS measured and IS what decides.
         assert a.window_s is not None
-        assert a.reliable is (a.support > MIN_SUPPORT)
+        assert a.reliable is (a.support > MIN_SUPPORT and a.margin > MIN_MARGIN)
         floor.append(a.confidence)
 
     assert max(floor) > MIN_CONFIDENCE, (

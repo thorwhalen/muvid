@@ -20,7 +20,7 @@ import uuid
 from pathlib import Path
 from urllib.parse import urlparse
 
-from muvid.footage.align import MIN_CONFIDENCE, MIN_SUPPORT
+from muvid.footage.align import MIN_CONFIDENCE, MIN_MARGIN, MIN_SUPPORT
 from muvid.mcp.identity import current_email
 
 # -- resource caps (env-tunable) --------------------------------------------
@@ -332,6 +332,9 @@ def align_footage(project_id: str) -> dict:
                 "clip_id": a.clip_id,
                 "confidence": round(a.confidence, 3),
                 "support": _round_support(a.support),
+                # The separator, and the one to read first: negative means the clip's
+                # own evidence prefers a DIFFERENT offset, which is why it was refused.
+                "margin": _round_support(a.margin),
                 "window_s": _round_support(a.window_s),
             }
             for a in aligns
@@ -354,8 +357,14 @@ def align_footage(project_id: str) -> dict:
         "confidence_threshold": _MIN_CONFIDENCE,
         # Support must EXCEED this, and the strictness is the meaning: at exactly this
         # value every window had the offset on its ballot and none found it unaided.
+        # A FLOOR on how much evidence reached the offset...
         "support_threshold": MIN_SUPPORT,
         "support_threshold_is_exclusive": True,
+        # ...and the SEPARATOR, which is what actually does the work: measured on the
+        # muvid#59 material, margin>0 passes 24/24 correct and 0/6 noise where a support
+        # threshold alone passed 18/24. Negative margin = the evidence prefers elsewhere.
+        "margin_threshold": MIN_MARGIN,
+        "margin_threshold_is_exclusive": True,
         "offset_consensus": _offset_consensus(aligns),
         # Usable-for-an-edit, not present-in-the-project: these clips are still here, still
         # listed, still addressable — they just cover no part of the song.
@@ -524,6 +533,7 @@ def _coverage_report(entries, aligns, song_dur: float) -> dict:
             "clip_id": e.clip_id,
             "confidence": round(by_id[e.clip_id].confidence, 3),
             "support": _round_support(by_id[e.clip_id].support),
+            "margin": _round_support(by_id[e.clip_id].margin),
         }
         for e in entries
         if e.clip_id in by_id and not by_id[e.clip_id].reliable

@@ -196,39 +196,54 @@ TRANSITION_CURVES = frozenset(
 #: the decision this leaves open.
 MIN_CONFIDENCE = float(os.environ.get("MUVID_FOOTAGE_MIN_CONFIDENCE", "0.1"))
 
-#: Support must EXCEED this for an offset to be vouched for — a FLOOR on how much
-#: evidence reached it (env ``MUVID_FOOTAGE_MIN_SUPPORT``). It is not the separator;
-#: :data:`MIN_MARGIN` is. Support says how much of the clip's evidence reaches this
-#: offset, and that is a different question from whether anything disputes it.
+#: Support must EXCEED this for an offset to be vouched for (env
+#: ``MUVID_FOOTAGE_MIN_SUPPORT``). Strictly greater, and the value is the meaning:
+#: ``mixing`` grades a window 1.0 when its own argmax reached the offset and at most
+#: ``BALLOT_VOTE_WEIGHT`` (0.5) when the offset was merely on its ballot, so **0.5 is
+#: exactly the ceiling of ballot-only evidence** — at 0.5 nothing found the offset
+#: unaided; above it, something did.
 #:
-#: **0.25 was measured, not chosen.** On the muvid#59 master — 24 correct alignments
-#: (21 clips across the 12-29 s band at three offsets, plus the shoot's three real
-#: excerpts) against six pure-noise clips as the known-wrong control:
+#: **This nearly went to 0.25, and the measurement that stopped it is the one worth
+#: keeping.** On the muvid#59 master — 24 correct alignments against six pure-noise
+#: clips — ``margin > 0`` alone scored 24/24 and 0/6 where this threshold scores 18/24,
+#: so dropping the floor and letting :data:`MIN_MARGIN` separate looked strictly better.
+#: It is not. **Every wrong case in that set was pure NOISE; not one was an ALIAS** — a
+#: bar-multiple repeat of the true offset — which is the case muvid#59 is actually made
+#: of. Measured on a tiled fixture, clips of the same source at a true offset of 28.0 s:
 #:
-#: ==================================  =================  ===============
-#: gate                                correct passing    noise passing
-#: ==================================  =================  ===============
-#: ``support > 0.5`` (muvid 0.0.53)    18 / 24            0 / 6
-#: ``support > 0.5 and margin > 0``    18 / 24            0 / 6
-#: ``margin > 0`` alone                **24 / 24**        **0 / 6**
-#: ``support > 0.25 and margin > 0``   **24 / 24**        **0 / 6**
-#: ==================================  =================  ===============
+#: ========  ==========  =========  ==========  ==========
+#: clip      offset      correct?   support     margin
+#: ========  ==========  =========  ==========  ==========
+#: 8 s       27.988      yes        0.572       +0.237
+#: **10 s**  **35.974**  **NO**     **0.487**   **+0.115**
+#: 12 s      27.990      yes        0.659       +0.217
+#: **14 s**  **11.956**  **NO**     0.451       **-0.349**
+#: 16 s      27.986      yes        0.722       +0.353
+#: 20 s      27.990      yes        0.638       +0.197
+#: ========  ==========  =========  ==========  ==========
 #:
-#: So margin is not an addition to a support threshold — it is a BETTER gate than one,
-#: and the conjunction with 0.5 adds nothing because margin never refuses what that
-#: threshold passes. Dropping the floor to 0.25 recovers all six correct short clips
-#: 0.5 was turning away (they score 0.30-0.38) without admitting a noise clip.
+#: The 10 s clip lands on a repeat with BOTH numbers positive, so a 0.25 floor vouches
+#: for an offset 7.97 s wrong that this one refuses. The 14 s repeat *is* caught by a
+#: negative margin — margin catches some aliases and not others, which is worse than a
+#: clean signal because it looks like one. Across both data sets:
 #:
-#: **The floor is kept rather than gating on margin alone, for two measured reasons.**
-#: The noise clip that comes closest scores ``margin == +0.000`` exactly — refused by a
-#: tie no draw guarantees — and two correct passes sit at ``+0.014`` and ``+0.029`` with
-#: support 0.34-0.35, which is thin evidence that happens to be undisputed. With the
-#: floor in place, five of the six noise clips fail on support independently, so that
-#: exact tie is not the only thing standing between the gate and pure noise.
+#: ================================  =============  ===========  ==================
+#: gate                              real correct   real noise   synthetic REPEATS
+#: ================================  =============  ===========  ==================
+#: ``support > 0.25 and margin > 0``  11 / 11       0 / 6        **1 of 2 admitted**
+#: ``margin > 0`` alone               11 / 11       0 / 6        **1 of 2 admitted**
+#: ``support > 0.5 and margin > 0``   5 / 11        0 / 6        0 of 2
+#: ================================  =============  ===========  ==================
 #:
-#: Thirty cases is encouraging and not proof. Re-run that table before moving either
-#: number.
-MIN_SUPPORT = float(os.environ.get("MUVID_FOOTAGE_MIN_SUPPORT", "0.25"))
+#: So the floor is load-bearing on repeating references, which is the material this
+#: whole issue is about, and it costs six correct short clips (support 0.30-0.38) to
+#: keep. That is the safe direction: a refusal is visible and recoverable, a repeat
+#: rendered as if true is the failure muvid#59 exists to prevent.
+#:
+#: Thirty real cases and six synthetic ones is encouraging and not proof. Re-run BOTH
+#: tables before moving this — and make sure the set you re-run contains aliases, not
+#: only noise, which is the mistake that nearly lowered it.
+MIN_SUPPORT = float(os.environ.get("MUVID_FOOTAGE_MIN_SUPPORT", "0.5"))
 
 #: Margin must EXCEED this for an offset to be vouched for (env
 #: ``MUVID_FOOTAGE_MIN_MARGIN``). This is the SEPARATOR, and zero is the meaningful
@@ -320,13 +335,17 @@ def vouches_for(
     make a noise-floor test pass would hide that behind a green run. That fallback is now
     reached only by a clip too short to vote at all, which is the narrowest it has been.
 
-    **Two numbers, asking different questions.** :data:`MIN_SUPPORT` is a FLOOR — did
-    enough of the clip's evidence reach this offset — and :data:`MIN_MARGIN` is the
-    SEPARATOR — does that evidence prefer this offset over every other one it
-    considered. Measured on the muvid#59 master, the separator does the work:
-    ``margin > 0`` alone passes 24/24 correct and 0/6 noise, where a support threshold
-    at 0.5 passes 18/24. The floor is kept anyway, so the one noise clip whose margin
-    lands on an exact ``+0.000`` is not held out by a tie alone.
+    **Two numbers, asking different questions, and BOTH are required.**
+    :data:`MIN_SUPPORT` asks whether enough of the clip's evidence reached this offset;
+    :data:`MIN_MARGIN` asks whether that evidence prefers this offset over every other
+    one it considered. Neither subsumes the other, and the measurement that proves it is
+    in :data:`MIN_SUPPORT`'s note: margin alone scores 24/24 on real material where the
+    support threshold scores 18/24, and then vouches for a bar-multiple REPEAT that the
+    support threshold refuses. Aliases and noise fail differently; margin catches noise
+    and only some aliases.
+
+    So this is a strict tightening of what muvid 0.0.53 shipped — it can only refuse
+    more, never less.
 
     **What muvid#91 becomes.** Since the estimator fits its window down to a 3 s floor,
     the regime with no vote at all is now exactly clips shorter than
