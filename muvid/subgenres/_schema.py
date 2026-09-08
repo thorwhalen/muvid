@@ -25,8 +25,14 @@ __all__ = ["validate", "SchemaError", "ENFORCED_KEYWORDS"]
 #: The JSON-Schema keywords this validator actually enforces. Everything else
 #: in a manifest schema is documentation as far as the runtime is concerned.
 ENFORCED_KEYWORDS = (
-    "type", "required", "properties", "additionalProperties",
-    "enum", "minimum", "maximum", "items",
+    "type",
+    "required",
+    "properties",
+    "additionalProperties",
+    "enum",
+    "minimum",
+    "maximum",
+    "items",
 )
 
 _TYPES: dict[str, tuple[type, ...]] = {
@@ -92,7 +98,9 @@ def _check(value: Any, schema: Mapping[str, Any], path: str, errors: list[str]) 
             _check(item, schema["items"], f"{path or '$'}[{i}]", errors)
 
 
-def validate(value: Any, schema: Mapping[str, Any] | None, *, where: str = "") -> list[str]:
+def validate(
+    value: Any, schema: Mapping[str, Any] | None, *, where: str = ""
+) -> list[str]:
     """Return every problem found; an empty list means it passed.
 
     Enforces exactly :data:`ENFORCED_KEYWORDS`. A missing or empty schema

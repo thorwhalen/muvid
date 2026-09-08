@@ -83,7 +83,9 @@ def check_render_bounds(canvas: Canvas, duration_s: float) -> None:
             f"{MAX_PIXELS} (MUVID_LYRICVID_MAX_PIXELS)"
         )
     if not 1 <= canvas.fps <= MAX_FPS:
-        raise ValueError(f"fps {canvas.fps} is outside 1..{MAX_FPS} (MUVID_LYRICVID_MAX_FPS)")
+        raise ValueError(
+            f"fps {canvas.fps} is outside 1..{MAX_FPS} (MUVID_LYRICVID_MAX_FPS)"
+        )
     if duration_s > MAX_DURATION_S:
         raise ValueError(
             f"audio is {duration_s:.0f}s; the render limit is {MAX_DURATION_S}s "

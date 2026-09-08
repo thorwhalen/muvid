@@ -27,8 +27,18 @@ __all__ = ["list_subgenres", "render_subgenre"]
 #: are identified by the manifest: a property with ``"format": "path"`` OR a
 #: name in this set is fetched through _resolve_input. Everything else is
 #: passed through as-is after schema validation.
-_FILE_INPUT_NAMES = frozenset({"audio", "lyrics", "subtitles", "cover", "image",
-                               "reference_image", "clip", "video"})
+_FILE_INPUT_NAMES = frozenset(
+    {
+        "audio",
+        "lyrics",
+        "subtitles",
+        "cover",
+        "image",
+        "reference_image",
+        "clip",
+        "video",
+    }
+)
 
 #: A plugin may declare list-valued file inputs (photos[], clips[]); cap them.
 MAX_FILE_INPUTS = int(os.environ.get("MUVID_SUBGENRE_MAX_FILE_INPUTS", "64"))
@@ -49,13 +59,20 @@ def _is_file_input(name: str, schema: dict) -> bool:
     prop = (schema.get("properties") or {}).get(name) or {}
     if prop.get("format") == "path":
         return True
-    if prop.get("type") == "array" and (prop.get("items") or {}).get("format") == "path":
+    if (
+        prop.get("type") == "array"
+        and (prop.get("items") or {}).get("format") == "path"
+    ):
         return True
     return name in _FILE_INPUT_NAMES
 
 
 def render_subgenre(
-    project_id: str, *, subgenre: str, inputs: dict, params: dict | None = None,
+    project_id: str,
+    *,
+    subgenre: str,
+    inputs: dict,
+    params: dict | None = None,
 ) -> dict:
     """Render one installed subgenre into the caller's project. Free.
 
@@ -99,22 +116,33 @@ def render_subgenre(
                 n_files += 1
                 if n_files > MAX_FILE_INPUTS:
                     raise _tool_error(f"more than {MAX_FILE_INPUTS} file inputs")
-                fetched.append(str(_resolve_input(url, fetch_dir / f"{name}-{i}", label=name)))
+                fetched.append(
+                    str(_resolve_input(url, fetch_dir / f"{name}-{i}", label=name))
+                )
             resolved[name] = fetched if isinstance(value, list) else fetched[0]
         else:
             resolved[name] = value
 
-    ext = {"video/mp4": "mp4", "image/png": "png", "image/jpeg": "jpg",
-           "image/gif": "gif", "audio/mpeg": "mp3"}.get(manifest.produces, "bin")
+    ext = {
+        "video/mp4": "mp4",
+        "image/png": "png",
+        "image/jpeg": "jpg",
+        "image/gif": "gif",
+        "audio/mpeg": "mp3",
+    }.get(manifest.produces, "bin")
     out = render_dir / f"video.{ext}"
     try:
         result = _render(
-            subgenre, inputs=resolved, params=params or {},
-            workdir=render_dir / "work", output=out,
+            subgenre,
+            inputs=resolved,
+            params=params or {},
+            workdir=render_dir / "work",
+            output=out,
         )
     except SchemaError as exc:
-        raise _tool_error("request does not satisfy the subgenre's schema: "
-                          + "; ".join(exc.errors)) from exc
+        raise _tool_error(
+            "request does not satisfy the subgenre's schema: " + "; ".join(exc.errors)
+        ) from exc
     except (ValueError, FileNotFoundError, RuntimeError) as exc:
         raise _tool_error(f"render refused: {exc}") from exc
 

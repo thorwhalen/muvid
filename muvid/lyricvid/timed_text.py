@@ -158,8 +158,12 @@ class TimedText:
                             "index": l.index,
                             "text": l.text,
                             "words": [
-                                {"text": w.text, "start": w.start, "end": w.end,
-                                 "measured": w.measured}
+                                {
+                                    "text": w.text,
+                                    "start": w.start,
+                                    "end": w.end,
+                                    "measured": w.measured,
+                                }
                                 for w in l.words
                             ],
                         }
@@ -269,14 +273,17 @@ def from_subtitles(path: Path | str, *, duration: float = 0.0) -> TimedText:
             start = _hms(*m.group(1, 2, 3, 4))
             end = _hms(*m.group(5, 6, 7, 8))
             body = "\n".join(
-                l for l in block.splitlines()
+                l
+                for l in block.splitlines()
                 if not _SRT_TIME.search(l) and not l.strip().isdigit()
             ).strip()
             body = re.sub(r"<[^>]+>", "", body)
             if body:
                 lines.append(
-                    Line(words=_spread_words_over(body.replace("\n", " "), start, end),
-                         index=len(lines))
+                    Line(
+                        words=_spread_words_over(body.replace("\n", " "), start, end),
+                        index=len(lines),
+                    )
                 )
         source = "srt"
     else:
@@ -299,7 +306,9 @@ def from_subtitles(path: Path | str, *, duration: float = 0.0) -> TimedText:
         stamped.sort(key=lambda p: p[0])
         source = "lrc"
         for i, (start, body) in enumerate(stamped):
-            end = stamped[i + 1][0] if i + 1 < len(stamped) else (duration or start + 3.0)
+            end = (
+                stamped[i + 1][0] if i + 1 < len(stamped) else (duration or start + 3.0)
+            )
             word_stamps = list(_LRC_WORD.finditer(body))
             if word_stamps:
                 source = "lrc-enhanced"
@@ -324,7 +333,9 @@ def from_subtitles(path: Path | str, *, duration: float = 0.0) -> TimedText:
                 body = re.sub(r"<[^>]+>", "", body).strip()
                 if body:
                     lines.append(
-                        Line(words=_spread_words_over(body, start, end), index=len(lines))
+                        Line(
+                            words=_spread_words_over(body, start, end), index=len(lines)
+                        )
                     )
 
     if not lines:
@@ -336,7 +347,9 @@ def from_subtitles(path: Path | str, *, duration: float = 0.0) -> TimedText:
     )
 
 
-def from_alignment_store(project_root: Path | str, *, duration: float = 0.0) -> TimedText:
+def from_alignment_store(
+    project_root: Path | str, *, duration: float = 0.0
+) -> TimedText:
     """Read muvid's own three-tier alignment (sections / lines / words).
 
     muvid already declares itself the word-timing SSOT — ``muvid.align`` writes
@@ -377,7 +390,7 @@ def _lyric_tokens(text: str) -> list[str]:
     lowered = text.lower()
     if len(lowered) != len(text):  # a case-fold that changed length; be safe
         return _LYRIC_TOKEN_RE.findall(lowered)
-    return [text[m.start():m.end()] for m in _LYRIC_TOKEN_RE.finditer(lowered)]
+    return [text[m.start() : m.end()] for m in _LYRIC_TOKEN_RE.finditer(lowered)]
 
 
 def _line_words_from_alignment(ln) -> tuple[Word, ...]:
@@ -402,10 +415,16 @@ def _line_words_from_alignment(ln) -> tuple[Word, ...]:
         if 0 <= i < len(tokens) and wa.start_s is not None and wa.end_s is not None:
             timed[i] = (float(wa.start_s), float(wa.end_s))
 
-    line_start = ln.start_s if ln.start_s is not None else (
-        min(s for s, _ in timed.values()) if timed else None)
-    line_end = ln.end_s if ln.end_s is not None else (
-        max(e for _, e in timed.values()) if timed else None)
+    line_start = (
+        ln.start_s
+        if ln.start_s is not None
+        else (min(s for s, _ in timed.values()) if timed else None)
+    )
+    line_end = (
+        ln.end_s
+        if ln.end_s is not None
+        else (max(e for _, e in timed.values()) if timed else None)
+    )
     if line_start is None or line_end is None:
         return ()  # nothing measured and nothing to interpolate from
 
@@ -431,7 +450,9 @@ def _line_words_from_alignment(ln) -> tuple[Word, ...]:
     return tuple(out)
 
 
-def from_alignment_result(result, *, duration: float = 0.0, source: str = "muvid-align") -> TimedText:
+def from_alignment_result(
+    result, *, duration: float = 0.0, source: str = "muvid-align"
+) -> TimedText:
     """Convert a :class:`muvid.align.AlignmentResult` into a timed tree.
 
     Keeps the sections and lines the aligner found — which is strictly better
@@ -529,8 +550,9 @@ def from_lyrics_and_audio(
                 "faster-whisper is not installed. Either `pip install "
                 "faster-whisper` (offline, free), or pass --lyrics / --subtitles."
             )
-        return from_words(_transcribe_words_offline(audio), duration=duration,
-                          source="transcript")
+        return from_words(
+            _transcribe_words_offline(audio), duration=duration, source="transcript"
+        )
 
     from muvid import align as align_mod
     from muvid.lyrics import parse_lyrics_md

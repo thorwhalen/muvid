@@ -186,11 +186,15 @@ def check_subgenre_conformance(
     # muvid's own lyric-video needs a real audio file, which no manifest can
     # carry. (It used to fail with "needs inputs['audio']", which made the
     # README's one-liner fail on the reference plugin.)
-    trial_inputs = dict(inputs) if inputs is not None else (
-        dict(subgenre.examples[0].inputs) if subgenre.examples else {}
+    trial_inputs = (
+        dict(inputs)
+        if inputs is not None
+        else (dict(subgenre.examples[0].inputs) if subgenre.examples else {})
     )
-    trial_params = dict(params) if params is not None else (
-        dict(subgenre.examples[0].params) if subgenre.examples else {}
+    trial_params = (
+        dict(params)
+        if params is not None
+        else (dict(subgenre.examples[0].params) if subgenre.examples else {})
     )
     required = list((subgenre.inputs or {}).get("required") or [])
     missing = [k for k in required if k not in trial_inputs]
@@ -205,13 +209,15 @@ def check_subgenre_conformance(
     problems = _validate(trial_inputs, subgenre.inputs, where="inputs")
     problems += _validate(trial_params, subgenre.params_schema, where="params")
     if problems:
-        report.failures.append("trial inputs/params do not satisfy the manifest's own "
-                               "schema: " + "; ".join(problems))
+        report.failures.append(
+            "trial inputs/params do not satisfy the manifest's own "
+            "schema: " + "; ".join(problems)
+        )
         return report
     report.passed.append("trial inputs/params satisfy the declared schema")
 
     wd = workdir / "conformance"
-    wd.mkdir(parents=True, exist_ok=True)   # the HOST keeps the workdir promise
+    wd.mkdir(parents=True, exist_ok=True)  # the HOST keeps the workdir promise
     out = wd / "out.bin"
     try:
         result = fn(

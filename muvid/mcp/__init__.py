@@ -76,8 +76,9 @@ SCORING_TOOLS = [
 ]
 
 #: All tools this package exposes (all free). Bare names; a host may prefix them.
-TOOL_NAMES = (VISUALIZER_TOOLS + FOOTAGE_TOOLS + SCORING_TOOLS + LYRICVID_TOOLS
-              + SUBGENRE_TOOLS)
+TOOL_NAMES = (
+    VISUALIZER_TOOLS + FOOTAGE_TOOLS + SCORING_TOOLS + LYRICVID_TOOLS + SUBGENRE_TOOLS
+)
 
 #: Alias — muvid has no costed tools.
 FREE_TOOLS = [n for n in TOOL_NAMES if n not in LYRICVID_COSTED]
