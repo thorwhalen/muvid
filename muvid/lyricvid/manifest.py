@@ -104,6 +104,7 @@ LYRIC_VIDEO = Subgenre(
     # treatment is opt-in and priced by the caller that configures it — an unknown
     # cost must force approval rather than encode as zero.
     cost_profile=None,
+    api_versions=("1",),
     examples=(
         Example(
             description="The simplest thing that works: a song and nothing else.",

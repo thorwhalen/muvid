@@ -19,6 +19,13 @@ from muvid.mcp._guide import INSTRUCTIONS
 from muvid.mcp.identity import current_email, token_email, use_email
 from muvid.mcp.workspace import VisualizerWorkspace, data_root
 
+#: The generic subgenre transport (muvid.mcp.subgenre_tools): ANY installed
+#: subgenre plugin is listable and renderable here without muvid knowing it.
+SUBGENRE_TOOLS = [
+    "list_subgenres",
+    "render_subgenre",
+]
+
 #: The ``lyric-video`` genre tools (muvid.mcp.lyricvid_tools). Five free, one costed.
 LYRICVID_TOOLS = [
     "list_archetypes",
@@ -69,7 +76,8 @@ SCORING_TOOLS = [
 ]
 
 #: All tools this package exposes (all free). Bare names; a host may prefix them.
-TOOL_NAMES = VISUALIZER_TOOLS + FOOTAGE_TOOLS + SCORING_TOOLS + LYRICVID_TOOLS
+TOOL_NAMES = (VISUALIZER_TOOLS + FOOTAGE_TOOLS + SCORING_TOOLS + LYRICVID_TOOLS
+              + SUBGENRE_TOOLS)
 
 #: Alias — muvid has no costed tools.
 FREE_TOOLS = [n for n in TOOL_NAMES if n not in LYRICVID_COSTED]
@@ -80,6 +88,7 @@ TOOL_REFS = {name: f"muvid.mcp.tools:{name}" for name in VISUALIZER_TOOLS}
 TOOL_REFS.update({name: f"muvid.mcp.footage_tools:{name}" for name in FOOTAGE_TOOLS})
 TOOL_REFS.update({name: f"muvid.mcp.scoring_tools:{name}" for name in SCORING_TOOLS})
 TOOL_REFS.update({name: f"muvid.mcp.lyricvid_tools:{name}" for name in LYRICVID_TOOLS})
+TOOL_REFS.update({name: f"muvid.mcp.subgenre_tools:{name}" for name in SUBGENRE_TOOLS})
 
 
 def register_tools(server, *, prefix="", include=None, exclude=None):

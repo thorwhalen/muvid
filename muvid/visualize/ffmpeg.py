@@ -281,8 +281,11 @@ def require_filter(name: str, *, needed_for: str) -> None:
     if not has_filter(name):
         raise FfmpegError(
             f"This ffmpeg build has no {name!r} filter, which {needed_for} needs. "
-            "Install a full-featured build (Debian/Ubuntu: 'sudo apt-get install "
-            "ffmpeg'; macOS: 'brew install ffmpeg'), or choose another visual. "
+            "Install a full-featured build. Debian/Ubuntu: 'sudo apt-get install "
+            "ffmpeg' (its package pulls in libass and libfreetype). macOS: Homebrew "
+            "slimmed 'ffmpeg' in Jan 2026 — it no longer has libass or drawtext; "
+            "use 'brew install ffmpeg-full' (keg-only: prepend "
+            "/opt/homebrew/opt/ffmpeg-full/bin to PATH) or 'ffmpeg@6'. "
             "Run 'ffmpeg -filters' to see what your build supports."
         )
 

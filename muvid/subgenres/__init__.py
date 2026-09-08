@@ -100,18 +100,47 @@ def render_subgenre(
     """
     from pathlib import Path
 
+    from muvid.subgenres._schema import SchemaError, validate as _validate
+
+    manifest = get_subgenre(slug)
+    inputs = dict(inputs)
+    params = dict(params or {})
+
+    # The manifest's schemas are a contract, and a contract nobody checks is
+    # decoration. Validate BEFORE resolving the renderer: a typo'd input should
+    # fail in microseconds, not after importing a rendering stack.
+    problems = _validate(inputs, manifest.inputs, where="inputs")
+    problems += _validate(params, manifest.params_schema, where="params")
+    if problems:
+        raise SchemaError([f"subgenre {slug!r}: {p}" for p in problems])
+
+    workdir = Path(workdir)
+    output = Path(output)
+    # The RenderRequest contract promises the renderer that workdir exists and
+    # output's parent exists. The HOST keeps that promise, not the plugin.
+    workdir.mkdir(parents=True, exist_ok=True)
+    output.parent.mkdir(parents=True, exist_ok=True)
+
     renderer = resolve_renderer(slug)
     request = RenderRequest(
-        subgenre=slug,
-        inputs=dict(inputs),
-        params=dict(params or {}),
-        workdir=Path(workdir),
-        output=Path(output),
+        subgenre=slug, inputs=inputs, params=params, workdir=workdir, output=output
     )
     result = renderer(request)
     if not isinstance(result, RenderResult):
         raise TypeError(
             f"subgenre {slug!r} renderer returned {type(result).__name__}, "
             "expected a muvid.subgenres.RenderResult"
+        )
+    # A host serves request.output. A renderer that wrote somewhere else — or
+    # nowhere — must be a loud error here, not a 404 (or a served stray path)
+    # later. The conformance kit has always checked this; the runtime now agrees.
+    if Path(result.output).resolve() != output.resolve():
+        raise ValueError(
+            f"subgenre {slug!r} renderer reported output {result.output}, "
+            f"but was asked to write {output}"
+        )
+    if not output.exists():
+        raise FileNotFoundError(
+            f"subgenre {slug!r} renderer reported success but {output} does not exist"
         )
     return result

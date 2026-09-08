@@ -28,9 +28,13 @@ from __future__ import annotations
 
 from nw import Genre, Template, register_genre, register_genre_project_factory
 
+from muvid.lyricvid.manifest import LYRIC_VIDEO as _MANIFEST
 from muvid.lyricvid.spec import ARCHETYPES
 
-LYRIC_VIDEO_SLUG = "lyric-video"
+#: The slug, title, description, intake kinds and cost profile come FROM the
+#: subgenre manifest — one copy. The first cut hand-copied them here and the
+#: two had already drifted by the time it was reviewed.
+LYRIC_VIDEO_SLUG = _MANIFEST.slug
 
 #: Short, human-facing titles for the archetypes. The long descriptions already
 #: live in ``muvid.lyricvid.spec.ARCHETYPES`` and are reused verbatim as the
@@ -67,26 +71,21 @@ def _templates() -> tuple[Template, ...]:
 LYRIC_VIDEO: Genre = register_genre(
     Genre(
         slug=LYRIC_VIDEO_SLUG,
-        title="Lyric Video (kinetic typography)",
-        description=(
-            "Turn a song into a typographic music video — the words appear in "
-            "time with the singing, laid out by an archetype chosen for the "
-            "song: one word centred, stacked lines, a karaoke wipe, a fixed "
-            "concrete page whose words ignite in reading order, words packed "
-            "into a shape, text on a path, or scatter. Word timings are "
-            "measured, never guessed. Runs with no AI and no cost; an LLM "
-            "creative director is opt-in."
-        ),
+        title=_MANIFEST.title,
+        description=_MANIFEST.description,
         transform_names=(),
         strategy_names=(),
         projection_entrypoint=None,
         status="available",
-        intake_kinds=("lyric video", "lyrics", "kinetic typography", "karaoke", "song"),
+        intake_kinds=tuple(_MANIFEST.intake_kinds),
         # None means genuinely free: the default director is a heuristic that
         # spends nothing. Turning on the LLM director is the caller's opt-in and
         # is priced there — an unknown cost must force approval, never encode as 0.
-        cost_profile=None,
-        defaults={"archetype": "one_word_centred", "renderer": "ass"},
+        cost_profile=_MANIFEST.cost_profile,
+        # 'auto' picks the ASS renderer where ffmpeg can burn subtitles in and
+        # the browser one otherwise — the same default the manifest and the
+        # MCP tool use, read from one place.
+        defaults={"archetype": "one_word_centred", "renderer": "auto"},
         templates=_templates(),
     )
 )

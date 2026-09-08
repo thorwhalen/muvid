@@ -124,9 +124,87 @@ CASES: dict[str, str] = {
     "title": "Title Case.",
 }
 
+#: Where a shape outline may come from. A closed set for the same reason the
+#: others are — and additionally because ``value`` is INTERPRETED by the
+#: renderer, which makes ``kind`` a trust boundary: ``mask_image`` names a file
+#: to open, and a treatment that arrives from a remote caller must not be able
+#: to point that at a host path. The spec only admits the kinds; where a
+#: ``mask_image`` value is allowed to come FROM is the caller-facing surface's
+#: decision (see ``MASK_IMAGE_TRUSTED``).
+SHAPE_KINDS: dict[str, str] = {
+    "named": "A built-in outline: circle, heart, star, apple, square.",
+    "svg_path": "An SVG path string (M/L/H/V/C/S/Q/T/Z) supplied inline.",
+    "mask_image": "An image whose dark ink (or alpha) is the outline. Trusted "
+                  "callers only: the value names a file.",
+}
+
+#: The shape kinds that carry no reference to anything outside the spec. A
+#: surface serving untrusted callers (the MCP tools) admits ONLY these unless it
+#: has itself fetched and scoped the image.
+INLINE_SHAPE_KINDS: frozenset[str] = frozenset({"named", "svg_path"})
+
 
 def _enum(vocab: Mapping[str, str]) -> list[str]:
     return list(vocab)
+
+
+# --------------------------------------------------------------------------
+# Coercion helpers — what makes from_dict total over hostile input
+# --------------------------------------------------------------------------
+
+
+def _mapping(v: Any) -> dict[str, Any]:
+    """A dict, or an empty one. Never raises."""
+    return dict(v) if isinstance(v, Mapping) else {}
+
+
+def _seq(v: Any) -> tuple:
+    """A tuple; a bare string is ONE element, not its characters."""
+    if v is None:
+        return ()
+    if isinstance(v, str):
+        return (v,) if v.strip() else ()
+    if isinstance(v, (list, tuple, set, frozenset)):
+        return tuple(x for x in v if x is not None)
+    return (v,)
+
+
+def _text(v: Any, default: str = "") -> str:
+    return default if v is None else str(v)
+
+
+def _build(cls, raw: Mapping[str, Any]):
+    """Instantiate a frozen record from a mapping, coercing each field's type.
+
+    Unknown keys are dropped; a value that will not coerce falls to the
+    field's default. This is what stops ``Palette(foo=1)`` and
+    ``Typography(weight='700', tracking=None)`` from crashing a render.
+    """
+    from dataclasses import fields
+
+    defaults = asdict(cls())
+    kwargs: dict[str, Any] = {}
+    for f in fields(cls):
+        if f.name not in raw:
+            continue
+        v = raw[f.name]
+        want = type(defaults[f.name])
+        if v is None:
+            continue
+        try:
+            if want is bool:
+                kwargs[f.name] = bool(v)
+            elif want is int:
+                kwargs[f.name] = int(float(v))
+            elif want is float:
+                kwargs[f.name] = float(v)
+            elif want is str:
+                kwargs[f.name] = str(v)
+            else:
+                kwargs[f.name] = v
+        except (TypeError, ValueError):
+            continue  # keep the default
+    return cls(**kwargs)
 
 
 # --------------------------------------------------------------------------
@@ -229,55 +307,74 @@ class TreatmentSpec:
 
     # -- serialisation -----------------------------------------------------
     def to_dict(self) -> dict[str, Any]:
-        return asdict(self)
+        """A JSON-native dict: tuples become lists, so what this emits is
+        exactly what :func:`json_schema` validates and what a file round-trips."""
+        return json.loads(json.dumps(asdict(self)))
 
     def to_json(self, *, indent: int = 2) -> str:
         return json.dumps(self.to_dict(), indent=indent)
 
     @classmethod
     def from_dict(cls, d: Mapping[str, Any]) -> "TreatmentSpec":
-        """Build from a plain mapping, tolerating missing keys (they default)."""
-        d = dict(d or {})
-        direction = dict(d.get("direction") or {})
-        pal = Palette(**{**asdict(Palette()), **dict(direction.pop("palette", {}) or {})})
-        typo = Typography(
-            **{**asdict(Typography()), **dict(direction.pop("typography", {}) or {})}
-        )
-        mv = direction.pop("motion_vocabulary", None) or ("fade",)
+        """Build from a plain mapping — TOTAL over what a model or a remote caller sends.
+
+        Missing keys default. Wrong-shaped values are coerced toward the field's
+        type rather than raised on: a string where a list was expected becomes
+        a one-element list (``applies_to: "chorus"`` used to become
+        ``('c','h','o','r','u','s')``), a numeric string becomes a number, an
+        unknown key is dropped, a ``None`` sub-object is the default. What
+        cannot be coerced falls to the default and :func:`repair` reports the
+        enum-level substitutions afterwards.
+
+        >>> s = TreatmentSpec.from_dict({'scenes': [None, {'applies_to': 'chorus',
+        ...     'timing': 'fast', 'shape': 'circle'}],
+        ...     'direction': {'palette': {'foo': 1, 'bg': '#000000'},
+        ...                   'motion_vocabulary': 'pop',
+        ...                   'typography': {'weight': '700', 'tracking': None}}})
+        >>> s.scenes[1].applies_to, s.direction.motion_vocabulary
+        (('chorus',), ('pop',))
+        >>> s.direction.typography.weight, s.direction.typography.tracking
+        (700, 0.0)
+        >>> s.direction.palette.bg, s.scenes[1].shape
+        ('#000000', None)
+        """
+        d = _mapping(d)
+
+        direction = _mapping(d.get("direction"))
+        pal = _build(Palette, _mapping(direction.get("palette")))
+        typo = _build(Typography, _mapping(direction.get("typography")))
+        mv = _seq(direction.get("motion_vocabulary")) or ("fade",)
         direction_obj = Direction(
-            **{
-                **{"mood": "", "rationale": ""},
-                **{k: v for k, v in direction.items() if k in {"mood", "rationale"}},
-                "palette": pal,
-                "typography": typo,
-                "motion_vocabulary": tuple(mv),
-            }
+            mood=_text(direction.get("mood")),
+            rationale=_text(direction.get("rationale")),
+            palette=pal,
+            typography=typo,
+            motion_vocabulary=tuple(str(m) for m in mv),
         )
+
         scenes = []
-        for raw in d.get("scenes") or [{}]:
-            raw = dict(raw)
-            timing = Timing(**{**asdict(Timing()), **dict(raw.pop("timing", {}) or {})})
-            shape_raw = raw.pop("shape", None)
-            shape = (
-                ShapeRef(**{**asdict(ShapeRef()), **dict(shape_raw)})
-                if shape_raw
-                else None
-            )
-            applies = tuple(raw.pop("applies_to", ("*",)) or ("*",))
+        raw_scenes = d.get("scenes")
+        raw_scenes = list(raw_scenes) if isinstance(raw_scenes, (list, tuple)) else [{}]
+        for raw in raw_scenes or [{}]:
+            raw = _mapping(raw)
+            timing = _build(Timing, _mapping(raw.get("timing")))
+            shape_raw = raw.get("shape")
+            shape = _build(ShapeRef, _mapping(shape_raw)) if isinstance(shape_raw, Mapping) else None
+            applies = tuple(str(a) for a in _seq(raw.get("applies_to"))) or ("*",)
             scenes.append(
                 Scene(
                     applies_to=applies,
-                    archetype=raw.get("archetype", "one_word_centred"),
-                    motion=raw.get("motion", "fade"),
-                    persistence=raw.get("persistence", "clear_on_line"),
+                    archetype=_text(raw.get("archetype"), "one_word_centred"),
+                    motion=_text(raw.get("motion"), "fade"),
+                    persistence=_text(raw.get("persistence"), "clear_on_line"),
                     timing=timing,
                     shape=shape,
-                    params=dict(raw.get("params") or {}),
+                    params=_mapping(raw.get("params")),
                 )
             )
         return cls(
-            spec_version=str(d.get("spec_version", SPEC_VERSION)),
-            title=str(d.get("title", "")),
+            spec_version=_text(d.get("spec_version"), SPEC_VERSION),
+            title=_text(d.get("title")),
             direction=direction_obj,
             scenes=tuple(scenes),
         )
@@ -348,8 +445,14 @@ def validate(spec: TreatmentSpec) -> list[str]:
             )
         if sc.timing.attack_s < 0:
             errs.append(f"scenes[{i}].timing.attack_s must be >= 0")
+        if not 0 <= sc.timing.lead_s <= 1:
+            errs.append(f"scenes[{i}].timing.lead_s must be within 0..1 s")
         if sc.archetype in {"shape_fill"} and sc.shape is None:
             errs.append(f"scenes[{i}].archetype {sc.archetype!r} requires a shape")
+        if sc.shape is not None and sc.shape.kind not in SHAPE_KINDS:
+            errs.append(
+                f"scenes[{i}].shape.kind {sc.shape.kind!r} is not one of {_enum(SHAPE_KINDS)}"
+            )
     return errs
 
 
@@ -407,13 +510,19 @@ def repair(spec: TreatmentSpec) -> tuple[TreatmentSpec, list[str]]:
             cut_style=pick(t.cut_style, CUT_STYLES, "hard",
                            f"scenes[{i}].timing.cut_style"),
             attack_s=max(0.0, float(t.attack_s)),
+            lead_s=min(1.0, max(0.0, float(t.lead_s))),
         )
+        if t.lead_s != sc.timing.lead_s:
+            notes.append(f"scenes[{i}].timing.lead_s {sc.timing.lead_s!r} -> {t.lead_s!r}")
         archetype = pick(sc.archetype, ARCHETYPES, "one_word_centred",
                          f"scenes[{i}].archetype")
         shape = sc.shape
         if archetype == "shape_fill" and shape is None:
             shape = ShapeRef()
             notes.append(f"scenes[{i}] shape_fill without a shape -> {shape.value!r}")
+        if shape is not None and shape.kind not in SHAPE_KINDS:
+            notes.append(f"scenes[{i}].shape.kind {shape.kind!r} -> 'named'/'circle'")
+            shape = ShapeRef()
         scenes.append(
             replace(
                 sc,
@@ -558,16 +667,23 @@ def json_schema() -> dict[str, Any]:
                                 },
                                 "cut_style": {"type": "string", "enum": _enum(CUT_STYLES)},
                                 "attack_s": {"type": "number", "minimum": 0},
-                                "lead_s": {"type": "number"},
+                                # a negative lead puts t_in after t_out and the
+                                # cue is never drawn; bound it like attack_s
+                                "lead_s": {"type": "number", "minimum": 0, "maximum": 1},
                             },
                         },
                         "shape": {
-                            "type": "object",
+                            # to_dict() emits null for a scene without a shape,
+                            # and the schema must accept what to_dict emits
+                            "type": ["object", "null"],
                             "additionalProperties": False,
                             "properties": {
                                 "kind": {
                                     "type": "string",
-                                    "enum": ["named", "mask_image", "svg_path"],
+                                    "enum": _enum(SHAPE_KINDS),
+                                    "description": "; ".join(
+                                        f"{k}: {v}" for k, v in SHAPE_KINDS.items()
+                                    ),
                                 },
                                 "value": {"type": "string"},
                             },

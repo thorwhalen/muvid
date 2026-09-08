@@ -37,17 +37,10 @@ def catalog() -> dict[str, Any]:
     """
     from muvid.subgenres import subgenre_catalog
 
-    _ensure_registered()
+    # muvid's own subgenre arrives the same way a third party's does: through
+    # the `muvid.subgenres.v1` entry point declared in pyproject.toml. No
+    # hand-registration here — the reference plugin is ON the mechanism.
     return subgenre_catalog()
-
-
-def _ensure_registered() -> None:
-    """Register muvid's own subgenres, idempotently."""
-    from muvid.subgenres import list_subgenres, register_subgenre
-    from muvid.lyricvid.manifest import LYRIC_VIDEO
-
-    if LYRIC_VIDEO.slug not in list_subgenres():
-        register_subgenre(LYRIC_VIDEO)
 
 
 def vocabulary() -> dict[str, Any]:
@@ -96,6 +89,11 @@ def analyze_song(
     tt = build_timed_text(
         audio=audio, lyrics=lyrics, subtitles=subtitles, project=project, aligner=aligner
     )
+    return _describe(tt, max_lines=max_lines)
+
+
+def _describe(tt, *, max_lines: int = 40) -> dict[str, Any]:
+    """The analysis payload for an already-built TimedText (built ONCE)."""
     words = list(tt.words())
     lines = list(tt.lines())
     span = max(1e-6, tt.duration)
@@ -163,9 +161,9 @@ def propose_treatments(
     )
     ranked = rank_treatments(specs, tt)
     return {
-        "song": analyze_song(
-            audio, lyrics=lyrics, subtitles=subtitles, project=project, max_lines=0
-        ),
+        # the same TimedText the options were built from — not a second
+        # alignment/transcription of the same song
+        "song": _describe(tt, max_lines=0),
         "options": [
             {
                 "rank": i,

@@ -21,10 +21,15 @@ about it are load-bearing and easy to undo by accident:
 
 - **It sits BELOW `nw.Genre`, not beside it.** `nw` already owns the cross-package
   catalogue and has no plugin hook; a second registry of "a kind of music video" would
-  fight it over slugs, directories and the MCP surface. A subgenre is bridged UP into
-  one `nw.Template` (or, as with `lyric-video`, one Genre whose Templates are its
-  archetypes) by muvid — so a third-party plugin depends on `muvid` alone and never
-  imports `nw`.
+  fight it over slugs, directories and the MCP surface. A subgenre is bridged UP by
+  muvid — `muvid/genre_subgenres.py` registers one `nw.Genre` per installed subgenre
+  with the manifest's examples as Templates (`params={"subgenre": slug, ...}`), and
+  `muvid/mcp/subgenre_tools.py` gives every one of them a free, SSRF-guarded,
+  schema-validated `render_subgenre` transport — so a third-party plugin depends on
+  `muvid` alone and never imports `nw`. `lyric-video` is bridged by hand
+  (`genre_lyric_video.py`, archetype Templates) and the generic bridge defers to it:
+  it runs LAST in `muvid/genre.py` and skips any slug already registered, because
+  `nw.genres` refuses a collision and has no `replace=`.
 - **The entry-point value is a MANIFEST, not a renderer** (`muvid.subgenres.Subgenre`,
   entry-point group `muvid.subgenres.v1`). Listing every installed subgenre imports no
   rendering code, which is what lets an LLM or a UI choose among a dozen of them without

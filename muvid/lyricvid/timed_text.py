@@ -131,8 +131,13 @@ class TimedText:
 
     @property
     def measured(self) -> bool:
-        """True when every word time was measured rather than interpolated."""
-        return all(w.measured for w in self.words())
+        """True when every word time was measured rather than interpolated.
+
+        False for an empty text: "all of nothing was measured" is the kind of
+        vacuous truth that reads as reassurance in a report.
+        """
+        ws = list(self.words())
+        return bool(ws) and all(w.measured for w in ws)
 
     def section_for(self, t: float) -> Section | None:
         for s in self.sections:
@@ -251,7 +256,11 @@ def from_subtitles(path: Path | str, *, duration: float = 0.0) -> TimedText:
     suffix = path.suffix.lower()
 
     lines: list[Line] = []
-    if suffix == ".srt" or "-->" in text:
+    # The extension decides when it can; the sniff is only for an unknown one.
+    # (An LRC whose lyric contains "-->" used to be parsed as SRT — and came back
+    # empty.)
+    is_srt = suffix == ".srt" or (suffix != ".lrc" and bool(_SRT_TIME.search(text)))
+    if is_srt:
         blocks = re.split(r"\n\s*\n", text.strip())
         for block in blocks:
             m = _SRT_TIME.search(block)
@@ -273,10 +282,21 @@ def from_subtitles(path: Path | str, *, duration: float = 0.0) -> TimedText:
     else:
         stamped: list[tuple[float, str]] = []
         for raw in text.splitlines():
-            m = _LRC_LINE.match(raw.strip())
-            if not m:
-                continue
-            stamped.append((_hms("0", m.group(1), m.group(2), m.group(3)), m.group(4)))
+            line = raw.strip()
+            # A line may carry SEVERAL leading stamps ("[00:01.00][00:05.00]repeat
+            # me" — the same words sung twice). Peel them all; each is a line.
+            times: list[float] = []
+            while True:
+                m = _LRC_LINE.match(line)
+                if not m:
+                    break
+                times.append(_hms("0", m.group(1), m.group(2), m.group(3)))
+                line = m.group(4)
+                if not _LRC_LINE.match(line):
+                    break
+            for t in times:
+                stamped.append((t, line))
+        stamped.sort(key=lambda p: p[0])
         source = "lrc"
         for i, (start, body) in enumerate(stamped):
             end = stamped[i + 1][0] if i + 1 < len(stamped) else (duration or start + 3.0)
@@ -284,6 +304,11 @@ def from_subtitles(path: Path | str, *, duration: float = 0.0) -> TimedText:
             if word_stamps:
                 source = "lrc-enhanced"
                 ws: list[Word] = []
+                # text BEFORE the first <stamp> belongs to the line's own time
+                lead_text = body[: word_stamps[0].start()].strip()
+                if lead_text:
+                    first_word_t = _hms("0", *word_stamps[0].group(1, 2, 3))
+                    ws.extend(_spread_words_over(lead_text, start, first_word_t))
                 for j, wm in enumerate(word_stamps):
                     w_start = _hms("0", wm.group(1), wm.group(2), wm.group(3))
                     w_end = (
@@ -322,11 +347,17 @@ def from_alignment_store(project_root: Path | str, *, duration: float = 0.0) -> 
     from muvid.project import MusicVideoProject
 
     project = MusicVideoProject(Path(project_root))
-    song = getattr(project, "song_path", None)
-    if not duration and song and Path(song).exists():
-        from muvid.visualize.ffmpeg import media_duration
+    if not duration:
+        # song_path() is a METHOD that raises when no song is registered; the
+        # first cut read it as a property and handed a bound method to Path().
+        try:
+            song = project.song_path()
+        except RuntimeError:
+            song = None
+        if song is not None and Path(song).exists():
+            from muvid.visualize.ffmpeg import media_duration
 
-        duration = media_duration(song)
+            duration = media_duration(song)
     timings = list(word_timings_for_window(project, 0.0, duration or 1e9))
     return from_words(timings, duration=duration, source="muvid-alignment")
 
