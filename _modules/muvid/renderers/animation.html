@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.renderers.animation &mdash; muvid 0.0.53 documentation</title>
+  <title>muvid.renderers.animation &mdash; muvid 0.0.54 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=d78a2f11"></script>
+      <script src="../../../_static/documentation_options.js?v=1c03bfdc"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -525,7 +525,10 @@
     <span class="n">scene_dir</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">shot_dir</span> <span class="o">/</span> <span class="s2">"an_scene"</span>
     <span class="n">scene_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">md</span> <span class="o">=</span> <span class="n">_build_an_scene_md</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span>
-    <span class="p">(</span><span class="n">scene_dir</span> <span class="o">/</span> <span class="s2">"scene.md"</span><span class="p">)</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">md</span><span class="p">)</span>
+    <span class="c1"># UTF-8 by contract: the scene markdown embeds the shot's lyric lines</span>
+    <span class="c1"># verbatim (see _build_an_scene_md), so its codec cannot come from the</span>
+    <span class="c1"># process locale.</span>
+    <span class="p">(</span><span class="n">scene_dir</span> <span class="o">/</span> <span class="s2">"scene.md"</span><span class="p">)</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">md</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span>
 
     <span class="n">lipsync</span> <span class="o">=</span> <span class="n">_make_lipsync_provider</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span>
     <span class="n">orchestrate_kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"lipsync"</span><span class="p">:</span> <span class="n">lipsync</span><span class="p">}</span> <span class="k">if</span> <span class="n">lipsync</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">{}</span>
