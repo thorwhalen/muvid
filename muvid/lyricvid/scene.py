@@ -24,7 +24,14 @@ from typing import Any, Callable, Sequence
 from muvid.lyricvid import spec as spec_mod
 from muvid.lyricvid.timed_text import Line, TimedText, Word
 
-__all__ = ["Canvas", "Cue", "Scene", "compile_scene", "register_archetype", "ARCHETYPE_FNS"]
+__all__ = [
+    "Canvas",
+    "Cue",
+    "Scene",
+    "compile_scene",
+    "register_archetype",
+    "ARCHETYPE_FNS",
+]
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -116,7 +123,9 @@ def _fit_size(text: str, *, max_frac: float, canvas: Canvas, base: float) -> flo
     return base if w <= limit else max(0.02, base * limit / w)
 
 
-def _envelope(word: Word, sc: spec_mod.Scene, *, line: Line, tt: TimedText) -> tuple[float, float]:
+def _envelope(
+    word: Word, sc: spec_mod.Scene, *, line: Line, tt: TimedText
+) -> tuple[float, float]:
     """When a cue starts arriving and when it is fully there.
 
     The model chose a quantisation policy; this applies it to measured times.
@@ -276,10 +285,17 @@ def _karaoke_wipe(*, sc, direction, lines, tt, canvas, **_) -> list[Cue]:
         show_from = starts[i]
         cues.append(
             Cue(
-                text=text, x=0.5, y=y_live, size=fitted,
-                t_in=show_from, t_full=min(show_from + 0.2, line.end),
-                t_out=line.end, t_gone=line.end + 0.25,
-                colour=direction.palette.dim, motion="fade", layer=0,
+                text=text,
+                x=0.5,
+                y=y_live,
+                size=fitted,
+                t_in=show_from,
+                t_full=min(show_from + 0.2, line.end),
+                t_out=line.end,
+                t_gone=line.end + 0.25,
+                colour=direction.palette.dim,
+                motion="fade",
+                layer=0,
             )
         )
         # the wipe: each word lights the accent colour across its own span.
@@ -298,10 +314,13 @@ def _karaoke_wipe(*, sc, direction, lines, tt, canvas, **_) -> list[Cue]:
                     x=0.5 + (cursor - width / 2 + ww / 2) / canvas.aspect,
                     y=y_live,
                     size=fitted,
-                    t_in=w.start, t_full=t_full,
-                    t_out=line.end, t_gone=line.end + 0.25,
+                    t_in=w.start,
+                    t_full=t_full,
+                    t_out=line.end,
+                    t_gone=line.end + 0.25,
                     colour=direction.palette.accent,
-                    motion="wipe", layer=1,
+                    motion="wipe",
+                    layer=1,
                     extra={"wipe_end": w.end},
                 )
             )
@@ -313,11 +332,17 @@ def _karaoke_wipe(*, sc, direction, lines, tt, canvas, **_) -> list[Cue]:
             preview_until = starts[i + 1]
             cues.append(
                 Cue(
-                    text=nxt, x=0.5, y=y_next,
+                    text=nxt,
+                    x=0.5,
+                    y=y_next,
                     size=_fit_size(nxt, max_frac=0.88, canvas=canvas, base=size * 0.86),
-                    t_in=show_from, t_full=min(show_from + 0.2, preview_until),
-                    t_out=preview_until, t_gone=preview_until + 0.15,
-                    colour=direction.palette.dim, motion="fade", layer=0,
+                    t_in=show_from,
+                    t_full=min(show_from + 0.2, preview_until),
+                    t_out=preview_until,
+                    t_gone=preview_until + 0.15,
+                    colour=direction.palette.dim,
+                    motion="fade",
+                    layer=0,
                 )
             )
     return cues
@@ -351,15 +376,22 @@ def _concrete_page(*, sc, direction, lines, tt, canvas, **_) -> list[Cue]:
     show_all = sc.persistence == "dim"
     for r, line in enumerate(rows):
         y = y0 + r * size * leading
-        row_w = _text_width(_apply_case(line.text, direction.typography.case), size,
-                            direction.typography.tracking)
+        row_w = _text_width(
+            _apply_case(line.text, direction.typography.case),
+            size,
+            direction.typography.tracking,
+        )
         cursor = 0.0  # height units, from the row's left edge
         for w in line.words:
             wt = _apply_case(w.text, direction.typography.case)
             ww = _text_width(wt + " ", size, direction.typography.tracking)
             t_in, t_full = _envelope(w, sc, line=line, tt=tt)
             # height-unit offset -> width fraction (see karaoke_wipe)
-            x = 0.5 + (cursor - row_w / 2 + (ww - _text_width(" ", size)) / 2) / canvas.aspect
+            x = (
+                0.5
+                + (cursor - row_w / 2 + (ww - _text_width(" ", size)) / 2)
+                / canvas.aspect
+            )
             cues.append(
                 Cue(
                     text=wt,
@@ -368,7 +400,8 @@ def _concrete_page(*, sc, direction, lines, tt, canvas, **_) -> list[Cue]:
                     size=size,
                     t_in=0.0 if show_all else t_in,
                     t_full=t_full,
-                    t_out=None, t_gone=None,
+                    t_out=None,
+                    t_gone=None,
                     colour=direction.palette.fg,
                     dim_colour=direction.palette.dim if show_all else None,
                     dim_from=None,
@@ -398,9 +431,13 @@ def _text_on_path(*, sc, direction, lines, tt, canvas, **_) -> list[Cue]:
                     x=0.10 + 0.80 * frac,
                     y=0.5 - amp * math.sin(math.pi * frac),
                     size=size,
-                    t_in=t_in, t_full=t_full, t_out=t_out, t_gone=t_gone,
+                    t_in=t_in,
+                    t_full=t_full,
+                    t_out=t_out,
+                    t_gone=t_gone,
                     colour=direction.palette.fg,
-                    dim_colour=direction.palette.dim, dim_from=dim_from,
+                    dim_colour=direction.palette.dim,
+                    dim_from=dim_from,
                     motion=sc.motion,
                 )
             )
@@ -431,9 +468,13 @@ def _scatter(*, sc, direction, lines, tt, canvas, **_) -> list[Cue]:
                 x=0.5 + r * math.cos(a) / canvas.aspect,
                 y=0.5 + r * math.sin(a),
                 size=size,
-                t_in=t_in, t_full=t_full, t_out=t_out, t_gone=t_gone,
+                t_in=t_in,
+                t_full=t_full,
+                t_out=t_out,
+                t_gone=t_gone,
                 colour=direction.palette.fg,
-                dim_colour=direction.palette.dim, dim_from=dim_from,
+                dim_colour=direction.palette.dim,
+                dim_from=dim_from,
                 motion=sc.motion,
             )
         )
@@ -468,10 +509,17 @@ def _shape_fill(*, sc, direction, lines, tt, canvas, **_) -> list[Cue]:
         t_out, t_gone, dim_from = _persistence_times(w, line, tt, sc)
         cues.append(
             Cue(
-                text=place.text, x=place.x, y=place.y, size=place.size,
-                t_in=t_in, t_full=t_full, t_out=t_out, t_gone=t_gone,
+                text=place.text,
+                x=place.x,
+                y=place.y,
+                size=place.size,
+                t_in=t_in,
+                t_full=t_full,
+                t_out=t_out,
+                t_gone=t_gone,
                 colour=direction.palette.fg,
-                dim_colour=direction.palette.dim, dim_from=dim_from,
+                dim_colour=direction.palette.dim,
+                dim_from=dim_from,
                 motion=sc.motion,
             )
         )
@@ -545,10 +593,9 @@ def compile_scene(
     # docstring ("sections the spec does not mention fall back") was written
     # before the code that keeps it; a lyric must never silently vanish.
     uncovered = [l for l in timed_text.lines() if id(l) not in covered]
-    uncovered_sections = sorted({
-        s.label for s in timed_text.sections
-        for l in s.lines if id(l) not in covered
-    })
+    uncovered_sections = sorted(
+        {s.label for s in timed_text.sections for l in s.lines if id(l) not in covered}
+    )
     if uncovered:
         run(fallback or spec_mod.Scene(), uncovered)
 
@@ -565,7 +612,11 @@ def compile_scene(
             "n_cues": len(cues),
             # sections no named scene claimed (rendered by the fallback);
             # omit-when-empty so a fully-specified treatment carries no noise
-            **({"uncovered_sections": uncovered_sections} if uncovered_sections and
-               not any("*" in s.applies_to for s in treatment.scenes) else {}),
+            **(
+                {"uncovered_sections": uncovered_sections}
+                if uncovered_sections
+                and not any("*" in s.applies_to for s in treatment.scenes)
+                else {}
+            ),
         },
     )

@@ -24,7 +24,13 @@ only, which is the property the plugin surface exists to provide.
 
 from __future__ import annotations
 
-from nw import Genre, Template, list_genres, register_genre, register_genre_project_factory
+from nw import (
+    Genre,
+    Template,
+    list_genres,
+    register_genre,
+    register_genre_project_factory,
+)
 
 from muvid.subgenres import Subgenre, iter_subgenres
 
@@ -41,8 +47,14 @@ def _templates(sg: Subgenre) -> tuple[Template, ...]:
     chosen, and so ``create_genre_project(template=...)`` has a name to use.
     """
     if not sg.examples:
-        return (Template(slug="default", title=sg.title, description=sg.description,
-                         params={"subgenre": sg.slug}),)
+        return (
+            Template(
+                slug="default",
+                title=sg.title,
+                description=sg.description,
+                params={"subgenre": sg.slug},
+            ),
+        )
     out = []
     for i, ex in enumerate(sg.examples):
         out.append(
@@ -67,7 +79,9 @@ def _factory(sg: Subgenre):
     def factory(caller, project_id, *, title, template, params):
         from muvid.mcp.workspace import VisualizerWorkspace
 
-        proj = VisualizerWorkspace.for_email(caller).create_project(project_id, title=title)
+        proj = VisualizerWorkspace.for_email(caller).create_project(
+            project_id, title=title
+        )
         return {
             "project": proj,
             "project_id": project_id,

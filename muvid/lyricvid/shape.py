@@ -348,8 +348,9 @@ def _svg_ink(u: Any, v: Any, value: str, *, curve_samples: int = CURVE_SAMPLES) 
 
 
 #: Largest mask image ``mask_image`` will open. A silhouette at 4k is plenty.
-MAX_MASK_PIXELS = int(__import__("os").environ.get(
-    "MUVID_LYRICVID_MAX_MASK_PIXELS", str(4096 * 4096)))
+MAX_MASK_PIXELS = int(
+    __import__("os").environ.get("MUVID_LYRICVID_MAX_MASK_PIXELS", str(4096 * 4096))
+)
 
 
 def _image_ink(

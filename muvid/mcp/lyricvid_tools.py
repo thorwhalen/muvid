@@ -61,8 +61,9 @@ def list_archetypes() -> dict:
     }
 
 
-def _fetch_inputs(project_id: str, audio: str, lyrics: str | None,
-                  subtitles: str | None) -> tuple[Any, dict]:
+def _fetch_inputs(
+    project_id: str, audio: str, lyrics: str | None, subtitles: str | None
+) -> tuple[Any, dict]:
     proj = _workspace().open_project(project_id)
     workdir = Path(proj.root) / "lyricvid"
     workdir.mkdir(parents=True, exist_ok=True)
@@ -70,7 +71,9 @@ def _fetch_inputs(project_id: str, audio: str, lyrics: str | None,
         "audio": str(_resolve_input(audio, workdir / "song", label="audio"))
     }
     if lyrics:
-        inputs["lyrics"] = str(_resolve_input(lyrics, workdir / "lyrics", label="lyrics"))
+        inputs["lyrics"] = str(
+            _resolve_input(lyrics, workdir / "lyrics", label="lyrics")
+        )
     if subtitles:
         inputs["subtitles"] = str(
             _resolve_input(subtitles, workdir / "subs", label="subtitles")
@@ -79,7 +82,10 @@ def _fetch_inputs(project_id: str, audio: str, lyrics: str | None,
 
 
 def analyze_song_lyrics(
-    project_id: str, *, audio: str, lyrics: str | None = None,
+    project_id: str,
+    *,
+    audio: str,
+    lyrics: str | None = None,
     subtitles: str | None = None,
 ) -> dict:
     """Measure a song's words: sections, lines, words-per-second, timing quality. Free.
@@ -93,8 +99,13 @@ def analyze_song_lyrics(
 
 
 def propose_lyric_treatments(
-    project_id: str, *, audio: str, lyrics: str | None = None,
-    subtitles: str | None = None, n: int = 3, title: str = "",
+    project_id: str,
+    *,
+    audio: str,
+    lyrics: str | None = None,
+    subtitles: str | None = None,
+    n: int = 3,
+    title: str = "",
 ) -> dict:
     """Propose N ranked lyric-video treatments, with rationales. Free.
 
@@ -110,9 +121,15 @@ def propose_lyric_treatments(
 
 
 def propose_lyric_treatments_ai(
-    project_id: str, *, audio: str, lyrics: str | None = None,
-    subtitles: str | None = None, n: int = 3, title: str = "",
-    reference_image: str | None = None, model: str | None = None,
+    project_id: str,
+    *,
+    audio: str,
+    lyrics: str | None = None,
+    subtitles: str | None = None,
+    n: int = 3,
+    title: str = "",
+    reference_image: str | None = None,
+    model: str | None = None,
 ) -> dict:
     """Propose N lyric-video treatments using an LLM creative director. COSTED.
 
@@ -129,12 +146,16 @@ def propose_lyric_treatments_ai(
     # thousand. Refuse rather than clamp: a caller who asked for 50 should learn
     # the bound, not silently get 8.
     if not 1 <= n <= MAX_AI_OPTIONS:
-        raise _tool_error(f"n must be between 1 and {MAX_AI_OPTIONS} (each is a model call)")
+        raise _tool_error(
+            f"n must be between 1 and {MAX_AI_OPTIONS} (each is a model call)"
+        )
     _proj, inputs = _fetch_inputs(project_id, audio, lyrics, subtitles)
     ref = None
     if reference_image:
         workdir = Path(_workspace().open_project(project_id).root) / "lyricvid"
-        ref = str(_resolve_input(reference_image, workdir / "ref", label="reference_image"))
+        ref = str(
+            _resolve_input(reference_image, workdir / "ref", label="reference_image")
+        )
     out = _lv.propose_treatments(
         **inputs, n=n, title=title, reference_image=ref, use_llm=True, model=model
     )
@@ -162,11 +183,18 @@ def validate_lyric_treatment(treatment: dict) -> dict:
 
 
 def render_lyric_video(
-    project_id: str, *, audio: str, lyrics: str | None = None,
-    subtitles: str | None = None, treatment: dict | None = None,
+    project_id: str,
+    *,
+    audio: str,
+    lyrics: str | None = None,
+    subtitles: str | None = None,
+    treatment: dict | None = None,
     archetype: str | None = None,
-    renderer: str = "auto", title: str = "", width: int = 1920,
-    height: int = 1080, fps: int = 30,
+    renderer: str = "auto",
+    title: str = "",
+    width: int = 1920,
+    height: int = 1080,
+    fps: int = 30,
 ) -> dict:
     """Render a lyric video. Free — no model is called on this path.
 
@@ -252,7 +280,10 @@ def _refuse_untrusted_shapes(treatment: dict) -> None:
 
     for i, sc in enumerate(treatment.get("scenes") or []):
         shape = (sc or {}).get("shape") if isinstance(sc, dict) else None
-        if isinstance(shape, dict) and shape.get("kind") not in (None, *INLINE_SHAPE_KINDS):
+        if isinstance(shape, dict) and shape.get("kind") not in (
+            None,
+            *INLINE_SHAPE_KINDS,
+        ):
             raise _tool_error(
                 f"scenes[{i}].shape.kind {shape.get('kind')!r} is not accepted over "
                 f"this surface; use one of {sorted(INLINE_SHAPE_KINDS)}"
