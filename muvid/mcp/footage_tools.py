@@ -15,7 +15,9 @@ Workflow: ``create_project(genre='music_video')`` → ``set_song`` → ``add_foo
 
 from __future__ import annotations
 
+import json
 import os
+import time
 import uuid
 from pathlib import Path
 from urllib.parse import urlparse
@@ -1060,6 +1062,204 @@ def footage_status(project_id: str) -> dict:
         "aligned": [a.clip_id for a in proj.load_alignments()],
         "renders": proj.list_renders(),
     }
+
+
+# -- the master beat grid, on its own (thorwhalen/muvid#18 item 5) ------------
+
+#: Where the song's beat grid is cached: beside the score tensor it feeds, under the
+#: project's ``scores/`` dir, so it shares that dir's lifecycle (``set_song`` and a
+#: re-align that changed the offsets both rmtree it — the second is more than the grid
+#: needs, since it depends on the song alone, but a recompute is seconds and a second
+#: invalidation policy is a second thing to get wrong). Keyed on ``song_hash`` on top
+#: of that, so a record is never served for a song it was not measured on.
+_BEAT_GRID_CACHE_NAME = "beat_grid.json"
+#: Rounded exactly as ``grid.save_scores`` rounds a scoring run's manifest, so the two
+#: records of the same song's grid agree to the digit.
+_BEAT_TIME_DECIMALS = 4
+_TEMPO_DECIMALS = 3
+#: The ``source`` vocabulary of a ``beat_grid`` reply — how the grid was obtained, in
+#: the order the tool tries them (cheapest first; the estimator runs last, once).
+_BEAT_GRID_FROM_CACHE = "cache"
+_BEAT_GRID_FROM_SCORES = "scores"
+_BEAT_GRID_COMPUTED = "computed"
+
+
+def beat_grid(project_id: str) -> dict:
+    """The song's beat grid — tempo and beat instants on the song timeline — WITHOUT
+    running the scoring job. Free.
+
+    ``score_footage`` computes this very grid as its first stage and then decodes every
+    clip through cv2 in the background, which is far too much to pay when all a caller
+    wants is where the beats are (thorwhalen/muvid#18 item 5) — a fixed-stride cut grid,
+    a check that the tempo came out right, a cut plan of its own. This is one call to
+    ``mixing.audio.beat_grid`` on the song alone (the "compute once on the master"
+    invariant: clips map to it through their offsets, never the other way round),
+    cached under the project as ``scores/beat_grid.json`` keyed on ``song_hash`` so the
+    second call is a file read; a project that has already been scored is served from
+    that run's manifest instead. ``source`` says which (``computed`` | ``cache`` |
+    ``scores``).
+
+    Needs the ``scoring`` extra (``mixing[beats]``, i.e. librosa); without it the reply
+    is a clean error naming the install, never a traceback. Needs a song
+    (``set_song``); no alignment is required.
+
+    Returns ``tempo_bpm``, ``beats`` (seconds, ascending), ``n_beats``,
+    ``song_duration`` (so a caller can close the last bar) and ``source``.
+    ``downbeats`` is present only when the estimator measured any — the librosa
+    backend has no downbeat tracker, and an empty list would read as "this song has
+    no downbeats", a measurement nobody made (gate, don't zero).
+    """
+    proj = _open(project_id)
+    if not proj.has_song():
+        raise _tool_error("no song set — call set_song first")
+    source, record = _beat_grid_record(proj, song_hash=proj.song_hash())
+    return _beat_grid_reply(
+        project_id, record, source=source, song_duration=proj.song_duration()
+    )
+
+
+def _beat_grid_record(proj, *, song_hash: str) -> tuple[str, dict]:
+    """``(source, record)`` from the cheapest source that can answer for THIS song.
+
+    Each source either answers with a record measured on ``song_hash`` or declines with
+    ``None``; the estimator is last and never declines (it computes, caches, or raises).
+    Adding a source is a row here, not a branch in the tool.
+    """
+    cache_path = _beat_grid_cache_path(proj)
+
+    def compute():
+        return _compute_beat_grid(proj, cache_path=cache_path, song_hash=song_hash)
+
+    sources = (
+        (_BEAT_GRID_FROM_CACHE, lambda: _read_beat_grid_cache(cache_path, song_hash)),
+        (_BEAT_GRID_FROM_SCORES, lambda: _beat_grid_from_scores(proj, song_hash)),
+        (_BEAT_GRID_COMPUTED, compute),
+    )
+    for source, load in sources:
+        record = load()
+        if record is not None:
+            return source, record
+    raise AssertionError("the computed source never declines")  # pragma: no cover
+
+
+def _beat_grid_cache_path(proj) -> Path:
+    from muvid.footage.scoring.grid import scores_dir  # the dir name's SSOT
+
+    return scores_dir(proj.root) / _BEAT_GRID_CACHE_NAME
+
+
+def _read_beat_grid_cache(path: Path, song_hash: str) -> dict | None:
+    """The cached record if it was measured on THIS song, else ``None``.
+
+    Absent, torn (a concurrent writer) or unreadable is a miss — recomputed, never
+    served — and so is a record carrying another song's hash (the ``scores/`` dir
+    outlives a hand-edited manifest or a copied project tree; the key does not).
+    """
+    try:
+        record = json.loads(path.read_text())
+    except (OSError, ValueError):
+        return None
+    if not isinstance(record, dict) or record.get("song_hash") != song_hash:
+        return None
+    return record
+
+
+def _beat_grid_from_scores(proj, song_hash: str) -> dict | None:
+    """Lift the grid out of a scoring run's manifest when one exists for THIS song.
+
+    ``score_project`` computes exactly this grid as its first stage and persists it in
+    ``scores/manifest.json``, so a scored project has already paid for it. Only the
+    song hash has to match: that manifest goes stale for SCORES the moment the
+    alignment changes (``manifest_is_current`` checks the fingerprint too), but the
+    beat grid depends on the song alone.
+    """
+    from muvid.footage.scoring.grid import load_manifest
+
+    manifest = load_manifest(proj.root)
+    if not manifest or manifest.get("song_hash") != song_hash:
+        return None
+    beats = manifest.get("beats")
+    if not isinstance(beats, dict) or not isinstance(beats.get("beat_times"), list):
+        return None
+    return {
+        "song_hash": song_hash,
+        "tempo_bpm": manifest.get("tempo_bpm"),
+        "beat_times": beats["beat_times"],
+        "downbeat_times": beats.get("downbeat_times") or [],
+    }
+
+
+def _compute_beat_grid(proj, *, cache_path: Path, song_hash: str) -> dict:
+    """Run ``mixing.audio.beat_grid`` on the song and write the record to the cache.
+
+    Imported HERE, not at module top: ``mixing.audio`` is core but the estimator's
+    librosa is the ``scoring`` extra, and this module is on the connector's import-safe
+    path. The ONLY exception translated is ``ImportError`` — the way ``mixing`` reports
+    a missing optional package — so a caller gets the install hint instead of a
+    traceback; whatever else the estimator raises is a ``mixing`` regression and
+    propagates untouched (never a broad except around a sibling's call).
+    """
+    try:
+        from mixing.audio import beat_grid as estimate
+
+        grid = estimate(str(proj.song_path()))
+    except ImportError as e:
+        raise _tool_error(
+            "the beat grid needs librosa, which the 'scoring' extra provides — "
+            f"pip install 'muvid[scoring]' ({e})"
+        ) from e
+    record = _as_beat_grid_record(grid, song_hash=song_hash)
+    _write_beat_grid_cache(cache_path, record)
+    return record
+
+
+def _as_beat_grid_record(grid, *, song_hash: str) -> dict:
+    """The cache record: the three ``BeatGrid`` fields muvid reads (the same three the
+    scoring orchestrator reads), rounded like the scores manifest, plus the key."""
+    import math
+
+    tempo = float(grid.tempo_bpm)
+    return {
+        "song_hash": song_hash,
+        "tempo_bpm": round(tempo, _TEMPO_DECIMALS) if math.isfinite(tempo) else None,
+        "beat_times": [round(float(t), _BEAT_TIME_DECIMALS) for t in grid.beat_times],
+        "downbeat_times": [
+            round(float(t), _BEAT_TIME_DECIMALS) for t in grid.downbeat_times
+        ],
+        "computed_at": time.time(),
+    }
+
+
+def _write_beat_grid_cache(path: Path, record: dict) -> None:
+    """tmp + ``os.replace`` (the same crash-consistency as the score files), so a
+    concurrent call never reads a torn record. The reply is already correct by the
+    time this runs: a cache that cannot be written (a scoring job's rmtree racing this
+    call, a read-only tree) costs the NEXT call a recompute, nothing more."""
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        tmp = path.with_name(path.name + ".tmp")
+        tmp.write_text(json.dumps(record, indent=2))
+        os.replace(tmp, path)
+    except OSError:
+        pass
+
+
+def _beat_grid_reply(
+    project_id: str, record: dict, *, source: str, song_duration: float
+) -> dict:
+    beats = list(record.get("beat_times") or [])
+    reply = {
+        "project_id": project_id,
+        "tempo_bpm": record.get("tempo_bpm"),
+        "beats": beats,
+        "n_beats": len(beats),
+        "song_duration": song_duration,
+        "source": source,
+    }
+    downbeats = list(record.get("downbeat_times") or [])
+    if downbeats:  # measured → reported; unmeasured → absent (never an empty list)
+        reply["downbeats"] = downbeats
+    return reply
 
 
 def list_strategies() -> dict:

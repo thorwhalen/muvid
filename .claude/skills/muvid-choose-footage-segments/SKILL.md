@@ -322,4 +322,7 @@ What to know (the list is unnumbered on purpose — the count was already wrong)
 - `muvid/footage/look.py` — the `looks` seam: `punch_in`, `motion`, `stylize`, `chain`,
   `punch_in_cuts`. Compiles only; the assembler splices. `muvid/footage/assemble.py`'s
   `_part_filter` is THE per-cut chain, shared by the solo and the transition sites.
-- `mixing.audio.beat_grid` (mixing[beats]) supplies the master beat/onset grid.
+- `mixing.audio.beat_grid` (mixing[beats]) supplies the master beat/onset grid. MCP:
+  `beat_grid(project_id)` returns it on its own (cached under the project, keyed on
+  `song_hash`), so nobody runs `score_footage` just to learn where the beats are
+  (muvid#18 item 5).
