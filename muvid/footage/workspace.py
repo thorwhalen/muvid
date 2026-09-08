@@ -14,6 +14,25 @@ with the visualizer's root, different subtree). **Never** inside the app/deploy 
 - ``.../alignments.json`` — the persisted per-clip alignment
 - ``.../renders/{render_id}/`` — an assembled music video
 
+**Every JSON record here is replaced, never truncated in place** (muvid#17 item 4).
+``manifest.json`` and ``alignments.json`` used to be bare ``write_text`` calls — a
+truncate-then-write — while ``manifest()`` deliberately swallows ``OSError``/``ValueError``
+so an unreadable project reads as an EMPTY one. Put together, a process killed between
+the truncate and the write left a project that presented as having no song and no clips:
+not an error a caller could act on, but a plausible state a caller would act on wrongly
+(re-uploading everything, or rendering nothing). The scoring layer three directories
+away already wrote tmp + ``os.replace``; :func:`atomic_write_text` is the ONE such dance
+now, shared by every manifest/alignment/meta write here, ``scoring/grid.py`` (through
+:func:`atomic_write_bytes`, its ``.npz`` primitive) and ``downloads.organise``. A reader
+sees the whole prior record or the whole new one. The on-disk FORMAT is untouched: that
+would be a migration.
+
+**Invalidation runs BEFORE the write that would make the stale artifact look current.**
+``set_song`` drops ``alignments.json`` and the score tracks first and replaces the manifest
+LAST, so no crash window leaves a manifest naming the new song beside an alignment measured
+against the old one — the offsets would then be read as if they belonged to it, which is
+muvid#59's silently-out-of-sync video by another route.
+
 Invalidation is deliberate and lives here, beside the state it protects: ``set_song``
 and ``remove_clip`` both drop ``alignments.json`` and every persisted score track,
 because the alignment is a measurement of exactly the song and the clip set that were
@@ -25,6 +44,7 @@ from __future__ import annotations
 
 import json
 import os
+import tempfile
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -73,7 +93,7 @@ class MusicVideoFootageProject:
             return {"title": self.project_id, "canvas": DEFAULT_CANVAS_NAME}
 
     def _write_manifest(self, m: dict) -> None:
-        self._manifest_path().write_text(json.dumps(m, indent=2))
+        atomic_write_text(self._manifest_path(), json.dumps(m, indent=2))
 
     def canvas(self) -> tuple[int, int]:
         return CANVASES.get(
@@ -82,28 +102,63 @@ class MusicVideoFootageProject:
 
     # -- the fixed song ------------------------------------------------------
     def set_song(self, src_path: str, *, ext: str) -> None:
-        """Store (replacing) the project's one clean song from a local file."""
+        """Store (replacing) the project's one clean song from a local file.
+
+        The order of operations is the contract (muvid#17 item 4), in three phases:
+
+        1. **Everything that can fail runs first, against a staged copy** — the copy
+           itself, the duration probe, the content hash. A missing source or an
+           un-probeable file raises here and the project is exactly as it was: the old
+           song, its alignment and its scores all still stand.
+        2. **What the old song vouched for is dropped** — ``alignments.json`` and the
+           score tracks — BEFORE the manifest can name the new song. The song is the
+           alignment reference, so an offset measured against the old one is meaningless
+           against the new one; but nothing on disk ties an alignment record to a song,
+           so a manifest that named the new song beside the old alignment would have
+           those offsets read as its own and cut a video silently out of sync (the
+           muvid#59 failure shape, by a different route). Dropping first means the worst
+           a crash can leave is a project that demands a fresh ``align_footage``.
+        3. **The song file lands, then the manifest is replaced LAST** — it names the
+           file, so the file must exist before any reader can be pointed at it.
+        """
         import shutil
 
+        suffix = _safe_ext(ext)
         song_dir = self.root / "song"
-        if song_dir.exists():
-            shutil.rmtree(song_dir)
-        song_dir.mkdir(parents=True, exist_ok=True)
-        dest = song_dir / f"song{_safe_ext(ext)}"
-        shutil.copyfile(src_path, dest)
+        dest = song_dir / f"song{suffix}"
+        # Phase 1: stage beside the song dir (same filesystem, so the final move is a
+        # rename) and measure. Nothing the project owns has been touched yet.
+        fd, staged_name = tempfile.mkstemp(
+            dir=str(self.root), prefix=".song.", suffix=suffix
+        )
+        os.close(fd)
+        staged = Path(staged_name)
+        try:
+            shutil.copyfile(src_path, staged)
+            duration = _probe_duration(staged)
+            # Compute the song hash ONCE here (chunked) and cache it — scoring/reads
+            # compare the stored hash rather than re-hashing a 100 MB file on every poll.
+            digest = _hash_file(staged)
+            # Phase 2: invalidate what the OLD song vouched for, before anything can name
+            # the new one. footage_timeline/assemble then demand a fresh align_footage
+            # rather than silently cutting to a song the offsets no longer match.
+            (self.root / "alignments.json").unlink(missing_ok=True)
+            self.invalidate_scores()
+            # Phase 3a: the file. Replace the whole dir so a prior song under a different
+            # extension cannot be orphaned beside the new one.
+            if song_dir.exists():
+                shutil.rmtree(song_dir)
+            song_dir.mkdir(parents=True, exist_ok=True)
+            os.replace(staged, dest)
+        except BaseException:
+            staged.unlink(missing_ok=True)
+            raise
+        # Phase 3b: the manifest, LAST.
         m = self.manifest()
         m["song"] = dest.name
-        m["song_duration"] = _probe_duration(dest)
-        # Compute the song hash ONCE here (chunked) and cache it — scoring/reads compare the
-        # stored hash rather than re-hashing a 100 MB file on every poll (persistence-lens).
-        m["song_hash"] = _hash_file(dest)
+        m["song_duration"] = duration
+        m["song_hash"] = digest
         self._write_manifest(m)
-        # The song is the alignment reference — changing it invalidates every persisted
-        # offset. Drop the alignment so footage_timeline/assemble demand a fresh
-        # align_footage rather than silently cutting to a song the offsets no longer match.
-        (self.root / "alignments.json").unlink(missing_ok=True)
-        # A new song also invalidates every persisted score track (the grid mapping moved).
-        self.invalidate_scores()
 
     def song_hash(self) -> str:
         """The clean song's content hash (cached in the manifest; computed if missing)."""
@@ -216,8 +271,9 @@ class MusicVideoFootageProject:
 
     # -- alignments ----------------------------------------------------------
     def save_alignments(self, aligns: list[FootageAlignment]) -> None:
-        (self.root / "alignments.json").write_text(
-            json.dumps([a.to_dict() for a in aligns], indent=2)
+        atomic_write_text(
+            self.root / "alignments.json",
+            json.dumps([a.to_dict() for a in aligns], indent=2),
         )
 
     def load_alignments(self) -> list[FootageAlignment]:
@@ -248,8 +304,8 @@ class MusicVideoFootageProject:
 
     def write_render_meta(self, render_id: str, meta: dict) -> None:
         rid = safe_component(render_id, label="render_id")
-        (self.root / "renders" / rid / "meta.json").write_text(
-            json.dumps(meta, indent=2)
+        atomic_write_text(
+            self.root / "renders" / rid / "meta.json", json.dumps(meta, indent=2)
         )
 
     def ensure_render_refs(self) -> dict:
@@ -306,7 +362,7 @@ class MusicVideoFootageProject:
                 continue
             meta["ref_n"] = nxt
             try:
-                meta_path.write_text(json.dumps(meta, indent=2))
+                atomic_write_text(meta_path, json.dumps(meta, indent=2))
             except OSError:
                 # A read-only or racing write must not break listing; the ref is
                 # still correct for THIS call, it just isn't durable yet.
@@ -370,6 +426,81 @@ def _hash_file(path: Path, *, chunk: int = 1 << 20) -> str:
     return h.hexdigest()
 
 
+def atomic_write_bytes(path: Path, data: bytes) -> None:
+    """Replace ``path``'s content with ``data`` so a reader never sees a torn file.
+
+    The ONE tmp + fsync + ``os.replace`` dance in the package (muvid#17 item 4); every
+    JSON record in this module goes through :func:`atomic_write_text`, and the
+    scoring layer's ``.npz`` arrays come here directly. The pieces, and why each is
+    load-bearing:
+
+    - **The temp file is created in ``path``'s own directory** (``tempfile.mkstemp``,
+      so a concurrent writer gets its own name rather than racing on a fixed
+      ``.tmp``). ``os.replace`` is only a rename — and only atomic — within one
+      filesystem; a temp under ``/tmp`` would make it a copy with a torn window.
+    - **The temp is fsync'd before the rename.** Without it the rename can reach the
+      journal before the data reaches the disk, and a power cut leaves the new name
+      pointing at zeros — the failure mode a rename alone is wrongly believed to
+      exclude.
+    - **The directory is fsync'd after the rename, best-effort.** That is what makes
+      the rename itself — and any ``unlink`` a caller did in the same directory just
+      before it, which is how :meth:`MusicVideoFootageProject.set_song` orders its
+      invalidation — durable. Directories cannot be opened for fsync on every platform
+      (Windows), so an ``OSError`` there is the one exception swallowed: the data is
+      already safe on disk; only the metadata's promptness is lost.
+    - **On any failure the temp is removed and the error propagates.** ``write_text``
+      raised too; the difference is that ``path`` still holds the previous complete
+      record instead of a truncated one.
+
+    ``mkstemp`` creates the file ``0600``, which is what these per-user records want and
+    what ``downloads.organise`` already did for ``meta.json``; the mode of an existing
+    file is not carried over, deliberately, so the outcome does not depend on history.
+    """
+    path = Path(path)
+    fd, tmp_name = tempfile.mkstemp(
+        dir=str(path.parent), prefix=f".{path.name}.", suffix=".tmp"
+    )
+    try:
+        with os.fdopen(fd, "wb") as f:
+            f.write(data)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(tmp_name, path)
+    except BaseException:
+        try:
+            os.unlink(tmp_name)
+        except OSError:
+            pass
+        raise
+    _fsync_dir(path.parent)
+
+
+def _fsync_dir(directory: Path) -> None:
+    """Flush a directory's metadata (renames, unlinks) — best-effort, see the caller."""
+    try:
+        dfd = os.open(str(directory), os.O_RDONLY)
+    except OSError:
+        return  # a platform (Windows) or filesystem that cannot open a directory
+    try:
+        os.fsync(dfd)
+    except OSError:
+        pass  # same: the data is on disk; only the directory entry's promptness is lost
+    finally:
+        os.close(dfd)
+
+
+def atomic_write_text(path: Path, text: str) -> None:
+    """Atomically replace ``path`` with ``text`` (UTF-8) — see :func:`atomic_write_bytes`.
+
+    Every ``manifest.json``, ``alignments.json`` and render ``meta.json`` write goes
+    through here. UTF-8 is a superset of the ASCII ``json.dumps`` emits by default, so
+    the bytes on disk are identical to what ``write_text`` produced and the locale-default
+    ``read_text`` on the read side is untouched — the FORMAT does not change, only the
+    way it gets there.
+    """
+    atomic_write_bytes(path, text.encode("utf-8"))
+
+
 @dataclass(frozen=True)
 class FootageWorkspace:
     """A caller's private music-video area, addressed by ``email``."""
@@ -403,7 +534,8 @@ class FootageWorkspace:
             )
         root.mkdir(parents=True, exist_ok=True)
         canvas_name = canvas if canvas in CANVASES else DEFAULT_CANVAS_NAME
-        (root / "manifest.json").write_text(
+        atomic_write_text(
+            root / "manifest.json",
             json.dumps(
                 {
                     "title": title or project_id,
@@ -411,7 +543,7 @@ class FootageWorkspace:
                     "created": time.time(),
                 },
                 indent=2,
-            )
+            ),
         )
         return MusicVideoFootageProject(self.email, project_id, root)
 

@@ -21,7 +21,10 @@ Design decisions (see ``misc/docs/footage_scoring_design.md`` — LOCKED post-cr
   mismatch is a load-time assertion, never a silent 2× misalignment.
 - **Persistence is crash-consistent**: each clip's ``.npz`` is written to a temp then
   ``os.replace``\\ d; ``manifest.json`` is written LAST via tmp+rename, so a reader sees
-  either the whole prior state or the whole new one.
+  either the whole prior state or the whole new one. The dance itself is
+  ``muvid.footage.workspace.atomic_write_bytes`` — the ONE implementation the project
+  manifest, the alignments and the render metadata share (muvid#17 item 4); this module
+  used to carry its own copy, which is how the other records came to have none.
 
 Pure numpy — no cv2/torch/ffmpeg here. Imported only under the ``muvid[scoring]`` extra
 (never on the import-light ``muvid.genre_music_video`` path).
@@ -30,12 +33,13 @@ Pure numpy — no cv2/torch/ffmpeg here. Imported only under the ``muvid[scoring
 from __future__ import annotations
 
 import json
-import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Mapping, Sequence
 
 import numpy as np
+
+from muvid.footage.workspace import atomic_write_bytes
 
 #: Default grid step (seconds) → 10 Hz. Ample for a UI and beat-level selection.
 DEFAULT_HOP_S = 0.1
@@ -377,12 +381,6 @@ def scores_present(project_root: Path) -> bool:
     return (scores_dir(project_root) / MANIFEST_NAME).exists()
 
 
-def _atomic_write_bytes(path: Path, data: bytes) -> None:
-    tmp = path.with_name(path.name + ".tmp")
-    tmp.write_bytes(data)
-    os.replace(tmp, path)
-
-
 def save_scores(
     project_root: Path,
     tracks: Mapping[str, Sequence[ScoreTrack]],
@@ -422,7 +420,7 @@ def save_scores(
 
         buf = io.BytesIO()
         np.savez_compressed(buf, **arrays)
-        _atomic_write_bytes(d / f"{cid}.npz", buf.getvalue())
+        atomic_write_bytes(d / f"{cid}.npz", buf.getvalue())
         written.append(cid)
 
     manifest = {
@@ -457,7 +455,7 @@ def save_scores(
     # manifest LAST — its presence signals a complete scores/ dir. allow_nan=False makes any
     # stray NaN/Inf FAIL LOUD here rather than silently emit invalid JSON (the "NaN never
     # reaches a serializer" invariant — norm params for an all-masked metric are already None).
-    _atomic_write_bytes(
+    atomic_write_bytes(
         d / MANIFEST_NAME,
         json.dumps(manifest, indent=2, allow_nan=False).encode("utf-8"),
     )
