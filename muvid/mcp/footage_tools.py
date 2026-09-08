@@ -1263,6 +1263,8 @@ def _beat_grid_reply(
     if downbeats:  # measured → reported; unmeasured → absent (never an empty list)
         reply["downbeats"] = downbeats
     return reply
+
+
 def _alignment_covers_clips(proj) -> bool:
     """Whether a persisted alignment exists AND has a record for every current clip.
 
