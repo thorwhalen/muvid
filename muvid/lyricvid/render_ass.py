@@ -352,7 +352,11 @@ def _escape_text(text: str) -> str:
         >>> _escape_text('a {b}\nc')
         'a (b)\\Nc'
     """
-    out = text.replace("{", "(").replace("}", ")")
+    # Backslash first: ``\N`` / ``\n`` / ``\h`` are interpreted by libass even
+    # OUTSIDE override braces, so a lyric containing a literal backslash could
+    # inject a hard line break. A fraction slash reads fine in its place.
+    out = text.replace("\\", "⁄")
+    out = out.replace("{", "(").replace("}", ")")
     out = out.replace("\r\n", "\n").replace("\r", "\n").replace("\n", r"\N")
     return out
 

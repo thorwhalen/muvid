@@ -41,6 +41,11 @@ import muvid.genre_music_video  # noqa: F401,E402 — registers music_video + it
 # muvid.lyricvid. Import-safe the same way (nw + a stdlib-only vocabulary module).
 import muvid.genre_lyric_video  # noqa: F401,E402 — registers lyric-video + its factory
 
+# ...and LAST, the generic bridge: every other installed subgenre plugin becomes
+# an nw genre too, with its manifest examples as Templates. Last so the
+# hand-written genres above win their slugs (nw.genres refuses a collision).
+import muvid.genre_subgenres  # noqa: F401,E402 — bridges third-party subgenres
+
 from muvid.visualize.visuals import list_visuals
 
 MUSIC_VISUALIZER_SLUG = "music-visualizer"

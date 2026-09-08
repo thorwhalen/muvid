@@ -69,3 +69,43 @@ def test_the_installed_mixing_reports_alignment_support_in_ci():
         "instrument muvid#59 is about. Raise the mixing floor in pyproject.toml, or "
         "find out why the resolver picked an older one."
     )
+
+
+#: ffmpeg FILTERS the suite guards on with ``needs_ffmpeg_filter``, and what needs each.
+#: Same trap as the extras above: a runner image whose ffmpeg lacks libass makes the
+#: lyric-video ASS burn-in tests skip, and the run stays green while the default
+#: renderer's mp4 path is measured by nothing (muvid#97). Ubuntu's ``ffmpeg`` package
+#: depends on libass9 and libfreetype, so in CI these are a hard requirement.
+_FILTERS_REQUIRED_IN_CI = [
+    ("subtitles", "the lyric-video ASS renderer (libass)"),
+    ("drawtext", "visualizer titles (libfreetype)"),
+    ("xfade", "footage transitions"),
+]
+
+
+@pytest.mark.parametrize("filter_name,needed_for", _FILTERS_REQUIRED_IN_CI)
+def test_ffmpeg_filters_are_present_in_ci(filter_name, needed_for):
+    if not os.environ.get("CI"):
+        pytest.skip("canary only bites in CI — a local slim ffmpeg is legitimate")
+    import platform
+    import shutil
+
+    if platform.system() == "Windows":
+        # Deliberate, and recorded in pyproject's [tool.wads.ops.ffmpeg]: the
+        # Windows runner gets no ffmpeg (the installer crashes on its cp1252
+        # console) and every ffmpeg-backed test skips there by design. A canary
+        # that fires on a policy is not a canary.
+        pytest.skip("ffmpeg is intentionally not installed on the Windows runner")
+    assert shutil.which("ffmpeg"), (
+        "CI's runner has no ffmpeg at all, so every ffmpeg-backed test is silently "
+        "skipped. The wads install step ([tool.wads.ops.ffmpeg]) should have put one "
+        "on PATH — check .github/workflows/ci.yml."
+    )
+    from muvid.visualize.ffmpeg import has_filter
+
+    assert has_filter(filter_name), (
+        f"CI's ffmpeg has no {filter_name!r} filter, so every test that guards on it "
+        f"({needed_for}) is silently skipped and that path is measured by nothing. "
+        "Fix the installer in [tool.wads.ops.ffmpeg] (pyproject.toml) — the check is "
+        "capability-based precisely so a slim binary triggers a reinstall."
+    )

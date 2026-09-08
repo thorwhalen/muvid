@@ -19,6 +19,13 @@ from muvid.mcp._guide import INSTRUCTIONS
 from muvid.mcp.identity import current_email, token_email, use_email
 from muvid.mcp.workspace import VisualizerWorkspace, data_root
 
+#: The generic subgenre transport (muvid.mcp.subgenre_tools): ANY installed
+#: subgenre plugin is listable and renderable here without muvid knowing it.
+SUBGENRE_TOOLS = [
+    "list_subgenres",
+    "render_subgenre",
+]
+
 #: The ``lyric-video`` genre tools (muvid.mcp.lyricvid_tools). Five free, one costed.
 LYRICVID_TOOLS = [
     "list_archetypes",
@@ -58,6 +65,11 @@ FOOTAGE_TOOLS = [
     # edited DECISION lane → an ``edl=`` argument). Both free and read-only.
     "footage_editor_document",
     "footage_edl_from_annotations",
+    # Clip lifecycle (muvid#22): the way back to a lost project_id, and the way a
+    # mistaken upload stops being permanent. Both free; remove_footage invalidates
+    # the alignment the same way set_song does.
+    "list_music_video_projects",
+    "remove_footage",
 ]
 
 #: The footage SCORING tools (muvid.mcp.scoring_tools) — the background scoring job + the
@@ -69,7 +81,9 @@ SCORING_TOOLS = [
 ]
 
 #: All tools this package exposes (all free). Bare names; a host may prefix them.
-TOOL_NAMES = VISUALIZER_TOOLS + FOOTAGE_TOOLS + SCORING_TOOLS + LYRICVID_TOOLS
+TOOL_NAMES = (
+    VISUALIZER_TOOLS + FOOTAGE_TOOLS + SCORING_TOOLS + LYRICVID_TOOLS + SUBGENRE_TOOLS
+)
 
 #: Alias — muvid has no costed tools.
 FREE_TOOLS = [n for n in TOOL_NAMES if n not in LYRICVID_COSTED]
@@ -80,6 +94,7 @@ TOOL_REFS = {name: f"muvid.mcp.tools:{name}" for name in VISUALIZER_TOOLS}
 TOOL_REFS.update({name: f"muvid.mcp.footage_tools:{name}" for name in FOOTAGE_TOOLS})
 TOOL_REFS.update({name: f"muvid.mcp.scoring_tools:{name}" for name in SCORING_TOOLS})
 TOOL_REFS.update({name: f"muvid.mcp.lyricvid_tools:{name}" for name in LYRICVID_TOOLS})
+TOOL_REFS.update({name: f"muvid.mcp.subgenre_tools:{name}" for name in SUBGENRE_TOOLS})
 
 
 def register_tools(server, *, prefix="", include=None, exclude=None):

@@ -299,6 +299,9 @@ def test_register_tools_includes_footage(tmp_path):
     names = mcp.register_tools(FastMCP(name="t"), prefix="muvid_")
     assert "muvid_assemble_music_video" in names
     assert "muvid_align_footage" in names
+    # muvid#22: the clip-lifecycle pair has a transport, not just a function.
+    assert "muvid_list_music_video_projects" in names
+    assert "muvid_remove_footage" in names
     assert len(names) == len(set(names))
     # The footage tools are ffmpeg-only and spend nothing. This used to assert the
     # GLOBAL `COSTED_TOOLS == []`, which stopped being true when the lyric-video
@@ -627,3 +630,175 @@ def test_add_footage_enforces_the_clip_cap(tmp_path, monkeypatch):
     proj.add_clip("existing", str(tmp_path / "x"), ext="mp4")  # pre-fill to the cap
     with use_email("u@x.com"), pytest.raises(ToolError, match="limit"):
         ft.add_footage("p", url="https://example.com/clip.mp4")
+
+
+# -- clip lifecycle: remove_footage + list_music_video_projects (muvid#22) ----
+
+
+def _add_fake_clip(proj, clip_id: str, *, ext: str = "mp4", name: str = "") -> None:
+    """A second clip on a ``_fake_state`` project, still without ffmpeg."""
+    (proj.root / "clips" / f"{clip_id}.{ext}").write_bytes(b"x")
+    m = proj.manifest()
+    m["clips"].append(
+        {"clip_id": clip_id, "file": f"{clip_id}.{ext}", "name": name or clip_id}
+    )
+    proj._write_manifest(m)
+
+
+def test_workspace_remove_clip_drops_file_manifest_alignment_and_scores(
+    tmp_path, monkeypatch
+):
+    """The on-disk half of muvid#22, at the workspace level.
+
+    The acceptance criterion is "removing a clip invalidates the alignment
+    artifact"; the scores go with it because they are keyed on that alignment's
+    fingerprint — the same pair ``set_song`` drops, for the same reason.
+    """
+    proj = _fake_state(tmp_path, monkeypatch)
+    _add_fake_clip(proj, "B", ext="mov", name="phone B")
+    scores = proj.root / "scores"
+    scores.mkdir()
+    (scores / "A.npz").write_bytes(b"expensive")
+    assert proj.load_alignments() and (proj.root / "alignments.json").exists()
+
+    with pytest.raises(KeyError):
+        proj.remove_clip("nope")
+    # A refusal is not a partial removal: nothing moved.
+    assert (proj.root / "alignments.json").exists() and scores.exists()
+    assert {c["clip_id"] for c in proj.list_clips()} == {"A", "B"}
+
+    out = proj.remove_clip("B")
+    assert out == {
+        "clip_id": "B",
+        "name": "phone B",
+        "files": ["B.mov"],
+        "alignment_invalidated": True,
+        "scores_invalidated": True,
+    }
+    assert not (proj.root / "clips" / "B.mov").exists()
+    assert (proj.root / "clips" / "A.mp4").exists(), "only the named clip goes"
+    assert proj.list_clips() == [{"clip_id": "A", "name": "A"}]
+    assert proj.clip_paths() == {"A": str(proj.root / "clips" / "A.mp4")}
+    assert proj.load_alignments() == [], "removal invalidates the alignment"
+    assert not (proj.root / "alignments.json").exists()
+    assert not scores.exists(), "and the score tensor keyed on it"
+
+    # Removing the last clip, with nothing left to invalidate, says so honestly.
+    out = proj.remove_clip("A")
+    assert out["alignment_invalidated"] is False and out["scores_invalidated"] is False
+    assert proj.list_clips() == [] and proj.manifest()["clips"] == []
+
+
+def test_remove_footage_refuses_an_unknown_clip_naming_the_known_ones(
+    tmp_path, monkeypatch
+):
+    pytest.importorskip("fastmcp")
+    from fastmcp.exceptions import ToolError
+
+    import muvid.mcp.footage_tools as ft
+    from muvid.mcp.identity import use_email
+
+    proj = _fake_state(tmp_path, monkeypatch)
+    _add_fake_clip(proj, "B", name="phone B")
+    with use_email("u@x.com"), pytest.raises(ToolError) as ei:
+        ft.remove_footage("p", clip_id="zz")
+    msg = str(ei.value)
+    assert "unknown clip_id 'zz'" in msg
+    assert "A" in msg and "B (phone B)" in msg, msg
+    # The refusal changed nothing: clips, files and the alignment are all still there.
+    assert {c["clip_id"] for c in proj.list_clips()} == {"A", "B"}
+    assert (proj.root / "clips" / "A.mp4").exists()
+    assert proj.load_alignments(), "an unknown id must not invalidate anything"
+
+    # Another caller's project is "no such project", never a clip listing.
+    with use_email("intruder@x.com"), pytest.raises(ToolError, match="no such project"):
+        ft.remove_footage("p", clip_id="A")
+
+    # A project with no clips says what to do instead of listing nothing.
+    from muvid.footage.workspace import FootageWorkspace
+
+    FootageWorkspace.for_email("u@x.com").create_project("empty")
+    with use_email("u@x.com"), pytest.raises(ToolError, match="has no clips"):
+        ft.remove_footage("empty", clip_id="A")
+
+
+def test_remove_footage_tool_deletes_the_clip_and_invalidates_alignment(
+    tmp_path, monkeypatch
+):
+    pytest.importorskip("fastmcp")
+    import muvid.mcp.footage_tools as ft
+    from muvid.mcp.identity import use_email
+
+    proj = _fake_state(tmp_path, monkeypatch)
+    _add_fake_clip(proj, "B", name="phone B")
+    (proj.root / "scores").mkdir()
+    (proj.root / "scores" / "A.npz").write_bytes(b"expensive")
+
+    with use_email("u@x.com"):
+        out = ft.remove_footage("p", clip_id="A")
+        status = ft.footage_status("p")
+    assert out == {
+        "project_id": "p",
+        "removed": {"clip_id": "A", "name": "A"},
+        "clips": [{"clip_id": "B", "name": "phone B"}],
+        "alignment_invalidated": True,
+        "scores_invalidated": True,
+    }
+    assert not (proj.root / "clips" / "A.mp4").exists()
+    assert (proj.root / "clips" / "B.mp4").exists()
+    # What the caller sees next: the clip is gone AND the project reads as unaligned,
+    # so the next action (align_footage) is visible rather than a stale offset.
+    assert status["clips"] == [{"clip_id": "B", "name": "phone B"}]
+    assert status["aligned"] == []
+    assert not (proj.root / "scores").exists()
+
+
+def test_list_music_video_projects_recovers_a_lost_project_id(tmp_path, monkeypatch):
+    """muvid#22 acceptance: a caller can list their music_video projects, and the row
+    says where each one is in the workflow — so the next call reads off the listing."""
+    pytest.importorskip("fastmcp")
+    import muvid.mcp.footage_tools as ft
+    from muvid.footage.workspace import FootageWorkspace
+    from muvid.mcp.identity import use_email
+
+    with use_email("nobody@x.com"):
+        assert ft.list_music_video_projects() == {"projects": []}
+
+    proj = _fake_state(tmp_path, monkeypatch)  # u@x.com / "p": song + clip A + aligned
+    proj.new_render_dir("r1")
+    proj.write_render_meta("r1", {"render_id": "r1"})
+    FootageWorkspace.for_email("u@x.com").create_project("q", title="Bare")
+    FootageWorkspace.for_email("other@x.com").create_project("theirs")
+
+    with use_email("u@x.com"):
+        rows = ft.list_music_video_projects()["projects"]
+    by = {r["project_id"]: r for r in rows}
+    assert set(by) == {"p", "q"}, "only the caller's projects, both of them"
+    assert by["p"]["title"] == "p"
+    assert by["p"]["has_song"] is True
+    assert by["p"]["n_clips"] == 1
+    assert by["p"]["aligned"] is True
+    assert by["p"]["n_renders"] == 1
+    assert by["q"] == {
+        "project_id": "q",
+        "title": "Bare",
+        "has_song": False,
+        "n_clips": 0,
+        "aligned": False,
+        "n_renders": 0,
+        "created": by["q"]["created"],
+        "modified": by["q"]["modified"],
+    }
+    assert by["q"]["created"] is not None and by["q"]["modified"] is not None
+
+    # `aligned` is a claim about the clip SET: a clip added after align_footage has no
+    # offset, so the row must flip to false until a re-align covers it.
+    _add_fake_clip(proj, "B")
+    with use_email("u@x.com"):
+        row = {r["project_id"]: r for r in ft.list_music_video_projects()["projects"]}
+    assert row["p"]["n_clips"] == 2 and row["p"]["aligned"] is False
+
+    # Scoping is the authorization model: the other caller sees only their own.
+    with use_email("other@x.com"):
+        theirs = ft.list_music_video_projects()["projects"]
+    assert [r["project_id"] for r in theirs] == ["theirs"]

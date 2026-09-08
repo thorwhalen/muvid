@@ -19,11 +19,18 @@ unpriced call as ``0.0`` is the exact bug muvid#47 was filed about.
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from typing import Any
 
 from muvid.lyricvid import tools as _lv
 from muvid.mcp.tools import _download_claim, _resolve_input, _tool_error, _workspace
+
+#: Ceiling on proposals per call. For the AI tool each proposal is one model
+#: call; for the free one it is CPU. Both are bounds a host cannot see through
+#: the tool name, so they live here rather than in the caller's good intentions.
+MAX_AI_OPTIONS = int(os.environ.get("MUVID_LYRICVID_MAX_AI_OPTIONS", "8"))
+MAX_FREE_OPTIONS = int(os.environ.get("MUVID_LYRICVID_MAX_FREE_OPTIONS", "24"))
 
 __all__ = [
     "list_archetypes",
@@ -57,7 +64,7 @@ def list_archetypes() -> dict:
 def _fetch_inputs(
     project_id: str, audio: str, lyrics: str | None, subtitles: str | None
 ) -> tuple[Any, dict]:
-    proj = _workspace().project(project_id)
+    proj = _workspace().open_project(project_id)
     workdir = Path(proj.root) / "lyricvid"
     workdir.mkdir(parents=True, exist_ok=True)
     inputs: dict[str, str] = {
@@ -107,6 +114,8 @@ def propose_lyric_treatments(
     network, no cost. For an LLM-authored treatment use
     ``propose_lyric_treatments_ai``.
     """
+    if not 1 <= n <= MAX_FREE_OPTIONS:
+        raise _tool_error(f"n must be between 1 and {MAX_FREE_OPTIONS}")
     _proj, inputs = _fetch_inputs(project_id, audio, lyrics, subtitles)
     return _lv.propose_treatments(**inputs, n=n, title=title, use_llm=False)
 
@@ -132,10 +141,18 @@ def propose_lyric_treatments_ai(
     photographed page, a poster). The model describes it as an *archetype plus
     a shape*, never as coordinates.
     """
+    # `n` is the number of MODEL CALLS. The budget gate meters by tool name and
+    # cannot see an argument, so an uncapped n turns one approved call into a
+    # thousand. Refuse rather than clamp: a caller who asked for 50 should learn
+    # the bound, not silently get 8.
+    if not 1 <= n <= MAX_AI_OPTIONS:
+        raise _tool_error(
+            f"n must be between 1 and {MAX_AI_OPTIONS} (each is a model call)"
+        )
     _proj, inputs = _fetch_inputs(project_id, audio, lyrics, subtitles)
     ref = None
     if reference_image:
-        workdir = Path(_workspace().project(project_id).root) / "lyricvid"
+        workdir = Path(_workspace().open_project(project_id).root) / "lyricvid"
         ref = str(
             _resolve_input(reference_image, workdir / "ref", label="reference_image")
         )
@@ -159,7 +176,10 @@ def validate_lyric_treatment(treatment: dict) -> dict:
     """
     if not isinstance(treatment, dict):
         raise _tool_error("treatment must be a JSON object")
-    return _lv.validate_treatment(treatment)
+    try:
+        return _lv.validate_treatment(treatment)
+    except (TypeError, ValueError) as exc:  # from_dict is total now; belt and braces
+        raise _tool_error(f"treatment could not be read: {exc}") from exc
 
 
 def render_lyric_video(
@@ -169,7 +189,8 @@ def render_lyric_video(
     lyrics: str | None = None,
     subtitles: str | None = None,
     treatment: dict | None = None,
-    renderer: str = "ass",
+    archetype: str | None = None,
+    renderer: str = "auto",
     title: str = "",
     width: int = 1920,
     height: int = 1080,
@@ -177,37 +198,61 @@ def render_lyric_video(
 ) -> dict:
     """Render a lyric video. Free — no model is called on this path.
 
-    ``treatment`` omitted, the heuristic director chooses one. ``renderer='ass'``
-    (the default) is frame-exact and additionally returns an editable ``.ass``
-    subtitle file among the artifacts.
+    ``treatment`` omitted, the heuristic director chooses one; ``archetype``
+    alone (the value an nw Template carries) builds a one-scene treatment from
+    it. ``renderer='auto'`` picks ``ass`` where this ffmpeg can burn subtitles
+    in and ``web`` otherwise, and records which; ``ass`` additionally returns
+    an editable ``.ass`` subtitle file among the artifacts.
     """
     import uuid
 
-    if renderer not in {"ass", "web"}:
-        raise _tool_error(f"renderer must be 'ass' or 'web', got {renderer!r}")
+    if renderer not in {"auto", "ass", "web"}:
+        raise _tool_error(f"renderer must be 'auto', 'ass' or 'web', got {renderer!r}")
+    if treatment is not None:
+        if not isinstance(treatment, dict):
+            raise _tool_error("treatment must be a JSON object")
+        _refuse_untrusted_shapes(treatment)
+    elif archetype is not None:
+        from muvid.lyricvid.spec import ARCHETYPES
+
+        if archetype not in ARCHETYPES:
+            raise _tool_error(
+                f"unknown archetype {archetype!r}; one of {sorted(ARCHETYPES)}"
+            )
+        treatment = {"scenes": [{"archetype": archetype}]}
+
     proj, inputs = _fetch_inputs(project_id, audio, lyrics, subtitles)
     render_id = uuid.uuid4().hex[:12]
-    out = Path(proj.root) / "renders" / f"{render_id}.mp4"
-    out.parent.mkdir(parents=True, exist_ok=True)
+    # The workspace's own layout: renders/<id>/video.mp4 + meta.json beside it.
+    # That is what downloads.resolve() and list_renders() read; writing
+    # renders/<id>.mp4 rendered fine and was then unreachable by the claim
+    # this tool returned.
+    render_dir = proj.new_render_dir(render_id)
+    out = render_dir / "video.mp4"
 
-    result = _lv.render_lyric_video(
-        inputs["audio"],
-        str(out),
-        lyrics=inputs.get("lyrics"),
-        subtitles=inputs.get("subtitles"),
-        treatment=treatment,
-        renderer=renderer,
-        title=title,
-        width=width,
-        height=height,
-        fps=fps,
-        workdir=str(Path(proj.root) / "lyricvid" / render_id),
-    )
+    try:
+        result = _lv.render_lyric_video(
+            inputs["audio"],
+            str(out),
+            lyrics=inputs.get("lyrics"),
+            subtitles=inputs.get("subtitles"),
+            treatment=treatment,
+            renderer=renderer,
+            title=title,
+            width=width,
+            height=height,
+            fps=fps,
+            workdir=str(render_dir / "work"),
+        )
+    except (ValueError, FileNotFoundError, RuntimeError) as exc:
+        # A caller sees WHAT was wrong, never a traceback, never a host path.
+        raise _tool_error(f"render refused: {exc}") from exc
+
     meta = {
         "render_id": render_id,
         "video": result["output"],
         "duration": result.get("duration_s"),
-        "renderer": renderer,
+        "renderer": result.get("meta", {}).get("renderer", renderer),
         "artifacts": result.get("artifacts", {}),
         "meta": result.get("meta", {}),
         "download": _download_claim(project_id, render_id),
@@ -216,7 +261,30 @@ def render_lyric_video(
             f"artifact_id='{render_id}')` for a link to watch and download this."
         ),
     }
-    write_meta = getattr(proj, "write_render_meta", None)
-    if write_meta is not None:
-        write_meta(render_id, meta)
+    proj.write_render_meta(render_id, meta)
     return meta
+
+
+def _refuse_untrusted_shapes(treatment: dict) -> None:
+    """Refuse a treatment whose shape names a FILE.
+
+    ``shape.kind == 'mask_image'`` makes ``shape.value`` a path the renderer
+    opens. Over MCP that path would be a remote caller's string reaching
+    ``Image.open`` on the host — a filesystem-existence oracle at best and a
+    cross-tenant read at worst. Only shapes that carry no reference to anything
+    outside the spec are accepted here; a mask image would have to arrive
+    through ``_resolve_input`` like every other file, and that plumbing is not
+    built, so it is refused rather than half-trusted.
+    """
+    from muvid.lyricvid.spec import INLINE_SHAPE_KINDS
+
+    for i, sc in enumerate(treatment.get("scenes") or []):
+        shape = (sc or {}).get("shape") if isinstance(sc, dict) else None
+        if isinstance(shape, dict) and shape.get("kind") not in (
+            None,
+            *INLINE_SHAPE_KINDS,
+        ):
+            raise _tool_error(
+                f"scenes[{i}].shape.kind {shape.get('kind')!r} is not accepted over "
+                f"this surface; use one of {sorted(INLINE_SHAPE_KINDS)}"
+            )

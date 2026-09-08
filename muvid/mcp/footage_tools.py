@@ -11,6 +11,9 @@ memory does not grow with cut count) — the connector renders synchronously ove
 
 Workflow: ``create_project(genre='music_video')`` → ``set_song`` → ``add_footage`` ×N →
 ``align_footage`` → (``footage_timeline`` to inspect) → ``assemble_music_video``.
+Lifecycle around it (muvid#22): ``list_music_video_projects`` finds a project whose id
+was lost, and ``remove_footage`` takes a clip back out — which invalidates the
+alignment, exactly as ``set_song`` does.
 """
 
 from __future__ import annotations
@@ -1060,6 +1063,102 @@ def footage_status(project_id: str) -> dict:
         "aligned": [a.clip_id for a in proj.load_alignments()],
         "renders": proj.list_renders(),
     }
+
+
+def _alignment_covers_clips(proj) -> bool:
+    """Whether a persisted alignment exists AND has a record for every current clip.
+
+    "Aligned" is a claim about the clip SET, not about a file: a clip added after
+    ``align_footage`` has no offset, the auto edit would silently pass it over, and the
+    file on disk would still say "aligned". Reading it this way makes the listing's next
+    action honest — false means "run align_footage", whichever way it became false.
+    """
+    clip_ids = {c["clip_id"] for c in proj.list_clips()}
+    aligned_ids = {a.clip_id for a in proj.load_alignments()}
+    return bool(clip_ids) and clip_ids <= aligned_ids
+
+
+def list_music_video_projects() -> dict:
+    """List YOUR music_video (footage) projects, newest-modified first. Free.
+
+    The way back to a lost ``project_id`` (muvid#22): ``list_projects`` spans both
+    muvid genres but says nothing about a footage project's progress, and every other
+    footage tool needs the id first. Each row carries where the project is in the
+    workflow — ``has_song``, ``n_clips``, ``aligned``, ``n_renders`` — so the next call
+    reads off the listing without a ``footage_status`` per project:
+
+    - ``aligned`` is true only when the persisted alignment covers every current clip.
+      An ``add_footage`` or ``remove_footage`` after ``align_footage`` makes it false
+      again until you re-align.
+    - ``n_renders`` counts what ``footage_status`` lists under ``renders``; ``0`` is a
+      positive answer ("no cut yet"), never an omitted project.
+
+    ``[]`` means you have no footage projects; a visualizer project is not one and
+    shows up in ``list_projects`` instead.
+    """
+    ws = _workspace()
+    rows = []
+    for r in ws.list_projects():
+        try:
+            proj = ws.open_project(r["project_id"])
+        except (FileNotFoundError, ValueError):
+            continue  # vanished mid-scan — genuinely absent
+        rows.append(
+            {
+                "project_id": r["project_id"],
+                "title": r.get("title") or r["project_id"],
+                "has_song": proj.has_song(),
+                "n_clips": len(proj.list_clips()),
+                "aligned": _alignment_covers_clips(proj),
+                "n_renders": len(proj.list_renders()),
+                "created": r.get("created"),
+                "modified": r.get("modified"),
+            }
+        )
+    return {"projects": rows}
+
+
+def remove_footage(project_id: str, *, clip_id: str) -> dict:
+    """Remove one footage clip from the project — its stored file and its entry. Free.
+
+    Irreversible for the clip (re-add it from its URL if it was a mistake); existing
+    renders are untouched. Removal INVALIDATES the alignment and every persisted score
+    track, exactly as ``set_song`` does (muvid#22) — the alignment describes the clip set
+    it was measured on, and a removed clip's offset must not outlive the clip. So run
+    ``align_footage`` again before ``propose_edit`` / ``assemble_music_video``; until
+    then ``footage_status`` reports the project unaligned and this project's
+    ``aligned`` flag in ``list_music_video_projects`` is false.
+
+    An unknown ``clip_id`` is refused, naming the clip ids the project holds, and a
+    refusal changes nothing on disk. Returns what was removed, the clips that remain,
+    and whether an alignment / score tracks were actually dropped.
+    """
+    proj = _open(project_id)
+    known = proj.list_clips()
+    if clip_id not in {c["clip_id"] for c in known}:
+        raise _tool_error(_unknown_clip_message(clip_id, known))
+    removed = proj.remove_clip(clip_id)
+    return {
+        "project_id": project_id,
+        "removed": {"clip_id": removed["clip_id"], "name": removed["name"]},
+        "clips": proj.list_clips(),
+        "alignment_invalidated": removed["alignment_invalidated"],
+        "scores_invalidated": removed["scores_invalidated"],
+    }
+
+
+def _unknown_clip_message(clip_id: str, known: list[dict]) -> str:
+    if not known:
+        return f"unknown clip_id {clip_id!r} — this project has no clips (add_footage first)"
+    listed = ", ".join(
+        (
+            c["clip_id"]
+            if c.get("name", c["clip_id"]) == c["clip_id"]
+            else f"{c['clip_id']} ({c['name']})"
+        )
+        for c in known
+    )
+    return f"unknown clip_id {clip_id!r} — this project's clips are: {listed}"
 
 
 def list_strategies() -> dict:
