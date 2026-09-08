@@ -87,7 +87,11 @@ def analyze_song(
     from muvid.lyricvid.pipeline import build_timed_text
 
     tt = build_timed_text(
-        audio=audio, lyrics=lyrics, subtitles=subtitles, project=project, aligner=aligner
+        audio=audio,
+        lyrics=lyrics,
+        subtitles=subtitles,
+        project=project,
+        aligner=aligner,
     )
     return _describe(tt, max_lines=max_lines)
 
@@ -115,8 +119,12 @@ def _describe(tt, *, max_lines: int = 40) -> dict[str, Any]:
             for s in tt.sections
         ],
         "lines": [
-            {"index": l.index, "text": l.text, "start": round(l.start, 3),
-             "end": round(l.end, 3)}
+            {
+                "index": l.index,
+                "text": l.text,
+                "start": round(l.start, 3),
+                "end": round(l.end, 3),
+            }
             for l in lines[:max_lines]
         ],
         "lines_truncated": max(0, len(lines) - max_lines),
@@ -149,7 +157,11 @@ def propose_treatments(
         audio=audio, lyrics=lyrics, subtitles=subtitles, project=project
     )
     llm = None
-    cost: dict[str, Any] = {"spent_usd": 0.0, "has_unknown_costs": False, "provider": None}
+    cost: dict[str, Any] = {
+        "spent_usd": 0.0,
+        "has_unknown_costs": False,
+        "provider": None,
+    }
     if use_llm:
         from muvid.lyricvid.director import anthropic_llm
 
@@ -241,17 +253,24 @@ def render_lyric_video(
     inputs = {
         k: v
         for k, v in (
-            ("audio", audio), ("lyrics", lyrics),
-            ("subtitles", subtitles), ("project", project),
+            ("audio", audio),
+            ("lyrics", lyrics),
+            ("subtitles", subtitles),
+            ("project", project),
         )
         if v
     }
     params = {
         k: v
         for k, v in (
-            ("treatment", treatment), ("renderer", renderer), ("title", title),
-            ("persona", persona), ("aligner", aligner),
-            ("width", width), ("height", height), ("fps", fps),
+            ("treatment", treatment),
+            ("renderer", renderer),
+            ("title", title),
+            ("persona", persona),
+            ("aligner", aligner),
+            ("width", width),
+            ("height", height),
+            ("fps", fps),
         )
         if v is not None
     }

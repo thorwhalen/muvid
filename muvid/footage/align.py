@@ -42,14 +42,20 @@ __all__ = [
 ]
 
 #: Estimator parameters :func:`align_footage` refuses to forward, because changing them
-#: changes what :data:`~muvid.footage.edl.MIN_SUPPORT` MEANS — and the failure is silent
-#: in both directions. Measured on one 50 s clip against a 90 s reference: the defaults
-#: give ``support=0.75`` and a vouched alignment; ``window_s=45`` on the same clip gives
-#: ``support=None``, which drops the verdict onto the confidence coefficient — i.e. the
-#: support gate switches OFF and the caller is told nothing. Widening it far enough
-#: disables the check; narrowing it deflates every support — measured across eleven clip
-#: lengths, correct alignments read 0.38-0.70 at a 20 s window and 0.00-1.00 at a 4 s one
-#: — so correct alignments fall under the threshold instead.
+#: changes what :data:`~muvid.footage.edl.MIN_SUPPORT` MEANS. Per mixing#43 (mixing PR
+#: #51), an explicit ``window_s`` wider than a clip can hold a second, independent look
+#: at is refused by ``mixing`` itself with a typed ``WindowTooWideForClip``, so that
+#: direction no longer reaches muvid as a silent ``support=None``. (Where exactly that
+#: bound falls is ``mixing``'s call to make and to change; muvid does not restate it
+#: here.) Narrowing the window is not caught by that refusal and still
+#: deflates every support — measured across eleven clip lengths, correct alignments read
+#: 0.38-0.70 at a 20 s window and 0.00-1.00 at a 4 s one — so correct alignments fall
+#: under the threshold instead. Refusing here regardless of what ``mixing`` does about
+#: the wide-window case keeps the two packages from disagreeing about it later, and keeps
+#: the calibration decision (moving ``MUVID_FOOTAGE_MIN_SUPPORT`` if the window moves)
+#: something a person makes out loud rather than a side effect of a keyword — the
+#: refusal at ``mixing``'s own entry point is a different failure mode for a different
+#: caller, not a substitute for muvid's own gate.
 #:
 #: (Since ``mixing>=0.0.48``, passing ``window_s`` alone also pairs it with
 #: ``hop = window/2``, so the two are one knob at the estimator too. Another reason not
@@ -106,7 +112,8 @@ def align_footage(
 
             **The window parameters are the exception and are REFUSED** — see
             :data:`WINDOW_PARAMETERS`. They do not tune the estimator so much as re-scale
-            the gate that reads it, in both directions and silently.
+            the gate that reads it, and muvid refuses them at this entry point regardless
+            of whether ``mixing`` itself would also refuse or silently answer.
     """
     from mixing.audio import align_clips_to_reference  # lazy: heavy
 
@@ -137,9 +144,11 @@ def _refuse_window_parameters(estimator_kwargs: dict) -> None:
     raise TypeError(
         f"align_footage() will not forward {', '.join(named)}: the analysis window is "
         f"what MIN_SUPPORT is calibrated against, so changing it here would re-scale "
-        f"the trust gate without saying so — widening it far enough turns the gate off "
-        f"entirely (support becomes None and the verdict silently falls back to the "
-        f"confidence coefficient). There is no in-pipeline escape: the window is not "
+        f"the trust gate without saying so. Narrowing it deflates every support, which "
+        f"still reaches the gate silently; widening it past what a clip can hold is now "
+        f"refused by mixing itself (WindowTooWideForClip, mixing#43), but muvid "
+        f"refuses the keyword regardless, so the calibration decision stays a deliberate "
+        f"one on this side too. There is no in-pipeline escape: the window is not "
         f"tunable through this entry point, deliberately. If what you want is a "
         f"different THRESHOLD, set MUVID_FOOTAGE_MIN_SUPPORT. If you genuinely need a "
         f"different window, call mixing.audio.align_clips_to_reference yourself and "

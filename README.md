@@ -253,9 +253,12 @@ RANSOM_NOTE = Subgenre(
     slug="ransom-note",
     title="Ransom note",
     description="Lyrics cut from magazines, one word per beat.",
-    render="my_package.render:render",          # a STRING, imported lazily
-    inputs={"type": "object", "required": ["audio"],
-            "properties": {"audio": {"type": "string"}}},
+    render="my_package.render:render",  # a STRING, imported lazily
+    inputs={
+        "type": "object",
+        "required": ["audio"],
+        "properties": {"audio": {"type": "string"}},
+    },
 )
 ```
 
@@ -282,6 +285,7 @@ Verify yours against the contract:
 
 ```python
 from muvid.subgenres.testing import check_subgenre_conformance
+
 report = check_subgenre_conformance(RANSOM_NOTE, workdir=tmp_path)
 assert report.ok, report.summary()
 ```

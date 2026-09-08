@@ -23,6 +23,13 @@ The recurrence is the corrected form from the design's algorithm review
   never a silent junk EDL.
 - The ``allowed(i,j)`` clip-domain hook + the injectable boundary set make the Phase-2
   manual-pin re-solve a *pruning*, not a reformulation.
+- **An unvouched alignment is a reward penalty, not a pruning** (muvid#88): a clip the
+  aligner will not vouch for is charged :data:`UNVOUCHED_REWARD_PENALTY` reward-seconds
+  per second, which is larger than the composite's whole range and therefore ranks trust
+  above every METRIC, while leaving the clip reachable where it is the only coverage.
+  Pruning it would be a second trust gate; scoring it as a metric column would let
+  sharpness outbid it. It does **not** dominate the DP's non-composite terms — see the
+  constant, which says what it does and does not buy.
 
 numpy only (no cv2/torch): registered LAZILY in :mod:`muvid.footage.strategy` so
 ``import muvid.footage`` never pulls numpy.
@@ -214,6 +221,8 @@ def run_weighted(
         # alignment-only default rather than emit an arbitrary path.
         return _fallback(aligns, song_duration, cause="no_weighted_metrics")
 
+    composite = _demote_unvouched(composite, aligns)
+
     entries, cause = _viterbi(aligns, boundaries, composite, tensor, cfg)
     solved_cfg = cfg  # the config that actually produced `entries` (escalate on THIS)
     if entries is None:
@@ -360,6 +369,61 @@ def _composite(
         if a.clip_id in tensor.clip_ids:
             g[ai] = contrib[tensor.clip_ids.index(a.clip_id)]
     return g, W
+
+
+#: Reward-seconds per second charged to a clip the aligner will not vouch for. The
+#: composite ĝ is normalized to ``[0, 1]``, so anything ``> 1.0`` dominates it: over the
+#: same span a vouched clip at ĝ=0 outscores an unvouched one at ĝ=1, whatever the
+#: weights say. It is a demotion and not a prohibition — where nothing else covers the
+#: span the DP must still use the clip, pays the penalty on every path equally, and the
+#: choice is unaffected.
+#:
+#: **What it does NOT buy, measured rather than assumed.** "No weighting can buy an
+#: unvouched clip a span another clip covers" is true of the reward INTEGRAL and false of
+#: the DP as a whole, because two of the DP's terms are not composite reward at all:
+#:
+#: - ``l_max_overrun_penalty`` is caller-settable through ``config``. At 0.9, a single
+#:   40 s vouched clip is cut away from every 10 s: measured, ``BAD`` at 10-12, 20-22 and
+#:   30-32 s, all of them spans the vouched clip covers.
+#: - ``_viterbi``'s transition window ``max_seg_s`` (4x ``l_max`` = 32 s at the defaults)
+#:   is a PERFORMANCE bound, and consecutive segments must be different clips — so a
+#:   vouched take longer than the cap cannot be one segment and the optimizer is forced
+#:   to cut away and back. Measured under the default config, a 2 s opener plus one 58 s
+#:   vouched clip gives ``[(0,2,O), (2,34,V), (34,36,BAD), (36,60,V)]``.
+#:
+#: Raising the penalty does not fix either: both are structural, not a scoring tie the
+#: penalty is competing in. What repairs them is
+#: :func:`~muvid.footage.edl._absorb_neighbour`, which hands such a span back to the
+#: vouched cut on either side of it — losslessly, because that clip already covers it —
+#: rather than letting the recovery gap footage the shoot actually has. Keep that pairing
+#: in mind before changing either half.
+#:
+#: Not a config field, and not a tensor column, deliberately. A column would be
+#: *commensurate* with sharpness and lip-sync — a sharp unvouched clip could outrank a
+#: dull vouched one, which is exactly the trade muvid#88 says must not be available —
+#: and a config field would let the preference be tuned away silently by a caller
+#: passing ``config=`` to the MCP tool.
+UNVOUCHED_REWARD_PENALTY = 2.0
+
+
+def _demote_unvouched(composite: np.ndarray, aligns) -> np.ndarray:
+    """Charge :data:`UNVOUCHED_REWARD_PENALTY` per second to every unvouched clip (muvid#88).
+
+    The ``weighted`` strategy's form of the same preference the alignment-only built-ins
+    apply in :func:`muvid.footage.strategy._prefer_vouched`. Applied to the composite the
+    DP integrates rather than inside ``feasible()``, so it demotes without pruning: the
+    clip stays reachable where it is the only coverage, which is what keeps a refusal a
+    refusal and not a silently missing source.
+
+    Applied here rather than in :func:`_composite` because ``_composite`` also feeds
+    :func:`selection_margin`, a diagnostic about how close two clips are on SCORE. Trust
+    is not a score, and folding it in there would make that number answer a different
+    question than its name.
+    """
+    for ai, a in enumerate(aligns):
+        if not a.reliable:
+            composite[ai] -= UNVOUCHED_REWARD_PENALTY
+    return composite
 
 
 def _prefix(g_row: np.ndarray) -> np.ndarray:

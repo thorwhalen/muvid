@@ -270,10 +270,14 @@ def align_footage(project_id: str) -> dict:
 
     - ``low_confidence`` — clips that matched weakly, for reporting;
     - ``unreliable`` — clips whose offset the aligner will NOT vouch for. These stay in
-      the project and stay addressable, but ``assemble_music_video`` REFUSES to cut to
-      them unless it is called with ``allow_unreliable=true``, because a wrong offset
-      does not fail — it renders a video out of sync with the song (muvid#59). Re-align,
-      leave them out of the edit, or opt in deliberately;
+      the project and stay addressable, and the auto path simply prefers other clips
+      over them: a span another clip covers goes to that clip, and a span only an
+      unreliable clip covers is left as a gap and reported in ``coverage.excluded``
+      (muvid#88). ``assemble_music_video`` still REFUSES an explicit ``edl`` that cuts
+      to one, and still refuses an auto edit when NO clip is trustworthy, unless called
+      with ``allow_unreliable=true`` — because a wrong offset does not fail, it renders
+      a video out of sync with the song (muvid#59). Re-align, accept the smaller edit,
+      or opt in deliberately;
     - ``no_consensus`` — clips too short to be put to a vote at all (under about 4.5 s).
       **A clip in this list can be marked reliable and still be wrong**, and no other
       field will say so: its offset rests on one measurement, judged by a confidence
@@ -509,7 +513,7 @@ def _round_support(support: float | None) -> float | None:
     return None if support is None else round(float(support), 3)
 
 
-def _coverage_report(entries, aligns, song_dur: float) -> dict:
+def _coverage_report(entries, aligns, song_dur: float, *, excluded=()) -> dict:
     """What the song's timeline looks like under ``entries`` — covered, weak, and MISSING.
 
     Answers the three questions a person actually has about a proposed edit, in the form the
@@ -519,6 +523,15 @@ def _coverage_report(entries, aligns, song_dur: float) -> dict:
 
     Pass only FOOTAGE entries: a gap entry renders fill, and filled is not covered — the
     user still has no footage there, which is precisely what this report exists to say.
+
+    ``excluded`` (muvid#88) is the fourth question, and it is a different one from
+    ``uncovered``: those spans DID have footage and the edit gave them up because the only
+    clip covering them is one the aligner will not vouch for. They appear in ``uncovered``
+    as well — the user has no usable footage there either way — and here with the clip and
+    the three numbers the verdict rests on, which is what makes it actionable (re-align
+    that clip, shoot again, or re-run with ``allow_unreliable``). ``weak_segments`` and
+    ``excluded`` are therefore mutually exclusive on any one span: a weak span made the cut,
+    an excluded one did not.
     """
     by_id = {a.clip_id: a for a in aligns}
     covered = sorted((e.song_start, e.song_end) for e in entries)
@@ -551,8 +564,62 @@ def _coverage_report(entries, aligns, song_dur: float) -> dict:
         "coverage_fraction": round(covered_s / song_dur, 4) if song_dur else 0.0,
         "uncovered": gaps,
         "weak_segments": weak,
+        "excluded": [x.to_dict() for x in excluded],
         "confidence_threshold": _MIN_CONFIDENCE,
     }
+
+
+def _exclusion_note(x) -> str:
+    """One ``warnings`` line per span the recovery gave up (muvid#88).
+
+    The reply's own contract says ``warnings`` is the whole of a caller's ability to know
+    what the render PLAN found, and a hole in the video is the largest such finding there
+    is. Nesting it only under ``coverage.excluded`` meant an agent reading ``ok`` and
+    ``warnings`` — which is what the docstring tells it to read — could ship a black
+    stretch without ever seeing why.
+    """
+    from muvid.footage.edl import UNVOUCHED_SELECTION
+
+    why = (
+        "a clip the aligner vouches for covers that span, but the selection did not use "
+        "it — try another strategy or selection config"
+        if x.reason == UNVOUCHED_SELECTION
+        else "no clip the aligner vouches for covers that span — re-align or re-shoot"
+    )
+    numbers = f"confidence {x.confidence:.3f}"
+    if x.support is not None:
+        numbers += f", support {x.support:.2f}"
+    if x.margin is not None:
+        numbers += f", margin {x.margin:+.2f}"
+    return (
+        f"set aside {x.song_end - x.song_start:.1f} s of clip {x.clip_id!r} at "
+        f"{x.song_start:.1f}-{x.song_end:.1f} s ({numbers}): {why}. It renders as a gap."
+    )
+
+
+def _auto_edl(aligns, song_dur: float, *, strategy, context, recover: bool):
+    """The auto path, in one place: select -> set aside -> gap-fill (muvid#88).
+
+    Both tools that build an edit from a strategy go through this, so ``propose_edit``
+    cannot propose an edit ``assemble_music_video`` would not produce — the two are
+    documented as the same edit and the recovery is the kind of step that drifts between
+    two call sites otherwise.
+
+    ``recover=False`` (i.e. the caller passed ``allow_unreliable``) skips the exclusion
+    entirely: someone who has said they want the unvouched footage rendered means the
+    footage, not a gap where it would have been.
+
+    Returns ``(entries, excluded)``; the caller still passes ``entries`` through
+    ``validate_edl``, which stays the ONE gate.
+    """
+    from muvid.footage.edl import exclude_unvouched, fill_gaps
+    from muvid.footage.strategy import select_edl
+
+    selected = select_edl(strategy, aligns, song_dur, context=context)
+    excluded = []
+    if recover:
+        selected, excluded = exclude_unvouched(selected, aligns)
+    return fill_gaps(selected, song_dur), excluded
 
 
 def propose_edit(
@@ -575,10 +642,11 @@ def propose_edit(
     footage covers as explicit gap entries, ``clip_id: null``, rendered as black), the
     ``strategy`` actually used, and a ``coverage`` report naming every uncovered span of
     the song and every segment that made the cut despite weak alignment. Same arguments as
-    ``assemble_music_video``'s auto path.
+    ``assemble_music_video``'s auto path, and the same edit it would build — including the
+    ``coverage.excluded`` recovery described there.
     """
-    from muvid.footage.edl import fill_gaps, validate_edl
-    from muvid.footage.strategy import DEFAULT_STRATEGY, select_edl
+    from muvid.footage.edl import validate_edl
+    from muvid.footage.strategy import DEFAULT_STRATEGY
 
     proj = _open(project_id)
     if not proj.has_song():
@@ -591,15 +659,23 @@ def propose_edit(
     strat = strategy or ("weighted" if has_selection_config else DEFAULT_STRATEGY)
     try:
         context = _selection_context(proj, strat, preset, weights, config)
+        proposal, excluded = _auto_edl(
+            aligns, song_dur, strategy=strat, context=context, recover=True
+        )
         entries = validate_edl(
-            fill_gaps(select_edl(strat, aligns, song_dur, context=context), song_dur),
+            proposal,
             aligns,
             song_dur,
             canvas=proj.canvas(),
             # This tool renders nothing; refusing here would deny the caller the very
             # diagnosis they came for, since `coverage.weak_segments` names each
             # unvouched span and the time it covers. The refusal belongs where the
-            # encode does — `assemble_music_video` (muvid#59).
+            # encode does — `assemble_music_video` (muvid#59). After muvid#88 that
+            # difference is narrow: the recovery above has already set aside every
+            # span an assemble would have refused, EXCEPT in the one case it declines
+            # to act on — a shoot with no trustworthy clip at all, where this returns
+            # the unvouched edit with `weak_segments` naming every span of it and
+            # `excluded` empty, and the assemble refuses.
             allow_unreliable=True,
         )
     except (ValueError, KeyError) as e:
@@ -608,10 +684,38 @@ def propose_edit(
         "project_id": project_id,
         "strategy": strat,
         "edl": [_edl_json(e) for e in entries],
+        "assemble_refusal": _assemble_refusal(entries, aligns, song_dur, proj.canvas()),
         "coverage": _coverage_report(
-            [e for e in entries if not e.is_gap], aligns, song_dur
+            [e for e in entries if not e.is_gap],
+            aligns,
+            song_dur,
+            excluded=excluded,
         ),
+        "warnings": [_exclusion_note(x) for x in excluded],
     }
+
+
+def _assemble_refusal(entries, aligns, song_dur: float, canvas) -> "dict | None":
+    """``None`` if assembling this proposal would render; the refusal if it would not.
+
+    ``propose_edit`` validates with ``allow_unreliable=True`` so it can diagnose rather
+    than refuse — which left one case indistinguishable from success: a shoot where NO
+    clip is trustworthy comes back as a full unvouched edit with ``excluded`` empty, and
+    nothing in the reply said the render would be refused. So the question is put to the
+    GATE rather than answered by re-implementing its predicate here; two gates that can
+    disagree is the thing muvid#88 exists to avoid.
+    """
+    from muvid.footage.edl import UnreliableAlignmentError, validate_edl
+
+    try:
+        validate_edl(entries, aligns, song_dur, canvas=canvas)
+    except UnreliableAlignmentError as e:
+        return {
+            "error": "unreliable_alignment",
+            "clip_ids": e.clip_ids,
+            "message": str(e),
+        }
+    return None
 
 
 def _resolve_canvas(proj, canvas: str) -> tuple[int, int]:
@@ -697,12 +801,25 @@ def assemble_music_video(
       ``list_strategies``; default ``best_confidence``) builds the edit from the alignments.
     - ``canvas``: render-time override ("landscape"/"portrait"/"square") — the same edit
       re-rendered in another shape, no new project needed. Default: the project's canvas.
+    - **A clip the aligner will not vouch for costs its own spans, not the whole edit**
+      (muvid#88). On the auto path the strategy prefers a vouched clip wherever one
+      covers the span, so an untrustworthy clip is simply not chosen while any other
+      clip covers that stretch of the song. Where it was the ONLY footage, the span is
+      set aside rather than cut to: it renders as a gap and is named in
+      ``coverage.excluded`` with the clip, the span, and the confidence/support/margin
+      the verdict rests on. So a five-clip shoot with one bad clip still assembles.
+      The refusal remains for the two cases it was built for: an explicit ``edl`` naming
+      an unvouched clip (you chose it), and an auto edit where NO clip is trustworthy —
+      a black video reported as success is the failure this exists to prevent, so that
+      still comes back as an error naming every clip.
     - ``allow_unreliable``: render even on clips whose alignment the aligner will not
       vouch for. **Off by default and it should stay off**: a wrong offset does not
       fail, it delivers a video out of sync with the song, so the refusal is the only
       thing standing between a bad measurement and a bad render (muvid#59). Set it when
       you have checked the offsets yourself, or when a slightly-off cut beats no cut at
-      all. ``align_footage`` names the clips this applies to in its ``unreliable`` list.
+      all — it also turns OFF the set-aside above, since someone who opted in wants that
+      footage rendered rather than gapped. ``align_footage`` names the clips this
+      applies to in its ``unreliable`` list.
 
     The video is EXACTLY the song's duration: each cut is trimmed at its aligned in-point,
     scaled onto the canvas (padded, never stretched), gaps render black, and the CLEAN
@@ -724,7 +841,7 @@ def assemble_music_video(
         fill_gaps,
         validate_edl,
     )
-    from muvid.footage.strategy import DEFAULT_STRATEGY, select_edl
+    from muvid.footage.strategy import DEFAULT_STRATEGY
     from muvid.visualize import failures, report, verify_video
 
     proj = _open(project_id)
@@ -757,6 +874,9 @@ def assemble_music_video(
                 allow_unreliable=allow_unreliable,
             )
             used_strategy = None
+            # The caller named these clips; nothing is set aside on their behalf
+            # (muvid#88 is about the AUTO path, where nobody chose the bad clip).
+            excluded = []
         else:
             strat = strategy or (
                 "weighted" if has_selection_config else DEFAULT_STRATEGY
@@ -766,10 +886,16 @@ def assemble_music_video(
                     f"selection config only applies to strategy='weighted' (got {strat!r})"
                 )
             context = _selection_context(proj, strat, preset, weights, config)
+            proposal, excluded = _auto_edl(
+                aligns,
+                song_dur,
+                strategy=strat,
+                context=context,
+                # A caller who opted in wants the footage rendered, not set aside.
+                recover=not allow_unreliable,
+            )
             entries = validate_edl(
-                fill_gaps(
-                    select_edl(strat, aligns, song_dur, context=context), song_dur
-                ),
+                proposal,
                 aligns,
                 song_dur,
                 canvas=canvas_wh,
@@ -797,7 +923,7 @@ def assemble_music_video(
     # so a muvid#73 hitch came back as an `ok` render with nothing said about it.
     # A warning the caller cannot see is the silent no-op this repo refuses
     # everywhere else, so the sink is threaded in and its contents are returned.
-    notes: list[str] = []
+    notes: list[str] = [_exclusion_note(x) for x in excluded]
     try:
         out = _assemble(
             cuts,
@@ -842,7 +968,7 @@ def assemble_music_video(
         # (muvid#21 item 3). propose_edit already returns full precision; same contract.
         "edl": [_edl_json(e) for e in entries],
         "coverage": _coverage_report(
-            [e for e in entries if not e.is_gap], aligns, song_dur
+            [e for e in entries if not e.is_gap], aligns, song_dur, excluded=excluded
         ),
         "ok": not failures(checks),
         "checks": report(checks),

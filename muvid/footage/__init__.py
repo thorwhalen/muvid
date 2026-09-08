@@ -10,7 +10,8 @@ Modules:
 
 - :mod:`muvid.footage.align` — align a clip set to the song (thin over ``mixing.audio``).
 - :mod:`muvid.footage.strategy` — the pluggable ``SelectionStrategy`` registry that turns
-  alignments into an EDL (which clip covers which span of the song).
+  alignments into an EDL (which clip covers which span of the song), preferring a clip
+  the aligner vouches for wherever one covers the span (muvid#88).
 - :mod:`muvid.footage.edl` — the ``validate_edl`` SSOT + EDL/alignment data types,
   including the per-cut ``CropWindow`` (the EDL's spatial half, muvid#60).
 - :mod:`muvid.footage.look` — the ``looks`` seam: compile a grade, a LUT or an
@@ -23,7 +24,9 @@ from muvid.footage.edl import (
     FootageAlignment,
     EdlEntry,
     CropWindow,
+    ExcludedSpan,
     UnreliableAlignmentError,
+    exclude_unvouched,
     validate_edl,
     derive_cuts,
 )
@@ -49,7 +52,9 @@ __all__ = [
     "FootageAlignment",
     "EdlEntry",
     "CropWindow",
+    "ExcludedSpan",
     "UnreliableAlignmentError",
+    "exclude_unvouched",
     "validate_edl",
     "derive_cuts",
     "LookError",

@@ -435,9 +435,7 @@ def _fade_tag(p: _Placed, *, fade_in: bool = True) -> str:
 def _one(p: _Placed, motion_tags: str, *, position: str | None = None) -> list[_Event]:
     """The common case: one Dialogue event carrying ``motion_tags``."""
     tags = f"{position or _pos(p)}{_style_tags(p)}{motion_tags}{_dim_tags(p)}"
-    return [
-        _Event(start=p.start, end=p.end, layer=p.cue.layer, tags=tags, text=p.text)
-    ]
+    return [_Event(start=p.start, end=p.end, layer=p.cue.layer, tags=tags, text=p.text)]
 
 
 # --------------------------------------------------------------------------

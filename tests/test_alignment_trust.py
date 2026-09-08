@@ -924,9 +924,17 @@ def test_the_window_is_fitted_to_the_clip_and_reported_with_the_support(tmp_path
 def test_a_wider_window_is_refused_because_it_would_turn_the_gate_off(tmp_path):
     """Measured: ``window_s=45`` on a 50 s clip takes support from 0.75 to None.
 
-    That is the support gate switching off — the verdict silently falls back to the
-    confidence coefficient — from a keyword that reads like a tuning knob. An argument
-    that quietly disables a safety check is refused rather than documented.
+    That measurement predates mixing#43 (mixing PR #51): a wide-enough explicit
+    ``window_s`` used to make ``mixing`` return ``support=None``, quietly falling the
+    verdict back onto the confidence coefficient. Per mixing#43, ``mixing`` refuses
+    that call itself with a typed ``WindowTooWideForClip`` instead of answering.
+    muvid refuses
+    the keyword at its own entry point regardless of what ``mixing`` does with it —
+    narrowing the window is not caught by mixing's refusal and still deflates every
+    support silently, and re-scaling the gate ``MIN_SUPPORT`` is calibrated against is
+    a decision muvid wants made out loud (via ``MUVID_FOOTAGE_MIN_SUPPORT``), not one
+    that rides along with an estimator keyword. An argument that quietly re-scales a
+    safety check is refused rather than merely documented.
     """
     from muvid.footage.align import align_footage
 
