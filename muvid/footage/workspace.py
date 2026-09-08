@@ -13,6 +13,12 @@ with the visualizer's root, different subtree). **Never** inside the app/deploy 
 - ``.../clips/{clip_id}.<ext>`` — an uploaded footage clip
 - ``.../alignments.json`` — the persisted per-clip alignment
 - ``.../renders/{render_id}/`` — an assembled music video
+
+Invalidation is deliberate and lives here, beside the state it protects: ``set_song``
+and ``remove_clip`` both drop ``alignments.json`` and every persisted score track,
+because the alignment is a measurement of exactly the song and the clip set that were
+present when it was taken (muvid#22 — a removed clip's offset must not outlive the
+clip, and the score tensor is keyed on that alignment's fingerprint).
 """
 
 from __future__ import annotations
@@ -148,6 +154,53 @@ class MusicVideoFootageProject:
         clips.append({"clip_id": cid, "file": dest.name, "name": name or cid})
         self._write_manifest(m)
         return cid
+
+    def remove_clip(self, clip_id: str) -> dict:
+        """Delete one clip — its file(s) and its manifest entry — and invalidate what
+        was measured against it (muvid#22).
+
+        A removal changes the clip SET the alignment describes, so ``alignments.json``
+        is dropped and, with it, every persisted score track — the same invalidation
+        ``set_song`` performs, and for the same reason: scores are keyed on the alignment
+        fingerprint, which no longer matches. Whole-artifact, not surgical: pruning one
+        record from the alignment would still move the fingerprint and strand the
+        score manifest, and editing that manifest in place is a migration-surface change
+        this method deliberately does not make.
+
+        The steps run in an order where every crash-intermediate state is a valid
+        project: alignment and scores go first (leaving "present, unaligned"), then the
+        manifest (leaving at worst an orphan file ``add_clip`` would sweep), then the
+        file — never a manifest entry pointing at a file that is gone.
+
+        Returns what happened: ``{clip_id, name, files, alignment_invalidated,
+        scores_invalidated}``. Raises ``KeyError`` for a ``clip_id`` the manifest does
+        not hold; the MCP tool turns that into a refusal naming the known ids.
+        """
+        cid = safe_component(clip_id, label="clip_id")
+        m = self.manifest()
+        clips = list(m.get("clips", []))
+        entry = next((c for c in clips if c.get("clip_id") == cid), None)
+        if entry is None:
+            raise KeyError(cid)
+        alignment = self.root / "alignments.json"
+        had_alignment = alignment.exists()
+        alignment.unlink(missing_ok=True)
+        had_scores = (self.root / "scores").exists()
+        self.invalidate_scores()
+        m["clips"] = [c for c in clips if c.get("clip_id") != cid]
+        self._write_manifest(m)
+        removed_files = []
+        # The same sweep add_clip uses: any extension this id was ever stored under.
+        for old in (self.root / "clips").glob(f"{cid}.*"):
+            old.unlink()
+            removed_files.append(old.name)
+        return {
+            "clip_id": cid,
+            "name": entry.get("name", cid),
+            "files": removed_files,
+            "alignment_invalidated": had_alignment,
+            "scores_invalidated": had_scores,
+        }
 
     def clip_paths(self) -> dict:
         out = {}
