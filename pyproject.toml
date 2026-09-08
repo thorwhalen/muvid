@@ -134,6 +134,16 @@ scoring-shots = [
 editor = [
     "lacing",
 ]
+# The WEB lyric-video backend (muvid.lyricvid.render_web): a deterministic HTML page
+# screenshotted frame by frame by headless Chromium. OPTIONAL — the ASS backend is the
+# default and needs no browser; this extra is the escape hatch for effects a subtitle
+# format cannot express (CSS filters, blend modes, variable fonts, arbitrary easing).
+# Playwright is Apache-2.0. The browser binary is a SECOND install:
+#     pip install 'muvid[lyricvid-web]' && playwright install chromium
+# The import is lazy, so `import muvid.lyricvid.render_web` never pulls it.
+lyricvid-web = [
+    "playwright>=1.40",
+]
 # OPT-IN, OFF BY DEFAULT — the lip-sync tier (Demucs vocal separation + SyncNet LSE-C). NOT
 # on the prod connector: the htdemucs weights are CC-BY-NC (research-only, not commercial-
 # clean) and Demucs+SyncNet on CPU peak ~2-3 GB (OOM risk on the fragile box). Install only
@@ -141,6 +151,19 @@ editor = [
 scoring-lipsync = [
     "demucs",
     "syncnet-python",
+]
+# The LYRIC VIDEO subgenre's default renderer (muvid.lyricvid.render_ass): the computed
+# scene is emitted as an ASS subtitle document and burnt in with ffmpeg's `subtitles`
+# filter, which IS libass — so this extra buys a pure-Python document builder and no new
+# system dependency (ffmpeg is already a hard requirement). 1.6 is where
+# `pysubs2.Alignment` exists (verified against the published wheels, not the changelog:
+# 1.5.0's `__init__` exports `Color, VERSION` and 1.6.0's exports `Color, Alignment,
+# VERSION`) — the renderer's centre-centre anchor is that enum, and the whole Cue->\pos
+# contract rests on it. pysubs2 is MIT and declares no dependencies of its own, so it
+# clears the core-tier licence bar; it is an extra rather than core only because `import
+# muvid` must not pay for a renderer most callers never reach.
+lyricvid = [
+    "pysubs2>=1.6",
 ]
 ui = [
     "fastapi",
@@ -158,6 +181,32 @@ dev = [
 docs = [
     "sphinx>=6.0",
     "sphinx-rtd-theme>=1.0",
+]
+
+# PACKAGE DATA. The distribution is the whole `muvid` package directory, non-`.py`
+# files included: `muvid/data/prompts/*.md` (the creative director's prompt text —
+# one copy, read at runtime by BOTH the agentic skill and the production LLM call,
+# through `importlib.resources` so it works from a wheel and not only from a
+# checkout), `muvid/data/skills/` (the shipped lyric-video skill) and
+# `muvid/ui/static/`. Hatchling infers `packages` from the project name and would
+# include all of that by default, so this block changes nothing today — it is
+# written out because those files are LOAD-BEARING AT RUNTIME and hatchling's
+# default file selection honours VCS ignore rules. A future `.gitignore` line that
+# swept up `data/` or `*.md` would drop the prompts from the wheel while every
+# import still succeeded, and the first symptom would be a `FileNotFoundError` in
+# production. `artifacts` re-includes them unconditionally, which is the one thing
+# an ignore rule cannot undo.
+[tool.hatch.build.targets.wheel]
+packages = ["muvid"]
+artifacts = [
+    "muvid/data/**/*.md",
+    "muvid/ui/static/*",
+]
+
+[tool.hatch.build.targets.sdist]
+artifacts = [
+    "muvid/data/**/*.md",
+    "muvid/ui/static/*",
 ]
 
 [tool.ruff]
@@ -230,7 +279,7 @@ project_name = ""
 # hardcodes the same value in its two install-deps-uv steps; keep the three sites in
 # agreement.
 [tool.wads.ci.install]
-extras = "ai,mcp,ui"
+extras = "ai,mcp,ui,lyricvid"
 
 [tool.wads.ci.commands]
 pre_test = []

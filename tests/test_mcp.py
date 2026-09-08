@@ -50,9 +50,23 @@ def test_register_tools_prefixes_and_selects():
     assert "render_visualizer" not in minus
 
 
-def test_no_costed_tools():
-    assert mcp.COSTED_TOOLS == []
-    assert set(mcp.FREE_TOOLS) == set(mcp.TOOL_NAMES)
+def test_exactly_one_costed_tool_and_the_split_is_total():
+    """muvid has exactly one tool that spends money, and the split covers everything.
+
+    This assertion changed deliberately. It used to read
+    ``COSTED_TOOLS == []`` / ``FREE_TOOLS == TOOL_NAMES``, which was true while
+    every tool was ffmpeg-only. ``propose_lyric_treatments_ai`` calls an LLM to
+    author a lyric-video treatment and is the first tool that does not.
+
+    What the test now defends is the property that actually matters to a host:
+    free and costed must PARTITION the tool list. A tool in neither is
+    unmeterable; a tool in both is ambiguous. The heuristic proposer stays free
+    and is a separate tool from the AI one precisely so this partition can exist
+    at all — a host meters by tool name and cannot see an argument.
+    """
+    assert mcp.COSTED_TOOLS == ["propose_lyric_treatments_ai"]
+    assert set(mcp.FREE_TOOLS) | set(mcp.COSTED_TOOLS) == set(mcp.TOOL_NAMES)
+    assert not (set(mcp.FREE_TOOLS) & set(mcp.COSTED_TOOLS))
 
 
 def test_list_visuals_lists_the_six_looks():
@@ -360,12 +374,13 @@ def test_every_public_tool_function_is_registered():
     call them. The tests reached them by direct import, which is exactly why the
     gap was invisible — a feature shipped without a transport.
 
-    Each of the three tool modules holds only tool functions at public scope, so
+    Each of the four tool modules holds only tool functions at public scope, so
     "public function not in the declared list" is the whole invariant.
     """
     import inspect
 
     import muvid.mcp.footage_tools as footage_tools
+    import muvid.mcp.lyricvid_tools as lyricvid_tools
     import muvid.mcp.scoring_tools as scoring_tools
     import muvid.mcp.tools as visualizer_tools
 
@@ -373,6 +388,7 @@ def test_every_public_tool_function_is_registered():
         (visualizer_tools, mcp.VISUALIZER_TOOLS),
         (scoring_tools, mcp.SCORING_TOOLS),
         (footage_tools, mcp.FOOTAGE_TOOLS),
+        (lyricvid_tools, mcp.LYRICVID_TOOLS),
     ):
         public = {
             name

@@ -37,7 +37,12 @@ def test_register_tools_includes_scoring():
     ):
         assert t in names
     assert len(names) == len(set(names))  # no dup names
-    assert mcp.COSTED_TOOLS == []
+    # The scoring tools are ffmpeg-only and spend nothing. This used to assert the
+    # GLOBAL `COSTED_TOOLS == []`, which stopped being true when the lyric-video
+    # LLM director arrived — and was never this test's business anyway. The
+    # partition invariant lives in test_mcp.py; what belongs here is that no
+    # scoring tool has quietly become costed.
+    assert not (set(mcp.SCORING_TOOLS) & set(mcp.COSTED_TOOLS))
 
 
 def test_scoring_tools_reject_missing_prereqs(tmp_path, monkeypatch):

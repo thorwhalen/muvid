@@ -1,8 +1,9 @@
 # muvid
 
-Tools to make music videos — three ways, from a song and a cover, from a pile of
-phone recordings of one gig, or from an AI narrative pipeline. See the table
-below for which is which; the rest of this section describes the third.
+Tools to make music videos — four ways: from a song and a cover, from a pile of
+phone recordings of one gig, from an AI narrative pipeline, or as a lyric video
+whose words appear in time with the singing. See the table below for which is
+which; the rest of this section describes the AI pipeline.
 
 The AI pipeline orchestrates the local ecosystem (`falaw`, `lookbook`, `lacing`,
 `an`, `mixing`) into a song-to-video pipeline. The user is the director; an agent
@@ -24,17 +25,23 @@ The AI pipeline orchestrates the local ecosystem (`falaw`, `lookbook`, `lacing`,
 > [`misc/docs/alignment_references.md`](misc/docs/alignment_references.md)
 > for the lyric-alignment literature muvid builds on.
 
-muvid is **three independent parts**:
+muvid is **four independent parts**:
 
 | part | what it does | needs |
 |---|---|---|
 | [`muvid.visualize`](#muvidvisualize--audio--cover--video) | a song + a cover → a 16:9 audio-reactive visualizer video, deterministic and ffmpeg-only | `ffmpeg` |
 | [the `music_video` genre](#the-music_video-genre--footage-assembly) | N phone recordings of ONE song → aligned, scored, cut and assembled into a music video | `ffmpeg` |
 | the AI narrative pipeline (above) | a song → a cast, a script and generated shots | API keys, `muvid[ai]` |
+| [`muvid.lyricvid`](#muvidlyricvid--lyric-videos) | a song → a typographic music video: the words appear in time with the singing | `ffmpeg`, `muvid[lyricvid]` |
 
-The first two are free, deterministic and key-free, and both are registered
+Three of the four are free, deterministic and key-free, and are registered
 [`nw`](https://github.com/thorwhalen/nw) genres — so a host connector serves them
-directly. The third is the generative one, and is the only part that spends money.
+directly. The AI narrative pipeline is the generative one. The lyric video is free
+by default; only its optional LLM creative director spends money.
+
+`muvid.lyricvid` is also the first **subgenre plugin** — see
+[Plugins](#plugins--adding-a-kind-of-video) for how to add another kind of video
+without editing muvid.
 
 ## Install
 
@@ -42,7 +49,9 @@ directly. The third is the generative one, and is the only part that spends mone
 pip install muvid                  # core: CLI + muvid.visualize + muvid.footage (needs ffmpeg)
 pip install 'muvid[scoring]'       # footage scoring: quality + motion-to-beat + the weighted selector
 pip install 'muvid[editor]'        # export a footage project as lacing annotations
-pip install 'muvid[mcp]'           # serve the two nw genres over MCP (fastmcp, py2mcp, nw)
+pip install 'muvid[mcp]'           # serve the nw genres over MCP (fastmcp, py2mcp, nw)
+pip install 'muvid[lyricvid]'      # lyric videos: the ASS renderer (pysubs2)
+pip install 'muvid[lyricvid-web]'  # ...plus the browser renderer (playwright)
 pip install 'muvid[ai]'            # the narrative pipeline (falaw, lacing, lookbook)
 pip install 'muvid[ui]'            # FastAPI + uvicorn for the web UI
 ```
@@ -177,6 +186,109 @@ expose it as MCP tools (`set_song`, `add_footage`, `align_footage`, `propose_edi
 schemas, `clip-alignment/v1`, `clip-score-track/v1` and `music-video-edl/v1`, all in song
 time on one axis — and reads an edited `DECISION` tier back into an EDL. Annotate → edit
 → export → render round-trips to the same cuts, transitions included.
+
+## `muvid.lyricvid` — lyric videos
+
+A song in, a typographic music video out: the words appear in time with the
+singing. Free, deterministic, and no API key.
+
+```bash
+pip install 'muvid[lyricvid]'
+python -m muvid.lyricvid render song.wav out.mp4 --lyrics lyrics.md
+```
+
+That is the whole minimum. Everything else is optional: `--lyrics` may be
+muvid's lyrics markdown, plain text, an `.srt`, an enhanced `.lrc`, an existing
+muvid project — or nothing at all, in which case the words are transcribed.
+
+The pipeline is four seams, each with a default that genuinely works:
+
+```
+audio (+ lyrics)  ->  TimedText     measured word times, from muvid's own aligner
+                  ->  TreatmentSpec the creative decision
+                  ->  Scene         every position and time, computed in Python
+                  ->  mp4           the ASS renderer, or the browser one
+```
+
+**The layout is chosen from a closed set of archetypes** — one word centred,
+stacked lines, a karaoke wipe, a fixed concrete page whose words ignite in
+reading order, words packed into a shape, text on a path, scatter:
+
+```bash
+python -m muvid.lyricvid vocabulary          # the archetypes, with descriptions
+python -m muvid.lyricvid analyze song.wav    # words/second, sections, timing quality
+python -m muvid.lyricvid propose song.wav    # 3 ranked treatments, free, no model
+```
+
+A **treatment** is a small JSON document with two layers: a `direction` (mood,
+palette, typography, motion vocabulary, and a rationale) and `scenes` (an
+archetype plus parameters). It never contains a coordinate or a timestamp —
+those are computed from measurement, which is what keeps the words in sync. Edit
+it by hand, validate it, re-render:
+
+```bash
+python -m muvid.lyricvid validate treatment.json
+python -m muvid.lyricvid render song.wav out.mp4 --treatment treatment.json
+```
+
+An **LLM creative director** can propose the treatment instead (`--use-llm`).
+It is opt-in, it is the only part of muvid that spends money, and it still emits
+only a treatment — never rendering code, never coordinates.
+
+Two renderers. `ass` (default) writes an
+[ASS](https://en.wikipedia.org/wiki/SubStation_Alpha) subtitle file and burns it
+in with ffmpeg: frame-exact, no browser, and the `.ass` file is itself an
+editable deliverable you can open in Aegisub. `web` drives headless Chromium for
+effects ASS cannot express, at 10-100x the render time.
+
+## Plugins — adding a kind of video
+
+`muvid.subgenres` is how another kind of video gets added, by muvid or by anyone
+else, without editing muvid. A subgenre is declared as pure data:
+
+```python
+from muvid.subgenres import Subgenre
+
+RANSOM_NOTE = Subgenre(
+    slug="ransom-note",
+    title="Ransom note",
+    description="Lyrics cut from magazines, one word per beat.",
+    render="my_package.render:render",          # a STRING, imported lazily
+    inputs={"type": "object", "required": ["audio"],
+            "properties": {"audio": {"type": "string"}}},
+)
+```
+
+and shipped by pointing an entry point at the manifest:
+
+```toml
+[project.entry-points."muvid.subgenres.v1"]
+ransom-note = "my_package.subgenre:RANSOM_NOTE"
+```
+
+The renderer is a plain function, `(RenderRequest) -> RenderResult`, handed paths
+and primitives — never a muvid project object, so muvid can change its own
+schema without breaking you.
+
+Two properties are worth the design they cost. **Listing imports nothing**: the
+entry point resolves to a manifest, not a renderer, so a UI or an agent can
+choose among a dozen installed subgenres in microseconds, and a plugin whose
+heavy dependency is missing becomes a recorded error rather than a dead
+catalogue. **It composes with `nw` rather than competing**: muvid bridges
+subgenres up into the `nw` genre catalogue, so a plugin depends on `muvid` alone
+and a host connector picks it up for free.
+
+Verify yours against the contract:
+
+```python
+from muvid.subgenres.testing import check_subgenre_conformance
+report = check_subgenre_conformance(RANSOM_NOTE, workdir=tmp_path)
+assert report.ok, report.summary()
+```
+
+```bash
+python -m muvid.lyricvid subgenres    # everything installed, as JSON
+```
 
 ## 30-second tour
 

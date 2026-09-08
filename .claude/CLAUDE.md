@@ -1,17 +1,48 @@
 # muvid — agent & contributor guide
 
-`muvid` makes music videos. It is **three parts**, not two — the "two independent
-halves" line in `README.md` and `muvid/__init__.py` predates the footage genre and is
-stale. Read this table before touching anything:
+`muvid` makes music videos. It is **four parts** — the "two independent halves" line in
+`README.md` and `muvid/__init__.py` predates the footage genre and is stale. Read this
+table before touching anything:
 
 | # | part | entry points | state | status |
 |---|---|---|---|---|
 | 1 | **Visualizer** — ffmpeg-only, deterministic, no AI, no network | `muvid/visualize/`, nw genre `music-visualizer` (`muvid/genre.py`) | stateless | shipped; `yb` publishes through it |
 | 2 | **Footage assembly** — align N phone recordings of ONE song, score, select, EDL, assemble | `muvid/footage/`, `muvid/genre_music_video.py`, `muvid/mcp/footage_tools.py` + `scoring_tools.py` | **stateful, on disk** | shipped; **the active workstream**; serves live connector traffic |
 | 3 | **Full-AI narrative pipeline** — transcribe → align → cast → environments → script → render → compose | `muvid/facade.py`, `muvid/renderers/`, `muvid/lyrics.py`, `muvid/align.py`, `muvid/script.py`, `muvid/compose.py` | project folder | works end to end; **not** an nw genre; the shrink-toward-nw candidate (issue #4) |
+| 4 | **Lyric video (kinetic typography)** — measured word times → a treatment → a computed scene → ASS or browser render | `muvid/lyricvid/`, `muvid/subgenres/`, nw genre `lyric-video` (`muvid/genre_lyric_video.py`), `muvid/mcp/lyricvid_tools.py` | stateless | shipped; the first **subgenre plugin**, and the first COSTED tool |
 
-Parts 1 and 2 are registered nw genres served over MCP. Part 3 is standalone (CLI +
+Parts 1, 2 and 4 are registered nw genres served over MCP. Part 3 is standalone (CLI +
 `.claude/skills/muvid/` + the local FastAPI UI).
+
+### Part 4 is also the plugin surface — read this before adding a fifth part
+
+`muvid/subgenres/` is the answer to "another kind of video", **by anyone**. Three things
+about it are load-bearing and easy to undo by accident:
+
+- **It sits BELOW `nw.Genre`, not beside it.** `nw` already owns the cross-package
+  catalogue and has no plugin hook; a second registry of "a kind of music video" would
+  fight it over slugs, directories and the MCP surface. A subgenre is bridged UP into
+  one `nw.Template` (or, as with `lyric-video`, one Genre whose Templates are its
+  archetypes) by muvid — so a third-party plugin depends on `muvid` alone and never
+  imports `nw`.
+- **The entry-point value is a MANIFEST, not a renderer** (`muvid.subgenres.Subgenre`,
+  entry-point group `muvid.subgenres.v1`). Listing every installed subgenre imports no
+  rendering code, which is what lets an LLM or a UI choose among a dozen of them without
+  paying for a dozen dependency trees — and lets one broken plugin be a recorded error
+  instead of a dead catalogue. Keep manifest modules stdlib-only.
+- **The renderer is handed paths and primitives, never a `MusicVideoProject`.** A plugin
+  coupled to muvid's project schema turns every schema change into a breaking plugin-API
+  change (Sphinx's `app`, MkDocs' `config`, Datasette's `datasette` are the cautionary
+  tales). A plugin needing more asks through a narrow accessor, and that request becomes
+  a visible API change.
+
+`muvid.subgenres.testing.check_subgenre_conformance` is the conformance kit a plugin
+author runs; keep it honest, because it is the only thing standing between a
+third-party plugin and a support request.
+
+**The `lyric-video` slug is hyphenated, knowingly** (see "The slug trap" below): it
+matches the newer `music-visualizer` rather than `music_video`, and it is a persisted
+path segment and a live connector contract value from the day it ships.
 
 ## Start here (AI-first)
 
@@ -26,6 +57,11 @@ Skills in `.claude/skills/` (there are no agents in this repo):
   the selection strategy. Read this first for footage work.
 - [`muvid-score-footage`](skills/muvid-score-footage/SKILL.md) — **part 2**: the
   per-metric scoring recipes and the licence boundary.
+- [`muvid-lyric-video`](skills/muvid-lyric-video/SKILL.md) — **part 4**: choosing an
+  archetype, reading `timing_measured` before trusting word sync, and the rule that no
+  agent ever writes a coordinate or a timestamp. Unlike the others this one is a
+  **shipped** skill: the real files live in `muvid/data/skills/` so they reach a wheel,
+  and `.claude/skills/muvid-lyric-video` is a symlink to them.
 
 The rest of this file is the contract those skills rely on.
 
