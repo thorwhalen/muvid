@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.mcp.footage_tools &mdash; muvid 0.0.59 documentation</title>
+  <title>muvid.mcp.footage_tools &mdash; muvid 0.0.60 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -15,7 +15,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=6799126d"></script>
+      <script src="../../../_static/documentation_options.js?v=4d22d5b7"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -103,6 +103,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#muvid.mcp.footage_tools.add_footage_folder"><code class="docutils literal notranslate"><span class="pre">add_footage_folder()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.mcp.footage_tools.align_footage"><code class="docutils literal notranslate"><span class="pre">align_footage()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.mcp.footage_tools.assemble_music_video"><code class="docutils literal notranslate"><span class="pre">assemble_music_video()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.mcp.footage_tools.beat_grid"><code class="docutils literal notranslate"><span class="pre">beat_grid()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.mcp.footage_tools.footage_editor_document"><code class="docutils literal notranslate"><span class="pre">footage_editor_document()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.mcp.footage_tools.footage_edl_from_annotations"><code class="docutils literal notranslate"><span class="pre">footage_edl_from_annotations()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.mcp.footage_tools.footage_status"><code class="docutils literal notranslate"><span class="pre">footage_status()</span></code></a></li>
@@ -331,6 +332,31 @@ therefore restarts (muvid#73). Neither fails the render — <code class="docutil
 so this list is the only place either one is ever said. It exists because
 these findings used to be Python warnings on the server’s stderr, which a
 remote caller has no access to.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.mcp.footage_tools.beat_grid">
+<span class="sig-prename descclassname"><span class="pre">muvid.mcp.footage_tools.</span></span><span class="sig-name descname"><span class="pre">beat_grid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">project_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="../../../_modules/muvid/mcp/footage_tools.html#beat_grid"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.mcp.footage_tools.beat_grid" title="Link to this definition"></a></dt>
+<dd><p>The song’s beat grid — tempo and beat instants on the song timeline — WITHOUT
+running the scoring job. Free.</p>
+<p><code class="docutils literal notranslate"><span class="pre">score_footage</span></code> computes this very grid as its first stage and then decodes every
+clip through cv2 in the background, which is far too much to pay when all a caller
+wants is where the beats are (thorwhalen/muvid#18 item 5) — a fixed-stride cut grid,
+a check that the tempo came out right, a cut plan of its own. This is one call to
+<code class="docutils literal notranslate"><span class="pre">mixing.audio.beat_grid</span></code> on the song alone (the “compute once on the master”
+invariant: clips map to it through their offsets, never the other way round),
+cached under the project as <code class="docutils literal notranslate"><span class="pre">scores/beat_grid.json</span></code> keyed on <code class="docutils literal notranslate"><span class="pre">song_hash</span></code> so the
+second call is a file read; a project that has already been scored is served from
+that run’s manifest instead. <code class="docutils literal notranslate"><span class="pre">source</span></code> says which (<code class="docutils literal notranslate"><span class="pre">computed</span></code> | <code class="docutils literal notranslate"><span class="pre">cache</span></code> |
+<code class="docutils literal notranslate"><span class="pre">scores</span></code>).</p>
+<p>Needs the <code class="docutils literal notranslate"><span class="pre">scoring</span></code> extra (<code class="docutils literal notranslate"><span class="pre">mixing[beats]</span></code>, i.e. librosa); without it the reply
+is a clean error naming the install, never a traceback. Needs a song
+(<code class="docutils literal notranslate"><span class="pre">set_song</span></code>); no alignment is required.</p>
+<p>Returns <code class="docutils literal notranslate"><span class="pre">tempo_bpm</span></code>, <code class="docutils literal notranslate"><span class="pre">beats</span></code> (seconds, ascending), <code class="docutils literal notranslate"><span class="pre">n_beats</span></code>,
+<code class="docutils literal notranslate"><span class="pre">song_duration</span></code> (so a caller can close the last bar) and <code class="docutils literal notranslate"><span class="pre">source</span></code>.
+<code class="docutils literal notranslate"><span class="pre">downbeats</span></code> is present only when the estimator measured any — the librosa
+backend has no downbeat tracker, and an empty list would read as “this song has
+no downbeats”, a measurement nobody made (gate, don’t zero).</p>
 </dd></dl>
 
 <dl class="py function">

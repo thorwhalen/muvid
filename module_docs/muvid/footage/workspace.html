@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.footage.workspace &mdash; muvid 0.0.59 documentation</title>
+  <title>muvid.footage.workspace &mdash; muvid 0.0.60 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -15,7 +15,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=6799126d"></script>
+      <script src="../../../_static/documentation_options.js?v=4d22d5b7"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -91,6 +91,8 @@
 <li class="toctree-l3"><a class="reference internal" href="#muvid.footage.workspace.MusicVideoFootageProject.song_hash"><code class="docutils literal notranslate"><span class="pre">MusicVideoFootageProject.song_hash()</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.footage.workspace.atomic_write_bytes"><code class="docutils literal notranslate"><span class="pre">atomic_write_bytes()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.footage.workspace.atomic_write_text"><code class="docutils literal notranslate"><span class="pre">atomic_write_text()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../genre.html">muvid.genre</a></li>
@@ -188,6 +190,23 @@ with the visualizer’s root, different subtree). <strong>Never</strong> inside 
 <li><p><code class="docutils literal notranslate"><span class="pre">.../alignments.json</span></code> — the persisted per-clip alignment</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">.../renders/{render_id}/</span></code> — an assembled music video</p></li>
 </ul>
+<p><strong>Every JSON record here is replaced, never truncated in place</strong> (muvid#17 item 4).
+<code class="docutils literal notranslate"><span class="pre">manifest.json</span></code> and <code class="docutils literal notranslate"><span class="pre">alignments.json</span></code> used to be bare <code class="docutils literal notranslate"><span class="pre">write_text</span></code> calls — a
+truncate-then-write — while <code class="docutils literal notranslate"><span class="pre">manifest()</span></code> deliberately swallows <code class="docutils literal notranslate"><span class="pre">OSError</span></code>/<code class="docutils literal notranslate"><span class="pre">ValueError</span></code>
+so an unreadable project reads as an EMPTY one. Put together, a process killed between
+the truncate and the write left a project that presented as having no song and no clips:
+not an error a caller could act on, but a plausible state a caller would act on wrongly
+(re-uploading everything, or rendering nothing). The scoring layer three directories
+away already wrote tmp + <code class="docutils literal notranslate"><span class="pre">os.replace</span></code>; <a class="reference internal" href="#muvid.footage.workspace.atomic_write_text" title="muvid.footage.workspace.atomic_write_text"><code class="xref py py-func docutils literal notranslate"><span class="pre">atomic_write_text()</span></code></a> is the ONE such dance
+now, shared by every manifest/alignment/meta write here, <code class="docutils literal notranslate"><span class="pre">scoring/grid.py</span></code> (through
+<a class="reference internal" href="#muvid.footage.workspace.atomic_write_bytes" title="muvid.footage.workspace.atomic_write_bytes"><code class="xref py py-func docutils literal notranslate"><span class="pre">atomic_write_bytes()</span></code></a>, its <code class="docutils literal notranslate"><span class="pre">.npz</span></code> primitive) and <code class="docutils literal notranslate"><span class="pre">downloads.organise</span></code>. A reader
+sees the whole prior record or the whole new one. The on-disk FORMAT is untouched: that
+would be a migration.</p>
+<p><strong>Invalidation runs BEFORE the write that would make the stale artifact look current.</strong>
+<code class="docutils literal notranslate"><span class="pre">set_song</span></code> drops <code class="docutils literal notranslate"><span class="pre">alignments.json</span></code> and the score tracks first and replaces the manifest
+LAST, so no crash window leaves a manifest naming the new song beside an alignment measured
+against the old one — the offsets would then be read as if they belonged to it, which is
+muvid#59’s silently-out-of-sync video by another route.</p>
 <p>Invalidation is deliberate and lives here, beside the state it protects: <code class="docutils literal notranslate"><span class="pre">set_song</span></code>
 and <code class="docutils literal notranslate"><span class="pre">remove_clip</span></code> both drop <code class="docutils literal notranslate"><span class="pre">alignments.json</span></code> and every persisted score track,
 because the alignment is a measurement of exactly the song and the clip set that were
@@ -288,6 +307,23 @@ branching on which drawer it is looking in.</p>
 <dt class="sig sig-object py" id="muvid.footage.workspace.MusicVideoFootageProject.set_song">
 <span class="sig-name descname"><span class="pre">set_song</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">src_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">ext</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../../_modules/muvid/footage/workspace.html#MusicVideoFootageProject.set_song"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.workspace.MusicVideoFootageProject.set_song" title="Link to this definition"></a></dt>
 <dd><p>Store (replacing) the project’s one clean song from a local file.</p>
+<p>The order of operations is the contract (muvid#17 item 4), in three phases:</p>
+<ol class="arabic simple">
+<li><p><strong>Everything that can fail runs first, against a staged copy</strong> — the copy
+itself, the duration probe, the content hash. A missing source or an
+un-probeable file raises here and the project is exactly as it was: the old
+song, its alignment and its scores all still stand.</p></li>
+<li><p><strong>What the old song vouched for is dropped</strong> — <code class="docutils literal notranslate"><span class="pre">alignments.json</span></code> and the
+score tracks — BEFORE the manifest can name the new song. The song is the
+alignment reference, so an offset measured against the old one is meaningless
+against the new one; but nothing on disk ties an alignment record to a song,
+so a manifest that named the new song beside the old alignment would have
+those offsets read as its own and cut a video silently out of sync (the
+muvid#59 failure shape, by a different route). Dropping first means the worst
+a crash can leave is a project that demands a fresh <code class="docutils literal notranslate"><span class="pre">align_footage</span></code>.</p></li>
+<li><p><strong>The song file lands, then the manifest is replaced LAST</strong> — it names the
+file, so the file must exist before any reader can be pointed at it.</p></li>
+</ol>
 </dd></dl>
 
 <dl class="py method">
@@ -296,6 +332,49 @@ branching on which drawer it is looking in.</p>
 <dd><p>The clean song’s content hash (cached in the manifest; computed if missing).</p>
 </dd></dl>
 
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.footage.workspace.atomic_write_bytes">
+<span class="sig-prename descclassname"><span class="pre">muvid.footage.workspace.</span></span><span class="sig-name descname"><span class="pre">atomic_write_bytes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bytes</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../../_modules/muvid/footage/workspace.html#atomic_write_bytes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.workspace.atomic_write_bytes" title="Link to this definition"></a></dt>
+<dd><p>Replace <code class="docutils literal notranslate"><span class="pre">path</span></code>’s content with <code class="docutils literal notranslate"><span class="pre">data</span></code> so a reader never sees a torn file.</p>
+<p>The ONE tmp + fsync + <code class="docutils literal notranslate"><span class="pre">os.replace</span></code> dance in the package (muvid#17 item 4); every
+JSON record in this module goes through <a class="reference internal" href="#muvid.footage.workspace.atomic_write_text" title="muvid.footage.workspace.atomic_write_text"><code class="xref py py-func docutils literal notranslate"><span class="pre">atomic_write_text()</span></code></a>, and the
+scoring layer’s <code class="docutils literal notranslate"><span class="pre">.npz</span></code> arrays come here directly. The pieces, and why each is
+load-bearing:</p>
+<ul class="simple">
+<li><p><strong>The temp file is created in ``path``’s own directory</strong> (<code class="docutils literal notranslate"><span class="pre">tempfile.mkstemp</span></code>,
+so a concurrent writer gets its own name rather than racing on a fixed
+<code class="docutils literal notranslate"><span class="pre">.tmp</span></code>). <code class="docutils literal notranslate"><span class="pre">os.replace</span></code> is only a rename — and only atomic — within one
+filesystem; a temp under <code class="docutils literal notranslate"><span class="pre">/tmp</span></code> would make it a copy with a torn window.</p></li>
+<li><p><strong>The temp is fsync’d before the rename.</strong> Without it the rename can reach the
+journal before the data reaches the disk, and a power cut leaves the new name
+pointing at zeros — the failure mode a rename alone is wrongly believed to
+exclude.</p></li>
+<li><p><strong>The directory is fsync’d after the rename, best-effort.</strong> That is what makes
+the rename itself — and any <code class="docutils literal notranslate"><span class="pre">unlink</span></code> a caller did in the same directory just
+before it, which is how <a class="reference internal" href="#muvid.footage.workspace.MusicVideoFootageProject.set_song" title="muvid.footage.workspace.MusicVideoFootageProject.set_song"><code class="xref py py-meth docutils literal notranslate"><span class="pre">MusicVideoFootageProject.set_song()</span></code></a> orders its
+invalidation — durable. Directories cannot be opened for fsync on every platform
+(Windows), so an <code class="docutils literal notranslate"><span class="pre">OSError</span></code> there is the one exception swallowed: the data is
+already safe on disk; only the metadata’s promptness is lost.</p></li>
+<li><p><strong>On any failure the temp is removed and the error propagates.</strong> <code class="docutils literal notranslate"><span class="pre">write_text</span></code>
+raised too; the difference is that <code class="docutils literal notranslate"><span class="pre">path</span></code> still holds the previous complete
+record instead of a truncated one.</p></li>
+</ul>
+<p><code class="docutils literal notranslate"><span class="pre">mkstemp</span></code> creates the file <code class="docutils literal notranslate"><span class="pre">0600</span></code>, which is what these per-user records want and
+what <code class="docutils literal notranslate"><span class="pre">downloads.organise</span></code> already did for <code class="docutils literal notranslate"><span class="pre">meta.json</span></code>; the mode of an existing
+file is not carried over, deliberately, so the outcome does not depend on history.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.footage.workspace.atomic_write_text">
+<span class="sig-prename descclassname"><span class="pre">muvid.footage.workspace.</span></span><span class="sig-name descname"><span class="pre">atomic_write_text</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">text</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../../_modules/muvid/footage/workspace.html#atomic_write_text"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.workspace.atomic_write_text" title="Link to this definition"></a></dt>
+<dd><p>Atomically replace <code class="docutils literal notranslate"><span class="pre">path</span></code> with <code class="docutils literal notranslate"><span class="pre">text</span></code> (UTF-8) — see <a class="reference internal" href="#muvid.footage.workspace.atomic_write_bytes" title="muvid.footage.workspace.atomic_write_bytes"><code class="xref py py-func docutils literal notranslate"><span class="pre">atomic_write_bytes()</span></code></a>.</p>
+<p>Every <code class="docutils literal notranslate"><span class="pre">manifest.json</span></code>, <code class="docutils literal notranslate"><span class="pre">alignments.json</span></code> and render <code class="docutils literal notranslate"><span class="pre">meta.json</span></code> write goes
+through here. UTF-8 is a superset of the ASCII <code class="docutils literal notranslate"><span class="pre">json.dumps</span></code> emits by default, so
+the bytes on disk are identical to what <code class="docutils literal notranslate"><span class="pre">write_text</span></code> produced and the locale-default
+<code class="docutils literal notranslate"><span class="pre">read_text</span></code> on the read side is untouched — the FORMAT does not change, only the
+way it gets there.</p>
 </dd></dl>
 
 </section>

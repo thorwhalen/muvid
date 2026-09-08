@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.footage.workspace &mdash; muvid 0.0.59 documentation</title>
+  <title>muvid.footage.workspace &mdash; muvid 0.0.60 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=6799126d"></script>
+      <script src="../../../_static/documentation_options.js?v=4d22d5b7"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -171,6 +171,25 @@
 <span class="sd">- ``.../alignments.json`` — the persisted per-clip alignment</span>
 <span class="sd">- ``.../renders/{render_id}/`` — an assembled music video</span>
 
+<span class="sd">**Every JSON record here is replaced, never truncated in place** (muvid#17 item 4).</span>
+<span class="sd">``manifest.json`` and ``alignments.json`` used to be bare ``write_text`` calls — a</span>
+<span class="sd">truncate-then-write — while ``manifest()`` deliberately swallows ``OSError``/``ValueError``</span>
+<span class="sd">so an unreadable project reads as an EMPTY one. Put together, a process killed between</span>
+<span class="sd">the truncate and the write left a project that presented as having no song and no clips:</span>
+<span class="sd">not an error a caller could act on, but a plausible state a caller would act on wrongly</span>
+<span class="sd">(re-uploading everything, or rendering nothing). The scoring layer three directories</span>
+<span class="sd">away already wrote tmp + ``os.replace``; :func:`atomic_write_text` is the ONE such dance</span>
+<span class="sd">now, shared by every manifest/alignment/meta write here, ``scoring/grid.py`` (through</span>
+<span class="sd">:func:`atomic_write_bytes`, its ``.npz`` primitive) and ``downloads.organise``. A reader</span>
+<span class="sd">sees the whole prior record or the whole new one. The on-disk FORMAT is untouched: that</span>
+<span class="sd">would be a migration.</span>
+
+<span class="sd">**Invalidation runs BEFORE the write that would make the stale artifact look current.**</span>
+<span class="sd">``set_song`` drops ``alignments.json`` and the score tracks first and replaces the manifest</span>
+<span class="sd">LAST, so no crash window leaves a manifest naming the new song beside an alignment measured</span>
+<span class="sd">against the old one — the offsets would then be read as if they belonged to it, which is</span>
+<span class="sd">muvid#59's silently-out-of-sync video by another route.</span>
+
 <span class="sd">Invalidation is deliberate and lives here, beside the state it protects: ``set_song``</span>
 <span class="sd">and ``remove_clip`` both drop ``alignments.json`` and every persisted score track,</span>
 <span class="sd">because the alignment is a measurement of exactly the song and the clip set that were</span>
@@ -182,6 +201,7 @@
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">tempfile</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
@@ -232,7 +252,7 @@
             <span class="k">return</span> <span class="p">{</span><span class="s2">"title"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">project_id</span><span class="p">,</span> <span class="s2">"canvas"</span><span class="p">:</span> <span class="n">DEFAULT_CANVAS_NAME</span><span class="p">}</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_write_manifest</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">m</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_manifest_path</span><span class="p">()</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
+        <span class="n">atomic_write_text</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_manifest_path</span><span class="p">(),</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">canvas</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
         <span class="k">return</span> <span class="n">CANVASES</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
@@ -243,28 +263,63 @@
 <div class="viewcode-block" id="MusicVideoFootageProject.set_song">
 <a class="viewcode-back" href="../../../module_docs/muvid/footage/workspace.html#muvid.footage.workspace.MusicVideoFootageProject.set_song">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">set_song</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">src_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">ext</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Store (replacing) the project's one clean song from a local file."""</span>
+<span class="w">        </span><span class="sd">"""Store (replacing) the project's one clean song from a local file.</span>
+
+<span class="sd">        The order of operations is the contract (muvid#17 item 4), in three phases:</span>
+
+<span class="sd">        1. **Everything that can fail runs first, against a staged copy** — the copy</span>
+<span class="sd">           itself, the duration probe, the content hash. A missing source or an</span>
+<span class="sd">           un-probeable file raises here and the project is exactly as it was: the old</span>
+<span class="sd">           song, its alignment and its scores all still stand.</span>
+<span class="sd">        2. **What the old song vouched for is dropped** — ``alignments.json`` and the</span>
+<span class="sd">           score tracks — BEFORE the manifest can name the new song. The song is the</span>
+<span class="sd">           alignment reference, so an offset measured against the old one is meaningless</span>
+<span class="sd">           against the new one; but nothing on disk ties an alignment record to a song,</span>
+<span class="sd">           so a manifest that named the new song beside the old alignment would have</span>
+<span class="sd">           those offsets read as its own and cut a video silently out of sync (the</span>
+<span class="sd">           muvid#59 failure shape, by a different route). Dropping first means the worst</span>
+<span class="sd">           a crash can leave is a project that demands a fresh ``align_footage``.</span>
+<span class="sd">        3. **The song file lands, then the manifest is replaced LAST** — it names the</span>
+<span class="sd">           file, so the file must exist before any reader can be pointed at it.</span>
+<span class="sd">        """</span>
         <span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
 
+        <span class="n">suffix</span> <span class="o">=</span> <span class="n">_safe_ext</span><span class="p">(</span><span class="n">ext</span><span class="p">)</span>
         <span class="n">song_dir</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">root</span> <span class="o">/</span> <span class="s2">"song"</span>
-        <span class="k">if</span> <span class="n">song_dir</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
-            <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">song_dir</span><span class="p">)</span>
-        <span class="n">song_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="n">dest</span> <span class="o">=</span> <span class="n">song_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">"song</span><span class="si">{</span><span class="n">_safe_ext</span><span class="p">(</span><span class="n">ext</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
-        <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">src_path</span><span class="p">,</span> <span class="n">dest</span><span class="p">)</span>
+        <span class="n">dest</span> <span class="o">=</span> <span class="n">song_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">"song</span><span class="si">{</span><span class="n">suffix</span><span class="si">}</span><span class="s2">"</span>
+        <span class="c1"># Phase 1: stage beside the song dir (same filesystem, so the final move is a</span>
+        <span class="c1"># rename) and measure. Nothing the project owns has been touched yet.</span>
+        <span class="n">fd</span><span class="p">,</span> <span class="n">staged_name</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">mkstemp</span><span class="p">(</span>
+            <span class="nb">dir</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="p">),</span> <span class="n">prefix</span><span class="o">=</span><span class="s2">".song."</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="n">suffix</span>
+        <span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="n">fd</span><span class="p">)</span>
+        <span class="n">staged</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">staged_name</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">src_path</span><span class="p">,</span> <span class="n">staged</span><span class="p">)</span>
+            <span class="n">duration</span> <span class="o">=</span> <span class="n">_probe_duration</span><span class="p">(</span><span class="n">staged</span><span class="p">)</span>
+            <span class="c1"># Compute the song hash ONCE here (chunked) and cache it — scoring/reads</span>
+            <span class="c1"># compare the stored hash rather than re-hashing a 100 MB file on every poll.</span>
+            <span class="n">digest</span> <span class="o">=</span> <span class="n">_hash_file</span><span class="p">(</span><span class="n">staged</span><span class="p">)</span>
+            <span class="c1"># Phase 2: invalidate what the OLD song vouched for, before anything can name</span>
+            <span class="c1"># the new one. footage_timeline/assemble then demand a fresh align_footage</span>
+            <span class="c1"># rather than silently cutting to a song the offsets no longer match.</span>
+            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span> <span class="o">/</span> <span class="s2">"alignments.json"</span><span class="p">)</span><span class="o">.</span><span class="n">unlink</span><span class="p">(</span><span class="n">missing_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">invalidate_scores</span><span class="p">()</span>
+            <span class="c1"># Phase 3a: the file. Replace the whole dir so a prior song under a different</span>
+            <span class="c1"># extension cannot be orphaned beside the new one.</span>
+            <span class="k">if</span> <span class="n">song_dir</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+                <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">song_dir</span><span class="p">)</span>
+            <span class="n">song_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">staged</span><span class="p">,</span> <span class="n">dest</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">BaseException</span><span class="p">:</span>
+            <span class="n">staged</span><span class="o">.</span><span class="n">unlink</span><span class="p">(</span><span class="n">missing_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="k">raise</span>
+        <span class="c1"># Phase 3b: the manifest, LAST.</span>
         <span class="n">m</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">manifest</span><span class="p">()</span>
         <span class="n">m</span><span class="p">[</span><span class="s2">"song"</span><span class="p">]</span> <span class="o">=</span> <span class="n">dest</span><span class="o">.</span><span class="n">name</span>
-        <span class="n">m</span><span class="p">[</span><span class="s2">"song_duration"</span><span class="p">]</span> <span class="o">=</span> <span class="n">_probe_duration</span><span class="p">(</span><span class="n">dest</span><span class="p">)</span>
-        <span class="c1"># Compute the song hash ONCE here (chunked) and cache it — scoring/reads compare the</span>
-        <span class="c1"># stored hash rather than re-hashing a 100 MB file on every poll (persistence-lens).</span>
-        <span class="n">m</span><span class="p">[</span><span class="s2">"song_hash"</span><span class="p">]</span> <span class="o">=</span> <span class="n">_hash_file</span><span class="p">(</span><span class="n">dest</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_write_manifest</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
-        <span class="c1"># The song is the alignment reference — changing it invalidates every persisted</span>
-        <span class="c1"># offset. Drop the alignment so footage_timeline/assemble demand a fresh</span>
-        <span class="c1"># align_footage rather than silently cutting to a song the offsets no longer match.</span>
-        <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span> <span class="o">/</span> <span class="s2">"alignments.json"</span><span class="p">)</span><span class="o">.</span><span class="n">unlink</span><span class="p">(</span><span class="n">missing_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="c1"># A new song also invalidates every persisted score track (the grid mapping moved).</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">invalidate_scores</span><span class="p">()</span></div>
+        <span class="n">m</span><span class="p">[</span><span class="s2">"song_duration"</span><span class="p">]</span> <span class="o">=</span> <span class="n">duration</span>
+        <span class="n">m</span><span class="p">[</span><span class="s2">"song_hash"</span><span class="p">]</span> <span class="o">=</span> <span class="n">digest</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_write_manifest</span><span class="p">(</span><span class="n">m</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="MusicVideoFootageProject.song_hash">
@@ -390,8 +445,9 @@
 
     <span class="c1"># -- alignments ----------------------------------------------------------</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">save_alignments</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">aligns</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">FootageAlignment</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span> <span class="o">/</span> <span class="s2">"alignments.json"</span><span class="p">)</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span>
-            <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">([</span><span class="n">a</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">aligns</span><span class="p">],</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">atomic_write_text</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">root</span> <span class="o">/</span> <span class="s2">"alignments.json"</span><span class="p">,</span>
+            <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">([</span><span class="n">a</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">aligns</span><span class="p">],</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">),</span>
         <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">load_alignments</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">FootageAlignment</span><span class="p">]:</span>
@@ -422,8 +478,8 @@
 
     <span class="k">def</span><span class="w"> </span><span class="nf">write_render_meta</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">render_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">meta</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">rid</span> <span class="o">=</span> <span class="n">safe_component</span><span class="p">(</span><span class="n">render_id</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"render_id"</span><span class="p">)</span>
-        <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span> <span class="o">/</span> <span class="s2">"renders"</span> <span class="o">/</span> <span class="n">rid</span> <span class="o">/</span> <span class="s2">"meta.json"</span><span class="p">)</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span>
-            <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">meta</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">atomic_write_text</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">root</span> <span class="o">/</span> <span class="s2">"renders"</span> <span class="o">/</span> <span class="n">rid</span> <span class="o">/</span> <span class="s2">"meta.json"</span><span class="p">,</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">meta</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
         <span class="p">)</span>
 
 <div class="viewcode-block" id="MusicVideoFootageProject.ensure_render_refs">
@@ -482,7 +538,7 @@
                 <span class="k">continue</span>
             <span class="n">meta</span><span class="p">[</span><span class="s2">"ref_n"</span><span class="p">]</span> <span class="o">=</span> <span class="n">nxt</span>
             <span class="k">try</span><span class="p">:</span>
-                <span class="n">meta_path</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">meta</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
+                <span class="n">atomic_write_text</span><span class="p">(</span><span class="n">meta_path</span><span class="p">,</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">meta</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
             <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
                 <span class="c1"># A read-only or racing write must not break listing; the ref is</span>
                 <span class="c1"># still correct for THIS call, it just isn't durable yet.</span>
@@ -551,6 +607,87 @@
     <span class="k">return</span> <span class="n">h</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
 
 
+<div class="viewcode-block" id="atomic_write_bytes">
+<a class="viewcode-back" href="../../../module_docs/muvid/footage/workspace.html#muvid.footage.workspace.atomic_write_bytes">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">atomic_write_bytes</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Replace ``path``'s content with ``data`` so a reader never sees a torn file.</span>
+
+<span class="sd">    The ONE tmp + fsync + ``os.replace`` dance in the package (muvid#17 item 4); every</span>
+<span class="sd">    JSON record in this module goes through :func:`atomic_write_text`, and the</span>
+<span class="sd">    scoring layer's ``.npz`` arrays come here directly. The pieces, and why each is</span>
+<span class="sd">    load-bearing:</span>
+
+<span class="sd">    - **The temp file is created in ``path``'s own directory** (``tempfile.mkstemp``,</span>
+<span class="sd">      so a concurrent writer gets its own name rather than racing on a fixed</span>
+<span class="sd">      ``.tmp``). ``os.replace`` is only a rename — and only atomic — within one</span>
+<span class="sd">      filesystem; a temp under ``/tmp`` would make it a copy with a torn window.</span>
+<span class="sd">    - **The temp is fsync'd before the rename.** Without it the rename can reach the</span>
+<span class="sd">      journal before the data reaches the disk, and a power cut leaves the new name</span>
+<span class="sd">      pointing at zeros — the failure mode a rename alone is wrongly believed to</span>
+<span class="sd">      exclude.</span>
+<span class="sd">    - **The directory is fsync'd after the rename, best-effort.** That is what makes</span>
+<span class="sd">      the rename itself — and any ``unlink`` a caller did in the same directory just</span>
+<span class="sd">      before it, which is how :meth:`MusicVideoFootageProject.set_song` orders its</span>
+<span class="sd">      invalidation — durable. Directories cannot be opened for fsync on every platform</span>
+<span class="sd">      (Windows), so an ``OSError`` there is the one exception swallowed: the data is</span>
+<span class="sd">      already safe on disk; only the metadata's promptness is lost.</span>
+<span class="sd">    - **On any failure the temp is removed and the error propagates.** ``write_text``</span>
+<span class="sd">      raised too; the difference is that ``path`` still holds the previous complete</span>
+<span class="sd">      record instead of a truncated one.</span>
+
+<span class="sd">    ``mkstemp`` creates the file ``0600``, which is what these per-user records want and</span>
+<span class="sd">    what ``downloads.organise`` already did for ``meta.json``; the mode of an existing</span>
+<span class="sd">    file is not carried over, deliberately, so the outcome does not depend on history.</span>
+<span class="sd">    """</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="n">fd</span><span class="p">,</span> <span class="n">tmp_name</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">mkstemp</span><span class="p">(</span>
+        <span class="nb">dir</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">parent</span><span class="p">),</span> <span class="n">prefix</span><span class="o">=</span><span class="sa">f</span><span class="s2">".</span><span class="si">{</span><span class="n">path</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">."</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="s2">".tmp"</span>
+    <span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">os</span><span class="o">.</span><span class="n">fdopen</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="s2">"wb"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">fsync</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">fileno</span><span class="p">())</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">tmp_name</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">BaseException</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">unlink</span><span class="p">(</span><span class="n">tmp_name</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+            <span class="k">pass</span>
+        <span class="k">raise</span>
+    <span class="n">_fsync_dir</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">parent</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_fsync_dir</span><span class="p">(</span><span class="n">directory</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Flush a directory's metadata (renames, unlinks) — best-effort, see the caller."""</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">dfd</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">directory</span><span class="p">),</span> <span class="n">os</span><span class="o">.</span><span class="n">O_RDONLY</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+        <span class="k">return</span>  <span class="c1"># a platform (Windows) or filesystem that cannot open a directory</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">fsync</span><span class="p">(</span><span class="n">dfd</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+        <span class="k">pass</span>  <span class="c1"># same: the data is on disk; only the directory entry's promptness is lost</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="n">dfd</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="atomic_write_text">
+<a class="viewcode-back" href="../../../module_docs/muvid/footage/workspace.html#muvid.footage.workspace.atomic_write_text">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">atomic_write_text</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Atomically replace ``path`` with ``text`` (UTF-8) — see :func:`atomic_write_bytes`.</span>
+
+<span class="sd">    Every ``manifest.json``, ``alignments.json`` and render ``meta.json`` write goes</span>
+<span class="sd">    through here. UTF-8 is a superset of the ASCII ``json.dumps`` emits by default, so</span>
+<span class="sd">    the bytes on disk are identical to what ``write_text`` produced and the locale-default</span>
+<span class="sd">    ``read_text`` on the read side is untouched — the FORMAT does not change, only the</span>
+<span class="sd">    way it gets there.</span>
+<span class="sd">    """</span>
+    <span class="n">atomic_write_bytes</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">text</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">))</span></div>
+
+
+
 <div class="viewcode-block" id="FootageWorkspace">
 <a class="viewcode-back" href="../../../module_docs/muvid/footage/workspace.html#muvid.footage.workspace.FootageWorkspace">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -586,7 +723,8 @@
             <span class="p">)</span>
         <span class="n">root</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">canvas_name</span> <span class="o">=</span> <span class="n">canvas</span> <span class="k">if</span> <span class="n">canvas</span> <span class="ow">in</span> <span class="n">CANVASES</span> <span class="k">else</span> <span class="n">DEFAULT_CANVAS_NAME</span>
-        <span class="p">(</span><span class="n">root</span> <span class="o">/</span> <span class="s2">"manifest.json"</span><span class="p">)</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span>
+        <span class="n">atomic_write_text</span><span class="p">(</span>
+            <span class="n">root</span> <span class="o">/</span> <span class="s2">"manifest.json"</span><span class="p">,</span>
             <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span>
                 <span class="p">{</span>
                     <span class="s2">"title"</span><span class="p">:</span> <span class="n">title</span> <span class="ow">or</span> <span class="n">project_id</span><span class="p">,</span>
@@ -594,7 +732,7 @@
                     <span class="s2">"created"</span><span class="p">:</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">(),</span>
                 <span class="p">},</span>
                 <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
-            <span class="p">)</span>
+            <span class="p">),</span>
         <span class="p">)</span>
         <span class="k">return</span> <span class="n">MusicVideoFootageProject</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">email</span><span class="p">,</span> <span class="n">project_id</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span>
 

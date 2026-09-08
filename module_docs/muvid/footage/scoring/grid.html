@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.footage.scoring.grid &mdash; muvid 0.0.59 documentation</title>
+  <title>muvid.footage.scoring.grid &mdash; muvid 0.0.60 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../../_static/copybutton.css?v=76b2166b" />
@@ -15,7 +15,7 @@
   
       <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../../_static/documentation_options.js?v=6799126d"></script>
+      <script src="../../../../_static/documentation_options.js?v=4d22d5b7"></script>
       <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -198,7 +198,10 @@ norm params; the MCP wire maps masked entries to <code class="docutils literal n
 mismatch is a load-time assertion, never a silent 2× misalignment.</p></li>
 <li><p><strong>Persistence is crash-consistent</strong>: each clip’s <code class="docutils literal notranslate"><span class="pre">.npz</span></code> is written to a temp then
 <code class="docutils literal notranslate"><span class="pre">os.replace</span></code>d; <code class="docutils literal notranslate"><span class="pre">manifest.json</span></code> is written LAST via tmp+rename, so a reader sees
-either the whole prior state or the whole new one.</p></li>
+either the whole prior state or the whole new one. The dance itself is
+<code class="docutils literal notranslate"><span class="pre">muvid.footage.workspace.atomic_write_bytes</span></code> — the ONE implementation the project
+manifest, the alignments and the render metadata share (muvid#17 item 4); this module
+used to carry its own copy, which is how the other records came to have none.</p></li>
 </ul>
 <p>Pure numpy — no cv2/torch/ffmpeg here. Imported only under the <code class="docutils literal notranslate"><span class="pre">muvid[scoring]</span></code> extra
 (never on the import-light <code class="docutils literal notranslate"><span class="pre">muvid.genre_music_video</span></code> path).</p>

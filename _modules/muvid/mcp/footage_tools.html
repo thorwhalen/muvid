@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.mcp.footage_tools &mdash; muvid 0.0.59 documentation</title>
+  <title>muvid.mcp.footage_tools &mdash; muvid 0.0.60 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=6799126d"></script>
+      <script src="../../../_static/documentation_options.js?v=4d22d5b7"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -176,7 +176,9 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">uuid</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">urllib.parse</span><span class="w"> </span><span class="kn">import</span> <span class="n">urlparse</span>
@@ -1247,6 +1249,205 @@
 
 
 
+<span class="c1"># -- the master beat grid, on its own (thorwhalen/muvid#18 item 5) ------------</span>
+
+<span class="c1">#: Where the song's beat grid is cached: beside the score tensor it feeds, under the</span>
+<span class="c1">#: project's ``scores/`` dir, so it shares that dir's lifecycle (``set_song`` and a</span>
+<span class="c1">#: re-align that changed the offsets both rmtree it — the second is more than the grid</span>
+<span class="c1">#: needs, since it depends on the song alone, but a recompute is seconds and a second</span>
+<span class="c1">#: invalidation policy is a second thing to get wrong). Keyed on ``song_hash`` on top</span>
+<span class="c1">#: of that, so a record is never served for a song it was not measured on.</span>
+<span class="n">_BEAT_GRID_CACHE_NAME</span> <span class="o">=</span> <span class="s2">"beat_grid.json"</span>
+<span class="c1">#: Rounded exactly as ``grid.save_scores`` rounds a scoring run's manifest, so the two</span>
+<span class="c1">#: records of the same song's grid agree to the digit.</span>
+<span class="n">_BEAT_TIME_DECIMALS</span> <span class="o">=</span> <span class="mi">4</span>
+<span class="n">_TEMPO_DECIMALS</span> <span class="o">=</span> <span class="mi">3</span>
+<span class="c1">#: The ``source`` vocabulary of a ``beat_grid`` reply — how the grid was obtained, in</span>
+<span class="c1">#: the order the tool tries them (cheapest first; the estimator runs last, once).</span>
+<span class="n">_BEAT_GRID_FROM_CACHE</span> <span class="o">=</span> <span class="s2">"cache"</span>
+<span class="n">_BEAT_GRID_FROM_SCORES</span> <span class="o">=</span> <span class="s2">"scores"</span>
+<span class="n">_BEAT_GRID_COMPUTED</span> <span class="o">=</span> <span class="s2">"computed"</span>
+
+
+<div class="viewcode-block" id="beat_grid">
+<a class="viewcode-back" href="../../../module_docs/muvid/mcp/footage_tools.html#muvid.mcp.footage_tools.beat_grid">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">beat_grid</span><span class="p">(</span><span class="n">project_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The song's beat grid — tempo and beat instants on the song timeline — WITHOUT</span>
+<span class="sd">    running the scoring job. Free.</span>
+
+<span class="sd">    ``score_footage`` computes this very grid as its first stage and then decodes every</span>
+<span class="sd">    clip through cv2 in the background, which is far too much to pay when all a caller</span>
+<span class="sd">    wants is where the beats are (thorwhalen/muvid#18 item 5) — a fixed-stride cut grid,</span>
+<span class="sd">    a check that the tempo came out right, a cut plan of its own. This is one call to</span>
+<span class="sd">    ``mixing.audio.beat_grid`` on the song alone (the "compute once on the master"</span>
+<span class="sd">    invariant: clips map to it through their offsets, never the other way round),</span>
+<span class="sd">    cached under the project as ``scores/beat_grid.json`` keyed on ``song_hash`` so the</span>
+<span class="sd">    second call is a file read; a project that has already been scored is served from</span>
+<span class="sd">    that run's manifest instead. ``source`` says which (``computed`` | ``cache`` |</span>
+<span class="sd">    ``scores``).</span>
+
+<span class="sd">    Needs the ``scoring`` extra (``mixing[beats]``, i.e. librosa); without it the reply</span>
+<span class="sd">    is a clean error naming the install, never a traceback. Needs a song</span>
+<span class="sd">    (``set_song``); no alignment is required.</span>
+
+<span class="sd">    Returns ``tempo_bpm``, ``beats`` (seconds, ascending), ``n_beats``,</span>
+<span class="sd">    ``song_duration`` (so a caller can close the last bar) and ``source``.</span>
+<span class="sd">    ``downbeats`` is present only when the estimator measured any — the librosa</span>
+<span class="sd">    backend has no downbeat tracker, and an empty list would read as "this song has</span>
+<span class="sd">    no downbeats", a measurement nobody made (gate, don't zero).</span>
+<span class="sd">    """</span>
+    <span class="n">proj</span> <span class="o">=</span> <span class="n">_open</span><span class="p">(</span><span class="n">project_id</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">proj</span><span class="o">.</span><span class="n">has_song</span><span class="p">():</span>
+        <span class="k">raise</span> <span class="n">_tool_error</span><span class="p">(</span><span class="s2">"no song set — call set_song first"</span><span class="p">)</span>
+    <span class="n">source</span><span class="p">,</span> <span class="n">record</span> <span class="o">=</span> <span class="n">_beat_grid_record</span><span class="p">(</span><span class="n">proj</span><span class="p">,</span> <span class="n">song_hash</span><span class="o">=</span><span class="n">proj</span><span class="o">.</span><span class="n">song_hash</span><span class="p">())</span>
+    <span class="k">return</span> <span class="n">_beat_grid_reply</span><span class="p">(</span>
+        <span class="n">project_id</span><span class="p">,</span> <span class="n">record</span><span class="p">,</span> <span class="n">source</span><span class="o">=</span><span class="n">source</span><span class="p">,</span> <span class="n">song_duration</span><span class="o">=</span><span class="n">proj</span><span class="o">.</span><span class="n">song_duration</span><span class="p">()</span>
+    <span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_beat_grid_record</span><span class="p">(</span><span class="n">proj</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">song_hash</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""``(source, record)`` from the cheapest source that can answer for THIS song.</span>
+
+<span class="sd">    Each source either answers with a record measured on ``song_hash`` or declines with</span>
+<span class="sd">    ``None``; the estimator is last and never declines (it computes, caches, or raises).</span>
+<span class="sd">    Adding a source is a row here, not a branch in the tool.</span>
+<span class="sd">    """</span>
+    <span class="n">cache_path</span> <span class="o">=</span> <span class="n">_beat_grid_cache_path</span><span class="p">(</span><span class="n">proj</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute</span><span class="p">():</span>
+        <span class="k">return</span> <span class="n">_compute_beat_grid</span><span class="p">(</span><span class="n">proj</span><span class="p">,</span> <span class="n">cache_path</span><span class="o">=</span><span class="n">cache_path</span><span class="p">,</span> <span class="n">song_hash</span><span class="o">=</span><span class="n">song_hash</span><span class="p">)</span>
+
+    <span class="n">sources</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="p">(</span><span class="n">_BEAT_GRID_FROM_CACHE</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">_read_beat_grid_cache</span><span class="p">(</span><span class="n">cache_path</span><span class="p">,</span> <span class="n">song_hash</span><span class="p">)),</span>
+        <span class="p">(</span><span class="n">_BEAT_GRID_FROM_SCORES</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">_beat_grid_from_scores</span><span class="p">(</span><span class="n">proj</span><span class="p">,</span> <span class="n">song_hash</span><span class="p">)),</span>
+        <span class="p">(</span><span class="n">_BEAT_GRID_COMPUTED</span><span class="p">,</span> <span class="n">compute</span><span class="p">),</span>
+    <span class="p">)</span>
+    <span class="k">for</span> <span class="n">source</span><span class="p">,</span> <span class="n">load</span> <span class="ow">in</span> <span class="n">sources</span><span class="p">:</span>
+        <span class="n">record</span> <span class="o">=</span> <span class="n">load</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">record</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">source</span><span class="p">,</span> <span class="n">record</span>
+    <span class="k">raise</span> <span class="ne">AssertionError</span><span class="p">(</span><span class="s2">"the computed source never declines"</span><span class="p">)</span>  <span class="c1"># pragma: no cover</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_beat_grid_cache_path</span><span class="p">(</span><span class="n">proj</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.footage.scoring.grid</span><span class="w"> </span><span class="kn">import</span> <span class="n">scores_dir</span>  <span class="c1"># the dir name's SSOT</span>
+
+    <span class="k">return</span> <span class="n">scores_dir</span><span class="p">(</span><span class="n">proj</span><span class="o">.</span><span class="n">root</span><span class="p">)</span> <span class="o">/</span> <span class="n">_BEAT_GRID_CACHE_NAME</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_read_beat_grid_cache</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">song_hash</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The cached record if it was measured on THIS song, else ``None``.</span>
+
+<span class="sd">    Absent, torn (a concurrent writer) or unreadable is a miss — recomputed, never</span>
+<span class="sd">    served — and so is a record carrying another song's hash (the ``scores/`` dir</span>
+<span class="sd">    outlives a hand-edited manifest or a copied project tree; the key does not).</span>
+<span class="sd">    """</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">record</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">read_text</span><span class="p">())</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">OSError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">record</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">or</span> <span class="n">record</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"song_hash"</span><span class="p">)</span> <span class="o">!=</span> <span class="n">song_hash</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="n">record</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_beat_grid_from_scores</span><span class="p">(</span><span class="n">proj</span><span class="p">,</span> <span class="n">song_hash</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Lift the grid out of a scoring run's manifest when one exists for THIS song.</span>
+
+<span class="sd">    ``score_project`` computes exactly this grid as its first stage and persists it in</span>
+<span class="sd">    ``scores/manifest.json``, so a scored project has already paid for it. Only the</span>
+<span class="sd">    song hash has to match: that manifest goes stale for SCORES the moment the</span>
+<span class="sd">    alignment changes (``manifest_is_current`` checks the fingerprint too), but the</span>
+<span class="sd">    beat grid depends on the song alone.</span>
+<span class="sd">    """</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.footage.scoring.grid</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_manifest</span>
+
+    <span class="n">manifest</span> <span class="o">=</span> <span class="n">load_manifest</span><span class="p">(</span><span class="n">proj</span><span class="o">.</span><span class="n">root</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">manifest</span> <span class="ow">or</span> <span class="n">manifest</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"song_hash"</span><span class="p">)</span> <span class="o">!=</span> <span class="n">song_hash</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">beats</span> <span class="o">=</span> <span class="n">manifest</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"beats"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">beats</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">beats</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"beat_times"</span><span class="p">),</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">"song_hash"</span><span class="p">:</span> <span class="n">song_hash</span><span class="p">,</span>
+        <span class="s2">"tempo_bpm"</span><span class="p">:</span> <span class="n">manifest</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"tempo_bpm"</span><span class="p">),</span>
+        <span class="s2">"beat_times"</span><span class="p">:</span> <span class="n">beats</span><span class="p">[</span><span class="s2">"beat_times"</span><span class="p">],</span>
+        <span class="s2">"downbeat_times"</span><span class="p">:</span> <span class="n">beats</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"downbeat_times"</span><span class="p">)</span> <span class="ow">or</span> <span class="p">[],</span>
+    <span class="p">}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_compute_beat_grid</span><span class="p">(</span><span class="n">proj</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">cache_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">song_hash</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Run ``mixing.audio.beat_grid`` on the song and write the record to the cache.</span>
+
+<span class="sd">    Imported HERE, not at module top: ``mixing.audio`` is core but the estimator's</span>
+<span class="sd">    librosa is the ``scoring`` extra, and this module is on the connector's import-safe</span>
+<span class="sd">    path. The ONLY exception translated is ``ImportError`` — the way ``mixing`` reports</span>
+<span class="sd">    a missing optional package — so a caller gets the install hint instead of a</span>
+<span class="sd">    traceback; whatever else the estimator raises is a ``mixing`` regression and</span>
+<span class="sd">    propagates untouched (never a broad except around a sibling's call).</span>
+<span class="sd">    """</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">mixing.audio</span><span class="w"> </span><span class="kn">import</span> <span class="n">beat_grid</span> <span class="k">as</span> <span class="n">estimate</span>
+
+        <span class="n">grid</span> <span class="o">=</span> <span class="n">estimate</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">proj</span><span class="o">.</span><span class="n">song_path</span><span class="p">()))</span>
+    <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">_tool_error</span><span class="p">(</span>
+            <span class="s2">"the beat grid needs librosa, which the 'scoring' extra provides — "</span>
+            <span class="sa">f</span><span class="s2">"pip install 'muvid[scoring]' (</span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">)"</span>
+        <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+    <span class="n">record</span> <span class="o">=</span> <span class="n">_as_beat_grid_record</span><span class="p">(</span><span class="n">grid</span><span class="p">,</span> <span class="n">song_hash</span><span class="o">=</span><span class="n">song_hash</span><span class="p">)</span>
+    <span class="n">_write_beat_grid_cache</span><span class="p">(</span><span class="n">cache_path</span><span class="p">,</span> <span class="n">record</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">record</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_as_beat_grid_record</span><span class="p">(</span><span class="n">grid</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">song_hash</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The cache record: the three ``BeatGrid`` fields muvid reads (the same three the</span>
+<span class="sd">    scoring orchestrator reads), rounded like the scores manifest, plus the key."""</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+
+    <span class="n">tempo</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">grid</span><span class="o">.</span><span class="n">tempo_bpm</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">"song_hash"</span><span class="p">:</span> <span class="n">song_hash</span><span class="p">,</span>
+        <span class="s2">"tempo_bpm"</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">tempo</span><span class="p">,</span> <span class="n">_TEMPO_DECIMALS</span><span class="p">)</span> <span class="k">if</span> <span class="n">math</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">tempo</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="s2">"beat_times"</span><span class="p">:</span> <span class="p">[</span><span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">t</span><span class="p">),</span> <span class="n">_BEAT_TIME_DECIMALS</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">grid</span><span class="o">.</span><span class="n">beat_times</span><span class="p">],</span>
+        <span class="s2">"downbeat_times"</span><span class="p">:</span> <span class="p">[</span>
+            <span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">t</span><span class="p">),</span> <span class="n">_BEAT_TIME_DECIMALS</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">grid</span><span class="o">.</span><span class="n">downbeat_times</span>
+        <span class="p">],</span>
+        <span class="s2">"computed_at"</span><span class="p">:</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">(),</span>
+    <span class="p">}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_write_beat_grid_cache</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">record</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""tmp + ``os.replace`` (the same crash-consistency as the score files), so a</span>
+<span class="sd">    concurrent call never reads a torn record. The reply is already correct by the</span>
+<span class="sd">    time this runs: a cache that cannot be written (a scoring job's rmtree racing this</span>
+<span class="sd">    call, a read-only tree) costs the NEXT call a recompute, nothing more."""</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">path</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">tmp</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">with_name</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="s2">".tmp"</span><span class="p">)</span>
+        <span class="n">tmp</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">record</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">tmp</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+        <span class="k">pass</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_beat_grid_reply</span><span class="p">(</span>
+    <span class="n">project_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">record</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">source</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">song_duration</span><span class="p">:</span> <span class="nb">float</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+    <span class="n">beats</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"beat_times"</span><span class="p">)</span> <span class="ow">or</span> <span class="p">[])</span>
+    <span class="n">reply</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">"project_id"</span><span class="p">:</span> <span class="n">project_id</span><span class="p">,</span>
+        <span class="s2">"tempo_bpm"</span><span class="p">:</span> <span class="n">record</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"tempo_bpm"</span><span class="p">),</span>
+        <span class="s2">"beats"</span><span class="p">:</span> <span class="n">beats</span><span class="p">,</span>
+        <span class="s2">"n_beats"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">beats</span><span class="p">),</span>
+        <span class="s2">"song_duration"</span><span class="p">:</span> <span class="n">song_duration</span><span class="p">,</span>
+        <span class="s2">"source"</span><span class="p">:</span> <span class="n">source</span><span class="p">,</span>
+    <span class="p">}</span>
+    <span class="n">downbeats</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"downbeat_times"</span><span class="p">)</span> <span class="ow">or</span> <span class="p">[])</span>
+    <span class="k">if</span> <span class="n">downbeats</span><span class="p">:</span>  <span class="c1"># measured → reported; unmeasured → absent (never an empty list)</span>
+        <span class="n">reply</span><span class="p">[</span><span class="s2">"downbeats"</span><span class="p">]</span> <span class="o">=</span> <span class="n">downbeats</span>
+    <span class="k">return</span> <span class="n">reply</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">_alignment_covers_clips</span><span class="p">(</span><span class="n">proj</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Whether a persisted alignment exists AND has a record for every current clip.</span>
 
