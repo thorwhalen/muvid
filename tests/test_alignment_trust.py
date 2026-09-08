@@ -924,10 +924,11 @@ def test_the_window_is_fitted_to_the_clip_and_reported_with_the_support(tmp_path
 def test_a_wider_window_is_refused_because_it_would_turn_the_gate_off(tmp_path):
     """Measured: ``window_s=45`` on a 50 s clip takes support from 0.75 to None.
 
-    That measurement predates ``mixing>=0.0.51`` (mixing#43): a wide-enough explicit
+    That measurement predates mixing#43 (mixing PR #51): a wide-enough explicit
     ``window_s`` used to make ``mixing`` return ``support=None``, quietly falling the
-    verdict back onto the confidence coefficient. ``mixing`` now refuses that call
-    itself with a typed ``WindowTooWideForClip`` instead of answering. muvid refuses
+    verdict back onto the confidence coefficient. Per mixing#43, ``mixing`` refuses
+    that call itself with a typed ``WindowTooWideForClip`` instead of answering.
+    muvid refuses
     the keyword at its own entry point regardless of what ``mixing`` does with it —
     narrowing the window is not caught by mixing's refusal and still deflates every
     support silently, and re-scaling the gate ``MIN_SUPPORT`` is calibrated against is

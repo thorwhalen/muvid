@@ -42,11 +42,12 @@ __all__ = [
 ]
 
 #: Estimator parameters :func:`align_footage` refuses to forward, because changing them
-#: changes what :data:`~muvid.footage.edl.MIN_SUPPORT` MEANS. As of ``mixing>=0.0.51``
-#: (mixing#43), an explicit ``window_s`` wider than a clip can hold — above
-#: ``clip_duration - hop_s`` — is refused by ``mixing`` itself with a typed
-#: ``WindowTooWideForClip``, so that direction no longer reaches muvid as a silent
-#: ``support=None``. Narrowing the window is not caught by that refusal and still
+#: changes what :data:`~muvid.footage.edl.MIN_SUPPORT` MEANS. Per mixing#43 (mixing PR
+#: #51), an explicit ``window_s`` wider than a clip can hold a second, independent look
+#: at is refused by ``mixing`` itself with a typed ``WindowTooWideForClip``, so that
+#: direction no longer reaches muvid as a silent ``support=None``. (Where exactly that
+#: bound falls is ``mixing``'s call to make and to change; muvid does not restate it
+#: here.) Narrowing the window is not caught by that refusal and still
 #: deflates every support — measured across eleven clip lengths, correct alignments read
 #: 0.38-0.70 at a 20 s window and 0.00-1.00 at a 4 s one — so correct alignments fall
 #: under the threshold instead. Refusing here regardless of what ``mixing`` does about
@@ -145,7 +146,7 @@ def _refuse_window_parameters(estimator_kwargs: dict) -> None:
         f"what MIN_SUPPORT is calibrated against, so changing it here would re-scale "
         f"the trust gate without saying so. Narrowing it deflates every support, which "
         f"still reaches the gate silently; widening it past what a clip can hold is now "
-        f"refused by mixing itself (WindowTooWideForClip, mixing>=0.0.51), but muvid "
+        f"refused by mixing itself (WindowTooWideForClip, mixing#43), but muvid "
         f"refuses the keyword regardless, so the calibration decision stays a deliberate "
         f"one on this side too. There is no in-pipeline escape: the window is not "
         f"tunable through this entry point, deliberately. If what you want is a "
