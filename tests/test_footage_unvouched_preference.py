@@ -345,6 +345,10 @@ class TestTheToolSurface:
         assert cov["uncovered"] == [{"song_start": 20.0, "song_end": 30.0}]
         assert cov["weak_segments"] == []
         assert [e["clip_id"] for e in out["edl"]] == ["A", "B", None]
+        # This proposal WOULD render, and the reply says so rather than leaving the
+        # caller to infer it from an empty list that also means "nothing was recoverable".
+        assert out["assemble_refusal"] is None
+        assert len(out["warnings"]) == 1 and "BAD" in out["warnings"][0]
 
     def test_the_proposal_feeds_back_through_the_explicit_path(self, tools):
         """propose_edit promises the edit assemble would build; a gap must survive it."""
@@ -378,6 +382,13 @@ class TestTheToolSurface:
         out = ft.assemble_music_video("p")
         assert out["ok"] is True
         assert [x["clip_id"] for x in out["coverage"]["excluded"]] == ["BAD"]
+        # A hole in the video is the largest render-plan finding there is, and the
+        # reply's own contract says `warnings` is where a caller learns of one. An
+        # `ok: true` with an empty `warnings` and the loss nested two levels down under
+        # `coverage` is how an agent ships a black stretch without ever seeing it.
+        assert len(out["warnings"]) == 1
+        note = out["warnings"][0]
+        assert "'BAD'" in note and "20.0-30.0 s" in note and "re-align" in note
         # It reaches meta.json too: the record beside the file has to say why the video
         # goes black for ten seconds, or the answer dies with this reply.
         assert proj.meta["coverage"]["excluded"] == out["coverage"]["excluded"]
@@ -402,6 +413,7 @@ class TestTheToolSurface:
         monkeypatch.setattr(V, "report", lambda c: "ok")
         out = ft.assemble_music_video("p", allow_unreliable=True)
         assert out["coverage"]["excluded"] == []
+        assert out["warnings"] == []  # nothing was set aside — nothing to warn about
         assert "BAD" in {e["clip_id"] for e in out["edl"]}
         # ...and it is still reported as weak, which is the whole of the caller's warning.
         assert [w["clip_id"] for w in out["coverage"]["weak_segments"]] == ["BAD"]
@@ -418,9 +430,15 @@ class TestTheToolSurface:
             ft.assemble_music_video("p")
         # propose_edit renders nothing, so it still DIAGNOSES rather than refusing: the
         # spans it cannot recover come back as weak_segments instead of excluded.
-        cov = ft.propose_edit("p")["coverage"]
+        proposal = ft.propose_edit("p")
+        cov = proposal["coverage"]
         assert cov["excluded"] == []
         assert sorted(w["clip_id"] for w in cov["weak_segments"]) == ["X", "Y"]
+        # ...and it says out loud that the assemble will refuse this, which an empty
+        # `excluded` alone reads as success. The verdict comes from the gate itself.
+        refusal = proposal["assemble_refusal"]
+        assert refusal["error"] == "unreliable_alignment"
+        assert sorted(refusal["clip_ids"]) == ["X", "Y"]
 
 
 class TestTheSelectorArtifact:
@@ -495,7 +513,9 @@ class TestTheSelectorArtifact:
         )
         assert "BAD" in {e.clip_id for e in raw}
         kept, excluded = exclude_unvouched(raw, aligns)
-        assert [(e.song_start, e.song_end, e.clip_id) for e in kept] == [(0.0, 40.0, "V")]
+        assert [(e.song_start, e.song_end, e.clip_id) for e in kept] == [
+            (0.0, 40.0, "V")
+        ]
         assert excluded == []
 
     def test_absorption_never_reaches_past_what_the_neighbour_holds(self):
@@ -541,7 +561,9 @@ class TestTheSelectorArtifact:
         ]
         assert kept[0].crop_end is not None and excluded == []
 
-    def test_a_span_a_non_adjacent_vouched_clip_covers_is_named_as_a_selection_loss(self):
+    def test_a_span_a_non_adjacent_vouched_clip_covers_is_named_as_a_selection_loss(
+        self,
+    ):
         """Whose loss it was decides the remedy, so the record has to distinguish them."""
         aligns = [
             _align("A", 0.0, 10.0),

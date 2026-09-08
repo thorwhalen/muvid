@@ -86,13 +86,23 @@ higher = better) + `raw_values[]` + a coverage `mask[]`; grid frame *k* ↔ song
   it there would remove a source from the edit on the strength of a measurement, which is
   exactly what `overlaps=False` is written not to do. `weighted` carries the same
   preference as `select_score.UNVOUCHED_REWARD_PENALTY`, a per-second reward penalty
-  larger than the composite's whole `[0,1]` range, so it is lexicographic rather than one
-  more metric a sharp unvouched clip could outbid. **A new strategy that ranks clips owes
-  the same preference.** What happens to a span only an unvouched clip covers is decided
-  once, downstream, by `edl.exclude_unvouched`: the auto path sets it aside as a reported
-  `ExcludedSpan` and gap-fills it, so one bad clip costs its own spans instead of the
-  whole edit — and the gate still refuses, unchanged, when the recovery would leave no
+  larger than the composite's whole `[0,1]` range, so it beats every metric rather than
+  being one more a sharp unvouched clip could outbid. **A new strategy that ranks clips
+  owes the same preference.** What happens to a span only an unvouched clip covers is
+  decided once, downstream, by `edl.exclude_unvouched`: the auto path sets it aside as a
+  reported `ExcludedSpan` and gap-fills it, so one bad clip costs its own spans instead of
+  the whole edit — and the gate still refuses, unchanged, when the recovery would leave no
   footage at all.
+- **The penalty beats the metrics, not the DP — so the recovery absorbs before it gaps.**
+  `weighted` can still cut to an unvouched clip over a span a vouched one covers, through
+  two terms that are not composite reward: a caller-raised `l_max_overrun_penalty`, and
+  `_viterbi`'s `max_seg_s` transition window (4x `l_max`), which with the different-clip
+  rule makes a vouched take longer than the cap impossible as one segment and forces a cut
+  away and back. Both measured. Gapping those punches an avoidable hole through a
+  continuous take, so `edl._absorb_neighbour` gives the span back to the vouched cut
+  beside it when that clip already covers it, and declines into a `transition`/`crop_end`/
+  `look` cut whose meaning depends on its length. If you tune either the window or the
+  overrun knob, re-read that pairing: raising the penalty does not fix a structural cut.
 - **Gate, don't zero:** "no face / no data" is a `mask` = NA, not a 0 score — else
   selection biases toward any-face-on-screen or penalizes valid instrumental footage.
 - **Normalize robustly across clips** (median/IQR, percentile-clipped) so a "motion" peak
