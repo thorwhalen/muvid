@@ -6,14 +6,33 @@ Optional subpackage (extra ``muvid[mcp]``: ``fastmcp`` + ``py2mcp`` + ``nw``).
 (the unified reelee AV connector, thorwhalen/muvid#3), and :func:`build_server`
 assembles a standalone server for local (stdio) testing.
 
-Every tool is **free** (:data:`FREE_TOOLS` == :data:`TOOL_NAMES`): the visualizer spends
-no money. There are no costed tools, so there is no metering here — a host records the
-calls and, when it sets ``metered_tools``, these bypass its credit gate.
+Almost every tool is **free**. The one exception is
+``propose_lyric_treatments_ai`` (:data:`COSTED_TOOLS`), which calls an LLM to author a
+lyric-video treatment — muvid's first tool that spends money. It is a separate tool from
+the free heuristic proposer because a host meters by tool NAME and cannot see an
+argument, so a "free unless you pass a flag" tool is unmeterable by construction.
+Its cost is reported as UNKNOWN rather than zero: muvid's budget gate is conjunctive and
+an unpriced call must force approval (muvid#47).
 """
 
 from muvid.mcp._guide import INSTRUCTIONS
 from muvid.mcp.identity import current_email, token_email, use_email
 from muvid.mcp.workspace import VisualizerWorkspace, data_root
+
+#: The ``lyric-video`` genre tools (muvid.mcp.lyricvid_tools). Five free, one costed.
+LYRICVID_TOOLS = [
+    "list_archetypes",
+    "analyze_song_lyrics",
+    "propose_lyric_treatments",
+    "propose_lyric_treatments_ai",
+    "validate_lyric_treatment",
+    "render_lyric_video",
+]
+
+#: The one tool in muvid that spends money: an LLM creative director. Kept a
+#: SEPARATE tool from the free heuristic proposer rather than a flag on it,
+#: because a host meters by tool NAME and cannot see an argument.
+LYRICVID_COSTED = ["propose_lyric_treatments_ai"]
 
 #: The ``music-visualizer`` genre tools (muvid.mcp.tools).
 VISUALIZER_TOOLS = [
@@ -50,16 +69,17 @@ SCORING_TOOLS = [
 ]
 
 #: All tools this package exposes (all free). Bare names; a host may prefix them.
-TOOL_NAMES = VISUALIZER_TOOLS + FOOTAGE_TOOLS + SCORING_TOOLS
+TOOL_NAMES = VISUALIZER_TOOLS + FOOTAGE_TOOLS + SCORING_TOOLS + LYRICVID_TOOLS
 
 #: Alias — muvid has no costed tools.
-FREE_TOOLS = list(TOOL_NAMES)
-COSTED_TOOLS: list[str] = []
+FREE_TOOLS = [n for n in TOOL_NAMES if n not in LYRICVID_COSTED]
+COSTED_TOOLS: list[str] = list(LYRICVID_COSTED)
 
 #: Bare tool name → its ``module:function`` reference (tools live in three modules).
 TOOL_REFS = {name: f"muvid.mcp.tools:{name}" for name in VISUALIZER_TOOLS}
 TOOL_REFS.update({name: f"muvid.mcp.footage_tools:{name}" for name in FOOTAGE_TOOLS})
 TOOL_REFS.update({name: f"muvid.mcp.scoring_tools:{name}" for name in SCORING_TOOLS})
+TOOL_REFS.update({name: f"muvid.mcp.lyricvid_tools:{name}" for name in LYRICVID_TOOLS})
 
 
 def register_tools(server, *, prefix="", include=None, exclude=None):

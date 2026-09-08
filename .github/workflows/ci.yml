@@ -71,7 +71,7 @@ jobs:
       - name: Install Dependencies
         uses: i2mint/wads/actions/install-deps-uv@master
         with:
-          extras: ai,mcp,ui  # ai: the narrative-pipeline tests need falaw/lacing/lookbook; mcp: nw+fastmcp, without which tests/test_footage.py importorskips itself to 0% coverage (muvid#24 B5); ui: fastapi/pydantic, without which tests/test_ui_app_post.py importorskips itself to 0% coverage (muvid#85)
+          extras: ai,mcp,ui,lyricvid  # ai: the narrative-pipeline tests need falaw/lacing/lookbook; mcp: nw+fastmcp, without which tests/test_footage.py importorskips itself to 0% coverage (muvid#24 B5); ui: fastapi/pydantic, without which tests/test_ui_app_post.py importorskips itself to 0% coverage (muvid#85); lyricvid: pysubs2, without which the ASS renderer's tests importorskip themselves to 0% coverage — the same shape as muvid#24 B5
 
       - name: Format Source Code
         run: uvx ruff format .
@@ -132,7 +132,7 @@ jobs:
       - name: Install Dependencies
         uses: i2mint/wads/actions/install-deps-uv@master
         with:
-          extras: ai,mcp,ui  # ai: the narrative-pipeline tests need falaw/lacing/lookbook; mcp: nw+fastmcp, without which tests/test_footage.py importorskips itself to 0% coverage (muvid#24 B5); ui: fastapi/pydantic, without which tests/test_ui_app_post.py importorskips itself to 0% coverage (muvid#85)
+          extras: ai,mcp,ui,lyricvid  # ai: the narrative-pipeline tests need falaw/lacing/lookbook; mcp: nw+fastmcp, without which tests/test_footage.py importorskips itself to 0% coverage (muvid#24 B5); ui: fastapi/pydantic, without which tests/test_ui_app_post.py importorskips itself to 0% coverage (muvid#85); lyricvid: pysubs2, without which the ASS renderer's tests importorskip themselves to 0% coverage — the same shape as muvid#24 B5
 
       - name: Run Tests
         uses: i2mint/wads/actions/run-tests-uv@master

@@ -300,7 +300,12 @@ def test_register_tools_includes_footage(tmp_path):
     assert "muvid_assemble_music_video" in names
     assert "muvid_align_footage" in names
     assert len(names) == len(set(names))
-    assert mcp.COSTED_TOOLS == []
+    # The footage tools are ffmpeg-only and spend nothing. This used to assert the
+    # GLOBAL `COSTED_TOOLS == []`, which stopped being true when the lyric-video
+    # LLM director arrived — and was never this test's business anyway. The
+    # partition invariant lives in test_mcp.py; what belongs here is that no
+    # footage tool has quietly become costed.
+    assert not (set(mcp.FOOTAGE_TOOLS) & set(mcp.COSTED_TOOLS))
 
 
 def test_music_video_factory_round_trip(tmp_path, monkeypatch):

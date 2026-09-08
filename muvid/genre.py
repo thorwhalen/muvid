@@ -36,6 +36,11 @@ from nw import Genre, Template, register_genre, register_genre_project_factory
 # at module top; heavy align/assemble code is lazy). thorwhalen/reelee#229.
 import muvid.genre_music_video  # noqa: F401,E402 — registers music_video + its factory
 
+# ...and the kinetic-typography `lyric-video` genre, muvid's first SUBGENRE-backed
+# genre: its Templates are the layout archetypes, and the render is one call into
+# muvid.lyricvid. Import-safe the same way (nw + a stdlib-only vocabulary module).
+import muvid.genre_lyric_video  # noqa: F401,E402 — registers lyric-video + its factory
+
 from muvid.visualize.visuals import list_visuals
 
 MUSIC_VISUALIZER_SLUG = "music-visualizer"
