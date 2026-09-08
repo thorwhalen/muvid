@@ -1,0 +1,846 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>muvid.lyricvid.render_web &mdash; muvid 0.0.55 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=b87b3bc5"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
+      <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            muvid
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid.html">muvid</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/__main__.html">muvid.__main__</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/align.html">muvid.align</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/characters.html">muvid.characters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/compose.html">muvid.compose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/contracts.html">muvid.contracts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/cost.html">muvid.cost</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/downloads.html">muvid.downloads</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/environments.html">muvid.environments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/events.html">muvid.events</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/facade.html">muvid.facade</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage.html">muvid.footage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/align.html">muvid.footage.align</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/assemble.html">muvid.footage.assemble</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/edl.html">muvid.footage.edl</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/lacing_bridge.html">muvid.footage.lacing_bridge</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/look.html">muvid.footage.look</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring.html">muvid.footage.scoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring/_frame_metrics.html">muvid.footage.scoring._frame_metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring/frames.html">muvid.footage.scoring.frames</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring/grid.html">muvid.footage.scoring.grid</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring/lipsync.html">muvid.footage.scoring.lipsync</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring/motionbeat.html">muvid.footage.scoring.motionbeat</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring/orchestrator.html">muvid.footage.scoring.orchestrator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring/quality.html">muvid.footage.scoring.quality</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring/segment.html">muvid.footage.scoring.segment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/select_score.html">muvid.footage.select_score</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/strategy.html">muvid.footage.strategy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/workspace.html">muvid.footage.workspace</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/genre.html">muvid.genre</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/genre_lyric_video.html">muvid.genre_lyric_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/genre_music_video.html">muvid.genre_music_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyrics.html">muvid.lyrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyricvid.html">muvid.lyricvid</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyricvid/__main__.html">muvid.lyricvid.__main__</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyricvid/director.html">muvid.lyricvid.director</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyricvid/manifest.html">muvid.lyricvid.manifest</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyricvid/pipeline.html">muvid.lyricvid.pipeline</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyricvid/render_ass.html">muvid.lyricvid.render_ass</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyricvid/render_web.html">muvid.lyricvid.render_web</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyricvid/scene.html">muvid.lyricvid.scene</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyricvid/shape.html">muvid.lyricvid.shape</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyricvid/spec.html">muvid.lyricvid.spec</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyricvid/timed_text.html">muvid.lyricvid.timed_text</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyricvid/tools.html">muvid.lyricvid.tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp.html">muvid.mcp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/_fetch.html">muvid.mcp._fetch</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/_guide.html">muvid.mcp._guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/footage_tools.html">muvid.mcp.footage_tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/identity.html">muvid.mcp.identity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/lyricvid_tools.html">muvid.mcp.lyricvid_tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/scoring_tools.html">muvid.mcp.scoring_tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/tools.html">muvid.mcp.tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/workspace.html">muvid.mcp.workspace</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/project.html">muvid.project</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers.html">muvid.renderers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers/_common.html">muvid.renderers._common</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers/_errors.html">muvid.renderers._errors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers/animation.html">muvid.renderers.animation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers/image_to_video.html">muvid.renderers.image_to_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers/lipsync.html">muvid.renderers.lipsync</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers/still.html">muvid.renderers.still</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers/text_to_video.html">muvid.renderers.text_to_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/schema.html">muvid.schema</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/script.html">muvid.script</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/subgenres.html">muvid.subgenres</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/subgenres/_contract.html">muvid.subgenres._contract</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/subgenres/_manifest.html">muvid.subgenres._manifest</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/subgenres/_registry.html">muvid.subgenres._registry</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/subgenres/testing.html">muvid.subgenres.testing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/ui.html">muvid.ui</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/ui/app.html">muvid.ui.app</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize.html">muvid.visualize</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/canvas.html">muvid.visualize.canvas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/ffmpeg.html">muvid.visualize.ffmpeg</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/reactive.html">muvid.visualize.reactive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/verify.html">muvid.visualize.verify</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/video.html">muvid.visualize.video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/visuals.html">muvid.visualize.visuals</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">muvid</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">muvid.lyricvid.render_web</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for muvid.lyricvid.render_web</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""The web backend: a :class:`~muvid.lyricvid.scene.Scene` as a deterministic</span>
+<span class="sd">HTML page, screenshotted frame by frame and muxed with the song.</span>
+
+<span class="sd">ASS (:mod:`muvid.lyricvid.render_ass`) is the default backend and should stay</span>
+<span class="sd">that way — it is fast, has no browser to install, and libass is what every</span>
+<span class="sd">player already runs. This module is the **escape hatch**: CSS filters, blend</span>
+<span class="sd">modes, variable fonts and arbitrary easing are things a subtitle format cannot</span>
+<span class="sd">express, and a treatment that wants them should not have to become a different</span>
+<span class="sd">product. One compiler, two renderers.</span>
+
+<span class="sd">**Determinism is the whole design, not a nice property.** The page computes</span>
+<span class="sd">every visual property as a pure function of the time handed to</span>
+<span class="sd">``window.setTime(t)``. There are no CSS declarations that interpolate over wall</span>
+<span class="sd">time, no keyframes, no ``requestAnimationFrame``-driven state, no ``Date.now``,</span>
+<span class="sd">no ``Math.random`` — so a screenshot at ``t`` is the same image on every run, on</span>
+<span class="sd">every machine, and the capture loop can take as long as it likes per frame</span>
+<span class="sd">without the video drifting against the audio. Anything that makes the page's</span>
+<span class="sd">appearance depend on *when* it was asked rather than *what* it was asked is a</span>
+<span class="sd">bug in this module, and :func:`scene_to_html`'s doctests assert the absence of</span>
+<span class="sd">the usual offenders.</span>
+
+<span class="sd">The technique (deterministic ``setTime`` + Playwright capture + an ffmpeg mux)</span>
+<span class="sd">is ported from a working 81-second render; the poem-specific parts of that</span>
+<span class="sd">prototype are not here.</span>
+
+<span class="sd">**This renderer does no layout.** A cue's centre, size and stacking come from</span>
+<span class="sd">:func:`~muvid.lyricvid.scene.compile_scene` and are written into the markup</span>
+<span class="sd">once, unchanged; the page never re-measures text and never nudges a coordinate.</span>
+<span class="sd">That is what makes the two backends comparable — the same scene, drawn twice —</span>
+<span class="sd">and it means a layout mistake upstream shows up here as a visibly wrong frame</span>
+<span class="sd">rather than being quietly absorbed. Absorbing it would be worse: it would make</span>
+<span class="sd">the browser and ASS renders disagree, and would then be wrong again the day the</span>
+<span class="sd">compiler changed.</span>
+
+<span class="sd">Playwright is an **optional** dependency (``pip install 'muvid[lyricvid-web]'``</span>
+<span class="sd">plus ``playwright install chromium``). It is imported inside function bodies, so</span>
+<span class="sd">importing this module costs nothing and stays on muvid's import-safe path.</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">html</span><span class="w"> </span><span class="kn">import</span> <span class="n">escape</span> <span class="k">as</span> <span class="n">_escape</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Iterable</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">muvid.lyricvid.scene</span><span class="w"> </span><span class="kn">import</span> <span class="n">Cue</span><span class="p">,</span> <span class="n">Scene</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">muvid.subgenres</span><span class="w"> </span><span class="kn">import</span> <span class="n">RenderResult</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">muvid.visualize.ffmpeg</span><span class="w"> </span><span class="kn">import</span> <span class="n">media_duration</span><span class="p">,</span> <span class="n">run_ffmpeg</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"scene_to_html"</span><span class="p">,</span> <span class="s2">"render"</span><span class="p">,</span> <span class="s2">"WebRenderUnavailable"</span><span class="p">,</span> <span class="s2">"INSTALL_HINT"</span><span class="p">]</span>
+
+
+<div class="viewcode-block" id="WebRenderUnavailable">
+<a class="viewcode-back" href="../../../module_docs/muvid/lyricvid/render_web.html#muvid.lyricvid.render_web.WebRenderUnavailable">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">WebRenderUnavailable</span><span class="p">(</span><span class="ne">RuntimeError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Playwright (or its Chromium build) is not installed. Carries the remedy."""</span></div>
+
+
+
+<span class="c1">#: What to tell a caller who has not installed the optional backend. Both lines</span>
+<span class="c1">#: matter: the wheel and the browser binary are separate installs, and missing</span>
+<span class="c1">#: the second is the failure people actually hit.</span>
+<span class="n">INSTALL_HINT</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"muvid's web lyric-video backend needs Playwright and a Chromium build:</span><span class="se">\n</span><span class="s2">"</span>
+    <span class="s2">"    pip install 'muvid[lyricvid-web]'</span><span class="se">\n</span><span class="s2">"</span>
+    <span class="s2">"    playwright install chromium</span><span class="se">\n</span><span class="s2">"</span>
+    <span class="s2">"The ASS backend (muvid.lyricvid.render_ass) needs neither and is the default."</span>
+<span class="p">)</span>
+
+<span class="c1"># --------------------------------------------------------------------------</span>
+<span class="c1"># Tunables. No magic numbers in the page: Python is the SSOT and ships them to</span>
+<span class="c1"># the JS as `window.__CONST`, so a motion's feel is edited in one place.</span>
+<span class="c1"># --------------------------------------------------------------------------</span>
+
+<span class="c1">#: Seconds a ``pop`` overshoot takes to settle back to rest scale.</span>
+<span class="n">POP_S</span> <span class="o">=</span> <span class="mf">0.26</span>
+<span class="c1">#: How far ``pop`` overshoots, as a fraction of the resting size.</span>
+<span class="n">POP_AMOUNT</span> <span class="o">=</span> <span class="mf">0.12</span>
+<span class="c1">#: How far ``rise`` starts below its resting position, in em of its own size.</span>
+<span class="n">RISE_EM</span> <span class="o">=</span> <span class="mf">0.35</span>
+<span class="c1">#: Seconds a ``dim_from`` / ``ignite_at`` colour crossfade takes.</span>
+<span class="n">DIM_S</span> <span class="o">=</span> <span class="mf">0.30</span>
+<span class="c1">#: Seconds per character for ``typewriter``. Compressed when the word is short</span>
+<span class="c1">#: enough that typing at this rate would outlast it.</span>
+<span class="n">TYPEWRITER_CHAR_S</span> <span class="o">=</span> <span class="mf">0.045</span>
+
+<span class="c1">#: ``line-height`` on a cue. Above 1 so ascenders and descenders sit inside the</span>
+<span class="c1">#: element's own box — which is what lets ``wipe`` clip with a plain</span>
+<span class="c1">#: ``inset(0 X% 0 0)`` without shaving the tops off letters.</span>
+<span class="n">LINE_HEIGHT</span> <span class="o">=</span> <span class="mf">1.35</span>
+
+<span class="c1">#: Appended after the treatment's own family, so an unavailable family falls</span>
+<span class="c1">#: back rather than failing the render (:class:`muvid.lyricvid.spec.Typography`).</span>
+<span class="n">FONT_FALLBACK</span> <span class="o">=</span> <span class="s1">'"DejaVu Sans", "Helvetica Neue", Helvetica, Arial, sans-serif'</span>
+
+<span class="c1">#: Chromium flags that remove sources of run-to-run pixel variation: a fixed</span>
+<span class="c1">#: colour profile, no font hinting (which is DPI- and platform-dependent) and no</span>
+<span class="c1">#: subpixel-antialiased text (which is layout-order-dependent on some builds).</span>
+<span class="n">CHROMIUM_ARGS</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"--force-color-profile=srgb"</span><span class="p">,</span>
+    <span class="s2">"--font-render-hinting=none"</span><span class="p">,</span>
+    <span class="s2">"--disable-lcd-text"</span><span class="p">,</span>
+    <span class="s2">"--hide-scrollbars"</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1">#: How long to wait for ``window.__ready`` (fonts loaded, first frame drawn).</span>
+<span class="n">READY_TIMEOUT_MS</span> <span class="o">=</span> <span class="mi">30_000</span>
+
+<span class="c1">#: Names inside ``workdir``. The page is kept as an artifact — a render you can</span>
+<span class="c1">#: open in a browser and scrub is the difference between a debuggable backend</span>
+<span class="c1">#: and an opaque one — while the frames, which are large and reproducible, go.</span>
+<span class="n">PAGE_NAME</span> <span class="o">=</span> <span class="s2">"page.html"</span>
+<span class="n">FRAMES_DIRNAME</span> <span class="o">=</span> <span class="s2">"frames"</span>
+<span class="n">FRAME_PATTERN</span> <span class="o">=</span> <span class="s2">"f</span><span class="si">%06d</span><span class="s2">.png"</span>
+
+<span class="c1">#: H.264 High / yuv420p — the profile every platform accepts.</span>
+<span class="n">VIDEO_CODEC_ARGS</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"-c:v"</span><span class="p">,</span> <span class="s2">"libx264"</span><span class="p">,</span>
+    <span class="s2">"-preset"</span><span class="p">,</span> <span class="s2">"slow"</span><span class="p">,</span>
+    <span class="s2">"-pix_fmt"</span><span class="p">,</span> <span class="s2">"yuv420p"</span><span class="p">,</span>
+    <span class="s2">"-profile:v"</span><span class="p">,</span> <span class="s2">"high"</span><span class="p">,</span>
+    <span class="s2">"-level"</span><span class="p">,</span> <span class="s2">"4.1"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="c1">#: AAC, 48 kHz, stereo.</span>
+<span class="n">AUDIO_CODEC_ARGS</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"-c:a"</span><span class="p">,</span> <span class="s2">"aac"</span><span class="p">,</span>
+    <span class="s2">"-b:a"</span><span class="p">,</span> <span class="s2">"320k"</span><span class="p">,</span>
+    <span class="s2">"-ar"</span><span class="p">,</span> <span class="s2">"48000"</span><span class="p">,</span>
+    <span class="s2">"-ac"</span><span class="p">,</span> <span class="s2">"2"</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">_HEX</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="s2">"0123456789abcdefABCDEF"</span><span class="p">)</span>
+
+
+<span class="c1"># --------------------------------------------------------------------------</span>
+<span class="c1"># the page</span>
+<span class="c1"># --------------------------------------------------------------------------</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_colour</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">what</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""A validated ``#rrggbb``. Raises rather than substituting a colour.</span>
+
+<span class="sd">    :func:`muvid.lyricvid.spec.repair` already guarantees this for anything that</span>
+<span class="sd">    came through the compiler; a hand-built :class:`~muvid.lyricvid.scene.Scene`</span>
+<span class="sd">    that carries something else is a caller error, and a silently substituted</span>
+<span class="sd">    colour would be a wrong render reported as a good one.</span>
+<span class="sd">    """</span>
+    <span class="n">ok</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
+        <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">==</span> <span class="mi">7</span>
+        <span class="ow">and</span> <span class="n">value</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"#"</span>
+        <span class="ow">and</span> <span class="nb">all</span><span class="p">(</span><span class="n">c</span> <span class="ow">in</span> <span class="n">_HEX</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">value</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">ok</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">what</span><span class="si">}</span><span class="s2"> must be a #rrggbb colour, got </span><span class="si">{</span><span class="n">value</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">value</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_font_stack</span><span class="p">(</span><span class="n">family</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The treatment's family, quoted and de-fanged, ahead of the fallbacks."""</span>
+    <span class="n">clean</span> <span class="o">=</span> <span class="n">family</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">'"'</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"</span><span class="se">\\</span><span class="s2">"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">";"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s1">'"</span><span class="si">{</span><span class="n">clean</span><span class="si">}</span><span class="s1">", </span><span class="si">{</span><span class="n">FONT_FALLBACK</span><span class="si">}</span><span class="s1">'</span> <span class="k">if</span> <span class="n">clean</span> <span class="k">else</span> <span class="n">FONT_FALLBACK</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_cue_style</span><span class="p">(</span><span class="n">cue</span><span class="p">:</span> <span class="n">Cue</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The one thing about a cue that never changes: where it is and how big.</span>
+
+<span class="sd">    ``x``/``y`` are the *centre* (:class:`~muvid.lyricvid.scene.Cue`'s contract),</span>
+<span class="sd">    so they become ``left``/``top`` percentages plus a ``translate(-50%,-50%)``.</span>
+<span class="sd">    ``size`` is a fraction of canvas height and becomes ``vh``, which is why one</span>
+<span class="sd">    page renders correctly at 1080p and at 4K. Written once, into the markup —</span>
+<span class="sd">    a cue never moves, so a word can never reflow.</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s2">"left:</span><span class="si">{</span><span class="n">cue</span><span class="o">.</span><span class="n">x</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">100</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">%;"</span>
+        <span class="sa">f</span><span class="s2">"top:</span><span class="si">{</span><span class="n">cue</span><span class="o">.</span><span class="n">y</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">100</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">%;"</span>
+        <span class="sa">f</span><span class="s2">"font-size:</span><span class="si">{</span><span class="n">cue</span><span class="o">.</span><span class="n">size</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">100</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">vh;"</span>
+        <span class="sa">f</span><span class="s2">"z-index:</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">cue</span><span class="o">.</span><span class="n">layer</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_cue_markup</span><span class="p">(</span><span class="n">cue</span><span class="p">:</span> <span class="n">Cue</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""One absolutely-positioned element. ``typewriter`` gets a span per glyph.</span>
+
+<span class="sd">    The glyphs are all present from the start and revealed with ``visibility``,</span>
+<span class="sd">    never by changing the text — appearing character by character must not move</span>
+<span class="sd">    the characters already there.</span>
+<span class="sd">    """</span>
+    <span class="n">inner</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">""</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">"&lt;span&gt;</span><span class="si">{</span><span class="n">_escape</span><span class="p">(</span><span class="n">ch</span><span class="p">)</span><span class="si">}</span><span class="s2">&lt;/span&gt;"</span> <span class="k">for</span> <span class="n">ch</span> <span class="ow">in</span> <span class="n">cue</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">cue</span><span class="o">.</span><span class="n">motion</span> <span class="o">==</span> <span class="s2">"typewriter"</span>
+        <span class="k">else</span> <span class="n">_escape</span><span class="p">(</span><span class="n">cue</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s1">'&lt;div class="cue" style="</span><span class="si">{</span><span class="n">_cue_style</span><span class="p">(</span><span class="n">cue</span><span class="p">)</span><span class="si">}</span><span class="s1">"&gt;</span><span class="si">{</span><span class="n">inner</span><span class="si">}</span><span class="s1">&lt;/div&gt;'</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_cue_payload</span><span class="p">(</span><span class="n">cue</span><span class="p">:</span> <span class="n">Cue</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""The time envelope and colours — everything ``setTime`` needs, and no</span>
+<span class="sd">    geometry, because the geometry is already in the markup."""</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">"motion"</span><span class="p">:</span> <span class="n">cue</span><span class="o">.</span><span class="n">motion</span><span class="p">,</span>
+        <span class="s2">"t_in"</span><span class="p">:</span> <span class="n">cue</span><span class="o">.</span><span class="n">t_in</span><span class="p">,</span>
+        <span class="s2">"t_full"</span><span class="p">:</span> <span class="n">cue</span><span class="o">.</span><span class="n">t_full</span><span class="p">,</span>
+        <span class="s2">"t_out"</span><span class="p">:</span> <span class="n">cue</span><span class="o">.</span><span class="n">t_out</span><span class="p">,</span>
+        <span class="s2">"t_gone"</span><span class="p">:</span> <span class="n">cue</span><span class="o">.</span><span class="n">t_gone</span><span class="p">,</span>
+        <span class="s2">"colour"</span><span class="p">:</span> <span class="n">_colour</span><span class="p">(</span><span class="n">cue</span><span class="o">.</span><span class="n">colour</span><span class="p">,</span> <span class="n">what</span><span class="o">=</span><span class="s2">"cue.colour"</span><span class="p">),</span>
+        <span class="s2">"dim_colour"</span><span class="p">:</span> <span class="p">(</span>
+            <span class="kc">None</span> <span class="k">if</span> <span class="n">cue</span><span class="o">.</span><span class="n">dim_colour</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">_colour</span><span class="p">(</span><span class="n">cue</span><span class="o">.</span><span class="n">dim_colour</span><span class="p">,</span> <span class="n">what</span><span class="o">=</span><span class="s2">"cue.dim_colour"</span><span class="p">)</span>
+        <span class="p">),</span>
+        <span class="s2">"dim_from"</span><span class="p">:</span> <span class="n">cue</span><span class="o">.</span><span class="n">dim_from</span><span class="p">,</span>
+        <span class="c1"># per-word karaoke wipe window / concrete-page ignition, when the</span>
+        <span class="c1"># archetype computed one (muvid.lyricvid.scene puts them in `extra`).</span>
+        <span class="s2">"wipe_end"</span><span class="p">:</span> <span class="n">cue</span><span class="o">.</span><span class="n">extra</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"wipe_end"</span><span class="p">),</span>
+        <span class="s2">"ignite_at"</span><span class="p">:</span> <span class="n">cue</span><span class="o">.</span><span class="n">extra</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"ignite_at"</span><span class="p">),</span>
+    <span class="p">}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_inline_json</span><span class="p">(</span><span class="n">payload</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""``json.dumps`` that is safe to drop inside a ``&lt;script&gt;`` element."""</span>
+    <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">payload</span><span class="p">,</span> <span class="n">separators</span><span class="o">=</span><span class="p">(</span><span class="s2">","</span><span class="p">,</span> <span class="s2">":"</span><span class="p">))</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"&lt;"</span><span class="p">,</span> <span class="s2">"</span><span class="se">\\</span><span class="s2">u003c"</span><span class="p">)</span>
+
+
+<span class="n">_PAGE_JS</span> <span class="o">=</span> <span class="s2">"""</span>
+<span class="s2">'use strict';</span>
+<span class="s2">(function () {</span>
+<span class="s2">  var S = window.__SCENE;</span>
+<span class="s2">  var K = window.__CONST;</span>
+
+<span class="s2">  /* ---- pure helpers ---------------------------------------------------- */</span>
+<span class="s2">  function clamp01(x) { return x &lt; 0 ? 0 : (x &gt; 1 ? 1 : x); }</span>
+<span class="s2">  function easeOut(x) { return 1 - Math.pow(1 - x, 3); }</span>
+<span class="s2">  function step(c, t) { return t &gt;= c.t_in ? 1 : 0; }</span>
+<span class="s2">  function eased(c, t) {</span>
+<span class="s2">    var d = c.t_full - c.t_in;</span>
+<span class="s2">    return d &lt;= 0 ? step(c, t) : easeOut(clamp01((t - c.t_in) / d));</span>
+<span class="s2">  }</span>
+<span class="s2">  function rgb(c) {</span>
+<span class="s2">    return [parseInt(c.slice(1, 3), 16),</span>
+<span class="s2">            parseInt(c.slice(3, 5), 16),</span>
+<span class="s2">            parseInt(c.slice(5, 7), 16)];</span>
+<span class="s2">  }</span>
+<span class="s2">  function mix(a, b, f) {</span>
+<span class="s2">    return 'rgb(' + Math.round(a[0] + (b[0] - a[0]) * f) + ','</span>
+<span class="s2">                  + Math.round(a[1] + (b[1] - a[1]) * f) + ','</span>
+<span class="s2">                  + Math.round(a[2] + (b[2] - a[2]) * f) + ')';</span>
+<span class="s2">  }</span>
+
+<span class="s2">  /* ---- motion tables: one entry per muvid.lyricvid.spec.MOTIONS key ----- */</span>
+<span class="s2">  var ARRIVE = {</span>
+<span class="s2">    cut: step, fade: eased, pop: eased, rise: eased,</span>
+<span class="s2">    wipe: step,        /* the reveal IS the wipe */</span>
+<span class="s2">    typewriter: step   /* the reveal IS the typing */</span>
+<span class="s2">  };</span>
+<span class="s2">  var BASE = 'translate(-50%,-50%)';</span>
+<span class="s2">  var TRANSFORM = {</span>
+<span class="s2">    pop: function (c, t) {</span>
+<span class="s2">      var q = clamp01((t - c.t_in) / K.pop_s);</span>
+<span class="s2">      var k = 1 + K.pop_amount * (1 - easeOut(q));</span>
+<span class="s2">      return BASE + ' scale(' + k.toFixed(4) + ')';</span>
+<span class="s2">    },</span>
+<span class="s2">    rise: function (c, t) {</span>
+<span class="s2">      var dy = K.rise_em * (1 - eased(c, t));</span>
+<span class="s2">      return BASE + ' translateY(' + dy.toFixed(4) + 'em)';</span>
+<span class="s2">    }</span>
+<span class="s2">  };</span>
+
+<span class="s2">  /* ---- the frame function: everything below is f(t) --------------------- */</span>
+<span class="s2">  function alphaOf(c, t) {</span>
+<span class="s2">    if (t &lt; c.t_in) { return 0; }</span>
+<span class="s2">    var a = (ARRIVE[c.motion] || eased)(c, t);</span>
+<span class="s2">    if (c.t_out != null) {                 /* null OR undefined: never leaves */</span>
+<span class="s2">      var g = c.t_gone == null ? c.t_out : c.t_gone;</span>
+<span class="s2">      if (t &gt;= g) { return 0; }</span>
+<span class="s2">      if (t &gt; c.t_out) {</span>
+<span class="s2">        var d = g - c.t_out;</span>
+<span class="s2">        a *= d &lt;= 0 ? 0 : (1 - easeOut(clamp01((t - c.t_out) / d)));</span>
+<span class="s2">      }</span>
+<span class="s2">    }</span>
+<span class="s2">    return a;</span>
+<span class="s2">  }</span>
+<span class="s2">  function colourOf(it, t) {</span>
+<span class="s2">    var c = it.cue;</span>
+<span class="s2">    if (it.dim) {</span>
+<span class="s2">      /* concrete_page: present from the start, dim, igniting when sung */</span>
+<span class="s2">      if (c.ignite_at != null) {</span>
+<span class="s2">        return mix(it.dim, it.base, easeOut(clamp01((t - c.ignite_at) / K.dim_s)));</span>
+<span class="s2">      }</span>
+<span class="s2">      /* persistence='dim': arrives lit, recedes once it has been sung */</span>
+<span class="s2">      if (c.dim_from != null) {</span>
+<span class="s2">        return mix(it.base, it.dim, easeOut(clamp01((t - c.dim_from) / K.dim_s)));</span>
+<span class="s2">      }</span>
+<span class="s2">    }</span>
+<span class="s2">    return c.colour;</span>
+<span class="s2">  }</span>
+<span class="s2">  function clipOf(c, t) {</span>
+<span class="s2">    if (c.motion !== 'wipe') { return 'none'; }</span>
+<span class="s2">    var end = c.wipe_end == null ? c.t_full : c.wipe_end;</span>
+<span class="s2">    var d = end - c.t_in;</span>
+<span class="s2">    var f = d &lt;= 0 ? step(c, t) : clamp01((t - c.t_in) / d);</span>
+<span class="s2">    return 'inset(0 ' + ((1 - f) * 100).toFixed(3) + '% 0 0)';</span>
+<span class="s2">  }</span>
+<span class="s2">  function typedCount(it, t) {</span>
+<span class="s2">    var c = it.cue, n = it.chars.length;</span>
+<span class="s2">    var end = c.wipe_end != null ? c.wipe_end</span>
+<span class="s2">            : (c.t_out != null ? c.t_out : c.t_full);</span>
+<span class="s2">    var span = end - c.t_in;</span>
+<span class="s2">    var per = K.type_char_s;</span>
+<span class="s2">    if (span &gt; 0 &amp;&amp; span / n &lt; per) { per = span / n; }</span>
+<span class="s2">    if (per &lt;= 0) { return t &gt;= c.t_in ? n : 0; }</span>
+<span class="s2">    var k = Math.floor((t - c.t_in) / per) + 1;</span>
+<span class="s2">    return k &lt; 0 ? 0 : (k &gt; n ? n : k);</span>
+<span class="s2">  }</span>
+
+<span class="s2">  /* ---- pair the payload with the markup --------------------------------- */</span>
+<span class="s2">  var els = document.querySelectorAll('.cue');</span>
+<span class="s2">  var items = [];</span>
+<span class="s2">  for (var i = 0; i &lt; S.cues.length; i++) {</span>
+<span class="s2">    var c = S.cues[i];</span>
+<span class="s2">    items.push({</span>
+<span class="s2">      cue: c,</span>
+<span class="s2">      el: els[i],</span>
+<span class="s2">      chars: c.motion === 'typewriter' ? els[i].querySelectorAll('span') : null,</span>
+<span class="s2">      base: rgb(c.colour),</span>
+<span class="s2">      dim: c.dim_colour ? rgb(c.dim_colour) : null,</span>
+<span class="s2">      a: '', tr: '', co: '', cp: '', n: -1</span>
+<span class="s2">    });</span>
+<span class="s2">  }</span>
+
+<span class="s2">  /* The caches below are a write-skipping optimisation ONLY: every property is</span>
+<span class="s2">     still assigned f(t) whenever it differs from what is on the element, so the</span>
+<span class="s2">     rendered frame does not depend on which times were asked for before. */</span>
+<span class="s2">  function setTime(t) {</span>
+<span class="s2">    for (var i = 0; i &lt; items.length; i++) {</span>
+<span class="s2">      var it = items[i], c = it.cue;</span>
+<span class="s2">      var av = alphaOf(c, t).toFixed(4);</span>
+<span class="s2">      if (av !== it.a) { it.el.style.opacity = av; it.a = av; }</span>
+<span class="s2">      if (av === '0.0000') { continue; }</span>
+<span class="s2">      var fn = TRANSFORM[c.motion];</span>
+<span class="s2">      var tr = fn ? fn(c, t) : BASE;</span>
+<span class="s2">      if (tr !== it.tr) { it.el.style.transform = tr; it.tr = tr; }</span>
+<span class="s2">      var co = colourOf(it, t);</span>
+<span class="s2">      if (co !== it.co) { it.el.style.color = co; it.co = co; }</span>
+<span class="s2">      var cp = clipOf(c, t);</span>
+<span class="s2">      if (cp !== it.cp) { it.el.style.clipPath = cp; it.cp = cp; }</span>
+<span class="s2">      if (it.chars) {</span>
+<span class="s2">        var k = typedCount(it, t);</span>
+<span class="s2">        if (k !== it.n) {</span>
+<span class="s2">          for (var j = 0; j &lt; it.chars.length; j++) {</span>
+<span class="s2">            it.chars[j].style.visibility = j &lt; k ? 'visible' : 'hidden';</span>
+<span class="s2">          }</span>
+<span class="s2">          it.n = k;</span>
+<span class="s2">        }</span>
+<span class="s2">      }</span>
+<span class="s2">    }</span>
+<span class="s2">    document.documentElement.dataset.t = t.toFixed(4);</span>
+<span class="s2">  }</span>
+
+<span class="s2">  window.setTime = setTime;</span>
+<span class="s2">  window.__ready = false;</span>
+<span class="s2">  window.__cue_count = items.length;</span>
+<span class="s2">  var fonts = document.fonts ? document.fonts.ready : Promise.resolve();</span>
+<span class="s2">  fonts.then(function () {</span>
+<span class="s2">    setTime(0);</span>
+<span class="s2">    window.__ready = true;   /* the capture loop waits on this */</span>
+<span class="s2">  });</span>
+<span class="s2">})();</span>
+<span class="s2">"""</span>
+
+
+<div class="viewcode-block" id="scene_to_html">
+<a class="viewcode-back" href="../../../module_docs/muvid/lyricvid/render_web.html#muvid.lyricvid.render_web.scene_to_html">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">scene_to_html</span><span class="p">(</span><span class="n">scene</span><span class="p">:</span> <span class="n">Scene</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""A self-contained page exposing a deterministic ``setTime(t)``.</span>
+
+<span class="sd">    One absolutely-positioned element per cue, placed once from the cue's</span>
+<span class="sd">    normalised centre and sized in ``vh``; the script only ever changes</span>
+<span class="sd">    opacity, transform, colour and clip — never content, never position — so</span>
+<span class="sd">    words cannot reflow. Nothing in the page depends on wall-clock time.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        scene: the compiled scene. Colours must be ``#rrggbb``.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A complete HTML document, safe to write to a file and open.</span>
+
+<span class="sd">    &gt;&gt;&gt; from muvid.lyricvid import spec as spec_mod</span>
+<span class="sd">    &gt;&gt;&gt; from muvid.lyricvid.scene import compile_scene</span>
+<span class="sd">    &gt;&gt;&gt; from muvid.lyricvid.timed_text import from_words</span>
+<span class="sd">    &gt;&gt;&gt; tt = from_words([('one', 0.0, 0.5), ('two', 0.5, 1.0)], duration=1.0)</span>
+<span class="sd">    &gt;&gt;&gt; scene = compile_scene(spec_mod.TreatmentSpec(), tt)</span>
+<span class="sd">    &gt;&gt;&gt; page = scene_to_html(scene)</span>
+
+<span class="sd">    A page, with a deterministic entry point:</span>
+
+<span class="sd">    &gt;&gt;&gt; page.startswith('&lt;!doctype html&gt;')</span>
+<span class="sd">    True</span>
+<span class="sd">    &gt;&gt;&gt; 'function setTime(t)' in page and 'window.setTime = setTime' in page</span>
+<span class="sd">    True</span>
+<span class="sd">    &gt;&gt;&gt; 'window.__ready' in page</span>
+<span class="sd">    True</span>
+
+<span class="sd">    One element per cue, and the words themselves are in the markup:</span>
+
+<span class="sd">    &gt;&gt;&gt; page.count('class="cue"') == len(scene.cues)</span>
+<span class="sd">    True</span>
+<span class="sd">    &gt;&gt;&gt; '&gt;one&lt;' in page and '&gt;two&lt;' in page</span>
+<span class="sd">    True</span>
+
+<span class="sd">    And none of the ways a page stops being a pure function of ``t``:</span>
+
+<span class="sd">    &gt;&gt;&gt; forbidden = ('Math.random', 'Date.now', 'requestAnimationFrame',</span>
+<span class="sd">    ...              'performance.now', 'transition:', 'animation:',</span>
+<span class="sd">    ...              '@keyframes', 'setInterval', 'setTimeout')</span>
+<span class="sd">    &gt;&gt;&gt; [bad for bad in forbidden if bad in page]</span>
+<span class="sd">    []</span>
+<span class="sd">    """</span>
+    <span class="n">typo</span> <span class="o">=</span> <span class="n">scene</span><span class="o">.</span><span class="n">typography</span>
+    <span class="n">bg</span> <span class="o">=</span> <span class="n">_colour</span><span class="p">(</span><span class="n">scene</span><span class="o">.</span><span class="n">background</span><span class="p">,</span> <span class="n">what</span><span class="o">=</span><span class="s2">"scene.background"</span><span class="p">)</span>
+    <span class="n">cues</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Cue</span><span class="p">]</span> <span class="o">=</span> <span class="n">scene</span><span class="o">.</span><span class="n">cues</span>
+    <span class="n">payload</span> <span class="o">=</span> <span class="n">_inline_json</span><span class="p">({</span><span class="s2">"cues"</span><span class="p">:</span> <span class="p">[</span><span class="n">_cue_payload</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">cues</span><span class="p">]})</span>
+    <span class="n">consts</span> <span class="o">=</span> <span class="n">_inline_json</span><span class="p">(</span>
+        <span class="p">{</span>
+            <span class="s2">"pop_s"</span><span class="p">:</span> <span class="n">POP_S</span><span class="p">,</span>
+            <span class="s2">"pop_amount"</span><span class="p">:</span> <span class="n">POP_AMOUNT</span><span class="p">,</span>
+            <span class="s2">"rise_em"</span><span class="p">:</span> <span class="n">RISE_EM</span><span class="p">,</span>
+            <span class="s2">"dim_s"</span><span class="p">:</span> <span class="n">DIM_S</span><span class="p">,</span>
+            <span class="s2">"type_char_s"</span><span class="p">:</span> <span class="n">TYPEWRITER_CHAR_S</span><span class="p">,</span>
+        <span class="p">}</span>
+    <span class="p">)</span>
+    <span class="c1"># letter-spacing is added after EVERY glyph including the last, so a tracked</span>
+    <span class="c1"># cue's box is one em of tracking wider on the right than its ink; the</span>
+    <span class="c1"># matching left padding puts the ink back in the middle of the box, which is</span>
+    <span class="c1"># what translate(-50%) then centres on the cue's x.</span>
+    <span class="n">tracking</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s2">"letter-spacing:</span><span class="si">{</span><span class="n">typo</span><span class="o">.</span><span class="n">tracking</span><span class="si">}</span><span class="s2">em;padding-left:</span><span class="si">{</span><span class="n">typo</span><span class="o">.</span><span class="n">tracking</span><span class="si">}</span><span class="s2">em;"</span>
+        <span class="k">if</span> <span class="n">typo</span><span class="o">.</span><span class="n">tracking</span>
+        <span class="k">else</span> <span class="s2">""</span>
+    <span class="p">)</span>
+    <span class="n">body</span> <span class="o">=</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">_cue_markup</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">cues</span><span class="p">)</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">"""&lt;!doctype html&gt;</span>
+<span class="s2">&lt;html lang="en"&gt;</span>
+<span class="s2">&lt;head&gt;</span>
+<span class="s2">&lt;meta charset="utf-8"&gt;</span>
+<span class="s2">&lt;title&gt;muvid lyric video&lt;/title&gt;</span>
+<span class="s2">&lt;style&gt;</span>
+<span class="s2">  * </span><span class="se">{{</span><span class="s2"> margin: 0; padding: 0; box-sizing: border-box; </span><span class="se">}}</span>
+<span class="s2">  html, body </span><span class="se">{{</span>
+<span class="s2">    width: 100%; height: 100%;</span>
+<span class="s2">    overflow: hidden;</span>
+<span class="s2">    background: </span><span class="si">{</span><span class="n">bg</span><span class="si">}</span><span class="s2">;</span>
+<span class="s2">    -webkit-font-smoothing: antialiased;</span>
+<span class="s2">    text-rendering: geometricPrecision;</span>
+<span class="s2">  </span><span class="se">}}</span>
+<span class="s2">  #stage </span><span class="se">{{</span><span class="s2"> position: absolute; inset: 0; </span><span class="se">}}</span>
+<span class="s2">  .cue </span><span class="se">{{</span>
+<span class="s2">    position: absolute;</span>
+<span class="s2">    white-space: pre;</span>
+<span class="s2">    line-height: </span><span class="si">{</span><span class="n">LINE_HEIGHT</span><span class="si">}</span><span class="s2">;</span>
+<span class="s2">    font-family: </span><span class="si">{</span><span class="n">_font_stack</span><span class="p">(</span><span class="n">typo</span><span class="o">.</span><span class="n">family</span><span class="p">)</span><span class="si">}</span><span class="s2">;</span>
+<span class="s2">    font-weight: </span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">typo</span><span class="o">.</span><span class="n">weight</span><span class="p">)</span><span class="si">}</span><span class="s2">;</span>
+<span class="s2">    </span><span class="si">{</span><span class="n">tracking</span><span class="si">}</span>
+<span class="s2">    transform: translate(-50%,-50%);</span>
+<span class="s2">    opacity: 0;</span>
+<span class="s2">    will-change: opacity, transform;</span>
+<span class="s2">  </span><span class="se">}}</span>
+<span class="s2">  .cue span </span><span class="se">{{</span><span class="s2"> visibility: hidden; </span><span class="se">}}</span>
+<span class="s2">&lt;/style&gt;</span>
+<span class="s2">&lt;/head&gt;</span>
+<span class="s2">&lt;body&gt;</span>
+<span class="s2">&lt;div id="stage"&gt;</span>
+<span class="si">{</span><span class="n">body</span><span class="si">}</span>
+<span class="s2">&lt;/div&gt;</span>
+<span class="s2">&lt;script&gt;window.__SCENE = </span><span class="si">{</span><span class="n">payload</span><span class="si">}</span><span class="s2">;</span>
+<span class="s2">window.__CONST = </span><span class="si">{</span><span class="n">consts</span><span class="si">}</span><span class="s2">;&lt;/script&gt;</span>
+<span class="s2">&lt;script&gt;</span><span class="si">{</span><span class="n">_PAGE_JS</span><span class="si">}</span><span class="s2">&lt;/script&gt;</span>
+<span class="s2">&lt;/body&gt;</span>
+<span class="s2">&lt;/html&gt;</span>
+<span class="s2">"""</span></div>
+
+
+
+<span class="c1"># --------------------------------------------------------------------------</span>
+<span class="c1"># the render</span>
+<span class="c1"># --------------------------------------------------------------------------</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_check_geometry</span><span class="p">(</span><span class="n">scene</span><span class="p">:</span> <span class="n">Scene</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">scale</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Refuse a geometry that would fail later, or quietly lose pixels."""</span>
+    <span class="n">canvas</span> <span class="o">=</span> <span class="n">scene</span><span class="o">.</span><span class="n">canvas</span>
+    <span class="k">if</span> <span class="n">scale</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"scale must be a positive integer, got </span><span class="si">{</span><span class="n">scale</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">canvas</span><span class="o">.</span><span class="n">width</span> <span class="o">%</span> <span class="n">scale</span> <span class="ow">or</span> <span class="n">canvas</span><span class="o">.</span><span class="n">height</span> <span class="o">%</span> <span class="n">scale</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"canvas </span><span class="si">{</span><span class="n">canvas</span><span class="o">.</span><span class="n">width</span><span class="si">}</span><span class="s2">x</span><span class="si">{</span><span class="n">canvas</span><span class="o">.</span><span class="n">height</span><span class="si">}</span><span class="s2"> is not divisible by scale=</span><span class="si">{</span><span class="n">scale</span><span class="si">}</span><span class="s2">; "</span>
+            <span class="s2">"the viewport would be rounded down and the render would be the wrong size"</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="n">canvas</span><span class="o">.</span><span class="n">width</span> <span class="o">%</span> <span class="mi">2</span> <span class="ow">or</span> <span class="n">canvas</span><span class="o">.</span><span class="n">height</span> <span class="o">%</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"canvas </span><span class="si">{</span><span class="n">canvas</span><span class="o">.</span><span class="n">width</span><span class="si">}</span><span class="s2">x</span><span class="si">{</span><span class="n">canvas</span><span class="o">.</span><span class="n">height</span><span class="si">}</span><span class="s2"> has an odd dimension; "</span>
+            <span class="s2">"H.264 yuv420p needs both to be even"</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="n">canvas</span><span class="o">.</span><span class="n">fps</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"canvas.fps must be positive, got </span><span class="si">{</span><span class="n">canvas</span><span class="o">.</span><span class="n">fps</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_sync_playwright</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">"""Playwright's sync entry point, or a :class:`WebRenderUnavailable`."""</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">playwright.sync_api</span><span class="w"> </span><span class="kn">import</span> <span class="n">sync_playwright</span>
+    <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>  <span class="c1"># the optional extra is not installed</span>
+        <span class="k">raise</span> <span class="n">WebRenderUnavailable</span><span class="p">(</span><span class="n">INSTALL_HINT</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span>
+    <span class="k">return</span> <span class="n">sync_playwright</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_launch</span><span class="p">(</span><span class="n">pw</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Launch headless Chromium, translating "no browser installed" only.</span>
+
+<span class="sd">    Any other Playwright failure is re-raised untouched: a browser that crashed</span>
+<span class="sd">    or a flag it rejected is a real problem, and relabelling it as a missing</span>
+<span class="sd">    install would send the caller to the wrong remedy.</span>
+<span class="sd">    """</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">playwright.sync_api</span><span class="w"> </span><span class="kn">import</span> <span class="n">Error</span> <span class="k">as</span> <span class="n">PlaywrightError</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">pw</span><span class="o">.</span><span class="n">chromium</span><span class="o">.</span><span class="n">launch</span><span class="p">(</span><span class="n">args</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">CHROMIUM_ARGS</span><span class="p">))</span>
+    <span class="k">except</span> <span class="n">PlaywrightError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+        <span class="n">text</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="k">if</span> <span class="s2">"executable doesn't exist"</span> <span class="ow">in</span> <span class="n">text</span> <span class="ow">or</span> <span class="s2">"playwright install"</span> <span class="ow">in</span> <span class="n">text</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">WebRenderUnavailable</span><span class="p">(</span><span class="n">INSTALL_HINT</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span>
+        <span class="k">raise</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_capture</span><span class="p">(</span><span class="n">page</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">frames</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">scene</span><span class="p">:</span> <span class="n">Scene</span><span class="p">,</span> <span class="n">scale</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Drive ``setTime(i/fps)`` and screenshot, frame by frame. Returns the count.</span>
+
+<span class="sd">    The loop never waits on the page to "settle": there is nothing to settle to.</span>
+<span class="sd">    Every property was assigned synchronously inside ``setTime``, so the next</span>
+<span class="sd">    screenshot is already the frame for that time.</span>
+<span class="sd">    """</span>
+    <span class="n">canvas</span> <span class="o">=</span> <span class="n">scene</span><span class="o">.</span><span class="n">canvas</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">scene</span><span class="o">.</span><span class="n">duration</span> <span class="o">*</span> <span class="n">canvas</span><span class="o">.</span><span class="n">fps</span><span class="p">)))</span>
+    <span class="n">sync_playwright</span> <span class="o">=</span> <span class="n">_sync_playwright</span><span class="p">()</span>
+    <span class="k">with</span> <span class="n">sync_playwright</span><span class="p">()</span> <span class="k">as</span> <span class="n">pw</span><span class="p">:</span>
+        <span class="n">browser</span> <span class="o">=</span> <span class="n">_launch</span><span class="p">(</span><span class="n">pw</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">tab</span> <span class="o">=</span> <span class="n">browser</span><span class="o">.</span><span class="n">new_page</span><span class="p">(</span>
+                <span class="n">viewport</span><span class="o">=</span><span class="p">{</span>
+                    <span class="s2">"width"</span><span class="p">:</span> <span class="n">canvas</span><span class="o">.</span><span class="n">width</span> <span class="o">//</span> <span class="n">scale</span><span class="p">,</span>
+                    <span class="s2">"height"</span><span class="p">:</span> <span class="n">canvas</span><span class="o">.</span><span class="n">height</span> <span class="o">//</span> <span class="n">scale</span><span class="p">,</span>
+                <span class="p">},</span>
+                <span class="n">device_scale_factor</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">tab</span><span class="o">.</span><span class="n">goto</span><span class="p">(</span><span class="n">page</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span><span class="o">.</span><span class="n">as_uri</span><span class="p">())</span>
+            <span class="n">tab</span><span class="o">.</span><span class="n">wait_for_function</span><span class="p">(</span><span class="s2">"window.__ready === true"</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">READY_TIMEOUT_MS</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+                <span class="n">tab</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="s2">"t =&gt; window.setTime(t)"</span><span class="p">,</span> <span class="n">i</span> <span class="o">/</span> <span class="n">canvas</span><span class="o">.</span><span class="n">fps</span><span class="p">)</span>
+                <span class="n">tab</span><span class="o">.</span><span class="n">screenshot</span><span class="p">(</span>
+                    <span class="n">path</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">frames</span> <span class="o">/</span> <span class="p">(</span><span class="n">FRAME_PATTERN</span> <span class="o">%</span> <span class="n">i</span><span class="p">)),</span>
+                    <span class="n">animations</span><span class="o">=</span><span class="s2">"disabled"</span><span class="p">,</span>
+                    <span class="n">caret</span><span class="o">=</span><span class="s2">"hide"</span><span class="p">,</span>
+                <span class="p">)</span>
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="n">browser</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">n</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_encode</span><span class="p">(</span><span class="n">frames</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">audio</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">fps</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">crf</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""PNG frames + the song → an H.264/AAC mp4 every platform accepts."""</span>
+    <span class="n">output</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">run_ffmpeg</span><span class="p">(</span>
+        <span class="p">[</span>
+            <span class="s2">"-framerate"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">fps</span><span class="p">),</span>
+            <span class="s2">"-i"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">frames</span> <span class="o">/</span> <span class="n">FRAME_PATTERN</span><span class="p">),</span>
+            <span class="s2">"-i"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">audio</span><span class="p">),</span>
+            <span class="s2">"-map"</span><span class="p">,</span> <span class="s2">"0:v:0"</span><span class="p">,</span>
+            <span class="s2">"-map"</span><span class="p">,</span> <span class="s2">"1:a:0"</span><span class="p">,</span>
+            <span class="o">*</span><span class="n">VIDEO_CODEC_ARGS</span><span class="p">,</span>
+            <span class="s2">"-crf"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">crf</span><span class="p">),</span>
+            <span class="s2">"-g"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">fps</span> <span class="o">*</span> <span class="mi">2</span><span class="p">),</span>
+            <span class="o">*</span><span class="n">AUDIO_CODEC_ARGS</span><span class="p">,</span>
+            <span class="s2">"-movflags"</span><span class="p">,</span> <span class="s2">"+faststart"</span><span class="p">,</span>
+            <span class="c1"># -use_editlist 0: keep ffmpeg from writing the elst boxes some</span>
+            <span class="c1"># platforms (YouTube) trip on.</span>
+            <span class="s2">"-use_editlist"</span><span class="p">,</span> <span class="s2">"0"</span><span class="p">,</span>
+            <span class="s2">"-shortest"</span><span class="p">,</span>
+            <span class="nb">str</span><span class="p">(</span><span class="n">output</span><span class="p">),</span>
+        <span class="p">]</span>
+    <span class="p">)</span>
+
+
+<div class="viewcode-block" id="render">
+<a class="viewcode-back" href="../../../module_docs/muvid/lyricvid/render_web.html#muvid.lyricvid.render_web.render">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">render</span><span class="p">(</span>
+    <span class="n">scene</span><span class="p">:</span> <span class="n">Scene</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">audio</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="n">output</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="n">workdir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="n">crf</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">18</span><span class="p">,</span>
+    <span class="n">scale</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RenderResult</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Capture the scene's page with Playwright and mux the song.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        scene: the compiled scene. Its canvas fixes the size and frame rate.</span>
+<span class="sd">        audio: the song. Its stream is copied in unmodified.</span>
+<span class="sd">        output: where the mp4 goes.</span>
+<span class="sd">        workdir: scratch space owned by this render. The page is left behind as</span>
+<span class="sd">            an artifact; the frames are deleted.</span>
+<span class="sd">        crf: libx264 quality (lower is better; 18 is visually lossless-ish).</span>
+<span class="sd">        scale: device pixel ratio for the capture. The viewport is</span>
+<span class="sd">            ``canvas / scale`` CSS pixels and the screenshot comes back at the</span>
+<span class="sd">            canvas size either way, so the output resolution and the (all-``vh``)</span>
+<span class="sd">            layout are unchanged — what moves is the CSS pixel grid the browser</span>
+<span class="sd">            lays out and rasterises on. Leave it at ``1`` unless a font is</span>
+<span class="sd">            rasterising badly at the canvas's own grid.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A :class:`~muvid.subgenres.RenderResult` whose ``artifacts['page']`` is</span>
+<span class="sd">        the HTML that produced it — open it in a browser and call ``setTime``.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        WebRenderUnavailable: Playwright or its Chromium build is missing.</span>
+<span class="sd">        FileNotFoundError: ``audio`` does not exist.</span>
+<span class="sd">        ValueError: the canvas cannot be captured or encoded as asked.</span>
+<span class="sd">    """</span>
+    <span class="n">audio</span><span class="p">,</span> <span class="n">output</span><span class="p">,</span> <span class="n">workdir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">audio</span><span class="p">),</span> <span class="n">Path</span><span class="p">(</span><span class="n">output</span><span class="p">),</span> <span class="n">Path</span><span class="p">(</span><span class="n">workdir</span><span class="p">)</span>
+    <span class="n">_check_geometry</span><span class="p">(</span><span class="n">scene</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">audio</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"audio not found: </span><span class="si">{</span><span class="n">audio</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+    <span class="n">workdir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">page</span> <span class="o">=</span> <span class="n">workdir</span> <span class="o">/</span> <span class="n">PAGE_NAME</span>
+    <span class="n">page</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">scene_to_html</span><span class="p">(</span><span class="n">scene</span><span class="p">),</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span>
+
+    <span class="n">frames</span> <span class="o">=</span> <span class="n">workdir</span> <span class="o">/</span> <span class="n">FRAMES_DIRNAME</span>
+    <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">frames</span><span class="p">,</span> <span class="n">ignore_errors</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">frames</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">n_frames</span> <span class="o">=</span> <span class="n">_capture</span><span class="p">(</span><span class="n">page</span><span class="p">,</span> <span class="n">frames</span><span class="p">,</span> <span class="n">scene</span><span class="o">=</span><span class="n">scene</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">)</span>
+        <span class="n">_encode</span><span class="p">(</span><span class="n">frames</span><span class="p">,</span> <span class="n">audio</span><span class="p">,</span> <span class="n">output</span><span class="p">,</span> <span class="n">fps</span><span class="o">=</span><span class="n">scene</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">fps</span><span class="p">,</span> <span class="n">crf</span><span class="o">=</span><span class="n">crf</span><span class="p">)</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">frames</span><span class="p">,</span> <span class="n">ignore_errors</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">RenderResult</span><span class="p">(</span>
+        <span class="n">output</span><span class="o">=</span><span class="n">output</span><span class="p">,</span>
+        <span class="n">duration_s</span><span class="o">=</span><span class="n">media_duration</span><span class="p">(</span><span class="n">output</span><span class="p">),</span>
+        <span class="n">artifacts</span><span class="o">=</span><span class="p">{</span><span class="s2">"page"</span><span class="p">:</span> <span class="n">page</span><span class="p">},</span>
+        <span class="n">meta</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">"backend"</span><span class="p">:</span> <span class="s2">"web"</span><span class="p">,</span>
+            <span class="s2">"frames"</span><span class="p">:</span> <span class="n">n_frames</span><span class="p">,</span>
+            <span class="s2">"fps"</span><span class="p">:</span> <span class="n">scene</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">fps</span><span class="p">,</span>
+            <span class="s2">"width"</span><span class="p">:</span> <span class="n">scene</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">width</span><span class="p">,</span>
+            <span class="s2">"height"</span><span class="p">:</span> <span class="n">scene</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">height</span><span class="p">,</span>
+            <span class="s2">"scale"</span><span class="p">:</span> <span class="n">scale</span><span class="p">,</span>
+            <span class="s2">"crf"</span><span class="p">:</span> <span class="n">crf</span><span class="p">,</span>
+            <span class="s2">"n_cues"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">scene</span><span class="o">.</span><span class="n">cues</span><span class="p">),</span>
+        <span class="p">},</span>
+    <span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p></p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

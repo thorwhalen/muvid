@@ -1,0 +1,396 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>muvid.lyricvid.render_ass &mdash; muvid 0.0.55 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=b87b3bc5"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
+      <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="muvid.lyricvid.render_web" href="render_web.html" />
+    <link rel="prev" title="muvid.lyricvid.pipeline" href="pipeline.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            muvid
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../muvid.html">muvid</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../__main__.html">muvid.__main__</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../align.html">muvid.align</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../characters.html">muvid.characters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../compose.html">muvid.compose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contracts.html">muvid.contracts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cost.html">muvid.cost</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../downloads.html">muvid.downloads</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../environments.html">muvid.environments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../events.html">muvid.events</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../facade.html">muvid.facade</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../footage.html">muvid.footage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../footage/align.html">muvid.footage.align</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../footage/assemble.html">muvid.footage.assemble</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../footage/edl.html">muvid.footage.edl</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../footage/lacing_bridge.html">muvid.footage.lacing_bridge</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../footage/look.html">muvid.footage.look</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../footage/scoring.html">muvid.footage.scoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../footage/scoring/_frame_metrics.html">muvid.footage.scoring._frame_metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../footage/scoring/frames.html">muvid.footage.scoring.frames</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../footage/scoring/grid.html">muvid.footage.scoring.grid</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../footage/scoring/lipsync.html">muvid.footage.scoring.lipsync</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../footage/scoring/motionbeat.html">muvid.footage.scoring.motionbeat</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../footage/scoring/orchestrator.html">muvid.footage.scoring.orchestrator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../footage/scoring/quality.html">muvid.footage.scoring.quality</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../footage/scoring/segment.html">muvid.footage.scoring.segment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../footage/select_score.html">muvid.footage.select_score</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../footage/strategy.html">muvid.footage.strategy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../footage/workspace.html">muvid.footage.workspace</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../genre.html">muvid.genre</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../genre_lyric_video.html">muvid.genre_lyric_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../genre_music_video.html">muvid.genre_music_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../lyrics.html">muvid.lyrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../lyricvid.html">muvid.lyricvid</a></li>
+<li class="toctree-l1"><a class="reference internal" href="__main__.html">muvid.lyricvid.__main__</a></li>
+<li class="toctree-l1"><a class="reference internal" href="director.html">muvid.lyricvid.director</a></li>
+<li class="toctree-l1"><a class="reference internal" href="manifest.html">muvid.lyricvid.manifest</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pipeline.html">muvid.lyricvid.pipeline</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">muvid.lyricvid.render_ass</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.lyricvid.render_ass.FONT_FALLBACKS"><code class="docutils literal notranslate"><span class="pre">FONT_FALLBACKS</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.lyricvid.render_ass.MOTION_FNS"><code class="docutils literal notranslate"><span class="pre">MOTION_FNS</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.lyricvid.render_ass.RENDERER_NAME"><code class="docutils literal notranslate"><span class="pre">RENDERER_NAME</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.lyricvid.render_ass.STYLE_NAME"><code class="docutils literal notranslate"><span class="pre">STYLE_NAME</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.lyricvid.render_ass.list_motions"><code class="docutils literal notranslate"><span class="pre">list_motions()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.lyricvid.render_ass.register_motion"><code class="docutils literal notranslate"><span class="pre">register_motion()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.lyricvid.render_ass.render"><code class="docutils literal notranslate"><span class="pre">render()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.lyricvid.render_ass.scene_to_ass"><code class="docutils literal notranslate"><span class="pre">scene_to_ass()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="render_web.html">muvid.lyricvid.render_web</a></li>
+<li class="toctree-l1"><a class="reference internal" href="scene.html">muvid.lyricvid.scene</a></li>
+<li class="toctree-l1"><a class="reference internal" href="shape.html">muvid.lyricvid.shape</a></li>
+<li class="toctree-l1"><a class="reference internal" href="spec.html">muvid.lyricvid.spec</a></li>
+<li class="toctree-l1"><a class="reference internal" href="timed_text.html">muvid.lyricvid.timed_text</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tools.html">muvid.lyricvid.tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mcp.html">muvid.mcp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mcp/_fetch.html">muvid.mcp._fetch</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mcp/_guide.html">muvid.mcp._guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mcp/footage_tools.html">muvid.mcp.footage_tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mcp/identity.html">muvid.mcp.identity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mcp/lyricvid_tools.html">muvid.mcp.lyricvid_tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mcp/scoring_tools.html">muvid.mcp.scoring_tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mcp/tools.html">muvid.mcp.tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mcp/workspace.html">muvid.mcp.workspace</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../project.html">muvid.project</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../renderers.html">muvid.renderers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../renderers/_common.html">muvid.renderers._common</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../renderers/_errors.html">muvid.renderers._errors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../renderers/animation.html">muvid.renderers.animation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../renderers/image_to_video.html">muvid.renderers.image_to_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../renderers/lipsync.html">muvid.renderers.lipsync</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../renderers/still.html">muvid.renderers.still</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../renderers/text_to_video.html">muvid.renderers.text_to_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../schema.html">muvid.schema</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../script.html">muvid.script</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../subgenres.html">muvid.subgenres</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../subgenres/_contract.html">muvid.subgenres._contract</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../subgenres/_manifest.html">muvid.subgenres._manifest</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../subgenres/_registry.html">muvid.subgenres._registry</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../subgenres/testing.html">muvid.subgenres.testing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ui.html">muvid.ui</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ui/app.html">muvid.ui.app</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../visualize.html">muvid.visualize</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../visualize/canvas.html">muvid.visualize.canvas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../visualize/ffmpeg.html">muvid.visualize.ffmpeg</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../visualize/reactive.html">muvid.visualize.reactive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../visualize/verify.html">muvid.visualize.verify</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../visualize/video.html">muvid.visualize.video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../visualize/visuals.html">muvid.visualize.visuals</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">muvid</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">muvid.lyricvid.render_ass</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../_sources/module_docs/muvid/lyricvid/render_ass.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-muvid.lyricvid.render_ass">
+<span id="muvid-lyricvid-render-ass"></span><h1>muvid.lyricvid.render_ass<a class="headerlink" href="#module-muvid.lyricvid.render_ass" title="Link to this heading"></a></h1>
+<p>The default lyric-video renderer: a <a class="reference internal" href="scene.html#muvid.lyricvid.scene.Scene" title="muvid.lyricvid.scene.Scene"><code class="xref py py-class docutils literal notranslate"><span class="pre">Scene</span></code></a> as ASS.</p>
+<p>One <a class="reference internal" href="scene.html#muvid.lyricvid.scene.Scene" title="muvid.lyricvid.scene.Scene"><code class="xref py py-class docutils literal notranslate"><span class="pre">Scene</span></code></a> in, an <code class="docutils literal notranslate"><span class="pre">.ass</span></code> subtitle document and a
+burnt-in mp4 out. This is the <em>default</em> backend for the lyric-video subgenre for
+three reasons, in the order they mattered:</p>
+<ul class="simple">
+<li><p><strong>It is frame-exact.</strong> libass positions and animates text against the video’s
+own clock, so a word that the aligner measured at 12.34 s is drawn at 12.34 s
+— not at “whatever frame the compositor got to”.</p></li>
+<li><p><strong>It adds no non-Python dependency.</strong> <code class="docutils literal notranslate"><span class="pre">ffmpeg</span></code> is already a hard system
+requirement of muvid, and its <code class="docutils literal notranslate"><span class="pre">subtitles</span></code> filter <em>is</em> libass. The only new
+Python dependency is <code class="docutils literal notranslate"><span class="pre">pysubs2</span></code> (MIT, pure Python, zero dependencies of its
+own), behind the <code class="docutils literal notranslate"><span class="pre">lyricvid</span></code> extra.</p></li>
+<li><p><strong>The intermediate is a deliverable.</strong> The <code class="docutils literal notranslate"><span class="pre">.ass</span></code> file is a plain text
+document a human can open, retime and restyle, then re-burn — so a render that
+is 95% right is <em>editable</em> rather than a reason to re-run the pipeline.</p></li>
+</ul>
+<p>The whole of the renderer’s opinion lives in one table, <code class="docutils literal notranslate"><span class="pre">Cue</span></code> -&gt; ASS:</p>
+<p>Fonts are resolved through fontconfig when it is available: a family the machine
+does not have falls back (to the next of <a class="reference internal" href="#muvid.lyricvid.render_ass.FONT_FALLBACKS" title="muvid.lyricvid.render_ass.FONT_FALLBACKS"><code class="xref py py-data docutils literal notranslate"><span class="pre">FONT_FALLBACKS</span></code></a>) rather than
+failing the render, and the substitution is recorded in the result’s <code class="docutils literal notranslate"><span class="pre">meta</span></code> so
+a caller can see that the type is not what the treatment asked for.</p>
+<p>Import-safe: stdlib plus the two stdlib-only muvid modules it types against.
+<code class="docutils literal notranslate"><span class="pre">pysubs2</span></code>, <code class="docutils literal notranslate"><span class="pre">ffmpeg</span></code> and the verifier are imported inside the functions that
+need them, so importing this module costs a caller nothing.</p>
+<dl class="py data">
+<dt class="sig sig-object py" id="muvid.lyricvid.render_ass.FONT_FALLBACKS">
+<span class="sig-prename descclassname"><span class="pre">muvid.lyricvid.render_ass.</span></span><span class="sig-name descname"><span class="pre">FONT_FALLBACKS</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('DejaVu</span> <span class="pre">Sans',</span> <span class="pre">'Liberation</span> <span class="pre">Sans',</span> <span class="pre">'Noto</span> <span class="pre">Sans',</span> <span class="pre">'Arial',</span> <span class="pre">'Helvetica',</span> <span class="pre">'sans-serif')</span></span><a class="headerlink" href="#muvid.lyricvid.render_ass.FONT_FALLBACKS" title="Link to this definition"></a></dt>
+<dd><p>Families to try, in order, when the treatment’s family is not installed.
+DejaVu first because it is what a Linux render box actually has.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="muvid.lyricvid.render_ass.MOTION_FNS">
+<span class="sig-prename descclassname"><span class="pre">muvid.lyricvid.render_ass.</span></span><span class="sig-name descname"><span class="pre">MOTION_FNS</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">_Placed</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">_Event</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'cut':</span> <span class="pre">&lt;function</span> <span class="pre">_motion_cut&gt;,</span> <span class="pre">'fade':</span> <span class="pre">&lt;function</span> <span class="pre">_motion_fade&gt;,</span> <span class="pre">'pop':</span> <span class="pre">&lt;function</span> <span class="pre">_motion_pop&gt;,</span> <span class="pre">'rise':</span> <span class="pre">&lt;function</span> <span class="pre">_motion_rise&gt;,</span> <span class="pre">'typewriter':</span> <span class="pre">&lt;function</span> <span class="pre">_motion_typewriter&gt;,</span> <span class="pre">'wipe':</span> <span class="pre">&lt;function</span> <span class="pre">_motion_wipe&gt;}</span></span><a class="headerlink" href="#muvid.lyricvid.render_ass.MOTION_FNS" title="Link to this definition"></a></dt>
+<dd><p><code class="docutils literal notranslate"><span class="pre">motion</span></code> name -&gt; the events it draws. muvid’s house registry idiom
+(<code class="docutils literal notranslate"><span class="pre">register_visual</span></code>, <code class="docutils literal notranslate"><span class="pre">register_archetype</span></code>, <code class="docutils literal notranslate"><span class="pre">register_selection_strategy</span></code>):
+a new motion is a function plus an entry in
+<a class="reference internal" href="spec.html#muvid.lyricvid.spec.MOTIONS" title="muvid.lyricvid.spec.MOTIONS"><code class="xref py py-data docutils literal notranslate"><span class="pre">muvid.lyricvid.spec.MOTIONS</span></code></a>, never a branch in the writer.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="muvid.lyricvid.render_ass.RENDERER_NAME">
+<span class="sig-prename descclassname"><span class="pre">muvid.lyricvid.render_ass.</span></span><span class="sig-name descname"><span class="pre">RENDERER_NAME</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'lyricvid.render_ass'</span></span><a class="headerlink" href="#muvid.lyricvid.render_ass.RENDERER_NAME" title="Link to this definition"></a></dt>
+<dd><p>What the result’s <code class="docutils literal notranslate"><span class="pre">meta</span></code> reports as the renderer that made the file.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="muvid.lyricvid.render_ass.STYLE_NAME">
+<span class="sig-prename descclassname"><span class="pre">muvid.lyricvid.render_ass.</span></span><span class="sig-name descname"><span class="pre">STYLE_NAME</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Lyric'</span></span><a class="headerlink" href="#muvid.lyricvid.render_ass.STYLE_NAME" title="Link to this definition"></a></dt>
+<dd><p>The single ASS style every event references. One style plus per-event
+<code class="docutils literal notranslate"><span class="pre">\fs</span></code>/<code class="docutils literal notranslate"><span class="pre">\c</span></code> overrides, rather than a style per (size, colour) pair: a
+scene routinely holds hundreds of distinct sizes, and a styles table that
+long is unreadable to the human this file is also written for.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.lyricvid.render_ass.list_motions">
+<span class="sig-prename descclassname"><span class="pre">muvid.lyricvid.render_ass.</span></span><span class="sig-name descname"><span class="pre">list_motions</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../_modules/muvid/lyricvid/render_ass.html#list_motions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.lyricvid.render_ass.list_motions" title="Link to this definition"></a></dt>
+<dd><p>The motion families this renderer can draw.</p>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">list_motions</span><span class="p">()</span>
+<span class="go">['cut', 'fade', 'pop', 'rise', 'typewriter', 'wipe']</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.lyricvid.render_ass.register_motion">
+<span class="sig-prename descclassname"><span class="pre">muvid.lyricvid.render_ass.</span></span><span class="sig-name descname"><span class="pre">register_motion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">_Placed</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">_Event</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">_Placed</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">_Event</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../_modules/muvid/lyricvid/render_ass.html#register_motion"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.lyricvid.render_ass.register_motion" title="Link to this definition"></a></dt>
+<dd><p>Register how one <code class="docutils literal notranslate"><span class="pre">motion</span></code> family draws itself.</p>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nd">@register_motion</span><span class="p">(</span><span class="s1">'doctest-demo'</span><span class="p">)</span>
+<span class="gp">... </span><span class="k">def</span><span class="w"> </span><span class="nf">_demo</span><span class="p">(</span><span class="n">p</span><span class="p">):</span> <span class="k">return</span> <span class="p">[]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="s1">'doctest-demo'</span> <span class="ow">in</span> <span class="n">list_motions</span><span class="p">()</span>
+<span class="go">True</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">del</span> <span class="n">MOTION_FNS</span><span class="p">[</span><span class="s1">'doctest-demo'</span><span class="p">]</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.lyricvid.render_ass.render">
+<span class="sig-prename descclassname"><span class="pre">muvid.lyricvid.render_ass.</span></span><span class="sig-name descname"><span class="pre">render</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scene</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="scene.html#muvid.lyricvid.scene.Scene" title="muvid.lyricvid.scene.Scene"><span class="pre">Scene</span></a></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">audio</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">workdir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ass_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crf</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">18</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="../subgenres/_contract.html#muvid.subgenres._contract.RenderResult" title="muvid.subgenres._contract.RenderResult"><span class="pre">RenderResult</span></a></span></span><a class="reference internal" href="../../../_modules/muvid/lyricvid/render_ass.html#render"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.lyricvid.render_ass.render" title="Link to this definition"></a></dt>
+<dd><p>Burn the scene over a solid background and mux the song.</p>
+<p>Three steps, and the middle one is the whole renderer: write the <code class="docutils literal notranslate"><span class="pre">.ass</span></code>,
+generate a flat <code class="docutils literal notranslate"><span class="pre">color</span></code> source at the canvas’s size and rate, and let
+libass draw the document onto it while the song is mapped through untouched.</p>
+<p>The video runs for the <em>song’s</em> measured duration rather than the scene’s, so
+a treatment that stops short of the last bar still produces a video the
+length of the track — which is what
+<a class="reference internal" href="../visualize/verify.html#muvid.visualize.verify.verify_video" title="muvid.visualize.verify.verify_video"><code class="xref py py-func docutils literal notranslate"><span class="pre">verify_video()</span></code></a>’s duration check compares
+against, and it is run here on the finished file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>scene</strong> – The compiled scene.</p></li>
+<li><p><strong>audio</strong> – The song. Its duration sets the video’s.</p></li>
+<li><p><strong>output</strong> – Where the mp4 goes.</p></li>
+<li><p><strong>workdir</strong> – Directory for intermediates — this render owns it.</p></li>
+<li><p><strong>ass_path</strong> – Where to keep the subtitle document (default:
+<code class="docutils literal notranslate"><span class="pre">workdir/&lt;output</span> <span class="pre">stem&gt;.ass</span></code>). It is a deliverable, not a temp file.</p></li>
+<li><p><strong>crf</strong> – x264 quality, lower is better. 18 is visually lossless for flat
+colour and text.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <a class="reference internal" href="../subgenres/_contract.html#muvid.subgenres._contract.RenderResult" title="muvid.subgenres._contract.RenderResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">RenderResult</span></code></a> carrying the mp4, its
+measured duration, the <code class="docutils literal notranslate"><span class="pre">.ass</span></code> under <code class="docutils literal notranslate"><span class="pre">artifacts['ass']</span></code>, and a <code class="docutils literal notranslate"><span class="pre">meta</span></code>
+recording the renderer, the font actually used (and what was asked for,
+when they differ), the cue/event counts and any verification failure.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="../visualize/ffmpeg.html#muvid.visualize.ffmpeg.FfmpegError" title="muvid.visualize.ffmpeg.FfmpegError"><strong>muvid.visualize.ffmpeg.FfmpegError</strong></a> – This ffmpeg has no <code class="docutils literal notranslate"><span class="pre">subtitles</span></code>
+    filter (it is a libass build option, so a working ffmpeg is not
+    enough), or the burn failed.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.lyricvid.render_ass.scene_to_ass">
+<span class="sig-prename descclassname"><span class="pre">muvid.lyricvid.render_ass.</span></span><span class="sig-name descname"><span class="pre">scene_to_ass</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scene</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="scene.html#muvid.lyricvid.scene.Scene" title="muvid.lyricvid.scene.Scene"><span class="pre">Scene</span></a></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">font</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../../_modules/muvid/lyricvid/render_ass.html#scene_to_ass"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.lyricvid.render_ass.scene_to_ass" title="Link to this definition"></a></dt>
+<dd><p>Render a Scene as an ASS (Advanced SubStation Alpha) document.</p>
+<p>The document is built through <code class="docutils literal notranslate"><span class="pre">pysubs2</span></code> (MIT, pure Python, no dependencies
+of its own) rather than by string-formatting the format’s header by hand: it
+owns the <code class="docutils literal notranslate"><span class="pre">[Script</span> <span class="pre">Info]</span></code> / <code class="docutils literal notranslate"><span class="pre">[V4+</span> <span class="pre">Styles]</span></code> field order and the
+centisecond time format, and it parses back, so the output is round-trip
+checkable rather than merely plausible.</p>
+<p><code class="docutils literal notranslate"><span class="pre">PlayResX</span></code>/<code class="docutils literal notranslate"><span class="pre">PlayResY</span></code> are the canvas, so libass’s coordinates are the
+video’s pixels 1:1 and the same document burns correctly at 1080p or 4K only
+by changing the canvas it was compiled for.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>scene</strong> – The compiled scene. Every number in it is already resolved.</p></li>
+<li><p><strong>font</strong> – Family to typeset in. Defaults to the scene’s typography; an
+uninstalled family falls back (see <code class="xref py py-func docutils literal notranslate"><span class="pre">_resolve_font()</span></code>).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The <code class="docutils literal notranslate"><span class="pre">.ass</span></code> document, as text.</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">muvid.lyricvid.scene</span><span class="w"> </span><span class="kn">import</span> <span class="n">Canvas</span><span class="p">,</span> <span class="n">Cue</span><span class="p">,</span> <span class="n">Scene</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">muvid.lyricvid.spec</span><span class="w"> </span><span class="kn">import</span> <span class="n">Typography</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">scene</span> <span class="o">=</span> <span class="n">Scene</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">canvas</span><span class="o">=</span><span class="n">Canvas</span><span class="p">(</span><span class="n">width</span><span class="o">=</span><span class="mi">1920</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">1080</span><span class="p">,</span> <span class="n">fps</span><span class="o">=</span><span class="mi">30</span><span class="p">),</span>
+<span class="gp">... </span>    <span class="n">duration</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">background</span><span class="o">=</span><span class="s1">'#101014'</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">cues</span><span class="o">=</span><span class="p">(</span>
+<span class="gp">... </span>        <span class="n">Cue</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="s1">'red'</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="mf">0.25</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">t_in</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">t_full</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+<span class="gp">... </span>            <span class="n">t_out</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">t_gone</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">colour</span><span class="o">=</span><span class="s1">'#ff0000'</span><span class="p">,</span> <span class="n">motion</span><span class="o">=</span><span class="s1">'cut'</span><span class="p">),</span>
+<span class="gp">... </span>        <span class="n">Cue</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="s1">'fade'</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mf">0.25</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">t_in</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">t_full</span><span class="o">=</span><span class="mf">1.2</span><span class="p">,</span>
+<span class="gp">... </span>            <span class="n">t_out</span><span class="o">=</span><span class="mf">1.8</span><span class="p">,</span> <span class="n">t_gone</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span> <span class="n">colour</span><span class="o">=</span><span class="s1">'#e0533d'</span><span class="p">,</span> <span class="n">layer</span><span class="o">=</span><span class="mi">2</span><span class="p">),</span>
+<span class="gp">... </span>    <span class="p">),</span>
+<span class="gp">... </span>    <span class="n">typography</span><span class="o">=</span><span class="n">Typography</span><span class="p">(</span><span class="n">family</span><span class="o">=</span><span class="s1">'DejaVu Sans'</span><span class="p">),</span>
+<span class="gp">... </span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doc</span> <span class="o">=</span> <span class="n">scene_to_ass</span><span class="p">(</span><span class="n">scene</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The normalised centre becomes absolute pixels, and the style anchors at
+centre-centre (alignment 5) so <code class="docutils literal notranslate"><span class="pre">\pos</span></code> means what <code class="docutils literal notranslate"><span class="pre">Cue</span></code> says it means:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="sa">r</span><span class="s1">'\pos(480,540)'</span> <span class="ow">in</span> <span class="n">doc</span>      <span class="c1"># 0.25*1920, 0.5*1080</span>
+<span class="go">True</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="sa">r</span><span class="s1">'\pos(960,270)'</span> <span class="ow">in</span> <span class="n">doc</span>      <span class="c1"># 0.5*1920, 0.25*1080</span>
+<span class="go">True</span>
+</pre></div>
+</div>
+<p>Colours reverse to <code class="docutils literal notranslate"><span class="pre">&amp;HBBGGRR&amp;</span></code> — red is <code class="docutils literal notranslate"><span class="pre">&amp;H0000FF&amp;</span></code>, not <code class="docutils literal notranslate"><span class="pre">&amp;HFF0000&amp;</span></code>:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="sa">r</span><span class="s1">'\c&amp;H0000FF&amp;'</span> <span class="ow">in</span> <span class="n">doc</span>
+<span class="go">True</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="sa">r</span><span class="s1">'\c&amp;HFF0000&amp;'</span> <span class="ow">in</span> <span class="n">doc</span>
+<span class="go">False</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">size</span></code> is a fraction of canvas height, so 0.2 of 1080 is a 216px font,
+and the motions emit their own tags:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="sa">r</span><span class="s1">'\fs216'</span> <span class="ow">in</span> <span class="n">doc</span><span class="p">,</span> <span class="sa">r</span><span class="s1">'\fad(200,200)'</span> <span class="ow">in</span> <span class="n">doc</span>
+<span class="go">(True, True)</span>
+</pre></div>
+</div>
+<p>It parses back — the round trip is what makes the document a deliverable
+rather than a guess:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">pysubs2</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">subs</span> <span class="o">=</span> <span class="n">pysubs2</span><span class="o">.</span><span class="n">SSAFile</span><span class="o">.</span><span class="n">from_string</span><span class="p">(</span><span class="n">doc</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">len</span><span class="p">(</span><span class="n">subs</span><span class="o">.</span><span class="n">events</span><span class="p">),</span> <span class="n">subs</span><span class="o">.</span><span class="n">events</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">style</span><span class="p">,</span> <span class="n">subs</span><span class="o">.</span><span class="n">events</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">layer</span>
+<span class="go">(2, 'Lyric', 2)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">subs</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">'PlayResX'</span><span class="p">],</span> <span class="n">subs</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">'PlayResY'</span><span class="p">]</span>
+<span class="go">('1920', '1080')</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="pipeline.html" class="btn btn-neutral float-left" title="muvid.lyricvid.pipeline" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="render_web.html" class="btn btn-neutral float-right" title="muvid.lyricvid.render_web" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p></p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

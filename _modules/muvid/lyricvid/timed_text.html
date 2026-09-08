@@ -1,0 +1,566 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>muvid.lyricvid.timed_text &mdash; muvid 0.0.55 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=b87b3bc5"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
+      <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            muvid
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid.html">muvid</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/__main__.html">muvid.__main__</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/align.html">muvid.align</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/characters.html">muvid.characters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/compose.html">muvid.compose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/contracts.html">muvid.contracts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/cost.html">muvid.cost</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/downloads.html">muvid.downloads</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/environments.html">muvid.environments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/events.html">muvid.events</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/facade.html">muvid.facade</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage.html">muvid.footage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/align.html">muvid.footage.align</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/assemble.html">muvid.footage.assemble</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/edl.html">muvid.footage.edl</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/lacing_bridge.html">muvid.footage.lacing_bridge</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/look.html">muvid.footage.look</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring.html">muvid.footage.scoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring/_frame_metrics.html">muvid.footage.scoring._frame_metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring/frames.html">muvid.footage.scoring.frames</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring/grid.html">muvid.footage.scoring.grid</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring/lipsync.html">muvid.footage.scoring.lipsync</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring/motionbeat.html">muvid.footage.scoring.motionbeat</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring/orchestrator.html">muvid.footage.scoring.orchestrator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring/quality.html">muvid.footage.scoring.quality</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring/segment.html">muvid.footage.scoring.segment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/select_score.html">muvid.footage.select_score</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/strategy.html">muvid.footage.strategy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/workspace.html">muvid.footage.workspace</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/genre.html">muvid.genre</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/genre_lyric_video.html">muvid.genre_lyric_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/genre_music_video.html">muvid.genre_music_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyrics.html">muvid.lyrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyricvid.html">muvid.lyricvid</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyricvid/__main__.html">muvid.lyricvid.__main__</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyricvid/director.html">muvid.lyricvid.director</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyricvid/manifest.html">muvid.lyricvid.manifest</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyricvid/pipeline.html">muvid.lyricvid.pipeline</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyricvid/render_ass.html">muvid.lyricvid.render_ass</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyricvid/render_web.html">muvid.lyricvid.render_web</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyricvid/scene.html">muvid.lyricvid.scene</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyricvid/shape.html">muvid.lyricvid.shape</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyricvid/spec.html">muvid.lyricvid.spec</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyricvid/timed_text.html">muvid.lyricvid.timed_text</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyricvid/tools.html">muvid.lyricvid.tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp.html">muvid.mcp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/_fetch.html">muvid.mcp._fetch</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/_guide.html">muvid.mcp._guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/footage_tools.html">muvid.mcp.footage_tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/identity.html">muvid.mcp.identity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/lyricvid_tools.html">muvid.mcp.lyricvid_tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/scoring_tools.html">muvid.mcp.scoring_tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/tools.html">muvid.mcp.tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/workspace.html">muvid.mcp.workspace</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/project.html">muvid.project</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers.html">muvid.renderers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers/_common.html">muvid.renderers._common</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers/_errors.html">muvid.renderers._errors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers/animation.html">muvid.renderers.animation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers/image_to_video.html">muvid.renderers.image_to_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers/lipsync.html">muvid.renderers.lipsync</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers/still.html">muvid.renderers.still</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers/text_to_video.html">muvid.renderers.text_to_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/schema.html">muvid.schema</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/script.html">muvid.script</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/subgenres.html">muvid.subgenres</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/subgenres/_contract.html">muvid.subgenres._contract</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/subgenres/_manifest.html">muvid.subgenres._manifest</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/subgenres/_registry.html">muvid.subgenres._registry</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/subgenres/testing.html">muvid.subgenres.testing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/ui.html">muvid.ui</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/ui/app.html">muvid.ui.app</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize.html">muvid.visualize</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/canvas.html">muvid.visualize.canvas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/ffmpeg.html">muvid.visualize.ffmpeg</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/reactive.html">muvid.visualize.reactive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/verify.html">muvid.visualize.verify</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/video.html">muvid.visualize.video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/visuals.html">muvid.visualize.visuals</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">muvid</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">muvid.lyricvid.timed_text</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for muvid.lyricvid.timed_text</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""The timed text tree — song → sections → lines → words, with measured times.</span>
+
+<span class="sd">Everything downstream reads this and nothing else, which is what lets the</span>
+<span class="sd">subgenre accept four quite different kinds of input without the renderers</span>
+<span class="sd">caring which one arrived:</span>
+
+<span class="sd">============================  ==================================================</span>
+<span class="sd">input the caller has          how it gets here</span>
+<span class="sd">============================  ==================================================</span>
+<span class="sd">a muvid project               :func:`from_alignment_store` — muvid already owns</span>
+<span class="sd">                              the word-timing SSOT (``muvid.align`` writes a</span>
+<span class="sd">                              three-tier lacing store); we read it, never</span>
+<span class="sd">                              re-transcribe.</span>
+<span class="sd">an ``.srt`` / ``.lrc`` file   :func:`from_subtitles` — line-level times, words</span>
+<span class="sd">                              spread inside a line.</span>
+<span class="sd">lyrics text + audio           :func:`from_lyrics_and_audio` — runs muvid's</span>
+<span class="sd">                              registered aligner.</span>
+<span class="sd">audio only                    the aligner's transcription path, same function.</span>
+<span class="sd">============================  ==================================================</span>
+
+<span class="sd">Line-level input is not word-level input, and pretending otherwise is how lyric</span>
+<span class="sd">videos end up subtly out of sync. When words are interpolated inside a line</span>
+<span class="sd">rather than measured, :attr:`Word.measured` is ``False`` — renderers and the</span>
+<span class="sd">quantiser can then prefer ``line`` quantisation, and a caller can be told the</span>
+<span class="sd">timing is approximate instead of discovering it in the render.</span>
+
+<span class="sd">Import-safe: stdlib only at module scope. The muvid alignment machinery and any</span>
+<span class="sd">ASR are imported inside the functions that need them.</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">replace</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Iterator</span><span class="p">,</span> <span class="n">Sequence</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">"Word"</span><span class="p">,</span>
+    <span class="s2">"Line"</span><span class="p">,</span>
+    <span class="s2">"Section"</span><span class="p">,</span>
+    <span class="s2">"TimedText"</span><span class="p">,</span>
+    <span class="s2">"from_alignment_store"</span><span class="p">,</span>
+    <span class="s2">"from_subtitles"</span><span class="p">,</span>
+    <span class="s2">"from_lyrics_and_audio"</span><span class="p">,</span>
+    <span class="s2">"from_words"</span><span class="p">,</span>
+<span class="p">]</span>
+
+
+<div class="viewcode-block" id="Word">
+<a class="viewcode-back" href="../../../module_docs/muvid/lyricvid/timed_text.html#muvid.lyricvid.Word">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Word</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""One sung word on the song timeline. Times are seconds, absolute."""</span>
+
+    <span class="n">text</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">start</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">end</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="c1">#: False when the time was interpolated inside a line rather than measured.</span>
+    <span class="n">measured</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">duration</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">end</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">start</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="Line">
+<a class="viewcode-back" href="../../../module_docs/muvid/lyricvid/timed_text.html#muvid.lyricvid.Line">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Line</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""One sung line."""</span>
+
+    <span class="n">words</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Word</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
+    <span class="n">index</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">text</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">text</span><span class="p">:</span>
+            <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"text"</span><span class="p">,</span> <span class="s2">" "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">text</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">words</span><span class="p">))</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">min</span><span class="p">((</span><span class="n">w</span><span class="o">.</span><span class="n">start</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">words</span><span class="p">),</span> <span class="n">default</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">end</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">max</span><span class="p">((</span><span class="n">w</span><span class="o">.</span><span class="n">end</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">words</span><span class="p">),</span> <span class="n">default</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">measured</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">all</span><span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">measured</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">words</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="Section">
+<a class="viewcode-back" href="../../../module_docs/muvid/lyricvid/timed_text.html#muvid.lyricvid.Section">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Section</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""A labelled span — ``verse``, ``chorus``, whatever the lyrics document says."""</span>
+
+    <span class="n">label</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">lines</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Line</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">min</span><span class="p">((</span><span class="n">l</span><span class="o">.</span><span class="n">start</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">lines</span><span class="p">),</span> <span class="n">default</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">end</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">max</span><span class="p">((</span><span class="n">l</span><span class="o">.</span><span class="n">end</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">lines</span><span class="p">),</span> <span class="n">default</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="TimedText">
+<a class="viewcode-back" href="../../../module_docs/muvid/lyricvid/timed_text.html#muvid.lyricvid.TimedText">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">TimedText</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The whole song's text, timed.</span>
+
+<span class="sd">    &gt;&gt;&gt; tt = from_words([('hello', 0.0, 0.5), ('world', 0.5, 1.0)], duration=1.0)</span>
+<span class="sd">    &gt;&gt;&gt; [w.text for w in tt.words()]</span>
+<span class="sd">    ['hello', 'world']</span>
+<span class="sd">    &gt;&gt;&gt; tt.sections[0].label</span>
+<span class="sd">    '*'</span>
+<span class="sd">    """</span>
+
+    <span class="n">sections</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Section</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
+    <span class="n">duration</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="c1">#: Where the timing came from, for provenance and for honest reporting.</span>
+    <span class="n">source</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"unknown"</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">words</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">Word</span><span class="p">]:</span>
+        <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sections</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">s</span><span class="o">.</span><span class="n">lines</span><span class="p">:</span>
+                <span class="k">yield from</span> <span class="n">l</span><span class="o">.</span><span class="n">words</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">lines</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">Line</span><span class="p">]:</span>
+        <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sections</span><span class="p">:</span>
+            <span class="k">yield from</span> <span class="n">s</span><span class="o">.</span><span class="n">lines</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">measured</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""True when every word time was measured rather than interpolated."""</span>
+        <span class="k">return</span> <span class="nb">all</span><span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">measured</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">words</span><span class="p">())</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">section_for</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Section</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sections</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">start</span> <span class="o">&lt;=</span> <span class="n">t</span> <span class="o">&lt;=</span> <span class="n">s</span><span class="o">.</span><span class="n">end</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">s</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">"duration"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">duration</span><span class="p">,</span>
+            <span class="s2">"source"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">source</span><span class="p">,</span>
+            <span class="s2">"measured"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">measured</span><span class="p">,</span>
+            <span class="s2">"sections"</span><span class="p">:</span> <span class="p">[</span>
+                <span class="p">{</span>
+                    <span class="s2">"label"</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">label</span><span class="p">,</span>
+                    <span class="s2">"lines"</span><span class="p">:</span> <span class="p">[</span>
+                        <span class="p">{</span>
+                            <span class="s2">"index"</span><span class="p">:</span> <span class="n">l</span><span class="o">.</span><span class="n">index</span><span class="p">,</span>
+                            <span class="s2">"text"</span><span class="p">:</span> <span class="n">l</span><span class="o">.</span><span class="n">text</span><span class="p">,</span>
+                            <span class="s2">"words"</span><span class="p">:</span> <span class="p">[</span>
+                                <span class="p">{</span><span class="s2">"text"</span><span class="p">:</span> <span class="n">w</span><span class="o">.</span><span class="n">text</span><span class="p">,</span> <span class="s2">"start"</span><span class="p">:</span> <span class="n">w</span><span class="o">.</span><span class="n">start</span><span class="p">,</span> <span class="s2">"end"</span><span class="p">:</span> <span class="n">w</span><span class="o">.</span><span class="n">end</span><span class="p">,</span>
+                                 <span class="s2">"measured"</span><span class="p">:</span> <span class="n">w</span><span class="o">.</span><span class="n">measured</span><span class="p">}</span>
+                                <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">l</span><span class="o">.</span><span class="n">words</span>
+                            <span class="p">],</span>
+                        <span class="p">}</span>
+                        <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">s</span><span class="o">.</span><span class="n">lines</span>
+                    <span class="p">],</span>
+                <span class="p">}</span>
+                <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sections</span>
+            <span class="p">],</span>
+        <span class="p">}</span></div>
+
+
+
+<span class="c1"># --------------------------------------------------------------------------</span>
+<span class="c1"># builders</span>
+<span class="c1"># --------------------------------------------------------------------------</span>
+
+
+<div class="viewcode-block" id="from_words">
+<a class="viewcode-back" href="../../../module_docs/muvid/lyricvid/timed_text.html#muvid.lyricvid.from_words">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">from_words</span><span class="p">(</span>
+    <span class="n">words</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]],</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">duration</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
+    <span class="n">line_gap_s</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.9</span><span class="p">,</span>
+    <span class="n">source</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"words"</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TimedText</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Build from a flat ``(text, start, end)`` stream, splitting lines on gaps.</span>
+
+<span class="sd">    The gap heuristic is deliberately simple and deliberately visible: a real</span>
+<span class="sd">    lyrics document is always better, and when one exists the other builders</span>
+<span class="sd">    use it instead of guessing.</span>
+<span class="sd">    """</span>
+    <span class="n">ws</span> <span class="o">=</span> <span class="p">[</span><span class="n">Word</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="n">t</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">a</span><span class="p">),</span> <span class="n">end</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">b</span><span class="p">))</span> <span class="k">for</span> <span class="n">t</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">words</span> <span class="k">if</span> <span class="n">t</span><span class="o">.</span><span class="n">strip</span><span class="p">()]</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">ws</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">TimedText</span><span class="p">(</span><span class="n">sections</span><span class="o">=</span><span class="p">(),</span> <span class="n">duration</span><span class="o">=</span><span class="n">duration</span><span class="p">,</span> <span class="n">source</span><span class="o">=</span><span class="n">source</span><span class="p">)</span>
+    <span class="n">lines</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Line</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">current</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Word</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">ws</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+    <span class="k">for</span> <span class="n">prev</span><span class="p">,</span> <span class="n">w</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">ws</span><span class="p">,</span> <span class="n">ws</span><span class="p">[</span><span class="mi">1</span><span class="p">:]):</span>
+        <span class="k">if</span> <span class="n">w</span><span class="o">.</span><span class="n">start</span> <span class="o">-</span> <span class="n">prev</span><span class="o">.</span><span class="n">end</span> <span class="o">&gt;=</span> <span class="n">line_gap_s</span><span class="p">:</span>
+            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Line</span><span class="p">(</span><span class="n">words</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="n">current</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">lines</span><span class="p">)))</span>
+            <span class="n">current</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">current</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">w</span><span class="p">)</span>
+    <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Line</span><span class="p">(</span><span class="n">words</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="n">current</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">lines</span><span class="p">)))</span>
+    <span class="k">return</span> <span class="n">TimedText</span><span class="p">(</span>
+        <span class="n">sections</span><span class="o">=</span><span class="p">(</span><span class="n">Section</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">"*"</span><span class="p">,</span> <span class="n">lines</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="n">lines</span><span class="p">)),),</span>
+        <span class="n">duration</span><span class="o">=</span><span class="n">duration</span> <span class="ow">or</span> <span class="n">ws</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">end</span><span class="p">,</span>
+        <span class="n">source</span><span class="o">=</span><span class="n">source</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_spread_words_over</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">start</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">end</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Word</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Distribute a line's words across its span, weighted by word length.</span>
+
+<span class="sd">    Weighting by length is a small thing that reads much better than an even</span>
+<span class="sd">    split: "I" and "extraordinary" do not take the same time to sing.</span>
+<span class="sd">    """</span>
+    <span class="n">tokens</span> <span class="o">=</span> <span class="p">[</span><span class="n">t</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">re</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="sa">r</span><span class="s2">"\s+"</span><span class="p">,</span> <span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span> <span class="k">if</span> <span class="n">t</span><span class="p">]</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">tokens</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">()</span>
+    <span class="n">weights</span> <span class="o">=</span> <span class="p">[</span><span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">t</span><span class="p">))</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">tokens</span><span class="p">]</span>
+    <span class="n">total</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">weights</span><span class="p">)</span>
+    <span class="n">span</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mf">1e-6</span><span class="p">,</span> <span class="n">end</span> <span class="o">-</span> <span class="n">start</span><span class="p">)</span>
+    <span class="n">out</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Word</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">cursor</span> <span class="o">=</span> <span class="n">start</span>
+    <span class="k">for</span> <span class="n">tok</span><span class="p">,</span> <span class="n">w</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">tokens</span><span class="p">,</span> <span class="n">weights</span><span class="p">):</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">span</span> <span class="o">*</span> <span class="p">(</span><span class="n">w</span> <span class="o">/</span> <span class="n">total</span><span class="p">)</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Word</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="n">tok</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="n">cursor</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="n">cursor</span> <span class="o">+</span> <span class="n">d</span><span class="p">,</span> <span class="n">measured</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+        <span class="n">cursor</span> <span class="o">+=</span> <span class="n">d</span>
+    <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
+
+
+<span class="n">_SRT_TIME</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span>
+    <span class="sa">r</span><span class="s2">"(\d{1,2}):(\d</span><span class="si">{2}</span><span class="s2">):(\d</span><span class="si">{2}</span><span class="s2">)[,.](\d{1,3})\s*--&gt;\s*(\d{1,2}):(\d</span><span class="si">{2}</span><span class="s2">):(\d</span><span class="si">{2}</span><span class="s2">)[,.](\d{1,3})"</span>
+<span class="p">)</span>
+<span class="n">_LRC_LINE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"\[(\d{1,2}):(\d</span><span class="si">{2}</span><span class="s2">)(?:[.:](\d{1,3}))?\]\s*(.*)"</span><span class="p">)</span>
+<span class="c1">#: Enhanced LRC puts per-word stamps inline: ``[00:12.00]&lt;00:12.00&gt;Some &lt;00:12.5&gt;words``</span>
+<span class="n">_LRC_WORD</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"&lt;(\d{1,2}):(\d</span><span class="si">{2}</span><span class="s2">)(?:[.:](\d{1,3}))?&gt;\s*([^&lt;]*)"</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_hms</span><span class="p">(</span><span class="n">h</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">m</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">s</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">frac</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+    <span class="n">ms</span> <span class="o">=</span> <span class="nb">int</span><span class="p">((</span><span class="n">frac</span> <span class="ow">or</span> <span class="s2">"0"</span><span class="p">)</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="s2">"0"</span><span class="p">)[:</span><span class="mi">3</span><span class="p">])</span>
+    <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">h</span><span class="p">)</span> <span class="o">*</span> <span class="mi">3600</span> <span class="o">+</span> <span class="nb">int</span><span class="p">(</span><span class="n">m</span><span class="p">)</span> <span class="o">*</span> <span class="mi">60</span> <span class="o">+</span> <span class="nb">int</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="o">+</span> <span class="n">ms</span> <span class="o">/</span> <span class="mf">1000.0</span>
+
+
+<div class="viewcode-block" id="from_subtitles">
+<a class="viewcode-back" href="../../../module_docs/muvid/lyricvid/timed_text.html#muvid.lyricvid.from_subtitles">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">from_subtitles</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">duration</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TimedText</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Read ``.srt``, ``.lrc`` or enhanced ``.lrc`` into a timed tree.</span>
+
+<span class="sd">    Enhanced LRC carries real per-word stamps and is used as such; plain LRC and</span>
+<span class="sd">    SRT give line times only, so their words are spread and marked</span>
+<span class="sd">    ``measured=False``.</span>
+<span class="sd">    """</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="n">text</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="s2">"replace"</span><span class="p">)</span>
+    <span class="n">suffix</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">suffix</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+
+    <span class="n">lines</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Line</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="n">suffix</span> <span class="o">==</span> <span class="s2">".srt"</span> <span class="ow">or</span> <span class="s2">"--&gt;"</span> <span class="ow">in</span> <span class="n">text</span><span class="p">:</span>
+        <span class="n">blocks</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="sa">r</span><span class="s2">"\n\s*\n"</span><span class="p">,</span> <span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+        <span class="k">for</span> <span class="n">block</span> <span class="ow">in</span> <span class="n">blocks</span><span class="p">:</span>
+            <span class="n">m</span> <span class="o">=</span> <span class="n">_SRT_TIME</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">block</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">m</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">start</span> <span class="o">=</span> <span class="n">_hms</span><span class="p">(</span><span class="o">*</span><span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+            <span class="n">end</span> <span class="o">=</span> <span class="n">_hms</span><span class="p">(</span><span class="o">*</span><span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">))</span>
+            <span class="n">body</span> <span class="o">=</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                <span class="n">l</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">block</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">_SRT_TIME</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">l</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">l</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">isdigit</span><span class="p">()</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="n">body</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">"&lt;[^&gt;]+&gt;"</span><span class="p">,</span> <span class="s2">""</span><span class="p">,</span> <span class="n">body</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">body</span><span class="p">:</span>
+                <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="n">Line</span><span class="p">(</span><span class="n">words</span><span class="o">=</span><span class="n">_spread_words_over</span><span class="p">(</span><span class="n">body</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span> <span class="s2">" "</span><span class="p">),</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">),</span>
+                         <span class="n">index</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">lines</span><span class="p">))</span>
+                <span class="p">)</span>
+        <span class="n">source</span> <span class="o">=</span> <span class="s2">"srt"</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">stamped</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">raw</span> <span class="ow">in</span> <span class="n">text</span><span class="o">.</span><span class="n">splitlines</span><span class="p">():</span>
+            <span class="n">m</span> <span class="o">=</span> <span class="n">_LRC_LINE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">m</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">stamped</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">_hms</span><span class="p">(</span><span class="s2">"0"</span><span class="p">,</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">3</span><span class="p">)),</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">4</span><span class="p">)))</span>
+        <span class="n">source</span> <span class="o">=</span> <span class="s2">"lrc"</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">body</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">stamped</span><span class="p">):</span>
+            <span class="n">end</span> <span class="o">=</span> <span class="n">stamped</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">stamped</span><span class="p">)</span> <span class="k">else</span> <span class="p">(</span><span class="n">duration</span> <span class="ow">or</span> <span class="n">start</span> <span class="o">+</span> <span class="mf">3.0</span><span class="p">)</span>
+            <span class="n">word_stamps</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">_LRC_WORD</span><span class="o">.</span><span class="n">finditer</span><span class="p">(</span><span class="n">body</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">word_stamps</span><span class="p">:</span>
+                <span class="n">source</span> <span class="o">=</span> <span class="s2">"lrc-enhanced"</span>
+                <span class="n">ws</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Word</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">wm</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">word_stamps</span><span class="p">):</span>
+                    <span class="n">w_start</span> <span class="o">=</span> <span class="n">_hms</span><span class="p">(</span><span class="s2">"0"</span><span class="p">,</span> <span class="n">wm</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="n">wm</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span> <span class="n">wm</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
+                    <span class="n">w_end</span> <span class="o">=</span> <span class="p">(</span>
+                        <span class="n">_hms</span><span class="p">(</span><span class="s2">"0"</span><span class="p">,</span> <span class="o">*</span><span class="n">word_stamps</span><span class="p">[</span><span class="n">j</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+                        <span class="k">if</span> <span class="n">j</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">word_stamps</span><span class="p">)</span>
+                        <span class="k">else</span> <span class="n">end</span>
+                    <span class="p">)</span>
+                    <span class="k">for</span> <span class="n">tok</span> <span class="ow">in</span> <span class="n">wm</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">():</span>
+                        <span class="n">ws</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Word</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="n">tok</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="n">w_start</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="n">w_end</span><span class="p">))</span>
+                <span class="k">if</span> <span class="n">ws</span><span class="p">:</span>
+                    <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Line</span><span class="p">(</span><span class="n">words</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="n">ws</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">lines</span><span class="p">)))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">body</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">"&lt;[^&gt;]+&gt;"</span><span class="p">,</span> <span class="s2">""</span><span class="p">,</span> <span class="n">body</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">body</span><span class="p">:</span>
+                    <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                        <span class="n">Line</span><span class="p">(</span><span class="n">words</span><span class="o">=</span><span class="n">_spread_words_over</span><span class="p">(</span><span class="n">body</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">lines</span><span class="p">))</span>
+                    <span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">lines</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">TimedText</span><span class="p">(</span><span class="n">sections</span><span class="o">=</span><span class="p">(),</span> <span class="n">duration</span><span class="o">=</span><span class="n">duration</span><span class="p">,</span> <span class="n">source</span><span class="o">=</span><span class="n">source</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">TimedText</span><span class="p">(</span>
+        <span class="n">sections</span><span class="o">=</span><span class="p">(</span><span class="n">Section</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">"*"</span><span class="p">,</span> <span class="n">lines</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="n">lines</span><span class="p">)),),</span>
+        <span class="n">duration</span><span class="o">=</span><span class="n">duration</span> <span class="ow">or</span> <span class="nb">max</span><span class="p">(</span><span class="n">l</span><span class="o">.</span><span class="n">end</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">),</span>
+        <span class="n">source</span><span class="o">=</span><span class="n">source</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="from_alignment_store">
+<a class="viewcode-back" href="../../../module_docs/muvid/lyricvid/timed_text.html#muvid.lyricvid.from_alignment_store">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">from_alignment_store</span><span class="p">(</span><span class="n">project_root</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">duration</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TimedText</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Read muvid's own three-tier alignment (sections / lines / words).</span>
+
+<span class="sd">    muvid already declares itself the word-timing SSOT — ``muvid.align`` writes</span>
+<span class="sd">    a ``lacing`` store and ``muvid.contracts`` reads it — so this subgenre reads</span>
+<span class="sd">    that store rather than growing a second transcription path.</span>
+<span class="sd">    """</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.contracts</span><span class="w"> </span><span class="kn">import</span> <span class="n">word_timings_for_window</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.project</span><span class="w"> </span><span class="kn">import</span> <span class="n">MusicVideoProject</span>
+
+    <span class="n">project</span> <span class="o">=</span> <span class="n">MusicVideoProject</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">project_root</span><span class="p">))</span>
+    <span class="n">song</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">project</span><span class="p">,</span> <span class="s2">"song_path"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">duration</span> <span class="ow">and</span> <span class="n">song</span> <span class="ow">and</span> <span class="n">Path</span><span class="p">(</span><span class="n">song</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.visualize.ffmpeg</span><span class="w"> </span><span class="kn">import</span> <span class="n">media_duration</span>
+
+        <span class="n">duration</span> <span class="o">=</span> <span class="n">media_duration</span><span class="p">(</span><span class="n">song</span><span class="p">)</span>
+    <span class="n">timings</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">word_timings_for_window</span><span class="p">(</span><span class="n">project</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">duration</span> <span class="ow">or</span> <span class="mf">1e9</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">from_words</span><span class="p">(</span><span class="n">timings</span><span class="p">,</span> <span class="n">duration</span><span class="o">=</span><span class="n">duration</span><span class="p">,</span> <span class="n">source</span><span class="o">=</span><span class="s2">"muvid-alignment"</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="from_lyrics_and_audio">
+<a class="viewcode-back" href="../../../module_docs/muvid/lyricvid/timed_text.html#muvid.lyricvid.from_lyrics_and_audio">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">from_lyrics_and_audio</span><span class="p">(</span>
+    <span class="n">audio</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">lyrics</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">aligner</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">duration</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TimedText</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Align ``lyrics`` to ``audio`` using muvid's registered aligner.</span>
+
+<span class="sd">    ``aligner=None`` uses muvid's default. This deliberately goes through</span>
+<span class="sd">    ``muvid.align``'s registry rather than calling an ASR directly, so a better</span>
+<span class="sd">    singing-grade aligner registered later is picked up here for free.</span>
+<span class="sd">    """</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.visualize.ffmpeg</span><span class="w"> </span><span class="kn">import</span> <span class="n">media_duration</span>
+
+    <span class="n">audio</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">audio</span><span class="p">)</span>
+    <span class="n">duration</span> <span class="o">=</span> <span class="n">duration</span> <span class="ow">or</span> <span class="n">media_duration</span><span class="p">(</span><span class="n">audio</span><span class="p">)</span>
+
+    <span class="kn">from</span><span class="w"> </span><span class="nn">muvid</span><span class="w"> </span><span class="kn">import</span> <span class="n">align</span> <span class="k">as</span> <span class="n">align_mod</span>
+
+    <span class="n">resolve</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">align_mod</span><span class="p">,</span> <span class="s2">"resolve_aligner"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">resolve</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># pragma: no cover - depends on muvid.align's shape</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+            <span class="s2">"muvid.align exposes no aligner registry on this version; pass a "</span>
+            <span class="s2">"subtitle file instead, or upgrade muvid."</span>
+        <span class="p">)</span>
+    <span class="n">fn</span> <span class="o">=</span> <span class="n">resolve</span><span class="p">(</span><span class="n">aligner</span><span class="p">)</span> <span class="k">if</span> <span class="n">aligner</span> <span class="k">else</span> <span class="n">resolve</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">align_mod</span><span class="p">,</span> <span class="s2">"DEFAULT_ALIGNER"</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
+    <span class="n">words</span> <span class="o">=</span> <span class="n">fn</span><span class="p">(</span><span class="n">audio</span><span class="o">=</span><span class="n">audio</span><span class="p">,</span> <span class="n">lyrics</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="n">lyrics</span><span class="p">)</span> <span class="k">if</span> <span class="n">lyrics</span> <span class="k">else</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">from_words</span><span class="p">(</span><span class="n">words</span><span class="p">,</span> <span class="n">duration</span><span class="o">=</span><span class="n">duration</span><span class="p">,</span> <span class="n">source</span><span class="o">=</span><span class="sa">f</span><span class="s2">"aligner:</span><span class="si">{</span><span class="n">aligner</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">'default'</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p></p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
