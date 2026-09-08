@@ -8,6 +8,16 @@ only ``{song_start, song_end, clip_id}`` — the ``clip_in`` sign convention liv
 cut. Every strategy's output still passes :func:`~muvid.footage.edl.validate_edl` before
 any cutting, so a strategy that leaves a gap fails loudly with the exact uncovered span.
 
+**A strategy sees ``reliable`` the way it already sees ``overlaps``: as a preference**
+(muvid#88). Every built-in ranks a vouched clip above an unvouched one for the same span
+via :func:`_prefer_vouched`, and falls back to an unvouched clip only where nothing else
+covers the span — so one badly-aligned clip in a shoot costs the spans only it covered,
+not the whole edit. The strategies still decide nothing about trust: they never drop a
+source, and the verdict they read (``FootageAlignment.reliable``) is
+:func:`~muvid.footage.edl.vouches_for`'s. A third-party strategy that ranks clips itself
+should carry the same preference; ``weighted`` does it as a reward penalty rather than a
+special case (see :mod:`muvid.footage.select_score`).
+
 Registry idiom mirrors ``mixing.audio.segmentation`` (a ``strategy: str | callable`` param
 + a ``_STRATEGIES`` dict + :func:`resolve_strategy`) — the federation's established shape.
 Register your own with :func:`register_selection_strategy`.
@@ -148,6 +158,30 @@ def _covering(
     return [a for a in alignments if a.coverage[0] - _EPS <= mid < a.coverage[1] + _EPS]
 
 
+def _prefer_vouched(covering: list[FootageAlignment]) -> list[FootageAlignment]:
+    """Rank trust ahead of everything else, for ONE span (muvid#88).
+
+    ``reliable`` is a **preference, not a filter**, and the distinction is the whole
+    point. Where a vouched clip covers the span, the unvouched ones are not considered —
+    a clip nobody vouches for should never win a span some other clip could have had, on
+    any metric. Where none does, the full set is returned and the unvouched clip is still
+    chosen, because a strategy PROPOSES: dropping the only footage for a span here would
+    put a second trust check next to :func:`~muvid.footage.edl.validate_edl` and remove a
+    source from the edit on the strength of a measurement — the two things
+    ``overlaps=False`` is carefully written not to do.
+
+    What happens to that forced span is decided downstream and out loud:
+    :func:`~muvid.footage.edl.exclude_unvouched` sets it aside as a reported gap on the
+    auto path, and ``validate_edl`` refuses it everywhere else.
+
+    Applied per elementary interval rather than to the alignment set, so a clip that is
+    the only cover for one span and one of several for the next is preferred away from
+    the second without losing the first.
+    """
+    vouched = [a for a in covering if a.reliable]
+    return vouched or covering
+
+
 def _coalesce(spans: list[tuple[float, float, str]]) -> list[EdlEntry]:
     """Merge consecutive same-clip elementary spans into one EDL entry."""
     out: list[EdlEntry] = []
@@ -177,6 +211,10 @@ def _build(alignments, pick) -> list[EdlEntry]:
         if not covering:
             prev_clip_id = None  # a gap breaks continuity
             continue
+        # Trust first, then whatever the strategy optimizes (muvid#88). Here rather than
+        # in each `pick` so every built-in — and `fewest_cuts`, which would otherwise sit
+        # on an unvouched clip precisely because staying is free — carries it identically.
+        covering = _prefer_vouched(covering)
         clip_id = pick(covering, prev_clip_id)
         spans.append((lo, hi, clip_id))
         prev_clip_id = clip_id

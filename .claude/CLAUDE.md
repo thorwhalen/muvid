@@ -73,8 +73,8 @@ Pipeline: `align → score → select → EDL → assemble`.
 | module | owns |
 |---|---|
 | `muvid/footage/align.py` | thin over `mixing.audio.align_clips_to_reference`; per-clip `offset_s`, `confidence`, `support`, `coverage`, `overlaps`; re-exports `edl.vouches_for` (muvid#59) |
-| `muvid/footage/edl.py` | `FootageAlignment`, `EdlEntry`, `AssemblyCut`; `fill_gaps`, **`validate_edl`** (the ONE gate), `derive_cuts` (the ONE place `clip_in = song_start - offset_s` is derived) |
-| `muvid/footage/strategy.py` | the `SelectionStrategy` registry — `best_confidence` (`DEFAULT_STRATEGY`), `longest_take`, `fewest_cuts`, plus `weighted` registered **lazily** so `import muvid.footage` stays numpy-free |
+| `muvid/footage/edl.py` | `FootageAlignment`, `EdlEntry`, `AssemblyCut`, `ExcludedSpan`; `fill_gaps`, **`validate_edl`** (the ONE gate), `exclude_unvouched` (the auto path's recovery — a transform, not a second gate), `derive_cuts` (the ONE place `clip_in = song_start - offset_s` is derived) |
+| `muvid/footage/strategy.py` | the `SelectionStrategy` registry — `best_confidence` (`DEFAULT_STRATEGY`), `longest_take`, `fewest_cuts`, plus `weighted` registered **lazily** so `import muvid.footage` stays numpy-free; `_prefer_vouched` is where every built-in ranks trust above its own metric (muvid#88) |
 | `muvid/footage/select_score.py` | the `weighted` strategy: beat-snapped semi-Markov Viterbi over the score tensor |
 | `muvid/footage/scoring/` | `grid.py` (`ScoreTrack`/`ScoreTensor` + resample + robust-normalize + `.npz` persistence), `frames.py` (ONE decode pass per clip), `quality.py`, `motionbeat.py`, `segment.py`, `lipsync.py`, `orchestrator.py` (`score_project`) |
 | `muvid/footage/assemble.py` | three bounded stages (one ffmpeg per cut → concat demuxer stream-copy → mux) — memory O(1) in cut count |
@@ -143,6 +143,46 @@ Pipeline: `align → score → select → EDL → assemble`.
   the tools that render nothing (`propose_edit`, the lacing editor document, the
   weighted strategy's own structural self-check) pass `allow_unreliable=True` on purpose
   — refusing there would withhold the diagnosis instead of the render.
+  **On the AUTO path the refusal was blunter than intended, and the fix is a preference
+  plus a transform — never a second check** (muvid#88). One unvouched clip out of five
+  failed an edit the other four covered, and the caller's only recoveries were
+  `allow_unreliable=True` (render the bad clip) or hand-writing an EDL (the thing the
+  auto path exists to prevent). So `reliable` is now read the way `overlaps` already was:
+  every built-in runs its `pick` over `strategy._prefer_vouched(covering)` and `weighted`
+  charges `select_score.UNVOUCHED_REWARD_PENALTY` (2.0 reward-seconds per second, chosen
+  to exceed the composite's whole `[0,1]` range — a tensor column would have been
+  *commensurate* with sharpness and therefore outbiddable, which is why it is not one).
+  A strategy still never drops a source: where nothing else covers a span it proposes the
+  unvouched clip, and `edl.exclude_unvouched` — a transform run by the tools, not a gate —
+  sets that span aside as a typed `ExcludedSpan` and lets `fill_gaps` make it a gap.
+  **Its one refusal to act is what keeps the gate alive**: if every footage entry
+  would be excluded it returns the edit unchanged, so `validate_edl` raises exactly the
+  same `UnreliableAlignmentError` naming every clip. That case is not a smaller edit — it
+  is a black video reported as success, which is muvid#59's plausible-artifact failure one
+  level up. `allow_unreliable=True` skips the exclusion entirely (opting in means you want
+  that footage, not a gap where it would have been), and the explicit-`edl` path is
+  untouched because the caller named the clip.
+  **The penalty dominates the METRICS and not the DP, and the difference cost a review
+  round.** "No weighting can buy an unvouched clip a span another clip covers" is true of
+  the reward integral and false of `weighted` as a whole, because two of the DP's terms
+  are not composite reward: `l_max_overrun_penalty` is caller-settable through `config`
+  (at 0.9, a lone 40 s vouched take is cut away from at 10-12, 20-22 and 30-32 s), and
+  `_viterbi`'s `max_seg_s` transition window (4x `l_max`) is a PERFORMANCE bound that,
+  with the different-clip rule, makes a vouched take longer than the cap impossible to
+  express as one segment — measured under the DEFAULT config, a 2 s opener plus one 58 s
+  vouched clip gives `[(0,2,O),(2,34,V),(34,36,BAD),(36,60,V)]`. Raising the penalty fixes
+  neither; they are structural. So **a gap is the recovery's last resort, not its first**:
+  `edl._absorb_neighbour` hands such a span back to the vouched cut on either side of it
+  when that clip already covers it — lossless, and `validate_edl` re-checks containment
+  regardless — and declines only into a cut whose meaning depends on its length or its
+  start boundary (`transition` / `crop_end` / `look`), which would otherwise be silently
+  re-timed. Without it the recovery punches an avoidable black hole through a continuous
+  take and blames an alignment for it, which is why `ExcludedSpan.reason` also separates
+  `no_vouched_coverage` (re-align or re-shoot) from `unvouched_selection` (the footage
+  exists; the selection did not use it) — one value would tell a caller to re-shoot
+  footage they already have. Every set-aside span also gets a line in the tool reply's
+  `warnings`, because that list is documented as the whole of a caller's ability to know
+  what the render plan found and a hole in the video is the largest such finding there is.
   **`confidence` is the weak instrument, and knowing that is the point**: on repetitive
   music the top two correlation peaks differ by under 1.3%, so a coefficient cannot tell
   a winner from a coin flip. `support` (how much of the clip agrees) can, which is why
