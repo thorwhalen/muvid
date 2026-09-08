@@ -14,6 +14,16 @@ not vouch for (``FootageAlignment.reliable`` False) is refused here with
 :class:`UnreliableAlignmentError` rather than quietly cut to, because a wrong offset
 does not fail — it renders a video out of sync with the song (muvid#59).
 
+That refusal is right when the CALLER named the clip, and used to be blunt on the auto
+path, where one badly-aligned clip out of five failed an edit the other four could have
+covered (muvid#88). The auto path now recovers in two steps that leave the single gate
+alone: a strategy treats ``reliable`` as a **preference** (it ranks a vouched clip above
+an unvouched one for the same span, and falls back to unvouched only where nothing else
+covers it), and :func:`exclude_unvouched` sets those forced spans aside as reported
+:class:`ExcludedSpan` records, gap-filled like any other hole. What reaches the gate is
+therefore a smaller edit; the gate still refuses, with the same error, when the recovery
+would leave no footage at all.
+
 An entry may carry an optional :class:`Transition` — a blend IN from its predecessor
 instead of a hard cut (muvid#34). It is an annotation on a boundary that already exists
 implicitly, so spans stay one-per-song-span and nothing about reading an EDL changes.
@@ -1051,6 +1061,97 @@ def _refuse_unvouched(entries: Sequence[EdlEntry], by_id: dict) -> None:
             unvouched.append(a)
     if unvouched:
         raise UnreliableAlignmentError(unvouched)
+
+
+#: Why a span was set aside by :func:`exclude_unvouched` — the only reason today, named
+#: rather than spelled inline so a caller can match on it and a second reason (should one
+#: ever exist) has somewhere to go.
+UNVOUCHED_REASON = "unreliable_alignment"
+
+
+@dataclass(frozen=True)
+class ExcludedSpan:
+    """One span an AUTO-selected edit gave up rather than cut to unvouched footage (muvid#88).
+
+    A typed record, not a log line: it is returned to the caller (and over the MCP wire),
+    because "your video is shorter than the song" is only actionable next to *which* clip
+    was set aside, *where*, and *on what numbers*. The numbers are the same three
+    :func:`vouches_for` reached its verdict on, so the report and the gate can never
+    disagree about why.
+    """
+
+    clip_id: str
+    song_start: float
+    song_end: float
+    reason: str = UNVOUCHED_REASON
+    confidence: float = 0.0
+    support: float | None = None
+    margin: float | None = None
+
+    def to_dict(self) -> dict:
+        """JSON-ready. ``support``/``margin`` stay ``None`` — "not measured" is not zero."""
+        return {
+            "clip_id": self.clip_id,
+            "song_start": self.song_start,
+            "song_end": self.song_end,
+            "reason": self.reason,
+            "confidence": self.confidence,
+            "support": self.support,
+            "margin": self.margin,
+        }
+
+
+def exclude_unvouched(
+    edl: Sequence,
+    alignments: Sequence[FootageAlignment],
+) -> "tuple[list[EdlEntry], list[ExcludedSpan]]":
+    """Set aside the spans of an AUTO edit whose only footage is unvouched (muvid#88).
+
+    The auto path's recovery, and deliberately NOT a second gate. A strategy already
+    prefers a vouched clip wherever one covers the span (see
+    :mod:`muvid.footage.strategy`), so an unvouched entry surviving into its output means
+    exactly one thing: **nothing else covered that span**. This drops those entries, which
+    :func:`fill_gaps` then turns into explicit gap entries — the encoding muvid already
+    uses for "no footage here" — and returns them as :class:`ExcludedSpan` records so the
+    loss is reported rather than silent.
+
+    Run it BEFORE :func:`fill_gaps` and pass the result through :func:`validate_edl` as
+    usual. It is a transform, not a verdict: it re-decides nothing about trust (it reads
+    ``FootageAlignment.reliable``, which :func:`vouches_for` set) and it refuses nothing —
+    :func:`validate_edl` remains the ONE gate.
+
+    **It declines to empty the edit, and that is what keeps the refusal alive.** If every
+    footage entry would be excluded, the original list is returned unchanged with an empty
+    excluded list, so :func:`validate_edl` sees an edit that still cuts to unvouched clips
+    and raises :class:`UnreliableAlignmentError` exactly as before. A shoot where nothing
+    is trustworthy must not come back as a black video reported as success — that is the
+    plausible-artifact failure muvid#59 is about, one level up. A *smaller* edit is a
+    recovery; an *empty* one is the same wrong answer wearing a coverage report.
+
+    Returns ``(entries, excluded)``.
+    """
+    by_id = {a.clip_id: a for a in alignments}
+    entries = [_as_entry(e) for e in edl]
+    kept: list[EdlEntry] = []
+    excluded: list[ExcludedSpan] = []
+    for e in entries:
+        a = None if e.is_gap else by_id.get(e.clip_id)
+        if a is not None and not a.reliable:
+            excluded.append(
+                ExcludedSpan(
+                    clip_id=e.clip_id,
+                    song_start=e.song_start,
+                    song_end=e.song_end,
+                    confidence=a.confidence,
+                    support=a.support,
+                    margin=a.margin,
+                )
+            )
+        else:
+            kept.append(e)
+    if not excluded or not any(not e.is_gap for e in kept):
+        return entries, []
+    return kept, excluded
 
 
 def _span(e: EdlEntry) -> float:

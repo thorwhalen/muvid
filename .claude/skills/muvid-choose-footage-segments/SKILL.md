@@ -79,6 +79,20 @@ higher = better) + `raw_values[]` + a coverage `mask[]`; grid frame *k* ↔ song
   a coin flip on repetitive music), and `validate_edl` refuses to cut to an unvouched clip
   unless the caller passes `allow_unreliable=True`. Selection itself does NOT filter on it
   — a strategy proposes, the gate decides — so do not add a second check in a strategy.
+- **But a strategy PREFERS a vouched clip, which is a different thing from filtering**
+  (muvid#88). Ranking is the strategy's job; refusing is the gate's. Every built-in runs
+  its `pick` over `strategy._prefer_vouched(covering)`, so an unvouched clip never wins a
+  span another clip covers — and is still chosen where nothing else does, because dropping
+  it there would remove a source from the edit on the strength of a measurement, which is
+  exactly what `overlaps=False` is written not to do. `weighted` carries the same
+  preference as `select_score.UNVOUCHED_REWARD_PENALTY`, a per-second reward penalty
+  larger than the composite's whole `[0,1]` range, so it is lexicographic rather than one
+  more metric a sharp unvouched clip could outbid. **A new strategy that ranks clips owes
+  the same preference.** What happens to a span only an unvouched clip covers is decided
+  once, downstream, by `edl.exclude_unvouched`: the auto path sets it aside as a reported
+  `ExcludedSpan` and gap-fills it, so one bad clip costs its own spans instead of the
+  whole edit — and the gate still refuses, unchanged, when the recovery would leave no
+  footage at all.
 - **Gate, don't zero:** "no face / no data" is a `mask` = NA, not a 0 score — else
   selection biases toward any-face-on-screen or penalizes valid instrumental footage.
 - **Normalize robustly across clips** (median/IQR, percentile-clipped) so a "motion" peak
