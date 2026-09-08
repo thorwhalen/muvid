@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.footage.align &mdash; muvid 0.0.56 documentation</title>
+  <title>muvid.footage.align &mdash; muvid 0.0.57 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -15,7 +15,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=8f83b1af"></script>
+      <script src="../../../_static/documentation_options.js?v=2bfb35b6"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -184,14 +184,20 @@ it; it is defined in <a class="reference internal" href="edl.html#module-muvid.f
 <dt class="sig sig-object py" id="muvid.footage.align.WINDOW_PARAMETERS">
 <span class="sig-prename descclassname"><span class="pre">muvid.footage.align.</span></span><span class="sig-name descname"><span class="pre">WINDOW_PARAMETERS</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('window_s',</span> <span class="pre">'hop_s')</span></span><a class="headerlink" href="#muvid.footage.align.WINDOW_PARAMETERS" title="Link to this definition"></a></dt>
 <dd><p>Estimator parameters <a class="reference internal" href="#muvid.footage.align.align_footage" title="muvid.footage.align.align_footage"><code class="xref py py-func docutils literal notranslate"><span class="pre">align_footage()</span></code></a> refuses to forward, because changing them
-changes what <a class="reference internal" href="edl.html#muvid.footage.edl.MIN_SUPPORT" title="muvid.footage.edl.MIN_SUPPORT"><code class="xref py py-data docutils literal notranslate"><span class="pre">MIN_SUPPORT</span></code></a> MEANS — and the failure is silent
-in both directions. Measured on one 50 s clip against a 90 s reference: the defaults
-give <code class="docutils literal notranslate"><span class="pre">support=0.75</span></code> and a vouched alignment; <code class="docutils literal notranslate"><span class="pre">window_s=45</span></code> on the same clip gives
-<code class="docutils literal notranslate"><span class="pre">support=None</span></code>, which drops the verdict onto the confidence coefficient — i.e. the
-support gate switches OFF and the caller is told nothing. Widening it far enough
-disables the check; narrowing it deflates every support — measured across eleven clip
-lengths, correct alignments read 0.38-0.70 at a 20 s window and 0.00-1.00 at a 4 s one
-— so correct alignments fall under the threshold instead.</p>
+changes what <a class="reference internal" href="edl.html#muvid.footage.edl.MIN_SUPPORT" title="muvid.footage.edl.MIN_SUPPORT"><code class="xref py py-data docutils literal notranslate"><span class="pre">MIN_SUPPORT</span></code></a> MEANS. Per mixing#43 (mixing PR
+#51), an explicit <code class="docutils literal notranslate"><span class="pre">window_s</span></code> wider than a clip can hold a second, independent look
+at is refused by <code class="docutils literal notranslate"><span class="pre">mixing</span></code> itself with a typed <code class="docutils literal notranslate"><span class="pre">WindowTooWideForClip</span></code>, so that
+direction no longer reaches muvid as a silent <code class="docutils literal notranslate"><span class="pre">support=None</span></code>. (Where exactly that
+bound falls is <code class="docutils literal notranslate"><span class="pre">mixing</span></code>’s call to make and to change; muvid does not restate it
+here.) Narrowing the window is not caught by that refusal and still
+deflates every support — measured across eleven clip lengths, correct alignments read
+0.38-0.70 at a 20 s window and 0.00-1.00 at a 4 s one — so correct alignments fall
+under the threshold instead. Refusing here regardless of what <code class="docutils literal notranslate"><span class="pre">mixing</span></code> does about
+the wide-window case keeps the two packages from disagreeing about it later, and keeps
+the calibration decision (moving <code class="docutils literal notranslate"><span class="pre">MUVID_FOOTAGE_MIN_SUPPORT</span></code> if the window moves)
+something a person makes out loud rather than a side effect of a keyword — the
+refusal at <code class="docutils literal notranslate"><span class="pre">mixing</span></code>’s own entry point is a different failure mode for a different
+caller, not a substitute for muvid’s own gate.</p>
 <p>(Since <code class="docutils literal notranslate"><span class="pre">mixing&gt;=0.0.48</span></code>, passing <code class="docutils literal notranslate"><span class="pre">window_s</span></code> alone also pairs it with
 <code class="docutils literal notranslate"><span class="pre">hop</span> <span class="pre">=</span> <span class="pre">window/2</span></code>, so the two are one knob at the estimator too. Another reason not
 to accept half of it through a keyword.)</p>
@@ -238,7 +244,8 @@ it. That failure is the point: a window parameter silently ignored is a
 caller believing they tuned an estimator that never saw the value.</p>
 <p><strong>The window parameters are the exception and are REFUSED</strong> — see
 <a class="reference internal" href="#muvid.footage.align.WINDOW_PARAMETERS" title="muvid.footage.align.WINDOW_PARAMETERS"><code class="xref py py-data docutils literal notranslate"><span class="pre">WINDOW_PARAMETERS</span></code></a>. They do not tune the estimator so much as re-scale
-the gate that reads it, in both directions and silently.</p>
+the gate that reads it, and muvid refuses them at this entry point regardless
+of whether <code class="docutils literal notranslate"><span class="pre">mixing</span></code> itself would also refuse or silently answer.</p>
 </p></li>
 </ul>
 </dd>

@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.footage.align &mdash; muvid 0.0.56 documentation</title>
+  <title>muvid.footage.align &mdash; muvid 0.0.57 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=8f83b1af"></script>
+      <script src="../../../_static/documentation_options.js?v=2bfb35b6"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -196,14 +196,20 @@
 <span class="p">]</span>
 
 <span class="c1">#: Estimator parameters :func:`align_footage` refuses to forward, because changing them</span>
-<span class="c1">#: changes what :data:`~muvid.footage.edl.MIN_SUPPORT` MEANS — and the failure is silent</span>
-<span class="c1">#: in both directions. Measured on one 50 s clip against a 90 s reference: the defaults</span>
-<span class="c1">#: give ``support=0.75`` and a vouched alignment; ``window_s=45`` on the same clip gives</span>
-<span class="c1">#: ``support=None``, which drops the verdict onto the confidence coefficient — i.e. the</span>
-<span class="c1">#: support gate switches OFF and the caller is told nothing. Widening it far enough</span>
-<span class="c1">#: disables the check; narrowing it deflates every support — measured across eleven clip</span>
-<span class="c1">#: lengths, correct alignments read 0.38-0.70 at a 20 s window and 0.00-1.00 at a 4 s one</span>
-<span class="c1">#: — so correct alignments fall under the threshold instead.</span>
+<span class="c1">#: changes what :data:`~muvid.footage.edl.MIN_SUPPORT` MEANS. Per mixing#43 (mixing PR</span>
+<span class="c1">#: #51), an explicit ``window_s`` wider than a clip can hold a second, independent look</span>
+<span class="c1">#: at is refused by ``mixing`` itself with a typed ``WindowTooWideForClip``, so that</span>
+<span class="c1">#: direction no longer reaches muvid as a silent ``support=None``. (Where exactly that</span>
+<span class="c1">#: bound falls is ``mixing``'s call to make and to change; muvid does not restate it</span>
+<span class="c1">#: here.) Narrowing the window is not caught by that refusal and still</span>
+<span class="c1">#: deflates every support — measured across eleven clip lengths, correct alignments read</span>
+<span class="c1">#: 0.38-0.70 at a 20 s window and 0.00-1.00 at a 4 s one — so correct alignments fall</span>
+<span class="c1">#: under the threshold instead. Refusing here regardless of what ``mixing`` does about</span>
+<span class="c1">#: the wide-window case keeps the two packages from disagreeing about it later, and keeps</span>
+<span class="c1">#: the calibration decision (moving ``MUVID_FOOTAGE_MIN_SUPPORT`` if the window moves)</span>
+<span class="c1">#: something a person makes out loud rather than a side effect of a keyword — the</span>
+<span class="c1">#: refusal at ``mixing``'s own entry point is a different failure mode for a different</span>
+<span class="c1">#: caller, not a substitute for muvid's own gate.</span>
 <span class="c1">#:</span>
 <span class="c1">#: (Since ``mixing&gt;=0.0.48``, passing ``window_s`` alone also pairs it with</span>
 <span class="c1">#: ``hop = window/2``, so the two are one knob at the estimator too. Another reason not</span>
@@ -262,7 +268,8 @@
 
 <span class="sd">            **The window parameters are the exception and are REFUSED** — see</span>
 <span class="sd">            :data:`WINDOW_PARAMETERS`. They do not tune the estimator so much as re-scale</span>
-<span class="sd">            the gate that reads it, in both directions and silently.</span>
+<span class="sd">            the gate that reads it, and muvid refuses them at this entry point regardless</span>
+<span class="sd">            of whether ``mixing`` itself would also refuse or silently answer.</span>
 <span class="sd">    """</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">mixing.audio</span><span class="w"> </span><span class="kn">import</span> <span class="n">align_clips_to_reference</span>  <span class="c1"># lazy: heavy</span>
 
@@ -294,9 +301,11 @@
     <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
         <span class="sa">f</span><span class="s2">"align_footage() will not forward </span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">named</span><span class="p">)</span><span class="si">}</span><span class="s2">: the analysis window is "</span>
         <span class="sa">f</span><span class="s2">"what MIN_SUPPORT is calibrated against, so changing it here would re-scale "</span>
-        <span class="sa">f</span><span class="s2">"the trust gate without saying so — widening it far enough turns the gate off "</span>
-        <span class="sa">f</span><span class="s2">"entirely (support becomes None and the verdict silently falls back to the "</span>
-        <span class="sa">f</span><span class="s2">"confidence coefficient). There is no in-pipeline escape: the window is not "</span>
+        <span class="sa">f</span><span class="s2">"the trust gate without saying so. Narrowing it deflates every support, which "</span>
+        <span class="sa">f</span><span class="s2">"still reaches the gate silently; widening it past what a clip can hold is now "</span>
+        <span class="sa">f</span><span class="s2">"refused by mixing itself (WindowTooWideForClip, mixing#43), but muvid "</span>
+        <span class="sa">f</span><span class="s2">"refuses the keyword regardless, so the calibration decision stays a deliberate "</span>
+        <span class="sa">f</span><span class="s2">"one on this side too. There is no in-pipeline escape: the window is not "</span>
         <span class="sa">f</span><span class="s2">"tunable through this entry point, deliberately. If what you want is a "</span>
         <span class="sa">f</span><span class="s2">"different THRESHOLD, set MUVID_FOOTAGE_MIN_SUPPORT. If you genuinely need a "</span>
         <span class="sa">f</span><span class="s2">"different window, call mixing.audio.align_clips_to_reference yourself and "</span>
