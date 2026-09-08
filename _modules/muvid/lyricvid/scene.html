@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.lyricvid.scene &mdash; muvid 0.0.55 documentation</title>
+  <title>muvid.lyricvid.scene &mdash; muvid 0.0.56 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=b87b3bc5"></script>
+      <script src="../../../_static/documentation_options.js?v=8f83b1af"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -178,7 +178,14 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.lyricvid</span><span class="w"> </span><span class="kn">import</span> <span class="n">spec</span> <span class="k">as</span> <span class="n">spec_mod</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.lyricvid.timed_text</span><span class="w"> </span><span class="kn">import</span> <span class="n">Line</span><span class="p">,</span> <span class="n">TimedText</span><span class="p">,</span> <span class="n">Word</span>
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"Canvas"</span><span class="p">,</span> <span class="s2">"Cue"</span><span class="p">,</span> <span class="s2">"Scene"</span><span class="p">,</span> <span class="s2">"compile_scene"</span><span class="p">,</span> <span class="s2">"register_archetype"</span><span class="p">,</span> <span class="s2">"ARCHETYPE_FNS"</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">"Canvas"</span><span class="p">,</span>
+    <span class="s2">"Cue"</span><span class="p">,</span>
+    <span class="s2">"Scene"</span><span class="p">,</span>
+    <span class="s2">"compile_scene"</span><span class="p">,</span>
+    <span class="s2">"register_archetype"</span><span class="p">,</span>
+    <span class="s2">"ARCHETYPE_FNS"</span><span class="p">,</span>
+<span class="p">]</span>
 
 
 <div class="viewcode-block" id="Canvas">
@@ -279,7 +286,9 @@
     <span class="k">return</span> <span class="n">base</span> <span class="k">if</span> <span class="n">w</span> <span class="o">&lt;=</span> <span class="n">limit</span> <span class="k">else</span> <span class="nb">max</span><span class="p">(</span><span class="mf">0.02</span><span class="p">,</span> <span class="n">base</span> <span class="o">*</span> <span class="n">limit</span> <span class="o">/</span> <span class="n">w</span><span class="p">)</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_envelope</span><span class="p">(</span><span class="n">word</span><span class="p">:</span> <span class="n">Word</span><span class="p">,</span> <span class="n">sc</span><span class="p">:</span> <span class="n">spec_mod</span><span class="o">.</span><span class="n">Scene</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">line</span><span class="p">:</span> <span class="n">Line</span><span class="p">,</span> <span class="n">tt</span><span class="p">:</span> <span class="n">TimedText</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_envelope</span><span class="p">(</span>
+    <span class="n">word</span><span class="p">:</span> <span class="n">Word</span><span class="p">,</span> <span class="n">sc</span><span class="p">:</span> <span class="n">spec_mod</span><span class="o">.</span><span class="n">Scene</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">line</span><span class="p">:</span> <span class="n">Line</span><span class="p">,</span> <span class="n">tt</span><span class="p">:</span> <span class="n">TimedText</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">"""When a cue starts arriving and when it is fully there.</span>
 
 <span class="sd">    The model chose a quantisation policy; this applies it to measured times.</span>
@@ -432,10 +441,17 @@
         <span class="n">show_from</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">line</span><span class="o">.</span><span class="n">start</span> <span class="o">-</span> <span class="n">lead</span><span class="p">)</span>
         <span class="n">cues</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
             <span class="n">Cue</span><span class="p">(</span>
-                <span class="n">text</span><span class="o">=</span><span class="n">text</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">y_live</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">fitted</span><span class="p">,</span>
-                <span class="n">t_in</span><span class="o">=</span><span class="n">show_from</span><span class="p">,</span> <span class="n">t_full</span><span class="o">=</span><span class="n">show_from</span> <span class="o">+</span> <span class="mf">0.2</span><span class="p">,</span>
-                <span class="n">t_out</span><span class="o">=</span><span class="n">line</span><span class="o">.</span><span class="n">end</span><span class="p">,</span> <span class="n">t_gone</span><span class="o">=</span><span class="n">line</span><span class="o">.</span><span class="n">end</span> <span class="o">+</span> <span class="mf">0.25</span><span class="p">,</span>
-                <span class="n">colour</span><span class="o">=</span><span class="n">direction</span><span class="o">.</span><span class="n">palette</span><span class="o">.</span><span class="n">dim</span><span class="p">,</span> <span class="n">motion</span><span class="o">=</span><span class="s2">"fade"</span><span class="p">,</span> <span class="n">layer</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                <span class="n">text</span><span class="o">=</span><span class="n">text</span><span class="p">,</span>
+                <span class="n">x</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
+                <span class="n">y</span><span class="o">=</span><span class="n">y_live</span><span class="p">,</span>
+                <span class="n">size</span><span class="o">=</span><span class="n">fitted</span><span class="p">,</span>
+                <span class="n">t_in</span><span class="o">=</span><span class="n">show_from</span><span class="p">,</span>
+                <span class="n">t_full</span><span class="o">=</span><span class="n">show_from</span> <span class="o">+</span> <span class="mf">0.2</span><span class="p">,</span>
+                <span class="n">t_out</span><span class="o">=</span><span class="n">line</span><span class="o">.</span><span class="n">end</span><span class="p">,</span>
+                <span class="n">t_gone</span><span class="o">=</span><span class="n">line</span><span class="o">.</span><span class="n">end</span> <span class="o">+</span> <span class="mf">0.25</span><span class="p">,</span>
+                <span class="n">colour</span><span class="o">=</span><span class="n">direction</span><span class="o">.</span><span class="n">palette</span><span class="o">.</span><span class="n">dim</span><span class="p">,</span>
+                <span class="n">motion</span><span class="o">=</span><span class="s2">"fade"</span><span class="p">,</span>
+                <span class="n">layer</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="p">)</span>
         <span class="c1"># the wipe: each word lights the accent colour across its own span</span>
@@ -451,10 +467,13 @@
                     <span class="n">x</span><span class="o">=</span><span class="n">cursor</span> <span class="o">+</span> <span class="n">ww</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span>
                     <span class="n">y</span><span class="o">=</span><span class="n">y_live</span><span class="p">,</span>
                     <span class="n">size</span><span class="o">=</span><span class="n">fitted</span><span class="p">,</span>
-                    <span class="n">t_in</span><span class="o">=</span><span class="n">w</span><span class="o">.</span><span class="n">start</span><span class="p">,</span> <span class="n">t_full</span><span class="o">=</span><span class="n">w</span><span class="o">.</span><span class="n">start</span> <span class="o">+</span> <span class="nb">max</span><span class="p">(</span><span class="mf">0.01</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">timing</span><span class="o">.</span><span class="n">attack_s</span><span class="p">),</span>
-                    <span class="n">t_out</span><span class="o">=</span><span class="n">line</span><span class="o">.</span><span class="n">end</span><span class="p">,</span> <span class="n">t_gone</span><span class="o">=</span><span class="n">line</span><span class="o">.</span><span class="n">end</span> <span class="o">+</span> <span class="mf">0.25</span><span class="p">,</span>
+                    <span class="n">t_in</span><span class="o">=</span><span class="n">w</span><span class="o">.</span><span class="n">start</span><span class="p">,</span>
+                    <span class="n">t_full</span><span class="o">=</span><span class="n">w</span><span class="o">.</span><span class="n">start</span> <span class="o">+</span> <span class="nb">max</span><span class="p">(</span><span class="mf">0.01</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">timing</span><span class="o">.</span><span class="n">attack_s</span><span class="p">),</span>
+                    <span class="n">t_out</span><span class="o">=</span><span class="n">line</span><span class="o">.</span><span class="n">end</span><span class="p">,</span>
+                    <span class="n">t_gone</span><span class="o">=</span><span class="n">line</span><span class="o">.</span><span class="n">end</span> <span class="o">+</span> <span class="mf">0.25</span><span class="p">,</span>
                     <span class="n">colour</span><span class="o">=</span><span class="n">direction</span><span class="o">.</span><span class="n">palette</span><span class="o">.</span><span class="n">accent</span><span class="p">,</span>
-                    <span class="n">motion</span><span class="o">=</span><span class="s2">"wipe"</span><span class="p">,</span> <span class="n">layer</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                    <span class="n">motion</span><span class="o">=</span><span class="s2">"wipe"</span><span class="p">,</span>
+                    <span class="n">layer</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
                     <span class="n">extra</span><span class="o">=</span><span class="p">{</span><span class="s2">"wipe_end"</span><span class="p">:</span> <span class="n">w</span><span class="o">.</span><span class="n">end</span><span class="p">},</span>
                 <span class="p">)</span>
             <span class="p">)</span>
@@ -463,11 +482,17 @@
             <span class="n">nxt</span> <span class="o">=</span> <span class="n">_apply_case</span><span class="p">(</span><span class="n">lines</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">text</span><span class="p">,</span> <span class="n">direction</span><span class="o">.</span><span class="n">typography</span><span class="o">.</span><span class="n">case</span><span class="p">)</span>
             <span class="n">cues</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                 <span class="n">Cue</span><span class="p">(</span>
-                    <span class="n">text</span><span class="o">=</span><span class="n">nxt</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">y_next</span><span class="p">,</span>
+                    <span class="n">text</span><span class="o">=</span><span class="n">nxt</span><span class="p">,</span>
+                    <span class="n">x</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
+                    <span class="n">y</span><span class="o">=</span><span class="n">y_next</span><span class="p">,</span>
                     <span class="n">size</span><span class="o">=</span><span class="n">_fit_size</span><span class="p">(</span><span class="n">nxt</span><span class="p">,</span> <span class="n">max_frac</span><span class="o">=</span><span class="mf">0.88</span><span class="p">,</span> <span class="n">canvas</span><span class="o">=</span><span class="n">canvas</span><span class="p">,</span> <span class="n">base</span><span class="o">=</span><span class="n">size</span> <span class="o">*</span> <span class="mf">0.86</span><span class="p">),</span>
-                    <span class="n">t_in</span><span class="o">=</span><span class="n">show_from</span><span class="p">,</span> <span class="n">t_full</span><span class="o">=</span><span class="n">show_from</span> <span class="o">+</span> <span class="mf">0.2</span><span class="p">,</span>
-                    <span class="n">t_out</span><span class="o">=</span><span class="n">line</span><span class="o">.</span><span class="n">end</span><span class="p">,</span> <span class="n">t_gone</span><span class="o">=</span><span class="n">line</span><span class="o">.</span><span class="n">end</span> <span class="o">+</span> <span class="mf">0.2</span><span class="p">,</span>
-                    <span class="n">colour</span><span class="o">=</span><span class="n">direction</span><span class="o">.</span><span class="n">palette</span><span class="o">.</span><span class="n">dim</span><span class="p">,</span> <span class="n">motion</span><span class="o">=</span><span class="s2">"fade"</span><span class="p">,</span> <span class="n">layer</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                    <span class="n">t_in</span><span class="o">=</span><span class="n">show_from</span><span class="p">,</span>
+                    <span class="n">t_full</span><span class="o">=</span><span class="n">show_from</span> <span class="o">+</span> <span class="mf">0.2</span><span class="p">,</span>
+                    <span class="n">t_out</span><span class="o">=</span><span class="n">line</span><span class="o">.</span><span class="n">end</span><span class="p">,</span>
+                    <span class="n">t_gone</span><span class="o">=</span><span class="n">line</span><span class="o">.</span><span class="n">end</span> <span class="o">+</span> <span class="mf">0.2</span><span class="p">,</span>
+                    <span class="n">colour</span><span class="o">=</span><span class="n">direction</span><span class="o">.</span><span class="n">palette</span><span class="o">.</span><span class="n">dim</span><span class="p">,</span>
+                    <span class="n">motion</span><span class="o">=</span><span class="s2">"fade"</span><span class="p">,</span>
+                    <span class="n">layer</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
                 <span class="p">)</span>
             <span class="p">)</span>
     <span class="k">return</span> <span class="n">cues</span>
@@ -501,8 +526,11 @@
     <span class="n">show_all</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">persistence</span> <span class="o">==</span> <span class="s2">"dim"</span>
     <span class="k">for</span> <span class="n">r</span><span class="p">,</span> <span class="n">line</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">rows</span><span class="p">):</span>
         <span class="n">y</span> <span class="o">=</span> <span class="n">y0</span> <span class="o">+</span> <span class="n">r</span> <span class="o">*</span> <span class="n">size</span> <span class="o">*</span> <span class="n">leading</span>
-        <span class="n">row_w</span> <span class="o">=</span> <span class="n">_text_width</span><span class="p">(</span><span class="n">_apply_case</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">text</span><span class="p">,</span> <span class="n">direction</span><span class="o">.</span><span class="n">typography</span><span class="o">.</span><span class="n">case</span><span class="p">),</span> <span class="n">size</span><span class="p">,</span>
-                            <span class="n">direction</span><span class="o">.</span><span class="n">typography</span><span class="o">.</span><span class="n">tracking</span><span class="p">)</span>
+        <span class="n">row_w</span> <span class="o">=</span> <span class="n">_text_width</span><span class="p">(</span>
+            <span class="n">_apply_case</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">text</span><span class="p">,</span> <span class="n">direction</span><span class="o">.</span><span class="n">typography</span><span class="o">.</span><span class="n">case</span><span class="p">),</span>
+            <span class="n">size</span><span class="p">,</span>
+            <span class="n">direction</span><span class="o">.</span><span class="n">typography</span><span class="o">.</span><span class="n">tracking</span><span class="p">,</span>
+        <span class="p">)</span>
         <span class="n">cursor</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">-</span> <span class="n">row_w</span> <span class="o">/</span> <span class="mi">2</span>
         <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">line</span><span class="o">.</span><span class="n">words</span><span class="p">:</span>
             <span class="n">wt</span> <span class="o">=</span> <span class="n">_apply_case</span><span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">text</span><span class="p">,</span> <span class="n">direction</span><span class="o">.</span><span class="n">typography</span><span class="o">.</span><span class="n">case</span><span class="p">)</span>
@@ -516,7 +544,8 @@
                     <span class="n">size</span><span class="o">=</span><span class="n">size</span><span class="p">,</span>
                     <span class="n">t_in</span><span class="o">=</span><span class="mf">0.0</span> <span class="k">if</span> <span class="n">show_all</span> <span class="k">else</span> <span class="n">t_in</span><span class="p">,</span>
                     <span class="n">t_full</span><span class="o">=</span><span class="n">t_full</span><span class="p">,</span>
-                    <span class="n">t_out</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">t_gone</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                    <span class="n">t_out</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                    <span class="n">t_gone</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                     <span class="n">colour</span><span class="o">=</span><span class="n">direction</span><span class="o">.</span><span class="n">palette</span><span class="o">.</span><span class="n">fg</span><span class="p">,</span>
                     <span class="n">dim_colour</span><span class="o">=</span><span class="n">direction</span><span class="o">.</span><span class="n">palette</span><span class="o">.</span><span class="n">dim</span> <span class="k">if</span> <span class="n">show_all</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
                     <span class="n">dim_from</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
@@ -546,9 +575,13 @@
                     <span class="n">x</span><span class="o">=</span><span class="mf">0.10</span> <span class="o">+</span> <span class="mf">0.80</span> <span class="o">*</span> <span class="n">frac</span><span class="p">,</span>
                     <span class="n">y</span><span class="o">=</span><span class="mf">0.5</span> <span class="o">-</span> <span class="n">amp</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">frac</span><span class="p">),</span>
                     <span class="n">size</span><span class="o">=</span><span class="n">size</span><span class="p">,</span>
-                    <span class="n">t_in</span><span class="o">=</span><span class="n">t_in</span><span class="p">,</span> <span class="n">t_full</span><span class="o">=</span><span class="n">t_full</span><span class="p">,</span> <span class="n">t_out</span><span class="o">=</span><span class="n">t_out</span><span class="p">,</span> <span class="n">t_gone</span><span class="o">=</span><span class="n">t_gone</span><span class="p">,</span>
+                    <span class="n">t_in</span><span class="o">=</span><span class="n">t_in</span><span class="p">,</span>
+                    <span class="n">t_full</span><span class="o">=</span><span class="n">t_full</span><span class="p">,</span>
+                    <span class="n">t_out</span><span class="o">=</span><span class="n">t_out</span><span class="p">,</span>
+                    <span class="n">t_gone</span><span class="o">=</span><span class="n">t_gone</span><span class="p">,</span>
                     <span class="n">colour</span><span class="o">=</span><span class="n">direction</span><span class="o">.</span><span class="n">palette</span><span class="o">.</span><span class="n">fg</span><span class="p">,</span>
-                    <span class="n">dim_colour</span><span class="o">=</span><span class="n">direction</span><span class="o">.</span><span class="n">palette</span><span class="o">.</span><span class="n">dim</span><span class="p">,</span> <span class="n">dim_from</span><span class="o">=</span><span class="n">dim_from</span><span class="p">,</span>
+                    <span class="n">dim_colour</span><span class="o">=</span><span class="n">direction</span><span class="o">.</span><span class="n">palette</span><span class="o">.</span><span class="n">dim</span><span class="p">,</span>
+                    <span class="n">dim_from</span><span class="o">=</span><span class="n">dim_from</span><span class="p">,</span>
                     <span class="n">motion</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">motion</span><span class="p">,</span>
                 <span class="p">)</span>
             <span class="p">)</span>
@@ -579,9 +612,13 @@
                 <span class="n">x</span><span class="o">=</span><span class="mf">0.5</span> <span class="o">+</span> <span class="n">r</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="o">/</span> <span class="n">canvas</span><span class="o">.</span><span class="n">aspect</span> <span class="o">*</span> <span class="n">canvas</span><span class="o">.</span><span class="n">aspect</span> <span class="o">*</span> <span class="mf">0.9</span><span class="p">,</span>
                 <span class="n">y</span><span class="o">=</span><span class="mf">0.5</span> <span class="o">+</span> <span class="n">r</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">a</span><span class="p">),</span>
                 <span class="n">size</span><span class="o">=</span><span class="n">size</span><span class="p">,</span>
-                <span class="n">t_in</span><span class="o">=</span><span class="n">t_in</span><span class="p">,</span> <span class="n">t_full</span><span class="o">=</span><span class="n">t_full</span><span class="p">,</span> <span class="n">t_out</span><span class="o">=</span><span class="n">t_out</span><span class="p">,</span> <span class="n">t_gone</span><span class="o">=</span><span class="n">t_gone</span><span class="p">,</span>
+                <span class="n">t_in</span><span class="o">=</span><span class="n">t_in</span><span class="p">,</span>
+                <span class="n">t_full</span><span class="o">=</span><span class="n">t_full</span><span class="p">,</span>
+                <span class="n">t_out</span><span class="o">=</span><span class="n">t_out</span><span class="p">,</span>
+                <span class="n">t_gone</span><span class="o">=</span><span class="n">t_gone</span><span class="p">,</span>
                 <span class="n">colour</span><span class="o">=</span><span class="n">direction</span><span class="o">.</span><span class="n">palette</span><span class="o">.</span><span class="n">fg</span><span class="p">,</span>
-                <span class="n">dim_colour</span><span class="o">=</span><span class="n">direction</span><span class="o">.</span><span class="n">palette</span><span class="o">.</span><span class="n">dim</span><span class="p">,</span> <span class="n">dim_from</span><span class="o">=</span><span class="n">dim_from</span><span class="p">,</span>
+                <span class="n">dim_colour</span><span class="o">=</span><span class="n">direction</span><span class="o">.</span><span class="n">palette</span><span class="o">.</span><span class="n">dim</span><span class="p">,</span>
+                <span class="n">dim_from</span><span class="o">=</span><span class="n">dim_from</span><span class="p">,</span>
                 <span class="n">motion</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">motion</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="p">)</span>
@@ -616,10 +653,17 @@
         <span class="n">t_out</span><span class="p">,</span> <span class="n">t_gone</span><span class="p">,</span> <span class="n">dim_from</span> <span class="o">=</span> <span class="n">_persistence_times</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">line</span><span class="p">,</span> <span class="n">tt</span><span class="p">,</span> <span class="n">sc</span><span class="p">)</span>
         <span class="n">cues</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
             <span class="n">Cue</span><span class="p">(</span>
-                <span class="n">text</span><span class="o">=</span><span class="n">place</span><span class="o">.</span><span class="n">text</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="n">place</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">place</span><span class="o">.</span><span class="n">y</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">place</span><span class="o">.</span><span class="n">size</span><span class="p">,</span>
-                <span class="n">t_in</span><span class="o">=</span><span class="n">t_in</span><span class="p">,</span> <span class="n">t_full</span><span class="o">=</span><span class="n">t_full</span><span class="p">,</span> <span class="n">t_out</span><span class="o">=</span><span class="n">t_out</span><span class="p">,</span> <span class="n">t_gone</span><span class="o">=</span><span class="n">t_gone</span><span class="p">,</span>
+                <span class="n">text</span><span class="o">=</span><span class="n">place</span><span class="o">.</span><span class="n">text</span><span class="p">,</span>
+                <span class="n">x</span><span class="o">=</span><span class="n">place</span><span class="o">.</span><span class="n">x</span><span class="p">,</span>
+                <span class="n">y</span><span class="o">=</span><span class="n">place</span><span class="o">.</span><span class="n">y</span><span class="p">,</span>
+                <span class="n">size</span><span class="o">=</span><span class="n">place</span><span class="o">.</span><span class="n">size</span><span class="p">,</span>
+                <span class="n">t_in</span><span class="o">=</span><span class="n">t_in</span><span class="p">,</span>
+                <span class="n">t_full</span><span class="o">=</span><span class="n">t_full</span><span class="p">,</span>
+                <span class="n">t_out</span><span class="o">=</span><span class="n">t_out</span><span class="p">,</span>
+                <span class="n">t_gone</span><span class="o">=</span><span class="n">t_gone</span><span class="p">,</span>
                 <span class="n">colour</span><span class="o">=</span><span class="n">direction</span><span class="o">.</span><span class="n">palette</span><span class="o">.</span><span class="n">fg</span><span class="p">,</span>
-                <span class="n">dim_colour</span><span class="o">=</span><span class="n">direction</span><span class="o">.</span><span class="n">palette</span><span class="o">.</span><span class="n">dim</span><span class="p">,</span> <span class="n">dim_from</span><span class="o">=</span><span class="n">dim_from</span><span class="p">,</span>
+                <span class="n">dim_colour</span><span class="o">=</span><span class="n">direction</span><span class="o">.</span><span class="n">palette</span><span class="o">.</span><span class="n">dim</span><span class="p">,</span>
+                <span class="n">dim_from</span><span class="o">=</span><span class="n">dim_from</span><span class="p">,</span>
                 <span class="n">motion</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">motion</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="p">)</span>

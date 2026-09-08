@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.lyricvid.render_web &mdash; muvid 0.0.55 documentation</title>
+  <title>muvid.lyricvid.render_web &mdash; muvid 0.0.56 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=b87b3bc5"></script>
+      <script src="../../../_static/documentation_options.js?v=8f83b1af"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -271,18 +271,27 @@
 
 <span class="c1">#: H.264 High / yuv420p — the profile every platform accepts.</span>
 <span class="n">VIDEO_CODEC_ARGS</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="s2">"-c:v"</span><span class="p">,</span> <span class="s2">"libx264"</span><span class="p">,</span>
-    <span class="s2">"-preset"</span><span class="p">,</span> <span class="s2">"slow"</span><span class="p">,</span>
-    <span class="s2">"-pix_fmt"</span><span class="p">,</span> <span class="s2">"yuv420p"</span><span class="p">,</span>
-    <span class="s2">"-profile:v"</span><span class="p">,</span> <span class="s2">"high"</span><span class="p">,</span>
-    <span class="s2">"-level"</span><span class="p">,</span> <span class="s2">"4.1"</span><span class="p">,</span>
+    <span class="s2">"-c:v"</span><span class="p">,</span>
+    <span class="s2">"libx264"</span><span class="p">,</span>
+    <span class="s2">"-preset"</span><span class="p">,</span>
+    <span class="s2">"slow"</span><span class="p">,</span>
+    <span class="s2">"-pix_fmt"</span><span class="p">,</span>
+    <span class="s2">"yuv420p"</span><span class="p">,</span>
+    <span class="s2">"-profile:v"</span><span class="p">,</span>
+    <span class="s2">"high"</span><span class="p">,</span>
+    <span class="s2">"-level"</span><span class="p">,</span>
+    <span class="s2">"4.1"</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="c1">#: AAC, 48 kHz, stereo.</span>
 <span class="n">AUDIO_CODEC_ARGS</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="s2">"-c:a"</span><span class="p">,</span> <span class="s2">"aac"</span><span class="p">,</span>
-    <span class="s2">"-b:a"</span><span class="p">,</span> <span class="s2">"320k"</span><span class="p">,</span>
-    <span class="s2">"-ar"</span><span class="p">,</span> <span class="s2">"48000"</span><span class="p">,</span>
-    <span class="s2">"-ac"</span><span class="p">,</span> <span class="s2">"2"</span><span class="p">,</span>
+    <span class="s2">"-c:a"</span><span class="p">,</span>
+    <span class="s2">"aac"</span><span class="p">,</span>
+    <span class="s2">"-b:a"</span><span class="p">,</span>
+    <span class="s2">"320k"</span><span class="p">,</span>
+    <span class="s2">"-ar"</span><span class="p">,</span>
+    <span class="s2">"48000"</span><span class="p">,</span>
+    <span class="s2">"-ac"</span><span class="p">,</span>
+    <span class="s2">"2"</span><span class="p">,</span>
 <span class="p">)</span>
 
 <span class="n">_HEX</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="s2">"0123456789abcdefABCDEF"</span><span class="p">)</span>
@@ -361,7 +370,9 @@
         <span class="s2">"t_gone"</span><span class="p">:</span> <span class="n">cue</span><span class="o">.</span><span class="n">t_gone</span><span class="p">,</span>
         <span class="s2">"colour"</span><span class="p">:</span> <span class="n">_colour</span><span class="p">(</span><span class="n">cue</span><span class="o">.</span><span class="n">colour</span><span class="p">,</span> <span class="n">what</span><span class="o">=</span><span class="s2">"cue.colour"</span><span class="p">),</span>
         <span class="s2">"dim_colour"</span><span class="p">:</span> <span class="p">(</span>
-            <span class="kc">None</span> <span class="k">if</span> <span class="n">cue</span><span class="o">.</span><span class="n">dim_colour</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">_colour</span><span class="p">(</span><span class="n">cue</span><span class="o">.</span><span class="n">dim_colour</span><span class="p">,</span> <span class="n">what</span><span class="o">=</span><span class="s2">"cue.dim_colour"</span><span class="p">)</span>
+            <span class="kc">None</span>
+            <span class="k">if</span> <span class="n">cue</span><span class="o">.</span><span class="n">dim_colour</span> <span class="ow">is</span> <span class="kc">None</span>
+            <span class="k">else</span> <span class="n">_colour</span><span class="p">(</span><span class="n">cue</span><span class="o">.</span><span class="n">dim_colour</span><span class="p">,</span> <span class="n">what</span><span class="o">=</span><span class="s2">"cue.dim_colour"</span><span class="p">)</span>
         <span class="p">),</span>
         <span class="s2">"dim_from"</span><span class="p">:</span> <span class="n">cue</span><span class="o">.</span><span class="n">dim_from</span><span class="p">,</span>
         <span class="c1"># per-word karaoke wipe window / concrete-page ignition, when the</span>
@@ -725,19 +736,28 @@
     <span class="n">output</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">run_ffmpeg</span><span class="p">(</span>
         <span class="p">[</span>
-            <span class="s2">"-framerate"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">fps</span><span class="p">),</span>
-            <span class="s2">"-i"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">frames</span> <span class="o">/</span> <span class="n">FRAME_PATTERN</span><span class="p">),</span>
-            <span class="s2">"-i"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">audio</span><span class="p">),</span>
-            <span class="s2">"-map"</span><span class="p">,</span> <span class="s2">"0:v:0"</span><span class="p">,</span>
-            <span class="s2">"-map"</span><span class="p">,</span> <span class="s2">"1:a:0"</span><span class="p">,</span>
+            <span class="s2">"-framerate"</span><span class="p">,</span>
+            <span class="nb">str</span><span class="p">(</span><span class="n">fps</span><span class="p">),</span>
+            <span class="s2">"-i"</span><span class="p">,</span>
+            <span class="nb">str</span><span class="p">(</span><span class="n">frames</span> <span class="o">/</span> <span class="n">FRAME_PATTERN</span><span class="p">),</span>
+            <span class="s2">"-i"</span><span class="p">,</span>
+            <span class="nb">str</span><span class="p">(</span><span class="n">audio</span><span class="p">),</span>
+            <span class="s2">"-map"</span><span class="p">,</span>
+            <span class="s2">"0:v:0"</span><span class="p">,</span>
+            <span class="s2">"-map"</span><span class="p">,</span>
+            <span class="s2">"1:a:0"</span><span class="p">,</span>
             <span class="o">*</span><span class="n">VIDEO_CODEC_ARGS</span><span class="p">,</span>
-            <span class="s2">"-crf"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">crf</span><span class="p">),</span>
-            <span class="s2">"-g"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">fps</span> <span class="o">*</span> <span class="mi">2</span><span class="p">),</span>
+            <span class="s2">"-crf"</span><span class="p">,</span>
+            <span class="nb">str</span><span class="p">(</span><span class="n">crf</span><span class="p">),</span>
+            <span class="s2">"-g"</span><span class="p">,</span>
+            <span class="nb">str</span><span class="p">(</span><span class="n">fps</span> <span class="o">*</span> <span class="mi">2</span><span class="p">),</span>
             <span class="o">*</span><span class="n">AUDIO_CODEC_ARGS</span><span class="p">,</span>
-            <span class="s2">"-movflags"</span><span class="p">,</span> <span class="s2">"+faststart"</span><span class="p">,</span>
+            <span class="s2">"-movflags"</span><span class="p">,</span>
+            <span class="s2">"+faststart"</span><span class="p">,</span>
             <span class="c1"># -use_editlist 0: keep ffmpeg from writing the elst boxes some</span>
             <span class="c1"># platforms (YouTube) trip on.</span>
-            <span class="s2">"-use_editlist"</span><span class="p">,</span> <span class="s2">"0"</span><span class="p">,</span>
+            <span class="s2">"-use_editlist"</span><span class="p">,</span>
+            <span class="s2">"0"</span><span class="p">,</span>
             <span class="s2">"-shortest"</span><span class="p">,</span>
             <span class="nb">str</span><span class="p">(</span><span class="n">output</span><span class="p">),</span>
         <span class="p">]</span>

@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.footage.select_score &mdash; muvid 0.0.55 documentation</title>
+  <title>muvid.footage.select_score &mdash; muvid 0.0.56 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=b87b3bc5"></script>
+      <script src="../../../_static/documentation_options.js?v=8f83b1af"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -177,6 +177,13 @@
 <span class="sd">  never a silent junk EDL.</span>
 <span class="sd">- The ``allowed(i,j)`` clip-domain hook + the injectable boundary set make the Phase-2</span>
 <span class="sd">  manual-pin re-solve a *pruning*, not a reformulation.</span>
+<span class="sd">- **An unvouched alignment is a reward penalty, not a pruning** (muvid#88): a clip the</span>
+<span class="sd">  aligner will not vouch for is charged :data:`UNVOUCHED_REWARD_PENALTY` reward-seconds</span>
+<span class="sd">  per second, which is larger than the composite's whole range and therefore ranks trust</span>
+<span class="sd">  above every METRIC, while leaving the clip reachable where it is the only coverage.</span>
+<span class="sd">  Pruning it would be a second trust gate; scoring it as a metric column would let</span>
+<span class="sd">  sharpness outbid it. It does **not** dominate the DP's non-composite terms — see the</span>
+<span class="sd">  constant, which says what it does and does not buy.</span>
 
 <span class="sd">numpy only (no cv2/torch): registered LAZILY in :mod:`muvid.footage.strategy` so</span>
 <span class="sd">``import muvid.footage`` never pulls numpy.</span>
@@ -382,6 +389,8 @@
         <span class="c1"># alignment-only default rather than emit an arbitrary path.</span>
         <span class="k">return</span> <span class="n">_fallback</span><span class="p">(</span><span class="n">aligns</span><span class="p">,</span> <span class="n">song_duration</span><span class="p">,</span> <span class="n">cause</span><span class="o">=</span><span class="s2">"no_weighted_metrics"</span><span class="p">)</span>
 
+    <span class="n">composite</span> <span class="o">=</span> <span class="n">_demote_unvouched</span><span class="p">(</span><span class="n">composite</span><span class="p">,</span> <span class="n">aligns</span><span class="p">)</span>
+
     <span class="n">entries</span><span class="p">,</span> <span class="n">cause</span> <span class="o">=</span> <span class="n">_viterbi</span><span class="p">(</span><span class="n">aligns</span><span class="p">,</span> <span class="n">boundaries</span><span class="p">,</span> <span class="n">composite</span><span class="p">,</span> <span class="n">tensor</span><span class="p">,</span> <span class="n">cfg</span><span class="p">)</span>
     <span class="n">solved_cfg</span> <span class="o">=</span> <span class="n">cfg</span>  <span class="c1"># the config that actually produced `entries` (escalate on THIS)</span>
     <span class="k">if</span> <span class="n">entries</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -529,6 +538,61 @@
         <span class="k">if</span> <span class="n">a</span><span class="o">.</span><span class="n">clip_id</span> <span class="ow">in</span> <span class="n">tensor</span><span class="o">.</span><span class="n">clip_ids</span><span class="p">:</span>
             <span class="n">g</span><span class="p">[</span><span class="n">ai</span><span class="p">]</span> <span class="o">=</span> <span class="n">contrib</span><span class="p">[</span><span class="n">tensor</span><span class="o">.</span><span class="n">clip_ids</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">clip_id</span><span class="p">)]</span>
     <span class="k">return</span> <span class="n">g</span><span class="p">,</span> <span class="n">W</span>
+
+
+<span class="c1">#: Reward-seconds per second charged to a clip the aligner will not vouch for. The</span>
+<span class="c1">#: composite ĝ is normalized to ``[0, 1]``, so anything ``&gt; 1.0`` dominates it: over the</span>
+<span class="c1">#: same span a vouched clip at ĝ=0 outscores an unvouched one at ĝ=1, whatever the</span>
+<span class="c1">#: weights say. It is a demotion and not a prohibition — where nothing else covers the</span>
+<span class="c1">#: span the DP must still use the clip, pays the penalty on every path equally, and the</span>
+<span class="c1">#: choice is unaffected.</span>
+<span class="c1">#:</span>
+<span class="c1">#: **What it does NOT buy, measured rather than assumed.** "No weighting can buy an</span>
+<span class="c1">#: unvouched clip a span another clip covers" is true of the reward INTEGRAL and false of</span>
+<span class="c1">#: the DP as a whole, because two of the DP's terms are not composite reward at all:</span>
+<span class="c1">#:</span>
+<span class="c1">#: - ``l_max_overrun_penalty`` is caller-settable through ``config``. At 0.9, a single</span>
+<span class="c1">#:   40 s vouched clip is cut away from every 10 s: measured, ``BAD`` at 10-12, 20-22 and</span>
+<span class="c1">#:   30-32 s, all of them spans the vouched clip covers.</span>
+<span class="c1">#: - ``_viterbi``'s transition window ``max_seg_s`` (4x ``l_max`` = 32 s at the defaults)</span>
+<span class="c1">#:   is a PERFORMANCE bound, and consecutive segments must be different clips — so a</span>
+<span class="c1">#:   vouched take longer than the cap cannot be one segment and the optimizer is forced</span>
+<span class="c1">#:   to cut away and back. Measured under the default config, a 2 s opener plus one 58 s</span>
+<span class="c1">#:   vouched clip gives ``[(0,2,O), (2,34,V), (34,36,BAD), (36,60,V)]``.</span>
+<span class="c1">#:</span>
+<span class="c1">#: Raising the penalty does not fix either: both are structural, not a scoring tie the</span>
+<span class="c1">#: penalty is competing in. What repairs them is</span>
+<span class="c1">#: :func:`~muvid.footage.edl._absorb_neighbour`, which hands such a span back to the</span>
+<span class="c1">#: vouched cut on either side of it — losslessly, because that clip already covers it —</span>
+<span class="c1">#: rather than letting the recovery gap footage the shoot actually has. Keep that pairing</span>
+<span class="c1">#: in mind before changing either half.</span>
+<span class="c1">#:</span>
+<span class="c1">#: Not a config field, and not a tensor column, deliberately. A column would be</span>
+<span class="c1">#: *commensurate* with sharpness and lip-sync — a sharp unvouched clip could outrank a</span>
+<span class="c1">#: dull vouched one, which is exactly the trade muvid#88 says must not be available —</span>
+<span class="c1">#: and a config field would let the preference be tuned away silently by a caller</span>
+<span class="c1">#: passing ``config=`` to the MCP tool.</span>
+<span class="n">UNVOUCHED_REWARD_PENALTY</span> <span class="o">=</span> <span class="mf">2.0</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_demote_unvouched</span><span class="p">(</span><span class="n">composite</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">aligns</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Charge :data:`UNVOUCHED_REWARD_PENALTY` per second to every unvouched clip (muvid#88).</span>
+
+<span class="sd">    The ``weighted`` strategy's form of the same preference the alignment-only built-ins</span>
+<span class="sd">    apply in :func:`muvid.footage.strategy._prefer_vouched`. Applied to the composite the</span>
+<span class="sd">    DP integrates rather than inside ``feasible()``, so it demotes without pruning: the</span>
+<span class="sd">    clip stays reachable where it is the only coverage, which is what keeps a refusal a</span>
+<span class="sd">    refusal and not a silently missing source.</span>
+
+<span class="sd">    Applied here rather than in :func:`_composite` because ``_composite`` also feeds</span>
+<span class="sd">    :func:`selection_margin`, a diagnostic about how close two clips are on SCORE. Trust</span>
+<span class="sd">    is not a score, and folding it in there would make that number answer a different</span>
+<span class="sd">    question than its name.</span>
+<span class="sd">    """</span>
+    <span class="k">for</span> <span class="n">ai</span><span class="p">,</span> <span class="n">a</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">aligns</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">a</span><span class="o">.</span><span class="n">reliable</span><span class="p">:</span>
+            <span class="n">composite</span><span class="p">[</span><span class="n">ai</span><span class="p">]</span> <span class="o">-=</span> <span class="n">UNVOUCHED_REWARD_PENALTY</span>
+    <span class="k">return</span> <span class="n">composite</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_prefix</span><span class="p">(</span><span class="n">g_row</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>

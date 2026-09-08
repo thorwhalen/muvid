@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.footage.edl &mdash; muvid 0.0.55 documentation</title>
+  <title>muvid.footage.edl &mdash; muvid 0.0.56 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=b87b3bc5"></script>
+      <script src="../../../_static/documentation_options.js?v=8f83b1af"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -168,6 +168,16 @@
 <span class="sd">:class:`UnreliableAlignmentError` rather than quietly cut to, because a wrong offset</span>
 <span class="sd">does not fail — it renders a video out of sync with the song (muvid#59).</span>
 
+<span class="sd">That refusal is right when the CALLER named the clip, and used to be blunt on the auto</span>
+<span class="sd">path, where one badly-aligned clip out of five failed an edit the other four could have</span>
+<span class="sd">covered (muvid#88). The auto path now recovers in two steps that leave the single gate</span>
+<span class="sd">alone: a strategy treats ``reliable`` as a **preference** (it ranks a vouched clip above</span>
+<span class="sd">an unvouched one for the same span, and falls back to unvouched only where nothing else</span>
+<span class="sd">covers it), and :func:`exclude_unvouched` sets those forced spans aside as reported</span>
+<span class="sd">:class:`ExcludedSpan` records, gap-filled like any other hole. What reaches the gate is</span>
+<span class="sd">therefore a smaller edit; the gate still refuses, with the same error, when the recovery</span>
+<span class="sd">would leave no footage at all.</span>
+
 <span class="sd">An entry may carry an optional :class:`Transition` — a blend IN from its predecessor</span>
 <span class="sd">instead of a hard cut (muvid#34). It is an annotation on a boundary that already exists</span>
 <span class="sd">implicitly, so spans stay one-per-song-span and nothing about reading an EDL changes.</span>
@@ -177,7 +187,7 @@
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">replace</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">Sequence</span>
 
 <span class="c1">#: Spans shorter than this (seconds) are treated as coincident / zero — guards float noise.</span>
@@ -1182,11 +1192,7 @@
                 <span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">e</span><span class="o">.</span><span class="n">is_gap</span><span class="p">:</span>
             <span class="n">a</span> <span class="o">=</span> <span class="n">by_id</span><span class="p">[</span><span class="n">e</span><span class="o">.</span><span class="n">clip_id</span><span class="p">]</span>
-            <span class="n">clip_in</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="n">song_start</span> <span class="o">-</span> <span class="n">a</span><span class="o">.</span><span class="n">offset_s</span>
-            <span class="k">if</span> <span class="p">(</span>
-                <span class="n">clip_in</span> <span class="o">&lt;</span> <span class="o">-</span><span class="n">_EPS</span>
-                <span class="ow">or</span> <span class="n">clip_in</span> <span class="o">+</span> <span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">song_end</span> <span class="o">-</span> <span class="n">e</span><span class="o">.</span><span class="n">song_start</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">a</span><span class="o">.</span><span class="n">duration_s</span> <span class="o">+</span> <span class="n">_EPS</span>
-            <span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">_clip_contains</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">song_start</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">song_end</span><span class="p">):</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                     <span class="sa">f</span><span class="s2">"EDL entry </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">: clip </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">clip_id</span><span class="si">!r}</span><span class="s2"> does not contain song span "</span>
                     <span class="sa">f</span><span class="s2">"[</span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">song_start</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">song_end</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">] (its coverage is "</span>
@@ -1232,6 +1238,224 @@
             <span class="n">unvouched</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">unvouched</span><span class="p">:</span>
         <span class="k">raise</span> <span class="n">UnreliableAlignmentError</span><span class="p">(</span><span class="n">unvouched</span><span class="p">)</span>
+
+
+<span class="c1">#: The span had no alternative: nothing the aligner vouches for covers it at all. The</span>
+<span class="c1">#: honest answer is a gap, and the remedy is to re-align or re-shoot.</span>
+<span class="n">NO_VOUCHED_COVERAGE</span> <span class="o">=</span> <span class="s2">"no_vouched_coverage"</span>
+
+<span class="c1">#: A vouched clip DOES cover the span and the strategy cut to an unvouched one anyway —</span>
+<span class="c1">#: so the loss is the SELECTOR's, not the footage's. The two are separate values because</span>
+<span class="c1">#: they were measured to be separate events and they have different remedies: this one</span>
+<span class="c1">#: says try another strategy or another selection config. ``weighted`` produces it</span>
+<span class="c1">#: structurally — see :func:`_absorb_neighbour`, which repairs the repairable half.</span>
+<span class="n">UNVOUCHED_SELECTION</span> <span class="o">=</span> <span class="s2">"unvouched_selection"</span>
+
+<span class="c1">#: Every reason :func:`exclude_unvouched` can give, for a caller matching on the value.</span>
+<span class="n">EXCLUSION_REASONS</span> <span class="o">=</span> <span class="p">(</span><span class="n">NO_VOUCHED_COVERAGE</span><span class="p">,</span> <span class="n">UNVOUCHED_SELECTION</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="ExcludedSpan">
+<a class="viewcode-back" href="../../../module_docs/muvid/footage/edl.html#muvid.footage.ExcludedSpan">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ExcludedSpan</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""One span an AUTO-selected edit gave up rather than cut to unvouched footage (muvid#88).</span>
+
+<span class="sd">    A typed record, not a log line: it is returned to the caller (and over the MCP wire),</span>
+<span class="sd">    because "your video is shorter than the song" is only actionable next to *which* clip</span>
+<span class="sd">    was set aside, *where*, and *on what numbers*. The numbers are the same three</span>
+<span class="sd">    :func:`vouches_for` reached its verdict on, so the report and the gate can never</span>
+<span class="sd">    disagree about why.</span>
+<span class="sd">    """</span>
+
+    <span class="n">clip_id</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">song_start</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">song_end</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">reason</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">NO_VOUCHED_COVERAGE</span>
+    <span class="n">confidence</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">support</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">margin</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="ExcludedSpan.to_dict">
+<a class="viewcode-back" href="../../../module_docs/muvid/footage/edl.html#muvid.footage.ExcludedSpan.to_dict">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""JSON-ready. ``support``/``margin`` stay ``None`` — "not measured" is not zero."""</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">"clip_id"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">clip_id</span><span class="p">,</span>
+            <span class="s2">"song_start"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">song_start</span><span class="p">,</span>
+            <span class="s2">"song_end"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">song_end</span><span class="p">,</span>
+            <span class="s2">"reason"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">reason</span><span class="p">,</span>
+            <span class="s2">"confidence"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">confidence</span><span class="p">,</span>
+            <span class="s2">"support"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">support</span><span class="p">,</span>
+            <span class="s2">"margin"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">margin</span><span class="p">,</span>
+        <span class="p">}</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="exclude_unvouched">
+<a class="viewcode-back" href="../../../module_docs/muvid/footage/edl.html#muvid.footage.exclude_unvouched">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">exclude_unvouched</span><span class="p">(</span>
+    <span class="n">edl</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">,</span>
+    <span class="n">alignments</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">FootageAlignment</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"tuple[list[EdlEntry], list[ExcludedSpan]]"</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Set aside the spans of an AUTO edit whose only footage is unvouched (muvid#88).</span>
+
+<span class="sd">    The auto path's recovery, and deliberately NOT a second gate. A strategy already</span>
+<span class="sd">    prefers a vouched clip wherever one covers the span (see</span>
+<span class="sd">    :mod:`muvid.footage.strategy`), so an unvouched entry surviving into its output means</span>
+<span class="sd">    exactly one thing: **nothing else covered that span**. This drops those entries, which</span>
+<span class="sd">    :func:`fill_gaps` then turns into explicit gap entries — the encoding muvid already</span>
+<span class="sd">    uses for "no footage here" — and returns them as :class:`ExcludedSpan` records so the</span>
+<span class="sd">    loss is reported rather than silent.</span>
+
+<span class="sd">    Run it BEFORE :func:`fill_gaps` and pass the result through :func:`validate_edl` as</span>
+<span class="sd">    usual. It is a transform, not a verdict: it re-decides nothing about trust (it reads</span>
+<span class="sd">    ``FootageAlignment.reliable``, which :func:`vouches_for` set) and it refuses nothing —</span>
+<span class="sd">    :func:`validate_edl` remains the ONE gate.</span>
+
+<span class="sd">    **It declines to empty the edit, and that is what keeps the refusal alive.** If every</span>
+<span class="sd">    footage entry would be excluded, the original list is returned unchanged with an empty</span>
+<span class="sd">    excluded list, so :func:`validate_edl` sees an edit that still cuts to unvouched clips</span>
+<span class="sd">    and raises :class:`UnreliableAlignmentError` exactly as before. A shoot where nothing</span>
+<span class="sd">    is trustworthy must not come back as a black video reported as success — that is the</span>
+<span class="sd">    plausible-artifact failure muvid#59 is about, one level up. A *smaller* edit is a</span>
+<span class="sd">    recovery; an *empty* one is the same wrong answer wearing a coverage report.</span>
+
+<span class="sd">    **A gap is the last resort, not the first.** Before dropping an entry it is offered</span>
+<span class="sd">    to its neighbours: if the cut on either side is a vouched clip that ALREADY covers the</span>
+<span class="sd">    span, the span is absorbed into that cut instead. That case is not hypothetical and it</span>
+<span class="sd">    is not the aligner's fault — ``weighted``'s DP produces it structurally. Its</span>
+<span class="sd">    transition window is capped at ``max_seg_s`` (4x ``l_max``, a performance bound) and</span>
+<span class="sd">    consecutive segments must be different clips, so a single vouched take longer than the</span>
+<span class="sd">    cap CANNOT be one segment and the optimizer is forced to cut away and back. Measured</span>
+<span class="sd">    on a 60 s song under the DEFAULT config, a 2 s opener plus one 58 s vouched clip</span>
+<span class="sd">    yields ``[(0,2,O), (2,34,V), (34,36,BAD), (36,60,V)]`` — and gapping that 2 s would</span>
+<span class="sd">    punch an avoidable black hole through the middle of a continuous take, blamed on an</span>
+<span class="sd">    alignment that had nothing to do with it. A caller-raised ``l_max_overrun_penalty``</span>
+<span class="sd">    does the same thing at every ``l_max`` boundary. Absorbing loses nothing: the frames</span>
+<span class="sd">    come from a clip the aligner vouches for, which the caller's own edit already used on</span>
+<span class="sd">    both sides, and ``validate_edl`` re-checks containment afterwards either way.</span>
+
+<span class="sd">    Absorption is refused into a cut whose meaning depends on its length or on the</span>
+<span class="sd">    boundary it starts at — one carrying a ``transition``, a ``crop_end`` pan or a</span>
+<span class="sd">    ``look`` — and across a following ``transition``, since the blend's other side would</span>
+<span class="sd">    change clip underneath it. Strategies emit none of those, so the auto path always</span>
+<span class="sd">    absorbs; a hand-written EDL degrades to the gap rather than to a silently restretched</span>
+<span class="sd">    pan.</span>
+
+<span class="sd">    Returns ``(entries, excluded)``.</span>
+<span class="sd">    """</span>
+    <span class="n">by_id</span> <span class="o">=</span> <span class="p">{</span><span class="n">a</span><span class="o">.</span><span class="n">clip_id</span><span class="p">:</span> <span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">alignments</span><span class="p">}</span>
+    <span class="n">entries</span> <span class="o">=</span> <span class="p">[</span><span class="n">_as_entry</span><span class="p">(</span><span class="n">e</span><span class="p">)</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">edl</span><span class="p">]</span>
+    <span class="n">kept</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">EdlEntry</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">excluded</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ExcludedSpan</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">e</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">entries</span><span class="p">):</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">is_gap</span> <span class="k">else</span> <span class="n">by_id</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">clip_id</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">a</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">a</span><span class="o">.</span><span class="n">reliable</span><span class="p">:</span>
+            <span class="n">kept</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="n">_absorb_neighbour</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">kept</span><span class="p">,</span> <span class="n">entries</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">by_id</span><span class="p">):</span>
+            <span class="k">continue</span>
+        <span class="n">excluded</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">ExcludedSpan</span><span class="p">(</span>
+                <span class="n">clip_id</span><span class="o">=</span><span class="n">e</span><span class="o">.</span><span class="n">clip_id</span><span class="p">,</span>
+                <span class="n">song_start</span><span class="o">=</span><span class="n">e</span><span class="o">.</span><span class="n">song_start</span><span class="p">,</span>
+                <span class="n">song_end</span><span class="o">=</span><span class="n">e</span><span class="o">.</span><span class="n">song_end</span><span class="p">,</span>
+                <span class="n">reason</span><span class="o">=</span><span class="n">_exclusion_reason</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">alignments</span><span class="p">),</span>
+                <span class="n">confidence</span><span class="o">=</span><span class="n">a</span><span class="o">.</span><span class="n">confidence</span><span class="p">,</span>
+                <span class="n">support</span><span class="o">=</span><span class="n">a</span><span class="o">.</span><span class="n">support</span><span class="p">,</span>
+                <span class="n">margin</span><span class="o">=</span><span class="n">a</span><span class="o">.</span><span class="n">margin</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="ow">not</span> <span class="n">e</span><span class="o">.</span><span class="n">is_gap</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">kept</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">entries</span><span class="p">,</span> <span class="p">[]</span>
+    <span class="k">return</span> <span class="n">_coalesce_absorbed</span><span class="p">(</span><span class="n">kept</span><span class="p">),</span> <span class="n">excluded</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_clip_contains</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="n">FootageAlignment</span><span class="p">,</span> <span class="n">start</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">end</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Does clip ``a`` actually hold the song span ``[start, end]``?</span>
+
+<span class="sd">    The containment arithmetic :func:`validate_edl` enforces, in one place so a caller</span>
+<span class="sd">    that reshapes an edit (:func:`exclude_unvouched`) tests exactly what the gate will.</span>
+<span class="sd">    """</span>
+    <span class="n">clip_in</span> <span class="o">=</span> <span class="n">start</span> <span class="o">-</span> <span class="n">a</span><span class="o">.</span><span class="n">offset_s</span>
+    <span class="k">return</span> <span class="n">clip_in</span> <span class="o">&gt;=</span> <span class="o">-</span><span class="n">_EPS</span> <span class="ow">and</span> <span class="n">clip_in</span> <span class="o">+</span> <span class="p">(</span><span class="n">end</span> <span class="o">-</span> <span class="n">start</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">a</span><span class="o">.</span><span class="n">duration_s</span> <span class="o">+</span> <span class="n">_EPS</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_absorbable</span><span class="p">(</span><span class="n">e</span><span class="p">:</span> <span class="s2">"EdlEntry | None"</span><span class="p">,</span> <span class="n">by_id</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Is ``e`` a plain vouched cut that can simply be made longer?"""</span>
+    <span class="k">if</span> <span class="n">e</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">e</span><span class="o">.</span><span class="n">is_gap</span> <span class="ow">or</span> <span class="n">e</span><span class="o">.</span><span class="n">clip_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">by_id</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">by_id</span><span class="p">[</span><span class="n">e</span><span class="o">.</span><span class="n">clip_id</span><span class="p">]</span><span class="o">.</span><span class="n">reliable</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">return</span> <span class="n">e</span><span class="o">.</span><span class="n">transition</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">e</span><span class="o">.</span><span class="n">crop_end</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">e</span><span class="o">.</span><span class="n">look</span> <span class="ow">is</span> <span class="kc">None</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_absorb_neighbour</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">kept</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">entries</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">i</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">by_id</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Hand ``e``'s span to a vouched neighbour that already covers it; ``True`` if done.</span>
+
+<span class="sd">    Tries the preceding cut first (extend its end), then the following one (extend its</span>
+<span class="sd">    start), which is what turns ``weighted``'s forced cut-away-and-back into the single</span>
+<span class="sd">    long take it should have been. Mutates ``kept``/``entries`` in place — ``entries[i+1]``</span>
+<span class="sd">    is rewritten so the extension is visible when the loop reaches it.</span>
+<span class="sd">    """</span>
+    <span class="n">prev</span> <span class="o">=</span> <span class="n">kept</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="n">kept</span> <span class="k">else</span> <span class="kc">None</span>
+    <span class="n">nxt</span> <span class="o">=</span> <span class="n">entries</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">entries</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
+    <span class="c1"># Absorbing into `prev` leaves the boundary at `e.song_end` in place but changes the</span>
+    <span class="c1"># clip on its left, so a blend hanging off it would be blending from somewhere else.</span>
+    <span class="k">if</span> <span class="p">(</span>
+        <span class="n">_absorbable</span><span class="p">(</span><span class="n">prev</span><span class="p">,</span> <span class="n">by_id</span><span class="p">)</span>
+        <span class="ow">and</span> <span class="p">(</span><span class="n">nxt</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">nxt</span><span class="o">.</span><span class="n">transition</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="ow">and</span> <span class="n">_clip_contains</span><span class="p">(</span><span class="n">by_id</span><span class="p">[</span><span class="n">prev</span><span class="o">.</span><span class="n">clip_id</span><span class="p">],</span> <span class="n">prev</span><span class="o">.</span><span class="n">song_start</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">song_end</span><span class="p">)</span>
+    <span class="p">):</span>
+        <span class="n">kept</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">replace</span><span class="p">(</span><span class="n">prev</span><span class="p">,</span> <span class="n">song_end</span><span class="o">=</span><span class="n">e</span><span class="o">.</span><span class="n">song_end</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">True</span>
+    <span class="k">if</span> <span class="n">_absorbable</span><span class="p">(</span><span class="n">nxt</span><span class="p">,</span> <span class="n">by_id</span><span class="p">)</span> <span class="ow">and</span> <span class="n">_clip_contains</span><span class="p">(</span>
+        <span class="n">by_id</span><span class="p">[</span><span class="n">nxt</span><span class="o">.</span><span class="n">clip_id</span><span class="p">],</span> <span class="n">e</span><span class="o">.</span><span class="n">song_start</span><span class="p">,</span> <span class="n">nxt</span><span class="o">.</span><span class="n">song_end</span>
+    <span class="p">):</span>
+        <span class="n">entries</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">replace</span><span class="p">(</span><span class="n">nxt</span><span class="p">,</span> <span class="n">song_start</span><span class="o">=</span><span class="n">e</span><span class="o">.</span><span class="n">song_start</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">True</span>
+    <span class="k">return</span> <span class="kc">False</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_coalesce_absorbed</span><span class="p">(</span><span class="n">entries</span><span class="p">:</span> <span class="nb">list</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Merge adjacent cuts absorption left identical and touching — one take, one entry.</span>
+
+<span class="sd">    Only where every field but the span agrees, so two differently-graded cuts of one clip</span>
+<span class="sd">    stay two cuts.</span>
+<span class="sd">    """</span>
+    <span class="n">out</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">EdlEntry</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">entries</span><span class="p">:</span>
+        <span class="n">prev</span> <span class="o">=</span> <span class="n">out</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="n">out</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">prev</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="ow">and</span> <span class="ow">not</span> <span class="n">e</span><span class="o">.</span><span class="n">is_gap</span>
+            <span class="ow">and</span> <span class="n">prev</span><span class="o">.</span><span class="n">clip_id</span> <span class="o">==</span> <span class="n">e</span><span class="o">.</span><span class="n">clip_id</span>
+            <span class="ow">and</span> <span class="nb">abs</span><span class="p">(</span><span class="n">prev</span><span class="o">.</span><span class="n">song_end</span> <span class="o">-</span> <span class="n">e</span><span class="o">.</span><span class="n">song_start</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">_EPS</span>
+            <span class="ow">and</span> <span class="n">e</span><span class="o">.</span><span class="n">transition</span> <span class="ow">is</span> <span class="kc">None</span>
+            <span class="ow">and</span> <span class="p">(</span><span class="n">prev</span><span class="o">.</span><span class="n">crop</span><span class="p">,</span> <span class="n">prev</span><span class="o">.</span><span class="n">crop_end</span><span class="p">,</span> <span class="n">prev</span><span class="o">.</span><span class="n">look</span><span class="p">,</span> <span class="n">prev</span><span class="o">.</span><span class="n">look_time_varying</span><span class="p">)</span>
+            <span class="o">==</span> <span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">crop</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">crop_end</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">look</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">look_time_varying</span><span class="p">)</span>
+        <span class="p">):</span>
+            <span class="n">out</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">replace</span><span class="p">(</span><span class="n">prev</span><span class="p">,</span> <span class="n">song_end</span><span class="o">=</span><span class="n">e</span><span class="o">.</span><span class="n">song_end</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">out</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_exclusion_reason</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">alignments</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">FootageAlignment</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Whose loss was it — the footage's, or the selector's?</span>
+
+<span class="sd">    :data:`UNVOUCHED_SELECTION` when some vouched clip could have held the span and the</span>
+<span class="sd">    strategy did not use it (after absorption, that means a non-adjacent one). Reporting</span>
+<span class="sd">    both as :data:`NO_VOUCHED_COVERAGE` would tell a caller to re-shoot footage they</span>
+<span class="sd">    already have.</span>
+<span class="sd">    """</span>
+    <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">alignments</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">a</span><span class="o">.</span><span class="n">reliable</span> <span class="ow">and</span> <span class="n">_clip_contains</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">song_start</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">song_end</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">UNVOUCHED_SELECTION</span>
+    <span class="k">return</span> <span class="n">NO_VOUCHED_COVERAGE</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_span</span><span class="p">(</span><span class="n">e</span><span class="p">:</span> <span class="n">EdlEntry</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>

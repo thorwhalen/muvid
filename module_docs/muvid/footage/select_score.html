@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.footage.select_score &mdash; muvid 0.0.55 documentation</title>
+  <title>muvid.footage.select_score &mdash; muvid 0.0.56 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -15,7 +15,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=b87b3bc5"></script>
+      <script src="../../../_static/documentation_options.js?v=8f83b1af"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -79,6 +79,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#muvid.footage.select_score.DEFAULT_WEIGHTS"><code class="docutils literal notranslate"><span class="pre">DEFAULT_WEIGHTS</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.footage.select_score.PRESETS"><code class="docutils literal notranslate"><span class="pre">PRESETS</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.footage.select_score.SelectionContext"><code class="docutils literal notranslate"><span class="pre">SelectionContext</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.footage.select_score.UNVOUCHED_REWARD_PENALTY"><code class="docutils literal notranslate"><span class="pre">UNVOUCHED_REWARD_PENALTY</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.footage.select_score.WeightedSelectionConfig"><code class="docutils literal notranslate"><span class="pre">WeightedSelectionConfig</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.footage.select_score.resolve_config"><code class="docutils literal notranslate"><span class="pre">resolve_config()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.footage.select_score.run_weighted"><code class="docutils literal notranslate"><span class="pre">run_weighted()</span></code></a></li>
@@ -189,6 +190,13 @@ hop/tempo-independent). A switch then costs <code class="docutils literal notran
 never a silent junk EDL.</p></li>
 <li><p>The <code class="docutils literal notranslate"><span class="pre">allowed(i,j)</span></code> clip-domain hook + the injectable boundary set make the Phase-2
 manual-pin re-solve a <em>pruning</em>, not a reformulation.</p></li>
+<li><p><strong>An unvouched alignment is a reward penalty, not a pruning</strong> (muvid#88): a clip the
+aligner will not vouch for is charged <a class="reference internal" href="#muvid.footage.select_score.UNVOUCHED_REWARD_PENALTY" title="muvid.footage.select_score.UNVOUCHED_REWARD_PENALTY"><code class="xref py py-data docutils literal notranslate"><span class="pre">UNVOUCHED_REWARD_PENALTY</span></code></a> reward-seconds
+per second, which is larger than the composite’s whole range and therefore ranks trust
+above every METRIC, while leaving the clip reachable where it is the only coverage.
+Pruning it would be a second trust gate; scoring it as a metric column would let
+sharpness outbid it. It does <strong>not</strong> dominate the DP’s non-composite terms — see the
+constant, which says what it does and does not buy.</p></li>
 </ul>
 <p>numpy only (no cv2/torch): registered LAZILY in <a class="reference internal" href="strategy.html#module-muvid.footage.strategy" title="muvid.footage.strategy"><code class="xref py py-mod docutils literal notranslate"><span class="pre">muvid.footage.strategy</span></code></a> so
 <code class="docutils literal notranslate"><span class="pre">import</span> <span class="pre">muvid.footage</span></code> never pulls numpy.</p>
@@ -215,6 +223,41 @@ dwells, few cuts.</p>
 strategy raises a clear “run scoring first”). <code class="docutils literal notranslate"><span class="pre">shot_boundaries</span></code> (clip_id → song-times)
 is consumed only when <code class="docutils literal notranslate"><span class="pre">config.boundary_mode</span> <span class="pre">==</span> <span class="pre">&quot;beats+shots&quot;</span></code>. <code class="docutils literal notranslate"><span class="pre">pins</span></code> (Phase 2) is a
 list of <code class="docutils literal notranslate"><span class="pre">(song_start,</span> <span class="pre">song_end,</span> <span class="pre">clip_id)</span></code> hard constraints.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="muvid.footage.select_score.UNVOUCHED_REWARD_PENALTY">
+<span class="sig-prename descclassname"><span class="pre">muvid.footage.select_score.</span></span><span class="sig-name descname"><span class="pre">UNVOUCHED_REWARD_PENALTY</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2.0</span></span><a class="headerlink" href="#muvid.footage.select_score.UNVOUCHED_REWARD_PENALTY" title="Link to this definition"></a></dt>
+<dd><p>Reward-seconds per second charged to a clip the aligner will not vouch for. The
+composite ĝ is normalized to <code class="docutils literal notranslate"><span class="pre">[0,</span> <span class="pre">1]</span></code>, so anything <code class="docutils literal notranslate"><span class="pre">&gt;</span> <span class="pre">1.0</span></code> dominates it: over the
+same span a vouched clip at ĝ=0 outscores an unvouched one at ĝ=1, whatever the
+weights say. It is a demotion and not a prohibition — where nothing else covers the
+span the DP must still use the clip, pays the penalty on every path equally, and the
+choice is unaffected.</p>
+<p><strong>What it does NOT buy, measured rather than assumed.</strong> “No weighting can buy an
+unvouched clip a span another clip covers” is true of the reward INTEGRAL and false of
+the DP as a whole, because two of the DP’s terms are not composite reward at all:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">l_max_overrun_penalty</span></code> is caller-settable through <code class="docutils literal notranslate"><span class="pre">config</span></code>. At 0.9, a single
+40 s vouched clip is cut away from every 10 s: measured, <code class="docutils literal notranslate"><span class="pre">BAD</span></code> at 10-12, 20-22 and
+30-32 s, all of them spans the vouched clip covers.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">_viterbi</span></code>’s transition window <code class="docutils literal notranslate"><span class="pre">max_seg_s</span></code> (4x <code class="docutils literal notranslate"><span class="pre">l_max</span></code> = 32 s at the defaults)
+is a PERFORMANCE bound, and consecutive segments must be different clips — so a
+vouched take longer than the cap cannot be one segment and the optimizer is forced
+to cut away and back. Measured under the default config, a 2 s opener plus one 58 s
+vouched clip gives <code class="docutils literal notranslate"><span class="pre">[(0,2,O),</span> <span class="pre">(2,34,V),</span> <span class="pre">(34,36,BAD),</span> <span class="pre">(36,60,V)]</span></code>.</p></li>
+</ul>
+<p>Raising the penalty does not fix either: both are structural, not a scoring tie the
+penalty is competing in. What repairs them is
+<code class="xref py py-func docutils literal notranslate"><span class="pre">_absorb_neighbour()</span></code>, which hands such a span back to the
+vouched cut on either side of it — losslessly, because that clip already covers it —
+rather than letting the recovery gap footage the shoot actually has. Keep that pairing
+in mind before changing either half.</p>
+<p>Not a config field, and not a tensor column, deliberately. A column would be
+<em>commensurate</em> with sharpness and lip-sync — a sharp unvouched clip could outrank a
+dull vouched one, which is exactly the trade muvid#88 says must not be available —
+and a config field would let the preference be tuned away silently by a caller
+passing <code class="docutils literal notranslate"><span class="pre">config=</span></code> to the MCP tool.</p>
 </dd></dl>
 
 <dl class="py class">

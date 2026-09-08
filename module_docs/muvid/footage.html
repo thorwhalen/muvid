@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.footage &mdash; muvid 0.0.55 documentation</title>
+  <title>muvid.footage &mdash; muvid 0.0.56 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -15,7 +15,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=b87b3bc5"></script>
+      <script src="../../_static/documentation_options.js?v=8f83b1af"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -70,6 +70,10 @@
 <li class="toctree-l3"><a class="reference internal" href="#muvid.footage.EdlEntry.transition"><code class="docutils literal notranslate"><span class="pre">EdlEntry.transition</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.footage.ExcludedSpan"><code class="docutils literal notranslate"><span class="pre">ExcludedSpan</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#muvid.footage.ExcludedSpan.to_dict"><code class="docutils literal notranslate"><span class="pre">ExcludedSpan.to_dict()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.footage.FootageAlignment"><code class="docutils literal notranslate"><span class="pre">FootageAlignment</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#muvid.footage.FootageAlignment.margin"><code class="docutils literal notranslate"><span class="pre">FootageAlignment.margin</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#muvid.footage.FootageAlignment.overlaps"><code class="docutils literal notranslate"><span class="pre">FootageAlignment.overlaps</span></code></a></li>
@@ -86,6 +90,7 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.footage.chain"><code class="docutils literal notranslate"><span class="pre">chain()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.footage.derive_cuts"><code class="docutils literal notranslate"><span class="pre">derive_cuts()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.footage.exclude_unvouched"><code class="docutils literal notranslate"><span class="pre">exclude_unvouched()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.footage.is_time_varying"><code class="docutils literal notranslate"><span class="pre">is_time_varying()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.footage.list_strategies"><code class="docutils literal notranslate"><span class="pre">list_strategies()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.footage.motion"><code class="docutils literal notranslate"><span class="pre">motion()</span></code></a></li>
@@ -203,7 +208,8 @@ chosen or auto-selected edit is assembled into a music video over the clean song
 <ul class="simple">
 <li><p><a class="reference internal" href="footage/align.html#module-muvid.footage.align" title="muvid.footage.align"><code class="xref py py-mod docutils literal notranslate"><span class="pre">muvid.footage.align</span></code></a> — align a clip set to the song (thin over <code class="docutils literal notranslate"><span class="pre">mixing.audio</span></code>).</p></li>
 <li><p><a class="reference internal" href="footage/strategy.html#module-muvid.footage.strategy" title="muvid.footage.strategy"><code class="xref py py-mod docutils literal notranslate"><span class="pre">muvid.footage.strategy</span></code></a> — the pluggable <code class="docutils literal notranslate"><span class="pre">SelectionStrategy</span></code> registry that turns
-alignments into an EDL (which clip covers which span of the song).</p></li>
+alignments into an EDL (which clip covers which span of the song), preferring a clip
+the aligner vouches for wherever one covers the span (muvid#88).</p></li>
 <li><p><a class="reference internal" href="footage/edl.html#module-muvid.footage.edl" title="muvid.footage.edl"><code class="xref py py-mod docutils literal notranslate"><span class="pre">muvid.footage.edl</span></code></a> — the <code class="docutils literal notranslate"><span class="pre">validate_edl</span></code> SSOT + EDL/alignment data types,
 including the per-cut <code class="docutils literal notranslate"><span class="pre">CropWindow</span></code> (the EDL’s spatial half, muvid#60).</p></li>
 <li><p><a class="reference internal" href="footage/look.html#module-muvid.footage.look" title="muvid.footage.look"><code class="xref py py-mod docutils literal notranslate"><span class="pre">muvid.footage.look</span></code></a> — the <code class="docutils literal notranslate"><span class="pre">looks</span></code> seam: compile a grade, a LUT or an
@@ -324,6 +330,23 @@ the fragment rather than hardcoding it.</p>
 default) is a hard cut, so an EDL written before this field existed is a
 valid EDL now, and one written with it, read by older code, renders hard
 cuts — degraded, never wrong, in both directions.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="muvid.footage.ExcludedSpan">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">muvid.footage.</span></span><span class="sig-name descname"><span class="pre">ExcludedSpan</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">clip_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">song_start</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">song_end</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reason</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'no_vouched_coverage'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">confidence</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">support</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">margin</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/muvid/footage/edl.html#ExcludedSpan"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.ExcludedSpan" title="Link to this definition"></a></dt>
+<dd><p>One span an AUTO-selected edit gave up rather than cut to unvouched footage (muvid#88).</p>
+<p>A typed record, not a log line: it is returned to the caller (and over the MCP wire),
+because “your video is shorter than the song” is only actionable next to <em>which</em> clip
+was set aside, <em>where</em>, and <em>on what numbers</em>. The numbers are the same three
+<code class="xref py py-func docutils literal notranslate"><span class="pre">vouches_for()</span></code> reached its verdict on, so the report and the gate can never
+disagree about why.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="muvid.footage.ExcludedSpan.to_dict">
+<span class="sig-name descname"><span class="pre">to_dict</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="../../_modules/muvid/footage/edl.html#ExcludedSpan.to_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.ExcludedSpan.to_dict" title="Link to this definition"></a></dt>
+<dd><p>JSON-ready. <code class="docutils literal notranslate"><span class="pre">support</span></code>/<code class="docutils literal notranslate"><span class="pre">margin</span></code> stay <code class="docutils literal notranslate"><span class="pre">None</span></code> — “not measured” is not zero.</p>
 </dd></dl>
 
 </dd></dl>
@@ -518,6 +541,51 @@ half of a chain quietly downgrades only that half’s claim, never the other’s
 <dd><p>Turn a <em>validated</em> EDL into render-ready cuts — the ONE place <code class="docutils literal notranslate"><span class="pre">clip_in</span></code> is derived.</p>
 <p>Strategies emit only <code class="docutils literal notranslate"><span class="pre">{song_start,</span> <span class="pre">song_end,</span> <span class="pre">clip_id}</span></code>; the sign convention
 <code class="docutils literal notranslate"><span class="pre">clip_in</span> <span class="pre">=</span> <span class="pre">song_start</span> <span class="pre">-</span> <span class="pre">offset</span></code> lives here (SSOT), so no strategy can desync the cut.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.footage.exclude_unvouched">
+<span class="sig-prename descclassname"><span class="pre">muvid.footage.</span></span><span class="sig-name descname"><span class="pre">exclude_unvouched</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">edl</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alignments</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="footage/edl.html#muvid.footage.edl.FootageAlignment" title="muvid.footage.edl.FootageAlignment"><span class="pre">FootageAlignment</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="footage/edl.html#muvid.footage.edl.EdlEntry" title="muvid.footage.edl.EdlEntry"><span class="pre">EdlEntry</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="footage/edl.html#muvid.footage.edl.ExcludedSpan" title="muvid.footage.edl.ExcludedSpan"><span class="pre">ExcludedSpan</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/muvid/footage/edl.html#exclude_unvouched"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.exclude_unvouched" title="Link to this definition"></a></dt>
+<dd><p>Set aside the spans of an AUTO edit whose only footage is unvouched (muvid#88).</p>
+<p>The auto path’s recovery, and deliberately NOT a second gate. A strategy already
+prefers a vouched clip wherever one covers the span (see
+<a class="reference internal" href="footage/strategy.html#module-muvid.footage.strategy" title="muvid.footage.strategy"><code class="xref py py-mod docutils literal notranslate"><span class="pre">muvid.footage.strategy</span></code></a>), so an unvouched entry surviving into its output means
+exactly one thing: <strong>nothing else covered that span</strong>. This drops those entries, which
+<code class="xref py py-func docutils literal notranslate"><span class="pre">fill_gaps()</span></code> then turns into explicit gap entries — the encoding muvid already
+uses for “no footage here” — and returns them as <a class="reference internal" href="#muvid.footage.ExcludedSpan" title="muvid.footage.ExcludedSpan"><code class="xref py py-class docutils literal notranslate"><span class="pre">ExcludedSpan</span></code></a> records so the
+loss is reported rather than silent.</p>
+<p>Run it BEFORE <code class="xref py py-func docutils literal notranslate"><span class="pre">fill_gaps()</span></code> and pass the result through <a class="reference internal" href="#muvid.footage.validate_edl" title="muvid.footage.validate_edl"><code class="xref py py-func docutils literal notranslate"><span class="pre">validate_edl()</span></code></a> as
+usual. It is a transform, not a verdict: it re-decides nothing about trust (it reads
+<code class="docutils literal notranslate"><span class="pre">FootageAlignment.reliable</span></code>, which <code class="xref py py-func docutils literal notranslate"><span class="pre">vouches_for()</span></code> set) and it refuses nothing —
+<a class="reference internal" href="#muvid.footage.validate_edl" title="muvid.footage.validate_edl"><code class="xref py py-func docutils literal notranslate"><span class="pre">validate_edl()</span></code></a> remains the ONE gate.</p>
+<p><strong>It declines to empty the edit, and that is what keeps the refusal alive.</strong> If every
+footage entry would be excluded, the original list is returned unchanged with an empty
+excluded list, so <a class="reference internal" href="#muvid.footage.validate_edl" title="muvid.footage.validate_edl"><code class="xref py py-func docutils literal notranslate"><span class="pre">validate_edl()</span></code></a> sees an edit that still cuts to unvouched clips
+and raises <a class="reference internal" href="#muvid.footage.UnreliableAlignmentError" title="muvid.footage.UnreliableAlignmentError"><code class="xref py py-class docutils literal notranslate"><span class="pre">UnreliableAlignmentError</span></code></a> exactly as before. A shoot where nothing
+is trustworthy must not come back as a black video reported as success — that is the
+plausible-artifact failure muvid#59 is about, one level up. A <em>smaller</em> edit is a
+recovery; an <em>empty</em> one is the same wrong answer wearing a coverage report.</p>
+<p><strong>A gap is the last resort, not the first.</strong> Before dropping an entry it is offered
+to its neighbours: if the cut on either side is a vouched clip that ALREADY covers the
+span, the span is absorbed into that cut instead. That case is not hypothetical and it
+is not the aligner’s fault — <code class="docutils literal notranslate"><span class="pre">weighted</span></code>’s DP produces it structurally. Its
+transition window is capped at <code class="docutils literal notranslate"><span class="pre">max_seg_s</span></code> (4x <code class="docutils literal notranslate"><span class="pre">l_max</span></code>, a performance bound) and
+consecutive segments must be different clips, so a single vouched take longer than the
+cap CANNOT be one segment and the optimizer is forced to cut away and back. Measured
+on a 60 s song under the DEFAULT config, a 2 s opener plus one 58 s vouched clip
+yields <code class="docutils literal notranslate"><span class="pre">[(0,2,O),</span> <span class="pre">(2,34,V),</span> <span class="pre">(34,36,BAD),</span> <span class="pre">(36,60,V)]</span></code> — and gapping that 2 s would
+punch an avoidable black hole through the middle of a continuous take, blamed on an
+alignment that had nothing to do with it. A caller-raised <code class="docutils literal notranslate"><span class="pre">l_max_overrun_penalty</span></code>
+does the same thing at every <code class="docutils literal notranslate"><span class="pre">l_max</span></code> boundary. Absorbing loses nothing: the frames
+come from a clip the aligner vouches for, which the caller’s own edit already used on
+both sides, and <code class="docutils literal notranslate"><span class="pre">validate_edl</span></code> re-checks containment afterwards either way.</p>
+<p>Absorption is refused into a cut whose meaning depends on its length or on the
+boundary it starts at — one carrying a <code class="docutils literal notranslate"><span class="pre">transition</span></code>, a <code class="docutils literal notranslate"><span class="pre">crop_end</span></code> pan or a
+<code class="docutils literal notranslate"><span class="pre">look</span></code> — and across a following <code class="docutils literal notranslate"><span class="pre">transition</span></code>, since the blend’s other side would
+change clip underneath it. Strategies emit none of those, so the auto path always
+absorbs; a hand-written EDL degrades to the gap rather than to a silently restretched
+pan.</p>
+<p>Returns <code class="docutils literal notranslate"><span class="pre">(entries,</span> <span class="pre">excluded)</span></code>.</p>
 </dd></dl>
 
 <dl class="py function">

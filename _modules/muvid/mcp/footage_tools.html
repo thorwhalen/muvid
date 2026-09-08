@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.mcp.footage_tools &mdash; muvid 0.0.55 documentation</title>
+  <title>muvid.mcp.footage_tools &mdash; muvid 0.0.56 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=b87b3bc5"></script>
+      <script src="../../../_static/documentation_options.js?v=8f83b1af"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -436,10 +436,14 @@
 
 <span class="sd">    - ``low_confidence`` — clips that matched weakly, for reporting;</span>
 <span class="sd">    - ``unreliable`` — clips whose offset the aligner will NOT vouch for. These stay in</span>
-<span class="sd">      the project and stay addressable, but ``assemble_music_video`` REFUSES to cut to</span>
-<span class="sd">      them unless it is called with ``allow_unreliable=true``, because a wrong offset</span>
-<span class="sd">      does not fail — it renders a video out of sync with the song (muvid#59). Re-align,</span>
-<span class="sd">      leave them out of the edit, or opt in deliberately;</span>
+<span class="sd">      the project and stay addressable, and the auto path simply prefers other clips</span>
+<span class="sd">      over them: a span another clip covers goes to that clip, and a span only an</span>
+<span class="sd">      unreliable clip covers is left as a gap and reported in ``coverage.excluded``</span>
+<span class="sd">      (muvid#88). ``assemble_music_video`` still REFUSES an explicit ``edl`` that cuts</span>
+<span class="sd">      to one, and still refuses an auto edit when NO clip is trustworthy, unless called</span>
+<span class="sd">      with ``allow_unreliable=true`` — because a wrong offset does not fail, it renders</span>
+<span class="sd">      a video out of sync with the song (muvid#59). Re-align, accept the smaller edit,</span>
+<span class="sd">      or opt in deliberately;</span>
 <span class="sd">    - ``no_consensus`` — clips too short to be put to a vote at all (under about 4.5 s).</span>
 <span class="sd">      **A clip in this list can be marked reliable and still be wrong**, and no other</span>
 <span class="sd">      field will say so: its offset rests on one measurement, judged by a confidence</span>
@@ -679,7 +683,7 @@
     <span class="k">return</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">support</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">support</span><span class="p">),</span> <span class="mi">3</span><span class="p">)</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_coverage_report</span><span class="p">(</span><span class="n">entries</span><span class="p">,</span> <span class="n">aligns</span><span class="p">,</span> <span class="n">song_dur</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_coverage_report</span><span class="p">(</span><span class="n">entries</span><span class="p">,</span> <span class="n">aligns</span><span class="p">,</span> <span class="n">song_dur</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">excluded</span><span class="o">=</span><span class="p">())</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""What the song's timeline looks like under ``entries`` — covered, weak, and MISSING.</span>
 
 <span class="sd">    Answers the three questions a person actually has about a proposed edit, in the form the</span>
@@ -689,6 +693,15 @@
 
 <span class="sd">    Pass only FOOTAGE entries: a gap entry renders fill, and filled is not covered — the</span>
 <span class="sd">    user still has no footage there, which is precisely what this report exists to say.</span>
+
+<span class="sd">    ``excluded`` (muvid#88) is the fourth question, and it is a different one from</span>
+<span class="sd">    ``uncovered``: those spans DID have footage and the edit gave them up because the only</span>
+<span class="sd">    clip covering them is one the aligner will not vouch for. They appear in ``uncovered``</span>
+<span class="sd">    as well — the user has no usable footage there either way — and here with the clip and</span>
+<span class="sd">    the three numbers the verdict rests on, which is what makes it actionable (re-align</span>
+<span class="sd">    that clip, shoot again, or re-run with ``allow_unreliable``). ``weak_segments`` and</span>
+<span class="sd">    ``excluded`` are therefore mutually exclusive on any one span: a weak span made the cut,</span>
+<span class="sd">    an excluded one did not.</span>
 <span class="sd">    """</span>
     <span class="n">by_id</span> <span class="o">=</span> <span class="p">{</span><span class="n">a</span><span class="o">.</span><span class="n">clip_id</span><span class="p">:</span> <span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">aligns</span><span class="p">}</span>
     <span class="n">covered</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">((</span><span class="n">e</span><span class="o">.</span><span class="n">song_start</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">song_end</span><span class="p">)</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">entries</span><span class="p">)</span>
@@ -721,8 +734,62 @@
         <span class="s2">"coverage_fraction"</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">covered_s</span> <span class="o">/</span> <span class="n">song_dur</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span> <span class="k">if</span> <span class="n">song_dur</span> <span class="k">else</span> <span class="mf">0.0</span><span class="p">,</span>
         <span class="s2">"uncovered"</span><span class="p">:</span> <span class="n">gaps</span><span class="p">,</span>
         <span class="s2">"weak_segments"</span><span class="p">:</span> <span class="n">weak</span><span class="p">,</span>
+        <span class="s2">"excluded"</span><span class="p">:</span> <span class="p">[</span><span class="n">x</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">excluded</span><span class="p">],</span>
         <span class="s2">"confidence_threshold"</span><span class="p">:</span> <span class="n">_MIN_CONFIDENCE</span><span class="p">,</span>
     <span class="p">}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_exclusion_note</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""One ``warnings`` line per span the recovery gave up (muvid#88).</span>
+
+<span class="sd">    The reply's own contract says ``warnings`` is the whole of a caller's ability to know</span>
+<span class="sd">    what the render PLAN found, and a hole in the video is the largest such finding there</span>
+<span class="sd">    is. Nesting it only under ``coverage.excluded`` meant an agent reading ``ok`` and</span>
+<span class="sd">    ``warnings`` — which is what the docstring tells it to read — could ship a black</span>
+<span class="sd">    stretch without ever seeing why.</span>
+<span class="sd">    """</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.footage.edl</span><span class="w"> </span><span class="kn">import</span> <span class="n">UNVOUCHED_SELECTION</span>
+
+    <span class="n">why</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">"a clip the aligner vouches for covers that span, but the selection did not use "</span>
+        <span class="s2">"it — try another strategy or selection config"</span>
+        <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">reason</span> <span class="o">==</span> <span class="n">UNVOUCHED_SELECTION</span>
+        <span class="k">else</span> <span class="s2">"no clip the aligner vouches for covers that span — re-align or re-shoot"</span>
+    <span class="p">)</span>
+    <span class="n">numbers</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"confidence </span><span class="si">{</span><span class="n">x</span><span class="o">.</span><span class="n">confidence</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">"</span>
+    <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">support</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">numbers</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">", support </span><span class="si">{</span><span class="n">x</span><span class="o">.</span><span class="n">support</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">"</span>
+    <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">margin</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">numbers</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">", margin </span><span class="si">{</span><span class="n">x</span><span class="o">.</span><span class="n">margin</span><span class="si">:</span><span class="s2">+.2f</span><span class="si">}</span><span class="s2">"</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s2">"set aside </span><span class="si">{</span><span class="n">x</span><span class="o">.</span><span class="n">song_end</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">x</span><span class="o">.</span><span class="n">song_start</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> s of clip </span><span class="si">{</span><span class="n">x</span><span class="o">.</span><span class="n">clip_id</span><span class="si">!r}</span><span class="s2"> at "</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">x</span><span class="o">.</span><span class="n">song_start</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">x</span><span class="o">.</span><span class="n">song_end</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> s (</span><span class="si">{</span><span class="n">numbers</span><span class="si">}</span><span class="s2">): </span><span class="si">{</span><span class="n">why</span><span class="si">}</span><span class="s2">. It renders as a gap."</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_auto_edl</span><span class="p">(</span><span class="n">aligns</span><span class="p">,</span> <span class="n">song_dur</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">strategy</span><span class="p">,</span> <span class="n">context</span><span class="p">,</span> <span class="n">recover</span><span class="p">:</span> <span class="nb">bool</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The auto path, in one place: select -&gt; set aside -&gt; gap-fill (muvid#88).</span>
+
+<span class="sd">    Both tools that build an edit from a strategy go through this, so ``propose_edit``</span>
+<span class="sd">    cannot propose an edit ``assemble_music_video`` would not produce — the two are</span>
+<span class="sd">    documented as the same edit and the recovery is the kind of step that drifts between</span>
+<span class="sd">    two call sites otherwise.</span>
+
+<span class="sd">    ``recover=False`` (i.e. the caller passed ``allow_unreliable``) skips the exclusion</span>
+<span class="sd">    entirely: someone who has said they want the unvouched footage rendered means the</span>
+<span class="sd">    footage, not a gap where it would have been.</span>
+
+<span class="sd">    Returns ``(entries, excluded)``; the caller still passes ``entries`` through</span>
+<span class="sd">    ``validate_edl``, which stays the ONE gate.</span>
+<span class="sd">    """</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.footage.edl</span><span class="w"> </span><span class="kn">import</span> <span class="n">exclude_unvouched</span><span class="p">,</span> <span class="n">fill_gaps</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.footage.strategy</span><span class="w"> </span><span class="kn">import</span> <span class="n">select_edl</span>
+
+    <span class="n">selected</span> <span class="o">=</span> <span class="n">select_edl</span><span class="p">(</span><span class="n">strategy</span><span class="p">,</span> <span class="n">aligns</span><span class="p">,</span> <span class="n">song_dur</span><span class="p">,</span> <span class="n">context</span><span class="o">=</span><span class="n">context</span><span class="p">)</span>
+    <span class="n">excluded</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="n">recover</span><span class="p">:</span>
+        <span class="n">selected</span><span class="p">,</span> <span class="n">excluded</span> <span class="o">=</span> <span class="n">exclude_unvouched</span><span class="p">(</span><span class="n">selected</span><span class="p">,</span> <span class="n">aligns</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">fill_gaps</span><span class="p">(</span><span class="n">selected</span><span class="p">,</span> <span class="n">song_dur</span><span class="p">),</span> <span class="n">excluded</span>
 
 
 <div class="viewcode-block" id="propose_edit">
@@ -747,10 +814,11 @@
 <span class="sd">    footage covers as explicit gap entries, ``clip_id: null``, rendered as black), the</span>
 <span class="sd">    ``strategy`` actually used, and a ``coverage`` report naming every uncovered span of</span>
 <span class="sd">    the song and every segment that made the cut despite weak alignment. Same arguments as</span>
-<span class="sd">    ``assemble_music_video``'s auto path.</span>
+<span class="sd">    ``assemble_music_video``'s auto path, and the same edit it would build — including the</span>
+<span class="sd">    ``coverage.excluded`` recovery described there.</span>
 <span class="sd">    """</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.footage.edl</span><span class="w"> </span><span class="kn">import</span> <span class="n">fill_gaps</span><span class="p">,</span> <span class="n">validate_edl</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.footage.strategy</span><span class="w"> </span><span class="kn">import</span> <span class="n">DEFAULT_STRATEGY</span><span class="p">,</span> <span class="n">select_edl</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.footage.edl</span><span class="w"> </span><span class="kn">import</span> <span class="n">validate_edl</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.footage.strategy</span><span class="w"> </span><span class="kn">import</span> <span class="n">DEFAULT_STRATEGY</span>
 
     <span class="n">proj</span> <span class="o">=</span> <span class="n">_open</span><span class="p">(</span><span class="n">project_id</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">proj</span><span class="o">.</span><span class="n">has_song</span><span class="p">():</span>
@@ -763,15 +831,23 @@
     <span class="n">strat</span> <span class="o">=</span> <span class="n">strategy</span> <span class="ow">or</span> <span class="p">(</span><span class="s2">"weighted"</span> <span class="k">if</span> <span class="n">has_selection_config</span> <span class="k">else</span> <span class="n">DEFAULT_STRATEGY</span><span class="p">)</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">context</span> <span class="o">=</span> <span class="n">_selection_context</span><span class="p">(</span><span class="n">proj</span><span class="p">,</span> <span class="n">strat</span><span class="p">,</span> <span class="n">preset</span><span class="p">,</span> <span class="n">weights</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
+        <span class="n">proposal</span><span class="p">,</span> <span class="n">excluded</span> <span class="o">=</span> <span class="n">_auto_edl</span><span class="p">(</span>
+            <span class="n">aligns</span><span class="p">,</span> <span class="n">song_dur</span><span class="p">,</span> <span class="n">strategy</span><span class="o">=</span><span class="n">strat</span><span class="p">,</span> <span class="n">context</span><span class="o">=</span><span class="n">context</span><span class="p">,</span> <span class="n">recover</span><span class="o">=</span><span class="kc">True</span>
+        <span class="p">)</span>
         <span class="n">entries</span> <span class="o">=</span> <span class="n">validate_edl</span><span class="p">(</span>
-            <span class="n">fill_gaps</span><span class="p">(</span><span class="n">select_edl</span><span class="p">(</span><span class="n">strat</span><span class="p">,</span> <span class="n">aligns</span><span class="p">,</span> <span class="n">song_dur</span><span class="p">,</span> <span class="n">context</span><span class="o">=</span><span class="n">context</span><span class="p">),</span> <span class="n">song_dur</span><span class="p">),</span>
+            <span class="n">proposal</span><span class="p">,</span>
             <span class="n">aligns</span><span class="p">,</span>
             <span class="n">song_dur</span><span class="p">,</span>
             <span class="n">canvas</span><span class="o">=</span><span class="n">proj</span><span class="o">.</span><span class="n">canvas</span><span class="p">(),</span>
             <span class="c1"># This tool renders nothing; refusing here would deny the caller the very</span>
             <span class="c1"># diagnosis they came for, since `coverage.weak_segments` names each</span>
             <span class="c1"># unvouched span and the time it covers. The refusal belongs where the</span>
-            <span class="c1"># encode does — `assemble_music_video` (muvid#59).</span>
+            <span class="c1"># encode does — `assemble_music_video` (muvid#59). After muvid#88 that</span>
+            <span class="c1"># difference is narrow: the recovery above has already set aside every</span>
+            <span class="c1"># span an assemble would have refused, EXCEPT in the one case it declines</span>
+            <span class="c1"># to act on — a shoot with no trustworthy clip at all, where this returns</span>
+            <span class="c1"># the unvouched edit with `weak_segments` naming every span of it and</span>
+            <span class="c1"># `excluded` empty, and the assemble refuses.</span>
             <span class="n">allow_unreliable</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">KeyError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
@@ -780,11 +856,39 @@
         <span class="s2">"project_id"</span><span class="p">:</span> <span class="n">project_id</span><span class="p">,</span>
         <span class="s2">"strategy"</span><span class="p">:</span> <span class="n">strat</span><span class="p">,</span>
         <span class="s2">"edl"</span><span class="p">:</span> <span class="p">[</span><span class="n">_edl_json</span><span class="p">(</span><span class="n">e</span><span class="p">)</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">entries</span><span class="p">],</span>
+        <span class="s2">"assemble_refusal"</span><span class="p">:</span> <span class="n">_assemble_refusal</span><span class="p">(</span><span class="n">entries</span><span class="p">,</span> <span class="n">aligns</span><span class="p">,</span> <span class="n">song_dur</span><span class="p">,</span> <span class="n">proj</span><span class="o">.</span><span class="n">canvas</span><span class="p">()),</span>
         <span class="s2">"coverage"</span><span class="p">:</span> <span class="n">_coverage_report</span><span class="p">(</span>
-            <span class="p">[</span><span class="n">e</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">entries</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">e</span><span class="o">.</span><span class="n">is_gap</span><span class="p">],</span> <span class="n">aligns</span><span class="p">,</span> <span class="n">song_dur</span>
+            <span class="p">[</span><span class="n">e</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">entries</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">e</span><span class="o">.</span><span class="n">is_gap</span><span class="p">],</span>
+            <span class="n">aligns</span><span class="p">,</span>
+            <span class="n">song_dur</span><span class="p">,</span>
+            <span class="n">excluded</span><span class="o">=</span><span class="n">excluded</span><span class="p">,</span>
         <span class="p">),</span>
+        <span class="s2">"warnings"</span><span class="p">:</span> <span class="p">[</span><span class="n">_exclusion_note</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">excluded</span><span class="p">],</span>
     <span class="p">}</span></div>
 
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_assemble_refusal</span><span class="p">(</span><span class="n">entries</span><span class="p">,</span> <span class="n">aligns</span><span class="p">,</span> <span class="n">song_dur</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">canvas</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"dict | None"</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""``None`` if assembling this proposal would render; the refusal if it would not.</span>
+
+<span class="sd">    ``propose_edit`` validates with ``allow_unreliable=True`` so it can diagnose rather</span>
+<span class="sd">    than refuse — which left one case indistinguishable from success: a shoot where NO</span>
+<span class="sd">    clip is trustworthy comes back as a full unvouched edit with ``excluded`` empty, and</span>
+<span class="sd">    nothing in the reply said the render would be refused. So the question is put to the</span>
+<span class="sd">    GATE rather than answered by re-implementing its predicate here; two gates that can</span>
+<span class="sd">    disagree is the thing muvid#88 exists to avoid.</span>
+<span class="sd">    """</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.footage.edl</span><span class="w"> </span><span class="kn">import</span> <span class="n">UnreliableAlignmentError</span><span class="p">,</span> <span class="n">validate_edl</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">validate_edl</span><span class="p">(</span><span class="n">entries</span><span class="p">,</span> <span class="n">aligns</span><span class="p">,</span> <span class="n">song_dur</span><span class="p">,</span> <span class="n">canvas</span><span class="o">=</span><span class="n">canvas</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">UnreliableAlignmentError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">"error"</span><span class="p">:</span> <span class="s2">"unreliable_alignment"</span><span class="p">,</span>
+            <span class="s2">"clip_ids"</span><span class="p">:</span> <span class="n">e</span><span class="o">.</span><span class="n">clip_ids</span><span class="p">,</span>
+            <span class="s2">"message"</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">),</span>
+        <span class="p">}</span>
+    <span class="k">return</span> <span class="kc">None</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_canvas</span><span class="p">(</span><span class="n">proj</span><span class="p">,</span> <span class="n">canvas</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
@@ -872,12 +976,25 @@
 <span class="sd">      ``list_strategies``; default ``best_confidence``) builds the edit from the alignments.</span>
 <span class="sd">    - ``canvas``: render-time override ("landscape"/"portrait"/"square") — the same edit</span>
 <span class="sd">      re-rendered in another shape, no new project needed. Default: the project's canvas.</span>
+<span class="sd">    - **A clip the aligner will not vouch for costs its own spans, not the whole edit**</span>
+<span class="sd">      (muvid#88). On the auto path the strategy prefers a vouched clip wherever one</span>
+<span class="sd">      covers the span, so an untrustworthy clip is simply not chosen while any other</span>
+<span class="sd">      clip covers that stretch of the song. Where it was the ONLY footage, the span is</span>
+<span class="sd">      set aside rather than cut to: it renders as a gap and is named in</span>
+<span class="sd">      ``coverage.excluded`` with the clip, the span, and the confidence/support/margin</span>
+<span class="sd">      the verdict rests on. So a five-clip shoot with one bad clip still assembles.</span>
+<span class="sd">      The refusal remains for the two cases it was built for: an explicit ``edl`` naming</span>
+<span class="sd">      an unvouched clip (you chose it), and an auto edit where NO clip is trustworthy —</span>
+<span class="sd">      a black video reported as success is the failure this exists to prevent, so that</span>
+<span class="sd">      still comes back as an error naming every clip.</span>
 <span class="sd">    - ``allow_unreliable``: render even on clips whose alignment the aligner will not</span>
 <span class="sd">      vouch for. **Off by default and it should stay off**: a wrong offset does not</span>
 <span class="sd">      fail, it delivers a video out of sync with the song, so the refusal is the only</span>
 <span class="sd">      thing standing between a bad measurement and a bad render (muvid#59). Set it when</span>
 <span class="sd">      you have checked the offsets yourself, or when a slightly-off cut beats no cut at</span>
-<span class="sd">      all. ``align_footage`` names the clips this applies to in its ``unreliable`` list.</span>
+<span class="sd">      all — it also turns OFF the set-aside above, since someone who opted in wants that</span>
+<span class="sd">      footage rendered rather than gapped. ``align_footage`` names the clips this</span>
+<span class="sd">      applies to in its ``unreliable`` list.</span>
 
 <span class="sd">    The video is EXACTLY the song's duration: each cut is trimmed at its aligned in-point,</span>
 <span class="sd">    scaled onto the canvas (padded, never stretched), gaps render black, and the CLEAN</span>
@@ -899,7 +1016,7 @@
         <span class="n">fill_gaps</span><span class="p">,</span>
         <span class="n">validate_edl</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.footage.strategy</span><span class="w"> </span><span class="kn">import</span> <span class="n">DEFAULT_STRATEGY</span><span class="p">,</span> <span class="n">select_edl</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.footage.strategy</span><span class="w"> </span><span class="kn">import</span> <span class="n">DEFAULT_STRATEGY</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.visualize</span><span class="w"> </span><span class="kn">import</span> <span class="n">failures</span><span class="p">,</span> <span class="n">report</span><span class="p">,</span> <span class="n">verify_video</span>
 
     <span class="n">proj</span> <span class="o">=</span> <span class="n">_open</span><span class="p">(</span><span class="n">project_id</span><span class="p">)</span>
@@ -932,6 +1049,9 @@
                 <span class="n">allow_unreliable</span><span class="o">=</span><span class="n">allow_unreliable</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="n">used_strategy</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="c1"># The caller named these clips; nothing is set aside on their behalf</span>
+            <span class="c1"># (muvid#88 is about the AUTO path, where nobody chose the bad clip).</span>
+            <span class="n">excluded</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">strat</span> <span class="o">=</span> <span class="n">strategy</span> <span class="ow">or</span> <span class="p">(</span>
                 <span class="s2">"weighted"</span> <span class="k">if</span> <span class="n">has_selection_config</span> <span class="k">else</span> <span class="n">DEFAULT_STRATEGY</span>
@@ -941,10 +1061,16 @@
                     <span class="sa">f</span><span class="s2">"selection config only applies to strategy='weighted' (got </span><span class="si">{</span><span class="n">strat</span><span class="si">!r}</span><span class="s2">)"</span>
                 <span class="p">)</span>
             <span class="n">context</span> <span class="o">=</span> <span class="n">_selection_context</span><span class="p">(</span><span class="n">proj</span><span class="p">,</span> <span class="n">strat</span><span class="p">,</span> <span class="n">preset</span><span class="p">,</span> <span class="n">weights</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
+            <span class="n">proposal</span><span class="p">,</span> <span class="n">excluded</span> <span class="o">=</span> <span class="n">_auto_edl</span><span class="p">(</span>
+                <span class="n">aligns</span><span class="p">,</span>
+                <span class="n">song_dur</span><span class="p">,</span>
+                <span class="n">strategy</span><span class="o">=</span><span class="n">strat</span><span class="p">,</span>
+                <span class="n">context</span><span class="o">=</span><span class="n">context</span><span class="p">,</span>
+                <span class="c1"># A caller who opted in wants the footage rendered, not set aside.</span>
+                <span class="n">recover</span><span class="o">=</span><span class="ow">not</span> <span class="n">allow_unreliable</span><span class="p">,</span>
+            <span class="p">)</span>
             <span class="n">entries</span> <span class="o">=</span> <span class="n">validate_edl</span><span class="p">(</span>
-                <span class="n">fill_gaps</span><span class="p">(</span>
-                    <span class="n">select_edl</span><span class="p">(</span><span class="n">strat</span><span class="p">,</span> <span class="n">aligns</span><span class="p">,</span> <span class="n">song_dur</span><span class="p">,</span> <span class="n">context</span><span class="o">=</span><span class="n">context</span><span class="p">),</span> <span class="n">song_dur</span>
-                <span class="p">),</span>
+                <span class="n">proposal</span><span class="p">,</span>
                 <span class="n">aligns</span><span class="p">,</span>
                 <span class="n">song_dur</span><span class="p">,</span>
                 <span class="n">canvas</span><span class="o">=</span><span class="n">canvas_wh</span><span class="p">,</span>
@@ -972,7 +1098,7 @@
     <span class="c1"># so a muvid#73 hitch came back as an `ok` render with nothing said about it.</span>
     <span class="c1"># A warning the caller cannot see is the silent no-op this repo refuses</span>
     <span class="c1"># everywhere else, so the sink is threaded in and its contents are returned.</span>
-    <span class="n">notes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">notes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">_exclusion_note</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">excluded</span><span class="p">]</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">out</span> <span class="o">=</span> <span class="n">_assemble</span><span class="p">(</span>
             <span class="n">cuts</span><span class="p">,</span>
@@ -1017,7 +1143,7 @@
         <span class="c1"># (muvid#21 item 3). propose_edit already returns full precision; same contract.</span>
         <span class="s2">"edl"</span><span class="p">:</span> <span class="p">[</span><span class="n">_edl_json</span><span class="p">(</span><span class="n">e</span><span class="p">)</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">entries</span><span class="p">],</span>
         <span class="s2">"coverage"</span><span class="p">:</span> <span class="n">_coverage_report</span><span class="p">(</span>
-            <span class="p">[</span><span class="n">e</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">entries</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">e</span><span class="o">.</span><span class="n">is_gap</span><span class="p">],</span> <span class="n">aligns</span><span class="p">,</span> <span class="n">song_dur</span>
+            <span class="p">[</span><span class="n">e</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">entries</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">e</span><span class="o">.</span><span class="n">is_gap</span><span class="p">],</span> <span class="n">aligns</span><span class="p">,</span> <span class="n">song_dur</span><span class="p">,</span> <span class="n">excluded</span><span class="o">=</span><span class="n">excluded</span>
         <span class="p">),</span>
         <span class="s2">"ok"</span><span class="p">:</span> <span class="ow">not</span> <span class="n">failures</span><span class="p">(</span><span class="n">checks</span><span class="p">),</span>
         <span class="s2">"checks"</span><span class="p">:</span> <span class="n">report</span><span class="p">(</span><span class="n">checks</span><span class="p">),</span>

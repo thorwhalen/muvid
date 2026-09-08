@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.lyricvid.spec &mdash; muvid 0.0.55 documentation</title>
+  <title>muvid.lyricvid.spec &mdash; muvid 0.0.56 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=b87b3bc5"></script>
+      <script src="../../../_static/documentation_options.js?v=8f83b1af"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -415,7 +415,9 @@
 <span class="w">        </span><span class="sd">"""Build from a plain mapping, tolerating missing keys (they default)."""</span>
         <span class="n">d</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">d</span> <span class="ow">or</span> <span class="p">{})</span>
         <span class="n">direction</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"direction"</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{})</span>
-        <span class="n">pal</span> <span class="o">=</span> <span class="n">Palette</span><span class="p">(</span><span class="o">**</span><span class="p">{</span><span class="o">**</span><span class="n">asdict</span><span class="p">(</span><span class="n">Palette</span><span class="p">()),</span> <span class="o">**</span><span class="nb">dict</span><span class="p">(</span><span class="n">direction</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"palette"</span><span class="p">,</span> <span class="p">{})</span> <span class="ow">or</span> <span class="p">{})})</span>
+        <span class="n">pal</span> <span class="o">=</span> <span class="n">Palette</span><span class="p">(</span>
+            <span class="o">**</span><span class="p">{</span><span class="o">**</span><span class="n">asdict</span><span class="p">(</span><span class="n">Palette</span><span class="p">()),</span> <span class="o">**</span><span class="nb">dict</span><span class="p">(</span><span class="n">direction</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"palette"</span><span class="p">,</span> <span class="p">{})</span> <span class="ow">or</span> <span class="p">{})}</span>
+        <span class="p">)</span>
         <span class="n">typo</span> <span class="o">=</span> <span class="n">Typography</span><span class="p">(</span>
             <span class="o">**</span><span class="p">{</span><span class="o">**</span><span class="n">asdict</span><span class="p">(</span><span class="n">Typography</span><span class="p">()),</span> <span class="o">**</span><span class="nb">dict</span><span class="p">(</span><span class="n">direction</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"typography"</span><span class="p">,</span> <span class="p">{})</span> <span class="ow">or</span> <span class="p">{})}</span>
         <span class="p">)</span>
@@ -491,9 +493,7 @@
 <span class="sd">    """</span>
     <span class="n">errs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">if</span> <span class="n">spec</span><span class="o">.</span><span class="n">spec_version</span> <span class="o">!=</span> <span class="n">SPEC_VERSION</span><span class="p">:</span>
-        <span class="n">errs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">"spec_version </span><span class="si">{</span><span class="n">spec</span><span class="o">.</span><span class="n">spec_version</span><span class="si">!r}</span><span class="s2"> != supported </span><span class="si">{</span><span class="n">SPEC_VERSION</span><span class="si">!r}</span><span class="s2">"</span>
-        <span class="p">)</span>
+        <span class="n">errs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"spec_version </span><span class="si">{</span><span class="n">spec</span><span class="o">.</span><span class="n">spec_version</span><span class="si">!r}</span><span class="s2"> != supported </span><span class="si">{</span><span class="n">SPEC_VERSION</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
     <span class="n">d</span> <span class="o">=</span> <span class="n">spec</span><span class="o">.</span><span class="n">direction</span>
     <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">asdict</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">palette</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
         <span class="k">if</span> <span class="n">_bad_colour</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
@@ -504,7 +504,9 @@
         <span class="p">)</span>
     <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">d</span><span class="o">.</span><span class="n">motion_vocabulary</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">m</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">MOTIONS</span><span class="p">:</span>
-            <span class="n">errs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"direction.motion_vocabulary entry </span><span class="si">{</span><span class="n">m</span><span class="si">!r}</span><span class="s2"> is not a known motion"</span><span class="p">)</span>
+            <span class="n">errs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"direction.motion_vocabulary entry </span><span class="si">{</span><span class="n">m</span><span class="si">!r}</span><span class="s2"> is not a known motion"</span>
+            <span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">spec</span><span class="o">.</span><span class="n">scenes</span><span class="p">:</span>
         <span class="n">errs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"scenes is empty — at least one scene is required"</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">sc</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">scenes</span><span class="p">):</span>
@@ -570,8 +572,9 @@
 
     <span class="n">typo</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">typography</span>
     <span class="k">if</span> <span class="n">typo</span><span class="o">.</span><span class="n">case</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">CASES</span><span class="p">:</span>
-        <span class="n">typo</span> <span class="o">=</span> <span class="n">replace</span><span class="p">(</span><span class="n">typo</span><span class="p">,</span> <span class="n">case</span><span class="o">=</span><span class="n">pick</span><span class="p">(</span><span class="n">typo</span><span class="o">.</span><span class="n">case</span><span class="p">,</span> <span class="n">CASES</span><span class="p">,</span> <span class="s2">"as_written"</span><span class="p">,</span>
-                                       <span class="s2">"direction.typography.case"</span><span class="p">))</span>
+        <span class="n">typo</span> <span class="o">=</span> <span class="n">replace</span><span class="p">(</span>
+            <span class="n">typo</span><span class="p">,</span> <span class="n">case</span><span class="o">=</span><span class="n">pick</span><span class="p">(</span><span class="n">typo</span><span class="o">.</span><span class="n">case</span><span class="p">,</span> <span class="n">CASES</span><span class="p">,</span> <span class="s2">"as_written"</span><span class="p">,</span> <span class="s2">"direction.typography.case"</span><span class="p">)</span>
+        <span class="p">)</span>
     <span class="n">vocab</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">m</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">d</span><span class="o">.</span><span class="n">motion_vocabulary</span> <span class="k">if</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">MOTIONS</span><span class="p">)</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">vocab</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">motion_vocabulary</span><span class="p">):</span>
         <span class="n">dropped</span> <span class="o">=</span> <span class="p">[</span><span class="n">m</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">d</span><span class="o">.</span><span class="n">motion_vocabulary</span> <span class="k">if</span> <span class="n">m</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">MOTIONS</span><span class="p">]</span>
@@ -585,14 +588,17 @@
         <span class="n">t</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">timing</span>
         <span class="n">t</span> <span class="o">=</span> <span class="n">replace</span><span class="p">(</span>
             <span class="n">t</span><span class="p">,</span>
-            <span class="n">quantize_to</span><span class="o">=</span><span class="n">pick</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">quantize_to</span><span class="p">,</span> <span class="n">QUANTIZE</span><span class="p">,</span> <span class="s2">"word"</span><span class="p">,</span>
-                             <span class="sa">f</span><span class="s2">"scenes[</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">].timing.quantize_to"</span><span class="p">),</span>
-            <span class="n">cut_style</span><span class="o">=</span><span class="n">pick</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">cut_style</span><span class="p">,</span> <span class="n">CUT_STYLES</span><span class="p">,</span> <span class="s2">"hard"</span><span class="p">,</span>
-                           <span class="sa">f</span><span class="s2">"scenes[</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">].timing.cut_style"</span><span class="p">),</span>
+            <span class="n">quantize_to</span><span class="o">=</span><span class="n">pick</span><span class="p">(</span>
+                <span class="n">t</span><span class="o">.</span><span class="n">quantize_to</span><span class="p">,</span> <span class="n">QUANTIZE</span><span class="p">,</span> <span class="s2">"word"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"scenes[</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">].timing.quantize_to"</span>
+            <span class="p">),</span>
+            <span class="n">cut_style</span><span class="o">=</span><span class="n">pick</span><span class="p">(</span>
+                <span class="n">t</span><span class="o">.</span><span class="n">cut_style</span><span class="p">,</span> <span class="n">CUT_STYLES</span><span class="p">,</span> <span class="s2">"hard"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"scenes[</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">].timing.cut_style"</span>
+            <span class="p">),</span>
             <span class="n">attack_s</span><span class="o">=</span><span class="nb">max</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">attack_s</span><span class="p">)),</span>
         <span class="p">)</span>
-        <span class="n">archetype</span> <span class="o">=</span> <span class="n">pick</span><span class="p">(</span><span class="n">sc</span><span class="o">.</span><span class="n">archetype</span><span class="p">,</span> <span class="n">ARCHETYPES</span><span class="p">,</span> <span class="s2">"one_word_centred"</span><span class="p">,</span>
-                         <span class="sa">f</span><span class="s2">"scenes[</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">].archetype"</span><span class="p">)</span>
+        <span class="n">archetype</span> <span class="o">=</span> <span class="n">pick</span><span class="p">(</span>
+            <span class="n">sc</span><span class="o">.</span><span class="n">archetype</span><span class="p">,</span> <span class="n">ARCHETYPES</span><span class="p">,</span> <span class="s2">"one_word_centred"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"scenes[</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">].archetype"</span>
+        <span class="p">)</span>
         <span class="n">shape</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">shape</span>
         <span class="k">if</span> <span class="n">archetype</span> <span class="o">==</span> <span class="s2">"shape_fill"</span> <span class="ow">and</span> <span class="n">shape</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">shape</span> <span class="o">=</span> <span class="n">ShapeRef</span><span class="p">()</span>
@@ -602,8 +608,12 @@
                 <span class="n">sc</span><span class="p">,</span>
                 <span class="n">archetype</span><span class="o">=</span><span class="n">archetype</span><span class="p">,</span>
                 <span class="n">motion</span><span class="o">=</span><span class="n">pick</span><span class="p">(</span><span class="n">sc</span><span class="o">.</span><span class="n">motion</span><span class="p">,</span> <span class="n">MOTIONS</span><span class="p">,</span> <span class="s2">"fade"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"scenes[</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">].motion"</span><span class="p">),</span>
-                <span class="n">persistence</span><span class="o">=</span><span class="n">pick</span><span class="p">(</span><span class="n">sc</span><span class="o">.</span><span class="n">persistence</span><span class="p">,</span> <span class="n">PERSISTENCE</span><span class="p">,</span> <span class="s2">"clear_on_line"</span><span class="p">,</span>
-                                 <span class="sa">f</span><span class="s2">"scenes[</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">].persistence"</span><span class="p">),</span>
+                <span class="n">persistence</span><span class="o">=</span><span class="n">pick</span><span class="p">(</span>
+                    <span class="n">sc</span><span class="o">.</span><span class="n">persistence</span><span class="p">,</span>
+                    <span class="n">PERSISTENCE</span><span class="p">,</span>
+                    <span class="s2">"clear_on_line"</span><span class="p">,</span>
+                    <span class="sa">f</span><span class="s2">"scenes[</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">].persistence"</span><span class="p">,</span>
+                <span class="p">),</span>
                 <span class="n">timing</span><span class="o">=</span><span class="n">t</span><span class="p">,</span>
                 <span class="n">shape</span><span class="o">=</span><span class="n">shape</span><span class="p">,</span>
             <span class="p">)</span>
@@ -623,7 +633,9 @@
 
 <div class="viewcode-block" id="coerce">
 <a class="viewcode-back" href="../../../module_docs/muvid/lyricvid/spec.html#muvid.lyricvid.coerce">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">coerce</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="n">TreatmentSpec</span> <span class="o">|</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">TreatmentSpec</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">coerce</span><span class="p">(</span>
+    <span class="n">obj</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="n">TreatmentSpec</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">TreatmentSpec</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">"""Take whatever a caller or a model produced and return a renderable spec.</span>
 
 <span class="sd">    Accepts a :class:`TreatmentSpec`, a mapping, or a JSON string — and repairs</span>
@@ -681,7 +693,10 @@
                         <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"object"</span><span class="p">,</span>
                         <span class="s2">"additionalProperties"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
                         <span class="s2">"properties"</span><span class="p">:</span> <span class="p">{</span>
-                            <span class="s2">"bg"</span><span class="p">:</span> <span class="n">colour</span><span class="p">,</span> <span class="s2">"fg"</span><span class="p">:</span> <span class="n">colour</span><span class="p">,</span> <span class="s2">"accent"</span><span class="p">:</span> <span class="n">colour</span><span class="p">,</span> <span class="s2">"dim"</span><span class="p">:</span> <span class="n">colour</span>
+                            <span class="s2">"bg"</span><span class="p">:</span> <span class="n">colour</span><span class="p">,</span>
+                            <span class="s2">"fg"</span><span class="p">:</span> <span class="n">colour</span><span class="p">,</span>
+                            <span class="s2">"accent"</span><span class="p">:</span> <span class="n">colour</span><span class="p">,</span>
+                            <span class="s2">"dim"</span><span class="p">:</span> <span class="n">colour</span><span class="p">,</span>
                         <span class="p">},</span>
                     <span class="p">},</span>
                     <span class="s2">"typography"</span><span class="p">:</span> <span class="p">{</span>
@@ -689,7 +704,11 @@
                         <span class="s2">"additionalProperties"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
                         <span class="s2">"properties"</span><span class="p">:</span> <span class="p">{</span>
                             <span class="s2">"family"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"string"</span><span class="p">},</span>
-                            <span class="s2">"weight"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"integer"</span><span class="p">,</span> <span class="s2">"minimum"</span><span class="p">:</span> <span class="mi">100</span><span class="p">,</span> <span class="s2">"maximum"</span><span class="p">:</span> <span class="mi">900</span><span class="p">},</span>
+                            <span class="s2">"weight"</span><span class="p">:</span> <span class="p">{</span>
+                                <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"integer"</span><span class="p">,</span>
+                                <span class="s2">"minimum"</span><span class="p">:</span> <span class="mi">100</span><span class="p">,</span>
+                                <span class="s2">"maximum"</span><span class="p">:</span> <span class="mi">900</span><span class="p">,</span>
+                            <span class="p">},</span>
                             <span class="s2">"case"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"string"</span><span class="p">,</span> <span class="s2">"enum"</span><span class="p">:</span> <span class="n">_enum</span><span class="p">(</span><span class="n">CASES</span><span class="p">)},</span>
                             <span class="s2">"tracking"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"number"</span><span class="p">},</span>
                             <span class="s2">"max_line_chars"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"integer"</span><span class="p">,</span> <span class="s2">"minimum"</span><span class="p">:</span> <span class="mi">8</span><span class="p">},</span>
@@ -725,7 +744,9 @@
                         <span class="s2">"motion"</span><span class="p">:</span> <span class="p">{</span>
                             <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"string"</span><span class="p">,</span>
                             <span class="s2">"enum"</span><span class="p">:</span> <span class="n">_enum</span><span class="p">(</span><span class="n">MOTIONS</span><span class="p">),</span>
-                            <span class="s2">"description"</span><span class="p">:</span> <span class="s2">"; "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">MOTIONS</span><span class="o">.</span><span class="n">items</span><span class="p">()),</span>
+                            <span class="s2">"description"</span><span class="p">:</span> <span class="s2">"; "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">MOTIONS</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                            <span class="p">),</span>
                         <span class="p">},</span>
                         <span class="s2">"persistence"</span><span class="p">:</span> <span class="p">{</span>
                             <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"string"</span><span class="p">,</span>
@@ -745,7 +766,10 @@
                                         <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">QUANTIZE</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
                                     <span class="p">),</span>
                                 <span class="p">},</span>
-                                <span class="s2">"cut_style"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"string"</span><span class="p">,</span> <span class="s2">"enum"</span><span class="p">:</span> <span class="n">_enum</span><span class="p">(</span><span class="n">CUT_STYLES</span><span class="p">)},</span>
+                                <span class="s2">"cut_style"</span><span class="p">:</span> <span class="p">{</span>
+                                    <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"string"</span><span class="p">,</span>
+                                    <span class="s2">"enum"</span><span class="p">:</span> <span class="n">_enum</span><span class="p">(</span><span class="n">CUT_STYLES</span><span class="p">),</span>
+                                <span class="p">},</span>
                                 <span class="s2">"attack_s"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"number"</span><span class="p">,</span> <span class="s2">"minimum"</span><span class="p">:</span> <span class="mi">0</span><span class="p">},</span>
                                 <span class="s2">"lead_s"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"number"</span><span class="p">},</span>
                             <span class="p">},</span>

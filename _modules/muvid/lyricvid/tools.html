@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.lyricvid.tools &mdash; muvid 0.0.55 documentation</title>
+  <title>muvid.lyricvid.tools &mdash; muvid 0.0.56 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=b87b3bc5"></script>
+      <script src="../../../_static/documentation_options.js?v=8f83b1af"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -259,7 +259,11 @@
     <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.lyricvid.pipeline</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_timed_text</span>
 
     <span class="n">tt</span> <span class="o">=</span> <span class="n">build_timed_text</span><span class="p">(</span>
-        <span class="n">audio</span><span class="o">=</span><span class="n">audio</span><span class="p">,</span> <span class="n">lyrics</span><span class="o">=</span><span class="n">lyrics</span><span class="p">,</span> <span class="n">subtitles</span><span class="o">=</span><span class="n">subtitles</span><span class="p">,</span> <span class="n">project</span><span class="o">=</span><span class="n">project</span><span class="p">,</span> <span class="n">aligner</span><span class="o">=</span><span class="n">aligner</span>
+        <span class="n">audio</span><span class="o">=</span><span class="n">audio</span><span class="p">,</span>
+        <span class="n">lyrics</span><span class="o">=</span><span class="n">lyrics</span><span class="p">,</span>
+        <span class="n">subtitles</span><span class="o">=</span><span class="n">subtitles</span><span class="p">,</span>
+        <span class="n">project</span><span class="o">=</span><span class="n">project</span><span class="p">,</span>
+        <span class="n">aligner</span><span class="o">=</span><span class="n">aligner</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">words</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">tt</span><span class="o">.</span><span class="n">words</span><span class="p">())</span>
     <span class="n">lines</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">tt</span><span class="o">.</span><span class="n">lines</span><span class="p">())</span>
@@ -282,8 +286,12 @@
             <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">tt</span><span class="o">.</span><span class="n">sections</span>
         <span class="p">],</span>
         <span class="s2">"lines"</span><span class="p">:</span> <span class="p">[</span>
-            <span class="p">{</span><span class="s2">"index"</span><span class="p">:</span> <span class="n">l</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="s2">"text"</span><span class="p">:</span> <span class="n">l</span><span class="o">.</span><span class="n">text</span><span class="p">,</span> <span class="s2">"start"</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">l</span><span class="o">.</span><span class="n">start</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
-             <span class="s2">"end"</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">l</span><span class="o">.</span><span class="n">end</span><span class="p">,</span> <span class="mi">3</span><span class="p">)}</span>
+            <span class="p">{</span>
+                <span class="s2">"index"</span><span class="p">:</span> <span class="n">l</span><span class="o">.</span><span class="n">index</span><span class="p">,</span>
+                <span class="s2">"text"</span><span class="p">:</span> <span class="n">l</span><span class="o">.</span><span class="n">text</span><span class="p">,</span>
+                <span class="s2">"start"</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">l</span><span class="o">.</span><span class="n">start</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+                <span class="s2">"end"</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">l</span><span class="o">.</span><span class="n">end</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+            <span class="p">}</span>
             <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">[:</span><span class="n">max_lines</span><span class="p">]</span>
         <span class="p">],</span>
         <span class="s2">"lines_truncated"</span><span class="p">:</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span> <span class="o">-</span> <span class="n">max_lines</span><span class="p">),</span>
@@ -319,7 +327,11 @@
         <span class="n">audio</span><span class="o">=</span><span class="n">audio</span><span class="p">,</span> <span class="n">lyrics</span><span class="o">=</span><span class="n">lyrics</span><span class="p">,</span> <span class="n">subtitles</span><span class="o">=</span><span class="n">subtitles</span><span class="p">,</span> <span class="n">project</span><span class="o">=</span><span class="n">project</span>
     <span class="p">)</span>
     <span class="n">llm</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">cost</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"spent_usd"</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span> <span class="s2">"has_unknown_costs"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span> <span class="s2">"provider"</span><span class="p">:</span> <span class="kc">None</span><span class="p">}</span>
+    <span class="n">cost</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">"spent_usd"</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span>
+        <span class="s2">"has_unknown_costs"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="s2">"provider"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">}</span>
     <span class="k">if</span> <span class="n">use_llm</span><span class="p">:</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.lyricvid.director</span><span class="w"> </span><span class="kn">import</span> <span class="n">anthropic_llm</span>
 
@@ -417,17 +429,24 @@
     <span class="n">inputs</span> <span class="o">=</span> <span class="p">{</span>
         <span class="n">k</span><span class="p">:</span> <span class="n">v</span>
         <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="p">(</span>
-            <span class="p">(</span><span class="s2">"audio"</span><span class="p">,</span> <span class="n">audio</span><span class="p">),</span> <span class="p">(</span><span class="s2">"lyrics"</span><span class="p">,</span> <span class="n">lyrics</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"subtitles"</span><span class="p">,</span> <span class="n">subtitles</span><span class="p">),</span> <span class="p">(</span><span class="s2">"project"</span><span class="p">,</span> <span class="n">project</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">"audio"</span><span class="p">,</span> <span class="n">audio</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">"lyrics"</span><span class="p">,</span> <span class="n">lyrics</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">"subtitles"</span><span class="p">,</span> <span class="n">subtitles</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">"project"</span><span class="p">,</span> <span class="n">project</span><span class="p">),</span>
         <span class="p">)</span>
         <span class="k">if</span> <span class="n">v</span>
     <span class="p">}</span>
     <span class="n">params</span> <span class="o">=</span> <span class="p">{</span>
         <span class="n">k</span><span class="p">:</span> <span class="n">v</span>
         <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="p">(</span>
-            <span class="p">(</span><span class="s2">"treatment"</span><span class="p">,</span> <span class="n">treatment</span><span class="p">),</span> <span class="p">(</span><span class="s2">"renderer"</span><span class="p">,</span> <span class="n">renderer</span><span class="p">),</span> <span class="p">(</span><span class="s2">"title"</span><span class="p">,</span> <span class="n">title</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"persona"</span><span class="p">,</span> <span class="n">persona</span><span class="p">),</span> <span class="p">(</span><span class="s2">"aligner"</span><span class="p">,</span> <span class="n">aligner</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"width"</span><span class="p">,</span> <span class="n">width</span><span class="p">),</span> <span class="p">(</span><span class="s2">"height"</span><span class="p">,</span> <span class="n">height</span><span class="p">),</span> <span class="p">(</span><span class="s2">"fps"</span><span class="p">,</span> <span class="n">fps</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">"treatment"</span><span class="p">,</span> <span class="n">treatment</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">"renderer"</span><span class="p">,</span> <span class="n">renderer</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">"title"</span><span class="p">,</span> <span class="n">title</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">"persona"</span><span class="p">,</span> <span class="n">persona</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">"aligner"</span><span class="p">,</span> <span class="n">aligner</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">"width"</span><span class="p">,</span> <span class="n">width</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">"height"</span><span class="p">,</span> <span class="n">height</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">"fps"</span><span class="p">,</span> <span class="n">fps</span><span class="p">),</span>
         <span class="p">)</span>
         <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
     <span class="p">}</span>

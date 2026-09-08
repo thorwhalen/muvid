@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.footage.strategy &mdash; muvid 0.0.55 documentation</title>
+  <title>muvid.footage.strategy &mdash; muvid 0.0.56 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=b87b3bc5"></script>
+      <script src="../../../_static/documentation_options.js?v=8f83b1af"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -161,6 +161,16 @@
 <span class="sd">:func:`muvid.footage.edl.derive_cuts` (SSOT), so a third-party strategy can't desync the</span>
 <span class="sd">cut. Every strategy's output still passes :func:`~muvid.footage.edl.validate_edl` before</span>
 <span class="sd">any cutting, so a strategy that leaves a gap fails loudly with the exact uncovered span.</span>
+
+<span class="sd">**A strategy sees ``reliable`` the way it already sees ``overlaps``: as a preference**</span>
+<span class="sd">(muvid#88). Every built-in ranks a vouched clip above an unvouched one for the same span</span>
+<span class="sd">via :func:`_prefer_vouched`, and falls back to an unvouched clip only where nothing else</span>
+<span class="sd">covers the span — so one badly-aligned clip in a shoot costs the spans only it covered,</span>
+<span class="sd">not the whole edit. The strategies still decide nothing about trust: they never drop a</span>
+<span class="sd">source, and the verdict they read (``FootageAlignment.reliable``) is</span>
+<span class="sd">:func:`~muvid.footage.edl.vouches_for`'s. A third-party strategy that ranks clips itself</span>
+<span class="sd">should carry the same preference; ``weighted`` does it as a reward penalty rather than a</span>
+<span class="sd">special case (see :mod:`muvid.footage.select_score`).</span>
 
 <span class="sd">Registry idiom mirrors ``mixing.audio.segmentation`` (a ``strategy: str | callable`` param</span>
 <span class="sd">+ a ``_STRATEGIES`` dict + :func:`resolve_strategy`) — the federation's established shape.</span>
@@ -317,6 +327,30 @@
     <span class="k">return</span> <span class="p">[</span><span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">alignments</span> <span class="k">if</span> <span class="n">a</span><span class="o">.</span><span class="n">coverage</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">_EPS</span> <span class="o">&lt;=</span> <span class="n">mid</span> <span class="o">&lt;</span> <span class="n">a</span><span class="o">.</span><span class="n">coverage</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">_EPS</span><span class="p">]</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_prefer_vouched</span><span class="p">(</span><span class="n">covering</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">FootageAlignment</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">FootageAlignment</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Rank trust ahead of everything else, for ONE span (muvid#88).</span>
+
+<span class="sd">    ``reliable`` is a **preference, not a filter**, and the distinction is the whole</span>
+<span class="sd">    point. Where a vouched clip covers the span, the unvouched ones are not considered —</span>
+<span class="sd">    a clip nobody vouches for should never win a span some other clip could have had, on</span>
+<span class="sd">    any metric. Where none does, the full set is returned and the unvouched clip is still</span>
+<span class="sd">    chosen, because a strategy PROPOSES: dropping the only footage for a span here would</span>
+<span class="sd">    put a second trust check next to :func:`~muvid.footage.edl.validate_edl` and remove a</span>
+<span class="sd">    source from the edit on the strength of a measurement — the two things</span>
+<span class="sd">    ``overlaps=False`` is carefully written not to do.</span>
+
+<span class="sd">    What happens to that forced span is decided downstream and out loud:</span>
+<span class="sd">    :func:`~muvid.footage.edl.exclude_unvouched` sets it aside as a reported gap on the</span>
+<span class="sd">    auto path, and ``validate_edl`` refuses it everywhere else.</span>
+
+<span class="sd">    Applied per elementary interval rather than to the alignment set, so a clip that is</span>
+<span class="sd">    the only cover for one span and one of several for the next is preferred away from</span>
+<span class="sd">    the second without losing the first.</span>
+<span class="sd">    """</span>
+    <span class="n">vouched</span> <span class="o">=</span> <span class="p">[</span><span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">covering</span> <span class="k">if</span> <span class="n">a</span><span class="o">.</span><span class="n">reliable</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">vouched</span> <span class="ow">or</span> <span class="n">covering</span>
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">_coalesce</span><span class="p">(</span><span class="n">spans</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">str</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">EdlEntry</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">"""Merge consecutive same-clip elementary spans into one EDL entry."""</span>
     <span class="n">out</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">EdlEntry</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
@@ -346,6 +380,10 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="n">covering</span><span class="p">:</span>
             <span class="n">prev_clip_id</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># a gap breaks continuity</span>
             <span class="k">continue</span>
+        <span class="c1"># Trust first, then whatever the strategy optimizes (muvid#88). Here rather than</span>
+        <span class="c1"># in each `pick` so every built-in — and `fewest_cuts`, which would otherwise sit</span>
+        <span class="c1"># on an unvouched clip precisely because staying is free — carries it identically.</span>
+        <span class="n">covering</span> <span class="o">=</span> <span class="n">_prefer_vouched</span><span class="p">(</span><span class="n">covering</span><span class="p">)</span>
         <span class="n">clip_id</span> <span class="o">=</span> <span class="n">pick</span><span class="p">(</span><span class="n">covering</span><span class="p">,</span> <span class="n">prev_clip_id</span><span class="p">)</span>
         <span class="n">spans</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">lo</span><span class="p">,</span> <span class="n">hi</span><span class="p">,</span> <span class="n">clip_id</span><span class="p">))</span>
         <span class="n">prev_clip_id</span> <span class="o">=</span> <span class="n">clip_id</span>

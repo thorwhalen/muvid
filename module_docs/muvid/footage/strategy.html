@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.footage.strategy &mdash; muvid 0.0.55 documentation</title>
+  <title>muvid.footage.strategy &mdash; muvid 0.0.56 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -15,7 +15,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=b87b3bc5"></script>
+      <script src="../../../_static/documentation_options.js?v=8f83b1af"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -176,6 +176,15 @@ only <code class="docutils literal notranslate"><span class="pre">{song_start,</
 <a class="reference internal" href="edl.html#muvid.footage.edl.derive_cuts" title="muvid.footage.edl.derive_cuts"><code class="xref py py-func docutils literal notranslate"><span class="pre">muvid.footage.edl.derive_cuts()</span></code></a> (SSOT), so a third-party strategy can’t desync the
 cut. Every strategy’s output still passes <a class="reference internal" href="edl.html#muvid.footage.edl.validate_edl" title="muvid.footage.edl.validate_edl"><code class="xref py py-func docutils literal notranslate"><span class="pre">validate_edl()</span></code></a> before
 any cutting, so a strategy that leaves a gap fails loudly with the exact uncovered span.</p>
+<p><strong>A strategy sees ``reliable`` the way it already sees ``overlaps``: as a preference</strong>
+(muvid#88). Every built-in ranks a vouched clip above an unvouched one for the same span
+via <code class="xref py py-func docutils literal notranslate"><span class="pre">_prefer_vouched()</span></code>, and falls back to an unvouched clip only where nothing else
+covers the span — so one badly-aligned clip in a shoot costs the spans only it covered,
+not the whole edit. The strategies still decide nothing about trust: they never drop a
+source, and the verdict they read (<code class="docutils literal notranslate"><span class="pre">FootageAlignment.reliable</span></code>) is
+<a class="reference internal" href="edl.html#muvid.footage.edl.vouches_for" title="muvid.footage.edl.vouches_for"><code class="xref py py-func docutils literal notranslate"><span class="pre">vouches_for()</span></code></a>’s. A third-party strategy that ranks clips itself
+should carry the same preference; <code class="docutils literal notranslate"><span class="pre">weighted</span></code> does it as a reward penalty rather than a
+special case (see <a class="reference internal" href="select_score.html#module-muvid.footage.select_score" title="muvid.footage.select_score"><code class="xref py py-mod docutils literal notranslate"><span class="pre">muvid.footage.select_score</span></code></a>).</p>
 <p>Registry idiom mirrors <code class="docutils literal notranslate"><span class="pre">mixing.audio.segmentation</span></code> (a <code class="docutils literal notranslate"><span class="pre">strategy:</span> <span class="pre">str</span> <span class="pre">|</span> <span class="pre">callable</span></code> param
 + a <code class="docutils literal notranslate"><span class="pre">_STRATEGIES</span></code> dict + <a class="reference internal" href="#muvid.footage.strategy.resolve_strategy" title="muvid.footage.strategy.resolve_strategy"><code class="xref py py-func docutils literal notranslate"><span class="pre">resolve_strategy()</span></code></a>) — the federation’s established shape.
 Register your own with <a class="reference internal" href="#muvid.footage.strategy.register_selection_strategy" title="muvid.footage.strategy.register_selection_strategy"><code class="xref py py-func docutils literal notranslate"><span class="pre">register_selection_strategy()</span></code></a>.</p>

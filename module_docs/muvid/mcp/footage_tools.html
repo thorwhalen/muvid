@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.mcp.footage_tools &mdash; muvid 0.0.55 documentation</title>
+  <title>muvid.mcp.footage_tools &mdash; muvid 0.0.56 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -15,7 +15,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=b87b3bc5"></script>
+      <script src="../../../_static/documentation_options.js?v=8f83b1af"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -214,10 +214,14 @@ whole-clip measurement), and its coverage of the song, plus two lists:</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">low_confidence</span></code> — clips that matched weakly, for reporting;</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">unreliable</span></code> — clips whose offset the aligner will NOT vouch for. These stay in
-the project and stay addressable, but <code class="docutils literal notranslate"><span class="pre">assemble_music_video</span></code> REFUSES to cut to
-them unless it is called with <code class="docutils literal notranslate"><span class="pre">allow_unreliable=true</span></code>, because a wrong offset
-does not fail — it renders a video out of sync with the song (muvid#59). Re-align,
-leave them out of the edit, or opt in deliberately;</p></li>
+the project and stay addressable, and the auto path simply prefers other clips
+over them: a span another clip covers goes to that clip, and a span only an
+unreliable clip covers is left as a gap and reported in <code class="docutils literal notranslate"><span class="pre">coverage.excluded</span></code>
+(muvid#88). <code class="docutils literal notranslate"><span class="pre">assemble_music_video</span></code> still REFUSES an explicit <code class="docutils literal notranslate"><span class="pre">edl</span></code> that cuts
+to one, and still refuses an auto edit when NO clip is trustworthy, unless called
+with <code class="docutils literal notranslate"><span class="pre">allow_unreliable=true</span></code> — because a wrong offset does not fail, it renders
+a video out of sync with the song (muvid#59). Re-align, accept the smaller edit,
+or opt in deliberately;</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">no_consensus</span></code> — clips too short to be put to a vote at all (under about 4.5 s).
 <strong>A clip in this list can be marked reliable and still be wrong</strong>, and no other
 field will say so: its offset rests on one measurement, judged by a confidence
@@ -288,12 +292,25 @@ is cheap: it re-selects from the SAME scores without re-scoring.</p></li>
 <code class="docutils literal notranslate"><span class="pre">list_strategies</span></code>; default <code class="docutils literal notranslate"><span class="pre">best_confidence</span></code>) builds the edit from the alignments.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">canvas</span></code>: render-time override (“landscape”/”portrait”/”square”) — the same edit
 re-rendered in another shape, no new project needed. Default: the project’s canvas.</p></li>
+<li><p><strong>A clip the aligner will not vouch for costs its own spans, not the whole edit</strong>
+(muvid#88). On the auto path the strategy prefers a vouched clip wherever one
+covers the span, so an untrustworthy clip is simply not chosen while any other
+clip covers that stretch of the song. Where it was the ONLY footage, the span is
+set aside rather than cut to: it renders as a gap and is named in
+<code class="docutils literal notranslate"><span class="pre">coverage.excluded</span></code> with the clip, the span, and the confidence/support/margin
+the verdict rests on. So a five-clip shoot with one bad clip still assembles.
+The refusal remains for the two cases it was built for: an explicit <code class="docutils literal notranslate"><span class="pre">edl</span></code> naming
+an unvouched clip (you chose it), and an auto edit where NO clip is trustworthy —
+a black video reported as success is the failure this exists to prevent, so that
+still comes back as an error naming every clip.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">allow_unreliable</span></code>: render even on clips whose alignment the aligner will not
 vouch for. <strong>Off by default and it should stay off</strong>: a wrong offset does not
 fail, it delivers a video out of sync with the song, so the refusal is the only
 thing standing between a bad measurement and a bad render (muvid#59). Set it when
 you have checked the offsets yourself, or when a slightly-off cut beats no cut at
-all. <code class="docutils literal notranslate"><span class="pre">align_footage</span></code> names the clips this applies to in its <code class="docutils literal notranslate"><span class="pre">unreliable</span></code> list.</p></li>
+all — it also turns OFF the set-aside above, since someone who opted in wants that
+footage rendered rather than gapped. <code class="docutils literal notranslate"><span class="pre">align_footage</span></code> names the clips this
+applies to in its <code class="docutils literal notranslate"><span class="pre">unreliable</span></code> list.</p></li>
 </ul>
 <p>The video is EXACTLY the song’s duration: each cut is trimmed at its aligned in-point,
 scaled onto the canvas (padded, never stretched), gaps render black, and the CLEAN
@@ -366,7 +383,8 @@ list by hand, and only then pay for a render — passing the chosen EDL straight
 footage covers as explicit gap entries, <code class="docutils literal notranslate"><span class="pre">clip_id:</span> <span class="pre">null</span></code>, rendered as black), the
 <code class="docutils literal notranslate"><span class="pre">strategy</span></code> actually used, and a <code class="docutils literal notranslate"><span class="pre">coverage</span></code> report naming every uncovered span of
 the song and every segment that made the cut despite weak alignment. Same arguments as
-<code class="docutils literal notranslate"><span class="pre">assemble_music_video</span></code>’s auto path.</p>
+<code class="docutils literal notranslate"><span class="pre">assemble_music_video</span></code>’s auto path, and the same edit it would build — including the
+<code class="docutils literal notranslate"><span class="pre">coverage.excluded</span></code> recovery described there.</p>
 </dd></dl>
 
 <dl class="py function">
