@@ -65,6 +65,9 @@ FOOTAGE_TOOLS = [
     # edited DECISION lane → an ``edl=`` argument). Both free and read-only.
     "footage_editor_document",
     "footage_edl_from_annotations",
+    # The song's beat grid on its own (muvid#18 item 5): the grid used to be reachable
+    # only as a side effect of the cv2-heavy score_footage job. Free, cached per song.
+    "beat_grid",
     # Clip lifecycle (muvid#22): the way back to a lost project_id, and the way a
     # mistaken upload stops being permanent. Both free; remove_footage invalidates
     # the alignment the same way set_song does.
