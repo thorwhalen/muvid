@@ -501,31 +501,52 @@ def _normalised(raw: Mapping[str, Any]) -> dict[str, float]:
 ARCHETYPE_CHARACTER: dict[str, dict[str, float]] = {
     # a hook you already know: one word, big, unmissable
     "one_word_centred": {
-        "base": 0.30, "repetition": 0.30, "brevity": 0.25, "sparsity": 0.15,
+        "base": 0.30,
+        "repetition": 0.30,
+        "brevity": 0.25,
+        "sparsity": 0.15,
     },
     # a story you have to follow: keep what has been sung on screen
     "stacked_lines": {
-        "base": 0.25, "line_length": 0.35, "variety": 0.25, "density": 0.15,
+        "base": 0.25,
+        "line_length": 0.35,
+        "variety": 0.25,
+        "density": 0.15,
     },
     # sing along: two lines, one wiped, the next one already visible
     "karaoke_wipe": {
-        "base": 0.35, "density": 0.25, "line_length": 0.20, "structure": 0.10,
+        "base": 0.35,
+        "density": 0.25,
+        "line_length": 0.20,
+        "structure": 0.10,
     },
     # the lyric sheet has a shape worth showing, and it fits on one page
     "concrete_page": {
-        "base": 0.10, "shapedness": 0.35, "page_fits": 0.35, "richness": 0.10,
+        "base": 0.10,
+        "shapedness": 0.35,
+        "page_fits": 0.35,
+        "richness": 0.10,
     },
     # one image the song keeps returning to
     "shape_fill": {
-        "base": 0.10, "dominance": 0.40, "sparsity": 0.20, "brevity": 0.15,
+        "base": 0.10,
+        "dominance": 0.40,
+        "sparsity": 0.20,
+        "brevity": 0.15,
     },
     # a single repeated phrase, given a curve to ride
     "text_on_path": {
-        "base": 0.15, "repetition": 0.35, "brevity": 0.30, "sparsity": 0.10,
+        "base": 0.15,
+        "repetition": 0.35,
+        "brevity": 0.30,
+        "sparsity": 0.10,
     },
     # sparse, wide-ranging, fragmentary
     "scatter": {
-        "base": 0.10, "richness": 0.30, "sparsity": 0.30, "brevity": 0.20,
+        "base": 0.10,
+        "richness": 0.30,
+        "sparsity": 0.30,
+        "brevity": 0.20,
     },
 }
 
@@ -539,8 +560,9 @@ PERSONA_WEIGHT = 0.45
 def _character_fit(archetype: str, signals: Mapping[str, float]) -> float:
     row = ARCHETYPE_CHARACTER.get(archetype, {})
     total = row.get("base", 0.0)
-    total += sum(coef * signals.get(name, 0.0) for name, coef in row.items()
-                 if name != "base")
+    total += sum(
+        coef * signals.get(name, 0.0) for name, coef in row.items() if name != "base"
+    )
     return _clamp(total)
 
 
@@ -699,9 +721,7 @@ def build_messages(
     >>> [b['type'] for b in img[-1]['content']]
     ['image', 'text']
     """
-    messages: list[dict[str, Any]] = [
-        {"role": "system", "content": director_prompt()}
-    ]
+    messages: list[dict[str, Any]] = [{"role": "system", "content": director_prompt()}]
     if persona is not None:
         messages.append({"role": "system", "content": resolve_persona(persona).block()})
 
@@ -771,11 +791,15 @@ def _is_lift(label: str) -> bool:
 
 def _descriptor(raw: Mapping[str, Any], norm: Mapping[str, float]) -> str:
     """A phrase describing the song, for the mood line."""
-    pace = "fast" if norm["density"] > 0.6 else (
-        "unhurried" if norm["density"] < 0.3 else "steady"
+    pace = (
+        "fast"
+        if norm["density"] > 0.6
+        else ("unhurried" if norm["density"] < 0.3 else "steady")
     )
-    shape = "highly repetitive" if norm["repetition"] > 0.4 else (
-        "through-written" if norm["repetition"] < 0.15 else "part-repeating"
+    shape = (
+        "highly repetitive"
+        if norm["repetition"] > 0.4
+        else ("through-written" if norm["repetition"] < 0.15 else "part-repeating")
     )
     return (
         f"{pace} and {shape} — {raw['n_words']} words across "
@@ -848,8 +872,11 @@ def heuristic_director(
                 "attack_s": who.attack_s,
                 "lead_s": who.lead_s,
             },
-            **({"shape": {"kind": "named", "value": _shape_for(raw)}}
-               if archetype == "shape_fill" else {}),
+            **(
+                {"shape": {"kind": "named", "value": _shape_for(raw)}}
+                if archetype == "shape_fill"
+                else {}
+            ),
         }
 
     if per_section:
@@ -954,14 +981,13 @@ def _price(model: str, usage: Mapping[str, int]) -> tuple[float | None, bool]:
         return None, True
     per_in, per_out = prices
     cost = (
-        usage.get("input_tokens", 0) * per_in
-        + usage.get("output_tokens", 0) * per_out
+        usage.get("input_tokens", 0) * per_in + usage.get("output_tokens", 0) * per_out
     ) / 1_000_000
     return round(cost, 6), False
 
 
 def _split_system(
-    messages: Sequence[Mapping[str, Any]]
+    messages: Sequence[Mapping[str, Any]],
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     """Leading ``system`` messages become the top-level ``system`` blocks.
 
@@ -1168,9 +1194,7 @@ def propose_treatments(
     taken: list[str] = []
     for who in chosen:
         request = dict(context, avoid_archetypes=list(dict.fromkeys(taken)))
-        messages = build_messages(
-            request, persona=who, reference_image=reference_image
-        )
+        messages = build_messages(request, persona=who, reference_image=reference_image)
         source = "heuristic" if llm is None else "llm"
         reason: str | None = None
         raw: Any = None
@@ -1254,6 +1278,7 @@ RANK_WEIGHTS: dict[str, float] = {
     "coherence": 0.15,
 }
 
+
 def _combine(parts: "dict[str, float]") -> float:
     """Combine the rank terms so a disqualifying one cannot be averaged away.
 
@@ -1336,15 +1361,11 @@ def _contrast_ratio(a: str, b: str) -> float:
     return (hi + 0.05) / (lo + 0.05)
 
 
-def _lines_covered(
-    scene: spec_mod.Scene, timed_text: TimedText
-) -> int:
+def _lines_covered(scene: spec_mod.Scene, timed_text: TimedText) -> int:
     if "*" in scene.applies_to:
         return sum(len(s.lines) for s in timed_text.sections)
     wanted = {a.lower() for a in scene.applies_to}
-    return sum(
-        len(s.lines) for s in timed_text.sections if s.label.lower() in wanted
-    )
+    return sum(len(s.lines) for s in timed_text.sections if s.label.lower() in wanted)
 
 
 def _score_legibility(
@@ -1371,9 +1392,7 @@ def _score_coverage(spec: spec_mod.TreatmentSpec, timed_text: TimedText) -> floa
         if "*" in scene.applies_to:
             return 1.0
         covered.update(a.lower() for a in scene.applies_to)
-    hit = sum(
-        len(s.lines) for s in timed_text.sections if s.label.lower() in covered
-    )
+    hit = sum(len(s.lines) for s in timed_text.sections if s.label.lower() in covered)
     return hit / lines
 
 
@@ -1397,9 +1416,7 @@ def _score_coherence(spec: spec_mod.TreatmentSpec) -> tuple[float, list[str]]:
     notes: list[str] = []
     declared = set(spec.direction.motion_vocabulary)
     used = [s.motion for s in spec.scenes]
-    motion_score = (
-        sum(1 for m in used if m in declared) / len(used) if used else 1.0
-    )
+    motion_score = sum(1 for m in used if m in declared) / len(used) if used else 1.0
     if motion_score < 1:
         notes.append("a scene uses a motion the direction does not declare")
 
@@ -1477,7 +1494,9 @@ def rank_treatments(
         if parts[weakest] < 1.0:
             why += f" — weakest is {weakest}"
             if weakest == "legibility":
-                worst = min(spec.scenes, key=lambda s: _legibility_fit(s.archetype, wps))
+                worst = min(
+                    spec.scenes, key=lambda s: _legibility_fit(s.archetype, wps)
+                )
                 why += (
                     f" ({worst.archetype} at {wps:.1f} w/s against a capacity of "
                     f"{ARCHETYPE_CAPACITY_WPS.get(worst.archetype, 2.5):.1f})"

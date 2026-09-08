@@ -113,7 +113,11 @@ class Subgenre:
             "params_schema": dict(self.params_schema),
             "produces": self.produces,
             "examples": [
-                {"description": e.description, "params": dict(e.params), "preview": e.preview}
+                {
+                    "description": e.description,
+                    "params": dict(e.params),
+                    "preview": e.preview,
+                }
                 for e in self.examples
             ],
             "intake_kinds": list(self.intake_kinds),

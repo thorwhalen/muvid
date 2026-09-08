@@ -152,8 +152,12 @@ class TimedText:
                             "index": l.index,
                             "text": l.text,
                             "words": [
-                                {"text": w.text, "start": w.start, "end": w.end,
-                                 "measured": w.measured}
+                                {
+                                    "text": w.text,
+                                    "start": w.start,
+                                    "end": w.end,
+                                    "measured": w.measured,
+                                }
                                 for w in l.words
                             ],
                         }
@@ -256,14 +260,17 @@ def from_subtitles(path: Path | str, *, duration: float = 0.0) -> TimedText:
             start = _hms(*m.group(1, 2, 3, 4))
             end = _hms(*m.group(5, 6, 7, 8))
             body = "\n".join(
-                l for l in block.splitlines()
+                l
+                for l in block.splitlines()
                 if not _SRT_TIME.search(l) and not l.strip().isdigit()
             ).strip()
             body = re.sub(r"<[^>]+>", "", body)
             if body:
                 lines.append(
-                    Line(words=_spread_words_over(body.replace("\n", " "), start, end),
-                         index=len(lines))
+                    Line(
+                        words=_spread_words_over(body.replace("\n", " "), start, end),
+                        index=len(lines),
+                    )
                 )
         source = "srt"
     else:
@@ -275,7 +282,9 @@ def from_subtitles(path: Path | str, *, duration: float = 0.0) -> TimedText:
             stamped.append((_hms("0", m.group(1), m.group(2), m.group(3)), m.group(4)))
         source = "lrc"
         for i, (start, body) in enumerate(stamped):
-            end = stamped[i + 1][0] if i + 1 < len(stamped) else (duration or start + 3.0)
+            end = (
+                stamped[i + 1][0] if i + 1 < len(stamped) else (duration or start + 3.0)
+            )
             word_stamps = list(_LRC_WORD.finditer(body))
             if word_stamps:
                 source = "lrc-enhanced"
@@ -295,7 +304,9 @@ def from_subtitles(path: Path | str, *, duration: float = 0.0) -> TimedText:
                 body = re.sub(r"<[^>]+>", "", body).strip()
                 if body:
                     lines.append(
-                        Line(words=_spread_words_over(body, start, end), index=len(lines))
+                        Line(
+                            words=_spread_words_over(body, start, end), index=len(lines)
+                        )
                     )
 
     if not lines:
@@ -307,7 +318,9 @@ def from_subtitles(path: Path | str, *, duration: float = 0.0) -> TimedText:
     )
 
 
-def from_alignment_store(project_root: Path | str, *, duration: float = 0.0) -> TimedText:
+def from_alignment_store(
+    project_root: Path | str, *, duration: float = 0.0
+) -> TimedText:
     """Read muvid's own three-tier alignment (sections / lines / words).
 
     muvid already declares itself the word-timing SSOT — ``muvid.align`` writes
@@ -353,6 +366,12 @@ def from_lyrics_and_audio(
             "muvid.align exposes no aligner registry on this version; pass a "
             "subtitle file instead, or upgrade muvid."
         )
-    fn = resolve(aligner) if aligner else resolve(getattr(align_mod, "DEFAULT_ALIGNER", None))
+    fn = (
+        resolve(aligner)
+        if aligner
+        else resolve(getattr(align_mod, "DEFAULT_ALIGNER", None))
+    )
     words = fn(audio=audio, lyrics=Path(lyrics) if lyrics else None)
-    return from_words(words, duration=duration, source=f"aligner:{aligner or 'default'}")
+    return from_words(
+        words, duration=duration, source=f"aligner:{aligner or 'default'}"
+    )

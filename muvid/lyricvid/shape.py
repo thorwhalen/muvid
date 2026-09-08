@@ -285,7 +285,9 @@ def _star(u: Any, v: Any) -> Any:
     return _STAR_FILL(u, v)
 
 
-def _star_vertices(*, points: int = 5, inner: float = 0.42) -> list[tuple[float, float]]:
+def _star_vertices(
+    *, points: int = 5, inner: float = 0.42
+) -> list[tuple[float, float]]:
     """Alternating outer/inner vertices of a star, in unit-box coordinates."""
     verts: list[tuple[float, float]] = []
     for i in range(2 * points):
@@ -404,7 +406,9 @@ _SVG_TOKEN = re.compile(
 SVG_COMMANDS = "MLHVCSQTZ"
 
 
-def parse_svg_path(d: str, *, curve_samples: int = CURVE_SAMPLES) -> list[list[tuple[float, float]]]:
+def parse_svg_path(
+    d: str, *, curve_samples: int = CURVE_SAMPLES
+) -> list[list[tuple[float, float]]]:
     """Flatten an SVG path into polygons, normalised into the unit box.
 
     Understands ``M L H V C S Q T Z`` (absolute and relative), flattening every
@@ -424,7 +428,7 @@ def parse_svg_path(d: str, *, curve_samples: int = CURVE_SAMPLES) -> list[list[t
     pos = 0
     for m in _SVG_TOKEN.finditer(d or ""):
         if m.start() != pos and (d[pos : m.start()].strip(" ,\t\r\n")):
-            raise ValueError(f"svg_path: cannot parse {d[pos:m.start()]!r}")
+            raise ValueError(f"svg_path: cannot parse {d[pos : m.start()]!r}")
         pos = m.end()
         if m.group(1):
             if m.group(1) in "Aa":
@@ -501,7 +505,14 @@ def parse_svg_path(d: str, *, curve_samples: int = CURVE_SAMPLES) -> list[list[t
             if up == "C":
                 x1, y1, x2, y2, px, py = take(6)
                 if rel:
-                    x1, y1, x2, y2, px, py = x1 + x, y1 + y, x2 + x, y2 + y, px + x, py + y
+                    x1, y1, x2, y2, px, py = (
+                        x1 + x,
+                        y1 + y,
+                        x2 + x,
+                        y2 + y,
+                        px + x,
+                        py + y,
+                    )
             else:
                 x2, y2, px, py = take(4)
                 if rel:
@@ -530,8 +541,16 @@ def parse_svg_path(d: str, *, curve_samples: int = CURVE_SAMPLES) -> list[list[t
 
 
 def _cubic(
-    x0: float, y0: float, x1: float, y1: float, x2: float, y2: float,
-    x3: float, y3: float, *, samples: int,
+    x0: float,
+    y0: float,
+    x1: float,
+    y1: float,
+    x2: float,
+    y2: float,
+    x3: float,
+    y3: float,
+    *,
+    samples: int,
 ) -> list[tuple[float, float]]:
     """A cubic Bezier, flattened (the start point is left to the caller)."""
     out = []
@@ -555,8 +574,12 @@ def _quadratic(
     for k in range(1, samples + 1):
         t = k / samples
         s = 1.0 - t
-        out.append((s * s * x0 + 2 * s * t * x1 + t * t * x2,
-                    s * s * y0 + 2 * s * t * y1 + t * t * y2))
+        out.append(
+            (
+                s * s * x0 + 2 * s * t * x1 + t * t * x2,
+                s * s * y0 + 2 * s * t * y1 + t * t * y2,
+            )
+        )
     return out
 
 
@@ -642,10 +665,14 @@ def _distance_transform(mask: Any, *, max_iterations: int) -> Any:
         nxt = np.minimum.reduce(
             [
                 d,
-                p[:-2, 1:-1] + ortho, p[2:, 1:-1] + ortho,
-                p[1:-1, :-2] + ortho, p[1:-1, 2:] + ortho,
-                p[:-2, :-2] + diag, p[:-2, 2:] + diag,
-                p[2:, :-2] + diag, p[2:, 2:] + diag,
+                p[:-2, 1:-1] + ortho,
+                p[2:, 1:-1] + ortho,
+                p[1:-1, :-2] + ortho,
+                p[1:-1, 2:] + ortho,
+                p[:-2, :-2] + diag,
+                p[:-2, 2:] + diag,
+                p[2:, :-2] + diag,
+                p[2:, 2:] + diag,
             ]
         )
         if np.array_equal(nxt, d):
@@ -706,7 +733,9 @@ def _text_width(text: str, size: float) -> float:
     return len(text) * size * _CHAR_W
 
 
-def bounding_box(placement: Placement, *, aspect: float = DEFAULT_ASPECT) -> tuple[float, float, float, float]:
+def bounding_box(
+    placement: Placement, *, aspect: float = DEFAULT_ASPECT
+) -> tuple[float, float, float, float]:
     """``(x0, y0, x1, y1)`` of a placement's layout box, normalised to the canvas.
 
     The LAYOUT box — the room the packer reserved, glyphs plus leading and side
@@ -741,7 +770,9 @@ def _salience_sizes(texts: Sequence[str], *, base_size: float) -> list[float]:
         order = 1.0 - i / (n - 1) if n > 1 else 1.0
         span = (length - lo) / (hi - lo) if hi > lo else 0.5
         weight = SALIENCE_ORDER_WEIGHT * order + (1.0 - SALIENCE_ORDER_WEIGHT) * span
-        sizes.append(base_size * (SALIENCE_MIN + (SALIENCE_MAX - SALIENCE_MIN) * weight))
+        sizes.append(
+            base_size * (SALIENCE_MIN + (SALIENCE_MAX - SALIENCE_MIN) * weight)
+        )
     return sizes
 
 
@@ -791,7 +822,10 @@ def _spiral_hit(
         return None
     s = field.summed
     covered = (
-        s[y1[idx], x1[idx]] - s[y0[idx], x1[idx]] - s[y1[idx], x0[idx]] + s[y0[idx], x0[idx]]
+        s[y1[idx], x1[idx]]
+        - s[y0[idx], x1[idx]]
+        - s[y1[idx], x0[idx]]
+        + s[y0[idx], x0[idx]]
     )
     area = (y1[idx] - y0[idx]) * (x1[idx] - x0[idx])
     for j in idx[covered == area]:
@@ -799,8 +833,12 @@ def _spiral_hit(
         gx1, gy1 = min(W, int(x1[j]) + GAP_PX), min(H, int(y1[j]) + GAP_PX)
         if not field.occupied[gy0:gy1, gx0:gx1].any():
             return (
-                float(xs[j]), float(ys[j]),
-                int(x0[j]), int(y0[j]), int(x1[j]), int(y1[j]),
+                float(xs[j]),
+                float(ys[j]),
+                int(x0[j]),
+                int(y0[j]),
+                int(x1[j]),
+                int(y1[j]),
             )
     return None
 
@@ -816,7 +854,7 @@ def _place_word(
     cy, cx = seed
     box_w = _text_width(text, size) * H * BOX_WIDTH
     box_h = size * H * BOX_HEIGHT
-    for rotated in ((False, True) if allow_rotation else (False,)):
+    for rotated in (False, True) if allow_rotation else (False,):
         w, h = (box_h, box_w) if rotated else (box_w, box_h)
         hit = _spiral_hit(
             field, cx=cx + 0.5, cy=cy + 0.5, half_w=w / 2.0, half_h=h / 2.0, index=index

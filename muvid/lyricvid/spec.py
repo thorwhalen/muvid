@@ -239,7 +239,9 @@ class TreatmentSpec:
         """Build from a plain mapping, tolerating missing keys (they default)."""
         d = dict(d or {})
         direction = dict(d.get("direction") or {})
-        pal = Palette(**{**asdict(Palette()), **dict(direction.pop("palette", {}) or {})})
+        pal = Palette(
+            **{**asdict(Palette()), **dict(direction.pop("palette", {}) or {})}
+        )
         typo = Typography(
             **{**asdict(Typography()), **dict(direction.pop("typography", {}) or {})}
         )
@@ -311,9 +313,7 @@ def validate(spec: TreatmentSpec) -> list[str]:
     """
     errs: list[str] = []
     if spec.spec_version != SPEC_VERSION:
-        errs.append(
-            f"spec_version {spec.spec_version!r} != supported {SPEC_VERSION!r}"
-        )
+        errs.append(f"spec_version {spec.spec_version!r} != supported {SPEC_VERSION!r}")
     d = spec.direction
     for name, value in asdict(d.palette).items():
         if _bad_colour(value):
@@ -324,7 +324,9 @@ def validate(spec: TreatmentSpec) -> list[str]:
         )
     for m in d.motion_vocabulary:
         if m not in MOTIONS:
-            errs.append(f"direction.motion_vocabulary entry {m!r} is not a known motion")
+            errs.append(
+                f"direction.motion_vocabulary entry {m!r} is not a known motion"
+            )
     if not spec.scenes:
         errs.append("scenes is empty — at least one scene is required")
     for i, sc in enumerate(spec.scenes):
@@ -387,8 +389,9 @@ def repair(spec: TreatmentSpec) -> tuple[TreatmentSpec, list[str]]:
 
     typo = d.typography
     if typo.case not in CASES:
-        typo = replace(typo, case=pick(typo.case, CASES, "as_written",
-                                       "direction.typography.case"))
+        typo = replace(
+            typo, case=pick(typo.case, CASES, "as_written", "direction.typography.case")
+        )
     vocab = tuple(m for m in d.motion_vocabulary if m in MOTIONS)
     if len(vocab) != len(d.motion_vocabulary):
         dropped = [m for m in d.motion_vocabulary if m not in MOTIONS]
@@ -402,14 +405,17 @@ def repair(spec: TreatmentSpec) -> tuple[TreatmentSpec, list[str]]:
         t = sc.timing
         t = replace(
             t,
-            quantize_to=pick(t.quantize_to, QUANTIZE, "word",
-                             f"scenes[{i}].timing.quantize_to"),
-            cut_style=pick(t.cut_style, CUT_STYLES, "hard",
-                           f"scenes[{i}].timing.cut_style"),
+            quantize_to=pick(
+                t.quantize_to, QUANTIZE, "word", f"scenes[{i}].timing.quantize_to"
+            ),
+            cut_style=pick(
+                t.cut_style, CUT_STYLES, "hard", f"scenes[{i}].timing.cut_style"
+            ),
             attack_s=max(0.0, float(t.attack_s)),
         )
-        archetype = pick(sc.archetype, ARCHETYPES, "one_word_centred",
-                         f"scenes[{i}].archetype")
+        archetype = pick(
+            sc.archetype, ARCHETYPES, "one_word_centred", f"scenes[{i}].archetype"
+        )
         shape = sc.shape
         if archetype == "shape_fill" and shape is None:
             shape = ShapeRef()
@@ -419,8 +425,12 @@ def repair(spec: TreatmentSpec) -> tuple[TreatmentSpec, list[str]]:
                 sc,
                 archetype=archetype,
                 motion=pick(sc.motion, MOTIONS, "fade", f"scenes[{i}].motion"),
-                persistence=pick(sc.persistence, PERSISTENCE, "clear_on_line",
-                                 f"scenes[{i}].persistence"),
+                persistence=pick(
+                    sc.persistence,
+                    PERSISTENCE,
+                    "clear_on_line",
+                    f"scenes[{i}].persistence",
+                ),
                 timing=t,
                 shape=shape,
             )
@@ -437,7 +447,9 @@ def repair(spec: TreatmentSpec) -> tuple[TreatmentSpec, list[str]]:
     )
 
 
-def coerce(obj: Mapping[str, Any] | TreatmentSpec | str) -> tuple[TreatmentSpec, list[str]]:
+def coerce(
+    obj: Mapping[str, Any] | TreatmentSpec | str,
+) -> tuple[TreatmentSpec, list[str]]:
     """Take whatever a caller or a model produced and return a renderable spec.
 
     Accepts a :class:`TreatmentSpec`, a mapping, or a JSON string — and repairs
@@ -492,7 +504,10 @@ def json_schema() -> dict[str, Any]:
                         "type": "object",
                         "additionalProperties": False,
                         "properties": {
-                            "bg": colour, "fg": colour, "accent": colour, "dim": colour
+                            "bg": colour,
+                            "fg": colour,
+                            "accent": colour,
+                            "dim": colour,
                         },
                     },
                     "typography": {
@@ -500,7 +515,11 @@ def json_schema() -> dict[str, Any]:
                         "additionalProperties": False,
                         "properties": {
                             "family": {"type": "string"},
-                            "weight": {"type": "integer", "minimum": 100, "maximum": 900},
+                            "weight": {
+                                "type": "integer",
+                                "minimum": 100,
+                                "maximum": 900,
+                            },
                             "case": {"type": "string", "enum": _enum(CASES)},
                             "tracking": {"type": "number"},
                             "max_line_chars": {"type": "integer", "minimum": 8},
@@ -536,7 +555,9 @@ def json_schema() -> dict[str, Any]:
                         "motion": {
                             "type": "string",
                             "enum": _enum(MOTIONS),
-                            "description": "; ".join(f"{k}: {v}" for k, v in MOTIONS.items()),
+                            "description": "; ".join(
+                                f"{k}: {v}" for k, v in MOTIONS.items()
+                            ),
                         },
                         "persistence": {
                             "type": "string",
@@ -556,7 +577,10 @@ def json_schema() -> dict[str, Any]:
                                         f"{k}: {v}" for k, v in QUANTIZE.items()
                                     ),
                                 },
-                                "cut_style": {"type": "string", "enum": _enum(CUT_STYLES)},
+                                "cut_style": {
+                                    "type": "string",
+                                    "enum": _enum(CUT_STYLES),
+                                },
                                 "attack_s": {"type": "number", "minimum": 0},
                                 "lead_s": {"type": "number"},
                             },

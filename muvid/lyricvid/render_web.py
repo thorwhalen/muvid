@@ -114,18 +114,27 @@ FRAME_PATTERN = "f%06d.png"
 
 #: H.264 High / yuv420p — the profile every platform accepts.
 VIDEO_CODEC_ARGS: tuple[str, ...] = (
-    "-c:v", "libx264",
-    "-preset", "slow",
-    "-pix_fmt", "yuv420p",
-    "-profile:v", "high",
-    "-level", "4.1",
+    "-c:v",
+    "libx264",
+    "-preset",
+    "slow",
+    "-pix_fmt",
+    "yuv420p",
+    "-profile:v",
+    "high",
+    "-level",
+    "4.1",
 )
 #: AAC, 48 kHz, stereo.
 AUDIO_CODEC_ARGS: tuple[str, ...] = (
-    "-c:a", "aac",
-    "-b:a", "320k",
-    "-ar", "48000",
-    "-ac", "2",
+    "-c:a",
+    "aac",
+    "-b:a",
+    "320k",
+    "-ar",
+    "48000",
+    "-ac",
+    "2",
 )
 
 _HEX = set("0123456789abcdefABCDEF")
@@ -204,7 +213,9 @@ def _cue_payload(cue: Cue) -> dict[str, Any]:
         "t_gone": cue.t_gone,
         "colour": _colour(cue.colour, what="cue.colour"),
         "dim_colour": (
-            None if cue.dim_colour is None else _colour(cue.dim_colour, what="cue.dim_colour")
+            None
+            if cue.dim_colour is None
+            else _colour(cue.dim_colour, what="cue.dim_colour")
         ),
         "dim_from": cue.dim_from,
         # per-word karaoke wipe window / concrete-page ignition, when the
@@ -565,19 +576,28 @@ def _encode(frames: Path, audio: Path, output: Path, *, fps: int, crf: int) -> N
     output.parent.mkdir(parents=True, exist_ok=True)
     run_ffmpeg(
         [
-            "-framerate", str(fps),
-            "-i", str(frames / FRAME_PATTERN),
-            "-i", str(audio),
-            "-map", "0:v:0",
-            "-map", "1:a:0",
+            "-framerate",
+            str(fps),
+            "-i",
+            str(frames / FRAME_PATTERN),
+            "-i",
+            str(audio),
+            "-map",
+            "0:v:0",
+            "-map",
+            "1:a:0",
             *VIDEO_CODEC_ARGS,
-            "-crf", str(crf),
-            "-g", str(fps * 2),
+            "-crf",
+            str(crf),
+            "-g",
+            str(fps * 2),
             *AUDIO_CODEC_ARGS,
-            "-movflags", "+faststart",
+            "-movflags",
+            "+faststart",
             # -use_editlist 0: keep ffmpeg from writing the elst boxes some
             # platforms (YouTube) trip on.
-            "-use_editlist", "0",
+            "-use_editlist",
+            "0",
             "-shortest",
             str(output),
         ]

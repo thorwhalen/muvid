@@ -67,9 +67,11 @@ class ConformanceReport:
         return not self.failures
 
     def summary(self) -> str:
-        lines = [f"subgenre {self.slug!r}: "
-                 f"{len(self.passed)} passed, {len(self.failures)} failed, "
-                 f"{len(self.skipped)} skipped"]
+        lines = [
+            f"subgenre {self.slug!r}: "
+            f"{len(self.passed)} passed, {len(self.failures)} failed, "
+            f"{len(self.skipped)} skipped"
+        ]
         lines += [f"  FAIL  {f}" for f in self.failures]
         lines += [f"  skip  {s}" for s in self.skipped]
         return "\n".join(lines)
@@ -124,9 +126,7 @@ def check_subgenre_conformance(
         report.passed.append("slug is well-formed")
 
     if not subgenre.description.strip():
-        report.failures.append(
-            "description is empty — it is what an agent chooses on"
-        )
+        report.failures.append("description is empty — it is what an agent chooses on")
     else:
         report.passed.append("description is non-empty")
 
@@ -165,7 +165,9 @@ def check_subgenre_conformance(
 
         fn = getattr(import_module(module_name), func_name)
     except Exception as exc:
-        report.failures.append(f"render target does not resolve: {type(exc).__name__}: {exc}")
+        report.failures.append(
+            f"render target does not resolve: {type(exc).__name__}: {exc}"
+        )
         return report
     if not callable(fn):
         report.failures.append(f"render target {subgenre.render!r} is not callable")
@@ -214,6 +216,8 @@ def check_subgenre_conformance(
         json.dumps(result.to_dict())
         report.passed.append("RenderResult.to_dict() is JSON-serialisable")
     except TypeError as exc:
-        report.failures.append(f"RenderResult.to_dict() is not JSON-serialisable: {exc}")
+        report.failures.append(
+            f"RenderResult.to_dict() is not JSON-serialisable: {exc}"
+        )
 
     return report

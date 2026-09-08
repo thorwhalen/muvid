@@ -192,9 +192,7 @@ def render(request: RenderRequest) -> RenderResult:
     request.workdir.mkdir(parents=True, exist_ok=True)
     request.output.parent.mkdir(parents=True, exist_ok=True)
 
-    result = backend(
-        scene, audio=audio, output=request.output, workdir=request.workdir
-    )
+    result = backend(scene, audio=audio, output=request.output, workdir=request.workdir)
 
     # Keep the treatment alongside the video: a lyric video you cannot re-derive
     # or hand-edit is an opaque artifact, which is the thing this design avoids.
@@ -211,7 +209,9 @@ def render(request: RenderRequest) -> RenderResult:
     }
     return RenderResult(
         output=result.output,
-        duration_s=result.duration_s if result.duration_s is not None else timed.duration,
+        duration_s=result.duration_s
+        if result.duration_s is not None
+        else timed.duration,
         artifacts={**dict(result.artifacts), "treatment": spec_path},
         meta=meta,
     )
