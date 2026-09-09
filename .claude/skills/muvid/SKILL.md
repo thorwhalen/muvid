@@ -1,9 +1,69 @@
 ---
 name: muvid
-description: Use when the user wants to make a music video from a song. Triggers on "make a music video", "turn this song into a video", "/muvid", or any work inside an muvid project folder (look for project.json with muvid schema_version). Walks the user through getting lyrics, aligning to audio, casting characters, picking environments, writing the script, and rendering shots.
+description: >-
+  Use when the user wants to make a music video from a song. Triggers on "make a
+  music video", "turn this song into a video", "/muvid", or any work inside a
+  muvid project folder (look for project.json with muvid schema_version). Drives
+  muvid's NARRATIVE, shot-by-shot pipeline: transcribing the lyrics off the
+  audio, aligning them, casting characters, establishing environments, writing
+  the script, rendering shots. Also the router to muvid's one-command surfaces —
+  song in, video out, no project folder: lyric video, karaoke, kinetic
+  typography, concrete poem, CALLIGRAM, audio visualizer, and assembling N phone
+  recordings of one gig. If the user has no audio file, muvid cannot make one —
+  see "muvid needs a song" below.
 ---
 
 # muvid — guide a user from song to music video
+
+## First: which half of muvid does this user want?
+
+There are two different things in this package and they share no pipeline.
+Choosing wrong is expensive in one direction — `muvid init` is the first command
+of the pipeline below, and a user who wanted their lyrics animated has just been
+walked into transcription, casting, a script and a fal bill.
+
+**One command, a song in, a finished video out.** No project folder, no
+characters, no script, no per-shot renders. Route here whenever the ask is about
+the song's own surface:
+
+| the user asks for | go to |
+|---|---|
+| a lyric video, karaoke, kinetic typography, "put the words on screen" | the `muvid-lyric-video` skill |
+| a concrete poem, a **calligram**, shaped text, a poem turned into a video | the same skill — its `calligram` and `shape_fill` archetypes |
+| an audio visualizer, or a cover held over the song | the `muvid-visualize` skill |
+| cutting N phone recordings of one gig into one video | `muvid-choose-footage-segments`, then `muvid-score-footage` |
+
+The first two rows are one **subgenre plugin** — `python -m muvid.lyricvid
+subgenres` lists the installed ones (today, `lyric-video`) and the whole family
+renders through `python -m muvid.lyricvid render`. The other two are separate
+parts of the package with their own entry points; their skills say so.
+
+**The eight-stage pipeline below** is the other thing: a **narrative,
+shot-by-shot** music video — characters on screen, environments, a written
+script, one AI render per shot. Reach for it when the user wants *scenes*. It
+needs API keys and it spends real money.
+
+## muvid needs a song — it cannot make one
+
+Audio is the hard precondition at both doors: the pipeline starts at
+`muvid init <root> --song <audio>` and every stage after it is measured against
+that file, and `audio` is the only required input to a subgenre. Nothing in
+muvid synthesises one.
+
+So when the user brings a poem, a set of lyrics, or just a subject, the song
+comes first, from **`arioso`** (`$PP/t/arioso`) — a Python facade over 14 AI
+music backends, library only, no CLI. Four of them sing lyrics you supply
+(`sunoapi`, `elevenlabs`, `udio`, `yue`); on the other ten `lyrics=` is warned
+about and dropped, so the poem does not reach the song at all. Passing `lyrics=`
+to Suno also switches it into custom mode, where `title` is required but only
+written when you pass it — always pass `title=` alongside `lyrics=`, and
+`genre=` for a usable style. On the other ten backends `lyrics=` is dropped
+**silently**. This **spends money** (a subscription, with no per-call price and
+no cost gate in arioso); say so and get agreement before you call it. Load the
+**`arioso`** skill for the full surface; the shortest working snippet is in the
+`muvid-lyric-video` skill under "You need a song first".
+
+## Everything below is the narrative pipeline
 
 You are operating an `muvid` project: a folder containing a `project.json`,
 a song under `song/`, and progressively-filled-in artifacts under

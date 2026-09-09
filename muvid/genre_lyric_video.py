@@ -44,6 +44,7 @@ _ARCHETYPE_TITLES: dict[str, str] = {
     "stacked_lines": "Stacked lines",
     "karaoke_wipe": "Karaoke wipe",
     "concrete_page": "Concrete page",
+    "calligram": "Calligram (slanting streaks)",
     "shape_fill": "Words in a shape",
     "text_on_path": "Text on a path",
     "scatter": "Scatter",

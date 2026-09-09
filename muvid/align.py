@@ -38,11 +38,17 @@ from typing import Iterable, Optional
 from muvid.lyrics import LyricsDoc, words_from_transcript
 
 
-_WORD_TOKEN_RE = re.compile(r"[a-z0-9']+")
+#: Unicode-aware word boundaries. ``[^\W_]`` is "word character but not
+#: underscore", i.e. any letter or digit in ANY script — an ASCII-only class
+#: here silently shredded every accented language: 'même' tokenised as
+#: ('m', 'me'), 'cabrés' as ('cabr', 's'), and a one-letter word like 'ô' or
+#: 'à' vanished entirely. Kept character-for-character in sync with
+#: ``muvid.lyricvid.timed_text._LYRIC_TOKEN_RE``.
+_WORD_TOKEN_RE = re.compile(r"(?:[^\W_]|['’])+")
 
 
 def _normalize(token: str) -> str:
-    return token.lower().strip("'-")
+    return token.lower().strip("'’-")
 
 
 def _tokenize(text: str) -> list[str]:

@@ -49,12 +49,58 @@ third-party plugin and a support request.
 matches the newer `music-visualizer` rather than `music_video`, and it is a persisted
 path segment and a live connector contract value from the day it ships.
 
+### One level down, the archetypes are a registry too — `calligram` is the newest
+
+Inside part 4, `muvid.lyricvid.scene.register_archetype` is the open-closed seam, the
+same house idiom as `register_visual` / `register_aligner` /
+`register_selection_strategy`. A new look is a function plus an entry in
+`muvid.lyricvid.spec.ARCHETYPES` — the closed vocabulary a model is allowed to choose
+from — never a branch and never a fork. `python -m muvid.lyricvid vocabulary` prints the
+list off the code, so it cannot drift from what the renderer supports — read it there
+rather than pinning a count here. At the time of writing: `one_word_centred`,
+`stacked_lines`, `karaoke_wipe`, `concrete_page`, `calligram`, `shape_fill`,
+`text_on_path`, `scatter`.
+
+**`calligram`** turns each lyric line into a **slanting streak of upright letters**, one
+letter per grid slot, the streaks fanning open as they descend — the Apollinaire *Il
+pleut* construction, where the run of the text itself makes the picture. It exists
+because the archetype that looks like it should already cover that does not:
+`concrete_page` lays each line out as a **centred horizontal row** and cannot slant,
+indent or shape anything, and `muvid.lyrics.parse_lyrics_md` strips leading whitespace, so
+a hand-drawn ASCII layout pasted into `lyrics.md` is flattened twice, with no signal
+either time, and comes out as centred rows (muvid#109). (`text_on_path` is not a third
+option either — it is a hardcoded sine arc and ignores `shape` entirely.) All of
+`calligram`'s geometry is in row-pitch units and fitted to the frame last, so the shape is
+identical at any resolution, and its `slants` / `head_offsets` are shape parameters rather
+than coordinates, which is what keeps it inside the skill's no-coordinates rule. The art
+direction is `muvid-lyric-video`'s; this is only the registry fact.
+
+**A general text/typography animation layer does not belong here.** muvid's archetypes
+are lyric-video *layouts* computed from measured word times — a narrow closed vocabulary,
+deliberately. Glyphs as first-class animatable objects (arbitrary easing, per-glyph
+transforms, a scene graph over text, of which this fan is one preset) is `an`'s to build
+— the same package `renderers/animation.py` already bridges to — and is proposed as
+**thorwhalen/an#155**. If that lands, `calligram` should collapse into a thin caller of
+it rather than stand as a second implementation; do not grow a second layout family
+here.
+
+**Known gap (muvid#108) — `concrete_page` + `persistence: "dim"` is a silent no-op under
+the default renderer.** That pairing signals the dim→bright handover through
+`Cue.extra["ignite_at"]`, which only `render_web` reads; the ASS backend implements only
+the opposite ramp (`dim_from`, bright→dim). So under `ass` the page comes up bright at
+frame 1 and never ignites — no error, no warning, which is the plausible-artifact shape
+the rest of this file keeps being about. `calligram` is unaffected: it emits the same
+handover as an overlap of two cues, which both backends already understand. The
+workaround is `--renderer web`; the fix is teaching the ASS compiler `ignite_at`.
+
 ## Start here (AI-first)
 
 Skills in `.claude/skills/` (there are no agents in this repo):
 
 - [`muvid`](skills/muvid/SKILL.md) — drives **part 3**, the eight-stage narrative
-  pipeline, interactively.
+  pipeline, interactively. It is also the **router**: it opens by asking which half of
+  muvid the user wants, so a lyric-video or calligram request does not get walked into
+  `muvid init`, and it says where a song comes from when the user has none.
 - [`muvid-visualize`](skills/muvid-visualize/SKILL.md) — **part 1**: render/tune a
   visualizer, add a visual, verify a render.
 - [`muvid-choose-footage-segments`](skills/muvid-choose-footage-segments/SKILL.md) —
@@ -63,12 +109,47 @@ Skills in `.claude/skills/` (there are no agents in this repo):
 - [`muvid-score-footage`](skills/muvid-score-footage/SKILL.md) — **part 2**: the
   per-metric scoring recipes and the licence boundary.
 - [`muvid-lyric-video`](skills/muvid-lyric-video/SKILL.md) — **part 4**: choosing an
-  archetype, reading `timing_measured` before trusting word sync, and the rule that no
-  agent ever writes a coordinate or a timestamp. Unlike the others this one is a
+  archetype (including `calligram`, for a concrete poem whose shape is the point), reading
+  `timing_measured` before trusting word sync, and the rule that no agent ever writes a
+  coordinate or a timestamp. Unlike the others this one is a
   **shipped** skill: the real files live in `muvid/data/skills/` so they reach a wheel,
   and `.claude/skills/muvid-lyric-video` is a symlink to them.
 
 The rest of this file is the contract those skills rely on.
+
+## Capabilities muvid does not have
+
+muvid renders video out of inputs it is handed. Three things an agent working here
+will reach for belong to sibling packages, and inlining any of them is the wrong
+move — they are what the *caller* runs, not what muvid imports. None is a declared
+dependency, in any extra, and none should become one.
+
+| you need | package | its skill |
+|---|---|---|
+| **a song** — the user has a poem, lyrics or an idea, and no audio | [`arioso`](https://github.com/thorwhalen/arioso) (`$PP/t/arioso`) | none shipped; the working snippet is in `muvid-lyric-video`, under "You need a song first" |
+| **the geometry of a printed page** — per-word bounding boxes off a scan | [`ocracy`](https://github.com/thorwhalen/ocracy) (`$PP/t/ocracy`) | ships at `ocracy/data/skills/ocracy/`, so it may not appear in an enabled-skill list |
+| **publishing the result to YouTube** | [`yb`](https://github.com/thorwhalen/yb) | ships at `yb/data/skills/music2video/`, ditto — reached from `muvid-visualize` |
+
+- **`arioso`** is a facade over 14 AI music-generation backends, Python library only —
+  there is no CLI. `audio` is muvid's one hard precondition at both doors (the narrative
+  pipeline's `init`, and every subgenre's one required input) and muvid cannot satisfy
+  it. Four backends sing lyrics you supply — `sunoapi`, `elevenlabs`, `udio`, `yue`; on
+  the other ten `lyrics=` is dropped **silently**, with no warning, so a poem handed to `musicgen`
+  comes back as a tune with none of the poem in it. Passing `lyrics=` to Suno also
+  switches it into custom mode, where the API documents `title` and `style` as required
+  while the adapter writes `title` only when one was passed — so pass `title=` and
+  `genre=` alongside `lyrics=`. It spends money and has **no `estimate()` and no cost
+  gate**, so the conjunctive-gate rule below does not reach it: quote the call yourself
+  before making it.
+- **`ocracy`** is a facade over ~17 OCR engines (default `tesseract`) returning a
+  normalized `OcrResult` with per-word boxes and confidences — which is how you measure a
+  real printed page into `calligram`'s `slants` / `head_offsets`, or threshold a scan into
+  a `shape_fill` `mask_image`. Two traps, both of the reports-nothing-and-looks-fine kind
+  this file keeps warning about: each backend emits exactly **one** granularity, so
+  `.words` is empty on `easyocr`/`rapidocr`/`paddleocr`/`ocrmac` and `.lines` is empty on
+  `tesseract`; and its ledger's `bounding_boxes` flag **over-reports** — the
+  `claude-vision`, `mathpix` and `mistral-ocr` adapters all end in `OcrResult.from_text()`
+  and return `blocks == []`.
 
 ## Part 2 — the footage genre (where the work is)
 
