@@ -104,8 +104,12 @@ def validate_treatment(treatment: Mapping[str, Any] | str) -> dict[str, Any]:
     raw = spec_mod.TreatmentSpec.from_dict(treatment)
     errors = spec_mod.validate(raw)
     repaired, notes = spec_mod.repair(raw)
-    return {"valid": not errors, "errors": errors, "repairs": notes,
-            "treatment": repaired.to_dict()}
+    return {
+        "valid": not errors,
+        "errors": errors,
+        "repairs": notes,
+        "treatment": repaired.to_dict(),
+    }
 
 
 def render_choreo(
@@ -136,14 +140,24 @@ def render_choreo(
     params = {
         k: v
         for k, v in (
-            ("treatment", treatment), ("archetype", archetype), ("seed", seed),
-            ("beat_source", beat_source), ("strict", strict),
-            ("width", width), ("height", height), ("fps", fps),
+            ("treatment", treatment),
+            ("archetype", archetype),
+            ("seed", seed),
+            ("beat_source", beat_source),
+            ("strict", strict),
+            ("width", width),
+            ("height", height),
+            ("fps", fps),
         )
         if v is not None
     }
     result = _render(
-        RenderRequest(subgenre="choreo", inputs=inputs, params=params,
-                      workdir=wd, output=Path(output))
+        RenderRequest(
+            subgenre="choreo",
+            inputs=inputs,
+            params=params,
+            workdir=wd,
+            output=Path(output),
+        )
     )
     return result.to_dict()

@@ -259,7 +259,7 @@ def fischinger(
             y = 0.05 + (r + 0.5) * cell_h
         elif arrangement == "ring":
             ang = 2 * math.pi * (i % cols) / cols
-            rad = (0.18 + 0.1 * band_i)
+            rad = 0.18 + 0.1 * band_i
             x = 0.5 + rad * math.cos(ang) / canvas.aspect
             y = 0.5 + rad * math.sin(ang)
         elif arrangement == "rows":
@@ -272,10 +272,18 @@ def fischinger(
         life = hold * (0.5 + 0.5 * e.strength)
         out.append(
             Obj(
-                t_born=e.t, t_die=e.t + life, kind=shape.get(e.band, "diamond"),
-                x=x, y=y, size=size, colour=_band_colour(direction, e.band),
-                motion="pulse", band=e.band, strength=e.strength,
-                release_s=0.35 * life, layer=band_i,
+                t_born=e.t,
+                t_die=e.t + life,
+                kind=shape.get(e.band, "diamond"),
+                x=x,
+                y=y,
+                size=size,
+                colour=_band_colour(direction, e.band),
+                motion="pulse",
+                band=e.band,
+                strength=e.strength,
+                release_s=0.35 * life,
+                layer=band_i,
                 seed=int(unit_hash(seed, i, 3) * 1e9),
             )
         )
@@ -307,15 +315,28 @@ def star_guitar(
     ground_h = 1.0 - horizon
     out: list[Obj] = [
         Obj(  # the ground: a rect covering everything under the horizon
-            t_born=section.start, t_die=section.end, kind="rect",
-            x=0.5, y=horizon + ground_h / 2, size=ground_h,
-            aspect=canvas.aspect / ground_h, colour=_darken(pal.bg2, 0.55),
-            motion="hold", layer=-2,
+            t_born=section.start,
+            t_die=section.end,
+            kind="rect",
+            x=0.5,
+            y=horizon + ground_h / 2,
+            size=ground_h,
+            aspect=canvas.aspect / ground_h,
+            colour=_darken(pal.bg2, 0.55),
+            motion="hold",
+            layer=-2,
         ),
         Obj(  # the horizon line
-            t_born=section.start, t_die=section.end, kind="line",
-            x=0.5, y=horizon, size=canvas.aspect, aspect=canvas.aspect / 0.004,
-            colour=pal.fg, motion="hold", layer=-1,
+            t_born=section.start,
+            t_die=section.end,
+            kind="line",
+            x=0.5,
+            y=horizon,
+            size=canvas.aspect,
+            aspect=canvas.aspect / 0.004,
+            colour=pal.fg,
+            motion="hold",
+            layer=-1,
         ),
     ]
     for i, e in enumerate(_kept(events, direction)):
@@ -323,25 +344,46 @@ def star_guitar(
         if e.band == "low":
             height = horizon * (0.25 + 0.5 * e.strength)
             width_h = 0.012 + 0.01 * e.strength  # in height units
-            obj = dict(kind="rect", y=horizon - height / 2, size=height,
-                       aspect=width_h / height, layer=2)
+            obj = dict(
+                kind="rect",
+                y=horizon - height / 2,
+                size=height,
+                aspect=width_h / height,
+                layer=2,
+            )
         elif e.band == "mid":
             height = horizon * (0.12 + 0.38 * e.strength)
             width_h = 0.06 + 0.14 * h1
-            obj = dict(kind="rect", y=horizon - height / 2, size=height,
-                       aspect=width_h / height, layer=1)
+            obj = dict(
+                kind="rect",
+                y=horizon - height / 2,
+                size=height,
+                aspect=width_h / height,
+                layer=1,
+            )
         else:
             length = 0.10 + 0.18 * e.strength
-            obj = dict(kind="line", y=horizon - 0.18 - 0.35 * h1 * horizon,
-                       size=length, aspect=length / 0.004, angle=(h1 - 0.5) * 10.0,
-                       layer=3)
+            obj = dict(
+                kind="line",
+                y=horizon - 0.18 - 0.35 * h1 * horizon,
+                size=length,
+                aspect=length / 0.004,
+                angle=(h1 - 0.5) * 10.0,
+                layer=3,
+            )
         width_frac = (obj["size"] * obj["aspect"]) / canvas.aspect  # in width fractions
         x0 = 1.0 + width_frac / 2
         out.append(
             Obj(
-                t_born=e.t, t_die=e.t + (1.0 + width_frac) / speed,
-                x=x0, colour=_band_colour(direction, e.band), motion="scroll",
-                vx=-speed, band=e.band, strength=e.strength, **obj,
+                t_born=e.t,
+                t_die=e.t + (1.0 + width_frac) / speed,
+                x=x0,
+                colour=_band_colour(direction, e.band),
+                motion="scroll",
+                vx=-speed,
+                band=e.band,
+                strength=e.strength,
+                **obj,
             )
         )
     return out
@@ -370,17 +412,30 @@ def mclaren(
         h2 = unit_hash(seed, section.index, i, 2)
         h3 = unit_hash(seed, section.index, i, 3)
         if e.band == "low":
-            length, thick, angle = 0.08 + 0.12 * e.strength, 0.02 + 0.02 * e.strength, h3 * 180
+            length, thick, angle = (
+                0.08 + 0.12 * e.strength,
+                0.02 + 0.02 * e.strength,
+                h3 * 180,
+            )
         elif e.band == "mid":
             length, thick, angle = 0.12 + 0.22 * e.strength, 0.008, h3 * 180
         else:
             length, thick, angle = 0.25 + 0.4 * e.strength, 0.003, 90 + (h3 - 0.5) * 30
         out.append(
             Obj(
-                t_born=e.t, t_die=e.t + life * (0.5 + 0.5 * e.strength), kind="line",
-                x=0.08 + 0.84 * h1, y=0.08 + 0.84 * h2, size=length, aspect=length / thick,
-                angle=angle, colour=direction.palette.fg, motion="flicker",
-                band=e.band, strength=e.strength, seed=int(h1 * 1e9),
+                t_born=e.t,
+                t_die=e.t + life * (0.5 + 0.5 * e.strength),
+                kind="line",
+                x=0.08 + 0.84 * h1,
+                y=0.08 + 0.84 * h2,
+                size=length,
+                aspect=length / thick,
+                angle=angle,
+                colour=direction.palette.fg,
+                motion="flicker",
+                band=e.band,
+                strength=e.strength,
+                seed=int(h1 * 1e9),
             )
         )
     return out
@@ -403,28 +458,42 @@ def swarm(
     origin (``low`` from the bottom upward, ``high`` from the top downward,
     ``mid`` from the centre outward); each decelerates to rest over its life.
     """
-    per_event = _param(params, "swarm", "particles") * spec_mod.DENSITY_FACTOR.get(direction.density, 1.0)
+    per_event = _param(params, "swarm", "particles") * spec_mod.DENSITY_FACTOR.get(
+        direction.density, 1.0
+    )
     life_s = _param(params, "swarm", "life_s")
-    origins = {"low": (0.5, 0.88, -math.pi, 0.0), "high": (0.5, 0.12, 0.0, math.pi),
-               "mid": (0.5, 0.5, 0.0, 2 * math.pi)}
+    origins = {
+        "low": (0.5, 0.88, -math.pi, 0.0),
+        "high": (0.5, 0.12, 0.0, math.pi),
+        "mid": (0.5, 0.5, 0.0, 2 * math.pi),
+    }
     out: list[Obj] = []
     for i, e in enumerate(_kept(events, direction)):
         ox, oy, a0, a1 = origins.get(e.band, origins["mid"])
         n = max(1, int(round(per_event * (0.3 + 0.7 * e.strength))))
         for j in range(n):
             ang = a0 + (a1 - a0) * unit_hash(seed, section.index, i, j, 1)
-            spd = (0.12 + 0.5 * e.strength) * (0.5 + unit_hash(seed, section.index, i, j, 2))
+            spd = (0.12 + 0.5 * e.strength) * (
+                0.5 + unit_hash(seed, section.index, i, j, 2)
+            )
             hs = unit_hash(seed, section.index, i, j, 3)
             life = life_s * (0.6 + 0.4 * hs)
             out.append(
                 Obj(
-                    t_born=e.t, t_die=e.t + life, kind="circle",
+                    t_born=e.t,
+                    t_die=e.t + life,
+                    kind="circle",
                     x=ox + (unit_hash(seed, section.index, i, j, 4) - 0.5) * 0.2,
-                    y=oy, size=(0.008 + 0.03 * e.strength) * (0.5 + hs),
-                    colour=_band_colour(direction, e.band), motion="drift",
-                    vx=spd * math.cos(ang) / canvas.aspect, vy=spd * math.sin(ang),
-                    band=e.band, strength=e.strength,
-                    attack_s=0.05, release_s=0.5 * life,
+                    y=oy,
+                    size=(0.008 + 0.03 * e.strength) * (0.5 + hs),
+                    colour=_band_colour(direction, e.band),
+                    motion="drift",
+                    vx=spd * math.cos(ang) / canvas.aspect,
+                    vy=spd * math.sin(ang),
+                    band=e.band,
+                    strength=e.strength,
+                    attack_s=0.05,
+                    release_s=0.5 * life,
                 )
             )
     return out
@@ -437,7 +506,7 @@ def swarm(
 
 def _rgb(hex_colour: str) -> tuple[float, float, float]:
     h = hex_colour.lstrip("#")
-    return tuple(int(h[i:i + 2], 16) / 255.0 for i in (0, 2, 4))  # type: ignore[return-value]
+    return tuple(int(h[i : i + 2], 16) / 255.0 for i in (0, 2, 4))  # type: ignore[return-value]
 
 
 def _hex(rgb: tuple[float, float, float]) -> str:
@@ -463,13 +532,20 @@ def _sky(direction: spec_mod.Direction, section: Section, n_sections: int) -> Ba
     turns = section.index / max(1, n_sections)
     top = _rotate_hue(direction.palette.bg2, turns, sat=0.55)
     bottom = _rotate_hue(direction.palette.bg2, turns + 0.08, sat=0.35)
-    return Backdrop(start=section.start, end=section.end, kind="gradient", top=top, bottom=bottom)
+    return Backdrop(
+        start=section.start, end=section.end, kind="gradient", top=top, bottom=bottom
+    )
 
 
 def _backdrop(direction: spec_mod.Direction, section: Section) -> Backdrop:
     pal = direction.palette
-    return Backdrop(start=section.start, end=section.end, kind=direction.background,
-                    top=pal.bg, bottom=pal.bg2 if direction.background == "gradient" else pal.bg)
+    return Backdrop(
+        start=section.start,
+        end=section.end,
+        kind=direction.background,
+        top=pal.bg,
+        bottom=pal.bg2 if direction.background == "gradient" else pal.bg,
+    )
 
 
 # --------------------------------------------------------------------------
@@ -477,7 +553,9 @@ def _backdrop(direction: spec_mod.Direction, section: Section) -> Backdrop:
 # --------------------------------------------------------------------------
 
 
-def _scene_for(section: Section, scenes: Sequence[spec_mod.Scene]) -> tuple[spec_mod.Scene, bool]:
+def _scene_for(
+    section: Section, scenes: Sequence[spec_mod.Scene]
+) -> tuple[spec_mod.Scene, bool]:
     """The scene that claims ``section``; ``(scene, uncovered)``."""
     for sc in scenes:
         if section.label in sc.applies_to or str(section.index) in sc.applies_to:
@@ -527,12 +605,20 @@ def compile_scene(
         used.append(sc.archetype)
         events = analysis.events_in(section.start, section.end)
         objects.extend(
-            fn(events, section=section, analysis=analysis, direction=treatment.direction,
-               params=sc.params, canvas=canvas, seed=seed)
+            fn(
+                events,
+                section=section,
+                analysis=analysis,
+                direction=treatment.direction,
+                params=sc.params,
+                canvas=canvas,
+                seed=seed,
+            )
         )
         backdrops.append(
             _sky(treatment.direction, section, len(sections))
-            if sc.archetype == "star_guitar" else _backdrop(treatment.direction, section)
+            if sc.archetype == "star_guitar"
+            else _backdrop(treatment.direction, section)
         )
         if len(objects) > MAX_OBJECTS:
             raise ValueError(
@@ -550,6 +636,9 @@ def compile_scene(
     if uncovered:
         meta["uncovered_sections"] = uncovered
     return ChoreoScene(
-        canvas=canvas, duration=analysis.duration,
-        backdrops=tuple(backdrops), objects=tuple(objects), meta=meta,
+        canvas=canvas,
+        duration=analysis.duration,
+        backdrops=tuple(backdrops),
+        objects=tuple(objects),
+        meta=meta,
     )

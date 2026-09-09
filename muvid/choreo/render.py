@@ -82,7 +82,7 @@ class RenderedVideo:
 
 def _rgb(hex_colour: str) -> np.ndarray:
     h = hex_colour.lstrip("#")
-    return np.array([int(h[i:i + 2], 16) for i in (0, 2, 4)], dtype=np.float32)
+    return np.array([int(h[i : i + 2], 16) for i in (0, 2, 4)], dtype=np.float32)
 
 
 def backdrop_image(bd: Backdrop, width: int, height: int) -> np.ndarray:
@@ -136,7 +136,7 @@ def draw_circle(frame, X, Y, *, cx, cy, r, colour, alpha, inner=0.0):
     cov = np.clip(r + 0.5 - d, 0.0, 1.0)
     if inner > 0:
         cov = cov - np.clip(inner + 0.5 - d, 0.0, 1.0)
-    _blend(frame[box[2]:box[3], box[0]:box[1]], cov * alpha, colour)
+    _blend(frame[box[2] : box[3], box[0] : box[1]], cov * alpha, colour)
 
 
 def draw_rect(frame, X, Y, *, cx, cy, hw, hh, colour, alpha):
@@ -144,8 +144,10 @@ def draw_rect(frame, X, Y, *, cx, cy, hw, hh, colour, alpha):
     if box is None or hw <= 0 or hh <= 0:
         return
     dx, dy = _grid(box, X, Y, cx, cy)
-    cov = np.clip(hw + 0.5 - np.abs(dx), 0.0, 1.0) * np.clip(hh + 0.5 - np.abs(dy), 0.0, 1.0)
-    _blend(frame[box[2]:box[3], box[0]:box[1]], cov * alpha, colour)
+    cov = np.clip(hw + 0.5 - np.abs(dx), 0.0, 1.0) * np.clip(
+        hh + 0.5 - np.abs(dy), 0.0, 1.0
+    )
+    _blend(frame[box[2] : box[3], box[0] : box[1]], cov * alpha, colour)
 
 
 def draw_diamond(frame, X, Y, *, cx, cy, r, colour, alpha):
@@ -155,7 +157,7 @@ def draw_diamond(frame, X, Y, *, cx, cy, r, colour, alpha):
     dx, dy = _grid(box, X, Y, cx, cy)
     # L1 distance to the edge, scaled to ~pixels for a 1-px soft edge
     cov = np.clip((r - (np.abs(dx) + np.abs(dy))) / math.sqrt(2) + 0.5, 0.0, 1.0)
-    _blend(frame[box[2]:box[3], box[0]:box[1]], cov * alpha, colour)
+    _blend(frame[box[2] : box[3], box[0] : box[1]], cov * alpha, colour)
 
 
 def draw_triangle(frame, X, Y, *, cx, cy, hw, hh, colour, alpha):
@@ -164,13 +166,13 @@ def draw_triangle(frame, X, Y, *, cx, cy, hw, hh, colour, alpha):
     if box is None or hw <= 0 or hh <= 0:
         return
     dx, dy = _grid(box, X, Y, cx, cy)
-    base = hh - dy                                  # positive inside, above the base
+    base = hh - dy  # positive inside, above the base
     # the two slanted edges: signed distance to the line through apex and base corner
     n = math.hypot(2 * hh, hw)
-    left = (2 * hh * (dx + hw) - hw * (dy + hh)) / n   # >0 to the right of the left edge
+    left = (2 * hh * (dx + hw) - hw * (dy + hh)) / n  # >0 to the right of the left edge
     right = (2 * hh * (hw - dx) - hw * (dy + hh)) / n
     cov = np.clip(np.minimum(np.minimum(base, left), right) + 0.5, 0.0, 1.0)
-    _blend(frame[box[2]:box[3], box[0]:box[1]], cov * alpha, colour)
+    _blend(frame[box[2] : box[3], box[0] : box[1]], cov * alpha, colour)
 
 
 def draw_line(frame, X, Y, *, cx, cy, length, thickness, angle_deg, colour, alpha):
@@ -178,7 +180,9 @@ def draw_line(frame, X, Y, *, cx, cy, length, thickness, angle_deg, colour, alph
     ux, uy = math.cos(math.radians(angle_deg)), math.sin(math.radians(angle_deg))
     hl, ht = length / 2, thickness / 2
     ext = hl * max(abs(ux), abs(uy)) + ht + 1
-    box = _box(cx, cy, hl * abs(ux) + ht, hl * abs(uy) + ht, frame.shape[1], frame.shape[0])
+    box = _box(
+        cx, cy, hl * abs(ux) + ht, hl * abs(uy) + ht, frame.shape[1], frame.shape[0]
+    )
     if box is None or length <= 0 or thickness <= 0 or ext <= 0:
         return
     dx, dy = _grid(box, X, Y, cx, cy)
@@ -186,7 +190,7 @@ def draw_line(frame, X, Y, *, cx, cy, length, thickness, angle_deg, colour, alph
     px, py = dx - along * ux, dy - along * uy
     d = np.sqrt(px * px + py * py)
     cov = np.clip(ht + 0.5 - d, 0.0, 1.0)
-    _blend(frame[box[2]:box[3], box[0]:box[1]], cov * alpha, colour)
+    _blend(frame[box[2] : box[3], box[0] : box[1]], cov * alpha, colour)
 
 
 # --------------------------------------------------------------------------
@@ -228,8 +232,10 @@ class Painter:
         self.W, self.H = scene.canvas.width, scene.canvas.height
         self.X = np.arange(self.W, dtype=np.float32) + 0.5
         self.Y = np.arange(self.H, dtype=np.float32) + 0.5
-        self._backdrops = [(bd.start, bd.end, backdrop_image(bd, self.W, self.H))
-                           for bd in scene.backdrops]
+        self._backdrops = [
+            (bd.start, bd.end, backdrop_image(bd, self.W, self.H))
+            for bd in scene.backdrops
+        ]
         self._fallback = np.zeros((self.H, self.W, 3), dtype=np.uint8)
         self._colours: dict[str, np.ndarray] = {}
         self._objects = sorted(scene.objects, key=lambda o: o.t_born)
@@ -264,22 +270,62 @@ class Painter:
         cx, cy, s = x * self.W, y * self.H, size * self.H
         colour = self._colour(o.colour)
         if o.kind == "circle":
-            draw_circle(frame, self.X, self.Y, cx=cx, cy=cy, r=s / 2, colour=colour, alpha=alpha)
+            draw_circle(
+                frame, self.X, self.Y, cx=cx, cy=cy, r=s / 2, colour=colour, alpha=alpha
+            )
         elif o.kind == "ring":
-            draw_circle(frame, self.X, self.Y, cx=cx, cy=cy, r=s / 2, colour=colour,
-                        alpha=alpha, inner=s * 0.35)
+            draw_circle(
+                frame,
+                self.X,
+                self.Y,
+                cx=cx,
+                cy=cy,
+                r=s / 2,
+                colour=colour,
+                alpha=alpha,
+                inner=s * 0.35,
+            )
         elif o.kind == "rect":
-            draw_rect(frame, self.X, self.Y, cx=cx, cy=cy, hw=s * o.aspect / 2, hh=s / 2,
-                      colour=colour, alpha=alpha)
+            draw_rect(
+                frame,
+                self.X,
+                self.Y,
+                cx=cx,
+                cy=cy,
+                hw=s * o.aspect / 2,
+                hh=s / 2,
+                colour=colour,
+                alpha=alpha,
+            )
         elif o.kind == "triangle":
-            draw_triangle(frame, self.X, self.Y, cx=cx, cy=cy, hw=s * o.aspect / 2, hh=s / 2,
-                          colour=colour, alpha=alpha)
+            draw_triangle(
+                frame,
+                self.X,
+                self.Y,
+                cx=cx,
+                cy=cy,
+                hw=s * o.aspect / 2,
+                hh=s / 2,
+                colour=colour,
+                alpha=alpha,
+            )
         elif o.kind == "diamond":
-            draw_diamond(frame, self.X, self.Y, cx=cx, cy=cy, r=s / 2, colour=colour, alpha=alpha)
+            draw_diamond(
+                frame, self.X, self.Y, cx=cx, cy=cy, r=s / 2, colour=colour, alpha=alpha
+            )
         elif o.kind == "line":
-            draw_line(frame, self.X, self.Y, cx=cx, cy=cy, length=s,
-                      thickness=max(1.0, s / max(1e-6, o.aspect)), angle_deg=o.angle,
-                      colour=colour, alpha=alpha)
+            draw_line(
+                frame,
+                self.X,
+                self.Y,
+                cx=cx,
+                cy=cy,
+                length=s,
+                thickness=max(1.0, s / max(1e-6, o.aspect)),
+                angle_deg=o.angle,
+                colour=colour,
+                alpha=alpha,
+            )
 
     def frame(self, k: int) -> np.ndarray:
         """Frame ``k`` (at ``k / fps`` seconds) as a fresh ``uint8`` HxWx3 array."""
@@ -328,20 +374,40 @@ def encode_command(
     """The ffmpeg command that reads raw frames on stdin and writes the mp4."""
     c = scene.canvas
     return [
-        "ffmpeg", "-hide_banner", "-loglevel", "error", "-y",
-        "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{c.width}x{c.height}",
-        "-r", str(c.fps), "-i", "pipe:0",
-        "-i", str(audio),
-        "-map", "0:v", "-map", "1:a",
-        *_video_encode_args(crf=crf, preset=preset, fps=c.fps,
-                            gop=_gop_frames(c.fps, gop_seconds)),
+        "ffmpeg",
+        "-hide_banner",
+        "-loglevel",
+        "error",
+        "-y",
+        "-f",
+        "rawvideo",
+        "-pix_fmt",
+        "rgb24",
+        "-s",
+        f"{c.width}x{c.height}",
+        "-r",
+        str(c.fps),
+        "-i",
+        "pipe:0",
+        "-i",
+        str(audio),
+        "-map",
+        "0:v",
+        "-map",
+        "1:a",
+        *_video_encode_args(
+            crf=crf, preset=preset, fps=c.fps, gop=_gop_frames(c.fps, gop_seconds)
+        ),
         *_audio_encode_args(audio_bitrate),
-        "-t", f"{scene.duration:.3f}", "-shortest",
+        "-t",
+        f"{scene.duration:.3f}",
+        "-shortest",
         *_container_args(),
         # The manifest promises video/mp4 and the contract promises to write
         # EXACTLY request.output — whatever it is called. Name the muxer rather
         # than letting ffmpeg guess it from an extension the host may not use.
-        "-f", "mp4",
+        "-f",
+        "mp4",
         str(output),
     ]
 
@@ -379,8 +445,9 @@ def render_scene(
     total = n_frames(scene)
     painter = Painter(scene)
     with log.open("wb") as log_f:
-        proc = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.DEVNULL,
-                                stderr=log_f)
+        proc = subprocess.Popen(
+            cmd, stdin=subprocess.PIPE, stdout=subprocess.DEVNULL, stderr=log_f
+        )
         assert proc.stdin is not None
         try:
             for k in range(total):
@@ -398,7 +465,11 @@ def render_scene(
                 proc.stdin.close()
             except BrokenPipeError:
                 pass
-            remaining = None if timeout is None else max(1.0, timeout - (time.monotonic() - started))
+            remaining = (
+                None
+                if timeout is None
+                else max(1.0, timeout - (time.monotonic() - started))
+            )
             try:
                 proc.wait(timeout=remaining)
             except subprocess.TimeoutExpired:
@@ -416,6 +487,8 @@ def render_scene(
             f"ffmpeg exited {proc.returncode}.\n\n{tail}\n\ncommand: {shlex.join(cmd)}"
         )
     return RenderedVideo(
-        output=output, duration_s=media_duration(output), n_frames=total,
+        output=output,
+        duration_s=media_duration(output),
+        n_frames=total,
         render_s=time.monotonic() - started,
     )

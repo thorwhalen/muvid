@@ -135,8 +135,14 @@ MONTAGE = Subgenre(
     params_schema=_PARAMS,
     produces="video/mp4",
     intake_kinds=(
-        "montage", "photo montage", "slideshow", "beat sync", "photo beat sync",
-        "photos", "memories", "recap",
+        "montage",
+        "photo montage",
+        "slideshow",
+        "beat sync",
+        "photo beat sync",
+        "photos",
+        "memories",
+        "recap",
     ),
     # None means genuinely free: nothing here spends anything.
     cost_profile=None,

@@ -234,7 +234,8 @@ class TreatmentSpec:
             raw = _mapping(raw)
             scenes.append(
                 Scene(
-                    applies_to=tuple(str(a) for a in _seq(raw.get("applies_to"))) or ("*",),
+                    applies_to=tuple(str(a) for a in _seq(raw.get("applies_to")))
+                    or ("*",),
                     archetype=_text(raw.get("archetype"), "fischinger"),
                     params=_mapping(raw.get("params")),
                 )
@@ -272,7 +273,9 @@ _HEX = "0123456789abcdefABCDEF"
 
 def _bad_colour(value: Any) -> bool:
     return not (
-        isinstance(value, str) and len(value) == 7 and value[0] == "#"
+        isinstance(value, str)
+        and len(value) == 7
+        and value[0] == "#"
         and all(c in _HEX for c in value[1:])
     )
 
@@ -291,22 +294,28 @@ def validate(spec: TreatmentSpec) -> list[str]:
         if _bad_colour(value):
             errs.append(f"direction.palette.{name} {value!r} is not a #rrggbb colour")
     if d.background not in BACKGROUNDS:
-        errs.append(f"direction.background {d.background!r} is not one of {_enum(BACKGROUNDS)}")
+        errs.append(
+            f"direction.background {d.background!r} is not one of {_enum(BACKGROUNDS)}"
+        )
     if d.density not in DENSITIES:
         errs.append(f"direction.density {d.density!r} is not one of {_enum(DENSITIES)}")
     if not spec.scenes:
         errs.append("scenes is empty — at least one scene is required")
     for i, sc in enumerate(spec.scenes):
         if sc.archetype not in ARCHETYPES:
-            errs.append(f"scenes[{i}].archetype {sc.archetype!r} is not one of the known archetypes")
+            errs.append(
+                f"scenes[{i}].archetype {sc.archetype!r} is not one of the known archetypes"
+            )
         elif not isinstance(sc.params, Mapping):
             errs.append(f"scenes[{i}].params must be an object")
         else:
             known = ARCHETYPE_PARAMS[sc.archetype]
             for k, v in sc.params.items():
                 if k not in known:
-                    errs.append(f"scenes[{i}].params.{k} is not a {sc.archetype} parameter "
-                                f"(known: {sorted(known)})")
+                    errs.append(
+                        f"scenes[{i}].params.{k} is not a {sc.archetype} parameter "
+                        f"(known: {sorted(known)})"
+                    )
                 elif not isinstance(v, (int, float)) or isinstance(v, bool):
                     errs.append(f"scenes[{i}].params.{k} must be a number")
     return errs
@@ -346,11 +355,13 @@ def repair(spec: TreatmentSpec) -> tuple[TreatmentSpec, list[str]]:
 
     scenes = []
     for i, sc in enumerate(spec.scenes or (Scene(),)):
-        archetype = pick(sc.archetype, ARCHETYPES, "fischinger", f"scenes[{i}].archetype")
+        archetype = pick(
+            sc.archetype, ARCHETYPES, "fischinger", f"scenes[{i}].archetype"
+        )
         known = ARCHETYPE_PARAMS[archetype]
         params: dict[str, float] = {}
         dropped = []
-        for k, v in (sc.params.items() if isinstance(sc.params, Mapping) else ()):
+        for k, v in sc.params.items() if isinstance(sc.params, Mapping) else ():
             if k not in known:
                 dropped.append(k)
                 continue
@@ -371,13 +382,19 @@ def repair(spec: TreatmentSpec) -> tuple[TreatmentSpec, list[str]]:
         scenes.append(replace(sc, archetype=archetype, params=params))
 
     return (
-        TreatmentSpec(spec_version=SPEC_VERSION, title=spec.title,
-                      direction=direction, scenes=tuple(scenes)),
+        TreatmentSpec(
+            spec_version=SPEC_VERSION,
+            title=spec.title,
+            direction=direction,
+            scenes=tuple(scenes),
+        ),
         notes,
     )
 
 
-def coerce(obj: Mapping[str, Any] | TreatmentSpec | str) -> tuple[TreatmentSpec, list[str]]:
+def coerce(
+    obj: Mapping[str, Any] | TreatmentSpec | str,
+) -> tuple[TreatmentSpec, list[str]]:
     """Whatever a caller produced -> a renderable spec plus the repair notes."""
     if isinstance(obj, TreatmentSpec):
         spec = obj
@@ -421,12 +438,18 @@ def json_schema() -> dict[str, Any]:
                         "properties": {k: colour for k in asdict(Palette())},
                     },
                     "background": {
-                        "type": "string", "enum": _enum(BACKGROUNDS),
-                        "description": "; ".join(f"{k}: {v}" for k, v in BACKGROUNDS.items()),
+                        "type": "string",
+                        "enum": _enum(BACKGROUNDS),
+                        "description": "; ".join(
+                            f"{k}: {v}" for k, v in BACKGROUNDS.items()
+                        ),
                     },
                     "density": {
-                        "type": "string", "enum": _enum(DENSITIES),
-                        "description": "; ".join(f"{k}: {v}" for k, v in DENSITIES.items()),
+                        "type": "string",
+                        "enum": _enum(DENSITIES),
+                        "description": "; ".join(
+                            f"{k}: {v}" for k, v in DENSITIES.items()
+                        ),
                     },
                 },
             },
@@ -439,18 +462,23 @@ def json_schema() -> dict[str, Any]:
                     "required": ["archetype"],
                     "properties": {
                         "applies_to": {
-                            "type": "array", "items": {"type": "string"},
+                            "type": "array",
+                            "items": {"type": "string"},
                             "description": "Section tiers (low/mid/high), section "
                             "indices as strings, or ['*'] for the whole song.",
                         },
                         "archetype": {
-                            "type": "string", "enum": _enum(ARCHETYPES),
-                            "description": "; ".join(f"{k}: {v}" for k, v in ARCHETYPES.items()),
+                            "type": "string",
+                            "enum": _enum(ARCHETYPES),
+                            "description": "; ".join(
+                                f"{k}: {v}" for k, v in ARCHETYPES.items()
+                            ),
                         },
                         "params": {
                             "type": "object",
                             "description": "; ".join(
-                                f"{a}: " + ", ".join(
+                                f"{a}: "
+                                + ", ".join(
                                     f"{k} ({d}; default {dflt}, {lo}..{hi})"
                                     for k, (dflt, lo, hi, d) in ps.items()
                                 )
@@ -471,8 +499,10 @@ def vocabulary() -> dict[str, Any]:
         "backgrounds": dict(BACKGROUNDS),
         "densities": dict(DENSITIES),
         "archetype_params": {
-            a: {k: {"default": d, "min": lo, "max": hi, "description": desc}
-                for k, (d, lo, hi, desc) in ps.items()}
+            a: {
+                k: {"default": d, "min": lo, "max": hi, "description": desc}
+                for k, (d, lo, hi, desc) in ps.items()
+            }
             for a, ps in ARCHETYPE_PARAMS.items()
         },
     }

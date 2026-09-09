@@ -83,10 +83,18 @@ def render(
     treat = _json.loads(_treatment_arg(treatment)) if treatment else None
     _emit(
         _tools.render_choreo(
-            audio, output,
-            cover=cover or None, treatment=treat, archetype=archetype or None,
-            seed=seed, beat_source=beat_source, strict=strict,
-            width=width, height=height, fps=fps, workdir=workdir or None,
+            audio,
+            output,
+            cover=cover or None,
+            treatment=treat,
+            archetype=archetype or None,
+            seed=seed,
+            beat_source=beat_source,
+            strict=strict,
+            width=width,
+            height=height,
+            fps=fps,
+            workdir=workdir or None,
         )
     )
 

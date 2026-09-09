@@ -240,8 +240,12 @@ class Plan:
                             "use": t.use,
                             "source_in": round(t.source_in, 4),
                             "path": [
-                                {"t": round(k.t, 4), "x": round(k.window.x, 4),
-                                 "y": round(k.window.y, 4), "size": round(k.window.size, 4)}
+                                {
+                                    "t": round(k.t, 4),
+                                    "x": round(k.window.x, 4),
+                                    "y": round(k.window.y, 4),
+                                    "size": round(k.window.size, 4),
+                                }
                                 for k in t.path
                             ],
                         }
@@ -259,30 +263,43 @@ class Plan:
     def from_dict(cls, d: Mapping[str, Any]) -> "Plan":
         """Read a plan back — a hand-edited ``plan.json`` renders the same way."""
         media = tuple(
-            Media(index=int(m["index"]), path=str(m["path"]), kind=str(m["kind"]),
-                  width=int(m["width"]), height=int(m["height"]),
-                  duration=m.get("duration"), strength=float(m.get("strength", 0.0)))
+            Media(
+                index=int(m["index"]),
+                path=str(m["path"]),
+                kind=str(m["kind"]),
+                width=int(m["width"]),
+                height=int(m["height"]),
+                duration=m.get("duration"),
+                strength=float(m.get("strength", 0.0)),
+            )
             for m in d.get("media", ())
         )
         slots = tuple(
             Slot(
-                index=int(s["index"]), start=float(s["start"]), end=float(s["end"]),
-                section=str(s.get("section", "*")), archetype=str(s.get("archetype", "")),
+                index=int(s["index"]),
+                start=float(s["start"]),
+                end=float(s["end"]),
+                section=str(s.get("section", "*")),
+                archetype=str(s.get("archetype", "")),
                 regions=int(s.get("regions", 1)),
                 transition=str(s.get("transition", "cut")),
                 transition_s=float(s.get("transition_s", 0.0)),
                 tiles=tuple(
                     Tile(
-                        region=int(t["region"]), media=int(t["media"]),
+                        region=int(t["region"]),
+                        media=int(t["media"]),
                         motion=str(t.get("motion", "none")),
                         variant=str(t.get("variant", "full")),
                         use=int(t.get("use", 0)),
                         source_in=float(t.get("source_in", 0.0)),
                         path=tuple(
-                            Keyframe(float(k["t"]),
-                                     Window(float(k["x"]), float(k["y"]), float(k["size"])))
+                            Keyframe(
+                                float(k["t"]),
+                                Window(float(k["x"]), float(k["y"]), float(k["size"])),
+                            )
                             for k in t.get("path", ())
-                        ) or (Keyframe(0.0, Window(0.0, 0.0, 1.0)),),
+                        )
+                        or (Keyframe(0.0, Window(0.0, 0.0, 1.0)),),
                     )
                     for t in s.get("tiles", ())
                 ),
@@ -296,7 +313,9 @@ class Plan:
             beat_source=str(d.get("beat_source", "")),
             section_source=str(d.get("section_source", "")),
             sections=tuple(
-                Section(label=str(s["label"]), start=float(s["start"]), end=float(s["end"]))
+                Section(
+                    label=str(s["label"]), start=float(s["start"]), end=float(s["end"])
+                )
                 for s in d.get("sections", ())
             ),
             media=media,
@@ -328,7 +347,11 @@ def window(cx: float, cy: float, size: float) -> Window:
 
 
 def tile_path(
-    variant: str, motion: str, length_s: float, *, amplitude: float = 0.08,
+    variant: str,
+    motion: str,
+    length_s: float,
+    *,
+    amplitude: float = 0.08,
     punch_s: float = 0.25,
 ) -> tuple[Keyframe, ...]:
     """The window path for one still: piecewise linear, slot-relative seconds.
@@ -344,16 +367,22 @@ def tile_path(
     length_s = max(0.0, float(length_s))
     amp = max(0.0, float(amplitude))
     if motion == "zoom_in":
-        return (Keyframe(0.0, window(cx, cy, size)),
-                Keyframe(length_s, window(cx, cy, size * (1 - amp))))
+        return (
+            Keyframe(0.0, window(cx, cy, size)),
+            Keyframe(length_s, window(cx, cy, size * (1 - amp))),
+        )
     if motion == "zoom_out":
-        return (Keyframe(0.0, window(cx, cy, size * (1 - amp))),
-                Keyframe(length_s, window(cx, cy, size)))
+        return (
+            Keyframe(0.0, window(cx, cy, size * (1 - amp))),
+            Keyframe(length_s, window(cx, cy, size)),
+        )
     if motion in {"pan_left", "pan_right"}:
         s = min(size, 1.0 - amp)  # a full frame cannot pan; zoom in just enough
         sign = -1.0 if motion == "pan_left" else 1.0
-        return (Keyframe(0.0, window(cx - sign * amp / 2, cy, s)),
-                Keyframe(length_s, window(cx + sign * amp / 2, cy, s)))
+        return (
+            Keyframe(0.0, window(cx - sign * amp / 2, cy, s)),
+            Keyframe(length_s, window(cx + sign * amp / 2, cy, s)),
+        )
     if motion == "punch":
         rest = window(cx, cy, size)
         hit = window(cx, cy, size * (1 - amp))
@@ -409,7 +438,9 @@ def _beats_per_cut(
     return max(minimum, min(base * factor, cap))
 
 
-def cut_times(section: Section, analysis: Analysis, beats_per_cut: float) -> list[float]:
+def cut_times(
+    section: Section, analysis: Analysis, beats_per_cut: float
+) -> list[float]:
     """Slot boundaries inside ``section``: ``[start, cut, cut, ..., end]``.
 
     Cuts are beats of the measured grid every ``round(beats_per_cut)`` beats
@@ -471,7 +502,9 @@ def cut_times(section: Section, analysis: Analysis, beats_per_cut: float) -> lis
 FOLD_FRACTION = 0.4
 
 
-def _split_long(bounds: list[float], beats: Sequence[float], max_hold: float) -> list[float]:
+def _split_long(
+    bounds: list[float], beats: Sequence[float], max_hold: float
+) -> list[float]:
     """Split any span longer than ``max_hold`` at the beat nearest its middle.
 
     Folding and capping are both applied per section, and a section a little
@@ -489,7 +522,9 @@ def _split_long(bounds: list[float], beats: Sequence[float], max_hold: float) ->
     return out
 
 
-def _split_span(a: float, b: float, beats: Sequence[float], max_hold: float) -> list[float]:
+def _split_span(
+    a: float, b: float, beats: Sequence[float], max_hold: float
+) -> list[float]:
     if b - a <= max_hold + 1e-6:
         return [a, b]
     inside = [t for t in beats if a + MIN_SLOT_S < t < b - MIN_SLOT_S]
@@ -497,7 +532,9 @@ def _split_span(a: float, b: float, beats: Sequence[float], max_hold: float) -> 
         return [a, b]
     mid = (a + b) / 2
     cut = min(inside, key=lambda t: (abs(t - mid), t))
-    return _split_span(a, cut, beats, max_hold)[:-1] + _split_span(cut, b, beats, max_hold)
+    return _split_span(a, cut, beats, max_hold)[:-1] + _split_span(
+        cut, b, beats, max_hold
+    )
 
 
 def _spans(bounds: Sequence[float]) -> list[tuple[float, float]]:
@@ -539,69 +576,123 @@ def _param(params: Mapping[str, Any], archetype: str, key: str) -> float:
 
 
 @register_archetype("ballad_dissolve")
-def ballad_dissolve(section: Section, ctx: PlanContext, params: Mapping[str, Any]) -> list[SlotDraft]:
+def ballad_dissolve(
+    section: Section, ctx: PlanContext, params: Mapping[str, Any]
+) -> list[SlotDraft]:
     """Cut every 2-4 bars on a downbeat, one-beat crossfades, slow Ken Burns."""
     a = ctx.analysis
     bars = _param(params, "ballad_dissolve", "bars_per_cut")
-    bpc = _beats_per_cut(section.label, bars * a.beats_per_bar,
-                         feel=ctx.direction.cut_feel, minimum=a.beats_per_bar,
-                         beat_s=a.beat_s)
+    bpc = _beats_per_cut(
+        section.label,
+        bars * a.beats_per_bar,
+        feel=ctx.direction.cut_feel,
+        minimum=a.beats_per_bar,
+        beat_s=a.beat_s,
+    )
     fade_s = _param(params, "ballad_dissolve", "fade_beats") * a.beat_s
     drift = _param(params, "ballad_dissolve", "drift")
     return [
-        SlotDraft(start=s, end=e, section=section.label, archetype="ballad_dissolve",
-                  motions=_BALLAD_CYCLE, amplitude=drift,
-                  transition="fade" if fade_s > 0 else "cut", transition_s=fade_s)
+        SlotDraft(
+            start=s,
+            end=e,
+            section=section.label,
+            archetype="ballad_dissolve",
+            motions=_BALLAD_CYCLE,
+            amplitude=drift,
+            transition="fade" if fade_s > 0 else "cut",
+            transition_s=fade_s,
+        )
         for s, e in _spans(cut_times(section, a, bpc))
     ]
 
 
 @register_archetype("beat_cut")
-def beat_cut(section: Section, ctx: PlanContext, params: Mapping[str, Any]) -> list[SlotDraft]:
+def beat_cut(
+    section: Section, ctx: PlanContext, params: Mapping[str, Any]
+) -> list[SlotDraft]:
     """Hard cuts every bar in a verse, every half-bar in a chorus, punch on the cut."""
     a = ctx.analysis
-    bpc = _beats_per_cut(section.label, _param(params, "beat_cut", "beats_per_cut"),
-                         feel=ctx.direction.cut_feel, minimum=1.0, beat_s=a.beat_s)
+    bpc = _beats_per_cut(
+        section.label,
+        _param(params, "beat_cut", "beats_per_cut"),
+        feel=ctx.direction.cut_feel,
+        minimum=1.0,
+        beat_s=a.beat_s,
+    )
     punch = _param(params, "beat_cut", "punch")
     return [
-        SlotDraft(start=s, end=e, section=section.label, archetype="beat_cut",
-                  motions=("punch",) if punch > 0 else ("none",), amplitude=punch)
+        SlotDraft(
+            start=s,
+            end=e,
+            section=section.label,
+            archetype="beat_cut",
+            motions=("punch",) if punch > 0 else ("none",),
+            amplitude=punch,
+        )
         for s, e in _spans(cut_times(section, a, bpc))
     ]
 
 
 @register_archetype("grid")
-def grid(section: Section, ctx: PlanContext, params: Mapping[str, Any]) -> list[SlotDraft]:
+def grid(
+    section: Section, ctx: PlanContext, params: Mapping[str, Any]
+) -> list[SlotDraft]:
     """A 2x2 grid; one tile swaps per beat.
 
     All four swap on a section's first slot — a section change is the one
     place a full reset reads as an accent rather than a glitch.
     """
     a = ctx.analysis
-    bpc = _beats_per_cut(section.label, _param(params, "grid", "beats_per_swap"),
-                         feel=ctx.direction.cut_feel, minimum=1.0, beat_s=a.beat_s)
+    bpc = _beats_per_cut(
+        section.label,
+        _param(params, "grid", "beats_per_swap"),
+        feel=ctx.direction.cut_feel,
+        minimum=1.0,
+        beat_s=a.beat_s,
+    )
     drafts = []
     for k, (s, e) in enumerate(_spans(cut_times(section, a, bpc))):
-        fresh = tuple(range(GRID_REGIONS)) if k == 0 else (
-            _GRID_SWAP_ORDER[(k - 1) % GRID_REGIONS],
+        fresh = (
+            tuple(range(GRID_REGIONS))
+            if k == 0
+            else (_GRID_SWAP_ORDER[(k - 1) % GRID_REGIONS],)
         )
         drafts.append(
-            SlotDraft(start=s, end=e, section=section.label, archetype="grid",
-                      regions=GRID_REGIONS, fresh=fresh, motions=("none",))
+            SlotDraft(
+                start=s,
+                end=e,
+                section=section.label,
+                archetype="grid",
+                regions=GRID_REGIONS,
+                fresh=fresh,
+                motions=("none",),
+            )
         )
     return drafts
 
 
 @register_archetype("stop_motion")
-def stop_motion(section: Section, ctx: PlanContext, params: Mapping[str, Any]) -> list[SlotDraft]:
+def stop_motion(
+    section: Section, ctx: PlanContext, params: Mapping[str, Any]
+) -> list[SlotDraft]:
     """Stills held for a beat subdivision, no motion."""
     a = ctx.analysis
     sub = max(1.0, _param(params, "stop_motion", "subdivision"))
-    bpc = _beats_per_cut(section.label, 1.0 / sub, feel=ctx.direction.cut_feel,
-                         minimum=0.25, beat_s=a.beat_s)
+    bpc = _beats_per_cut(
+        section.label,
+        1.0 / sub,
+        feel=ctx.direction.cut_feel,
+        minimum=0.25,
+        beat_s=a.beat_s,
+    )
     return [
-        SlotDraft(start=s, end=e, section=section.label, archetype="stop_motion",
-                  motions=("none",))
+        SlotDraft(
+            start=s,
+            end=e,
+            section=section.label,
+            archetype="stop_motion",
+            motions=("none",),
+        )
         for s, e in _spans(cut_times(section, a, bpc))
     ]
 
@@ -652,7 +743,9 @@ def assign_media(
     gap = max(0, min(int(reuse.min_gap), len(pool_idx) - 1))
 
     n_finale = sum(
-        len(d.fresh) for d in drafts if finale_start is not None and d.start >= finale_start
+        len(d.fresh)
+        for d in drafts
+        if finale_start is not None and d.start >= finale_start
     )
     n_reserve = 0
     if reuse.reserve_for_finale and finale_start is not None and len(pool_idx) >= 2:
@@ -677,7 +770,9 @@ def assign_media(
         uses[m] = use + 1
         if m in last_at:
             g = ordinal - last_at[m]
-            min_observed_gap = g if min_observed_gap is None else min(min_observed_gap, g)
+            min_observed_gap = (
+                g if min_observed_gap is None else min(min_observed_gap, g)
+            )
         last_at[m] = ordinal
         ordinal += 1
         recent.append(m)
@@ -697,16 +792,20 @@ def assign_media(
             m = reserved_queue.pop(0)
             if m not in hard and m not in soft:
                 return take(m)
-        candidates = [
-            m for m in pool_idx if in_finale or m not in reserved
-        ]
+        candidates = [m for m in pool_idx if in_finale or m not in reserved]
         # The gap is against the candidates actually in play: with the reserve
         # held back a smaller pool is being cycled, and a gap sized for the
         # whole pool would leave nothing available and fall through to "anything".
         g = min(gap, len(candidates) - 1)
         blocked = set(recent[-g:]) if g > 0 else set()
         avail: list[int] = []
-        for exclude in (hard | soft | blocked, hard | soft, hard | blocked, hard, set()):
+        for exclude in (
+            hard | soft | blocked,
+            hard | soft,
+            hard | blocked,
+            hard,
+            set(),
+        ):
             avail = [m for m in candidates if m not in exclude]
             if avail:
                 break
@@ -723,7 +822,9 @@ def assign_media(
         assigned: dict[int, tuple[int, int]] = {}
         for r in range(d.regions):
             if r in fresh:
-                pin = cover is not None and ((k == 0 and r == min(fresh)) or (k == last and r == min(fresh)))
+                pin = cover is not None and (
+                    (k == 0 and r == min(fresh)) or (k == last and r == min(fresh))
+                )
                 if pin:
                     assigned[r] = (cover, 0 if k == 0 else 1)
                     continue
@@ -758,7 +859,9 @@ def assign_media(
 # --------------------------------------------------------------------------
 
 
-def _scene_for(section: Section, scenes: Sequence[spec_mod.Scene]) -> tuple[spec_mod.Scene, bool]:
+def _scene_for(
+    section: Section, scenes: Sequence[spec_mod.Scene]
+) -> tuple[spec_mod.Scene, bool]:
     """The scene that claims ``section``: a named one wins, else the first ``*``,
     else the first scene (reported as uncovered)."""
     for sc in scenes:
@@ -831,7 +934,9 @@ def plan_montage(
 
     finale = finale_of(analysis.sections)
     picks, stats = assign_media(
-        drafts, media, treatment.direction.reuse,
+        drafts,
+        media,
+        treatment.direction.reuse,
         finale_start=finale.start if finale else None,
     )
     by_index = {m.index: m for m in media}
@@ -853,10 +958,17 @@ def plan_montage(
             else:
                 source_in = 0.0
             tiles.append(
-                Tile(region=region, media=m_index, motion=motion, variant=variant,
-                     path=tile_path(variant, motion, length, amplitude=d.amplitude,
-                                    punch_s=punch_s),
-                     source_in=source_in, use=use)
+                Tile(
+                    region=region,
+                    media=m_index,
+                    motion=motion,
+                    variant=variant,
+                    path=tile_path(
+                        variant, motion, length, amplitude=d.amplitude, punch_s=punch_s
+                    ),
+                    source_in=source_in,
+                    use=use,
+                )
             )
         transition, t_s = d.transition, d.transition_s
         if i == 0 or transition == "cut" or t_s <= 0:
@@ -864,18 +976,33 @@ def plan_montage(
         else:
             t_s = min(t_s, MAX_TRANSITION_FRACTION * min(length, prev_len or length))
         slots.append(
-            Slot(index=i, start=d.start, end=d.end, section=d.section,
-                 archetype=d.archetype, regions=d.regions, tiles=tuple(tiles),
-                 transition=transition, transition_s=round(t_s, 6))
+            Slot(
+                index=i,
+                start=d.start,
+                end=d.end,
+                section=d.section,
+                archetype=d.archetype,
+                regions=d.regions,
+                tiles=tuple(tiles),
+                transition=transition,
+                transition_s=round(t_s, 6),
+            )
         )
         prev_len = length
 
-    stats["finale"] = None if finale is None else {
-        "label": finale.label, "start": round(finale.start, 4), "end": round(finale.end, 4),
-    }
+    stats["finale"] = (
+        None
+        if finale is None
+        else {
+            "label": finale.label,
+            "start": round(finale.start, 4),
+            "end": round(finale.end, 4),
+        }
+    )
     stats["n_slots"] = len(slots)
     stats["slots_per_section"] = {
-        s.label: sum(1 for sl in slots if sl.section == s.label) for s in analysis.sections
+        s.label: sum(1 for sl in slots if sl.section == s.label)
+        for s in analysis.sections
     }
     return Plan(
         duration=analysis.duration,

@@ -156,10 +156,13 @@ class Analysis:
     )
     meta: Mapping[str, Any] = field(default_factory=dict)
 
-    def events_in(self, start: float, end: float, *, band: str | None = None) -> list[Event]:
+    def events_in(
+        self, start: float, end: float, *, band: str | None = None
+    ) -> list[Event]:
         """Events with ``start <= t < end`` (optionally one band)."""
         return [
-            e for e in self.events
+            e
+            for e in self.events
             if start <= e.t < end and (band is None or e.band == band)
         ]
 
@@ -183,18 +186,25 @@ class Analysis:
                 source=str(tempo.get("source", "unknown")),
             ),
             events=tuple(
-                Event(t=float(e["t"]), band=str(e["band"]), strength=float(e["strength"]))
+                Event(
+                    t=float(e["t"]), band=str(e["band"]), strength=float(e["strength"])
+                )
                 for e in d.get("events", ())
             ),
             sections=tuple(
                 Section(
-                    index=int(s["index"]), label=str(s["label"]),
-                    start=float(s["start"]), end=float(s["end"]),
+                    index=int(s["index"]),
+                    label=str(s["label"]),
+                    start=float(s["start"]),
+                    end=float(s["end"]),
                     energy_db=float(s["energy_db"]),
                 )
                 for s in d.get("sections", ())
             ),
-            bands={k: (float(v[0]), float(v[1])) for k, v in (d.get("bands") or BANDS).items()},
+            bands={
+                k: (float(v[0]), float(v[1]))
+                for k, v in (d.get("bands") or BANDS).items()
+            },
             meta=dict(d.get("meta") or {}),
         )
 
@@ -238,8 +248,13 @@ def stft_magnitude(y, *, frame: int = FRAME, hop: int = HOP):
     return mag, 1.0  # caller derives Hz per bin from the sample rate
 
 
-def band_flux(mag, *, sample_rate: int = SAMPLE_RATE, frame: int = FRAME,
-              bands: Mapping[str, tuple[float, float]] = BANDS) -> dict[str, Any]:
+def band_flux(
+    mag,
+    *,
+    sample_rate: int = SAMPLE_RATE,
+    frame: int = FRAME,
+    bands: Mapping[str, tuple[float, float]] = BANDS,
+) -> dict[str, Any]:
     """Half-wave-rectified log-spectral flux, summed per band, one array per band.
 
     Log compression first (``log1p(gain * |X|)``) so a loud passage does not
@@ -257,12 +272,16 @@ def band_flux(mag, *, sample_rate: int = SAMPLE_RATE, frame: int = FRAME,
     out: dict[str, Any] = {}
     for name, (lo, hi) in bands.items():
         sel = (freqs > lo) & (freqs <= hi)
-        flux = rect[:, sel].sum(axis=1) if sel.any() else np.zeros(len(rect), np.float32)
+        flux = (
+            rect[:, sel].sum(axis=1) if sel.any() else np.zeros(len(rect), np.float32)
+        )
         out[name] = flux.astype(np.float32)
     return out
 
 
-def onset_envelope(flux: Mapping[str, Any], *, weights: Mapping[str, float] = BAND_WEIGHTS):
+def onset_envelope(
+    flux: Mapping[str, Any], *, weights: Mapping[str, float] = BAND_WEIGHTS
+):
     """One envelope for the beat tracker: each band normalised, then weighted.
 
     Per-band normalisation (by the band's own 95th percentile) stops the
@@ -335,7 +354,9 @@ def pick_onsets(
     high = med + delta * scale
     low = med + delta * hysteresis * scale
     is_peak = np.zeros(n, dtype=bool)
-    is_peak[1:-1] = (flux[1:-1] > flux[:-2]) & (flux[1:-1] >= flux[2:]) & (flux[1:-1] > high[1:-1])
+    is_peak[1:-1] = (
+        (flux[1:-1] > flux[:-2]) & (flux[1:-1] >= flux[2:]) & (flux[1:-1] > high[1:-1])
+    )
     candidates = np.flatnonzero(is_peak)
     if len(candidates) == 0:
         return []
@@ -343,7 +364,9 @@ def pick_onsets(
     below = flux < low
     peaks = [(int(i), float(flux[i])) for i in candidates]
     height_ref = float(np.percentile([h for _, h in peaks], 95)) or 1.0
-    out: list[list[float]] = []  # [frame, height], mutable so a stronger hit can replace
+    out: list[
+        list[float]
+    ] = []  # [frame, height], mutable so a stronger hit can replace
     armed = True
     i_prev = 0
     for i, h in peaks:
@@ -408,7 +431,7 @@ def beat_grid_numpy(
     lags = np.arange(lag_min, lag_max + 1)
     bpms = 60.0 / (lags * hop_s)
     prior = np.exp(-0.5 * (np.log2(bpms / prior_bpm) / PRIOR_STD_OCTAVES) ** 2)
-    score = ac[lag_min:lag_max + 1] * prior
+    score = ac[lag_min : lag_max + 1] * prior
     best = int(lags[int(np.argmax(score))])
     period_s = best * hop_s
     # phase: the comb offset that collects the most (rectified) envelope
@@ -416,15 +439,25 @@ def beat_grid_numpy(
     sums = [pos[k::best].sum() for k in range(best)]
     phase = int(np.argmax(sums)) * hop_s
     bpm = 60.0 / period_s
-    beats = tuple(float(phase + k * period_s) for k in range(int((duration - phase) / period_s) + 1)
-                  if phase + k * period_s < duration)
+    beats = tuple(
+        float(phase + k * period_s)
+        for k in range(int((duration - phase) / period_s) + 1)
+        if phase + k * period_s < duration
+    )
     return Tempo(bpm=float(bpm), beats=beats, source="numpy")
 
 
 def _fixed_grid(bpm: float, duration: float, *, source: str) -> Tempo:
     period = 60.0 / bpm
-    return Tempo(bpm=bpm, beats=tuple(k * period for k in range(int(duration / period) + 1)
-                                       if k * period < duration), source=source)
+    return Tempo(
+        bpm=bpm,
+        beats=tuple(
+            k * period
+            for k in range(int(duration / period) + 1)
+            if k * period < duration
+        ),
+        source=source,
+    )
 
 
 def beat_grid_mixing(audio: Path | str, *, sample_rate: int = SAMPLE_RATE) -> Tempo:
@@ -514,7 +547,11 @@ def find_sections(
     n_bars = max(1, int(math.ceil(duration / bar_s)))
     levels = []
     for b in range(n_bars):
-        seg = y[int(b * bar_s * sample_rate): int(min(duration, (b + 1) * bar_s) * sample_rate)]
+        seg = y[
+            int(b * bar_s * sample_rate) : int(
+                min(duration, (b + 1) * bar_s) * sample_rate
+            )
+        ]
         rms = float(np.sqrt(np.mean(seg * seg))) if len(seg) else 0.0
         levels.append(20.0 * math.log10(max(rms, 1e-6)))
     lv = np.asarray(levels)
@@ -524,7 +561,7 @@ def find_sections(
     for b in range(1, n_bars):
         if b - cur_start < min_bars or n_bars - b < min_bars:
             continue
-        ahead = float(lv[b: b + min_bars].mean())
+        ahead = float(lv[b : b + min_bars].mean())
         here = float(lv[cur_start:b].mean())
         if abs(ahead - here) > step_db:
             bounds.append(b)
@@ -536,6 +573,7 @@ def find_sections(
         b0, b1 = bounds[i], bounds[i + 1]
         raw.append((b0 * bar_s, min(duration, b1 * bar_s), float(lv[b0:b1].mean())))
     energies = sorted(e for _, _, e in raw)
+
     # tiers by tertile of the section energies; one section is 'mid'
     def tier(e: float) -> str:
         if len(energies) < 2 or energies[-1] - energies[0] < step_db:
@@ -544,7 +582,13 @@ def find_sections(
         return "low" if e <= lo else "high" if e > hi else "mid"
 
     return tuple(
-        Section(index=i, label=tier(e), start=round(s, 4), end=round(t, 4), energy_db=round(e, 2))
+        Section(
+            index=i,
+            label=tier(e),
+            start=round(s, 4),
+            end=round(t, 4),
+            energy_db=round(e, 2),
+        )
         for i, (s, t, e) in enumerate(raw)
     )
 
@@ -582,29 +626,43 @@ def analyze(
     mag, _ = stft_magnitude(y)
     flux = band_flux(mag, sample_rate=sample_rate, bands=bands)
     envelope = onset_envelope(flux)
-    tempo = resolve_tempo(path, envelope, hop_s=hop_s, duration=duration, source=beat_source)
+    tempo = resolve_tempo(
+        path, envelope, hop_s=hop_s, duration=duration, source=beat_source
+    )
 
     events: list[Event] = []
     for name, f in flux.items():
         ioi = max(MIN_IOI_S, tempo.period * float(min_ioi_beats.get(name, 0.25)))
         for t, s in pick_onsets(f, hop_s=hop_s, min_ioi_s=ioi):
             if t < duration:
-                events.append(Event(t=round(float(t), 4), band=name, strength=round(float(s), 4)))
+                events.append(
+                    Event(t=round(float(t), 4), band=name, strength=round(float(s), 4))
+                )
     events.sort(key=lambda e: (e.t, e.band))
 
     sections = find_sections(y, sample_rate=sample_rate, tempo=tempo, duration=duration)
     return Analysis(
         duration=round(duration, 4),
-        tempo=Tempo(bpm=round(tempo.bpm, 3), beats=tuple(round(b, 4) for b in tempo.beats),
-                    source=tempo.source),
+        tempo=Tempo(
+            bpm=round(tempo.bpm, 3),
+            beats=tuple(round(b, 4) for b in tempo.beats),
+            source=tempo.source,
+        ),
         events=tuple(events),
         sections=sections,
         bands=dict(bands),
         meta={
             "sample_rate": sample_rate,
             "hop_s": round(hop_s, 6),
-            "n_events": {name: sum(1 for e in events if e.band == name) for name in bands},
-            "min_ioi_s": {name: round(max(MIN_IOI_S, tempo.period * float(min_ioi_beats.get(name, 0.25))), 4)
-                          for name in bands},
+            "n_events": {
+                name: sum(1 for e in events if e.band == name) for name in bands
+            },
+            "min_ioi_s": {
+                name: round(
+                    max(MIN_IOI_S, tempo.period * float(min_ioi_beats.get(name, 0.25))),
+                    4,
+                )
+                for name in bands
+            },
         },
     )

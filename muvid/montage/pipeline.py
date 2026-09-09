@@ -74,7 +74,9 @@ def check_render_bounds(
             f"{MAX_PIXELS} (MUVID_MONTAGE_MAX_PIXELS)"
         )
     if not 1 <= canvas.fps <= MAX_FPS:
-        raise ValueError(f"fps {canvas.fps} is outside 1..{MAX_FPS} (MUVID_MONTAGE_MAX_FPS)")
+        raise ValueError(
+            f"fps {canvas.fps} is outside 1..{MAX_FPS} (MUVID_MONTAGE_MAX_FPS)"
+        )
     if duration_s > MAX_DURATION_S:
         raise ValueError(
             f"audio is {duration_s:.0f}s; the render limit is {MAX_DURATION_S}s "
@@ -87,7 +89,9 @@ def check_render_bounds(
             )
 
 
-def build_treatment(params: dict[str, Any]) -> tuple[spec_mod.TreatmentSpec, list[str], str]:
+def build_treatment(
+    params: dict[str, Any],
+) -> tuple[spec_mod.TreatmentSpec, list[str], str]:
     """``(treatment, repair_notes, source)`` from a request's params.
 
     A supplied ``treatment`` is coerced and repaired; otherwise a one-scene
@@ -115,7 +119,9 @@ def _paths(value: Any, *, what: str) -> list[str]:
         return [str(value)]
     if isinstance(value, (list, tuple)):
         return [str(v) for v in value if v]
-    raise TypeError(f"inputs[{what!r}] must be a list of paths, got {type(value).__name__}")
+    raise TypeError(
+        f"inputs[{what!r}] must be a list of paths, got {type(value).__name__}"
+    )
 
 
 def render(request: RenderRequest) -> RenderResult:
@@ -144,7 +150,9 @@ def render(request: RenderRequest) -> RenderResult:
     clips = _paths(inputs.get("clips"), what="clips")
     cover = inputs.get("cover")
     if not photos and not clips:
-        raise ValueError("montage needs inputs['photos'] and/or inputs['clips'] — the pool is empty")
+        raise ValueError(
+            "montage needs inputs['photos'] and/or inputs['clips'] — the pool is empty"
+        )
 
     canvas = Canvas(
         width=int(params.get("width", DEFAULT_CANVAS.width)),
@@ -159,7 +167,9 @@ def render(request: RenderRequest) -> RenderResult:
 
     treatment, repair_notes, treatment_source = build_treatment(params)
     if params.get("strict") and repair_notes:
-        raise ValueError("treatment needed repairs and strict=True: " + "; ".join(repair_notes))
+        raise ValueError(
+            "treatment needed repairs and strict=True: " + "; ".join(repair_notes)
+        )
 
     analysis = analyze(
         audio,

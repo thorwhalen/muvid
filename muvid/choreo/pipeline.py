@@ -76,7 +76,9 @@ def check_render_bounds(canvas: Canvas, duration_s: float) -> None:
             f"{MAX_PIXELS} (MUVID_CHOREO_MAX_PIXELS)"
         )
     if not 1 <= canvas.fps <= MAX_FPS:
-        raise ValueError(f"fps {canvas.fps} is outside 1..{MAX_FPS} (MUVID_CHOREO_MAX_FPS)")
+        raise ValueError(
+            f"fps {canvas.fps} is outside 1..{MAX_FPS} (MUVID_CHOREO_MAX_FPS)"
+        )
     if duration_s > MAX_DURATION_S:
         raise ValueError(
             f"audio is {duration_s:.0f}s; the render limit is {MAX_DURATION_S}s "
@@ -113,7 +115,9 @@ def check_input_counts(inputs: Mapping[str, Any]) -> None:
 
 
 def _hex(rgb) -> str:
-    return "#" + "".join(f"{int(round(min(1.0, max(0.0, float(c))) * 255)):02x}" for c in rgb)
+    return "#" + "".join(
+        f"{int(round(min(1.0, max(0.0, float(c))) * 255)):02x}" for c in rgb
+    )
 
 
 def palette_from_cover(cover: Path | str, *, workdir: Path | str) -> spec_mod.Palette:
@@ -134,25 +138,47 @@ def palette_from_cover(cover: Path | str, *, workdir: Path | str) -> spec_mod.Pa
     workdir.mkdir(parents=True, exist_ok=True)
     raw = workdir / "cover_thumb.rgb"
     n = _PALETTE_THUMB
-    run_ffmpeg([
-        "-i", str(cover), "-frames:v", "1", "-vf", f"scale={n}:{n}",
-        "-f", "rawvideo", "-pix_fmt", "rgb24", str(raw),
-    ])
-    px = np.frombuffer(raw.read_bytes(), dtype=np.uint8).reshape(-1, 3).astype(np.float32) / 255.0
+    run_ffmpeg(
+        [
+            "-i",
+            str(cover),
+            "-frames:v",
+            "1",
+            "-vf",
+            f"scale={n}:{n}",
+            "-f",
+            "rawvideo",
+            "-pix_fmt",
+            "rgb24",
+            str(raw),
+        ]
+    )
+    px = (
+        np.frombuffer(raw.read_bytes(), dtype=np.uint8)
+        .reshape(-1, 3)
+        .astype(np.float32)
+        / 255.0
+    )
     lum = px @ np.array([0.2126, 0.7152, 0.0722], dtype=np.float32)
     order = np.argsort(lum)
     q = max(1, len(px) // 4)
     bg = px[order[:q]].mean(axis=0) * 0.6
-    bg2 = px[order[q:2 * q]].mean(axis=0) * 0.75
-    fg = px[order[-max(1, len(px) // 8):]].mean(axis=0)
+    bg2 = px[order[q : 2 * q]].mean(axis=0) * 0.75
+    fg = px[order[-max(1, len(px) // 8) :]].mean(axis=0)
     fg = fg + (1.0 - fg) * 0.6
     sat = (px.max(axis=1) - px.min(axis=1)) / np.maximum(px.max(axis=1), 1e-6)
     accent = px[int(np.argmax(sat * (0.3 + lum)))]
     h, s, v = colorsys.rgb_to_hsv(*(float(c) for c in accent))
     s, v = max(s, 0.55), max(v, 0.85)
     low, mid, high = (colorsys.hsv_to_rgb((h + k / 3) % 1.0, s, v) for k in range(3))
-    return spec_mod.Palette(bg=_hex(bg), bg2=_hex(bg2), fg=_hex(fg),
-                            low=_hex(low), mid=_hex(mid), high=_hex(high))
+    return spec_mod.Palette(
+        bg=_hex(bg),
+        bg2=_hex(bg2),
+        fg=_hex(fg),
+        low=_hex(low),
+        mid=_hex(mid),
+        high=_hex(high),
+    )
 
 
 # --------------------------------------------------------------------------
@@ -160,7 +186,9 @@ def palette_from_cover(cover: Path | str, *, workdir: Path | str) -> spec_mod.Pa
 # --------------------------------------------------------------------------
 
 
-def _resolve_treatment(params: Mapping[str, Any]) -> tuple[spec_mod.TreatmentSpec, list[str], str, bool]:
+def _resolve_treatment(
+    params: Mapping[str, Any],
+) -> tuple[spec_mod.TreatmentSpec, list[str], str, bool]:
     """``(treatment, repair_notes, source, palette_was_given)``."""
     raw = params.get("treatment")
     if raw is None:
@@ -171,10 +199,15 @@ def _resolve_treatment(params: Mapping[str, Any]) -> tuple[spec_mod.TreatmentSpe
             )
         return spec_mod.default_treatment(archetype), [], "archetype", False
     treatment, notes = spec_mod.coerce(raw)
-    palette_given = isinstance(raw, Mapping) and isinstance(raw.get("direction"), Mapping) \
+    palette_given = (
+        isinstance(raw, Mapping)
+        and isinstance(raw.get("direction"), Mapping)
         and bool(raw["direction"].get("palette"))
+    )
     if params.get("strict") and notes:
-        raise ValueError("treatment needed repairs and strict=True: " + "; ".join(notes))
+        raise ValueError(
+            "treatment needed repairs and strict=True: " + "; ".join(notes)
+        )
     return treatment, notes, "supplied", palette_given
 
 
@@ -213,7 +246,9 @@ def render(request: RenderRequest) -> RenderResult:
 
     seed = int(params.get("seed", 0))
     beat_source = str(params.get("beat_source", "auto"))
-    treatment, repair_notes, treatment_source, palette_given = _resolve_treatment(params)
+    treatment, repair_notes, treatment_source, palette_given = _resolve_treatment(
+        params
+    )
 
     request.workdir.mkdir(parents=True, exist_ok=True)
     request.output.parent.mkdir(parents=True, exist_ok=True)
@@ -221,7 +256,9 @@ def render(request: RenderRequest) -> RenderResult:
     palette_source = "treatment" if palette_given else "default"
     if cover and not palette_given:
         palette = palette_from_cover(cover, workdir=request.workdir)
-        treatment = replace(treatment, direction=replace(treatment.direction, palette=palette))
+        treatment = replace(
+            treatment, direction=replace(treatment.direction, palette=palette)
+        )
         palette_source = "cover"
 
     analysis = analyze(audio, beat_source=beat_source)
@@ -238,7 +275,9 @@ def render(request: RenderRequest) -> RenderResult:
 
     from muvid.choreo.render import render_scene
 
-    rendered = render_scene(scene, audio=audio, output=request.output, workdir=request.workdir)
+    rendered = render_scene(
+        scene, audio=audio, output=request.output, workdir=request.workdir
+    )
 
     meta: dict[str, Any] = {
         "archetypes": scene.meta["archetypes"],
@@ -261,6 +300,10 @@ def render(request: RenderRequest) -> RenderResult:
     return RenderResult(
         output=rendered.output,
         duration_s=rendered.duration_s,
-        artifacts={"events": events_path, "scene": scene_path, "treatment": treatment_path},
+        artifacts={
+            "events": events_path,
+            "scene": scene_path,
+            "treatment": treatment_path,
+        },
         meta=meta,
     )

@@ -148,12 +148,15 @@ def parts_for(plan: Plan, fps: int) -> tuple[list[Part], dict[str, Any]]:
     """
     slots = plan.slots
     bounds, n_t = frame_layout(
-        [s.start for s in slots], plan.duration,
-        [s.transition_s if s.transition != "cut" else 0.0 for s in slots], fps,
+        [s.start for s in slots],
+        plan.duration,
+        [s.transition_s if s.transition != "cut" else 0.0 for s in slots],
+        fps,
     )
     lens = [b - a for a, b in zip(bounds, bounds[1:])]
     dropped = [
-        s.index for s, n in zip(slots, n_t)
+        s.index
+        for s, n in zip(slots, n_t)
         if s.transition != "cut" and s.transition_s > 0 and n == 0
     ]
     parts: list[Part] = []
@@ -162,15 +165,23 @@ def parts_for(plan: Plan, fps: int) -> tuple[list[Part], dict[str, Any]]:
         n_out = n_t[i + 1] if i + 1 < len(slots) else 0
         if n_in > 0:
             parts.append(
-                Part(kind="blend", slot=i, offset=-(n_in // 2), n_frames=n_in,
-                     prev=i - 1, prev_offset=lens[i - 1] - n_in // 2, curve=s.transition)
+                Part(
+                    kind="blend",
+                    slot=i,
+                    offset=-(n_in // 2),
+                    n_frames=n_in,
+                    prev=i - 1,
+                    prev_offset=lens[i - 1] - n_in // 2,
+                    curve=s.transition,
+                )
             )
         head = n_in - n_in // 2
         n_solo = lens[i] - head - n_out // 2
         if n_solo > 0:
             parts.append(Part(kind="solo", slot=i, offset=head, n_frames=n_solo))
     return parts, {
-        "n_frames": bounds[-1], "n_parts": len(parts),
+        "n_frames": bounds[-1],
+        "n_parts": len(parts),
         "transitions_dropped": dropped,
         "empty_slots": [s.index for s, n in zip(slots, lens) if n == 0],
     }
@@ -186,7 +197,9 @@ def _num(v: float) -> str:
     return s if s not in {"", "-"} else "0"
 
 
-def _ramp_exprs(path: Sequence[Keyframe], *, frame_offset: int, fps: int) -> tuple[str, str, str]:
+def _ramp_exprs(
+    path: Sequence[Keyframe], *, frame_offset: int, fps: int
+) -> tuple[str, str, str]:
     """``(size, x, y)`` expressions in ``on`` — sums of clamped linear ramps."""
     t = f"((on+{frame_offset})/{fps})"
     comps = []
@@ -203,7 +216,9 @@ def _ramp_exprs(path: Sequence[Keyframe], *, frame_offset: int, fps: int) -> tup
     return comps[0], comps[1], comps[2]
 
 
-def zoompan_exprs(path: Sequence[Keyframe], *, frame_offset: int, fps: int) -> dict[str, str]:
+def zoompan_exprs(
+    path: Sequence[Keyframe], *, frame_offset: int, fps: int
+) -> dict[str, str]:
     """The ``z``/``x``/``y`` expressions for ``zoompan`` over a still.
 
     ``on`` is the output frame counter; ``frame_offset`` shifts it so a part
@@ -229,7 +244,9 @@ def _rgb(colour: str) -> tuple[float, float, float]:
     return tuple(int(c[i : i + 2], 16) / 255.0 for i in (0, 2, 4))  # type: ignore[return-value]
 
 
-def grade_filter(grade: str, accent: str = "#e0533d", *, strength: float = TINT_STRENGTH) -> str:
+def grade_filter(
+    grade: str, accent: str = "#e0533d", *, strength: float = TINT_STRENGTH
+) -> str:
     """The ffmpeg fragment for a grade, or ``""`` for none.
 
     ``tint`` mixes ``strength`` of ``luma * accent`` into the frame — a closed
@@ -267,16 +284,33 @@ def _even(v: float) -> int:
 # --------------------------------------------------------------------------
 
 
-def _tile_input(tile: Tile, media: Media, *, offset: int, n_frames: int, fps: int) -> list[str]:
+def _tile_input(
+    tile: Tile, media: Media, *, offset: int, n_frames: int, fps: int
+) -> list[str]:
     if media.kind == "clip":
         seek = max(0.0, tile.source_in + offset / fps)
-        return ["-ss", f"{seek:.6f}", "-t", f"{(n_frames + 1) / fps:.6f}", "-i", media.path]
+        return [
+            "-ss",
+            f"{seek:.6f}",
+            "-t",
+            f"{(n_frames + 1) / fps:.6f}",
+            "-i",
+            media.path,
+        ]
     return ["-i", media.path]
 
 
 def _tile_chain(
-    tile: Tile, media: Media, *, src: str, out: str, tw: int, th: int, fps: int,
-    offset: int, n_frames: int,
+    tile: Tile,
+    media: Media,
+    *,
+    src: str,
+    out: str,
+    tw: int,
+    th: int,
+    fps: int,
+    offset: int,
+    n_frames: int,
 ) -> str:
     if media.kind == "clip":
         return (
@@ -293,8 +327,16 @@ def _tile_chain(
 
 
 def _slot_graph(
-    slot: Slot, plan: Plan, *, canvas: Canvas, input_base: int, out: str,
-    offset: int, n_frames: int, grade: str, bg: str,
+    slot: Slot,
+    plan: Plan,
+    *,
+    canvas: Canvas,
+    input_base: int,
+    out: str,
+    offset: int,
+    n_frames: int,
+    grade: str,
+    bg: str,
 ) -> tuple[list[str], list[str]]:
     """``(input args, filter chains)`` producing ``[out]`` at canvas size."""
     by_index = {m.index: m for m in plan.media}
@@ -310,8 +352,17 @@ def _slot_graph(
         media = by_index[tile.media]
         inputs += _tile_input(tile, media, offset=offset, n_frames=n_frames, fps=fps)
         chains.append(
-            _tile_chain(tile, media, src=f"{input_base}:v", out=f"{out}_t", tw=w, th=h,
-                        fps=fps, offset=offset, n_frames=n_frames)
+            _tile_chain(
+                tile,
+                media,
+                src=f"{input_base}:v",
+                out=f"{out}_t",
+                tw=w,
+                th=h,
+                fps=fps,
+                offset=offset,
+                n_frames=n_frames,
+            )
         )
         chains.append(f"[{out}_t]{tail}[{out}]")
         return inputs, chains
@@ -322,45 +373,97 @@ def _slot_graph(
         inputs += _tile_input(tile, media, offset=offset, n_frames=n_frames, fps=fps)
         label = f"{out}_t{k}"
         chains.append(
-            _tile_chain(tile, media, src=f"{input_base + k}:v", out=label, tw=tw, th=th,
-                        fps=fps, offset=offset, n_frames=n_frames)
+            _tile_chain(
+                tile,
+                media,
+                src=f"{input_base + k}:v",
+                out=label,
+                tw=tw,
+                th=th,
+                fps=fps,
+                offset=offset,
+                n_frames=n_frames,
+            )
         )
         labels.append(f"[{label}]")
-    pad = f"pad={w}:{h}:(ow-iw)/2:(oh-ih)/2:color={bg}," if (tw * 2, th * 2) != (w, h) else ""
+    pad = (
+        f"pad={w}:{h}:(ow-iw)/2:(oh-ih)/2:color={bg},"
+        if (tw * 2, th * 2) != (w, h)
+        else ""
+    )
     chains.append(
-        "".join(labels) + f"xstack=inputs=4:layout=0_0|w0_0|0_h0|w0_h0,{pad}{tail}[{out}]"
+        "".join(labels)
+        + f"xstack=inputs=4:layout=0_0|w0_0|0_h0|w0_h0,{pad}{tail}[{out}]"
     )
     return inputs, chains
 
 
 def _part_args(
-    part: Part, plan: Plan, *, canvas: Canvas, grade: str, bg: str,
+    part: Part,
+    plan: Plan,
+    *,
+    canvas: Canvas,
+    grade: str,
+    bg: str,
 ) -> list[str]:
     """Everything before the encode arguments for one part."""
     slots = plan.slots
     if part.kind == "solo":
         inputs, chains = _slot_graph(
-            slots[part.slot], plan, canvas=canvas, input_base=0, out="v",
-            offset=part.offset, n_frames=part.n_frames, grade=grade, bg=bg,
+            slots[part.slot],
+            plan,
+            canvas=canvas,
+            input_base=0,
+            out="v",
+            offset=part.offset,
+            n_frames=part.n_frames,
+            grade=grade,
+            bg=bg,
         )
     else:
         assert part.prev is not None
         in_a, ch_a = _slot_graph(
-            slots[part.prev], plan, canvas=canvas, input_base=0, out="a",
-            offset=part.prev_offset, n_frames=part.n_frames, grade=grade, bg=bg,
+            slots[part.prev],
+            plan,
+            canvas=canvas,
+            input_base=0,
+            out="a",
+            offset=part.prev_offset,
+            n_frames=part.n_frames,
+            grade=grade,
+            bg=bg,
         )
         n_a = sum(1 for x in in_a if x == "-i")
         in_b, ch_b = _slot_graph(
-            slots[part.slot], plan, canvas=canvas, input_base=n_a, out="b",
-            offset=part.offset, n_frames=part.n_frames, grade=grade, bg=bg,
+            slots[part.slot],
+            plan,
+            canvas=canvas,
+            input_base=n_a,
+            out="b",
+            offset=part.offset,
+            n_frames=part.n_frames,
+            grade=grade,
+            bg=bg,
         )
         inputs = in_a + in_b
-        chains = ch_a + ch_b + [
-            f"[a][b]xfade=transition={part.curve}:duration={part.n_frames / canvas.fps:.6f}"
-            ":offset=0[v]"
-        ]
-    return [*inputs, "-filter_complex", ";".join(chains), "-map", "[v]",
-            "-frames:v", str(part.n_frames), "-an"]
+        chains = (
+            ch_a
+            + ch_b
+            + [
+                f"[a][b]xfade=transition={part.curve}:duration={part.n_frames / canvas.fps:.6f}"
+                ":offset=0[v]"
+            ]
+        )
+    return [
+        *inputs,
+        "-filter_complex",
+        ";".join(chains),
+        "-map",
+        "[v]",
+        "-frames:v",
+        str(part.n_frames),
+        "-an",
+    ]
 
 
 # --------------------------------------------------------------------------
@@ -400,11 +503,17 @@ def render_plan(
         the parts count, and the verifier's findings.
     """
     from muvid.visualize.ffmpeg import (
-        media_duration, require_ffmpeg, require_filter, run_ffmpeg,
+        media_duration,
+        require_ffmpeg,
+        require_filter,
+        run_ffmpeg,
     )
     from muvid.visualize.verify import verify_video
     from muvid.visualize.video import (
-        _audio_encode_args, _container_args, _gop_frames, _video_encode_args,
+        _audio_encode_args,
+        _container_args,
+        _gop_frames,
+        _video_encode_args,
     )
 
     if canvas.width % 2 or canvas.height % 2:
@@ -444,8 +553,11 @@ def render_plan(
     for i, part in enumerate(parts):
         name = f"part{i:04d}.mp4"
         run_ffmpeg(
-            [*_part_args(part, plan, canvas=canvas, grade=grade_chain, bg=bg),
-             *encode, str(parts_dir / name)]
+            [
+                *_part_args(part, plan, canvas=canvas, grade=grade_chain, bg=bg),
+                *encode,
+                str(parts_dir / name),
+            ]
         )
         names.append(name)
     # Relative names in the list, resolved against the list's own directory —
@@ -454,24 +566,36 @@ def render_plan(
     concat_list.write_text("".join(f"file {n}\n" for n in names), encoding="utf-8")
     run_ffmpeg(
         [
-            "-f", "concat", "-i", str(concat_list),
-            "-i", str(audio),
-            "-map", "0:v", "-map", "1:a:0",
-            "-c:v", "copy",
+            "-f",
+            "concat",
+            "-i",
+            str(concat_list),
+            "-i",
+            str(audio),
+            "-map",
+            "0:v",
+            "-map",
+            "1:a:0",
+            "-c:v",
+            "copy",
             *_audio_encode_args("384k"),
-            "-t", f"{plan.duration:.6f}",
+            "-t",
+            f"{plan.duration:.6f}",
             "-shortest",
             *_container_args(),
             # The manifest promises video/mp4; say so rather than let ffmpeg
             # guess from the extension (the conformance kit renders to `out.bin`).
-            "-f", "mp4",
+            "-f",
+            "mp4",
             str(output),
         ]
     )
     if not keep_parts:
         shutil.rmtree(parts_dir, ignore_errors=True)
 
-    checks = verify_video(output, audio=audio, expected_canvas=(canvas.width, canvas.height))
+    checks = verify_video(
+        output, audio=audio, expected_canvas=(canvas.width, canvas.height)
+    )
     meta: dict[str, Any] = {
         "renderer": RENDERER_NAME,
         "canvas": [canvas.width, canvas.height],

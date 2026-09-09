@@ -113,9 +113,13 @@ class Media:
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            "index": self.index, "path": self.path, "kind": self.kind,
-            "width": self.width, "height": self.height,
-            "duration": self.duration, "strength": round(self.strength, 4),
+            "index": self.index,
+            "path": self.path,
+            "kind": self.kind,
+            "width": self.width,
+            "height": self.height,
+            "duration": self.duration,
+            "strength": round(self.strength, 4),
         }
 
 
@@ -148,8 +152,12 @@ class Analysis:
             "beats": [round(t, 4) for t in self.beats],
             "downbeats": [round(t, 4) for t in self.downbeats],
             "sections": [
-                {"label": s.label, "start": round(s.start, 4), "end": round(s.end, 4),
-                 "energy_db": None if s.energy_db is None else round(s.energy_db, 2)}
+                {
+                    "label": s.label,
+                    "start": round(s.start, 4),
+                    "end": round(s.end, 4),
+                    "energy_db": None if s.energy_db is None else round(s.energy_db, 2),
+                }
                 for s in self.sections
             ],
             "beat_source": self.beat_source,
@@ -291,7 +299,9 @@ def _refine_grid(o, period: float, phi: float) -> tuple[float, float]:
         k += 1
     if len(ks) < 4:
         return period, phi
-    slope, intercept = np.polyfit(np.asarray(ks, dtype=float), np.asarray(fs, dtype=float), 1)
+    slope, intercept = np.polyfit(
+        np.asarray(ks, dtype=float), np.asarray(fs, dtype=float), 1
+    )
     if not (0.5 * period < slope < 1.5 * period):
         return period, phi
     return float(slope), float(intercept)
@@ -308,7 +318,10 @@ def _numpy_beats(x, sr: int, duration: float):
         beat_s = 60.0 / FALLBACK_BPM
         beats = np.arange(0.0, duration, beat_s)
         return (
-            beats, FALLBACK_BPM, o, hop_s,
+            beats,
+            FALLBACK_BPM,
+            o,
+            hop_s,
             f"no periodicity found (peak {periodicity:.3f}); fixed {FALLBACK_BPM:g} BPM grid from 0",
         )
     period, phi = _refine_grid(o, period, float(_beat_phase(o, period)))
@@ -360,18 +373,34 @@ def beat_grid(
                 # reported, not hidden — and the numpy path gets its turn.
                 note = "mixing.audio.beat_grid found no beats"
                 if source == "mixing":
-                    return beats, tempo or FALLBACK_BPM, np.asarray(bg.onset_env), float(
-                        bg.onset_hop_s
-                    ), "mixing.audio.beat_grid", note
+                    return (
+                        beats,
+                        tempo or FALLBACK_BPM,
+                        np.asarray(bg.onset_env),
+                        float(bg.onset_hop_s),
+                        "mixing.audio.beat_grid",
+                        note,
+                    )
             else:
                 return (
-                    beats, tempo, np.asarray(bg.onset_env, dtype=float),
-                    float(bg.onset_hop_s), "mixing.audio.beat_grid (librosa)", "",
+                    beats,
+                    tempo,
+                    np.asarray(bg.onset_env, dtype=float),
+                    float(bg.onset_hop_s),
+                    "mixing.audio.beat_grid (librosa)",
+                    "",
                 )
 
     x = _pcm(audio, ANALYSIS_SR)
     beats, tempo, o, hop_s, note = _numpy_beats(x, ANALYSIS_SR, duration)
-    return beats, tempo, o, hop_s, "muvid.montage.analysis (numpy onset autocorrelation, fixed tempo)", note
+    return (
+        beats,
+        tempo,
+        o,
+        hop_s,
+        "muvid.montage.analysis (numpy onset autocorrelation, fixed tempo)",
+        note,
+    )
 
 
 def downbeats_from_beats(
@@ -500,11 +529,13 @@ def derive_sections(
         return (Section(label="verse", start=0.0, end=duration),)
     if n != len(energy):
         raise ValueError(f"{n} bars but {len(energy)} energy values")
-    lo, hi = sorted(energy)[max(0, n // 10)], sorted(energy)[min(n - 1, n - 1 - n // 10)]
+    lo, hi = (
+        sorted(energy)[max(0, n // 10)],
+        sorted(energy)[min(n - 1, n - 1 - n // 10)],
+    )
     if hi - lo < FLAT_RANGE_DB or n < 2:
         return (
-            Section(label="verse", start=0.0, end=duration,
-                    energy_db=sum(energy) / n),
+            Section(label="verse", start=0.0, end=duration, energy_db=sum(energy) / n),
         )
     threshold = _two_means_threshold(energy)
     loud = [v > threshold for v in energy]
@@ -532,7 +563,12 @@ def derive_sections(
         label = "chorus" if is_loud else "verse"
         if not is_loud and k == 0 and len(runs) > 1 and len(run) <= MAX_INTRO_BARS:
             label = "intro"
-        elif not is_loud and k == len(runs) - 1 and len(runs) > 1 and len(run) <= MAX_INTRO_BARS:
+        elif (
+            not is_loud
+            and k == len(runs) - 1
+            and len(runs) > 1
+            and len(run) <= MAX_INTRO_BARS
+        ):
             label = "outro"
         sections.append(
             Section(
@@ -617,8 +653,11 @@ def analyze(
         if near and median_gap > 0:
             tempo = 60.0 / (sum(near) / len(near))
     onset_env = np.asarray(onset_env, dtype=float)
-    idx = np.clip(np.round(np.asarray(beat_list) / max(hop_s, 1e-9)).astype(int), 0,
-                  max(0, len(onset_env) - 1))
+    idx = np.clip(
+        np.round(np.asarray(beat_list) / max(hop_s, 1e-9)).astype(int),
+        0,
+        max(0, len(onset_env) - 1),
+    )
     onset_at_beats = onset_env[idx].tolist() if len(onset_env) and beat_list else []
     downbeats = downbeats_from_beats(beat_list, onset_at_beats, beats_per_bar)
     if beat_list and duration > 0:
@@ -667,9 +706,23 @@ def _luma_contrast(path: Path, *, at_s: float | None) -> float:
 
     seek = ["-ss", f"{at_s:.3f}"] if at_s else []
     proc = _run_bounded(
-        ["ffmpeg", "-v", "error", *seek, "-i", str(path), "-frames:v", "1",
-         "-vf", f"scale={STRENGTH_THUMB}:{STRENGTH_THUMB}",
-         "-f", "rawvideo", "-pix_fmt", "gray", "-"],
+        [
+            "ffmpeg",
+            "-v",
+            "error",
+            *seek,
+            "-i",
+            str(path),
+            "-frames:v",
+            "1",
+            "-vf",
+            f"scale={STRENGTH_THUMB}:{STRENGTH_THUMB}",
+            "-f",
+            "rawvideo",
+            "-pix_fmt",
+            "gray",
+            "-",
+        ],
         text=False,
     )
     raw = proc.stdout or b""
@@ -722,8 +775,12 @@ def probe_media(
         )
         out.append(
             Media(
-                index=start_index + i, path=str(path), kind=kind,
-                width=width, height=height, duration=duration,
+                index=start_index + i,
+                path=str(path),
+                kind=kind,
+                width=width,
+                height=height,
+                duration=duration,
                 strength=strength_of(width, height, contrast),
             )
         )

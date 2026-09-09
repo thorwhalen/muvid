@@ -67,37 +67,58 @@ ARCHETYPES: dict[str, str] = {
 ARCHETYPE_PARAMS: dict[str, dict[str, dict[str, Any]]] = {
     "ballad_dissolve": {
         "bars_per_cut": {
-            "type": "number", "minimum": 1, "maximum": 16, "default": 4,
+            "type": "number",
+            "minimum": 1,
+            "maximum": 16,
+            "default": 4,
             "description": "Bars between cuts in a verse; a chorus halves it.",
         },
         "fade_beats": {
-            "type": "number", "minimum": 0, "maximum": 4, "default": 1,
+            "type": "number",
+            "minimum": 0,
+            "maximum": 4,
+            "default": 1,
             "description": "Crossfade length in beats. 0 is a hard cut.",
         },
         "drift": {
-            "type": "number", "minimum": 0, "maximum": 0.3, "default": 0.08,
+            "type": "number",
+            "minimum": 0,
+            "maximum": 0.3,
+            "default": 0.08,
             "description": "Ken Burns amplitude as a fraction of the frame.",
         },
     },
     "beat_cut": {
         "beats_per_cut": {
-            "type": "number", "minimum": 1, "maximum": 16, "default": 4,
+            "type": "number",
+            "minimum": 1,
+            "maximum": 16,
+            "default": 4,
             "description": "Beats between cuts in a verse; a chorus halves it.",
         },
         "punch": {
-            "type": "number", "minimum": 0, "maximum": 0.3, "default": 0.12,
+            "type": "number",
+            "minimum": 0,
+            "maximum": 0.3,
+            "default": 0.12,
             "description": "Punch-zoom amount on each cut (0 disables).",
         },
     },
     "grid": {
         "beats_per_swap": {
-            "type": "number", "minimum": 1, "maximum": 16, "default": 2,
+            "type": "number",
+            "minimum": 1,
+            "maximum": 16,
+            "default": 2,
             "description": "Beats between tile swaps in a verse; a chorus halves it.",
         },
     },
     "stop_motion": {
         "subdivision": {
-            "type": "integer", "minimum": 1, "maximum": 4, "default": 2,
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4,
+            "default": 2,
             "description": "Holds per beat (2 = eighth notes). A chorus doubles it, "
             "up to 4.",
         },
@@ -116,7 +137,10 @@ CUT_FEELS: dict[str, str] = {
 
 #: Multiplier on beats-per-cut per cut feel. Smaller is more cuts.
 CUT_FEEL_FACTORS: dict[str, float] = {
-    "slow": 2.0, "steady": 1.0, "driving": 0.5, "frantic": 0.25,
+    "slow": 2.0,
+    "steady": 1.0,
+    "driving": 0.5,
+    "frantic": 0.25,
 }
 
 #: A colour grade applied to every frame. Closed because the grade is
@@ -331,7 +355,8 @@ class TreatmentSpec:
             raw = _mapping(raw)
             scenes.append(
                 Scene(
-                    applies_to=tuple(str(a) for a in _seq(raw.get("applies_to"))) or ("*",),
+                    applies_to=tuple(str(a) for a in _seq(raw.get("applies_to")))
+                    or ("*",),
                     archetype=_text(raw.get("archetype"), "beat_cut"),
                     params=_mapping(raw.get("params")),
                 )
@@ -390,7 +415,9 @@ def validate(spec: TreatmentSpec) -> list[str]:
         if _bad_colour(value):
             errs.append(f"direction.palette.{name} {value!r} is not a #rrggbb colour")
     if d.cut_feel not in CUT_FEELS:
-        errs.append(f"direction.cut_feel {d.cut_feel!r} is not one of {_enum(CUT_FEELS)}")
+        errs.append(
+            f"direction.cut_feel {d.cut_feel!r} is not one of {_enum(CUT_FEELS)}"
+        )
     if d.grade not in GRADES:
         errs.append(f"direction.grade {d.grade!r} is not one of {_enum(GRADES)}")
     if d.reuse.min_gap < 0:
@@ -504,7 +531,9 @@ def repair(spec: TreatmentSpec) -> tuple[TreatmentSpec, list[str]]:
     )
 
 
-def coerce(obj: Mapping[str, Any] | TreatmentSpec | str) -> tuple[TreatmentSpec, list[str]]:
+def coerce(
+    obj: Mapping[str, Any] | TreatmentSpec | str,
+) -> tuple[TreatmentSpec, list[str]]:
     """Take whatever a caller or a model produced and return a plannable spec.
 
     Accepts a :class:`TreatmentSpec`, a mapping, or a JSON string — and repairs
@@ -580,12 +609,16 @@ def json_schema() -> dict[str, Any]:
                     "cut_feel": {
                         "type": "string",
                         "enum": _enum(CUT_FEELS),
-                        "description": "; ".join(f"{k}: {v}" for k, v in CUT_FEELS.items()),
+                        "description": "; ".join(
+                            f"{k}: {v}" for k, v in CUT_FEELS.items()
+                        ),
                     },
                     "grade": {
                         "type": "string",
                         "enum": _enum(GRADES),
-                        "description": "; ".join(f"{k}: {v}" for k, v in GRADES.items()),
+                        "description": "; ".join(
+                            f"{k}: {v}" for k, v in GRADES.items()
+                        ),
                     },
                     "reuse": {
                         "type": "object",

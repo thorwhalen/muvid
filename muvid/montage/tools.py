@@ -89,7 +89,9 @@ def analyze_song(
     """
     from muvid.montage.analysis import analyze
 
-    return analyze(audio, beats=beats, beats_per_bar=beats_per_bar, sections=sections).to_dict()
+    return analyze(
+        audio, beats=beats, beats_per_bar=beats_per_bar, sections=sections
+    ).to_dict()
 
 
 def _pool(
@@ -164,13 +166,21 @@ def plan_montage(
         if len(seq) > MAX_MEDIA:
             raise ValueError(f"{len(seq)} {name}; the bound is {MAX_MEDIA} per input")
     params = _params(
-        treatment=treatment, archetype=archetype, strict=strict, beats=beats,
-        beats_per_bar=beats_per_bar, sections=sections,
+        treatment=treatment,
+        archetype=archetype,
+        strict=strict,
+        beats=beats,
+        beats_per_bar=beats_per_bar,
+        sections=sections,
     )
     spec, notes, source = build_treatment(params)
     if strict and notes:
-        raise ValueError("treatment needed repairs and strict=True: " + "; ".join(notes))
-    analysis = analyze(audio, beats=beats, beats_per_bar=beats_per_bar, sections=sections)
+        raise ValueError(
+            "treatment needed repairs and strict=True: " + "; ".join(notes)
+        )
+    analysis = analyze(
+        audio, beats=beats, beats_per_bar=beats_per_bar, sections=sections
+    )
     media = list(probe_media(photos, kind="photo"))
     media += list(probe_media(clips, kind="clip", start_index=len(media)))
     if cover:
@@ -218,8 +228,14 @@ def render_montage(
 
     inputs = {"audio": str(audio), **_pool(photos, clips, cover)}
     params = _params(
-        treatment=treatment, archetype=archetype, strict=strict, beats=beats,
-        beats_per_bar=beats_per_bar, sections=sections, width=width, height=height,
+        treatment=treatment,
+        archetype=archetype,
+        strict=strict,
+        beats=beats,
+        beats_per_bar=beats_per_bar,
+        sections=sections,
+        width=width,
+        height=height,
         fps=fps,
     )
     out = Path(output)
@@ -228,8 +244,13 @@ def render_montage(
         get_subgenre(MONTAGE.slug)
     except KeyError:
         result = _render(
-            RenderRequest(subgenre=MONTAGE.slug, inputs=inputs, params=params,
-                          workdir=wd, output=out)
+            RenderRequest(
+                subgenre=MONTAGE.slug,
+                inputs=inputs,
+                params=params,
+                workdir=wd,
+                output=out,
+            )
         )
     else:
         result = render_subgenre(

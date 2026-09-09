@@ -108,8 +108,15 @@ CHOREO = Subgenre(
     params_schema=_PARAMS,
     produces="video/mp4",
     intake_kinds=(
-        "visual music", "abstract", "visualizer", "instrumental", "electronic",
-        "fischinger", "star guitar", "animation", "song",
+        "visual music",
+        "abstract",
+        "visualizer",
+        "instrumental",
+        "electronic",
+        "fischinger",
+        "star guitar",
+        "animation",
+        "song",
     ),
     #: None means genuinely free: nothing here spends anything.
     cost_profile=None,
@@ -131,8 +138,10 @@ CHOREO = Subgenre(
             "within a fraction of a beat. Sparse, so only the strong hits mark.",
             params={
                 "treatment": {
-                    "direction": {"density": "sparse",
-                                  "palette": {"bg": "#000000", "fg": "#ffffff"}},
+                    "direction": {
+                        "density": "sparse",
+                        "palette": {"bg": "#000000", "fg": "#ffffff"},
+                    },
                     "scenes": [{"archetype": "mclaren"}],
                 }
             },
@@ -145,8 +154,11 @@ CHOREO = Subgenre(
                     "direction": {"background": "gradient", "density": "dense"},
                     "scenes": [
                         {"applies_to": ["*"], "archetype": "swarm"},
-                        {"applies_to": ["high"], "archetype": "fischinger",
-                         "params": {"columns": 8, "rows": 4}},
+                        {
+                            "applies_to": ["high"],
+                            "archetype": "fischinger",
+                            "params": {"columns": 8, "rows": 4},
+                        },
                     ],
                 },
                 "seed": 7,
