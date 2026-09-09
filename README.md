@@ -25,7 +25,8 @@ The AI pipeline orchestrates the local ecosystem (`falaw`, `lookbook`, `lacing`,
 > [`misc/docs/alignment_references.md`](misc/docs/alignment_references.md)
 > for the lyric-alignment literature muvid builds on.
 
-muvid is **four independent parts**:
+muvid is **four independent parts** — the fourth is a plugin surface that
+currently ships three subgenres:
 
 | part | what it does | needs |
 |---|---|---|
@@ -33,6 +34,8 @@ muvid is **four independent parts**:
 | [the `music_video` genre](#the-music_video-genre--footage-assembly) | N phone recordings of ONE song → aligned, scored, cut and assembled into a music video | `ffmpeg` |
 | the AI narrative pipeline (above) | a song → a cast, a script and generated shots | API keys, `muvid[ai]` |
 | [`muvid.lyricvid`](#muvidlyricvid--lyric-videos) | a song → a typographic music video: the words appear in time with the singing | `ffmpeg`, `muvid[lyricvid]` |
+| [`muvid.choreo`](#muvidchoreo--visual-music) | a song and nothing else → event-driven visual music: onsets become objects, sections become scenes | `ffmpeg` |
+| [`muvid.montage`](#muvidmontage--beat-cut-montage) | a song + a pool of photos/clips → a montage cut on the beat, with Ken Burns, crossfades and grids | `ffmpeg` |
 
 Three of the four are free, deterministic and key-free, and are registered
 [`nw`](https://github.com/thorwhalen/nw) genres — so a host connector serves them
@@ -242,6 +245,46 @@ in with ffmpeg: frame-exact, no browser, and the `.ass` file is itself an
 editable deliverable you can open in Aegisub. `web` drives headless Chromium for
 effects ASS cannot express, at 10-100x the render time.
 
+## `muvid.choreo` — visual music
+
+Audio in, nothing else. The Oskar Fischinger / Norman McLaren / "Star Guitar"
+lineage: discrete musical **events** become **objects** with persistence on
+screen, and sections become different arrangements — choreographed and
+structural, unlike the continuous spectrum readout of `muvid.visualize`.
+
+```bash
+python -m muvid.choreo render song.wav out.mp4 --archetype star_guitar
+```
+
+Four archetypes: `fischinger` (shapes ignite on a grid per onset), `star_guitar`
+(a scrolling landscape — poles on the kicks, buildings on the mids, and their
+spacing *is* the rhythm), `mclaren` (scratches on black), `swarm`. Analysis is
+numpy only — a three-band spectral-flux onset detector with hysteresis and a
+beat-derived minimum inter-onset interval, a beat grid (from `mixing` when its
+librosa is present, else a built-in estimator), sections from energy. Frames
+are drawn in numpy and piped into ffmpeg. Deterministic: same song and seed,
+same video. `events.json` and `scene.json` ride along as inspectable artifacts.
+
+## `muvid.montage` — beat-cut montage
+
+A song plus a pool of photos and/or short clips that have no timeline of their
+own — the thing "photo beat sync" templates sell.
+
+```bash
+python -m muvid.montage render song.wav out.mp4 --photos a.jpg b.jpg c.jpg
+python -m muvid.montage plan   song.wav --photos a.jpg b.jpg c.jpg   # the EDL, as JSON
+```
+
+Its core is a **planner**: a pool with no timeline → slots on the song's beat
+grid and section structure, with section-aware pacing (choruses cut twice as
+fast, intros half as fast, never a hold over ten seconds) and an explicit
+**reuse policy** so twelve photos can carry a three-minute song — never the same
+image within *n* cuts, each revisit a different crop, the strongest images
+reserved to lead the final chorus, a cover pinned to the first and last slot.
+Four archetypes: `ballad_dissolve`, `beat_cut`, `grid` (2×2 tiles swapping on
+the beat), `stop_motion`. Rendering is one ffmpeg graph. `plan.json` is written
+*before* rendering and rides along as an artifact, so an edit is a re-render.
+
 ## Plugins — adding a kind of video
 
 `muvid.subgenres` is how another kind of video gets added, by muvid or by anyone
@@ -294,6 +337,12 @@ assert report.ok, report.summary()
 ```bash
 python -m muvid.lyricvid subgenres    # everything installed, as JSON
 ```
+
+`choreo` and `montage` are themselves registered this way and nothing else —
+nothing in muvid names them. They appear in the `nw` genre catalogue through
+`muvid/genre_subgenres.py` and are renderable over MCP through the generic
+`render_subgenre` tool, which fetches every file input into the caller's
+workspace and validates the request against the manifest's own schema first.
 
 ## 30-second tour
 
