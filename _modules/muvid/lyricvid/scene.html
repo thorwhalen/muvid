@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.lyricvid.scene &mdash; muvid 0.0.60 documentation</title>
+  <title>muvid.lyricvid.scene &mdash; muvid 0.0.61 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=4d22d5b7"></script>
+      <script src="../../../_static/documentation_options.js?v=e95a51ae"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -579,6 +579,189 @@
                 <span class="p">)</span>
             <span class="p">)</span>
             <span class="n">cursor</span> <span class="o">+=</span> <span class="n">ww</span>
+    <span class="k">return</span> <span class="n">cues</span>
+
+
+<span class="c1">#: Seconds the dim-&gt;bright handover in a ``calligram`` takes. Expressed as an</span>
+<span class="c1">#: overlap between two cues rather than as a renderer effect, so it works on</span>
+<span class="c1">#: both backends (see ``_calligram``).</span>
+<span class="n">_IGNITE_CROSSFADE_S</span> <span class="o">=</span> <span class="mf">0.12</span>
+
+
+<span class="nd">@register_archetype</span><span class="p">(</span><span class="s2">"calligram"</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_calligram</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">sc</span><span class="p">,</span> <span class="n">direction</span><span class="p">,</span> <span class="n">lines</span><span class="p">,</span> <span class="n">tt</span><span class="p">,</span> <span class="n">canvas</span><span class="p">,</span> <span class="o">**</span><span class="n">_</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Cue</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Each line is a slanting streak of upright letters, one letter per slot.</span>
+
+<span class="sd">    This is the Apollinaire ``Il pleut`` shape, generalised: the lyric is not</span>
+<span class="sd">    typeset as rows of words but as a *fan of streaks*, one per line, each</span>
+<span class="sd">    steeper than the one before it, with the letters themselves left upright.</span>
+<span class="sd">    That upright-letter-on-a-slanting-axis construction is what separates a</span>
+<span class="sd">    calligram from ordinary shaped text, and it is why ``concrete_page`` (whose</span>
+<span class="sd">    docstring offers "a concrete poem") cannot express one: it lays every line</span>
+<span class="sd">    out as a centred horizontal row.</span>
+
+<span class="sd">    WHY THIS LIVES IN MUVID, AND WHERE IT PROBABLY BELONGS INSTEAD</span>
+<span class="sd">    -------------------------------------------------------------</span>
+<span class="sd">    Strictly, this is *structured text animation* — glyphs placed by a</span>
+<span class="sd">    parameterised layout and animated on a timeline — which is ``an``'s domain,</span>
+<span class="sd">    not muvid's. It is here because muvid owns the layout-archetype vocabulary</span>
+<span class="sd">    that ``lyricvid`` compiles, and because as one function plus one vocabulary</span>
+<span class="sd">    entry it is exactly the seam this module's docstring describes. The general</span>
+<span class="sd">    version — a text/typography subgenre in ``an``, where glyphs are first-class</span>
+<span class="sd">    animatable objects that can appear, transform and move under a declared</span>
+<span class="sd">    parameterisation, and of which this fan is one preset — is proposed as</span>
+<span class="sd">    thorwhalen/an#155. If that lands, this archetype should become a thin caller</span>
+<span class="sd">    of it rather than growing more geometry of its own. Do not add a second</span>
+<span class="sd">    layout family here; add it there.</span>
+
+<span class="sd">    GEOMETRY</span>
+<span class="sd">    --------</span>
+<span class="sd">    All layout is done in *row-pitch units* — ``u`` across, ``v`` down, one unit</span>
+<span class="sd">    per letter slot — and only fitted to the canvas at the end. That keeps the</span>
+<span class="sd">    shape identical in portrait, landscape and 4K, and means the defaults are</span>
+<span class="sd">    aspect-independent rather than tuned to one frame.</span>
+
+<span class="sd">    For streak ``k``, slot ``i``::</span>
+
+<span class="sd">        u = head_offset[k] + i * slant[k]</span>
+<span class="sd">        v = i</span>
+
+<span class="sd">    ``slant`` is ``dx/dy`` (a tangent, not an angle) so the recurrence is a plain</span>
+<span class="sd">    addition. Words are separated by **exactly one** empty slot, which is what</span>
+<span class="sd">    the 1918 setting of ``Il pleut`` does throughout.</span>
+
+<span class="sd">    Defaults describe a generic rain-fan. A facsimile of a specific page passes</span>
+<span class="sd">    its measured ``slants`` and ``head_offsets`` instead; those are shape</span>
+<span class="sd">    parameters, not per-letter coordinates, so the spec's "no coordinates" rule</span>
+<span class="sd">    is intact.</span>
+
+<span class="sd">    Parameters (all via ``scene.params``)</span>
+<span class="sd">    ------------------------------------</span>
+<span class="sd">    ``slant`` / ``slant_step``  tangent of the first streak, and the increment</span>
+<span class="sd">        added per streak, so the group fans open as it descends.</span>
+<span class="sd">    ``head_gap``  horizontal distance between successive streak heads, in slots.</span>
+<span class="sd">    ``slants`` / ``head_offsets``  explicit per-streak overrides (lists).</span>
+<span class="sd">    ``top`` / ``bottom`` / ``left`` / ``right``  the box to fit inside.</span>
+<span class="sd">    ``size_ratio``  cap height as a fraction of the row pitch.</span>
+<span class="sd">    ``stagger``  0..1 — how much of a word's own duration its letters are</span>
+<span class="sd">        spread over, so a word trickles down its streak instead of flashing.</span>
+<span class="sd">    """</span>
+    <span class="n">rows</span> <span class="o">=</span> <span class="p">[</span><span class="n">ln</span> <span class="k">for</span> <span class="n">ln</span> <span class="ow">in</span> <span class="n">lines</span> <span class="k">if</span> <span class="n">ln</span><span class="o">.</span><span class="n">words</span><span class="p">]</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">rows</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[]</span>
+
+    <span class="n">p</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">params</span>
+    <span class="n">top</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"top"</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">))</span>
+    <span class="n">bottom</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"bottom"</span><span class="p">,</span> <span class="mf">0.97</span><span class="p">))</span>
+    <span class="n">left</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"left"</span><span class="p">,</span> <span class="mf">0.04</span><span class="p">))</span>
+    <span class="n">right</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"right"</span><span class="p">,</span> <span class="mf">0.96</span><span class="p">))</span>
+    <span class="n">size_ratio</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"size_ratio"</span><span class="p">,</span> <span class="mf">0.62</span><span class="p">))</span>
+    <span class="n">stagger</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"stagger"</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">))))</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span>
+
+    <span class="c1"># per-streak shape: explicit override, else the fan the scalars describe</span>
+    <span class="n">given_slants</span> <span class="o">=</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"slants"</span><span class="p">)</span> <span class="ow">or</span> <span class="p">[])]</span>
+    <span class="n">given_heads</span> <span class="o">=</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"head_offsets"</span><span class="p">)</span> <span class="ow">or</span> <span class="p">[])]</span>
+    <span class="n">slant0</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"slant"</span><span class="p">,</span> <span class="mf">0.19</span><span class="p">))</span>
+    <span class="n">slant_step</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"slant_step"</span><span class="p">,</span> <span class="mf">0.042</span><span class="p">))</span>
+    <span class="n">head_gap</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"head_gap"</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">))</span>
+    <span class="n">slant</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">given_slants</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">given_slants</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">n</span>
+        <span class="k">else</span> <span class="p">[</span><span class="n">slant0</span> <span class="o">+</span> <span class="n">k</span> <span class="o">*</span> <span class="n">slant_step</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">)]</span>
+    <span class="p">)</span>
+    <span class="n">head</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">given_heads</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">given_heads</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">n</span> <span class="k">else</span> <span class="p">[</span><span class="n">k</span> <span class="o">*</span> <span class="n">head_gap</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">)]</span>
+    <span class="p">)</span>
+
+    <span class="c1"># 1. place every letter on the abstract slot grid</span>
+    <span class="n">placed</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">Word</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="n">Line</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">line</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">rows</span><span class="p">):</span>
+        <span class="n">slot</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">line</span><span class="o">.</span><span class="n">words</span><span class="p">:</span>
+            <span class="n">text</span> <span class="o">=</span> <span class="n">_apply_case</span><span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">text</span><span class="p">,</span> <span class="n">direction</span><span class="o">.</span><span class="n">typography</span><span class="o">.</span><span class="n">case</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">ch</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">text</span><span class="p">):</span>
+                <span class="n">placed</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">k</span><span class="p">,</span> <span class="n">slot</span><span class="p">,</span> <span class="n">ch</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">text</span><span class="p">),</span> <span class="n">line</span><span class="p">))</span>
+                <span class="n">slot</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">slot</span> <span class="o">+=</span> <span class="mi">1</span>  <span class="c1"># exactly one empty slot between words</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">placed</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[]</span>
+
+    <span class="c1"># 2. fit the grid to the canvas — the only step that knows the frame</span>
+    <span class="n">us</span> <span class="o">=</span> <span class="p">[</span><span class="n">head</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">+</span> <span class="n">s</span> <span class="o">*</span> <span class="n">slant</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="o">*</span><span class="n">_</span> <span class="ow">in</span> <span class="n">placed</span><span class="p">]</span>
+    <span class="n">vs</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="o">*</span><span class="n">_</span> <span class="ow">in</span> <span class="n">placed</span><span class="p">]</span>
+    <span class="n">u_lo</span><span class="p">,</span> <span class="n">u_hi</span><span class="p">,</span> <span class="n">v_lo</span><span class="p">,</span> <span class="n">v_hi</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">us</span><span class="p">),</span> <span class="nb">max</span><span class="p">(</span><span class="n">us</span><span class="p">),</span> <span class="nb">min</span><span class="p">(</span><span class="n">vs</span><span class="p">),</span> <span class="nb">max</span><span class="p">(</span><span class="n">vs</span><span class="p">)</span>
+    <span class="n">u_span</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mf">1e-6</span><span class="p">,</span> <span class="n">u_hi</span> <span class="o">-</span> <span class="n">u_lo</span><span class="p">)</span>
+    <span class="n">v_span</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mf">1e-6</span><span class="p">,</span> <span class="n">v_hi</span> <span class="o">-</span> <span class="n">v_lo</span><span class="p">)</span>
+    <span class="c1"># a horizontal distance of `pitch` height-units is `pitch / aspect` of width</span>
+    <span class="n">pitch</span> <span class="o">=</span> <span class="nb">min</span><span class="p">((</span><span class="n">bottom</span> <span class="o">-</span> <span class="n">top</span><span class="p">)</span> <span class="o">/</span> <span class="n">v_span</span><span class="p">,</span> <span class="p">(</span><span class="n">right</span> <span class="o">-</span> <span class="n">left</span><span class="p">)</span> <span class="o">*</span> <span class="n">canvas</span><span class="o">.</span><span class="n">aspect</span> <span class="o">/</span> <span class="n">u_span</span><span class="p">)</span>
+    <span class="n">x0</span> <span class="o">=</span> <span class="p">(</span><span class="n">left</span> <span class="o">+</span> <span class="n">right</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">-</span> <span class="p">(</span><span class="n">u_span</span> <span class="o">*</span> <span class="n">pitch</span> <span class="o">/</span> <span class="n">canvas</span><span class="o">.</span><span class="n">aspect</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+    <span class="n">y0</span> <span class="o">=</span> <span class="p">(</span><span class="n">top</span> <span class="o">+</span> <span class="n">bottom</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">-</span> <span class="p">(</span><span class="n">v_span</span> <span class="o">*</span> <span class="n">pitch</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+    <span class="n">size</span> <span class="o">=</span> <span class="n">pitch</span> <span class="o">*</span> <span class="n">size_ratio</span>
+
+    <span class="c1"># 3. one cue per letter, ignited on its own word</span>
+    <span class="n">show_all</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">persistence</span> <span class="o">==</span> <span class="s2">"dim"</span>
+    <span class="n">cues</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Cue</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">ch</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">ln_len</span><span class="p">,</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">placed</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">ch</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
+            <span class="k">continue</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">x0</span> <span class="o">+</span> <span class="p">(</span><span class="n">head</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">+</span> <span class="n">s</span> <span class="o">*</span> <span class="n">slant</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">-</span> <span class="n">u_lo</span><span class="p">)</span> <span class="o">*</span> <span class="n">pitch</span> <span class="o">/</span> <span class="n">canvas</span><span class="o">.</span><span class="n">aspect</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">y0</span> <span class="o">+</span> <span class="p">(</span><span class="n">s</span> <span class="o">-</span> <span class="n">v_lo</span><span class="p">)</span> <span class="o">*</span> <span class="n">pitch</span>
+        <span class="n">t_in</span><span class="p">,</span> <span class="n">t_full</span> <span class="o">=</span> <span class="n">_envelope</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">sc</span><span class="p">,</span> <span class="n">line</span><span class="o">=</span><span class="n">line</span><span class="p">,</span> <span class="n">tt</span><span class="o">=</span><span class="n">tt</span><span class="p">)</span>
+        <span class="c1"># trickle the word's letters down its streak across the word's own span</span>
+        <span class="n">offset</span> <span class="o">=</span> <span class="n">stagger</span> <span class="o">*</span> <span class="p">(</span><span class="n">j</span> <span class="o">/</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">ln_len</span><span class="p">))</span> <span class="o">*</span> <span class="nb">max</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">w</span><span class="o">.</span><span class="n">end</span> <span class="o">-</span> <span class="n">w</span><span class="o">.</span><span class="n">start</span><span class="p">)</span>
+        <span class="n">ignite</span> <span class="o">=</span> <span class="n">t_in</span> <span class="o">+</span> <span class="n">offset</span>
+        <span class="k">if</span> <span class="n">show_all</span><span class="p">:</span>
+            <span class="c1"># dim-&gt;bright as an OVERLAP OF TWO CUES, not a renderer effect:</span>
+            <span class="c1"># `ignite_at` is honoured by render_web only, so a scene that</span>
+            <span class="c1"># depended on it would silently render as a flat bright page under</span>
+            <span class="c1"># the default ASS backend. Two cues is renderer-neutral.</span>
+            <span class="n">cues</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">Cue</span><span class="p">(</span>
+                    <span class="n">text</span><span class="o">=</span><span class="n">ch</span><span class="p">,</span>
+                    <span class="n">x</span><span class="o">=</span><span class="n">x</span><span class="p">,</span>
+                    <span class="n">y</span><span class="o">=</span><span class="n">y</span><span class="p">,</span>
+                    <span class="n">size</span><span class="o">=</span><span class="n">size</span><span class="p">,</span>
+                    <span class="n">t_in</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+                    <span class="n">t_full</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+                    <span class="n">t_out</span><span class="o">=</span><span class="n">ignite</span><span class="p">,</span>
+                    <span class="n">t_gone</span><span class="o">=</span><span class="n">ignite</span> <span class="o">+</span> <span class="n">_IGNITE_CROSSFADE_S</span><span class="p">,</span>
+                    <span class="n">colour</span><span class="o">=</span><span class="n">direction</span><span class="o">.</span><span class="n">palette</span><span class="o">.</span><span class="n">dim</span><span class="p">,</span>
+                    <span class="n">motion</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">motion</span><span class="p">,</span>
+                    <span class="n">layer</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+            <span class="n">cues</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">Cue</span><span class="p">(</span>
+                    <span class="n">text</span><span class="o">=</span><span class="n">ch</span><span class="p">,</span>
+                    <span class="n">x</span><span class="o">=</span><span class="n">x</span><span class="p">,</span>
+                    <span class="n">y</span><span class="o">=</span><span class="n">y</span><span class="p">,</span>
+                    <span class="n">size</span><span class="o">=</span><span class="n">size</span><span class="p">,</span>
+                    <span class="n">t_in</span><span class="o">=</span><span class="n">ignite</span><span class="p">,</span>
+                    <span class="n">t_full</span><span class="o">=</span><span class="n">ignite</span> <span class="o">+</span> <span class="n">_IGNITE_CROSSFADE_S</span><span class="p">,</span>
+                    <span class="n">colour</span><span class="o">=</span><span class="n">direction</span><span class="o">.</span><span class="n">palette</span><span class="o">.</span><span class="n">fg</span><span class="p">,</span>
+                    <span class="n">motion</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">motion</span><span class="p">,</span>
+                    <span class="n">layer</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">t_out</span><span class="p">,</span> <span class="n">t_gone</span><span class="p">,</span> <span class="n">dim_from</span> <span class="o">=</span> <span class="n">_persistence_times</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">line</span><span class="p">,</span> <span class="n">tt</span><span class="p">,</span> <span class="n">sc</span><span class="p">)</span>
+            <span class="n">cues</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">Cue</span><span class="p">(</span>
+                    <span class="n">text</span><span class="o">=</span><span class="n">ch</span><span class="p">,</span>
+                    <span class="n">x</span><span class="o">=</span><span class="n">x</span><span class="p">,</span>
+                    <span class="n">y</span><span class="o">=</span><span class="n">y</span><span class="p">,</span>
+                    <span class="n">size</span><span class="o">=</span><span class="n">size</span><span class="p">,</span>
+                    <span class="n">t_in</span><span class="o">=</span><span class="n">ignite</span><span class="p">,</span>
+                    <span class="n">t_full</span><span class="o">=</span><span class="nb">max</span><span class="p">(</span><span class="n">ignite</span><span class="p">,</span> <span class="n">t_full</span> <span class="o">+</span> <span class="n">offset</span><span class="p">),</span>
+                    <span class="n">t_out</span><span class="o">=</span><span class="n">t_out</span><span class="p">,</span>
+                    <span class="n">t_gone</span><span class="o">=</span><span class="n">t_gone</span><span class="p">,</span>
+                    <span class="n">colour</span><span class="o">=</span><span class="n">direction</span><span class="o">.</span><span class="n">palette</span><span class="o">.</span><span class="n">fg</span><span class="p">,</span>
+                    <span class="n">dim_colour</span><span class="o">=</span><span class="n">direction</span><span class="o">.</span><span class="n">palette</span><span class="o">.</span><span class="n">dim</span><span class="p">,</span>
+                    <span class="n">dim_from</span><span class="o">=</span><span class="n">dim_from</span><span class="p">,</span>
+                    <span class="n">motion</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">motion</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
     <span class="k">return</span> <span class="n">cues</span>
 
 

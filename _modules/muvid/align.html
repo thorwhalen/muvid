@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.align &mdash; muvid 0.0.60 documentation</title>
+  <title>muvid.align &mdash; muvid 0.0.61 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=4d22d5b7"></script>
+      <script src="../../_static/documentation_options.js?v=e95a51ae"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -195,11 +195,17 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.lyrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">LyricsDoc</span><span class="p">,</span> <span class="n">words_from_transcript</span>
 
 
-<span class="n">_WORD_TOKEN_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"[a-z0-9']+"</span><span class="p">)</span>
+<span class="c1">#: Unicode-aware word boundaries. ``[^\W_]`` is "word character but not</span>
+<span class="c1">#: underscore", i.e. any letter or digit in ANY script — an ASCII-only class</span>
+<span class="c1">#: here silently shredded every accented language: 'même' tokenised as</span>
+<span class="c1">#: ('m', 'me'), 'cabrés' as ('cabr', 's'), and a one-letter word like 'ô' or</span>
+<span class="c1">#: 'à' vanished entirely. Kept character-for-character in sync with</span>
+<span class="c1">#: ``muvid.lyricvid.timed_text._LYRIC_TOKEN_RE``.</span>
+<span class="n">_WORD_TOKEN_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"(?:[^\W_]|['’])+"</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_normalize</span><span class="p">(</span><span class="n">token</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-    <span class="k">return</span> <span class="n">token</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">"'-"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">token</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">"'’-"</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_tokenize</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
