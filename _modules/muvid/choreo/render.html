@@ -1,0 +1,644 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>muvid.choreo.render &mdash; muvid 0.0.62 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=dea2dbc4"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
+      <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            muvid
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid.html">muvid</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/__main__.html">muvid.__main__</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/align.html">muvid.align</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/characters.html">muvid.characters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/choreo.html">muvid.choreo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/choreo/__main__.html">muvid.choreo.__main__</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/choreo/analysis.html">muvid.choreo.analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/choreo/manifest.html">muvid.choreo.manifest</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/choreo/pipeline.html">muvid.choreo.pipeline</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/choreo/render.html">muvid.choreo.render</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/choreo/scene.html">muvid.choreo.scene</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/choreo/spec.html">muvid.choreo.spec</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/choreo/tools.html">muvid.choreo.tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/compose.html">muvid.compose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/contracts.html">muvid.contracts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/cost.html">muvid.cost</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/downloads.html">muvid.downloads</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/environments.html">muvid.environments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/events.html">muvid.events</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/facade.html">muvid.facade</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage.html">muvid.footage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/align.html">muvid.footage.align</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/assemble.html">muvid.footage.assemble</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/edl.html">muvid.footage.edl</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/lacing_bridge.html">muvid.footage.lacing_bridge</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/look.html">muvid.footage.look</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring.html">muvid.footage.scoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring/_frame_metrics.html">muvid.footage.scoring._frame_metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring/frames.html">muvid.footage.scoring.frames</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring/grid.html">muvid.footage.scoring.grid</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring/lipsync.html">muvid.footage.scoring.lipsync</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring/motionbeat.html">muvid.footage.scoring.motionbeat</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring/orchestrator.html">muvid.footage.scoring.orchestrator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring/quality.html">muvid.footage.scoring.quality</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring/segment.html">muvid.footage.scoring.segment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/select_score.html">muvid.footage.select_score</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/strategy.html">muvid.footage.strategy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/workspace.html">muvid.footage.workspace</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/genre.html">muvid.genre</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/genre_lyric_video.html">muvid.genre_lyric_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/genre_music_video.html">muvid.genre_music_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/genre_subgenres.html">muvid.genre_subgenres</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyrics.html">muvid.lyrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyricvid.html">muvid.lyricvid</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyricvid/__main__.html">muvid.lyricvid.__main__</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyricvid/director.html">muvid.lyricvid.director</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyricvid/manifest.html">muvid.lyricvid.manifest</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyricvid/pipeline.html">muvid.lyricvid.pipeline</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyricvid/render_ass.html">muvid.lyricvid.render_ass</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyricvid/render_web.html">muvid.lyricvid.render_web</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyricvid/scene.html">muvid.lyricvid.scene</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyricvid/shape.html">muvid.lyricvid.shape</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyricvid/spec.html">muvid.lyricvid.spec</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyricvid/timed_text.html">muvid.lyricvid.timed_text</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyricvid/tools.html">muvid.lyricvid.tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp.html">muvid.mcp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/_fetch.html">muvid.mcp._fetch</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/_guide.html">muvid.mcp._guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/footage_tools.html">muvid.mcp.footage_tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/identity.html">muvid.mcp.identity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/lyricvid_tools.html">muvid.mcp.lyricvid_tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/scoring_tools.html">muvid.mcp.scoring_tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/subgenre_tools.html">muvid.mcp.subgenre_tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/tools.html">muvid.mcp.tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/workspace.html">muvid.mcp.workspace</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/montage.html">muvid.montage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/montage/__main__.html">muvid.montage.__main__</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/montage/analysis.html">muvid.montage.analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/montage/manifest.html">muvid.montage.manifest</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/montage/pipeline.html">muvid.montage.pipeline</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/montage/plan.html">muvid.montage.plan</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/montage/render.html">muvid.montage.render</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/montage/spec.html">muvid.montage.spec</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/montage/tools.html">muvid.montage.tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/project.html">muvid.project</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers.html">muvid.renderers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers/_common.html">muvid.renderers._common</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers/_errors.html">muvid.renderers._errors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers/animation.html">muvid.renderers.animation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers/image_to_video.html">muvid.renderers.image_to_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers/lipsync.html">muvid.renderers.lipsync</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers/still.html">muvid.renderers.still</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers/text_to_video.html">muvid.renderers.text_to_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/schema.html">muvid.schema</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/script.html">muvid.script</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/subgenres.html">muvid.subgenres</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/subgenres/_contract.html">muvid.subgenres._contract</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/subgenres/_manifest.html">muvid.subgenres._manifest</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/subgenres/_registry.html">muvid.subgenres._registry</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/subgenres/_schema.html">muvid.subgenres._schema</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/subgenres/testing.html">muvid.subgenres.testing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/ui.html">muvid.ui</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/ui/app.html">muvid.ui.app</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize.html">muvid.visualize</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/canvas.html">muvid.visualize.canvas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/ffmpeg.html">muvid.visualize.ffmpeg</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/reactive.html">muvid.visualize.reactive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/verify.html">muvid.visualize.verify</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/video.html">muvid.visualize.video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/visuals.html">muvid.visualize.visuals</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">muvid</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">muvid.choreo.render</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for muvid.choreo.render</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""Draw a :class:`~muvid.choreo.scene.ChoreoScene` frame by frame and encode it.</span>
+
+<span class="sd">numpy paints each frame — filled circles, rects, triangles, lines, diamonds</span>
+<span class="sd">and rings, from coordinate grids and coverage masks with a one-pixel</span>
+<span class="sd">anti-aliased edge — and the raw ``rgb24`` frames are piped straight into</span>
+<span class="sd">ffmpeg's stdin, which muxes the song and encodes the YouTube-spec H.264/AAC</span>
+<span class="sd">mp4 :mod:`muvid.visualize.video` produces. Nothing touches the disk between</span>
+<span class="sd">the scene and the mp4: a 3-minute 720p render is ~15 GB of frames, and that</span>
+<span class="sd">is why this is a pipe and not a frame directory.</span>
+
+<span class="sd">Two things keep it fast enough on a CPU:</span>
+
+<span class="sd">* **only the dirty pixels are touched** — every primitive computes its</span>
+<span class="sd">  bounding box and paints inside it; a frame's cost is the sum of the objects</span>
+<span class="sd">  alive in it, not the canvas size;</span>
+<span class="sd">* **the frame buffer is the backdrop copied**, so a frame with nothing alive</span>
+<span class="sd">  costs one ``memcpy``.</span>
+
+<span class="sd">This is the ONE place choreo spawns ffmpeg itself rather than through</span>
+<span class="sd">:func:`muvid.visualize.ffmpeg.run_ffmpeg`, because that helper has no stdin</span>
+<span class="sd">seam. It uses the same binary check, the same timeout env var and the same</span>
+<span class="sd">encode/container arguments, so the mp4 it writes is the one ``verify_video``</span>
+<span class="sd">expects; when a streaming primitive lands in ``muvid.visualize.ffmpeg`` this</span>
+<span class="sd">should collapse onto it.</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">shlex</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterator</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">muvid.choreo.scene</span><span class="w"> </span><span class="kn">import</span> <span class="n">Backdrop</span><span class="p">,</span> <span class="n">ChoreoScene</span><span class="p">,</span> <span class="n">Obj</span><span class="p">,</span> <span class="n">unit_hash</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">muvid.visualize.ffmpeg</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">FFMPEG_TIMEOUT_ENV_VAR</span><span class="p">,</span>
+    <span class="n">FfmpegError</span><span class="p">,</span>
+    <span class="n">media_duration</span><span class="p">,</span>
+    <span class="n">require_ffmpeg</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">muvid.visualize.video</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">DEFAULT_AUDIO_BITRATE</span><span class="p">,</span>
+    <span class="n">DEFAULT_CRF</span><span class="p">,</span>
+    <span class="n">DEFAULT_GOP_SECONDS</span><span class="p">,</span>
+    <span class="n">DEFAULT_PRESET</span><span class="p">,</span>
+    <span class="n">_audio_encode_args</span><span class="p">,</span>
+    <span class="n">_container_args</span><span class="p">,</span>
+    <span class="n">_gop_frames</span><span class="p">,</span>
+    <span class="n">_video_encode_args</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"RenderedVideo"</span><span class="p">,</span> <span class="s2">"Painter"</span><span class="p">,</span> <span class="s2">"render_scene"</span><span class="p">,</span> <span class="s2">"iter_frames"</span><span class="p">]</span>
+
+<span class="c1">#: How far the vignette darkens the corners (0 = none).</span>
+<span class="n">VIGNETTE_STRENGTH</span> <span class="o">=</span> <span class="mf">0.6</span>
+
+
+<div class="viewcode-block" id="RenderedVideo">
+<a class="viewcode-back" href="../../../module_docs/muvid/choreo/render.html#muvid.choreo.render.RenderedVideo">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">RenderedVideo</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""What :func:`render_scene` produced, and how long it took."""</span>
+
+    <span class="n">output</span><span class="p">:</span> <span class="n">Path</span>
+    <span class="n">duration_s</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">n_frames</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">render_s</span><span class="p">:</span> <span class="nb">float</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">frames_per_second</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_frames</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">render_s</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">render_s</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="s2">"inf"</span><span class="p">)</span></div>
+
+
+
+<span class="c1"># --------------------------------------------------------------------------</span>
+<span class="c1"># colours and backdrops</span>
+<span class="c1"># --------------------------------------------------------------------------</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_rgb</span><span class="p">(</span><span class="n">hex_colour</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+    <span class="n">h</span> <span class="o">=</span> <span class="n">hex_colour</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s2">"#"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="nb">int</span><span class="p">(</span><span class="n">h</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">i</span> <span class="o">+</span> <span class="mi">2</span><span class="p">],</span> <span class="mi">16</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">)],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">backdrop_image</span><span class="p">(</span><span class="n">bd</span><span class="p">:</span> <span class="n">Backdrop</span><span class="p">,</span> <span class="n">width</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">height</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The ``uint8`` HxWx3 image behind the objects for one backdrop."""</span>
+    <span class="n">top</span><span class="p">,</span> <span class="n">bottom</span> <span class="o">=</span> <span class="n">_rgb</span><span class="p">(</span><span class="n">bd</span><span class="o">.</span><span class="n">top</span><span class="p">),</span> <span class="n">_rgb</span><span class="p">(</span><span class="n">bd</span><span class="o">.</span><span class="n">bottom</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">bd</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s2">"gradient"</span><span class="p">:</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">height</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)[:,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span>
+        <span class="n">img</span> <span class="o">=</span> <span class="n">top</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="p">:]</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">t</span><span class="p">)</span> <span class="o">+</span> <span class="n">bottom</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="p">:]</span> <span class="o">*</span> <span class="n">t</span>
+        <span class="n">img</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">broadcast_to</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="p">(</span><span class="n">height</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+    <span class="k">elif</span> <span class="n">bd</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s2">"vignette"</span><span class="p">:</span>
+        <span class="n">ys</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">height</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span> <span class="o">-</span> <span class="n">height</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">height</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">xs</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">width</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span> <span class="o">-</span> <span class="n">width</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">width</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">d2</span> <span class="o">=</span> <span class="p">(</span><span class="n">ys</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">xs</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="mf">2.0</span>
+        <span class="n">img</span> <span class="o">=</span> <span class="n">top</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="p">:]</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">VIGNETTE_STRENGTH</span> <span class="o">*</span> <span class="n">d2</span><span class="p">)[:,</span> <span class="p">:,</span> <span class="kc">None</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">img</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">broadcast_to</span><span class="p">(</span><span class="n">top</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="p">:],</span> <span class="p">(</span><span class="n">height</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">img</span> <span class="o">+</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">255</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
+
+
+<span class="c1"># --------------------------------------------------------------------------</span>
+<span class="c1"># primitives — each paints only inside its bounding box</span>
+<span class="c1"># --------------------------------------------------------------------------</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_blend</span><span class="p">(</span><span class="n">region</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">cov</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">colour</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""``region = region*(1-cov) + colour*cov`` in place, on a uint8 view."""</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">cov</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+        <span class="k">return</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">cov</span><span class="p">[:,</span> <span class="p">:,</span> <span class="kc">None</span><span class="p">]</span>
+    <span class="n">mixed</span> <span class="o">=</span> <span class="n">region</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">c</span><span class="p">)</span> <span class="o">+</span> <span class="n">colour</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="p">:]</span> <span class="o">*</span> <span class="n">c</span>
+    <span class="n">region</span><span class="p">[</span><span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">mixed</span> <span class="o">+</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">255</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_box</span><span class="p">(</span><span class="n">cx</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">cy</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">hw</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">hh</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">W</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">H</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+    <span class="n">x0</span><span class="p">,</span> <span class="n">x1</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">cx</span> <span class="o">-</span> <span class="n">hw</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))),</span> <span class="nb">min</span><span class="p">(</span><span class="n">W</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">cx</span> <span class="o">+</span> <span class="n">hw</span> <span class="o">+</span> <span class="mi">2</span><span class="p">)))</span>
+    <span class="n">y0</span><span class="p">,</span> <span class="n">y1</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">cy</span> <span class="o">-</span> <span class="n">hh</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))),</span> <span class="nb">min</span><span class="p">(</span><span class="n">H</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">cy</span> <span class="o">+</span> <span class="n">hh</span> <span class="o">+</span> <span class="mi">2</span><span class="p">)))</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">x0</span><span class="p">,</span> <span class="n">x1</span><span class="p">,</span> <span class="n">y0</span><span class="p">,</span> <span class="n">y1</span><span class="p">)</span> <span class="k">if</span> <span class="n">x1</span> <span class="o">&gt;</span> <span class="n">x0</span> <span class="ow">and</span> <span class="n">y1</span> <span class="o">&gt;</span> <span class="n">y0</span> <span class="k">else</span> <span class="kc">None</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_grid</span><span class="p">(</span><span class="n">box</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">cx</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">cy</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+    <span class="n">x0</span><span class="p">,</span> <span class="n">x1</span><span class="p">,</span> <span class="n">y0</span><span class="p">,</span> <span class="n">y1</span> <span class="o">=</span> <span class="n">box</span>
+    <span class="k">return</span> <span class="n">X</span><span class="p">[</span><span class="n">x0</span><span class="p">:</span><span class="n">x1</span><span class="p">][</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]</span> <span class="o">-</span> <span class="n">cx</span><span class="p">,</span> <span class="n">Y</span><span class="p">[</span><span class="n">y0</span><span class="p">:</span><span class="n">y1</span><span class="p">][:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">-</span> <span class="n">cy</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">draw_circle</span><span class="p">(</span><span class="n">frame</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">cx</span><span class="p">,</span> <span class="n">cy</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">colour</span><span class="p">,</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">inner</span><span class="o">=</span><span class="mf">0.0</span><span class="p">):</span>
+    <span class="n">box</span> <span class="o">=</span> <span class="n">_box</span><span class="p">(</span><span class="n">cx</span><span class="p">,</span> <span class="n">cy</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">frame</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">frame</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="k">if</span> <span class="n">box</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">r</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span>
+    <span class="n">dx</span><span class="p">,</span> <span class="n">dy</span> <span class="o">=</span> <span class="n">_grid</span><span class="p">(</span><span class="n">box</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">cx</span><span class="p">,</span> <span class="n">cy</span><span class="p">)</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">dx</span> <span class="o">*</span> <span class="n">dx</span> <span class="o">+</span> <span class="n">dy</span> <span class="o">*</span> <span class="n">dy</span><span class="p">)</span>
+    <span class="n">cov</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">r</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">-</span> <span class="n">d</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">inner</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">cov</span> <span class="o">=</span> <span class="n">cov</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">inner</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">-</span> <span class="n">d</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+    <span class="n">_blend</span><span class="p">(</span><span class="n">frame</span><span class="p">[</span><span class="n">box</span><span class="p">[</span><span class="mi">2</span><span class="p">]:</span><span class="n">box</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="n">box</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span><span class="n">box</span><span class="p">[</span><span class="mi">1</span><span class="p">]],</span> <span class="n">cov</span> <span class="o">*</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">colour</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">draw_rect</span><span class="p">(</span><span class="n">frame</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">cx</span><span class="p">,</span> <span class="n">cy</span><span class="p">,</span> <span class="n">hw</span><span class="p">,</span> <span class="n">hh</span><span class="p">,</span> <span class="n">colour</span><span class="p">,</span> <span class="n">alpha</span><span class="p">):</span>
+    <span class="n">box</span> <span class="o">=</span> <span class="n">_box</span><span class="p">(</span><span class="n">cx</span><span class="p">,</span> <span class="n">cy</span><span class="p">,</span> <span class="n">hw</span><span class="p">,</span> <span class="n">hh</span><span class="p">,</span> <span class="n">frame</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">frame</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="k">if</span> <span class="n">box</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">hw</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">hh</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span>
+    <span class="n">dx</span><span class="p">,</span> <span class="n">dy</span> <span class="o">=</span> <span class="n">_grid</span><span class="p">(</span><span class="n">box</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">cx</span><span class="p">,</span> <span class="n">cy</span><span class="p">)</span>
+    <span class="n">cov</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">hw</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">dx</span><span class="p">),</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">hh</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">dy</span><span class="p">),</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+    <span class="n">_blend</span><span class="p">(</span><span class="n">frame</span><span class="p">[</span><span class="n">box</span><span class="p">[</span><span class="mi">2</span><span class="p">]:</span><span class="n">box</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="n">box</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span><span class="n">box</span><span class="p">[</span><span class="mi">1</span><span class="p">]],</span> <span class="n">cov</span> <span class="o">*</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">colour</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">draw_diamond</span><span class="p">(</span><span class="n">frame</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">cx</span><span class="p">,</span> <span class="n">cy</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">colour</span><span class="p">,</span> <span class="n">alpha</span><span class="p">):</span>
+    <span class="n">box</span> <span class="o">=</span> <span class="n">_box</span><span class="p">(</span><span class="n">cx</span><span class="p">,</span> <span class="n">cy</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">frame</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">frame</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="k">if</span> <span class="n">box</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">r</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span>
+    <span class="n">dx</span><span class="p">,</span> <span class="n">dy</span> <span class="o">=</span> <span class="n">_grid</span><span class="p">(</span><span class="n">box</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">cx</span><span class="p">,</span> <span class="n">cy</span><span class="p">)</span>
+    <span class="c1"># L1 distance to the edge, scaled to ~pixels for a 1-px soft edge</span>
+    <span class="n">cov</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">((</span><span class="n">r</span> <span class="o">-</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">dx</span><span class="p">)</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">dy</span><span class="p">)))</span> <span class="o">/</span> <span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+    <span class="n">_blend</span><span class="p">(</span><span class="n">frame</span><span class="p">[</span><span class="n">box</span><span class="p">[</span><span class="mi">2</span><span class="p">]:</span><span class="n">box</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="n">box</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span><span class="n">box</span><span class="p">[</span><span class="mi">1</span><span class="p">]],</span> <span class="n">cov</span> <span class="o">*</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">colour</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">draw_triangle</span><span class="p">(</span><span class="n">frame</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">cx</span><span class="p">,</span> <span class="n">cy</span><span class="p">,</span> <span class="n">hw</span><span class="p">,</span> <span class="n">hh</span><span class="p">,</span> <span class="n">colour</span><span class="p">,</span> <span class="n">alpha</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""An upward triangle: apex at ``cy - hh``, base at ``cy + hh``, half-width ``hw``."""</span>
+    <span class="n">box</span> <span class="o">=</span> <span class="n">_box</span><span class="p">(</span><span class="n">cx</span><span class="p">,</span> <span class="n">cy</span><span class="p">,</span> <span class="n">hw</span><span class="p">,</span> <span class="n">hh</span><span class="p">,</span> <span class="n">frame</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">frame</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="k">if</span> <span class="n">box</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">hw</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">hh</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span>
+    <span class="n">dx</span><span class="p">,</span> <span class="n">dy</span> <span class="o">=</span> <span class="n">_grid</span><span class="p">(</span><span class="n">box</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">cx</span><span class="p">,</span> <span class="n">cy</span><span class="p">)</span>
+    <span class="n">base</span> <span class="o">=</span> <span class="n">hh</span> <span class="o">-</span> <span class="n">dy</span>                                  <span class="c1"># positive inside, above the base</span>
+    <span class="c1"># the two slanted edges: signed distance to the line through apex and base corner</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">hypot</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">hh</span><span class="p">,</span> <span class="n">hw</span><span class="p">)</span>
+    <span class="n">left</span> <span class="o">=</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">hh</span> <span class="o">*</span> <span class="p">(</span><span class="n">dx</span> <span class="o">+</span> <span class="n">hw</span><span class="p">)</span> <span class="o">-</span> <span class="n">hw</span> <span class="o">*</span> <span class="p">(</span><span class="n">dy</span> <span class="o">+</span> <span class="n">hh</span><span class="p">))</span> <span class="o">/</span> <span class="n">n</span>   <span class="c1"># &gt;0 to the right of the left edge</span>
+    <span class="n">right</span> <span class="o">=</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">hh</span> <span class="o">*</span> <span class="p">(</span><span class="n">hw</span> <span class="o">-</span> <span class="n">dx</span><span class="p">)</span> <span class="o">-</span> <span class="n">hw</span> <span class="o">*</span> <span class="p">(</span><span class="n">dy</span> <span class="o">+</span> <span class="n">hh</span><span class="p">))</span> <span class="o">/</span> <span class="n">n</span>
+    <span class="n">cov</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">left</span><span class="p">),</span> <span class="n">right</span><span class="p">)</span> <span class="o">+</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+    <span class="n">_blend</span><span class="p">(</span><span class="n">frame</span><span class="p">[</span><span class="n">box</span><span class="p">[</span><span class="mi">2</span><span class="p">]:</span><span class="n">box</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="n">box</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span><span class="n">box</span><span class="p">[</span><span class="mi">1</span><span class="p">]],</span> <span class="n">cov</span> <span class="o">*</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">colour</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">draw_line</span><span class="p">(</span><span class="n">frame</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">cx</span><span class="p">,</span> <span class="n">cy</span><span class="p">,</span> <span class="n">length</span><span class="p">,</span> <span class="n">thickness</span><span class="p">,</span> <span class="n">angle_deg</span><span class="p">,</span> <span class="n">colour</span><span class="p">,</span> <span class="n">alpha</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A capsule: a segment of ``length`` through ``(cx, cy)`` at ``angle_deg``."""</span>
+    <span class="n">ux</span><span class="p">,</span> <span class="n">uy</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">radians</span><span class="p">(</span><span class="n">angle_deg</span><span class="p">)),</span> <span class="n">math</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">radians</span><span class="p">(</span><span class="n">angle_deg</span><span class="p">))</span>
+    <span class="n">hl</span><span class="p">,</span> <span class="n">ht</span> <span class="o">=</span> <span class="n">length</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">thickness</span> <span class="o">/</span> <span class="mi">2</span>
+    <span class="n">ext</span> <span class="o">=</span> <span class="n">hl</span> <span class="o">*</span> <span class="nb">max</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">ux</span><span class="p">),</span> <span class="nb">abs</span><span class="p">(</span><span class="n">uy</span><span class="p">))</span> <span class="o">+</span> <span class="n">ht</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="n">box</span> <span class="o">=</span> <span class="n">_box</span><span class="p">(</span><span class="n">cx</span><span class="p">,</span> <span class="n">cy</span><span class="p">,</span> <span class="n">hl</span> <span class="o">*</span> <span class="nb">abs</span><span class="p">(</span><span class="n">ux</span><span class="p">)</span> <span class="o">+</span> <span class="n">ht</span><span class="p">,</span> <span class="n">hl</span> <span class="o">*</span> <span class="nb">abs</span><span class="p">(</span><span class="n">uy</span><span class="p">)</span> <span class="o">+</span> <span class="n">ht</span><span class="p">,</span> <span class="n">frame</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">frame</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="k">if</span> <span class="n">box</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">length</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">thickness</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">ext</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span>
+    <span class="n">dx</span><span class="p">,</span> <span class="n">dy</span> <span class="o">=</span> <span class="n">_grid</span><span class="p">(</span><span class="n">box</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">cx</span><span class="p">,</span> <span class="n">cy</span><span class="p">)</span>
+    <span class="n">along</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">dx</span> <span class="o">*</span> <span class="n">ux</span> <span class="o">+</span> <span class="n">dy</span> <span class="o">*</span> <span class="n">uy</span><span class="p">,</span> <span class="o">-</span><span class="n">hl</span><span class="p">,</span> <span class="n">hl</span><span class="p">)</span>
+    <span class="n">px</span><span class="p">,</span> <span class="n">py</span> <span class="o">=</span> <span class="n">dx</span> <span class="o">-</span> <span class="n">along</span> <span class="o">*</span> <span class="n">ux</span><span class="p">,</span> <span class="n">dy</span> <span class="o">-</span> <span class="n">along</span> <span class="o">*</span> <span class="n">uy</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">px</span> <span class="o">*</span> <span class="n">px</span> <span class="o">+</span> <span class="n">py</span> <span class="o">*</span> <span class="n">py</span><span class="p">)</span>
+    <span class="n">cov</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">ht</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">-</span> <span class="n">d</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+    <span class="n">_blend</span><span class="p">(</span><span class="n">frame</span><span class="p">[</span><span class="n">box</span><span class="p">[</span><span class="mi">2</span><span class="p">]:</span><span class="n">box</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="n">box</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span><span class="n">box</span><span class="p">[</span><span class="mi">1</span><span class="p">]],</span> <span class="n">cov</span> <span class="o">*</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">colour</span><span class="p">)</span>
+
+
+<span class="c1"># --------------------------------------------------------------------------</span>
+<span class="c1"># object state at time t</span>
+<span class="c1"># --------------------------------------------------------------------------</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_state</span><span class="p">(</span><span class="n">o</span><span class="p">:</span> <span class="n">Obj</span><span class="p">,</span> <span class="n">t</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""``(x, y, size, alpha)`` of ``o`` at time ``t`` (frame ``k``), normalised."""</span>
+    <span class="n">tau</span> <span class="o">=</span> <span class="n">t</span> <span class="o">-</span> <span class="n">o</span><span class="o">.</span><span class="n">t_born</span>
+    <span class="n">life</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mf">1e-6</span><span class="p">,</span> <span class="n">o</span><span class="o">.</span><span class="n">t_die</span> <span class="o">-</span> <span class="n">o</span><span class="o">.</span><span class="n">t_born</span><span class="p">)</span>
+    <span class="n">alpha</span> <span class="o">=</span> <span class="mf">1.0</span>
+    <span class="k">if</span> <span class="n">o</span><span class="o">.</span><span class="n">attack_s</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">alpha</span> <span class="o">*=</span> <span class="nb">min</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">tau</span> <span class="o">/</span> <span class="n">o</span><span class="o">.</span><span class="n">attack_s</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">o</span><span class="o">.</span><span class="n">release_s</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">alpha</span> <span class="o">*=</span> <span class="nb">min</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="p">(</span><span class="n">o</span><span class="o">.</span><span class="n">t_die</span> <span class="o">-</span> <span class="n">t</span><span class="p">)</span> <span class="o">/</span> <span class="n">o</span><span class="o">.</span><span class="n">release_s</span><span class="p">)</span>
+    <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">size</span> <span class="o">=</span> <span class="n">o</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">o</span><span class="o">.</span><span class="n">y</span><span class="p">,</span> <span class="n">o</span><span class="o">.</span><span class="n">size</span>
+    <span class="k">if</span> <span class="n">o</span><span class="o">.</span><span class="n">motion</span> <span class="o">==</span> <span class="s2">"scroll"</span><span class="p">:</span>
+        <span class="n">x</span> <span class="o">+=</span> <span class="n">o</span><span class="o">.</span><span class="n">vx</span> <span class="o">*</span> <span class="n">tau</span>
+        <span class="n">y</span> <span class="o">+=</span> <span class="n">o</span><span class="o">.</span><span class="n">vy</span> <span class="o">*</span> <span class="n">tau</span>
+    <span class="k">elif</span> <span class="n">o</span><span class="o">.</span><span class="n">motion</span> <span class="o">==</span> <span class="s2">"drift"</span><span class="p">:</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="n">tau</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">tau</span> <span class="o">/</span> <span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">life</span><span class="p">))</span>  <span class="c1"># decelerates to rest at t_die</span>
+        <span class="n">x</span> <span class="o">+=</span> <span class="n">o</span><span class="o">.</span><span class="n">vx</span> <span class="o">*</span> <span class="n">f</span>
+        <span class="n">y</span> <span class="o">+=</span> <span class="n">o</span><span class="o">.</span><span class="n">vy</span> <span class="o">*</span> <span class="n">f</span>
+    <span class="k">elif</span> <span class="n">o</span><span class="o">.</span><span class="n">motion</span> <span class="o">==</span> <span class="s2">"pulse"</span><span class="p">:</span>
+        <span class="n">size</span> <span class="o">*=</span> <span class="mf">1.0</span> <span class="o">+</span> <span class="mf">0.35</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mf">6.0</span> <span class="o">*</span> <span class="n">tau</span> <span class="o">/</span> <span class="n">life</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">o</span><span class="o">.</span><span class="n">motion</span> <span class="o">==</span> <span class="s2">"flicker"</span><span class="p">:</span>
+        <span class="n">x</span> <span class="o">+=</span> <span class="p">(</span><span class="n">unit_hash</span><span class="p">(</span><span class="n">o</span><span class="o">.</span><span class="n">seed</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="mf">0.5</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.01</span>
+        <span class="n">y</span> <span class="o">+=</span> <span class="p">(</span><span class="n">unit_hash</span><span class="p">(</span><span class="n">o</span><span class="o">.</span><span class="n">seed</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="mf">0.5</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.01</span>
+        <span class="n">alpha</span> <span class="o">*=</span> <span class="mf">0.6</span> <span class="o">+</span> <span class="mf">0.4</span> <span class="o">*</span> <span class="n">unit_hash</span><span class="p">(</span><span class="n">o</span><span class="o">.</span><span class="n">seed</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">size</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">alpha</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="Painter">
+<a class="viewcode-back" href="../../../module_docs/muvid/choreo/render.html#muvid.choreo.render.Painter">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Painter</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Paints frames of one scene. Holds the grids and backdrops between frames."""</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scene</span><span class="p">:</span> <span class="n">ChoreoScene</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">scene</span> <span class="o">=</span> <span class="n">scene</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">W</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">H</span> <span class="o">=</span> <span class="n">scene</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">width</span><span class="p">,</span> <span class="n">scene</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">height</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">W</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span> <span class="o">+</span> <span class="mf">0.5</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">H</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span> <span class="o">+</span> <span class="mf">0.5</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_backdrops</span> <span class="o">=</span> <span class="p">[(</span><span class="n">bd</span><span class="o">.</span><span class="n">start</span><span class="p">,</span> <span class="n">bd</span><span class="o">.</span><span class="n">end</span><span class="p">,</span> <span class="n">backdrop_image</span><span class="p">(</span><span class="n">bd</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">W</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">H</span><span class="p">))</span>
+                           <span class="k">for</span> <span class="n">bd</span> <span class="ow">in</span> <span class="n">scene</span><span class="o">.</span><span class="n">backdrops</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_fallback</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">H</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">W</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_colours</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_objects</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">scene</span><span class="o">.</span><span class="n">objects</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">o</span><span class="p">:</span> <span class="n">o</span><span class="o">.</span><span class="n">t_born</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_next</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_active</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Obj</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_colour</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hex_colour</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_colours</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">hex_colour</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">c</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">c</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_colours</span><span class="p">[</span><span class="n">hex_colour</span><span class="p">]</span> <span class="o">=</span> <span class="n">_rgb</span><span class="p">(</span><span class="n">hex_colour</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">c</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_backdrop_at</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">,</span> <span class="n">img</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_backdrops</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">start</span> <span class="o">&lt;=</span> <span class="n">t</span> <span class="o">&lt;</span> <span class="n">end</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">img</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_backdrops</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">2</span><span class="p">]</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_backdrops</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fallback</span>
+
+<div class="viewcode-block" id="Painter.alive">
+<a class="viewcode-back" href="../../../module_docs/muvid/choreo/render.html#muvid.choreo.render.Painter.alive">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">alive</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Obj</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Objects alive at ``t``. Frames must be asked for in increasing ``t``."""</span>
+        <span class="n">objs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_objects</span>
+        <span class="k">while</span> <span class="bp">self</span><span class="o">.</span><span class="n">_next</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">objs</span><span class="p">)</span> <span class="ow">and</span> <span class="n">objs</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_next</span><span class="p">]</span><span class="o">.</span><span class="n">t_born</span> <span class="o">&lt;=</span> <span class="n">t</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_active</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">objs</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_next</span><span class="p">])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_next</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_active</span> <span class="o">=</span> <span class="p">[</span><span class="n">o</span> <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_active</span> <span class="k">if</span> <span class="n">o</span><span class="o">.</span><span class="n">t_die</span> <span class="o">&gt;</span> <span class="n">t</span><span class="p">]</span>
+        <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_active</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">o</span><span class="p">:</span> <span class="n">o</span><span class="o">.</span><span class="n">layer</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">draw</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">frame</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">o</span><span class="p">:</span> <span class="n">Obj</span><span class="p">,</span> <span class="n">t</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">size</span><span class="p">,</span> <span class="n">alpha</span> <span class="o">=</span> <span class="n">_state</span><span class="p">(</span><span class="n">o</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">alpha</span> <span class="o">&lt;=</span> <span class="mf">0.0</span> <span class="ow">or</span> <span class="n">size</span> <span class="o">&lt;=</span> <span class="mf">0.0</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="n">cx</span><span class="p">,</span> <span class="n">cy</span><span class="p">,</span> <span class="n">s</span> <span class="o">=</span> <span class="n">x</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">W</span><span class="p">,</span> <span class="n">y</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">H</span><span class="p">,</span> <span class="n">size</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">H</span>
+        <span class="n">colour</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_colour</span><span class="p">(</span><span class="n">o</span><span class="o">.</span><span class="n">colour</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">o</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s2">"circle"</span><span class="p">:</span>
+            <span class="n">draw_circle</span><span class="p">(</span><span class="n">frame</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Y</span><span class="p">,</span> <span class="n">cx</span><span class="o">=</span><span class="n">cx</span><span class="p">,</span> <span class="n">cy</span><span class="o">=</span><span class="n">cy</span><span class="p">,</span> <span class="n">r</span><span class="o">=</span><span class="n">s</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">colour</span><span class="o">=</span><span class="n">colour</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="n">alpha</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">o</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s2">"ring"</span><span class="p">:</span>
+            <span class="n">draw_circle</span><span class="p">(</span><span class="n">frame</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Y</span><span class="p">,</span> <span class="n">cx</span><span class="o">=</span><span class="n">cx</span><span class="p">,</span> <span class="n">cy</span><span class="o">=</span><span class="n">cy</span><span class="p">,</span> <span class="n">r</span><span class="o">=</span><span class="n">s</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">colour</span><span class="o">=</span><span class="n">colour</span><span class="p">,</span>
+                        <span class="n">alpha</span><span class="o">=</span><span class="n">alpha</span><span class="p">,</span> <span class="n">inner</span><span class="o">=</span><span class="n">s</span> <span class="o">*</span> <span class="mf">0.35</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">o</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s2">"rect"</span><span class="p">:</span>
+            <span class="n">draw_rect</span><span class="p">(</span><span class="n">frame</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Y</span><span class="p">,</span> <span class="n">cx</span><span class="o">=</span><span class="n">cx</span><span class="p">,</span> <span class="n">cy</span><span class="o">=</span><span class="n">cy</span><span class="p">,</span> <span class="n">hw</span><span class="o">=</span><span class="n">s</span> <span class="o">*</span> <span class="n">o</span><span class="o">.</span><span class="n">aspect</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">hh</span><span class="o">=</span><span class="n">s</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span>
+                      <span class="n">colour</span><span class="o">=</span><span class="n">colour</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="n">alpha</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">o</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s2">"triangle"</span><span class="p">:</span>
+            <span class="n">draw_triangle</span><span class="p">(</span><span class="n">frame</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Y</span><span class="p">,</span> <span class="n">cx</span><span class="o">=</span><span class="n">cx</span><span class="p">,</span> <span class="n">cy</span><span class="o">=</span><span class="n">cy</span><span class="p">,</span> <span class="n">hw</span><span class="o">=</span><span class="n">s</span> <span class="o">*</span> <span class="n">o</span><span class="o">.</span><span class="n">aspect</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">hh</span><span class="o">=</span><span class="n">s</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span>
+                          <span class="n">colour</span><span class="o">=</span><span class="n">colour</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="n">alpha</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">o</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s2">"diamond"</span><span class="p">:</span>
+            <span class="n">draw_diamond</span><span class="p">(</span><span class="n">frame</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Y</span><span class="p">,</span> <span class="n">cx</span><span class="o">=</span><span class="n">cx</span><span class="p">,</span> <span class="n">cy</span><span class="o">=</span><span class="n">cy</span><span class="p">,</span> <span class="n">r</span><span class="o">=</span><span class="n">s</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">colour</span><span class="o">=</span><span class="n">colour</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="n">alpha</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">o</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s2">"line"</span><span class="p">:</span>
+            <span class="n">draw_line</span><span class="p">(</span><span class="n">frame</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Y</span><span class="p">,</span> <span class="n">cx</span><span class="o">=</span><span class="n">cx</span><span class="p">,</span> <span class="n">cy</span><span class="o">=</span><span class="n">cy</span><span class="p">,</span> <span class="n">length</span><span class="o">=</span><span class="n">s</span><span class="p">,</span>
+                      <span class="n">thickness</span><span class="o">=</span><span class="nb">max</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">s</span> <span class="o">/</span> <span class="nb">max</span><span class="p">(</span><span class="mf">1e-6</span><span class="p">,</span> <span class="n">o</span><span class="o">.</span><span class="n">aspect</span><span class="p">)),</span> <span class="n">angle_deg</span><span class="o">=</span><span class="n">o</span><span class="o">.</span><span class="n">angle</span><span class="p">,</span>
+                      <span class="n">colour</span><span class="o">=</span><span class="n">colour</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="n">alpha</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Painter.frame">
+<a class="viewcode-back" href="../../../module_docs/muvid/choreo/render.html#muvid.choreo.render.Painter.frame">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">frame</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Frame ``k`` (at ``k / fps`` seconds) as a fresh ``uint8`` HxWx3 array."""</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="n">k</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">scene</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">fps</span>
+        <span class="n">frame</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_backdrop_at</span><span class="p">(</span><span class="n">t</span><span class="p">)</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">alive</span><span class="p">(</span><span class="n">t</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">draw</span><span class="p">(</span><span class="n">frame</span><span class="p">,</span> <span class="n">o</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">frame</span></div>
+</div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">n_frames</span><span class="p">(</span><span class="n">scene</span><span class="p">:</span> <span class="n">ChoreoScene</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+    <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">scene</span><span class="o">.</span><span class="n">duration</span> <span class="o">*</span> <span class="n">scene</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">fps</span><span class="p">)))</span>
+
+
+<div class="viewcode-block" id="iter_frames">
+<a class="viewcode-back" href="../../../module_docs/muvid/choreo/render.html#muvid.choreo.render.iter_frames">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">iter_frames</span><span class="p">(</span><span class="n">scene</span><span class="p">:</span> <span class="n">ChoreoScene</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Every frame of ``scene``, in order."""</span>
+    <span class="n">painter</span> <span class="o">=</span> <span class="n">Painter</span><span class="p">(</span><span class="n">scene</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_frames</span><span class="p">(</span><span class="n">scene</span><span class="p">)):</span>
+        <span class="k">yield</span> <span class="n">painter</span><span class="o">.</span><span class="n">frame</span><span class="p">(</span><span class="n">k</span><span class="p">)</span></div>
+
+
+
+<span class="c1"># --------------------------------------------------------------------------</span>
+<span class="c1"># encode</span>
+<span class="c1"># --------------------------------------------------------------------------</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_timeout_s</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">raw</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">FFMPEG_TIMEOUT_ENV_VAR</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span> <span class="k">if</span> <span class="n">raw</span> <span class="k">else</span> <span class="kc">None</span>
+    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="n">value</span> <span class="k">if</span> <span class="n">value</span> <span class="ow">and</span> <span class="n">value</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="kc">None</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">encode_command</span><span class="p">(</span>
+    <span class="n">scene</span><span class="p">:</span> <span class="n">ChoreoScene</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">audio</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="n">output</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="n">crf</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">DEFAULT_CRF</span><span class="p">,</span>
+    <span class="n">preset</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">DEFAULT_PRESET</span><span class="p">,</span>
+    <span class="n">audio_bitrate</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">DEFAULT_AUDIO_BITRATE</span><span class="p">,</span>
+    <span class="n">gop_seconds</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">DEFAULT_GOP_SECONDS</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""The ffmpeg command that reads raw frames on stdin and writes the mp4."""</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">scene</span><span class="o">.</span><span class="n">canvas</span>
+    <span class="k">return</span> <span class="p">[</span>
+        <span class="s2">"ffmpeg"</span><span class="p">,</span> <span class="s2">"-hide_banner"</span><span class="p">,</span> <span class="s2">"-loglevel"</span><span class="p">,</span> <span class="s2">"error"</span><span class="p">,</span> <span class="s2">"-y"</span><span class="p">,</span>
+        <span class="s2">"-f"</span><span class="p">,</span> <span class="s2">"rawvideo"</span><span class="p">,</span> <span class="s2">"-pix_fmt"</span><span class="p">,</span> <span class="s2">"rgb24"</span><span class="p">,</span> <span class="s2">"-s"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">c</span><span class="o">.</span><span class="n">width</span><span class="si">}</span><span class="s2">x</span><span class="si">{</span><span class="n">c</span><span class="o">.</span><span class="n">height</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+        <span class="s2">"-r"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">fps</span><span class="p">),</span> <span class="s2">"-i"</span><span class="p">,</span> <span class="s2">"pipe:0"</span><span class="p">,</span>
+        <span class="s2">"-i"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">audio</span><span class="p">),</span>
+        <span class="s2">"-map"</span><span class="p">,</span> <span class="s2">"0:v"</span><span class="p">,</span> <span class="s2">"-map"</span><span class="p">,</span> <span class="s2">"1:a"</span><span class="p">,</span>
+        <span class="o">*</span><span class="n">_video_encode_args</span><span class="p">(</span><span class="n">crf</span><span class="o">=</span><span class="n">crf</span><span class="p">,</span> <span class="n">preset</span><span class="o">=</span><span class="n">preset</span><span class="p">,</span> <span class="n">fps</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">fps</span><span class="p">,</span>
+                            <span class="n">gop</span><span class="o">=</span><span class="n">_gop_frames</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">fps</span><span class="p">,</span> <span class="n">gop_seconds</span><span class="p">)),</span>
+        <span class="o">*</span><span class="n">_audio_encode_args</span><span class="p">(</span><span class="n">audio_bitrate</span><span class="p">),</span>
+        <span class="s2">"-t"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">scene</span><span class="o">.</span><span class="n">duration</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="s2">"-shortest"</span><span class="p">,</span>
+        <span class="o">*</span><span class="n">_container_args</span><span class="p">(),</span>
+        <span class="c1"># The manifest promises video/mp4 and the contract promises to write</span>
+        <span class="c1"># EXACTLY request.output — whatever it is called. Name the muxer rather</span>
+        <span class="c1"># than letting ffmpeg guess it from an extension the host may not use.</span>
+        <span class="s2">"-f"</span><span class="p">,</span> <span class="s2">"mp4"</span><span class="p">,</span>
+        <span class="nb">str</span><span class="p">(</span><span class="n">output</span><span class="p">),</span>
+    <span class="p">]</span>
+
+
+<div class="viewcode-block" id="render_scene">
+<a class="viewcode-back" href="../../../module_docs/muvid/choreo/render.html#muvid.choreo.render.render_scene">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">render_scene</span><span class="p">(</span>
+    <span class="n">scene</span><span class="p">:</span> <span class="n">ChoreoScene</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">audio</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">output</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">workdir</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">crf</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">DEFAULT_CRF</span><span class="p">,</span>
+    <span class="n">preset</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">DEFAULT_PRESET</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RenderedVideo</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Paint every frame of ``scene``, pipe them into ffmpeg, mux ``audio``.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        FfmpegError: ffmpeg exited non-zero, died mid-stream, or overran</span>
+<span class="sd">            ``$MUVID_FFMPEG_TIMEOUT_S``; the message carries the log's tail.</span>
+<span class="sd">        ValueError: the canvas has an odd dimension (yuv420p cannot encode one).</span>
+<span class="sd">    """</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">scene</span><span class="o">.</span><span class="n">canvas</span>
+    <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">width</span> <span class="o">%</span> <span class="mi">2</span> <span class="ow">or</span> <span class="n">c</span><span class="o">.</span><span class="n">height</span> <span class="o">%</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"canvas </span><span class="si">{</span><span class="n">c</span><span class="o">.</span><span class="n">width</span><span class="si">}</span><span class="s2">x</span><span class="si">{</span><span class="n">c</span><span class="o">.</span><span class="n">height</span><span class="si">}</span><span class="s2"> has an odd dimension; H.264 at yuv420p "</span>
+            <span class="s2">"needs even ones"</span>
+        <span class="p">)</span>
+    <span class="n">require_ffmpeg</span><span class="p">()</span>
+    <span class="n">audio</span><span class="p">,</span> <span class="n">output</span><span class="p">,</span> <span class="n">workdir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">audio</span><span class="p">),</span> <span class="n">Path</span><span class="p">(</span><span class="n">output</span><span class="p">),</span> <span class="n">Path</span><span class="p">(</span><span class="n">workdir</span><span class="p">)</span>
+    <span class="n">workdir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">output</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">cmd</span> <span class="o">=</span> <span class="n">encode_command</span><span class="p">(</span><span class="n">scene</span><span class="p">,</span> <span class="n">audio</span><span class="o">=</span><span class="n">audio</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="n">output</span><span class="p">,</span> <span class="n">crf</span><span class="o">=</span><span class="n">crf</span><span class="p">,</span> <span class="n">preset</span><span class="o">=</span><span class="n">preset</span><span class="p">)</span>
+    <span class="n">log</span> <span class="o">=</span> <span class="n">workdir</span> <span class="o">/</span> <span class="s2">"ffmpeg.log"</span>
+    <span class="n">timeout</span> <span class="o">=</span> <span class="n">_timeout_s</span><span class="p">()</span>
+    <span class="n">started</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">monotonic</span><span class="p">()</span>
+    <span class="n">total</span> <span class="o">=</span> <span class="n">n_frames</span><span class="p">(</span><span class="n">scene</span><span class="p">)</span>
+    <span class="n">painter</span> <span class="o">=</span> <span class="n">Painter</span><span class="p">(</span><span class="n">scene</span><span class="p">)</span>
+    <span class="k">with</span> <span class="n">log</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">"wb"</span><span class="p">)</span> <span class="k">as</span> <span class="n">log_f</span><span class="p">:</span>
+        <span class="n">proc</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">Popen</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span> <span class="n">stdin</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">,</span> <span class="n">stdout</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">DEVNULL</span><span class="p">,</span>
+                                <span class="n">stderr</span><span class="o">=</span><span class="n">log_f</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">proc</span><span class="o">.</span><span class="n">stdin</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">total</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">timeout</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">time</span><span class="o">.</span><span class="n">monotonic</span><span class="p">()</span> <span class="o">-</span> <span class="n">started</span> <span class="o">&gt;</span> <span class="n">timeout</span><span class="p">:</span>
+                    <span class="n">proc</span><span class="o">.</span><span class="n">kill</span><span class="p">()</span>
+                    <span class="k">raise</span> <span class="n">FfmpegError</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">"choreo render exceeded </span><span class="si">{</span><span class="n">timeout</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2">s (bound by "</span>
+                        <span class="sa">f</span><span class="s2">"$</span><span class="si">{</span><span class="n">FFMPEG_TIMEOUT_ENV_VAR</span><span class="si">}</span><span class="s2">) at frame </span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">total</span><span class="si">}</span><span class="s2">"</span>
+                    <span class="p">)</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">proc</span><span class="o">.</span><span class="n">stdin</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">painter</span><span class="o">.</span><span class="n">frame</span><span class="p">(</span><span class="n">k</span><span class="p">)</span><span class="o">.</span><span class="n">tobytes</span><span class="p">())</span>
+                <span class="k">except</span> <span class="ne">BrokenPipeError</span><span class="p">:</span>
+                    <span class="k">break</span>  <span class="c1"># ffmpeg died; its exit status says why below</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">proc</span><span class="o">.</span><span class="n">stdin</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+            <span class="k">except</span> <span class="ne">BrokenPipeError</span><span class="p">:</span>
+                <span class="k">pass</span>
+            <span class="n">remaining</span> <span class="o">=</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">timeout</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">max</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">timeout</span> <span class="o">-</span> <span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">monotonic</span><span class="p">()</span> <span class="o">-</span> <span class="n">started</span><span class="p">))</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">proc</span><span class="o">.</span><span class="n">wait</span><span class="p">(</span><span class="n">timeout</span><span class="o">=</span><span class="n">remaining</span><span class="p">)</span>
+            <span class="k">except</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">TimeoutExpired</span><span class="p">:</span>
+                <span class="n">proc</span><span class="o">.</span><span class="n">kill</span><span class="p">()</span>
+                <span class="k">raise</span> <span class="n">FfmpegError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"ffmpeg timed out after </span><span class="si">{</span><span class="n">timeout</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2">s (bound by $</span><span class="si">{</span><span class="n">FFMPEG_TIMEOUT_ENV_VAR</span><span class="si">}</span><span class="s2">)."</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="se">\n\n</span><span class="s2">command: </span><span class="si">{</span><span class="n">shlex</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
+                <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="kc">None</span>
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">proc</span><span class="o">.</span><span class="n">poll</span><span class="p">()</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">proc</span><span class="o">.</span><span class="n">kill</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">proc</span><span class="o">.</span><span class="n">returncode</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">tail</span> <span class="o">=</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">log</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">errors</span><span class="o">=</span><span class="s2">"replace"</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()[</span><span class="o">-</span><span class="mi">15</span><span class="p">:])</span>
+        <span class="k">raise</span> <span class="n">FfmpegError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"ffmpeg exited </span><span class="si">{</span><span class="n">proc</span><span class="o">.</span><span class="n">returncode</span><span class="si">}</span><span class="s2">.</span><span class="se">\n\n</span><span class="si">{</span><span class="n">tail</span><span class="si">}</span><span class="se">\n\n</span><span class="s2">command: </span><span class="si">{</span><span class="n">shlex</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">RenderedVideo</span><span class="p">(</span>
+        <span class="n">output</span><span class="o">=</span><span class="n">output</span><span class="p">,</span> <span class="n">duration_s</span><span class="o">=</span><span class="n">media_duration</span><span class="p">(</span><span class="n">output</span><span class="p">),</span> <span class="n">n_frames</span><span class="o">=</span><span class="n">total</span><span class="p">,</span>
+        <span class="n">render_s</span><span class="o">=</span><span class="n">time</span><span class="o">.</span><span class="n">monotonic</span><span class="p">()</span> <span class="o">-</span> <span class="n">started</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p></p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,716 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>muvid.choreo.spec &mdash; muvid 0.0.62 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=dea2dbc4"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
+      <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            muvid
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid.html">muvid</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/__main__.html">muvid.__main__</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/align.html">muvid.align</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/characters.html">muvid.characters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/choreo.html">muvid.choreo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/choreo/__main__.html">muvid.choreo.__main__</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/choreo/analysis.html">muvid.choreo.analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/choreo/manifest.html">muvid.choreo.manifest</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/choreo/pipeline.html">muvid.choreo.pipeline</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/choreo/render.html">muvid.choreo.render</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/choreo/scene.html">muvid.choreo.scene</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/choreo/spec.html">muvid.choreo.spec</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/choreo/tools.html">muvid.choreo.tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/compose.html">muvid.compose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/contracts.html">muvid.contracts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/cost.html">muvid.cost</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/downloads.html">muvid.downloads</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/environments.html">muvid.environments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/events.html">muvid.events</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/facade.html">muvid.facade</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage.html">muvid.footage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/align.html">muvid.footage.align</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/assemble.html">muvid.footage.assemble</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/edl.html">muvid.footage.edl</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/lacing_bridge.html">muvid.footage.lacing_bridge</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/look.html">muvid.footage.look</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring.html">muvid.footage.scoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring/_frame_metrics.html">muvid.footage.scoring._frame_metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring/frames.html">muvid.footage.scoring.frames</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring/grid.html">muvid.footage.scoring.grid</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring/lipsync.html">muvid.footage.scoring.lipsync</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring/motionbeat.html">muvid.footage.scoring.motionbeat</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring/orchestrator.html">muvid.footage.scoring.orchestrator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring/quality.html">muvid.footage.scoring.quality</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring/segment.html">muvid.footage.scoring.segment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/select_score.html">muvid.footage.select_score</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/strategy.html">muvid.footage.strategy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/workspace.html">muvid.footage.workspace</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/genre.html">muvid.genre</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/genre_lyric_video.html">muvid.genre_lyric_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/genre_music_video.html">muvid.genre_music_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/genre_subgenres.html">muvid.genre_subgenres</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyrics.html">muvid.lyrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyricvid.html">muvid.lyricvid</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyricvid/__main__.html">muvid.lyricvid.__main__</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyricvid/director.html">muvid.lyricvid.director</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyricvid/manifest.html">muvid.lyricvid.manifest</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyricvid/pipeline.html">muvid.lyricvid.pipeline</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyricvid/render_ass.html">muvid.lyricvid.render_ass</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyricvid/render_web.html">muvid.lyricvid.render_web</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyricvid/scene.html">muvid.lyricvid.scene</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyricvid/shape.html">muvid.lyricvid.shape</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyricvid/spec.html">muvid.lyricvid.spec</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyricvid/timed_text.html">muvid.lyricvid.timed_text</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyricvid/tools.html">muvid.lyricvid.tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp.html">muvid.mcp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/_fetch.html">muvid.mcp._fetch</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/_guide.html">muvid.mcp._guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/footage_tools.html">muvid.mcp.footage_tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/identity.html">muvid.mcp.identity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/lyricvid_tools.html">muvid.mcp.lyricvid_tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/scoring_tools.html">muvid.mcp.scoring_tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/subgenre_tools.html">muvid.mcp.subgenre_tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/tools.html">muvid.mcp.tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/workspace.html">muvid.mcp.workspace</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/montage.html">muvid.montage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/montage/__main__.html">muvid.montage.__main__</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/montage/analysis.html">muvid.montage.analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/montage/manifest.html">muvid.montage.manifest</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/montage/pipeline.html">muvid.montage.pipeline</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/montage/plan.html">muvid.montage.plan</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/montage/render.html">muvid.montage.render</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/montage/spec.html">muvid.montage.spec</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/montage/tools.html">muvid.montage.tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/project.html">muvid.project</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers.html">muvid.renderers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers/_common.html">muvid.renderers._common</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers/_errors.html">muvid.renderers._errors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers/animation.html">muvid.renderers.animation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers/image_to_video.html">muvid.renderers.image_to_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers/lipsync.html">muvid.renderers.lipsync</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers/still.html">muvid.renderers.still</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers/text_to_video.html">muvid.renderers.text_to_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/schema.html">muvid.schema</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/script.html">muvid.script</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/subgenres.html">muvid.subgenres</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/subgenres/_contract.html">muvid.subgenres._contract</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/subgenres/_manifest.html">muvid.subgenres._manifest</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/subgenres/_registry.html">muvid.subgenres._registry</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/subgenres/_schema.html">muvid.subgenres._schema</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/subgenres/testing.html">muvid.subgenres.testing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/ui.html">muvid.ui</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/ui/app.html">muvid.ui.app</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize.html">muvid.visualize</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/canvas.html">muvid.visualize.canvas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/ffmpeg.html">muvid.visualize.ffmpeg</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/reactive.html">muvid.visualize.reactive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/verify.html">muvid.visualize.verify</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/video.html">muvid.visualize.video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/visuals.html">muvid.visualize.visuals</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">muvid</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">muvid.choreo.spec</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for muvid.choreo.spec</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""The choreo treatment spec — what a director decides, as data; stdlib-only.</span>
+
+<span class="sd">The same two-layer split as :mod:`muvid.lyricvid.spec`, for the same reason:</span>
+
+<span class="sd">``direction``</span>
+<span class="sd">    WHAT and WHY — palette, background, density, mood, a rationale. The half a</span>
+<span class="sd">    model (or a person in a hurry) is genuinely good at.</span>
+
+<span class="sd">``scenes``</span>
+<span class="sd">    HOW — an **archetype** from a closed set, which sections it applies to,</span>
+<span class="sd">    and a small bag of archetype parameters. Never geometry, never timings:</span>
+<span class="sd">    every coordinate and every time is computed in Python from the event list.</span>
+
+<span class="sd">Closed vocabularies everywhere (archetypes, backgrounds, densities), and a</span>
+<span class="sd">``repair`` that projects a nearly-right spec onto the valid space rather than</span>
+<span class="sd">handing it back — a mechanical substitution renders something good now.</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">asdict</span><span class="p">,</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">replace</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Mapping</span>
+
+<span class="n">SPEC_VERSION</span> <span class="o">=</span> <span class="s2">"1.0"</span>
+
+<span class="c1">#: How events become objects. Each is a function in :mod:`muvid.choreo.scene`.</span>
+<span class="n">ARCHETYPES</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"fischinger"</span><span class="p">:</span> <span class="p">(</span>
+        <span class="s2">"Geometric shapes ignite per onset on a grid — band picks the shape "</span>
+        <span class="s2">"class (low: discs, mid: squares, high: triangles), strength the size, "</span>
+        <span class="s2">"and each section a different arrangement. The Study No. 7 look."</span>
+    <span class="p">),</span>
+    <span class="s2">"star_guitar"</span><span class="p">:</span> <span class="p">(</span>
+        <span class="s2">"A side-scrolling landscape: bass onsets are poles, mids are buildings, "</span>
+        <span class="s2">"highs are wires. Everything scrolls left at one constant speed, so the "</span>
+        <span class="s2">"spacing of the objects IS the rhythm. Sections change the sky."</span>
+    <span class="p">),</span>
+    <span class="s2">"mclaren"</span><span class="p">:</span> <span class="p">(</span>
+        <span class="s2">"White scratches and marks on black, one per onset, jittered, gone within "</span>
+        <span class="s2">"a fraction of a beat. Hand-scratched film."</span>
+    <span class="p">),</span>
+    <span class="s2">"swarm"</span><span class="p">:</span> <span class="p">(</span>
+        <span class="s2">"Particles whose count and speed follow band energy, thrown from a "</span>
+        <span class="s2">"band-specific origin and persisting as they slow. Continuous, organic."</span>
+    <span class="p">),</span>
+<span class="p">}</span>
+
+<span class="c1">#: What is behind the objects.</span>
+<span class="n">BACKGROUNDS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"solid"</span><span class="p">:</span> <span class="s2">"One flat colour (palette.bg)."</span><span class="p">,</span>
+    <span class="s2">"gradient"</span><span class="p">:</span> <span class="s2">"Vertical gradient from palette.bg (top) to palette.bg2 (bottom)."</span><span class="p">,</span>
+    <span class="s2">"vignette"</span><span class="p">:</span> <span class="s2">"palette.bg, darkened toward the corners."</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="c1">#: How many events become objects, and how many objects an event makes.</span>
+<span class="n">DENSITIES</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"sparse"</span><span class="p">:</span> <span class="s2">"Only strong onsets mark; few objects at a time."</span><span class="p">,</span>
+    <span class="s2">"normal"</span><span class="p">:</span> <span class="s2">"Most onsets mark."</span><span class="p">,</span>
+    <span class="s2">"dense"</span><span class="p">:</span> <span class="s2">"Every onset marks, and each makes more."</span><span class="p">,</span>
+<span class="p">}</span>
+<span class="c1">#: Strength gate per density: an event below it makes no object.</span>
+<span class="n">DENSITY_GATE</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"sparse"</span><span class="p">:</span> <span class="mf">0.45</span><span class="p">,</span> <span class="s2">"normal"</span><span class="p">:</span> <span class="mf">0.15</span><span class="p">,</span> <span class="s2">"dense"</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">}</span>
+<span class="c1">#: Count multiplier per density, for the archetypes that spawn several per event.</span>
+<span class="n">DENSITY_FACTOR</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"sparse"</span><span class="p">:</span> <span class="mf">0.5</span><span class="p">,</span> <span class="s2">"normal"</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span> <span class="s2">"dense"</span><span class="p">:</span> <span class="mf">2.0</span><span class="p">}</span>
+
+<span class="c1">#: Archetype parameters, documented once for the schema and the prompt. Each is</span>
+<span class="c1">#: read by its archetype with the default given here and clamped to the range.</span>
+<span class="n">ARCHETYPE_PARAMS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"fischinger"</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">"columns"</span><span class="p">:</span> <span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">24</span><span class="p">,</span> <span class="s2">"grid columns"</span><span class="p">),</span>
+        <span class="s2">"rows"</span><span class="p">:</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="s2">"grid rows"</span><span class="p">),</span>
+        <span class="s2">"hold_beats"</span><span class="p">:</span> <span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">8.0</span><span class="p">,</span> <span class="s2">"how long a shape lives, in beats"</span><span class="p">),</span>
+    <span class="p">},</span>
+    <span class="s2">"star_guitar"</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">"speed"</span><span class="p">:</span> <span class="p">(</span><span class="mf">0.35</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">,</span> <span class="s2">"scroll speed, canvas widths per second"</span><span class="p">),</span>
+        <span class="s2">"horizon"</span><span class="p">:</span> <span class="p">(</span><span class="mf">0.72</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">,</span> <span class="mf">0.95</span><span class="p">,</span> <span class="s2">"ground line, fraction of height from the top"</span><span class="p">),</span>
+    <span class="p">},</span>
+    <span class="s2">"mclaren"</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">"life_beats"</span><span class="p">:</span> <span class="p">(</span><span class="mf">0.25</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">,</span> <span class="s2">"how long a scratch lives, in beats"</span><span class="p">),</span>
+    <span class="p">},</span>
+    <span class="s2">"swarm"</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">"particles"</span><span class="p">:</span> <span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">40</span><span class="p">,</span> <span class="s2">"particles per event at normal density"</span><span class="p">),</span>
+        <span class="s2">"life_s"</span><span class="p">:</span> <span class="p">(</span><span class="mf">1.5</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">,</span> <span class="mf">6.0</span><span class="p">,</span> <span class="s2">"particle lifetime, seconds"</span><span class="p">),</span>
+    <span class="p">},</span>
+<span class="p">}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_enum</span><span class="p">(</span><span class="n">vocab</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+    <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">vocab</span><span class="p">)</span>
+
+
+<span class="c1"># --------------------------------------------------------------------------</span>
+<span class="c1"># coercion helpers — what makes from_dict total over hostile input</span>
+<span class="c1"># --------------------------------------------------------------------------</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_mapping</span><span class="p">(</span><span class="n">v</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+    <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">)</span> <span class="k">else</span> <span class="p">{}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_seq</span><span class="p">(</span><span class="n">v</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">()</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">v</span><span class="p">,)</span> <span class="k">if</span> <span class="n">v</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">else</span> <span class="p">()</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">,</span> <span class="nb">set</span><span class="p">,</span> <span class="nb">frozenset</span><span class="p">)):</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">v</span> <span class="k">if</span> <span class="n">x</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">v</span><span class="p">,)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_text</span><span class="p">(</span><span class="n">v</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">default</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">default</span> <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">str</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_build</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">raw</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]):</span>
+<span class="w">    </span><span class="sd">"""A frozen record from a mapping, each field coerced toward its type.</span>
+
+<span class="sd">    Unknown keys are dropped; a value that will not coerce keeps the default.</span>
+<span class="sd">    """</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">fields</span>
+
+    <span class="n">defaults</span> <span class="o">=</span> <span class="n">asdict</span><span class="p">(</span><span class="bp">cls</span><span class="p">())</span>
+    <span class="n">kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">fields</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">raw</span> <span class="ow">or</span> <span class="n">raw</span><span class="p">[</span><span class="n">f</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="n">raw</span><span class="p">[</span><span class="n">f</span><span class="o">.</span><span class="n">name</span><span class="p">]</span>
+        <span class="n">want</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">defaults</span><span class="p">[</span><span class="n">f</span><span class="o">.</span><span class="n">name</span><span class="p">])</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">want</span> <span class="ow">is</span> <span class="nb">bool</span><span class="p">:</span>
+                <span class="n">kwargs</span><span class="p">[</span><span class="n">f</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">want</span> <span class="ow">is</span> <span class="nb">int</span><span class="p">:</span>
+                <span class="n">kwargs</span><span class="p">[</span><span class="n">f</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">v</span><span class="p">))</span>
+            <span class="k">elif</span> <span class="n">want</span> <span class="ow">is</span> <span class="nb">float</span><span class="p">:</span>
+                <span class="n">kwargs</span><span class="p">[</span><span class="n">f</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">want</span> <span class="ow">is</span> <span class="nb">str</span><span class="p">:</span>
+                <span class="n">kwargs</span><span class="p">[</span><span class="n">f</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">kwargs</span><span class="p">[</span><span class="n">f</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+            <span class="k">continue</span>
+    <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+
+<span class="c1"># --------------------------------------------------------------------------</span>
+<span class="c1"># the spec</span>
+<span class="c1"># --------------------------------------------------------------------------</span>
+
+
+<div class="viewcode-block" id="Palette">
+<a class="viewcode-back" href="../../../module_docs/muvid/choreo/spec.html#muvid.choreo.Palette">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Palette</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Colours as ``#rrggbb``. ``low``/``mid``/``high`` are the band colours."""</span>
+
+    <span class="n">bg</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"#0b0b12"</span>
+    <span class="n">bg2</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"#1b1b2e"</span>
+    <span class="n">fg</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"#f4f1e8"</span>
+    <span class="n">low</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"#e4572e"</span>
+    <span class="n">mid</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"#f3c623"</span>
+    <span class="n">high</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"#4cc9f0"</span></div>
+
+
+
+<div class="viewcode-block" id="Direction">
+<a class="viewcode-back" href="../../../module_docs/muvid/choreo/spec.html#muvid.choreo.Direction">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Direction</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The song-level creative decision."""</span>
+
+    <span class="n">mood</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>
+    <span class="n">palette</span><span class="p">:</span> <span class="n">Palette</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">Palette</span><span class="p">)</span>
+    <span class="n">background</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"solid"</span>
+    <span class="n">density</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"normal"</span>
+    <span class="n">rationale</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span></div>
+
+
+
+<div class="viewcode-block" id="Scene">
+<a class="viewcode-back" href="../../../module_docs/muvid/choreo/spec.html#muvid.choreo.Scene">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Scene</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""One archetype applied to part of the song.</span>
+
+<span class="sd">    ``applies_to`` names section tiers (``low``/``mid``/``high``), section</span>
+<span class="sd">    indices as strings (``"2"``), or ``"*"`` for everything. A named scene wins</span>
+<span class="sd">    its sections over a ``"*"`` one; sections nobody names fall back to the</span>
+<span class="sd">    first ``"*"`` scene, and to the first scene if there is none.</span>
+<span class="sd">    """</span>
+
+    <span class="n">applies_to</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"*"</span><span class="p">,)</span>
+    <span class="n">archetype</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"fischinger"</span>
+    <span class="n">params</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="TreatmentSpec">
+<a class="viewcode-back" href="../../../module_docs/muvid/choreo/spec.html#muvid.choreo.TreatmentSpec">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">TreatmentSpec</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""A complete, renderable treatment.</span>
+
+<span class="sd">    &gt;&gt;&gt; s = TreatmentSpec()</span>
+<span class="sd">    &gt;&gt;&gt; validate(s)</span>
+<span class="sd">    []</span>
+<span class="sd">    &gt;&gt;&gt; TreatmentSpec.from_dict(s.to_dict()) == s</span>
+<span class="sd">    True</span>
+<span class="sd">    """</span>
+
+    <span class="n">spec_version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">SPEC_VERSION</span>
+    <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>
+    <span class="n">direction</span><span class="p">:</span> <span class="n">Direction</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">Direction</span><span class="p">)</span>
+    <span class="n">scenes</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Scene</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="p">(</span><span class="n">Scene</span><span class="p">(),))</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">asdict</span><span class="p">(</span><span class="bp">self</span><span class="p">)))</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_json</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">indent</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(),</span> <span class="n">indent</span><span class="o">=</span><span class="n">indent</span><span class="p">)</span>
+
+<div class="viewcode-block" id="TreatmentSpec.from_dict">
+<a class="viewcode-back" href="../../../module_docs/muvid/choreo/spec.html#muvid.choreo.TreatmentSpec.from_dict">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_dict</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">d</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="s2">"TreatmentSpec"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Build from a plain mapping — TOTAL over what a model or caller sends.</span>
+
+<span class="sd">        &gt;&gt;&gt; s = TreatmentSpec.from_dict({'scenes': [None, {'applies_to': 'high',</span>
+<span class="sd">        ...     'archetype': 'swarm', 'params': 'nope'}],</span>
+<span class="sd">        ...     'direction': {'palette': {'foo': 1, 'bg': '#000000'}, 'density': None}})</span>
+<span class="sd">        &gt;&gt;&gt; s.scenes[1].applies_to, s.scenes[1].params, s.direction.palette.bg</span>
+<span class="sd">        (('high',), {}, '#000000')</span>
+<span class="sd">        """</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">_mapping</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+        <span class="n">direction</span> <span class="o">=</span> <span class="n">_mapping</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"direction"</span><span class="p">))</span>
+        <span class="n">direction_obj</span> <span class="o">=</span> <span class="n">Direction</span><span class="p">(</span>
+            <span class="n">mood</span><span class="o">=</span><span class="n">_text</span><span class="p">(</span><span class="n">direction</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"mood"</span><span class="p">)),</span>
+            <span class="n">rationale</span><span class="o">=</span><span class="n">_text</span><span class="p">(</span><span class="n">direction</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"rationale"</span><span class="p">)),</span>
+            <span class="n">palette</span><span class="o">=</span><span class="n">_build</span><span class="p">(</span><span class="n">Palette</span><span class="p">,</span> <span class="n">_mapping</span><span class="p">(</span><span class="n">direction</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"palette"</span><span class="p">))),</span>
+            <span class="n">background</span><span class="o">=</span><span class="n">_text</span><span class="p">(</span><span class="n">direction</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"background"</span><span class="p">),</span> <span class="s2">"solid"</span><span class="p">),</span>
+            <span class="n">density</span><span class="o">=</span><span class="n">_text</span><span class="p">(</span><span class="n">direction</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"density"</span><span class="p">),</span> <span class="s2">"normal"</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="n">raw_scenes</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"scenes"</span><span class="p">)</span>
+        <span class="n">raw_scenes</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">raw_scenes</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">raw_scenes</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">))</span> <span class="k">else</span> <span class="p">[{}]</span>
+        <span class="n">scenes</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">raw</span> <span class="ow">in</span> <span class="n">raw_scenes</span> <span class="ow">or</span> <span class="p">[{}]:</span>
+            <span class="n">raw</span> <span class="o">=</span> <span class="n">_mapping</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span>
+            <span class="n">scenes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">Scene</span><span class="p">(</span>
+                    <span class="n">applies_to</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">_seq</span><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"applies_to"</span><span class="p">)))</span> <span class="ow">or</span> <span class="p">(</span><span class="s2">"*"</span><span class="p">,),</span>
+                    <span class="n">archetype</span><span class="o">=</span><span class="n">_text</span><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"archetype"</span><span class="p">),</span> <span class="s2">"fischinger"</span><span class="p">),</span>
+                    <span class="n">params</span><span class="o">=</span><span class="n">_mapping</span><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"params"</span><span class="p">)),</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span>
+            <span class="n">spec_version</span><span class="o">=</span><span class="n">_text</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"spec_version"</span><span class="p">),</span> <span class="n">SPEC_VERSION</span><span class="p">),</span>
+            <span class="n">title</span><span class="o">=</span><span class="n">_text</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"title"</span><span class="p">)),</span>
+            <span class="n">direction</span><span class="o">=</span><span class="n">direction_obj</span><span class="p">,</span>
+            <span class="n">scenes</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="n">scenes</span><span class="p">),</span>
+        <span class="p">)</span></div>
+
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_json</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"TreatmentSpec"</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">text</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="default_treatment">
+<a class="viewcode-back" href="../../../module_docs/muvid/choreo/spec.html#muvid.choreo.default_treatment">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">default_treatment</span><span class="p">(</span><span class="n">archetype</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"fischinger"</span><span class="p">,</span> <span class="o">**</span><span class="n">direction</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TreatmentSpec</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""A one-scene treatment for ``archetype``; the CLI's ``--archetype`` shortcut.</span>
+
+<span class="sd">    &gt;&gt;&gt; default_treatment('mclaren').scenes[0].archetype</span>
+<span class="sd">    'mclaren'</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="n">TreatmentSpec</span><span class="p">(</span>
+        <span class="n">direction</span><span class="o">=</span><span class="n">Direction</span><span class="p">(</span><span class="o">**</span><span class="n">direction</span><span class="p">)</span> <span class="k">if</span> <span class="n">direction</span> <span class="k">else</span> <span class="n">Direction</span><span class="p">(),</span>
+        <span class="n">scenes</span><span class="o">=</span><span class="p">(</span><span class="n">Scene</span><span class="p">(</span><span class="n">archetype</span><span class="o">=</span><span class="n">archetype</span><span class="p">),),</span>
+    <span class="p">)</span></div>
+
+
+
+<span class="c1"># --------------------------------------------------------------------------</span>
+<span class="c1"># validation and repair</span>
+<span class="c1"># --------------------------------------------------------------------------</span>
+
+<span class="n">_HEX</span> <span class="o">=</span> <span class="s2">"0123456789abcdefABCDEF"</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_bad_colour</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">return</span> <span class="ow">not</span> <span class="p">(</span>
+        <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">==</span> <span class="mi">7</span> <span class="ow">and</span> <span class="n">value</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"#"</span>
+        <span class="ow">and</span> <span class="nb">all</span><span class="p">(</span><span class="n">c</span> <span class="ow">in</span> <span class="n">_HEX</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">value</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+    <span class="p">)</span>
+
+
+<div class="viewcode-block" id="validate">
+<a class="viewcode-back" href="../../../module_docs/muvid/choreo/spec.html#muvid.choreo.validate">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">validate</span><span class="p">(</span><span class="n">spec</span><span class="p">:</span> <span class="n">TreatmentSpec</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Human-readable problems; empty means renderable.</span>
+
+<span class="sd">    &gt;&gt;&gt; validate(TreatmentSpec(scenes=(Scene(archetype='nope'),)))</span>
+<span class="sd">    ["scenes[0].archetype 'nope' is not one of the known archetypes"]</span>
+<span class="sd">    """</span>
+    <span class="n">errs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="n">spec</span><span class="o">.</span><span class="n">spec_version</span> <span class="o">!=</span> <span class="n">SPEC_VERSION</span><span class="p">:</span>
+        <span class="n">errs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"spec_version </span><span class="si">{</span><span class="n">spec</span><span class="o">.</span><span class="n">spec_version</span><span class="si">!r}</span><span class="s2"> != supported </span><span class="si">{</span><span class="n">SPEC_VERSION</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="n">spec</span><span class="o">.</span><span class="n">direction</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">asdict</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">palette</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">_bad_colour</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+            <span class="n">errs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"direction.palette.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">value</span><span class="si">!r}</span><span class="s2"> is not a #rrggbb colour"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">d</span><span class="o">.</span><span class="n">background</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">BACKGROUNDS</span><span class="p">:</span>
+        <span class="n">errs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"direction.background </span><span class="si">{</span><span class="n">d</span><span class="o">.</span><span class="n">background</span><span class="si">!r}</span><span class="s2"> is not one of </span><span class="si">{</span><span class="n">_enum</span><span class="p">(</span><span class="n">BACKGROUNDS</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">d</span><span class="o">.</span><span class="n">density</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">DENSITIES</span><span class="p">:</span>
+        <span class="n">errs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"direction.density </span><span class="si">{</span><span class="n">d</span><span class="o">.</span><span class="n">density</span><span class="si">!r}</span><span class="s2"> is not one of </span><span class="si">{</span><span class="n">_enum</span><span class="p">(</span><span class="n">DENSITIES</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">spec</span><span class="o">.</span><span class="n">scenes</span><span class="p">:</span>
+        <span class="n">errs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"scenes is empty — at least one scene is required"</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">sc</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">scenes</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">sc</span><span class="o">.</span><span class="n">archetype</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">ARCHETYPES</span><span class="p">:</span>
+            <span class="n">errs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"scenes[</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">].archetype </span><span class="si">{</span><span class="n">sc</span><span class="o">.</span><span class="n">archetype</span><span class="si">!r}</span><span class="s2"> is not one of the known archetypes"</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sc</span><span class="o">.</span><span class="n">params</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">):</span>
+            <span class="n">errs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"scenes[</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">].params must be an object"</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">known</span> <span class="o">=</span> <span class="n">ARCHETYPE_PARAMS</span><span class="p">[</span><span class="n">sc</span><span class="o">.</span><span class="n">archetype</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">sc</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">k</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">known</span><span class="p">:</span>
+                    <span class="n">errs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"scenes[</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">].params.</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2"> is not a </span><span class="si">{</span><span class="n">sc</span><span class="o">.</span><span class="n">archetype</span><span class="si">}</span><span class="s2"> parameter "</span>
+                                <span class="sa">f</span><span class="s2">"(known: </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">known</span><span class="p">)</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">))</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">bool</span><span class="p">):</span>
+                    <span class="n">errs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"scenes[</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">].params.</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2"> must be a number"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">errs</span></div>
+
+
+
+<div class="viewcode-block" id="repair">
+<a class="viewcode-back" href="../../../module_docs/muvid/choreo/spec.html#muvid.choreo.repair">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">repair</span><span class="p">(</span><span class="n">spec</span><span class="p">:</span> <span class="n">TreatmentSpec</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">TreatmentSpec</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">"""Project ``spec`` onto the valid space; return ``(spec, notes)``.</span>
+
+<span class="sd">    &gt;&gt;&gt; fixed, notes = repair(TreatmentSpec(scenes=(Scene(archetype='swirl',</span>
+<span class="sd">    ...     params={'columns': 99, 'bogus': 1}),)))</span>
+<span class="sd">    &gt;&gt;&gt; fixed.scenes[0].archetype, dict(fixed.scenes[0].params)</span>
+<span class="sd">    ('fischinger', {'columns': 24})</span>
+<span class="sd">    &gt;&gt;&gt; notes</span>
+<span class="sd">    ["scenes[0].archetype 'swirl' -&gt; 'fischinger'", 'scenes[0].params.columns 99 -&gt; 24', "scenes[0].params dropped unknown ['bogus']"]</span>
+<span class="sd">    """</span>
+    <span class="n">notes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">pick</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">vocab</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="n">default</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">where</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">vocab</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">value</span>
+        <span class="n">notes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">where</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">value</span><span class="si">!r}</span><span class="s2"> -&gt; </span><span class="si">{</span><span class="n">default</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">default</span>
+
+    <span class="n">d</span> <span class="o">=</span> <span class="n">spec</span><span class="o">.</span><span class="n">direction</span>
+    <span class="n">fixes</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">asdict</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">palette</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">_bad_colour</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+            <span class="n">fallback</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">Palette</span><span class="p">(),</span> <span class="n">name</span><span class="p">)</span>
+            <span class="n">notes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"direction.palette.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">value</span><span class="si">!r}</span><span class="s2"> -&gt; </span><span class="si">{</span><span class="n">fallback</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="n">fixes</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">fallback</span>
+    <span class="n">direction</span> <span class="o">=</span> <span class="n">replace</span><span class="p">(</span>
+        <span class="n">d</span><span class="p">,</span>
+        <span class="n">palette</span><span class="o">=</span><span class="n">replace</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">palette</span><span class="p">,</span> <span class="o">**</span><span class="n">fixes</span><span class="p">)</span> <span class="k">if</span> <span class="n">fixes</span> <span class="k">else</span> <span class="n">d</span><span class="o">.</span><span class="n">palette</span><span class="p">,</span>
+        <span class="n">background</span><span class="o">=</span><span class="n">pick</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">background</span><span class="p">,</span> <span class="n">BACKGROUNDS</span><span class="p">,</span> <span class="s2">"solid"</span><span class="p">,</span> <span class="s2">"direction.background"</span><span class="p">),</span>
+        <span class="n">density</span><span class="o">=</span><span class="n">pick</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">density</span><span class="p">,</span> <span class="n">DENSITIES</span><span class="p">,</span> <span class="s2">"normal"</span><span class="p">,</span> <span class="s2">"direction.density"</span><span class="p">),</span>
+    <span class="p">)</span>
+
+    <span class="n">scenes</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">sc</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">scenes</span> <span class="ow">or</span> <span class="p">(</span><span class="n">Scene</span><span class="p">(),)):</span>
+        <span class="n">archetype</span> <span class="o">=</span> <span class="n">pick</span><span class="p">(</span><span class="n">sc</span><span class="o">.</span><span class="n">archetype</span><span class="p">,</span> <span class="n">ARCHETYPES</span><span class="p">,</span> <span class="s2">"fischinger"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"scenes[</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">].archetype"</span><span class="p">)</span>
+        <span class="n">known</span> <span class="o">=</span> <span class="n">ARCHETYPE_PARAMS</span><span class="p">[</span><span class="n">archetype</span><span class="p">]</span>
+        <span class="n">params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">dropped</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="p">(</span><span class="n">sc</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sc</span><span class="o">.</span><span class="n">params</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">)</span> <span class="k">else</span> <span class="p">()):</span>
+            <span class="k">if</span> <span class="n">k</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">known</span><span class="p">:</span>
+                <span class="n">dropped</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+                <span class="k">continue</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">num</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="s2">"nan"</span><span class="p">)</span>
+            <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+                <span class="n">num</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="s2">"nan"</span><span class="p">)</span>
+            <span class="n">default</span><span class="p">,</span> <span class="n">lo</span><span class="p">,</span> <span class="n">hi</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">known</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">num</span> <span class="o">!=</span> <span class="n">num</span><span class="p">:</span>  <span class="c1"># NaN: unusable</span>
+                <span class="n">notes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"scenes[</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">].params.</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">v</span><span class="si">!r}</span><span class="s2"> -&gt; </span><span class="si">{</span><span class="n">default</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
+                <span class="n">num</span> <span class="o">=</span> <span class="n">default</span>
+            <span class="n">clamped</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">hi</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="n">lo</span><span class="p">,</span> <span class="n">num</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">clamped</span> <span class="o">!=</span> <span class="n">num</span><span class="p">:</span>
+                <span class="n">notes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"scenes[</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">].params.</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">v</span><span class="si">!r}</span><span class="s2"> -&gt; </span><span class="si">{</span><span class="n">clamped</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="n">params</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">clamped</span><span class="p">)</span> <span class="k">if</span> <span class="nb">float</span><span class="p">(</span><span class="n">clamped</span><span class="p">)</span><span class="o">.</span><span class="n">is_integer</span><span class="p">()</span> <span class="k">else</span> <span class="n">clamped</span>
+        <span class="k">if</span> <span class="n">dropped</span><span class="p">:</span>
+            <span class="n">notes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"scenes[</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">].params dropped unknown </span><span class="si">{</span><span class="n">dropped</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">scenes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">replace</span><span class="p">(</span><span class="n">sc</span><span class="p">,</span> <span class="n">archetype</span><span class="o">=</span><span class="n">archetype</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="n">TreatmentSpec</span><span class="p">(</span><span class="n">spec_version</span><span class="o">=</span><span class="n">SPEC_VERSION</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="n">spec</span><span class="o">.</span><span class="n">title</span><span class="p">,</span>
+                      <span class="n">direction</span><span class="o">=</span><span class="n">direction</span><span class="p">,</span> <span class="n">scenes</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="n">scenes</span><span class="p">)),</span>
+        <span class="n">notes</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="coerce">
+<a class="viewcode-back" href="../../../module_docs/muvid/choreo/spec.html#muvid.choreo.coerce">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">coerce</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="n">TreatmentSpec</span> <span class="o">|</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">TreatmentSpec</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">"""Whatever a caller produced -&gt; a renderable spec plus the repair notes."""</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">TreatmentSpec</span><span class="p">):</span>
+        <span class="n">spec</span> <span class="o">=</span> <span class="n">obj</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">spec</span> <span class="o">=</span> <span class="n">TreatmentSpec</span><span class="o">.</span><span class="n">from_json</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">spec</span> <span class="o">=</span> <span class="n">TreatmentSpec</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">repair</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span></div>
+
+
+
+<span class="c1"># --------------------------------------------------------------------------</span>
+<span class="c1"># JSON Schema and vocabulary — one artefact, several readers</span>
+<span class="c1"># --------------------------------------------------------------------------</span>
+
+
+<div class="viewcode-block" id="json_schema">
+<a class="viewcode-back" href="../../../module_docs/muvid/choreo/spec.html#muvid.choreo.json_schema">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">json_schema</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""The JSON Schema for a :class:`TreatmentSpec`.</span>
+
+<span class="sd">    &gt;&gt;&gt; json_schema()['properties']['scenes']['items']['properties']['archetype']['enum']</span>
+<span class="sd">    ['fischinger', 'star_guitar', 'mclaren', 'swarm']</span>
+<span class="sd">    """</span>
+    <span class="n">colour</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"string"</span><span class="p">,</span> <span class="s2">"pattern"</span><span class="p">:</span> <span class="s2">"^#[0-9a-fA-F]</span><span class="si">{6}</span><span class="s2">$"</span><span class="p">}</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">"$schema"</span><span class="p">:</span> <span class="s2">"https://json-schema.org/draft/2020-12/schema"</span><span class="p">,</span>
+        <span class="s2">"title"</span><span class="p">:</span> <span class="s2">"muvid choreo treatment"</span><span class="p">,</span>
+        <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"object"</span><span class="p">,</span>
+        <span class="s2">"additionalProperties"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="s2">"required"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"direction"</span><span class="p">,</span> <span class="s2">"scenes"</span><span class="p">],</span>
+        <span class="s2">"properties"</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">"spec_version"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"string"</span><span class="p">,</span> <span class="s2">"const"</span><span class="p">:</span> <span class="n">SPEC_VERSION</span><span class="p">},</span>
+            <span class="s2">"title"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"string"</span><span class="p">},</span>
+            <span class="s2">"direction"</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"object"</span><span class="p">,</span>
+                <span class="s2">"additionalProperties"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+                <span class="s2">"properties"</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="s2">"mood"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"string"</span><span class="p">},</span>
+                    <span class="s2">"rationale"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"string"</span><span class="p">},</span>
+                    <span class="s2">"palette"</span><span class="p">:</span> <span class="p">{</span>
+                        <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"object"</span><span class="p">,</span>
+                        <span class="s2">"additionalProperties"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+                        <span class="s2">"properties"</span><span class="p">:</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">colour</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">asdict</span><span class="p">(</span><span class="n">Palette</span><span class="p">())},</span>
+                    <span class="p">},</span>
+                    <span class="s2">"background"</span><span class="p">:</span> <span class="p">{</span>
+                        <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"string"</span><span class="p">,</span> <span class="s2">"enum"</span><span class="p">:</span> <span class="n">_enum</span><span class="p">(</span><span class="n">BACKGROUNDS</span><span class="p">),</span>
+                        <span class="s2">"description"</span><span class="p">:</span> <span class="s2">"; "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">BACKGROUNDS</span><span class="o">.</span><span class="n">items</span><span class="p">()),</span>
+                    <span class="p">},</span>
+                    <span class="s2">"density"</span><span class="p">:</span> <span class="p">{</span>
+                        <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"string"</span><span class="p">,</span> <span class="s2">"enum"</span><span class="p">:</span> <span class="n">_enum</span><span class="p">(</span><span class="n">DENSITIES</span><span class="p">),</span>
+                        <span class="s2">"description"</span><span class="p">:</span> <span class="s2">"; "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">DENSITIES</span><span class="o">.</span><span class="n">items</span><span class="p">()),</span>
+                    <span class="p">},</span>
+                <span class="p">},</span>
+            <span class="p">},</span>
+            <span class="s2">"scenes"</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"array"</span><span class="p">,</span>
+                <span class="s2">"minItems"</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+                <span class="s2">"items"</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"object"</span><span class="p">,</span>
+                    <span class="s2">"additionalProperties"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+                    <span class="s2">"required"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"archetype"</span><span class="p">],</span>
+                    <span class="s2">"properties"</span><span class="p">:</span> <span class="p">{</span>
+                        <span class="s2">"applies_to"</span><span class="p">:</span> <span class="p">{</span>
+                            <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"array"</span><span class="p">,</span> <span class="s2">"items"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"string"</span><span class="p">},</span>
+                            <span class="s2">"description"</span><span class="p">:</span> <span class="s2">"Section tiers (low/mid/high), section "</span>
+                            <span class="s2">"indices as strings, or ['*'] for the whole song."</span><span class="p">,</span>
+                        <span class="p">},</span>
+                        <span class="s2">"archetype"</span><span class="p">:</span> <span class="p">{</span>
+                            <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"string"</span><span class="p">,</span> <span class="s2">"enum"</span><span class="p">:</span> <span class="n">_enum</span><span class="p">(</span><span class="n">ARCHETYPES</span><span class="p">),</span>
+                            <span class="s2">"description"</span><span class="p">:</span> <span class="s2">"; "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">ARCHETYPES</span><span class="o">.</span><span class="n">items</span><span class="p">()),</span>
+                        <span class="p">},</span>
+                        <span class="s2">"params"</span><span class="p">:</span> <span class="p">{</span>
+                            <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"object"</span><span class="p">,</span>
+                            <span class="s2">"description"</span><span class="p">:</span> <span class="s2">"; "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">a</span><span class="si">}</span><span class="s2">: "</span> <span class="o">+</span> <span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">d</span><span class="si">}</span><span class="s2">; default </span><span class="si">{</span><span class="n">dflt</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">lo</span><span class="si">}</span><span class="s2">..</span><span class="si">{</span><span class="n">hi</span><span class="si">}</span><span class="s2">)"</span>
+                                    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="p">(</span><span class="n">dflt</span><span class="p">,</span> <span class="n">lo</span><span class="p">,</span> <span class="n">hi</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span> <span class="ow">in</span> <span class="n">ps</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                                <span class="p">)</span>
+                                <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">ps</span> <span class="ow">in</span> <span class="n">ARCHETYPE_PARAMS</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                            <span class="p">),</span>
+                        <span class="p">},</span>
+                    <span class="p">},</span>
+                <span class="p">},</span>
+            <span class="p">},</span>
+        <span class="p">},</span>
+    <span class="p">}</span></div>
+
+
+
+<div class="viewcode-block" id="vocabulary">
+<a class="viewcode-back" href="../../../module_docs/muvid/choreo/spec.html#muvid.choreo.vocabulary">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">vocabulary</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Every closed vocabulary, for prompts and UI. One copy, several readers."""</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">"archetypes"</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="n">ARCHETYPES</span><span class="p">),</span>
+        <span class="s2">"backgrounds"</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="n">BACKGROUNDS</span><span class="p">),</span>
+        <span class="s2">"densities"</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="n">DENSITIES</span><span class="p">),</span>
+        <span class="s2">"archetype_params"</span><span class="p">:</span> <span class="p">{</span>
+            <span class="n">a</span><span class="p">:</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="p">{</span><span class="s2">"default"</span><span class="p">:</span> <span class="n">d</span><span class="p">,</span> <span class="s2">"min"</span><span class="p">:</span> <span class="n">lo</span><span class="p">,</span> <span class="s2">"max"</span><span class="p">:</span> <span class="n">hi</span><span class="p">,</span> <span class="s2">"description"</span><span class="p">:</span> <span class="n">desc</span><span class="p">}</span>
+                <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">lo</span><span class="p">,</span> <span class="n">hi</span><span class="p">,</span> <span class="n">desc</span><span class="p">)</span> <span class="ow">in</span> <span class="n">ps</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+            <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">ps</span> <span class="ow">in</span> <span class="n">ARCHETYPE_PARAMS</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="p">},</span>
+    <span class="p">}</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p></p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

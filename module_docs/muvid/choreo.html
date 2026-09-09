@@ -1,0 +1,346 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>muvid.choreo &mdash; muvid 0.0.62 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=dea2dbc4"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
+      <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="muvid.choreo.__main__" href="choreo/__main__.html" />
+    <link rel="prev" title="muvid.characters" href="characters.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            muvid
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../muvid.html">muvid</a></li>
+<li class="toctree-l1"><a class="reference internal" href="__main__.html">muvid.__main__</a></li>
+<li class="toctree-l1"><a class="reference internal" href="align.html">muvid.align</a></li>
+<li class="toctree-l1"><a class="reference internal" href="characters.html">muvid.characters</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">muvid.choreo</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.choreo.Analysis"><code class="docutils literal notranslate"><span class="pre">Analysis</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#muvid.choreo.Analysis.events_in"><code class="docutils literal notranslate"><span class="pre">Analysis.events_in()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.choreo.Canvas"><code class="docutils literal notranslate"><span class="pre">Canvas</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.choreo.ChoreoScene"><code class="docutils literal notranslate"><span class="pre">ChoreoScene</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.choreo.TreatmentSpec"><code class="docutils literal notranslate"><span class="pre">TreatmentSpec</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#muvid.choreo.TreatmentSpec.from_dict"><code class="docutils literal notranslate"><span class="pre">TreatmentSpec.from_dict()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.choreo.analyze"><code class="docutils literal notranslate"><span class="pre">analyze()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.choreo.compile_scene"><code class="docutils literal notranslate"><span class="pre">compile_scene()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.choreo.render_choreo"><code class="docutils literal notranslate"><span class="pre">render_choreo()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="choreo/__main__.html">muvid.choreo.__main__</a></li>
+<li class="toctree-l1"><a class="reference internal" href="choreo/analysis.html">muvid.choreo.analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="choreo/manifest.html">muvid.choreo.manifest</a></li>
+<li class="toctree-l1"><a class="reference internal" href="choreo/pipeline.html">muvid.choreo.pipeline</a></li>
+<li class="toctree-l1"><a class="reference internal" href="choreo/render.html">muvid.choreo.render</a></li>
+<li class="toctree-l1"><a class="reference internal" href="choreo/scene.html">muvid.choreo.scene</a></li>
+<li class="toctree-l1"><a class="reference internal" href="choreo/spec.html">muvid.choreo.spec</a></li>
+<li class="toctree-l1"><a class="reference internal" href="choreo/tools.html">muvid.choreo.tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="compose.html">muvid.compose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contracts.html">muvid.contracts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cost.html">muvid.cost</a></li>
+<li class="toctree-l1"><a class="reference internal" href="downloads.html">muvid.downloads</a></li>
+<li class="toctree-l1"><a class="reference internal" href="environments.html">muvid.environments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="events.html">muvid.events</a></li>
+<li class="toctree-l1"><a class="reference internal" href="facade.html">muvid.facade</a></li>
+<li class="toctree-l1"><a class="reference internal" href="footage.html">muvid.footage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="footage/align.html">muvid.footage.align</a></li>
+<li class="toctree-l1"><a class="reference internal" href="footage/assemble.html">muvid.footage.assemble</a></li>
+<li class="toctree-l1"><a class="reference internal" href="footage/edl.html">muvid.footage.edl</a></li>
+<li class="toctree-l1"><a class="reference internal" href="footage/lacing_bridge.html">muvid.footage.lacing_bridge</a></li>
+<li class="toctree-l1"><a class="reference internal" href="footage/look.html">muvid.footage.look</a></li>
+<li class="toctree-l1"><a class="reference internal" href="footage/scoring.html">muvid.footage.scoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="footage/scoring/_frame_metrics.html">muvid.footage.scoring._frame_metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="footage/scoring/frames.html">muvid.footage.scoring.frames</a></li>
+<li class="toctree-l1"><a class="reference internal" href="footage/scoring/grid.html">muvid.footage.scoring.grid</a></li>
+<li class="toctree-l1"><a class="reference internal" href="footage/scoring/lipsync.html">muvid.footage.scoring.lipsync</a></li>
+<li class="toctree-l1"><a class="reference internal" href="footage/scoring/motionbeat.html">muvid.footage.scoring.motionbeat</a></li>
+<li class="toctree-l1"><a class="reference internal" href="footage/scoring/orchestrator.html">muvid.footage.scoring.orchestrator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="footage/scoring/quality.html">muvid.footage.scoring.quality</a></li>
+<li class="toctree-l1"><a class="reference internal" href="footage/scoring/segment.html">muvid.footage.scoring.segment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="footage/select_score.html">muvid.footage.select_score</a></li>
+<li class="toctree-l1"><a class="reference internal" href="footage/strategy.html">muvid.footage.strategy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="footage/workspace.html">muvid.footage.workspace</a></li>
+<li class="toctree-l1"><a class="reference internal" href="genre.html">muvid.genre</a></li>
+<li class="toctree-l1"><a class="reference internal" href="genre_lyric_video.html">muvid.genre_lyric_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="genre_music_video.html">muvid.genre_music_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="genre_subgenres.html">muvid.genre_subgenres</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lyrics.html">muvid.lyrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lyricvid.html">muvid.lyricvid</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lyricvid/__main__.html">muvid.lyricvid.__main__</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lyricvid/director.html">muvid.lyricvid.director</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lyricvid/manifest.html">muvid.lyricvid.manifest</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lyricvid/pipeline.html">muvid.lyricvid.pipeline</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lyricvid/render_ass.html">muvid.lyricvid.render_ass</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lyricvid/render_web.html">muvid.lyricvid.render_web</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lyricvid/scene.html">muvid.lyricvid.scene</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lyricvid/shape.html">muvid.lyricvid.shape</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lyricvid/spec.html">muvid.lyricvid.spec</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lyricvid/timed_text.html">muvid.lyricvid.timed_text</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lyricvid/tools.html">muvid.lyricvid.tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mcp.html">muvid.mcp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mcp/_fetch.html">muvid.mcp._fetch</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mcp/_guide.html">muvid.mcp._guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mcp/footage_tools.html">muvid.mcp.footage_tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mcp/identity.html">muvid.mcp.identity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mcp/lyricvid_tools.html">muvid.mcp.lyricvid_tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mcp/scoring_tools.html">muvid.mcp.scoring_tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mcp/subgenre_tools.html">muvid.mcp.subgenre_tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mcp/tools.html">muvid.mcp.tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mcp/workspace.html">muvid.mcp.workspace</a></li>
+<li class="toctree-l1"><a class="reference internal" href="montage.html">muvid.montage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="montage/__main__.html">muvid.montage.__main__</a></li>
+<li class="toctree-l1"><a class="reference internal" href="montage/analysis.html">muvid.montage.analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="montage/manifest.html">muvid.montage.manifest</a></li>
+<li class="toctree-l1"><a class="reference internal" href="montage/pipeline.html">muvid.montage.pipeline</a></li>
+<li class="toctree-l1"><a class="reference internal" href="montage/plan.html">muvid.montage.plan</a></li>
+<li class="toctree-l1"><a class="reference internal" href="montage/render.html">muvid.montage.render</a></li>
+<li class="toctree-l1"><a class="reference internal" href="montage/spec.html">muvid.montage.spec</a></li>
+<li class="toctree-l1"><a class="reference internal" href="montage/tools.html">muvid.montage.tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="project.html">muvid.project</a></li>
+<li class="toctree-l1"><a class="reference internal" href="renderers.html">muvid.renderers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="renderers/_common.html">muvid.renderers._common</a></li>
+<li class="toctree-l1"><a class="reference internal" href="renderers/_errors.html">muvid.renderers._errors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="renderers/animation.html">muvid.renderers.animation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="renderers/image_to_video.html">muvid.renderers.image_to_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="renderers/lipsync.html">muvid.renderers.lipsync</a></li>
+<li class="toctree-l1"><a class="reference internal" href="renderers/still.html">muvid.renderers.still</a></li>
+<li class="toctree-l1"><a class="reference internal" href="renderers/text_to_video.html">muvid.renderers.text_to_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="schema.html">muvid.schema</a></li>
+<li class="toctree-l1"><a class="reference internal" href="script.html">muvid.script</a></li>
+<li class="toctree-l1"><a class="reference internal" href="subgenres.html">muvid.subgenres</a></li>
+<li class="toctree-l1"><a class="reference internal" href="subgenres/_contract.html">muvid.subgenres._contract</a></li>
+<li class="toctree-l1"><a class="reference internal" href="subgenres/_manifest.html">muvid.subgenres._manifest</a></li>
+<li class="toctree-l1"><a class="reference internal" href="subgenres/_registry.html">muvid.subgenres._registry</a></li>
+<li class="toctree-l1"><a class="reference internal" href="subgenres/_schema.html">muvid.subgenres._schema</a></li>
+<li class="toctree-l1"><a class="reference internal" href="subgenres/testing.html">muvid.subgenres.testing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ui.html">muvid.ui</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ui/app.html">muvid.ui.app</a></li>
+<li class="toctree-l1"><a class="reference internal" href="visualize.html">muvid.visualize</a></li>
+<li class="toctree-l1"><a class="reference internal" href="visualize/canvas.html">muvid.visualize.canvas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="visualize/ffmpeg.html">muvid.visualize.ffmpeg</a></li>
+<li class="toctree-l1"><a class="reference internal" href="visualize/reactive.html">muvid.visualize.reactive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="visualize/verify.html">muvid.visualize.verify</a></li>
+<li class="toctree-l1"><a class="reference internal" href="visualize/video.html">muvid.visualize.video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="visualize/visuals.html">muvid.visualize.visuals</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">muvid</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">muvid.choreo</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/module_docs/muvid/choreo.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-muvid.choreo">
+<span id="muvid-choreo"></span><h1>muvid.choreo<a class="headerlink" href="#module-muvid.choreo" title="Link to this heading"></a></h1>
+<p>Choreo — event-driven visual music, muvid’s second subgenre plugin.</p>
+<p>Audio in, nothing else. Onsets in three frequency bands become objects that
+appear ON the event and then live — Fischinger’s igniting shapes, Gondry’s
+<em>Star Guitar</em> landscape whose spacing is the rhythm, McLaren’s scratches on
+black, or a swarm — and the song’s sections change the arrangement.</p>
+<blockquote>
+<div><p>from muvid.choreo import tools
+tools.render_choreo(‘song.wav’, ‘out.mp4’, archetype=’star_guitar’)</p>
+</div></blockquote>
+<p>or from the command line:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="o">-</span><span class="n">m</span> <span class="n">muvid</span><span class="o">.</span><span class="n">choreo</span> <span class="n">render</span> <span class="n">song</span><span class="o">.</span><span class="n">wav</span> <span class="n">out</span><span class="o">.</span><span class="n">mp4</span> <span class="o">--</span><span class="n">archetype</span> <span class="n">star_guitar</span>
+</pre></div>
+</div>
+<p>The pipeline is four seams, each with a default that genuinely works:</p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">analysis</span></code></dt><dd><p>the event list, beat grid and sections — numpy only; <code class="docutils literal notranslate"><span class="pre">mixing</span></code>’s
+librosa beat tracker when installed, a built-in estimate otherwise.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">spec</span></code></dt><dd><p>the treatment: direction {palette, background, density} + scenes[]
+{applies_to, archetype, params}. Closed vocabularies; repair, not reject.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">scene</span></code></dt><dd><p>every object’s birth, death, shape, place and motion — computed in Python,
+deterministic given a seed.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">render</span></code></dt><dd><p>numpy frames piped into ffmpeg; a YouTube-spec mp4 with the song muxed.</p>
+</dd>
+</dl>
+<p>This module is a PEP 562 lazy facade, like <code class="docutils literal notranslate"><span class="pre">muvid/__init__.py</span></code>: importing it
+pulls nothing heavy, and each attribute is resolved on first use.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="muvid.choreo.Analysis">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">muvid.choreo.</span></span><span class="sig-name descname"><span class="pre">Analysis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">*,</span> <span class="pre">duration:</span> <span class="pre">float,</span> <span class="pre">tempo:</span> <span class="pre">~muvid.choreo.analysis.Tempo,</span> <span class="pre">events:</span> <span class="pre">tuple[~muvid.choreo.analysis.Event,</span> <span class="pre">...],</span> <span class="pre">sections:</span> <span class="pre">tuple[~muvid.choreo.analysis.Section,</span> <span class="pre">...],</span> <span class="pre">bands:</span> <span class="pre">~typing.Mapping[str,</span> <span class="pre">tuple[float,</span> <span class="pre">float]]</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;,</span> <span class="pre">meta:</span> <span class="pre">~typing.Mapping[str,</span> <span class="pre">~typing.Any]</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/muvid/choreo/analysis.html#Analysis"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.choreo.Analysis" title="Link to this definition"></a></dt>
+<dd><p>Everything an archetype needs, and the JSON artifact a render leaves behind.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">a</span> <span class="o">=</span> <span class="n">Analysis</span><span class="p">(</span><span class="n">duration</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span> <span class="n">tempo</span><span class="o">=</span><span class="n">Tempo</span><span class="p">(</span><span class="n">bpm</span><span class="o">=</span><span class="mf">120.0</span><span class="p">,</span> <span class="n">beats</span><span class="o">=</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">),</span> <span class="n">source</span><span class="o">=</span><span class="s1">'numpy'</span><span class="p">),</span>
+<span class="gp">... </span>             <span class="n">events</span><span class="o">=</span><span class="p">(</span><span class="n">Event</span><span class="p">(</span><span class="n">t</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">band</span><span class="o">=</span><span class="s1">'low'</span><span class="p">,</span> <span class="n">strength</span><span class="o">=</span><span class="mf">1.0</span><span class="p">),),</span>
+<span class="gp">... </span>             <span class="n">sections</span><span class="o">=</span><span class="p">(</span><span class="n">Section</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">'mid'</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span> <span class="n">energy_db</span><span class="o">=-</span><span class="mf">12.0</span><span class="p">),))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">Analysis</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">to_dict</span><span class="p">())</span> <span class="o">==</span> <span class="n">a</span>
+<span class="go">True</span>
+</pre></div>
+</div>
+<dl class="py method">
+<dt class="sig sig-object py" id="muvid.choreo.Analysis.events_in">
+<span class="sig-name descname"><span class="pre">events_in</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">band</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="choreo/analysis.html#muvid.choreo.analysis.Event" title="muvid.choreo.analysis.Event"><span class="pre">Event</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/muvid/choreo/analysis.html#Analysis.events_in"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.choreo.Analysis.events_in" title="Link to this definition"></a></dt>
+<dd><p>Events with <code class="docutils literal notranslate"><span class="pre">start</span> <span class="pre">&lt;=</span> <span class="pre">t</span> <span class="pre">&lt;</span> <span class="pre">end</span></code> (optionally one band).</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="muvid.choreo.Canvas">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">muvid.choreo.</span></span><span class="sig-name descname"><span class="pre">Canvas</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">width</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1920</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">height</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1080</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">30</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/muvid/choreo/scene.html#Canvas"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.choreo.Canvas" title="Link to this definition"></a></dt>
+<dd><p>Output geometry.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="muvid.choreo.ChoreoScene">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">muvid.choreo.</span></span><span class="sig-name descname"><span class="pre">ChoreoScene</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">*,</span> <span class="pre">canvas:</span> <span class="pre">~muvid.choreo.scene.Canvas,</span> <span class="pre">duration:</span> <span class="pre">float,</span> <span class="pre">backdrops:</span> <span class="pre">tuple[~muvid.choreo.scene.Backdrop,</span> <span class="pre">...],</span> <span class="pre">objects:</span> <span class="pre">tuple[~muvid.choreo.scene.Obj,</span> <span class="pre">...],</span> <span class="pre">meta:</span> <span class="pre">dict[str,</span> <span class="pre">~typing.Any]</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/muvid/choreo/scene.html#ChoreoScene"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.choreo.ChoreoScene" title="Link to this definition"></a></dt>
+<dd><p>Everything the renderer needs, and nothing it has to interpret.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="muvid.choreo.TreatmentSpec">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">muvid.choreo.</span></span><span class="sig-name descname"><span class="pre">TreatmentSpec</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spec_version</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'1.0'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">direction</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="choreo/spec.html#muvid.choreo.spec.Direction" title="muvid.choreo.spec.Direction"><span class="pre">Direction</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scenes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple[~muvid.choreo.spec.Scene</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">...]</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/muvid/choreo/spec.html#TreatmentSpec"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.choreo.TreatmentSpec" title="Link to this definition"></a></dt>
+<dd><p>A complete, renderable treatment.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">s</span> <span class="o">=</span> <span class="n">TreatmentSpec</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">validate</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+<span class="go">[]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">TreatmentSpec</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">to_dict</span><span class="p">())</span> <span class="o">==</span> <span class="n">s</span>
+<span class="go">True</span>
+</pre></div>
+</div>
+<dl class="py method">
+<dt class="sig sig-object py" id="muvid.choreo.TreatmentSpec.from_dict">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">d</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Mapping</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="choreo/spec.html#muvid.choreo.spec.TreatmentSpec" title="muvid.choreo.spec.TreatmentSpec"><span class="pre">TreatmentSpec</span></a></span></span><a class="reference internal" href="../../_modules/muvid/choreo/spec.html#TreatmentSpec.from_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.choreo.TreatmentSpec.from_dict" title="Link to this definition"></a></dt>
+<dd><p>Build from a plain mapping — TOTAL over what a model or caller sends.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">s</span> <span class="o">=</span> <span class="n">TreatmentSpec</span><span class="o">.</span><span class="n">from_dict</span><span class="p">({</span><span class="s1">'scenes'</span><span class="p">:</span> <span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">{</span><span class="s1">'applies_to'</span><span class="p">:</span> <span class="s1">'high'</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="s1">'archetype'</span><span class="p">:</span> <span class="s1">'swarm'</span><span class="p">,</span> <span class="s1">'params'</span><span class="p">:</span> <span class="s1">'nope'</span><span class="p">}],</span>
+<span class="gp">... </span>    <span class="s1">'direction'</span><span class="p">:</span> <span class="p">{</span><span class="s1">'palette'</span><span class="p">:</span> <span class="p">{</span><span class="s1">'foo'</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">'bg'</span><span class="p">:</span> <span class="s1">'#000000'</span><span class="p">},</span> <span class="s1">'density'</span><span class="p">:</span> <span class="kc">None</span><span class="p">}})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">s</span><span class="o">.</span><span class="n">scenes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">applies_to</span><span class="p">,</span> <span class="n">s</span><span class="o">.</span><span class="n">scenes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">params</span><span class="p">,</span> <span class="n">s</span><span class="o">.</span><span class="n">direction</span><span class="o">.</span><span class="n">palette</span><span class="o">.</span><span class="n">bg</span>
+<span class="go">(('high',), {}, '#000000')</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.choreo.analyze">
+<span class="sig-prename descclassname"><span class="pre">muvid.choreo.</span></span><span class="sig-name descname"><span class="pre">analyze</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">audio</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_rate</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">22050</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beat_source</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'auto'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bands</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Mapping</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{'high':</span> <span class="pre">(2000.0,</span> <span class="pre">11025.0),</span> <span class="pre">'low':</span> <span class="pre">(20.0,</span> <span class="pre">200.0),</span> <span class="pre">'mid':</span> <span class="pre">(200.0,</span> <span class="pre">2000.0)}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_ioi_beats</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Mapping</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{'high':</span> <span class="pre">0.25,</span> <span class="pre">'low':</span> <span class="pre">0.5,</span> <span class="pre">'mid':</span> <span class="pre">0.25}</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="choreo/analysis.html#muvid.choreo.analysis.Analysis" title="muvid.choreo.analysis.Analysis"><span class="pre">Analysis</span></a></span></span><a class="reference internal" href="../../_modules/muvid/choreo/analysis.html#analyze"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.choreo.analyze" title="Link to this definition"></a></dt>
+<dd><p>Analyse a song (a path, or an already-decoded mono array at <code class="docutils literal notranslate"><span class="pre">sample_rate</span></code>).</p>
+<p>An array input never consults <code class="docutils literal notranslate"><span class="pre">mixing</span></code> (it needs a file), so its beat
+grid is always the numpy one; this is the path unit tests use.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.choreo.compile_scene">
+<span class="sig-prename descclassname"><span class="pre">muvid.choreo.</span></span><span class="sig-name descname"><span class="pre">compile_scene</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">treatment</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="choreo/spec.html#muvid.choreo.spec.TreatmentSpec" title="muvid.choreo.spec.TreatmentSpec"><span class="pre">TreatmentSpec</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">analysis</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="choreo/analysis.html#muvid.choreo.analysis.Analysis" title="muvid.choreo.analysis.Analysis"><span class="pre">Analysis</span></a></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">canvas</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="choreo/scene.html#muvid.choreo.scene.Canvas" title="muvid.choreo.scene.Canvas"><span class="pre">Canvas</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="choreo/scene.html#muvid.choreo.scene.ChoreoScene" title="muvid.choreo.scene.ChoreoScene"><span class="pre">ChoreoScene</span></a></span></span><a class="reference internal" href="../../_modules/muvid/choreo/scene.html#compile_scene"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.choreo.compile_scene" title="Link to this definition"></a></dt>
+<dd><p>Every object and backdrop for the whole song. Deterministic given <code class="docutils literal notranslate"><span class="pre">seed</span></code>.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">muvid.choreo.analysis</span><span class="w"> </span><span class="kn">import</span> <span class="n">Analysis</span><span class="p">,</span> <span class="n">Event</span><span class="p">,</span> <span class="n">Section</span><span class="p">,</span> <span class="n">Tempo</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">a</span> <span class="o">=</span> <span class="n">Analysis</span><span class="p">(</span><span class="n">duration</span><span class="o">=</span><span class="mf">4.0</span><span class="p">,</span> <span class="n">tempo</span><span class="o">=</span><span class="n">Tempo</span><span class="p">(</span><span class="n">bpm</span><span class="o">=</span><span class="mi">120</span><span class="p">,</span> <span class="n">beats</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">.5</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">),</span> <span class="n">source</span><span class="o">=</span><span class="s1">'numpy'</span><span class="p">),</span>
+<span class="gp">... </span>             <span class="n">events</span><span class="o">=</span><span class="p">(</span><span class="n">Event</span><span class="p">(</span><span class="n">t</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">band</span><span class="o">=</span><span class="s1">'low'</span><span class="p">,</span> <span class="n">strength</span><span class="o">=</span><span class="mf">0.9</span><span class="p">),</span>
+<span class="gp">... </span>                     <span class="n">Event</span><span class="p">(</span><span class="n">t</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span> <span class="n">band</span><span class="o">=</span><span class="s1">'high'</span><span class="p">,</span> <span class="n">strength</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)),</span>
+<span class="gp">... </span>             <span class="n">sections</span><span class="o">=</span><span class="p">(</span><span class="n">Section</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">'mid'</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="mf">4.0</span><span class="p">,</span> <span class="n">energy_db</span><span class="o">=-</span><span class="mi">10</span><span class="p">),))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">s</span> <span class="o">=</span> <span class="n">compile_scene</span><span class="p">(</span><span class="n">spec_mod</span><span class="o">.</span><span class="n">default_treatment</span><span class="p">(</span><span class="s1">'fischinger'</span><span class="p">),</span> <span class="n">a</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="p">[(</span><span class="n">o</span><span class="o">.</span><span class="n">t_born</span><span class="p">,</span> <span class="n">o</span><span class="o">.</span><span class="n">kind</span><span class="p">,</span> <span class="n">o</span><span class="o">.</span><span class="n">band</span><span class="p">)</span> <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">s</span><span class="o">.</span><span class="n">objects</span><span class="p">]</span>
+<span class="go">[(1.0, 'circle', 'low'), (2.0, 'triangle', 'high')]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">compile_scene</span><span class="p">(</span><span class="n">spec_mod</span><span class="o">.</span><span class="n">default_treatment</span><span class="p">(</span><span class="s1">'fischinger'</span><span class="p">),</span> <span class="n">a</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">==</span> <span class="n">s</span>
+<span class="go">True</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.choreo.render_choreo">
+<span class="sig-prename descclassname"><span class="pre">muvid.choreo.</span></span><span class="sig-name descname"><span class="pre">render_choreo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">audio</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">cover</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">treatment</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Mapping</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">archetype</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beat_source</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'auto'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strict</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">width</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1920</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">height</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1080</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">30</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">workdir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/muvid/choreo/tools.html#render_choreo"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.choreo.render_choreo" title="Link to this definition"></a></dt>
+<dd><p>Render a choreo video. The one verb that produces a file.</p>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="characters.html" class="btn btn-neutral float-left" title="muvid.characters" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="choreo/__main__.html" class="btn btn-neutral float-right" title="muvid.choreo.__main__" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p></p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

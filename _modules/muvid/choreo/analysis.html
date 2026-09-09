@@ -1,0 +1,845 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>muvid.choreo.analysis &mdash; muvid 0.0.62 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=dea2dbc4"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
+      <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            muvid
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid.html">muvid</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/__main__.html">muvid.__main__</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/align.html">muvid.align</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/characters.html">muvid.characters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/choreo.html">muvid.choreo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/choreo/__main__.html">muvid.choreo.__main__</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/choreo/analysis.html">muvid.choreo.analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/choreo/manifest.html">muvid.choreo.manifest</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/choreo/pipeline.html">muvid.choreo.pipeline</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/choreo/render.html">muvid.choreo.render</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/choreo/scene.html">muvid.choreo.scene</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/choreo/spec.html">muvid.choreo.spec</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/choreo/tools.html">muvid.choreo.tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/compose.html">muvid.compose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/contracts.html">muvid.contracts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/cost.html">muvid.cost</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/downloads.html">muvid.downloads</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/environments.html">muvid.environments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/events.html">muvid.events</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/facade.html">muvid.facade</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage.html">muvid.footage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/align.html">muvid.footage.align</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/assemble.html">muvid.footage.assemble</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/edl.html">muvid.footage.edl</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/lacing_bridge.html">muvid.footage.lacing_bridge</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/look.html">muvid.footage.look</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring.html">muvid.footage.scoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring/_frame_metrics.html">muvid.footage.scoring._frame_metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring/frames.html">muvid.footage.scoring.frames</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring/grid.html">muvid.footage.scoring.grid</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring/lipsync.html">muvid.footage.scoring.lipsync</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring/motionbeat.html">muvid.footage.scoring.motionbeat</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring/orchestrator.html">muvid.footage.scoring.orchestrator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring/quality.html">muvid.footage.scoring.quality</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/scoring/segment.html">muvid.footage.scoring.segment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/select_score.html">muvid.footage.select_score</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/strategy.html">muvid.footage.strategy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/footage/workspace.html">muvid.footage.workspace</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/genre.html">muvid.genre</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/genre_lyric_video.html">muvid.genre_lyric_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/genre_music_video.html">muvid.genre_music_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/genre_subgenres.html">muvid.genre_subgenres</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyrics.html">muvid.lyrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyricvid.html">muvid.lyricvid</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyricvid/__main__.html">muvid.lyricvid.__main__</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyricvid/director.html">muvid.lyricvid.director</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyricvid/manifest.html">muvid.lyricvid.manifest</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyricvid/pipeline.html">muvid.lyricvid.pipeline</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyricvid/render_ass.html">muvid.lyricvid.render_ass</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyricvid/render_web.html">muvid.lyricvid.render_web</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyricvid/scene.html">muvid.lyricvid.scene</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyricvid/shape.html">muvid.lyricvid.shape</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyricvid/spec.html">muvid.lyricvid.spec</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyricvid/timed_text.html">muvid.lyricvid.timed_text</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/lyricvid/tools.html">muvid.lyricvid.tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp.html">muvid.mcp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/_fetch.html">muvid.mcp._fetch</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/_guide.html">muvid.mcp._guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/footage_tools.html">muvid.mcp.footage_tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/identity.html">muvid.mcp.identity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/lyricvid_tools.html">muvid.mcp.lyricvid_tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/scoring_tools.html">muvid.mcp.scoring_tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/subgenre_tools.html">muvid.mcp.subgenre_tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/tools.html">muvid.mcp.tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/mcp/workspace.html">muvid.mcp.workspace</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/montage.html">muvid.montage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/montage/__main__.html">muvid.montage.__main__</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/montage/analysis.html">muvid.montage.analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/montage/manifest.html">muvid.montage.manifest</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/montage/pipeline.html">muvid.montage.pipeline</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/montage/plan.html">muvid.montage.plan</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/montage/render.html">muvid.montage.render</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/montage/spec.html">muvid.montage.spec</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/montage/tools.html">muvid.montage.tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/project.html">muvid.project</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers.html">muvid.renderers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers/_common.html">muvid.renderers._common</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers/_errors.html">muvid.renderers._errors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers/animation.html">muvid.renderers.animation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers/image_to_video.html">muvid.renderers.image_to_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers/lipsync.html">muvid.renderers.lipsync</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers/still.html">muvid.renderers.still</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers/text_to_video.html">muvid.renderers.text_to_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/schema.html">muvid.schema</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/script.html">muvid.script</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/subgenres.html">muvid.subgenres</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/subgenres/_contract.html">muvid.subgenres._contract</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/subgenres/_manifest.html">muvid.subgenres._manifest</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/subgenres/_registry.html">muvid.subgenres._registry</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/subgenres/_schema.html">muvid.subgenres._schema</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/subgenres/testing.html">muvid.subgenres.testing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/ui.html">muvid.ui</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/ui/app.html">muvid.ui.app</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize.html">muvid.visualize</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/canvas.html">muvid.visualize.canvas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/ffmpeg.html">muvid.visualize.ffmpeg</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/reactive.html">muvid.visualize.reactive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/verify.html">muvid.visualize.verify</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/video.html">muvid.visualize.video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/visualize/visuals.html">muvid.visualize.visuals</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">muvid</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">muvid.choreo.analysis</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for muvid.choreo.analysis</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""Turn a song into an EVENT LIST — the musical facts every archetype draws from.</span>
+
+<span class="sd">The visualizer (:mod:`muvid.visualize`) reads the spectrum continuously; this</span>
+<span class="sd">subgenre needs something discrete instead: *when did something happen, in which</span>
+<span class="sd">register, and how hard*. So the analysis produces</span>
+
+<span class="sd">* **events** ``[{t, band, strength}]`` — onsets in three bands (low/mid/high),</span>
+<span class="sd">  from a half-wave-rectified spectral flux with an adaptive threshold,</span>
+<span class="sd">  **hysteresis** and a **minimum inter-onset interval derived from the beat</span>
+<span class="sd">  grid**, so a noisy attack triggers once rather than flickering;</span>
+<span class="sd">* a **beat grid** (tempo + beat times) — from ``mixing.audio.beat_grid`` when</span>
+<span class="sd">  librosa is installed (the ``scoring`` extra), else a built-in autocorrelation</span>
+<span class="sd">  of the onset envelope, and the result says which;</span>
+<span class="sd">* coarse **sections** from energy — contiguous bar-blocks of similar loudness,</span>
+<span class="sd">  labelled ``low`` / ``mid`` / ``high`` by tier so a treatment can say "the loud</span>
+<span class="sd">  parts get the Fischinger grid".</span>
+
+<span class="sd">Everything is a function of the samples and the parameters: no randomness, no</span>
+<span class="sd">network, no model. The output is JSON-able and is written next to the video as</span>
+<span class="sd">``events.json`` so a render can be inspected — or re-choreographed — without</span>
+<span class="sd">re-analysing the song.</span>
+
+<span class="sd">numpy is imported inside functions only: this module sits on the listing path</span>
+<span class="sd">of :mod:`muvid.choreo.tools`, and the subprocess import-safety tests keep the</span>
+<span class="sd">manifest side of the package free of it.</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">asdict</span><span class="p">,</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Sequence</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">"Analysis"</span><span class="p">,</span>
+    <span class="s2">"Event"</span><span class="p">,</span>
+    <span class="s2">"Section"</span><span class="p">,</span>
+    <span class="s2">"Tempo"</span><span class="p">,</span>
+    <span class="s2">"BANDS"</span><span class="p">,</span>
+    <span class="s2">"analyze"</span><span class="p">,</span>
+    <span class="s2">"beat_grid_numpy"</span><span class="p">,</span>
+    <span class="s2">"find_sections"</span><span class="p">,</span>
+    <span class="s2">"onset_envelope"</span><span class="p">,</span>
+    <span class="s2">"pick_onsets"</span><span class="p">,</span>
+<span class="p">]</span>
+
+<span class="c1">#: Analysis sample rate. Onsets and tempo do not need full bandwidth, and the</span>
+<span class="c1">#: decode + STFT of a 15-minute song at this rate stays well under a second.</span>
+<span class="n">SAMPLE_RATE</span> <span class="o">=</span> <span class="mi">22050</span>
+<span class="c1">#: STFT frame and hop, in samples at :data:`SAMPLE_RATE` (46 ms / 11.6 ms).</span>
+<span class="n">FRAME</span> <span class="o">=</span> <span class="mi">1024</span>
+<span class="n">HOP</span> <span class="o">=</span> <span class="mi">256</span>
+
+<span class="c1">#: The three registers, as (low_hz, high_hz]. ``high`` runs to Nyquist.</span>
+<span class="n">BANDS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"low"</span><span class="p">:</span> <span class="p">(</span><span class="mf">20.0</span><span class="p">,</span> <span class="mf">200.0</span><span class="p">),</span>
+    <span class="s2">"mid"</span><span class="p">:</span> <span class="p">(</span><span class="mf">200.0</span><span class="p">,</span> <span class="mf">2000.0</span><span class="p">),</span>
+    <span class="s2">"high"</span><span class="p">:</span> <span class="p">(</span><span class="mf">2000.0</span><span class="p">,</span> <span class="n">SAMPLE_RATE</span> <span class="o">/</span> <span class="mi">2</span><span class="p">),</span>
+<span class="p">}</span>
+
+<span class="c1">#: Minimum inter-onset interval per band, in BEATS. A kick does not repeat</span>
+<span class="c1">#: within half a beat; hats do. These become seconds once the tempo is known,</span>
+<span class="c1">#: which is what "snapped to the beat grid" means here.</span>
+<span class="n">MIN_IOI_BEATS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"low"</span><span class="p">:</span> <span class="mf">0.5</span><span class="p">,</span> <span class="s2">"mid"</span><span class="p">:</span> <span class="mf">0.25</span><span class="p">,</span> <span class="s2">"high"</span><span class="p">:</span> <span class="mf">0.25</span><span class="p">}</span>
+<span class="c1">#: An absolute floor under the beat-derived interval, for absurd tempi.</span>
+<span class="n">MIN_IOI_S</span> <span class="o">=</span> <span class="mf">0.05</span>
+
+<span class="c1">#: Log compression gain, applied to magnitudes normalised by the song's own</span>
+<span class="c1">#: 99.9th percentile — so the events found do not depend on the master's level.</span>
+<span class="n">LOG_GAIN</span> <span class="o">=</span> <span class="mf">200.0</span>
+
+<span class="c1">#: Adaptive threshold: local median over this window, plus ``DELTA`` times the</span>
+<span class="c1">#: band's own robust scale.</span>
+<span class="n">THRESHOLD_WINDOW_S</span> <span class="o">=</span> <span class="mf">0.5</span>
+<span class="n">DELTA</span> <span class="o">=</span> <span class="mf">0.35</span>
+
+<span class="c1">#: How much each band's flux counts toward the beat grid. The beat is where</span>
+<span class="c1">#: the bass is; hats subdivide it and must not pull the phase to the off-beat.</span>
+<span class="n">BAND_WEIGHTS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"low"</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span> <span class="s2">"mid"</span><span class="p">:</span> <span class="mf">0.6</span><span class="p">,</span> <span class="s2">"high"</span><span class="p">:</span> <span class="mf">0.3</span><span class="p">}</span>
+<span class="c1">#: Hysteresis: after a trigger the detector re-arms only once the flux drops</span>
+<span class="c1">#: below this fraction of the excess threshold. 0 disables it.</span>
+<span class="n">HYSTERESIS</span> <span class="o">=</span> <span class="mf">0.5</span>
+
+<span class="c1">#: Tempo search range and prior (log-normal around ``PRIOR_BPM``, like librosa's).</span>
+<span class="n">BPM_MIN</span><span class="p">,</span> <span class="n">BPM_MAX</span><span class="p">,</span> <span class="n">PRIOR_BPM</span> <span class="o">=</span> <span class="mf">60.0</span><span class="p">,</span> <span class="mf">200.0</span><span class="p">,</span> <span class="mf">120.0</span>
+<span class="n">PRIOR_STD_OCTAVES</span> <span class="o">=</span> <span class="mf">1.0</span>
+
+<span class="c1">#: Sections: energy is measured per bar of this many beats, a section is at</span>
+<span class="c1">#: least ``MIN_SECTION_BARS`` long, and a new one starts when the level moves by</span>
+<span class="c1">#: more than ``SECTION_STEP_DB``.</span>
+<span class="n">BEATS_PER_BAR</span> <span class="o">=</span> <span class="mi">4</span>
+<span class="n">MIN_SECTION_BARS</span> <span class="o">=</span> <span class="mi">4</span>
+<span class="n">SECTION_STEP_DB</span> <span class="o">=</span> <span class="mf">3.0</span>
+
+<span class="n">SECTION_TIERS</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"low"</span><span class="p">,</span> <span class="s2">"mid"</span><span class="p">,</span> <span class="s2">"high"</span><span class="p">)</span>
+
+
+<span class="c1"># --------------------------------------------------------------------------</span>
+<span class="c1"># records</span>
+<span class="c1"># --------------------------------------------------------------------------</span>
+
+
+<div class="viewcode-block" id="Event">
+<a class="viewcode-back" href="../../../module_docs/muvid/choreo/analysis.html#muvid.choreo.Event">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Event</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""One onset: when, in which band, how hard (0..1, band-relative)."""</span>
+
+    <span class="n">t</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">band</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">strength</span><span class="p">:</span> <span class="nb">float</span></div>
+
+
+
+<div class="viewcode-block" id="Tempo">
+<a class="viewcode-back" href="../../../module_docs/muvid/choreo/analysis.html#muvid.choreo.Tempo">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Tempo</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The beat grid, and where it came from (``"mixing"`` or ``"numpy"``)."""</span>
+
+    <span class="n">bpm</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">beats</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
+    <span class="n">source</span><span class="p">:</span> <span class="nb">str</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">period</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Seconds per beat."""</span>
+        <span class="k">return</span> <span class="mf">60.0</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">bpm</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">bpm</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mf">0.5</span></div>
+
+
+
+<div class="viewcode-block" id="Section">
+<a class="viewcode-back" href="../../../module_docs/muvid/choreo/analysis.html#muvid.choreo.Section">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Section</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""A contiguous stretch of similar loudness. ``label`` is its tier."""</span>
+
+    <span class="n">index</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">label</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">start</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">end</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">energy_db</span><span class="p">:</span> <span class="nb">float</span></div>
+
+
+
+<div class="viewcode-block" id="Analysis">
+<a class="viewcode-back" href="../../../module_docs/muvid/choreo/analysis.html#muvid.choreo.Analysis">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Analysis</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Everything an archetype needs, and the JSON artifact a render leaves behind.</span>
+
+<span class="sd">    &gt;&gt;&gt; a = Analysis(duration=2.0, tempo=Tempo(bpm=120.0, beats=(0.0, 0.5), source='numpy'),</span>
+<span class="sd">    ...              events=(Event(t=0.0, band='low', strength=1.0),),</span>
+<span class="sd">    ...              sections=(Section(index=0, label='mid', start=0.0, end=2.0, energy_db=-12.0),))</span>
+<span class="sd">    &gt;&gt;&gt; Analysis.from_dict(a.to_dict()) == a</span>
+<span class="sd">    True</span>
+<span class="sd">    """</span>
+
+    <span class="n">duration</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">tempo</span><span class="p">:</span> <span class="n">Tempo</span>
+    <span class="n">events</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Event</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
+    <span class="n">sections</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Section</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
+    <span class="n">bands</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="n">BANDS</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">meta</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Analysis.events_in">
+<a class="viewcode-back" href="../../../module_docs/muvid/choreo/analysis.html#muvid.choreo.Analysis.events_in">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">events_in</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">end</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">band</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Event</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Events with ``start &lt;= t &lt; end`` (optionally one band)."""</span>
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="n">e</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">events</span>
+            <span class="k">if</span> <span class="n">start</span> <span class="o">&lt;=</span> <span class="n">e</span><span class="o">.</span><span class="n">t</span> <span class="o">&lt;</span> <span class="n">end</span> <span class="ow">and</span> <span class="p">(</span><span class="n">band</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">e</span><span class="o">.</span><span class="n">band</span> <span class="o">==</span> <span class="n">band</span><span class="p">)</span>
+        <span class="p">]</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">asdict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">d</span><span class="p">[</span><span class="s2">"bands"</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">bands</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+        <span class="n">d</span><span class="p">[</span><span class="s2">"meta"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">meta</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">d</span><span class="p">))</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_json</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">indent</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(),</span> <span class="n">indent</span><span class="o">=</span><span class="n">indent</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_dict</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">d</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="s2">"Analysis"</span><span class="p">:</span>
+        <span class="n">tempo</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"tempo"</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{}</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span>
+            <span class="n">duration</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s2">"duration"</span><span class="p">]),</span>
+            <span class="n">tempo</span><span class="o">=</span><span class="n">Tempo</span><span class="p">(</span>
+                <span class="n">bpm</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">tempo</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"bpm"</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)),</span>
+                <span class="n">beats</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">b</span><span class="p">)</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">tempo</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"beats"</span><span class="p">,</span> <span class="p">())),</span>
+                <span class="n">source</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">tempo</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"source"</span><span class="p">,</span> <span class="s2">"unknown"</span><span class="p">)),</span>
+            <span class="p">),</span>
+            <span class="n">events</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span>
+                <span class="n">Event</span><span class="p">(</span><span class="n">t</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">e</span><span class="p">[</span><span class="s2">"t"</span><span class="p">]),</span> <span class="n">band</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">[</span><span class="s2">"band"</span><span class="p">]),</span> <span class="n">strength</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">e</span><span class="p">[</span><span class="s2">"strength"</span><span class="p">]))</span>
+                <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"events"</span><span class="p">,</span> <span class="p">())</span>
+            <span class="p">),</span>
+            <span class="n">sections</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span>
+                <span class="n">Section</span><span class="p">(</span>
+                    <span class="n">index</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="s2">"index"</span><span class="p">]),</span> <span class="n">label</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="s2">"label"</span><span class="p">]),</span>
+                    <span class="n">start</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="s2">"start"</span><span class="p">]),</span> <span class="n">end</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="s2">"end"</span><span class="p">]),</span>
+                    <span class="n">energy_db</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="s2">"energy_db"</span><span class="p">]),</span>
+                <span class="p">)</span>
+                <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"sections"</span><span class="p">,</span> <span class="p">())</span>
+            <span class="p">),</span>
+            <span class="n">bands</span><span class="o">=</span><span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">v</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="nb">float</span><span class="p">(</span><span class="n">v</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"bands"</span><span class="p">)</span> <span class="ow">or</span> <span class="n">BANDS</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">()},</span>
+            <span class="n">meta</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"meta"</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{}),</span>
+        <span class="p">)</span></div>
+
+
+
+<span class="c1"># --------------------------------------------------------------------------</span>
+<span class="c1"># signal -&gt; flux</span>
+<span class="c1"># --------------------------------------------------------------------------</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">load_mono</span><span class="p">(</span><span class="n">audio</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">sample_rate</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">SAMPLE_RATE</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Decode ``audio`` to a mono float32 array through muvid's one PCM path.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: ffmpeg could not decode the file (``decode_pcm`` returns</span>
+<span class="sd">            empty bytes rather than raising, and "no usable audio" is a</span>
+<span class="sd">            refusal here — a silent video is not a render).</span>
+<span class="sd">    """</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+    <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.visualize.ffmpeg</span><span class="w"> </span><span class="kn">import</span> <span class="n">decode_pcm</span>
+
+    <span class="n">raw</span> <span class="o">=</span> <span class="n">decode_pcm</span><span class="p">(</span><span class="n">audio</span><span class="p">,</span> <span class="n">sample_rate</span><span class="o">=</span><span class="n">sample_rate</span><span class="p">,</span> <span class="n">channels</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">raw</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"could not decode any audio from </span><span class="si">{</span><span class="n">audio</span><span class="si">!s}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">frombuffer</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">stft_magnitude</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">frame</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">FRAME</span><span class="p">,</span> <span class="n">hop</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">HOP</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""``(magnitude[n_frames, n_bins], bin_hz_per_bin)`` with frame ``i`` centred at ``i*hop``."""</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+    <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+    <span class="n">pad</span> <span class="o">=</span> <span class="n">frame</span> <span class="o">//</span> <span class="mi">2</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pad</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="p">(</span><span class="n">pad</span><span class="p">,</span> <span class="n">pad</span><span class="p">))</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">y</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">frame</span><span class="p">:</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pad</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">frame</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">y</span><span class="p">)))</span>
+    <span class="n">n_frames</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">+</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">y</span><span class="p">)</span> <span class="o">-</span> <span class="n">frame</span><span class="p">)</span> <span class="o">//</span> <span class="n">hop</span>
+    <span class="n">frames</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">lib</span><span class="o">.</span><span class="n">stride_tricks</span><span class="o">.</span><span class="n">sliding_window_view</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">frame</span><span class="p">)[::</span><span class="n">hop</span><span class="p">][:</span><span class="n">n_frames</span><span class="p">]</span>
+    <span class="n">window</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hanning</span><span class="p">(</span><span class="n">frame</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+    <span class="n">mag</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">rfft</span><span class="p">(</span><span class="n">frames</span> <span class="o">*</span> <span class="n">window</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">mag</span><span class="p">,</span> <span class="mf">1.0</span>  <span class="c1"># caller derives Hz per bin from the sample rate</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">band_flux</span><span class="p">(</span><span class="n">mag</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">sample_rate</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">SAMPLE_RATE</span><span class="p">,</span> <span class="n">frame</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">FRAME</span><span class="p">,</span>
+              <span class="n">bands</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="n">BANDS</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Half-wave-rectified log-spectral flux, summed per band, one array per band.</span>
+
+<span class="sd">    Log compression first (``log1p(gain * |X|)``) so a loud passage does not</span>
+<span class="sd">    swamp the onsets inside a quiet one; rectification so only *increases*</span>
+<span class="sd">    count, which is what an onset is.</span>
+<span class="sd">    """</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+    <span class="n">n_bins</span> <span class="o">=</span> <span class="n">mag</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">freqs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">n_bins</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">sample_rate</span> <span class="o">/</span> <span class="n">frame</span><span class="p">)</span>
+    <span class="n">ref</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">mag</span><span class="p">,</span> <span class="mf">99.9</span><span class="p">))</span> <span class="ow">or</span> <span class="mf">1.0</span>
+    <span class="n">logmag</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log1p</span><span class="p">(</span><span class="n">LOG_GAIN</span> <span class="o">*</span> <span class="n">mag</span> <span class="o">/</span> <span class="n">ref</span><span class="p">)</span>
+    <span class="n">diff</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">logmag</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">prepend</span><span class="o">=</span><span class="n">logmag</span><span class="p">[:</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">rect</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">diff</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+    <span class="n">out</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="p">(</span><span class="n">lo</span><span class="p">,</span> <span class="n">hi</span><span class="p">)</span> <span class="ow">in</span> <span class="n">bands</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">sel</span> <span class="o">=</span> <span class="p">(</span><span class="n">freqs</span> <span class="o">&gt;</span> <span class="n">lo</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">freqs</span> <span class="o">&lt;=</span> <span class="n">hi</span><span class="p">)</span>
+        <span class="n">flux</span> <span class="o">=</span> <span class="n">rect</span><span class="p">[:,</span> <span class="n">sel</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="k">if</span> <span class="n">sel</span><span class="o">.</span><span class="n">any</span><span class="p">()</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">rect</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+        <span class="n">out</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">flux</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">out</span>
+
+
+<div class="viewcode-block" id="onset_envelope">
+<a class="viewcode-back" href="../../../module_docs/muvid/choreo/analysis.html#muvid.choreo.onset_envelope">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">onset_envelope</span><span class="p">(</span><span class="n">flux</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="o">*</span><span class="p">,</span> <span class="n">weights</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">BAND_WEIGHTS</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""One envelope for the beat tracker: each band normalised, then weighted.</span>
+
+<span class="sd">    Per-band normalisation (by the band's own 95th percentile) stops the</span>
+<span class="sd">    broadband high band — hundreds of bins against the low band's handful —</span>
+<span class="sd">    from owning the sum; the weights then let the bass lead.</span>
+<span class="sd">    """</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+    <span class="n">total</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">flux</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">scale</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="mi">95</span><span class="p">))</span> <span class="ow">or</span> <span class="nb">float</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">max</span><span class="p">())</span> <span class="ow">or</span> <span class="mf">1.0</span>
+        <span class="n">part</span> <span class="o">=</span> <span class="p">(</span><span class="n">f</span> <span class="o">/</span> <span class="n">scale</span><span class="p">)</span> <span class="o">*</span> <span class="nb">float</span><span class="p">(</span><span class="n">weights</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">))</span>
+        <span class="n">total</span> <span class="o">=</span> <span class="n">part</span> <span class="k">if</span> <span class="n">total</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">total</span> <span class="o">+</span> <span class="n">part</span>
+    <span class="k">return</span> <span class="n">total</span> <span class="k">if</span> <span class="n">total</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span></div>
+
+
+
+<span class="c1"># --------------------------------------------------------------------------</span>
+<span class="c1"># flux -&gt; onsets</span>
+<span class="c1"># --------------------------------------------------------------------------</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_running_median</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">half</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Median over ``[i-half, i+half]`` (edge-clamped). Pure numpy, O(n·w log w)."""</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+    <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">n</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">x</span>
+    <span class="n">padded</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pad</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="p">(</span><span class="n">half</span><span class="p">,</span> <span class="n">half</span><span class="p">),</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"edge"</span><span class="p">)</span>
+    <span class="n">win</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">lib</span><span class="o">.</span><span class="n">stride_tricks</span><span class="o">.</span><span class="n">sliding_window_view</span><span class="p">(</span><span class="n">padded</span><span class="p">,</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">half</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">win</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="pick_onsets">
+<a class="viewcode-back" href="../../../module_docs/muvid/choreo/analysis.html#muvid.choreo.pick_onsets">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">pick_onsets</span><span class="p">(</span>
+    <span class="n">flux</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">hop_s</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">min_ioi_s</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">window_s</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">THRESHOLD_WINDOW_S</span><span class="p">,</span>
+    <span class="n">delta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">DELTA</span><span class="p">,</span>
+    <span class="n">hysteresis</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">HYSTERESIS</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">"""Onset ``(time, strength)`` pairs from one band's flux.</span>
+
+<span class="sd">    A local maximum triggers when it exceeds ``median(window) + delta·scale``</span>
+<span class="sd">    and the flux has dropped back below the hysteresis level since the last</span>
+<span class="sd">    trigger (so one attack is one event). Inside ``min_ioi_s`` of the previous</span>
+<span class="sd">    trigger a *stronger* peak replaces it and a weaker one is dropped — a weak</span>
+<span class="sd">    early trigger must not block the real hit a few frames later. Strength is</span>
+<span class="sd">    the peak's height over the 95th percentile of all peak heights, clipped</span>
+<span class="sd">    to 1, so the loudest hits read as 1 and a click reads as small.</span>
+
+<span class="sd">    &gt;&gt;&gt; import numpy as np</span>
+<span class="sd">    &gt;&gt;&gt; f = np.zeros(200, np.float32); f[[20, 24, 100]] = [1.0, 0.9, 0.5]</span>
+<span class="sd">    &gt;&gt;&gt; [round(t, 3) for t, _ in pick_onsets(f, hop_s=0.01, min_ioi_s=0.1)]</span>
+<span class="sd">    [0.2, 1.0]</span>
+<span class="sd">    &gt;&gt;&gt; f[[20, 24]] = [0.3, 1.0]     # now the STRONGER hit is the later one</span>
+<span class="sd">    &gt;&gt;&gt; [round(t, 3) for t, _ in pick_onsets(f, hop_s=0.01, min_ioi_s=0.1)]</span>
+<span class="sd">    [0.24, 1.0]</span>
+<span class="sd">    """</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+    <span class="n">flux</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">flux</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">flux</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">n</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[]</span>
+    <span class="n">half</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">window_s</span> <span class="o">/</span> <span class="n">hop_s</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)))</span>
+    <span class="n">med</span> <span class="o">=</span> <span class="n">_running_median</span><span class="p">(</span><span class="n">flux</span><span class="p">,</span> <span class="n">half</span><span class="p">)</span>
+    <span class="n">scale</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">flux</span><span class="p">,</span> <span class="mi">95</span><span class="p">))</span> <span class="ow">or</span> <span class="mf">1.0</span>
+    <span class="n">high</span> <span class="o">=</span> <span class="n">med</span> <span class="o">+</span> <span class="n">delta</span> <span class="o">*</span> <span class="n">scale</span>
+    <span class="n">low</span> <span class="o">=</span> <span class="n">med</span> <span class="o">+</span> <span class="n">delta</span> <span class="o">*</span> <span class="n">hysteresis</span> <span class="o">*</span> <span class="n">scale</span>
+    <span class="n">is_peak</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
+    <span class="n">is_peak</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">flux</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">flux</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">])</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">flux</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">flux</span><span class="p">[</span><span class="mi">2</span><span class="p">:])</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">flux</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">high</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">candidates</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">flatnonzero</span><span class="p">(</span><span class="n">is_peak</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">candidates</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[]</span>
+    <span class="n">min_gap</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">min_ioi_s</span> <span class="o">/</span> <span class="n">hop_s</span><span class="p">)))</span>
+    <span class="n">below</span> <span class="o">=</span> <span class="n">flux</span> <span class="o">&lt;</span> <span class="n">low</span>
+    <span class="n">peaks</span> <span class="o">=</span> <span class="p">[(</span><span class="nb">int</span><span class="p">(</span><span class="n">i</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">flux</span><span class="p">[</span><span class="n">i</span><span class="p">]))</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">candidates</span><span class="p">]</span>
+    <span class="n">height_ref</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">([</span><span class="n">h</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">peaks</span><span class="p">],</span> <span class="mi">95</span><span class="p">))</span> <span class="ow">or</span> <span class="mf">1.0</span>
+    <span class="n">out</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># [frame, height], mutable so a stronger hit can replace</span>
+    <span class="n">armed</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">i_prev</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">peaks</span><span class="p">:</span>
+        <span class="c1"># re-arm once the flux dipped under the low threshold since the last candidate</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">armed</span> <span class="ow">and</span> <span class="n">below</span><span class="p">[</span><span class="n">i_prev</span><span class="p">:</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+            <span class="n">armed</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">i_prev</span> <span class="o">=</span> <span class="n">i</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">armed</span><span class="p">:</span>
+            <span class="k">continue</span>  <span class="c1"># the same attack, still rising</span>
+        <span class="k">if</span> <span class="n">out</span> <span class="ow">and</span> <span class="n">i</span> <span class="o">-</span> <span class="n">out</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">min_gap</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">h</span> <span class="o">&gt;</span> <span class="n">out</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">]:</span>
+                <span class="n">out</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">h</span><span class="p">]</span>
+                <span class="n">armed</span> <span class="o">=</span> <span class="n">hysteresis</span> <span class="o">&lt;=</span> <span class="mi">0</span>
+            <span class="k">continue</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">i</span><span class="p">,</span> <span class="n">h</span><span class="p">])</span>
+        <span class="n">armed</span> <span class="o">=</span> <span class="n">hysteresis</span> <span class="o">&lt;=</span> <span class="mi">0</span>
+    <span class="k">return</span> <span class="p">[(</span><span class="n">i</span> <span class="o">*</span> <span class="n">hop_s</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">h</span> <span class="o">/</span> <span class="n">height_ref</span><span class="p">))</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">out</span><span class="p">]</span></div>
+
+
+
+<span class="c1"># --------------------------------------------------------------------------</span>
+<span class="c1"># onset envelope -&gt; beat grid</span>
+<span class="c1"># --------------------------------------------------------------------------</span>
+
+
+<div class="viewcode-block" id="beat_grid_numpy">
+<a class="viewcode-back" href="../../../module_docs/muvid/choreo/analysis.html#muvid.choreo.beat_grid_numpy">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">beat_grid_numpy</span><span class="p">(</span>
+    <span class="n">envelope</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">hop_s</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">duration</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">bpm_min</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">BPM_MIN</span><span class="p">,</span>
+    <span class="n">bpm_max</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">BPM_MAX</span><span class="p">,</span>
+    <span class="n">prior_bpm</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">PRIOR_BPM</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tempo</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Tempo and beat times from the autocorrelation of an onset envelope.</span>
+
+<span class="sd">    The lag with the strongest (prior-weighted) autocorrelation in</span>
+<span class="sd">    ``[60/bpm_max, 60/bpm_min]`` is the beat period; the phase is the offset</span>
+<span class="sd">    whose comb picks up the most envelope. A constant grid — no tracking of</span>
+<span class="sd">    tempo drift — which is the honest floor for a dependency-free estimate,</span>
+<span class="sd">    and enough for the inter-onset interval and the section bars it serves.</span>
+
+<span class="sd">    &gt;&gt;&gt; import numpy as np</span>
+<span class="sd">    &gt;&gt;&gt; env = np.zeros(2000, np.float32); env[::50] = 1.0     # a click every 0.5 s</span>
+<span class="sd">    &gt;&gt;&gt; t = beat_grid_numpy(env, hop_s=0.01, duration=20.0)</span>
+<span class="sd">    &gt;&gt;&gt; round(t.bpm), t.source, round(t.beats[1] - t.beats[0], 2)</span>
+<span class="sd">    (120, 'numpy', 0.5)</span>
+<span class="sd">    """</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+    <span class="n">env</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">envelope</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+    <span class="n">env</span> <span class="o">=</span> <span class="n">env</span> <span class="o">-</span> <span class="n">env</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">env</span><span class="p">)</span>
+    <span class="n">lag_min</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="mf">60.0</span> <span class="o">/</span> <span class="n">bpm_max</span> <span class="o">/</span> <span class="n">hop_s</span><span class="p">)))</span>
+    <span class="n">lag_max</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="mf">60.0</span> <span class="o">/</span> <span class="n">bpm_min</span> <span class="o">/</span> <span class="n">hop_s</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">n</span> <span class="o">&lt;</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">lag_min</span> <span class="o">+</span> <span class="mi">2</span> <span class="ow">or</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">env</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_fixed_grid</span><span class="p">(</span><span class="n">prior_bpm</span><span class="p">,</span> <span class="n">duration</span><span class="p">,</span> <span class="n">source</span><span class="o">=</span><span class="s2">"numpy"</span><span class="p">)</span>
+    <span class="n">lag_max</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">lag_max</span><span class="p">,</span> <span class="n">n</span> <span class="o">//</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">size</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="nb">int</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">n</span><span class="p">)))</span>
+    <span class="n">spec</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">rfft</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">size</span><span class="p">)</span>
+    <span class="n">ac</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">irfft</span><span class="p">(</span><span class="n">spec</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">conj</span><span class="p">(</span><span class="n">spec</span><span class="p">),</span> <span class="n">size</span><span class="p">)[:</span> <span class="n">lag_max</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+    <span class="n">ac</span> <span class="o">=</span> <span class="n">ac</span> <span class="o">/</span> <span class="p">(</span><span class="n">ac</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">or</span> <span class="mf">1.0</span><span class="p">)</span>
+    <span class="n">lags</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">lag_min</span><span class="p">,</span> <span class="n">lag_max</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">bpms</span> <span class="o">=</span> <span class="mf">60.0</span> <span class="o">/</span> <span class="p">(</span><span class="n">lags</span> <span class="o">*</span> <span class="n">hop_s</span><span class="p">)</span>
+    <span class="n">prior</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">bpms</span> <span class="o">/</span> <span class="n">prior_bpm</span><span class="p">)</span> <span class="o">/</span> <span class="n">PRIOR_STD_OCTAVES</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">score</span> <span class="o">=</span> <span class="n">ac</span><span class="p">[</span><span class="n">lag_min</span><span class="p">:</span><span class="n">lag_max</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">prior</span>
+    <span class="n">best</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">lags</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">score</span><span class="p">))])</span>
+    <span class="n">period_s</span> <span class="o">=</span> <span class="n">best</span> <span class="o">*</span> <span class="n">hop_s</span>
+    <span class="c1"># phase: the comb offset that collects the most (rectified) envelope</span>
+    <span class="n">pos</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">envelope</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">),</span> <span class="mf">0.0</span><span class="p">)</span>
+    <span class="n">sums</span> <span class="o">=</span> <span class="p">[</span><span class="n">pos</span><span class="p">[</span><span class="n">k</span><span class="p">::</span><span class="n">best</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">best</span><span class="p">)]</span>
+    <span class="n">phase</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">sums</span><span class="p">))</span> <span class="o">*</span> <span class="n">hop_s</span>
+    <span class="n">bpm</span> <span class="o">=</span> <span class="mf">60.0</span> <span class="o">/</span> <span class="n">period_s</span>
+    <span class="n">beats</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">phase</span> <span class="o">+</span> <span class="n">k</span> <span class="o">*</span> <span class="n">period_s</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">int</span><span class="p">((</span><span class="n">duration</span> <span class="o">-</span> <span class="n">phase</span><span class="p">)</span> <span class="o">/</span> <span class="n">period_s</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+                  <span class="k">if</span> <span class="n">phase</span> <span class="o">+</span> <span class="n">k</span> <span class="o">*</span> <span class="n">period_s</span> <span class="o">&lt;</span> <span class="n">duration</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">Tempo</span><span class="p">(</span><span class="n">bpm</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">bpm</span><span class="p">),</span> <span class="n">beats</span><span class="o">=</span><span class="n">beats</span><span class="p">,</span> <span class="n">source</span><span class="o">=</span><span class="s2">"numpy"</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_fixed_grid</span><span class="p">(</span><span class="n">bpm</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">duration</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">source</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tempo</span><span class="p">:</span>
+    <span class="n">period</span> <span class="o">=</span> <span class="mf">60.0</span> <span class="o">/</span> <span class="n">bpm</span>
+    <span class="k">return</span> <span class="n">Tempo</span><span class="p">(</span><span class="n">bpm</span><span class="o">=</span><span class="n">bpm</span><span class="p">,</span> <span class="n">beats</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="n">k</span> <span class="o">*</span> <span class="n">period</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">duration</span> <span class="o">/</span> <span class="n">period</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+                                       <span class="k">if</span> <span class="n">k</span> <span class="o">*</span> <span class="n">period</span> <span class="o">&lt;</span> <span class="n">duration</span><span class="p">),</span> <span class="n">source</span><span class="o">=</span><span class="n">source</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">beat_grid_mixing</span><span class="p">(</span><span class="n">audio</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">sample_rate</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">SAMPLE_RATE</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tempo</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The beat grid from ``mixing.audio.beat_grid`` (librosa, ISC).</span>
+
+<span class="sd">    Signature found: ``beat_grid(audio, *, sample_rate=22050, hop_length=512,</span>
+<span class="sd">    start_bpm=120.0, backend='librosa') -&gt; BeatGrid`` with fields</span>
+<span class="sd">    ``beat_times, downbeat_times, onset_env, onset_hop_s, sample_rate,</span>
+<span class="sd">    tempo_bpm``. It decodes the path itself (through pydub), so it is handed</span>
+<span class="sd">    the path rather than our samples.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ImportError: librosa is not installed — the ONLY thing ``auto`` catches.</span>
+<span class="sd">            Any other failure inside ``mixing`` propagates; a swallowed one</span>
+<span class="sd">            would be a plausible-looking wrong grid, the muvid#15 shape.</span>
+<span class="sd">    """</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">mixing.audio</span><span class="w"> </span><span class="kn">import</span> <span class="n">beat_grid</span>
+
+    <span class="n">grid</span> <span class="o">=</span> <span class="n">beat_grid</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">audio</span><span class="p">),</span> <span class="n">sample_rate</span><span class="o">=</span><span class="n">sample_rate</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">Tempo</span><span class="p">(</span>
+        <span class="n">bpm</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">grid</span><span class="o">.</span><span class="n">tempo_bpm</span><span class="p">),</span>
+        <span class="n">beats</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">b</span><span class="p">)</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">grid</span><span class="o">.</span><span class="n">beat_times</span><span class="p">),</span>
+        <span class="n">source</span><span class="o">=</span><span class="s2">"mixing"</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">resolve_tempo</span><span class="p">(</span>
+    <span class="n">audio</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">envelope</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">hop_s</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">duration</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">source</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"auto"</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tempo</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The beat grid from ``source``: ``mixing`` | ``numpy`` | ``auto``.</span>
+
+<span class="sd">    ``auto`` prefers ``mixing`` and falls back to ``numpy`` on ``ImportError``</span>
+<span class="sd">    only. ``mixing`` never falls back. A grid ``mixing`` returns with no tempo</span>
+<span class="sd">    (silence) is replaced by the numpy estimate and recorded as such.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">source</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"auto"</span><span class="p">,</span> <span class="s2">"mixing"</span><span class="p">,</span> <span class="s2">"numpy"</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"beat_source must be auto|mixing|numpy, got </span><span class="si">{</span><span class="n">source</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">source</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"auto"</span><span class="p">,</span> <span class="s2">"mixing"</span><span class="p">)</span> <span class="ow">and</span> <span class="n">audio</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">tempo</span> <span class="o">=</span> <span class="n">beat_grid_mixing</span><span class="p">(</span><span class="n">audio</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">source</span> <span class="o">==</span> <span class="s2">"mixing"</span><span class="p">:</span>
+                <span class="k">raise</span>
+            <span class="n">tempo</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">tempo</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">tempo</span><span class="o">.</span><span class="n">bpm</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">tempo</span><span class="o">.</span><span class="n">beats</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">tempo</span>
+    <span class="k">return</span> <span class="n">beat_grid_numpy</span><span class="p">(</span><span class="n">envelope</span><span class="p">,</span> <span class="n">hop_s</span><span class="o">=</span><span class="n">hop_s</span><span class="p">,</span> <span class="n">duration</span><span class="o">=</span><span class="n">duration</span><span class="p">)</span>
+
+
+<span class="c1"># --------------------------------------------------------------------------</span>
+<span class="c1"># energy -&gt; sections</span>
+<span class="c1"># --------------------------------------------------------------------------</span>
+
+
+<div class="viewcode-block" id="find_sections">
+<a class="viewcode-back" href="../../../module_docs/muvid/choreo/analysis.html#muvid.choreo.find_sections">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">find_sections</span><span class="p">(</span>
+    <span class="n">y</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">sample_rate</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">tempo</span><span class="p">:</span> <span class="n">Tempo</span><span class="p">,</span>
+    <span class="n">duration</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">beats_per_bar</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">BEATS_PER_BAR</span><span class="p">,</span>
+    <span class="n">min_bars</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">MIN_SECTION_BARS</span><span class="p">,</span>
+    <span class="n">step_db</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">SECTION_STEP_DB</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Section</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Coarse sections from per-bar RMS energy, labelled by loudness tier.</span>
+
+<span class="sd">    Greedy: a section absorbs the next bar unless the level of the *following*</span>
+<span class="sd">    ``min_bars`` bars sits more than ``step_db`` from the section's mean, and</span>
+<span class="sd">    the section is already ``min_bars`` long. Sections tile ``[0, duration]``</span>
+<span class="sd">    exactly and there is always at least one.</span>
+
+<span class="sd">    &gt;&gt;&gt; import numpy as np</span>
+<span class="sd">    &gt;&gt;&gt; sr = 8000; y = np.concatenate([np.full(sr * 8, 0.05), np.full(sr * 8, 0.5)])</span>
+<span class="sd">    &gt;&gt;&gt; secs = find_sections(y, sample_rate=sr, tempo=Tempo(bpm=120, beats=(), source='numpy'), duration=16.0)</span>
+<span class="sd">    &gt;&gt;&gt; [(s.label, s.start, s.end) for s in secs]</span>
+<span class="sd">    [('low', 0.0, 8.0), ('high', 8.0, 16.0)]</span>
+<span class="sd">    """</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+    <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+    <span class="n">bar_s</span> <span class="o">=</span> <span class="n">tempo</span><span class="o">.</span><span class="n">period</span> <span class="o">*</span> <span class="n">beats_per_bar</span>
+    <span class="n">n_bars</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">duration</span> <span class="o">/</span> <span class="n">bar_s</span><span class="p">)))</span>
+    <span class="n">levels</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_bars</span><span class="p">):</span>
+        <span class="n">seg</span> <span class="o">=</span> <span class="n">y</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">b</span> <span class="o">*</span> <span class="n">bar_s</span> <span class="o">*</span> <span class="n">sample_rate</span><span class="p">):</span> <span class="nb">int</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">duration</span><span class="p">,</span> <span class="p">(</span><span class="n">b</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">bar_s</span><span class="p">)</span> <span class="o">*</span> <span class="n">sample_rate</span><span class="p">)]</span>
+        <span class="n">rms</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">seg</span> <span class="o">*</span> <span class="n">seg</span><span class="p">)))</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">seg</span><span class="p">)</span> <span class="k">else</span> <span class="mf">0.0</span>
+        <span class="n">levels</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mf">20.0</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">rms</span><span class="p">,</span> <span class="mf">1e-6</span><span class="p">)))</span>
+    <span class="n">lv</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">levels</span><span class="p">)</span>
+
+    <span class="n">bounds</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">cur_start</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_bars</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">b</span> <span class="o">-</span> <span class="n">cur_start</span> <span class="o">&lt;</span> <span class="n">min_bars</span> <span class="ow">or</span> <span class="n">n_bars</span> <span class="o">-</span> <span class="n">b</span> <span class="o">&lt;</span> <span class="n">min_bars</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">ahead</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">lv</span><span class="p">[</span><span class="n">b</span><span class="p">:</span> <span class="n">b</span> <span class="o">+</span> <span class="n">min_bars</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span>
+        <span class="n">here</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">lv</span><span class="p">[</span><span class="n">cur_start</span><span class="p">:</span><span class="n">b</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span>
+        <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">ahead</span> <span class="o">-</span> <span class="n">here</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">step_db</span><span class="p">:</span>
+            <span class="n">bounds</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
+            <span class="n">cur_start</span> <span class="o">=</span> <span class="n">b</span>
+    <span class="n">bounds</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">n_bars</span><span class="p">)</span>
+
+    <span class="n">raw</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">bounds</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="n">b0</span><span class="p">,</span> <span class="n">b1</span> <span class="o">=</span> <span class="n">bounds</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">bounds</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+        <span class="n">raw</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">b0</span> <span class="o">*</span> <span class="n">bar_s</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="n">duration</span><span class="p">,</span> <span class="n">b1</span> <span class="o">*</span> <span class="n">bar_s</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">lv</span><span class="p">[</span><span class="n">b0</span><span class="p">:</span><span class="n">b1</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">())))</span>
+    <span class="n">energies</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">e</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">raw</span><span class="p">)</span>
+    <span class="c1"># tiers by tertile of the section energies; one section is 'mid'</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">tier</span><span class="p">(</span><span class="n">e</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">energies</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span> <span class="ow">or</span> <span class="n">energies</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">energies</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">step_db</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">"mid"</span>
+        <span class="n">lo</span><span class="p">,</span> <span class="n">hi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">energies</span><span class="p">,</span> <span class="p">[</span><span class="mf">33.4</span><span class="p">,</span> <span class="mf">66.7</span><span class="p">])</span>
+        <span class="k">return</span> <span class="s2">"low"</span> <span class="k">if</span> <span class="n">e</span> <span class="o">&lt;=</span> <span class="n">lo</span> <span class="k">else</span> <span class="s2">"high"</span> <span class="k">if</span> <span class="n">e</span> <span class="o">&gt;</span> <span class="n">hi</span> <span class="k">else</span> <span class="s2">"mid"</span>
+
+    <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span>
+        <span class="n">Section</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="n">i</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">tier</span><span class="p">(</span><span class="n">e</span><span class="p">),</span> <span class="n">start</span><span class="o">=</span><span class="nb">round</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span> <span class="n">end</span><span class="o">=</span><span class="nb">round</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span> <span class="n">energy_db</span><span class="o">=</span><span class="nb">round</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span>
+    <span class="p">)</span></div>
+
+
+
+<span class="c1"># --------------------------------------------------------------------------</span>
+<span class="c1"># the one entry point</span>
+<span class="c1"># --------------------------------------------------------------------------</span>
+
+
+<div class="viewcode-block" id="analyze">
+<a class="viewcode-back" href="../../../module_docs/muvid/choreo/analysis.html#muvid.choreo.analyze">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">analyze</span><span class="p">(</span>
+    <span class="n">audio</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">sample_rate</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">SAMPLE_RATE</span><span class="p">,</span>
+    <span class="n">beat_source</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"auto"</span><span class="p">,</span>
+    <span class="n">bands</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="n">BANDS</span><span class="p">,</span>
+    <span class="n">min_ioi_beats</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">MIN_IOI_BEATS</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Analysis</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Analyse a song (a path, or an already-decoded mono array at ``sample_rate``).</span>
+
+<span class="sd">    An array input never consults ``mixing`` (it needs a file), so its beat</span>
+<span class="sd">    grid is always the numpy one; this is the path unit tests use.</span>
+<span class="sd">    """</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+    <span class="n">path</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">audio</span><span class="p">,</span> <span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">)):</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">audio</span><span class="p">)</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">load_mono</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">sample_rate</span><span class="o">=</span><span class="n">sample_rate</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">audio</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+    <span class="n">duration</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">y</span><span class="p">)</span> <span class="o">/</span> <span class="nb">float</span><span class="p">(</span><span class="n">sample_rate</span><span class="p">)</span>
+    <span class="n">hop_s</span> <span class="o">=</span> <span class="n">HOP</span> <span class="o">/</span> <span class="nb">float</span><span class="p">(</span><span class="n">sample_rate</span><span class="p">)</span>
+
+    <span class="n">mag</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">stft_magnitude</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+    <span class="n">flux</span> <span class="o">=</span> <span class="n">band_flux</span><span class="p">(</span><span class="n">mag</span><span class="p">,</span> <span class="n">sample_rate</span><span class="o">=</span><span class="n">sample_rate</span><span class="p">,</span> <span class="n">bands</span><span class="o">=</span><span class="n">bands</span><span class="p">)</span>
+    <span class="n">envelope</span> <span class="o">=</span> <span class="n">onset_envelope</span><span class="p">(</span><span class="n">flux</span><span class="p">)</span>
+    <span class="n">tempo</span> <span class="o">=</span> <span class="n">resolve_tempo</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">envelope</span><span class="p">,</span> <span class="n">hop_s</span><span class="o">=</span><span class="n">hop_s</span><span class="p">,</span> <span class="n">duration</span><span class="o">=</span><span class="n">duration</span><span class="p">,</span> <span class="n">source</span><span class="o">=</span><span class="n">beat_source</span><span class="p">)</span>
+
+    <span class="n">events</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Event</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">flux</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">ioi</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">MIN_IOI_S</span><span class="p">,</span> <span class="n">tempo</span><span class="o">.</span><span class="n">period</span> <span class="o">*</span> <span class="nb">float</span><span class="p">(</span><span class="n">min_ioi_beats</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">)))</span>
+        <span class="k">for</span> <span class="n">t</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">pick_onsets</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">hop_s</span><span class="o">=</span><span class="n">hop_s</span><span class="p">,</span> <span class="n">min_ioi_s</span><span class="o">=</span><span class="n">ioi</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">t</span> <span class="o">&lt;</span> <span class="n">duration</span><span class="p">:</span>
+                <span class="n">events</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Event</span><span class="p">(</span><span class="n">t</span><span class="o">=</span><span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">t</span><span class="p">),</span> <span class="mi">4</span><span class="p">),</span> <span class="n">band</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">strength</span><span class="o">=</span><span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">s</span><span class="p">),</span> <span class="mi">4</span><span class="p">)))</span>
+    <span class="n">events</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">e</span><span class="p">:</span> <span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">t</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">band</span><span class="p">))</span>
+
+    <span class="n">sections</span> <span class="o">=</span> <span class="n">find_sections</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">sample_rate</span><span class="o">=</span><span class="n">sample_rate</span><span class="p">,</span> <span class="n">tempo</span><span class="o">=</span><span class="n">tempo</span><span class="p">,</span> <span class="n">duration</span><span class="o">=</span><span class="n">duration</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">Analysis</span><span class="p">(</span>
+        <span class="n">duration</span><span class="o">=</span><span class="nb">round</span><span class="p">(</span><span class="n">duration</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span>
+        <span class="n">tempo</span><span class="o">=</span><span class="n">Tempo</span><span class="p">(</span><span class="n">bpm</span><span class="o">=</span><span class="nb">round</span><span class="p">(</span><span class="n">tempo</span><span class="o">.</span><span class="n">bpm</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="n">beats</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">tempo</span><span class="o">.</span><span class="n">beats</span><span class="p">),</span>
+                    <span class="n">source</span><span class="o">=</span><span class="n">tempo</span><span class="o">.</span><span class="n">source</span><span class="p">),</span>
+        <span class="n">events</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="n">events</span><span class="p">),</span>
+        <span class="n">sections</span><span class="o">=</span><span class="n">sections</span><span class="p">,</span>
+        <span class="n">bands</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">bands</span><span class="p">),</span>
+        <span class="n">meta</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">"sample_rate"</span><span class="p">:</span> <span class="n">sample_rate</span><span class="p">,</span>
+            <span class="s2">"hop_s"</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">hop_s</span><span class="p">,</span> <span class="mi">6</span><span class="p">),</span>
+            <span class="s2">"n_events"</span><span class="p">:</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">events</span> <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">band</span> <span class="o">==</span> <span class="n">name</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">bands</span><span class="p">},</span>
+            <span class="s2">"min_ioi_s"</span><span class="p">:</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">MIN_IOI_S</span><span class="p">,</span> <span class="n">tempo</span><span class="o">.</span><span class="n">period</span> <span class="o">*</span> <span class="nb">float</span><span class="p">(</span><span class="n">min_ioi_beats</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">))),</span> <span class="mi">4</span><span class="p">)</span>
+                          <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">bands</span><span class="p">},</span>
+        <span class="p">},</span>
+    <span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p></p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

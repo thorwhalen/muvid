@@ -1,0 +1,301 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>muvid.choreo.pipeline &mdash; muvid 0.0.62 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=dea2dbc4"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
+      <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="muvid.choreo.render" href="render.html" />
+    <link rel="prev" title="muvid.choreo.manifest" href="manifest.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            muvid
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../muvid.html">muvid</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../__main__.html">muvid.__main__</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../align.html">muvid.align</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../characters.html">muvid.characters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../choreo.html">muvid.choreo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="__main__.html">muvid.choreo.__main__</a></li>
+<li class="toctree-l1"><a class="reference internal" href="analysis.html">muvid.choreo.analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="manifest.html">muvid.choreo.manifest</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">muvid.choreo.pipeline</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.choreo.pipeline.MAX_INPUT_FILES"><code class="docutils literal notranslate"><span class="pre">MAX_INPUT_FILES</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.choreo.pipeline.MAX_PIXELS"><code class="docutils literal notranslate"><span class="pre">MAX_PIXELS</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.choreo.pipeline.check_input_counts"><code class="docutils literal notranslate"><span class="pre">check_input_counts()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.choreo.pipeline.check_render_bounds"><code class="docutils literal notranslate"><span class="pre">check_render_bounds()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.choreo.pipeline.palette_from_cover"><code class="docutils literal notranslate"><span class="pre">palette_from_cover()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.choreo.pipeline.render"><code class="docutils literal notranslate"><span class="pre">render()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="render.html">muvid.choreo.render</a></li>
+<li class="toctree-l1"><a class="reference internal" href="scene.html">muvid.choreo.scene</a></li>
+<li class="toctree-l1"><a class="reference internal" href="spec.html">muvid.choreo.spec</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tools.html">muvid.choreo.tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../compose.html">muvid.compose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contracts.html">muvid.contracts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cost.html">muvid.cost</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../downloads.html">muvid.downloads</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../environments.html">muvid.environments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../events.html">muvid.events</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../facade.html">muvid.facade</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../footage.html">muvid.footage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../footage/align.html">muvid.footage.align</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../footage/assemble.html">muvid.footage.assemble</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../footage/edl.html">muvid.footage.edl</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../footage/lacing_bridge.html">muvid.footage.lacing_bridge</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../footage/look.html">muvid.footage.look</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../footage/scoring.html">muvid.footage.scoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../footage/scoring/_frame_metrics.html">muvid.footage.scoring._frame_metrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../footage/scoring/frames.html">muvid.footage.scoring.frames</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../footage/scoring/grid.html">muvid.footage.scoring.grid</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../footage/scoring/lipsync.html">muvid.footage.scoring.lipsync</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../footage/scoring/motionbeat.html">muvid.footage.scoring.motionbeat</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../footage/scoring/orchestrator.html">muvid.footage.scoring.orchestrator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../footage/scoring/quality.html">muvid.footage.scoring.quality</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../footage/scoring/segment.html">muvid.footage.scoring.segment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../footage/select_score.html">muvid.footage.select_score</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../footage/strategy.html">muvid.footage.strategy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../footage/workspace.html">muvid.footage.workspace</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../genre.html">muvid.genre</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../genre_lyric_video.html">muvid.genre_lyric_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../genre_music_video.html">muvid.genre_music_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../genre_subgenres.html">muvid.genre_subgenres</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../lyrics.html">muvid.lyrics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../lyricvid.html">muvid.lyricvid</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../lyricvid/__main__.html">muvid.lyricvid.__main__</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../lyricvid/director.html">muvid.lyricvid.director</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../lyricvid/manifest.html">muvid.lyricvid.manifest</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../lyricvid/pipeline.html">muvid.lyricvid.pipeline</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../lyricvid/render_ass.html">muvid.lyricvid.render_ass</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../lyricvid/render_web.html">muvid.lyricvid.render_web</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../lyricvid/scene.html">muvid.lyricvid.scene</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../lyricvid/shape.html">muvid.lyricvid.shape</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../lyricvid/spec.html">muvid.lyricvid.spec</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../lyricvid/timed_text.html">muvid.lyricvid.timed_text</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../lyricvid/tools.html">muvid.lyricvid.tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mcp.html">muvid.mcp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mcp/_fetch.html">muvid.mcp._fetch</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mcp/_guide.html">muvid.mcp._guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mcp/footage_tools.html">muvid.mcp.footage_tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mcp/identity.html">muvid.mcp.identity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mcp/lyricvid_tools.html">muvid.mcp.lyricvid_tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mcp/scoring_tools.html">muvid.mcp.scoring_tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mcp/subgenre_tools.html">muvid.mcp.subgenre_tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mcp/tools.html">muvid.mcp.tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mcp/workspace.html">muvid.mcp.workspace</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../montage.html">muvid.montage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../montage/__main__.html">muvid.montage.__main__</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../montage/analysis.html">muvid.montage.analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../montage/manifest.html">muvid.montage.manifest</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../montage/pipeline.html">muvid.montage.pipeline</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../montage/plan.html">muvid.montage.plan</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../montage/render.html">muvid.montage.render</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../montage/spec.html">muvid.montage.spec</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../montage/tools.html">muvid.montage.tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../project.html">muvid.project</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../renderers.html">muvid.renderers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../renderers/_common.html">muvid.renderers._common</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../renderers/_errors.html">muvid.renderers._errors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../renderers/animation.html">muvid.renderers.animation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../renderers/image_to_video.html">muvid.renderers.image_to_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../renderers/lipsync.html">muvid.renderers.lipsync</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../renderers/still.html">muvid.renderers.still</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../renderers/text_to_video.html">muvid.renderers.text_to_video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../schema.html">muvid.schema</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../script.html">muvid.script</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../subgenres.html">muvid.subgenres</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../subgenres/_contract.html">muvid.subgenres._contract</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../subgenres/_manifest.html">muvid.subgenres._manifest</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../subgenres/_registry.html">muvid.subgenres._registry</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../subgenres/_schema.html">muvid.subgenres._schema</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../subgenres/testing.html">muvid.subgenres.testing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ui.html">muvid.ui</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ui/app.html">muvid.ui.app</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../visualize.html">muvid.visualize</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../visualize/canvas.html">muvid.visualize.canvas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../visualize/ffmpeg.html">muvid.visualize.ffmpeg</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../visualize/reactive.html">muvid.visualize.reactive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../visualize/verify.html">muvid.visualize.verify</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../visualize/video.html">muvid.visualize.video</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../visualize/visuals.html">muvid.visualize.visuals</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">muvid</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">muvid.choreo.pipeline</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../_sources/module_docs/muvid/choreo/pipeline.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-muvid.choreo.pipeline">
+<span id="muvid-choreo-pipeline"></span><h1>muvid.choreo.pipeline<a class="headerlink" href="#module-muvid.choreo.pipeline" title="Link to this heading"></a></h1>
+<p>The choreo pipeline — the one path from a song to a finished video.</p>
+<blockquote>
+<div><dl class="simple">
+<dt>audio (+ optional cover)</dt><dd><p>-&gt; Analysis        events, beat grid, sections   (muvid.choreo.analysis)
+-&gt; TreatmentSpec   the creative decision          (muvid.choreo.spec)
+-&gt; ChoreoScene     every object computed          (muvid.choreo.scene)
+-&gt; mp4             numpy frames -&gt; ffmpeg         (muvid.choreo.render)</p>
+</dd>
+</dl>
+</div></blockquote>
+<p>Each arrow is a seam with a working default, so the whole thing runs on a bare
+<code class="docutils literal notranslate"><span class="pre">song.wav</span></code> with no cover, no AI, no network. <a class="reference internal" href="#muvid.choreo.pipeline.render" title="muvid.choreo.pipeline.render"><code class="xref py py-func docutils literal notranslate"><span class="pre">render()</span></code></a> satisfies
+<a class="reference internal" href="../subgenres.html#muvid.subgenres.Renderer" title="muvid.subgenres.Renderer"><code class="xref py py-class docutils literal notranslate"><span class="pre">muvid.subgenres.Renderer</span></code></a>; it is what the manifest names.</p>
+<p>Resource bounds are <strong>refusals, not clamps</strong> — the same shape and defaults as
+<code class="xref py py-func docutils literal notranslate"><span class="pre">muvid.lyricvid.pipeline.check_render_bounds()</span></code> under <code class="docutils literal notranslate"><span class="pre">MUVID_CHOREO_*</span></code>
+names — because a clamped request silently produces a different video than
+the one asked for. The bounds are checked before the analysis runs, so an
+oversized request fails in milliseconds.</p>
+<p>The cover, when given, is a <strong>palette source only</strong>: decoded once through
+ffmpeg to a 24x24 thumbnail and reduced to six colours by numpy. No Pillow.</p>
+<dl class="py data">
+<dt class="sig sig-object py" id="muvid.choreo.pipeline.MAX_INPUT_FILES">
+<span class="sig-prename descclassname"><span class="pre">muvid.choreo.pipeline.</span></span><span class="sig-name descname"><span class="pre">MAX_INPUT_FILES</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">64</span></span><a class="headerlink" href="#muvid.choreo.pipeline.MAX_INPUT_FILES" title="Link to this definition"></a></dt>
+<dd><p>How many files any one input may name. The inputs today are single paths;
+the bound exists so a list-valued input added later is bounded from day one.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="muvid.choreo.pipeline.MAX_PIXELS">
+<span class="sig-prename descclassname"><span class="pre">muvid.choreo.pipeline.</span></span><span class="sig-name descname"><span class="pre">MAX_PIXELS</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">8294400</span></span><a class="headerlink" href="#muvid.choreo.pipeline.MAX_PIXELS" title="Link to this definition"></a></dt>
+<dd><p>Resource bounds, env-configurable. Same defaults as the lyric video’s.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.choreo.pipeline.check_input_counts">
+<span class="sig-prename descclassname"><span class="pre">muvid.choreo.pipeline.</span></span><span class="sig-name descname"><span class="pre">check_input_counts</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Mapping</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../../_modules/muvid/choreo/pipeline.html#check_input_counts"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.choreo.pipeline.check_input_counts" title="Link to this definition"></a></dt>
+<dd><p>Refuse any input naming more than <a class="reference internal" href="#muvid.choreo.pipeline.MAX_INPUT_FILES" title="muvid.choreo.pipeline.MAX_INPUT_FILES"><code class="xref py py-data docutils literal notranslate"><span class="pre">MAX_INPUT_FILES</span></code></a> files.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">check_input_counts</span><span class="p">({</span><span class="s1">'audio'</span><span class="p">:</span> <span class="s1">'a.wav'</span><span class="p">})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">check_input_counts</span><span class="p">({</span><span class="s1">'frames'</span><span class="p">:</span> <span class="p">[</span><span class="s1">'x'</span><span class="p">]</span> <span class="o">*</span> <span class="mi">65</span><span class="p">})</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="c">...</span>
+<span class="gr">ValueError</span>: <span class="n">inputs['frames'] names 65 files; the bound is 64 (MUVID_CHOREO_MAX_INPUT_FILES)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.choreo.pipeline.check_render_bounds">
+<span class="sig-prename descclassname"><span class="pre">muvid.choreo.pipeline.</span></span><span class="sig-name descname"><span class="pre">check_render_bounds</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">canvas</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="scene.html#muvid.choreo.scene.Canvas" title="muvid.choreo.scene.Canvas"><span class="pre">Canvas</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">duration_s</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../../_modules/muvid/choreo/pipeline.html#check_render_bounds"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.choreo.pipeline.check_render_bounds" title="Link to this definition"></a></dt>
+<dd><p>Refuse a render that would exceed the resource bounds. Refuse, not clamp.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">check_render_bounds</span><span class="p">(</span><span class="n">Canvas</span><span class="p">(</span><span class="n">width</span><span class="o">=</span><span class="mi">1920</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">1080</span><span class="p">,</span> <span class="n">fps</span><span class="o">=</span><span class="mi">30</span><span class="p">),</span> <span class="mf">200.0</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">check_render_bounds</span><span class="p">(</span><span class="n">Canvas</span><span class="p">(</span><span class="n">width</span><span class="o">=</span><span class="mi">30000</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">30000</span><span class="p">,</span> <span class="n">fps</span><span class="o">=</span><span class="mi">30</span><span class="p">),</span> <span class="mf">10.0</span><span class="p">)</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="c">...</span>
+<span class="gr">ValueError</span>: <span class="n">canvas 30000x30000 is 900000000 px/frame; the bound is 8294400 (MUVID_CHOREO_MAX_PIXELS)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.choreo.pipeline.palette_from_cover">
+<span class="sig-prename descclassname"><span class="pre">muvid.choreo.pipeline.</span></span><span class="sig-name descname"><span class="pre">palette_from_cover</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cover</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">workdir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="spec.html#muvid.choreo.spec.Palette" title="muvid.choreo.spec.Palette"><span class="pre">Palette</span></a></span></span><a class="reference internal" href="../../../_modules/muvid/choreo/pipeline.html#palette_from_cover"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.choreo.pipeline.palette_from_cover" title="Link to this definition"></a></dt>
+<dd><p>Six colours from an image: dark bg pair, light fg, three spread accents.</p>
+<p>The image is decoded by ffmpeg to a <code class="xref py py-data docutils literal notranslate"><span class="pre">_PALETTE_THUMB</span></code> square (one
+process, any format ffmpeg reads), then: <code class="docutils literal notranslate"><span class="pre">bg</span></code> is the mean of the darkest
+quarter (darkened further so objects always read), <code class="docutils literal notranslate"><span class="pre">bg2</span></code> the next quarter,
+<code class="docutils literal notranslate"><span class="pre">fg</span></code> the lightest eighth pushed toward white, <code class="docutils literal notranslate"><span class="pre">low</span></code> the most saturated
+pixel, and <code class="docutils literal notranslate"><span class="pre">mid</span></code>/<code class="docutils literal notranslate"><span class="pre">high</span></code> that hue a third of a turn on — so the three
+bands are always distinguishable whatever the cover.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.choreo.pipeline.render">
+<span class="sig-prename descclassname"><span class="pre">muvid.choreo.pipeline.</span></span><span class="sig-name descname"><span class="pre">render</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../subgenres/_contract.html#muvid.subgenres._contract.RenderRequest" title="muvid.subgenres._contract.RenderRequest"><span class="pre">RenderRequest</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="../subgenres/_contract.html#muvid.subgenres._contract.RenderResult" title="muvid.subgenres._contract.RenderResult"><span class="pre">RenderResult</span></a></span></span><a class="reference internal" href="../../../_modules/muvid/choreo/pipeline.html#render"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.choreo.pipeline.render" title="Link to this definition"></a></dt>
+<dd><p>Render one choreo video. Satisfies <a class="reference internal" href="../subgenres.html#muvid.subgenres.Renderer" title="muvid.subgenres.Renderer"><code class="xref py py-class docutils literal notranslate"><span class="pre">muvid.subgenres.Renderer</span></code></a>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">request.inputs</span></code> takes <code class="docutils literal notranslate"><span class="pre">audio</span></code> (required) and <code class="docutils literal notranslate"><span class="pre">cover</span></code>. <code class="docutils literal notranslate"><span class="pre">request.params</span></code>
+takes <code class="docutils literal notranslate"><span class="pre">treatment</span></code> or <code class="docutils literal notranslate"><span class="pre">archetype</span></code>, <code class="docutils literal notranslate"><span class="pre">seed</span></code>, <code class="docutils literal notranslate"><span class="pre">beat_source</span></code>, <code class="docutils literal notranslate"><span class="pre">strict</span></code>,
+<code class="docutils literal notranslate"><span class="pre">width</span></code>, <code class="docutils literal notranslate"><span class="pre">height</span></code>, <code class="docutils literal notranslate"><span class="pre">fps</span></code>.</p>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="manifest.html" class="btn btn-neutral float-left" title="muvid.choreo.manifest" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="render.html" class="btn btn-neutral float-right" title="muvid.choreo.render" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p></p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
