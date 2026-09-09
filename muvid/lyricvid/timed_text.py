@@ -378,7 +378,7 @@ def from_alignment_store(
 #: The same token boundaries ``muvid.align._tokenize`` uses (it lowercases, then
 #: matches this), so a ``WordAlignment.token_index`` addresses the same token
 #: here. Kept in sync by the doctest below rather than by importing a private.
-_LYRIC_TOKEN_RE = re.compile(r"[a-z0-9']+")
+_LYRIC_TOKEN_RE = re.compile(r"(?:[^\W_]|['’])+")
 
 
 def _lyric_tokens(text: str) -> list[str]:
@@ -386,6 +386,11 @@ def _lyric_tokens(text: str) -> list[str]:
 
     >>> _lyric_tokens("Don't stop, Me now!")
     ["Don't", 'stop', 'Me', 'now']
+
+    Any script, not just ASCII — an accent is a letter, never a word boundary:
+
+    >>> _lyric_tokens("cabrés même ô")
+    ['cabrés', 'même', 'ô']
     """
     lowered = text.lower()
     if len(lowered) != len(text):  # a case-fold that changed length; be safe

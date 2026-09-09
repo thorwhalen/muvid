@@ -65,9 +65,20 @@ ARCHETYPES: dict[str, str] = {
         "it is sung. The classic karaoke treatment; the most legible option."
     ),
     "concrete_page": (
-        "The whole lyric is typeset as a fixed page and each word ignites in "
-        "reading order as it is sung. The page itself is the picture — use when "
-        "the layout carries meaning (a concrete poem, a shaped text)."
+        "The whole lyric is typeset as a fixed page — one CENTRED HORIZONTAL ROW "
+        "per line — and each word ignites in reading order as it is sung. The "
+        "page never reflows. Use when the poem is lines on a page. It cannot "
+        "slant, indent or shape anything: for a calligram or a concrete poem "
+        "whose picture is made by the run of the text, use 'calligram'; for "
+        "words poured into an outline, use 'shape_fill'."
+    ),
+    "calligram": (
+        "Each line becomes a slanting streak of UPRIGHT letters, one letter per "
+        "slot, the streaks fanning open as they descend — the Apollinaire "
+        "'Il pleut' construction. Use for a calligram or concrete poem whose "
+        "shape is made by the run of the text itself rather than by an outline; "
+        "prefer 'shape_fill' when the shape is a picture the words pour into, "
+        "and 'concrete_page' when the layout is simply lines on a page."
     ),
     "shape_fill": (
         "Words packed into the outline of a shape, filling it as the song "

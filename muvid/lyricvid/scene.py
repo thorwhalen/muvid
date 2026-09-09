@@ -413,6 +413,189 @@ def _concrete_page(*, sc, direction, lines, tt, canvas, **_) -> list[Cue]:
     return cues
 
 
+#: Seconds the dim->bright handover in a ``calligram`` takes. Expressed as an
+#: overlap between two cues rather than as a renderer effect, so it works on
+#: both backends (see ``_calligram``).
+_IGNITE_CROSSFADE_S = 0.12
+
+
+@register_archetype("calligram")
+def _calligram(*, sc, direction, lines, tt, canvas, **_) -> list[Cue]:
+    """Each line is a slanting streak of upright letters, one letter per slot.
+
+    This is the Apollinaire ``Il pleut`` shape, generalised: the lyric is not
+    typeset as rows of words but as a *fan of streaks*, one per line, each
+    steeper than the one before it, with the letters themselves left upright.
+    That upright-letter-on-a-slanting-axis construction is what separates a
+    calligram from ordinary shaped text, and it is why ``concrete_page`` (whose
+    docstring offers "a concrete poem") cannot express one: it lays every line
+    out as a centred horizontal row.
+
+    WHY THIS LIVES IN MUVID, AND WHERE IT PROBABLY BELONGS INSTEAD
+    -------------------------------------------------------------
+    Strictly, this is *structured text animation* — glyphs placed by a
+    parameterised layout and animated on a timeline — which is ``an``'s domain,
+    not muvid's. It is here because muvid owns the layout-archetype vocabulary
+    that ``lyricvid`` compiles, and because as one function plus one vocabulary
+    entry it is exactly the seam this module's docstring describes. The general
+    version — a text/typography subgenre in ``an``, where glyphs are first-class
+    animatable objects that can appear, transform and move under a declared
+    parameterisation, and of which this fan is one preset — is proposed as
+    thorwhalen/an#155. If that lands, this archetype should become a thin caller
+    of it rather than growing more geometry of its own. Do not add a second
+    layout family here; add it there.
+
+    GEOMETRY
+    --------
+    All layout is done in *row-pitch units* — ``u`` across, ``v`` down, one unit
+    per letter slot — and only fitted to the canvas at the end. That keeps the
+    shape identical in portrait, landscape and 4K, and means the defaults are
+    aspect-independent rather than tuned to one frame.
+
+    For streak ``k``, slot ``i``::
+
+        u = head_offset[k] + i * slant[k]
+        v = i
+
+    ``slant`` is ``dx/dy`` (a tangent, not an angle) so the recurrence is a plain
+    addition. Words are separated by **exactly one** empty slot, which is what
+    the 1918 setting of ``Il pleut`` does throughout.
+
+    Defaults describe a generic rain-fan. A facsimile of a specific page passes
+    its measured ``slants`` and ``head_offsets`` instead; those are shape
+    parameters, not per-letter coordinates, so the spec's "no coordinates" rule
+    is intact.
+
+    Parameters (all via ``scene.params``)
+    ------------------------------------
+    ``slant`` / ``slant_step``  tangent of the first streak, and the increment
+        added per streak, so the group fans open as it descends.
+    ``head_gap``  horizontal distance between successive streak heads, in slots.
+    ``slants`` / ``head_offsets``  explicit per-streak overrides (lists).
+    ``top`` / ``bottom`` / ``left`` / ``right``  the box to fit inside.
+    ``size_ratio``  cap height as a fraction of the row pitch.
+    ``stagger``  0..1 — how much of a word's own duration its letters are
+        spread over, so a word trickles down its streak instead of flashing.
+    """
+    rows = [ln for ln in lines if ln.words]
+    if not rows:
+        return []
+
+    p = sc.params
+    top = float(p.get("top", 0.05))
+    bottom = float(p.get("bottom", 0.97))
+    left = float(p.get("left", 0.04))
+    right = float(p.get("right", 0.96))
+    size_ratio = float(p.get("size_ratio", 0.62))
+    stagger = min(1.0, max(0.0, float(p.get("stagger", 1.0))))
+    n = len(rows)
+
+    # per-streak shape: explicit override, else the fan the scalars describe
+    given_slants = [float(x) for x in (p.get("slants") or [])]
+    given_heads = [float(x) for x in (p.get("head_offsets") or [])]
+    slant0 = float(p.get("slant", 0.19))
+    slant_step = float(p.get("slant_step", 0.042))
+    head_gap = float(p.get("head_gap", 5.0))
+    slant = (
+        given_slants
+        if len(given_slants) >= n
+        else [slant0 + k * slant_step for k in range(n)]
+    )
+    head = (
+        given_heads if len(given_heads) >= n else [k * head_gap for k in range(n)]
+    )
+
+    # 1. place every letter on the abstract slot grid
+    placed: list[tuple[int, int, str, Word, int, int, Line]] = []
+    for k, line in enumerate(rows):
+        slot = 0
+        for w in line.words:
+            text = _apply_case(w.text, direction.typography.case)
+            for j, ch in enumerate(text):
+                placed.append((k, slot, ch, w, j, len(text), line))
+                slot += 1
+            slot += 1  # exactly one empty slot between words
+    if not placed:
+        return []
+
+    # 2. fit the grid to the canvas — the only step that knows the frame
+    us = [head[k] + s * slant[k] for k, s, *_ in placed]
+    vs = [s for _, s, *_ in placed]
+    u_lo, u_hi, v_lo, v_hi = min(us), max(us), min(vs), max(vs)
+    u_span = max(1e-6, u_hi - u_lo)
+    v_span = max(1e-6, v_hi - v_lo)
+    # a horizontal distance of `pitch` height-units is `pitch / aspect` of width
+    pitch = min((bottom - top) / v_span, (right - left) * canvas.aspect / u_span)
+    x0 = (left + right) / 2 - (u_span * pitch / canvas.aspect) / 2
+    y0 = (top + bottom) / 2 - (v_span * pitch) / 2
+    size = pitch * size_ratio
+
+    # 3. one cue per letter, ignited on its own word
+    show_all = sc.persistence == "dim"
+    cues: list[Cue] = []
+    for k, s, ch, w, j, ln_len, line in placed:
+        if not ch.strip():
+            continue
+        x = x0 + (head[k] + s * slant[k] - u_lo) * pitch / canvas.aspect
+        y = y0 + (s - v_lo) * pitch
+        t_in, t_full = _envelope(w, sc, line=line, tt=tt)
+        # trickle the word's letters down its streak across the word's own span
+        offset = stagger * (j / max(1, ln_len)) * max(0.0, w.end - w.start)
+        ignite = t_in + offset
+        if show_all:
+            # dim->bright as an OVERLAP OF TWO CUES, not a renderer effect:
+            # `ignite_at` is honoured by render_web only, so a scene that
+            # depended on it would silently render as a flat bright page under
+            # the default ASS backend. Two cues is renderer-neutral.
+            cues.append(
+                Cue(
+                    text=ch,
+                    x=x,
+                    y=y,
+                    size=size,
+                    t_in=0.0,
+                    t_full=0.0,
+                    t_out=ignite,
+                    t_gone=ignite + _IGNITE_CROSSFADE_S,
+                    colour=direction.palette.dim,
+                    motion=sc.motion,
+                    layer=0,
+                )
+            )
+            cues.append(
+                Cue(
+                    text=ch,
+                    x=x,
+                    y=y,
+                    size=size,
+                    t_in=ignite,
+                    t_full=ignite + _IGNITE_CROSSFADE_S,
+                    colour=direction.palette.fg,
+                    motion=sc.motion,
+                    layer=1,
+                )
+            )
+        else:
+            t_out, t_gone, dim_from = _persistence_times(w, line, tt, sc)
+            cues.append(
+                Cue(
+                    text=ch,
+                    x=x,
+                    y=y,
+                    size=size,
+                    t_in=ignite,
+                    t_full=max(ignite, t_full + offset),
+                    t_out=t_out,
+                    t_gone=t_gone,
+                    colour=direction.palette.fg,
+                    dim_colour=direction.palette.dim,
+                    dim_from=dim_from,
+                    motion=sc.motion,
+                )
+            )
+    return cues
+
+
 @register_archetype("text_on_path")
 def _text_on_path(*, sc, direction, lines, tt, canvas, **_) -> list[Cue]:
     """Words ride a gentle arc across the frame, one line per sweep."""

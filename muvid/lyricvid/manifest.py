@@ -91,9 +91,10 @@ LYRIC_VIDEO = Subgenre(
         "Turn a song into a typographic music video: the words appear in time "
         "with the singing. The layout is chosen from a closed set of archetypes "
         "— one word centred, stacked lines, karaoke wipe, a fixed concrete page "
-        "whose words ignite in reading order, words packed into a shape, text on "
-        "a path, or scatter — and every position and time is computed from "
-        "measurement, never guessed. Runs with no AI and no cost by default."
+        "whose words ignite in reading order, a calligram of slanting streaks of "
+        "upright letters, words packed into a shape, text on a path, or scatter "
+        "— and every position and time is computed from measurement, never "
+        "guessed. Runs with no AI and no cost by default."
     ),
     render="muvid.lyricvid.pipeline:render",
     inputs=_INPUTS,
