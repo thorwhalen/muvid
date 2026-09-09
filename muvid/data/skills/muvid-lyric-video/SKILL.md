@@ -45,13 +45,16 @@ facade over 14 AI music backends, then come back:
 
 ```python
 import arioso
+
 songs = arioso.generate_many(
     "slow French chanson, sparse piano, breathy female voice, 62 bpm",
-    platform="sunoapi",              # Suno. also: elevenlabs, udio, yue
-    lyrics=poem_text,                # sung VERBATIM — not a prompt
-    genre="french chanson, ambient", # required alongside lyrics on Suno
-    title="Il pleut",                # ditto — omitting it can 400
-    model="V5", wait_for_completion=True, timeout=600,
+    platform="sunoapi",  # Suno. also: elevenlabs, udio, yue
+    lyrics=poem_text,  # sung VERBATIM — not a prompt
+    genre="french chanson, ambient",  # required alongside lyrics on Suno
+    title="Il pleut",  # ditto — omitting it can 400
+    model="V5",
+    wait_for_completion=True,
+    timeout=600,
 )
 open("song.mp3", "wb").write(arioso.fetch_audio(songs[0]).audio_bytes)
 ```

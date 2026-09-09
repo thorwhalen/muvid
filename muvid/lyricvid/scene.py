@@ -501,9 +501,7 @@ def _calligram(*, sc, direction, lines, tt, canvas, **_) -> list[Cue]:
         if len(given_slants) >= n
         else [slant0 + k * slant_step for k in range(n)]
     )
-    head = (
-        given_heads if len(given_heads) >= n else [k * head_gap for k in range(n)]
-    )
+    head = given_heads if len(given_heads) >= n else [k * head_gap for k in range(n)]
 
     # 1. place every letter on the abstract slot grid
     placed: list[tuple[int, int, str, Word, int, int, Line]] = []
