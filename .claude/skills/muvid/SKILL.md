@@ -313,8 +313,18 @@ strategy, generate the missing image, etc.) — don't just retry.
 If the user just says "make a music video from `~/Downloads/song.mp3`"
 and there's no project yet:
 
-1. Pick a sensible project root (ask if unsure). Default to
-   `~/muvid/<song-stem>`.
+1. Pick a project root. **Ask muvid where it goes — never write the path
+   by hand:** `root="$(muvid project-root <song-stem>)"`, which is
+   `~/.local/share/muvid/projects/<song-stem>` (`$MUVID_DATA_HOME` relocates
+   the root). Only use somewhere else if the user names it.
+
+   This line used to say `~/muvid/<song-stem>`, and that is how 36 MB of a
+   real project — two generated song takes, three rendered videos, the
+   source texts — ended up in an app-named directory under `$HOME` that no
+   tool, deploy or backup owns. An app directory holds code and build
+   output; data lives under `~/.local/share/<project>/`. The command exists
+   so this instruction computes the path instead of restating it, because a
+   path restated in prose is a path that drifts from the code.
 2. `muvid init <root> --song <path>` — show the resulting folder.
 3. `muvid transcribe <root>` — show the draft `lyrics.md`.
 4. Pause. Tell the user: "Open `<root>/lyrics/lyrics.md`, fix any

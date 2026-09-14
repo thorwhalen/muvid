@@ -747,8 +747,25 @@ function is half the job.
 
 ## On-disk state — treat it as a migration surface
 
-Default root `~/.local/share/muvid`, overridable via `MUVID_DATA_HOME`
-(`muvid/footage/workspace.py:28,39-41`). Never inside the app/deploy tree.
+Default root `~/.local/share/muvid`, overridable via `MUVID_DATA_HOME`. **`muvid/paths.py`
+is the SSOT** — `data_home()`, `safe_component()` and `project_root()`; both workspace
+modules re-export the first two by name (`data_root` is public API of `muvid.mcp`) rather
+than carrying the verbatim copies they used to. Never inside the app/deploy tree.
+
+**Parts 3 and 4 had no default at all, and that is what actually leaked.** `root` is a
+required positional on every part-3 CLI verb and on `MusicVideoProject`, deliberately — a
+pipeline that guessed which project it was operating on would be worse than one that asks.
+But "required everywhere" meant no *code* answered where a NEW project should go, so the
+only written-down answer was prose in `.claude/skills/muvid/SKILL.md`, which said
+`~/muvid/<song-stem>`. An agent followed it literally and put 36 MB of a real project —
+two generated song takes, three rendered videos, the poem sources — in `~/muvid/il-pleut`,
+an app-named directory under `$HOME` that no tool, deploy or backup owns. The fix is
+`paths.project_root(name)` → `{root}/projects/{name}`, surfaced as `facade.default_project_root`
+and the `muvid project-root` verb, and the skill now *calls* it instead of restating a path.
+**A default stated in prose cannot be tested and drifts from the code; keep this one
+computed.** `tests/test_paths.py` pins the property (no default resolves directly under
+`$HOME`) rather than one bad string, and pins the skill text too, because a code-only fix
+would have left the sentence that caused it in place.
 
 ```
 {root}/music_video/projects/{email}/{project_id}/manifest.json   title, canvas, song, song_hash, clips

@@ -17,6 +17,7 @@ from muvid import compose as _compose
 from muvid import environments as _envs
 from muvid import events as _events
 from muvid import lyrics as _lyrics
+from muvid import paths as _paths
 from muvid import script as _script
 from muvid.project import MusicVideoProject
 from muvid.renderers import render_all as _render_all, render_shot as _render_shot
@@ -26,6 +27,21 @@ from muvid.schema import SectionSpec, ShotSpec
 def _fal_events_log(project: MusicVideoProject) -> Path:
     """Path to the per-project fal events JSONL."""
     return project.root / ".muvid" / "fal_events.jsonl"
+
+
+def default_project_root(name: str) -> str:
+    """Where a project called ``name`` belongs by default, as an absolute path.
+
+    ``root`` is a required positional on every other verb here and on
+    :class:`muvid.project.MusicVideoProject`, deliberately — a pipeline that guessed
+    which project it was operating on would be worse than one that asks. But "required
+    everywhere" left *no* code answering where a NEW project should go, so the only
+    written-down answer lived in prose (the ``muvid`` skill), said ``~/muvid/<song-stem>``,
+    and put a real project's 36 MB in an app-named directory under ``$HOME`` that nothing
+    owns. This is that answer in code, where it can be tested and where callers — the
+    skill, the CLI, a script — can *ask* instead of restating it. It creates nothing.
+    """
+    return str(_paths.project_root(name))
 
 
 def init_project(

@@ -15,6 +15,18 @@ def _print_json(obj):
     print(_json.dumps(obj, indent=2, default=str))
 
 
+def project_root(name: str) -> None:
+    """Print where a project called NAME belongs by default.
+
+    Use this instead of writing a path by hand:
+    ``muvid init "$(muvid project-root my-song)" --song ...``. It prints
+    ``~/.local/share/muvid/projects/NAME`` (``$MUVID_DATA_HOME`` relocates the root)
+    and creates nothing. An app-named directory under ``$HOME`` — ``~/muvid/...`` —
+    is never the answer: an app directory holds code, not data.
+    """
+    print(facade.default_project_root(name))
+
+
 def init(root: str, *, title: str = "", song: str = "") -> None:
     """Create a new music video project at ROOT (optionally with a song)."""
     out = facade.init_project(root, title=title, song=song or None)
@@ -237,6 +249,7 @@ def serve(root: str = ".", *, host: str = "127.0.0.1", port: int = 7800) -> None
 #: plain functions: the parser is derived from these signatures and docstrings,
 #: so the command surface cannot drift from what is defined above.
 COMMANDS = [
+    project_root,
     init,
     transcribe,
     align,
