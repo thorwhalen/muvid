@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.choreo.tools &mdash; muvid 0.0.62 documentation</title>
+  <title>muvid.choreo.tools &mdash; muvid 0.0.63 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=dea2dbc4"></script>
+      <script src="../../../_static/documentation_options.js?v=7ada5fdd"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -120,6 +120,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/montage/render.html">muvid.montage.render</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/montage/spec.html">muvid.montage.spec</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/montage/tools.html">muvid.montage.tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/paths.html">muvid.paths</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/project.html">muvid.project</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers.html">muvid.renderers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers/_common.html">muvid.renderers._common</a></li>
@@ -296,8 +297,12 @@
     <span class="n">raw</span> <span class="o">=</span> <span class="n">spec_mod</span><span class="o">.</span><span class="n">TreatmentSpec</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">treatment</span><span class="p">)</span>
     <span class="n">errors</span> <span class="o">=</span> <span class="n">spec_mod</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span>
     <span class="n">repaired</span><span class="p">,</span> <span class="n">notes</span> <span class="o">=</span> <span class="n">spec_mod</span><span class="o">.</span><span class="n">repair</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span>
-    <span class="k">return</span> <span class="p">{</span><span class="s2">"valid"</span><span class="p">:</span> <span class="ow">not</span> <span class="n">errors</span><span class="p">,</span> <span class="s2">"errors"</span><span class="p">:</span> <span class="n">errors</span><span class="p">,</span> <span class="s2">"repairs"</span><span class="p">:</span> <span class="n">notes</span><span class="p">,</span>
-            <span class="s2">"treatment"</span><span class="p">:</span> <span class="n">repaired</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()}</span></div>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">"valid"</span><span class="p">:</span> <span class="ow">not</span> <span class="n">errors</span><span class="p">,</span>
+        <span class="s2">"errors"</span><span class="p">:</span> <span class="n">errors</span><span class="p">,</span>
+        <span class="s2">"repairs"</span><span class="p">:</span> <span class="n">notes</span><span class="p">,</span>
+        <span class="s2">"treatment"</span><span class="p">:</span> <span class="n">repaired</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(),</span>
+    <span class="p">}</span></div>
 
 
 
@@ -331,15 +336,25 @@
     <span class="n">params</span> <span class="o">=</span> <span class="p">{</span>
         <span class="n">k</span><span class="p">:</span> <span class="n">v</span>
         <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="p">(</span>
-            <span class="p">(</span><span class="s2">"treatment"</span><span class="p">,</span> <span class="n">treatment</span><span class="p">),</span> <span class="p">(</span><span class="s2">"archetype"</span><span class="p">,</span> <span class="n">archetype</span><span class="p">),</span> <span class="p">(</span><span class="s2">"seed"</span><span class="p">,</span> <span class="n">seed</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"beat_source"</span><span class="p">,</span> <span class="n">beat_source</span><span class="p">),</span> <span class="p">(</span><span class="s2">"strict"</span><span class="p">,</span> <span class="n">strict</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"width"</span><span class="p">,</span> <span class="n">width</span><span class="p">),</span> <span class="p">(</span><span class="s2">"height"</span><span class="p">,</span> <span class="n">height</span><span class="p">),</span> <span class="p">(</span><span class="s2">"fps"</span><span class="p">,</span> <span class="n">fps</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">"treatment"</span><span class="p">,</span> <span class="n">treatment</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">"archetype"</span><span class="p">,</span> <span class="n">archetype</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">"seed"</span><span class="p">,</span> <span class="n">seed</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">"beat_source"</span><span class="p">,</span> <span class="n">beat_source</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">"strict"</span><span class="p">,</span> <span class="n">strict</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">"width"</span><span class="p">,</span> <span class="n">width</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">"height"</span><span class="p">,</span> <span class="n">height</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">"fps"</span><span class="p">,</span> <span class="n">fps</span><span class="p">),</span>
         <span class="p">)</span>
         <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
     <span class="p">}</span>
     <span class="n">result</span> <span class="o">=</span> <span class="n">_render</span><span class="p">(</span>
-        <span class="n">RenderRequest</span><span class="p">(</span><span class="n">subgenre</span><span class="o">=</span><span class="s2">"choreo"</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="n">inputs</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">,</span>
-                      <span class="n">workdir</span><span class="o">=</span><span class="n">wd</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="n">output</span><span class="p">))</span>
+        <span class="n">RenderRequest</span><span class="p">(</span>
+            <span class="n">subgenre</span><span class="o">=</span><span class="s2">"choreo"</span><span class="p">,</span>
+            <span class="n">inputs</span><span class="o">=</span><span class="n">inputs</span><span class="p">,</span>
+            <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">,</span>
+            <span class="n">workdir</span><span class="o">=</span><span class="n">wd</span><span class="p">,</span>
+            <span class="n">output</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="n">output</span><span class="p">),</span>
+        <span class="p">)</span>
     <span class="p">)</span>
     <span class="k">return</span> <span class="n">result</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span></div>
 

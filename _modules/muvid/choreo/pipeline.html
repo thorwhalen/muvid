@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.choreo.pipeline &mdash; muvid 0.0.62 documentation</title>
+  <title>muvid.choreo.pipeline &mdash; muvid 0.0.63 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=dea2dbc4"></script>
+      <script src="../../../_static/documentation_options.js?v=7ada5fdd"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -120,6 +120,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/montage/render.html">muvid.montage.render</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/montage/spec.html">muvid.montage.spec</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/montage/tools.html">muvid.montage.tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/paths.html">muvid.paths</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/project.html">muvid.project</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers.html">muvid.renderers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers/_common.html">muvid.renderers._common</a></li>
@@ -253,7 +254,9 @@
             <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">MAX_PIXELS</span><span class="si">}</span><span class="s2"> (MUVID_CHOREO_MAX_PIXELS)"</span>
         <span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="mi">1</span> <span class="o">&lt;=</span> <span class="n">canvas</span><span class="o">.</span><span class="n">fps</span> <span class="o">&lt;=</span> <span class="n">MAX_FPS</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"fps </span><span class="si">{</span><span class="n">canvas</span><span class="o">.</span><span class="n">fps</span><span class="si">}</span><span class="s2"> is outside 1..</span><span class="si">{</span><span class="n">MAX_FPS</span><span class="si">}</span><span class="s2"> (MUVID_CHOREO_MAX_FPS)"</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"fps </span><span class="si">{</span><span class="n">canvas</span><span class="o">.</span><span class="n">fps</span><span class="si">}</span><span class="s2"> is outside 1..</span><span class="si">{</span><span class="n">MAX_FPS</span><span class="si">}</span><span class="s2"> (MUVID_CHOREO_MAX_FPS)"</span>
+        <span class="p">)</span>
     <span class="k">if</span> <span class="n">duration_s</span> <span class="o">&gt;</span> <span class="n">MAX_DURATION_S</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">"audio is </span><span class="si">{</span><span class="n">duration_s</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2">s; the render limit is </span><span class="si">{</span><span class="n">MAX_DURATION_S</span><span class="si">}</span><span class="s2">s "</span>
@@ -294,7 +297,9 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_hex</span><span class="p">(</span><span class="n">rgb</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-    <span class="k">return</span> <span class="s2">"#"</span> <span class="o">+</span> <span class="s2">""</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span><span class="w"> </span><span class="nb">max</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="nb">float</span><span class="p">(</span><span class="n">c</span><span class="p">)))</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">255</span><span class="p">))</span><span class="si">:</span><span class="s2">02x</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">rgb</span><span class="p">)</span>
+    <span class="k">return</span> <span class="s2">"#"</span> <span class="o">+</span> <span class="s2">""</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span><span class="w"> </span><span class="nb">max</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="nb">float</span><span class="p">(</span><span class="n">c</span><span class="p">)))</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">255</span><span class="p">))</span><span class="si">:</span><span class="s2">02x</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">rgb</span>
+    <span class="p">)</span>
 
 
 <div class="viewcode-block" id="palette_from_cover">
@@ -317,25 +322,47 @@
     <span class="n">workdir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">raw</span> <span class="o">=</span> <span class="n">workdir</span> <span class="o">/</span> <span class="s2">"cover_thumb.rgb"</span>
     <span class="n">n</span> <span class="o">=</span> <span class="n">_PALETTE_THUMB</span>
-    <span class="n">run_ffmpeg</span><span class="p">([</span>
-        <span class="s2">"-i"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">cover</span><span class="p">),</span> <span class="s2">"-frames:v"</span><span class="p">,</span> <span class="s2">"1"</span><span class="p">,</span> <span class="s2">"-vf"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"scale=</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
-        <span class="s2">"-f"</span><span class="p">,</span> <span class="s2">"rawvideo"</span><span class="p">,</span> <span class="s2">"-pix_fmt"</span><span class="p">,</span> <span class="s2">"rgb24"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">raw</span><span class="p">),</span>
-    <span class="p">])</span>
-    <span class="n">px</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">frombuffer</span><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">read_bytes</span><span class="p">(),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span> <span class="o">/</span> <span class="mf">255.0</span>
+    <span class="n">run_ffmpeg</span><span class="p">(</span>
+        <span class="p">[</span>
+            <span class="s2">"-i"</span><span class="p">,</span>
+            <span class="nb">str</span><span class="p">(</span><span class="n">cover</span><span class="p">),</span>
+            <span class="s2">"-frames:v"</span><span class="p">,</span>
+            <span class="s2">"1"</span><span class="p">,</span>
+            <span class="s2">"-vf"</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">"scale=</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="s2">"-f"</span><span class="p">,</span>
+            <span class="s2">"rawvideo"</span><span class="p">,</span>
+            <span class="s2">"-pix_fmt"</span><span class="p">,</span>
+            <span class="s2">"rgb24"</span><span class="p">,</span>
+            <span class="nb">str</span><span class="p">(</span><span class="n">raw</span><span class="p">),</span>
+        <span class="p">]</span>
+    <span class="p">)</span>
+    <span class="n">px</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">frombuffer</span><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">read_bytes</span><span class="p">(),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+        <span class="o">/</span> <span class="mf">255.0</span>
+    <span class="p">)</span>
     <span class="n">lum</span> <span class="o">=</span> <span class="n">px</span> <span class="o">@</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.2126</span><span class="p">,</span> <span class="mf">0.7152</span><span class="p">,</span> <span class="mf">0.0722</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
     <span class="n">order</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">lum</span><span class="p">)</span>
     <span class="n">q</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">px</span><span class="p">)</span> <span class="o">//</span> <span class="mi">4</span><span class="p">)</span>
     <span class="n">bg</span> <span class="o">=</span> <span class="n">px</span><span class="p">[</span><span class="n">order</span><span class="p">[:</span><span class="n">q</span><span class="p">]]</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.6</span>
-    <span class="n">bg2</span> <span class="o">=</span> <span class="n">px</span><span class="p">[</span><span class="n">order</span><span class="p">[</span><span class="n">q</span><span class="p">:</span><span class="mi">2</span> <span class="o">*</span> <span class="n">q</span><span class="p">]]</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.75</span>
-    <span class="n">fg</span> <span class="o">=</span> <span class="n">px</span><span class="p">[</span><span class="n">order</span><span class="p">[</span><span class="o">-</span><span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">px</span><span class="p">)</span> <span class="o">//</span> <span class="mi">8</span><span class="p">):]]</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">bg2</span> <span class="o">=</span> <span class="n">px</span><span class="p">[</span><span class="n">order</span><span class="p">[</span><span class="n">q</span> <span class="p">:</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">q</span><span class="p">]]</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.75</span>
+    <span class="n">fg</span> <span class="o">=</span> <span class="n">px</span><span class="p">[</span><span class="n">order</span><span class="p">[</span><span class="o">-</span><span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">px</span><span class="p">)</span> <span class="o">//</span> <span class="mi">8</span><span class="p">)</span> <span class="p">:]]</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
     <span class="n">fg</span> <span class="o">=</span> <span class="n">fg</span> <span class="o">+</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">fg</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.6</span>
     <span class="n">sat</span> <span class="o">=</span> <span class="p">(</span><span class="n">px</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="n">px</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">px</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span> <span class="mf">1e-6</span><span class="p">)</span>
     <span class="n">accent</span> <span class="o">=</span> <span class="n">px</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">sat</span> <span class="o">*</span> <span class="p">(</span><span class="mf">0.3</span> <span class="o">+</span> <span class="n">lum</span><span class="p">)))]</span>
     <span class="n">h</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">v</span> <span class="o">=</span> <span class="n">colorsys</span><span class="o">.</span><span class="n">rgb_to_hsv</span><span class="p">(</span><span class="o">*</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">accent</span><span class="p">))</span>
     <span class="n">s</span><span class="p">,</span> <span class="n">v</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="mf">0.55</span><span class="p">),</span> <span class="nb">max</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="mf">0.85</span><span class="p">)</span>
     <span class="n">low</span><span class="p">,</span> <span class="n">mid</span><span class="p">,</span> <span class="n">high</span> <span class="o">=</span> <span class="p">(</span><span class="n">colorsys</span><span class="o">.</span><span class="n">hsv_to_rgb</span><span class="p">((</span><span class="n">h</span> <span class="o">+</span> <span class="n">k</span> <span class="o">/</span> <span class="mi">3</span><span class="p">)</span> <span class="o">%</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
-    <span class="k">return</span> <span class="n">spec_mod</span><span class="o">.</span><span class="n">Palette</span><span class="p">(</span><span class="n">bg</span><span class="o">=</span><span class="n">_hex</span><span class="p">(</span><span class="n">bg</span><span class="p">),</span> <span class="n">bg2</span><span class="o">=</span><span class="n">_hex</span><span class="p">(</span><span class="n">bg2</span><span class="p">),</span> <span class="n">fg</span><span class="o">=</span><span class="n">_hex</span><span class="p">(</span><span class="n">fg</span><span class="p">),</span>
-                            <span class="n">low</span><span class="o">=</span><span class="n">_hex</span><span class="p">(</span><span class="n">low</span><span class="p">),</span> <span class="n">mid</span><span class="o">=</span><span class="n">_hex</span><span class="p">(</span><span class="n">mid</span><span class="p">),</span> <span class="n">high</span><span class="o">=</span><span class="n">_hex</span><span class="p">(</span><span class="n">high</span><span class="p">))</span></div>
+    <span class="k">return</span> <span class="n">spec_mod</span><span class="o">.</span><span class="n">Palette</span><span class="p">(</span>
+        <span class="n">bg</span><span class="o">=</span><span class="n">_hex</span><span class="p">(</span><span class="n">bg</span><span class="p">),</span>
+        <span class="n">bg2</span><span class="o">=</span><span class="n">_hex</span><span class="p">(</span><span class="n">bg2</span><span class="p">),</span>
+        <span class="n">fg</span><span class="o">=</span><span class="n">_hex</span><span class="p">(</span><span class="n">fg</span><span class="p">),</span>
+        <span class="n">low</span><span class="o">=</span><span class="n">_hex</span><span class="p">(</span><span class="n">low</span><span class="p">),</span>
+        <span class="n">mid</span><span class="o">=</span><span class="n">_hex</span><span class="p">(</span><span class="n">mid</span><span class="p">),</span>
+        <span class="n">high</span><span class="o">=</span><span class="n">_hex</span><span class="p">(</span><span class="n">high</span><span class="p">),</span>
+    <span class="p">)</span></div>
 
 
 
@@ -344,7 +371,9 @@
 <span class="c1"># --------------------------------------------------------------------------</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_resolve_treatment</span><span class="p">(</span><span class="n">params</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">spec_mod</span><span class="o">.</span><span class="n">TreatmentSpec</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_resolve_treatment</span><span class="p">(</span>
+    <span class="n">params</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">spec_mod</span><span class="o">.</span><span class="n">TreatmentSpec</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">"""``(treatment, repair_notes, source, palette_was_given)``."""</span>
     <span class="n">raw</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"treatment"</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">raw</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -355,10 +384,15 @@
             <span class="p">)</span>
         <span class="k">return</span> <span class="n">spec_mod</span><span class="o">.</span><span class="n">default_treatment</span><span class="p">(</span><span class="n">archetype</span><span class="p">),</span> <span class="p">[],</span> <span class="s2">"archetype"</span><span class="p">,</span> <span class="kc">False</span>
     <span class="n">treatment</span><span class="p">,</span> <span class="n">notes</span> <span class="o">=</span> <span class="n">spec_mod</span><span class="o">.</span><span class="n">coerce</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span>
-    <span class="n">palette_given</span> <span class="o">=</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"direction"</span><span class="p">),</span> <span class="n">Mapping</span><span class="p">)</span> \
+    <span class="n">palette_given</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="nb">isinstance</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">)</span>
+        <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"direction"</span><span class="p">),</span> <span class="n">Mapping</span><span class="p">)</span>
         <span class="ow">and</span> <span class="nb">bool</span><span class="p">(</span><span class="n">raw</span><span class="p">[</span><span class="s2">"direction"</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"palette"</span><span class="p">))</span>
+    <span class="p">)</span>
     <span class="k">if</span> <span class="n">params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"strict"</span><span class="p">)</span> <span class="ow">and</span> <span class="n">notes</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"treatment needed repairs and strict=True: "</span> <span class="o">+</span> <span class="s2">"; "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">notes</span><span class="p">))</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">"treatment needed repairs and strict=True: "</span> <span class="o">+</span> <span class="s2">"; "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">notes</span><span class="p">)</span>
+        <span class="p">)</span>
     <span class="k">return</span> <span class="n">treatment</span><span class="p">,</span> <span class="n">notes</span><span class="p">,</span> <span class="s2">"supplied"</span><span class="p">,</span> <span class="n">palette_given</span>
 
 
@@ -399,7 +433,9 @@
 
     <span class="n">seed</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"seed"</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
     <span class="n">beat_source</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"beat_source"</span><span class="p">,</span> <span class="s2">"auto"</span><span class="p">))</span>
-    <span class="n">treatment</span><span class="p">,</span> <span class="n">repair_notes</span><span class="p">,</span> <span class="n">treatment_source</span><span class="p">,</span> <span class="n">palette_given</span> <span class="o">=</span> <span class="n">_resolve_treatment</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
+    <span class="n">treatment</span><span class="p">,</span> <span class="n">repair_notes</span><span class="p">,</span> <span class="n">treatment_source</span><span class="p">,</span> <span class="n">palette_given</span> <span class="o">=</span> <span class="n">_resolve_treatment</span><span class="p">(</span>
+        <span class="n">params</span>
+    <span class="p">)</span>
 
     <span class="n">request</span><span class="o">.</span><span class="n">workdir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">request</span><span class="o">.</span><span class="n">output</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -407,7 +443,9 @@
     <span class="n">palette_source</span> <span class="o">=</span> <span class="s2">"treatment"</span> <span class="k">if</span> <span class="n">palette_given</span> <span class="k">else</span> <span class="s2">"default"</span>
     <span class="k">if</span> <span class="n">cover</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">palette_given</span><span class="p">:</span>
         <span class="n">palette</span> <span class="o">=</span> <span class="n">palette_from_cover</span><span class="p">(</span><span class="n">cover</span><span class="p">,</span> <span class="n">workdir</span><span class="o">=</span><span class="n">request</span><span class="o">.</span><span class="n">workdir</span><span class="p">)</span>
-        <span class="n">treatment</span> <span class="o">=</span> <span class="n">replace</span><span class="p">(</span><span class="n">treatment</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="n">replace</span><span class="p">(</span><span class="n">treatment</span><span class="o">.</span><span class="n">direction</span><span class="p">,</span> <span class="n">palette</span><span class="o">=</span><span class="n">palette</span><span class="p">))</span>
+        <span class="n">treatment</span> <span class="o">=</span> <span class="n">replace</span><span class="p">(</span>
+            <span class="n">treatment</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="n">replace</span><span class="p">(</span><span class="n">treatment</span><span class="o">.</span><span class="n">direction</span><span class="p">,</span> <span class="n">palette</span><span class="o">=</span><span class="n">palette</span><span class="p">)</span>
+        <span class="p">)</span>
         <span class="n">palette_source</span> <span class="o">=</span> <span class="s2">"cover"</span>
 
     <span class="n">analysis</span> <span class="o">=</span> <span class="n">analyze</span><span class="p">(</span><span class="n">audio</span><span class="p">,</span> <span class="n">beat_source</span><span class="o">=</span><span class="n">beat_source</span><span class="p">)</span>
@@ -424,7 +462,9 @@
 
     <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.choreo.render</span><span class="w"> </span><span class="kn">import</span> <span class="n">render_scene</span>
 
-    <span class="n">rendered</span> <span class="o">=</span> <span class="n">render_scene</span><span class="p">(</span><span class="n">scene</span><span class="p">,</span> <span class="n">audio</span><span class="o">=</span><span class="n">audio</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="n">request</span><span class="o">.</span><span class="n">output</span><span class="p">,</span> <span class="n">workdir</span><span class="o">=</span><span class="n">request</span><span class="o">.</span><span class="n">workdir</span><span class="p">)</span>
+    <span class="n">rendered</span> <span class="o">=</span> <span class="n">render_scene</span><span class="p">(</span>
+        <span class="n">scene</span><span class="p">,</span> <span class="n">audio</span><span class="o">=</span><span class="n">audio</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="n">request</span><span class="o">.</span><span class="n">output</span><span class="p">,</span> <span class="n">workdir</span><span class="o">=</span><span class="n">request</span><span class="o">.</span><span class="n">workdir</span>
+    <span class="p">)</span>
 
     <span class="n">meta</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
         <span class="s2">"archetypes"</span><span class="p">:</span> <span class="n">scene</span><span class="o">.</span><span class="n">meta</span><span class="p">[</span><span class="s2">"archetypes"</span><span class="p">],</span>
@@ -447,7 +487,11 @@
     <span class="k">return</span> <span class="n">RenderResult</span><span class="p">(</span>
         <span class="n">output</span><span class="o">=</span><span class="n">rendered</span><span class="o">.</span><span class="n">output</span><span class="p">,</span>
         <span class="n">duration_s</span><span class="o">=</span><span class="n">rendered</span><span class="o">.</span><span class="n">duration_s</span><span class="p">,</span>
-        <span class="n">artifacts</span><span class="o">=</span><span class="p">{</span><span class="s2">"events"</span><span class="p">:</span> <span class="n">events_path</span><span class="p">,</span> <span class="s2">"scene"</span><span class="p">:</span> <span class="n">scene_path</span><span class="p">,</span> <span class="s2">"treatment"</span><span class="p">:</span> <span class="n">treatment_path</span><span class="p">},</span>
+        <span class="n">artifacts</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">"events"</span><span class="p">:</span> <span class="n">events_path</span><span class="p">,</span>
+            <span class="s2">"scene"</span><span class="p">:</span> <span class="n">scene_path</span><span class="p">,</span>
+            <span class="s2">"treatment"</span><span class="p">:</span> <span class="n">treatment_path</span><span class="p">,</span>
+        <span class="p">},</span>
         <span class="n">meta</span><span class="o">=</span><span class="n">meta</span><span class="p">,</span>
     <span class="p">)</span></div>
 

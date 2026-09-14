@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.montage.analysis &mdash; muvid 0.0.62 documentation</title>
+  <title>muvid.montage.analysis &mdash; muvid 0.0.63 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=dea2dbc4"></script>
+      <script src="../../../_static/documentation_options.js?v=7ada5fdd"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -120,6 +120,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/montage/render.html">muvid.montage.render</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/montage/spec.html">muvid.montage.spec</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/montage/tools.html">muvid.montage.tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/paths.html">muvid.paths</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/project.html">muvid.project</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers.html">muvid.renderers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers/_common.html">muvid.renderers._common</a></li>
@@ -293,9 +294,13 @@
 
     <span class="k">def</span><span class="w"> </span><span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
         <span class="k">return</span> <span class="p">{</span>
-            <span class="s2">"index"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="s2">"path"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="s2">"kind"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span><span class="p">,</span>
-            <span class="s2">"width"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">width</span><span class="p">,</span> <span class="s2">"height"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">height</span><span class="p">,</span>
-            <span class="s2">"duration"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">duration</span><span class="p">,</span> <span class="s2">"strength"</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">strength</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span>
+            <span class="s2">"index"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="p">,</span>
+            <span class="s2">"path"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span>
+            <span class="s2">"kind"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span><span class="p">,</span>
+            <span class="s2">"width"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">width</span><span class="p">,</span>
+            <span class="s2">"height"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">height</span><span class="p">,</span>
+            <span class="s2">"duration"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">duration</span><span class="p">,</span>
+            <span class="s2">"strength"</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">strength</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span>
         <span class="p">}</span></div>
 
 
@@ -331,8 +336,12 @@
             <span class="s2">"beats"</span><span class="p">:</span> <span class="p">[</span><span class="nb">round</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">beats</span><span class="p">],</span>
             <span class="s2">"downbeats"</span><span class="p">:</span> <span class="p">[</span><span class="nb">round</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">downbeats</span><span class="p">],</span>
             <span class="s2">"sections"</span><span class="p">:</span> <span class="p">[</span>
-                <span class="p">{</span><span class="s2">"label"</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">label</span><span class="p">,</span> <span class="s2">"start"</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">start</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span> <span class="s2">"end"</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">end</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span>
-                 <span class="s2">"energy_db"</span><span class="p">:</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">energy_db</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">round</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">energy_db</span><span class="p">,</span> <span class="mi">2</span><span class="p">)}</span>
+                <span class="p">{</span>
+                    <span class="s2">"label"</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">label</span><span class="p">,</span>
+                    <span class="s2">"start"</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">start</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span>
+                    <span class="s2">"end"</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">end</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span>
+                    <span class="s2">"energy_db"</span><span class="p">:</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">energy_db</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">round</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">energy_db</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>
+                <span class="p">}</span>
                 <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sections</span>
             <span class="p">],</span>
             <span class="s2">"beat_source"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">beat_source</span><span class="p">,</span>
@@ -475,7 +484,9 @@
         <span class="n">k</span> <span class="o">+=</span> <span class="mi">1</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">ks</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">4</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">period</span><span class="p">,</span> <span class="n">phi</span>
-    <span class="n">slope</span><span class="p">,</span> <span class="n">intercept</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">polyfit</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">ks</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">fs</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">),</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">slope</span><span class="p">,</span> <span class="n">intercept</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">polyfit</span><span class="p">(</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">ks</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">fs</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">),</span> <span class="mi">1</span>
+    <span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="mf">0.5</span> <span class="o">*</span> <span class="n">period</span> <span class="o">&lt;</span> <span class="n">slope</span> <span class="o">&lt;</span> <span class="mf">1.5</span> <span class="o">*</span> <span class="n">period</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">period</span><span class="p">,</span> <span class="n">phi</span>
     <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">slope</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">intercept</span><span class="p">)</span>
@@ -492,7 +503,10 @@
         <span class="n">beat_s</span> <span class="o">=</span> <span class="mf">60.0</span> <span class="o">/</span> <span class="n">FALLBACK_BPM</span>
         <span class="n">beats</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">duration</span><span class="p">,</span> <span class="n">beat_s</span><span class="p">)</span>
         <span class="k">return</span> <span class="p">(</span>
-            <span class="n">beats</span><span class="p">,</span> <span class="n">FALLBACK_BPM</span><span class="p">,</span> <span class="n">o</span><span class="p">,</span> <span class="n">hop_s</span><span class="p">,</span>
+            <span class="n">beats</span><span class="p">,</span>
+            <span class="n">FALLBACK_BPM</span><span class="p">,</span>
+            <span class="n">o</span><span class="p">,</span>
+            <span class="n">hop_s</span><span class="p">,</span>
             <span class="sa">f</span><span class="s2">"no periodicity found (peak </span><span class="si">{</span><span class="n">periodicity</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">); fixed </span><span class="si">{</span><span class="n">FALLBACK_BPM</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2"> BPM grid from 0"</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="n">period</span><span class="p">,</span> <span class="n">phi</span> <span class="o">=</span> <span class="n">_refine_grid</span><span class="p">(</span><span class="n">o</span><span class="p">,</span> <span class="n">period</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">_beat_phase</span><span class="p">(</span><span class="n">o</span><span class="p">,</span> <span class="n">period</span><span class="p">)))</span>
@@ -546,18 +560,34 @@
                 <span class="c1"># reported, not hidden — and the numpy path gets its turn.</span>
                 <span class="n">note</span> <span class="o">=</span> <span class="s2">"mixing.audio.beat_grid found no beats"</span>
                 <span class="k">if</span> <span class="n">source</span> <span class="o">==</span> <span class="s2">"mixing"</span><span class="p">:</span>
-                    <span class="k">return</span> <span class="n">beats</span><span class="p">,</span> <span class="n">tempo</span> <span class="ow">or</span> <span class="n">FALLBACK_BPM</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">bg</span><span class="o">.</span><span class="n">onset_env</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span>
-                        <span class="n">bg</span><span class="o">.</span><span class="n">onset_hop_s</span>
-                    <span class="p">),</span> <span class="s2">"mixing.audio.beat_grid"</span><span class="p">,</span> <span class="n">note</span>
+                    <span class="k">return</span> <span class="p">(</span>
+                        <span class="n">beats</span><span class="p">,</span>
+                        <span class="n">tempo</span> <span class="ow">or</span> <span class="n">FALLBACK_BPM</span><span class="p">,</span>
+                        <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">bg</span><span class="o">.</span><span class="n">onset_env</span><span class="p">),</span>
+                        <span class="nb">float</span><span class="p">(</span><span class="n">bg</span><span class="o">.</span><span class="n">onset_hop_s</span><span class="p">),</span>
+                        <span class="s2">"mixing.audio.beat_grid"</span><span class="p">,</span>
+                        <span class="n">note</span><span class="p">,</span>
+                    <span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="k">return</span> <span class="p">(</span>
-                    <span class="n">beats</span><span class="p">,</span> <span class="n">tempo</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">bg</span><span class="o">.</span><span class="n">onset_env</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">),</span>
-                    <span class="nb">float</span><span class="p">(</span><span class="n">bg</span><span class="o">.</span><span class="n">onset_hop_s</span><span class="p">),</span> <span class="s2">"mixing.audio.beat_grid (librosa)"</span><span class="p">,</span> <span class="s2">""</span><span class="p">,</span>
+                    <span class="n">beats</span><span class="p">,</span>
+                    <span class="n">tempo</span><span class="p">,</span>
+                    <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">bg</span><span class="o">.</span><span class="n">onset_env</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">),</span>
+                    <span class="nb">float</span><span class="p">(</span><span class="n">bg</span><span class="o">.</span><span class="n">onset_hop_s</span><span class="p">),</span>
+                    <span class="s2">"mixing.audio.beat_grid (librosa)"</span><span class="p">,</span>
+                    <span class="s2">""</span><span class="p">,</span>
                 <span class="p">)</span>
 
     <span class="n">x</span> <span class="o">=</span> <span class="n">_pcm</span><span class="p">(</span><span class="n">audio</span><span class="p">,</span> <span class="n">ANALYSIS_SR</span><span class="p">)</span>
     <span class="n">beats</span><span class="p">,</span> <span class="n">tempo</span><span class="p">,</span> <span class="n">o</span><span class="p">,</span> <span class="n">hop_s</span><span class="p">,</span> <span class="n">note</span> <span class="o">=</span> <span class="n">_numpy_beats</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">ANALYSIS_SR</span><span class="p">,</span> <span class="n">duration</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">beats</span><span class="p">,</span> <span class="n">tempo</span><span class="p">,</span> <span class="n">o</span><span class="p">,</span> <span class="n">hop_s</span><span class="p">,</span> <span class="s2">"muvid.montage.analysis (numpy onset autocorrelation, fixed tempo)"</span><span class="p">,</span> <span class="n">note</span></div>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="n">beats</span><span class="p">,</span>
+        <span class="n">tempo</span><span class="p">,</span>
+        <span class="n">o</span><span class="p">,</span>
+        <span class="n">hop_s</span><span class="p">,</span>
+        <span class="s2">"muvid.montage.analysis (numpy onset autocorrelation, fixed tempo)"</span><span class="p">,</span>
+        <span class="n">note</span><span class="p">,</span>
+    <span class="p">)</span></div>
 
 
 
@@ -692,11 +722,13 @@
         <span class="k">return</span> <span class="p">(</span><span class="n">Section</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">"verse"</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="n">duration</span><span class="p">),)</span>
     <span class="k">if</span> <span class="n">n</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">energy</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2"> bars but </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">energy</span><span class="p">)</span><span class="si">}</span><span class="s2"> energy values"</span><span class="p">)</span>
-    <span class="n">lo</span><span class="p">,</span> <span class="n">hi</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">energy</span><span class="p">)[</span><span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">n</span> <span class="o">//</span> <span class="mi">10</span><span class="p">)],</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">energy</span><span class="p">)[</span><span class="nb">min</span><span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">n</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">n</span> <span class="o">//</span> <span class="mi">10</span><span class="p">)]</span>
+    <span class="n">lo</span><span class="p">,</span> <span class="n">hi</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="nb">sorted</span><span class="p">(</span><span class="n">energy</span><span class="p">)[</span><span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">n</span> <span class="o">//</span> <span class="mi">10</span><span class="p">)],</span>
+        <span class="nb">sorted</span><span class="p">(</span><span class="n">energy</span><span class="p">)[</span><span class="nb">min</span><span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">n</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">n</span> <span class="o">//</span> <span class="mi">10</span><span class="p">)],</span>
+    <span class="p">)</span>
     <span class="k">if</span> <span class="n">hi</span> <span class="o">-</span> <span class="n">lo</span> <span class="o">&lt;</span> <span class="n">FLAT_RANGE_DB</span> <span class="ow">or</span> <span class="n">n</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">(</span>
-            <span class="n">Section</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">"verse"</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="n">duration</span><span class="p">,</span>
-                    <span class="n">energy_db</span><span class="o">=</span><span class="nb">sum</span><span class="p">(</span><span class="n">energy</span><span class="p">)</span> <span class="o">/</span> <span class="n">n</span><span class="p">),</span>
+            <span class="n">Section</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">"verse"</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="n">duration</span><span class="p">,</span> <span class="n">energy_db</span><span class="o">=</span><span class="nb">sum</span><span class="p">(</span><span class="n">energy</span><span class="p">)</span> <span class="o">/</span> <span class="n">n</span><span class="p">),</span>
         <span class="p">)</span>
     <span class="n">threshold</span> <span class="o">=</span> <span class="n">_two_means_threshold</span><span class="p">(</span><span class="n">energy</span><span class="p">)</span>
     <span class="n">loud</span> <span class="o">=</span> <span class="p">[</span><span class="n">v</span> <span class="o">&gt;</span> <span class="n">threshold</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">energy</span><span class="p">]</span>
@@ -724,7 +756,12 @@
         <span class="n">label</span> <span class="o">=</span> <span class="s2">"chorus"</span> <span class="k">if</span> <span class="n">is_loud</span> <span class="k">else</span> <span class="s2">"verse"</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">is_loud</span> <span class="ow">and</span> <span class="n">k</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">runs</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">run</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">MAX_INTRO_BARS</span><span class="p">:</span>
             <span class="n">label</span> <span class="o">=</span> <span class="s2">"intro"</span>
-        <span class="k">elif</span> <span class="ow">not</span> <span class="n">is_loud</span> <span class="ow">and</span> <span class="n">k</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">runs</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">runs</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">run</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">MAX_INTRO_BARS</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="p">(</span>
+            <span class="ow">not</span> <span class="n">is_loud</span>
+            <span class="ow">and</span> <span class="n">k</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">runs</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+            <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">runs</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span>
+            <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">run</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">MAX_INTRO_BARS</span>
+        <span class="p">):</span>
             <span class="n">label</span> <span class="o">=</span> <span class="s2">"outro"</span>
         <span class="n">sections</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
             <span class="n">Section</span><span class="p">(</span>
@@ -815,8 +852,11 @@
         <span class="k">if</span> <span class="n">near</span> <span class="ow">and</span> <span class="n">median_gap</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">tempo</span> <span class="o">=</span> <span class="mf">60.0</span> <span class="o">/</span> <span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">near</span><span class="p">)</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">near</span><span class="p">))</span>
     <span class="n">onset_env</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">onset_env</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
-    <span class="n">idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">beat_list</span><span class="p">)</span> <span class="o">/</span> <span class="nb">max</span><span class="p">(</span><span class="n">hop_s</span><span class="p">,</span> <span class="mf">1e-9</span><span class="p">))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span>
-                  <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">onset_env</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="n">idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">beat_list</span><span class="p">)</span> <span class="o">/</span> <span class="nb">max</span><span class="p">(</span><span class="n">hop_s</span><span class="p">,</span> <span class="mf">1e-9</span><span class="p">))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">),</span>
+        <span class="mi">0</span><span class="p">,</span>
+        <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">onset_env</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">),</span>
+    <span class="p">)</span>
     <span class="n">onset_at_beats</span> <span class="o">=</span> <span class="n">onset_env</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">onset_env</span><span class="p">)</span> <span class="ow">and</span> <span class="n">beat_list</span> <span class="k">else</span> <span class="p">[]</span>
     <span class="n">downbeats</span> <span class="o">=</span> <span class="n">downbeats_from_beats</span><span class="p">(</span><span class="n">beat_list</span><span class="p">,</span> <span class="n">onset_at_beats</span><span class="p">,</span> <span class="n">beats_per_bar</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">beat_list</span> <span class="ow">and</span> <span class="n">duration</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
@@ -866,9 +906,23 @@
 
     <span class="n">seek</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"-ss"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">at_s</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">"</span><span class="p">]</span> <span class="k">if</span> <span class="n">at_s</span> <span class="k">else</span> <span class="p">[]</span>
     <span class="n">proc</span> <span class="o">=</span> <span class="n">_run_bounded</span><span class="p">(</span>
-        <span class="p">[</span><span class="s2">"ffmpeg"</span><span class="p">,</span> <span class="s2">"-v"</span><span class="p">,</span> <span class="s2">"error"</span><span class="p">,</span> <span class="o">*</span><span class="n">seek</span><span class="p">,</span> <span class="s2">"-i"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">),</span> <span class="s2">"-frames:v"</span><span class="p">,</span> <span class="s2">"1"</span><span class="p">,</span>
-         <span class="s2">"-vf"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"scale=</span><span class="si">{</span><span class="n">STRENGTH_THUMB</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">STRENGTH_THUMB</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
-         <span class="s2">"-f"</span><span class="p">,</span> <span class="s2">"rawvideo"</span><span class="p">,</span> <span class="s2">"-pix_fmt"</span><span class="p">,</span> <span class="s2">"gray"</span><span class="p">,</span> <span class="s2">"-"</span><span class="p">],</span>
+        <span class="p">[</span>
+            <span class="s2">"ffmpeg"</span><span class="p">,</span>
+            <span class="s2">"-v"</span><span class="p">,</span>
+            <span class="s2">"error"</span><span class="p">,</span>
+            <span class="o">*</span><span class="n">seek</span><span class="p">,</span>
+            <span class="s2">"-i"</span><span class="p">,</span>
+            <span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">),</span>
+            <span class="s2">"-frames:v"</span><span class="p">,</span>
+            <span class="s2">"1"</span><span class="p">,</span>
+            <span class="s2">"-vf"</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">"scale=</span><span class="si">{</span><span class="n">STRENGTH_THUMB</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">STRENGTH_THUMB</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="s2">"-f"</span><span class="p">,</span>
+            <span class="s2">"rawvideo"</span><span class="p">,</span>
+            <span class="s2">"-pix_fmt"</span><span class="p">,</span>
+            <span class="s2">"gray"</span><span class="p">,</span>
+            <span class="s2">"-"</span><span class="p">,</span>
+        <span class="p">],</span>
         <span class="n">text</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">raw</span> <span class="o">=</span> <span class="n">proc</span><span class="o">.</span><span class="n">stdout</span> <span class="ow">or</span> <span class="sa">b</span><span class="s2">""</span>
@@ -923,8 +977,12 @@
         <span class="p">)</span>
         <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
             <span class="n">Media</span><span class="p">(</span>
-                <span class="n">index</span><span class="o">=</span><span class="n">start_index</span> <span class="o">+</span> <span class="n">i</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">),</span> <span class="n">kind</span><span class="o">=</span><span class="n">kind</span><span class="p">,</span>
-                <span class="n">width</span><span class="o">=</span><span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="n">height</span><span class="p">,</span> <span class="n">duration</span><span class="o">=</span><span class="n">duration</span><span class="p">,</span>
+                <span class="n">index</span><span class="o">=</span><span class="n">start_index</span> <span class="o">+</span> <span class="n">i</span><span class="p">,</span>
+                <span class="n">path</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">),</span>
+                <span class="n">kind</span><span class="o">=</span><span class="n">kind</span><span class="p">,</span>
+                <span class="n">width</span><span class="o">=</span><span class="n">width</span><span class="p">,</span>
+                <span class="n">height</span><span class="o">=</span><span class="n">height</span><span class="p">,</span>
+                <span class="n">duration</span><span class="o">=</span><span class="n">duration</span><span class="p">,</span>
                 <span class="n">strength</span><span class="o">=</span><span class="n">strength_of</span><span class="p">(</span><span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">,</span> <span class="n">contrast</span><span class="p">),</span>
             <span class="p">)</span>
         <span class="p">)</span>

@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.montage.render &mdash; muvid 0.0.62 documentation</title>
+  <title>muvid.montage.render &mdash; muvid 0.0.63 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=dea2dbc4"></script>
+      <script src="../../../_static/documentation_options.js?v=7ada5fdd"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -120,6 +120,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/montage/render.html">muvid.montage.render</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/montage/spec.html">muvid.montage.spec</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/montage/tools.html">muvid.montage.tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/paths.html">muvid.paths</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/project.html">muvid.project</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers.html">muvid.renderers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers/_common.html">muvid.renderers._common</a></li>
@@ -332,12 +333,15 @@
 <span class="sd">    """</span>
     <span class="n">slots</span> <span class="o">=</span> <span class="n">plan</span><span class="o">.</span><span class="n">slots</span>
     <span class="n">bounds</span><span class="p">,</span> <span class="n">n_t</span> <span class="o">=</span> <span class="n">frame_layout</span><span class="p">(</span>
-        <span class="p">[</span><span class="n">s</span><span class="o">.</span><span class="n">start</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">slots</span><span class="p">],</span> <span class="n">plan</span><span class="o">.</span><span class="n">duration</span><span class="p">,</span>
-        <span class="p">[</span><span class="n">s</span><span class="o">.</span><span class="n">transition_s</span> <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">transition</span> <span class="o">!=</span> <span class="s2">"cut"</span> <span class="k">else</span> <span class="mf">0.0</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">slots</span><span class="p">],</span> <span class="n">fps</span><span class="p">,</span>
+        <span class="p">[</span><span class="n">s</span><span class="o">.</span><span class="n">start</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">slots</span><span class="p">],</span>
+        <span class="n">plan</span><span class="o">.</span><span class="n">duration</span><span class="p">,</span>
+        <span class="p">[</span><span class="n">s</span><span class="o">.</span><span class="n">transition_s</span> <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">transition</span> <span class="o">!=</span> <span class="s2">"cut"</span> <span class="k">else</span> <span class="mf">0.0</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">slots</span><span class="p">],</span>
+        <span class="n">fps</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">lens</span> <span class="o">=</span> <span class="p">[</span><span class="n">b</span> <span class="o">-</span> <span class="n">a</span> <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">bounds</span><span class="p">,</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">:])]</span>
     <span class="n">dropped</span> <span class="o">=</span> <span class="p">[</span>
-        <span class="n">s</span><span class="o">.</span><span class="n">index</span> <span class="k">for</span> <span class="n">s</span><span class="p">,</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">slots</span><span class="p">,</span> <span class="n">n_t</span><span class="p">)</span>
+        <span class="n">s</span><span class="o">.</span><span class="n">index</span>
+        <span class="k">for</span> <span class="n">s</span><span class="p">,</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">slots</span><span class="p">,</span> <span class="n">n_t</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">transition</span> <span class="o">!=</span> <span class="s2">"cut"</span> <span class="ow">and</span> <span class="n">s</span><span class="o">.</span><span class="n">transition_s</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">n</span> <span class="o">==</span> <span class="mi">0</span>
     <span class="p">]</span>
     <span class="n">parts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Part</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
@@ -346,15 +350,23 @@
         <span class="n">n_out</span> <span class="o">=</span> <span class="n">n_t</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">slots</span><span class="p">)</span> <span class="k">else</span> <span class="mi">0</span>
         <span class="k">if</span> <span class="n">n_in</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                <span class="n">Part</span><span class="p">(</span><span class="n">kind</span><span class="o">=</span><span class="s2">"blend"</span><span class="p">,</span> <span class="n">slot</span><span class="o">=</span><span class="n">i</span><span class="p">,</span> <span class="n">offset</span><span class="o">=-</span><span class="p">(</span><span class="n">n_in</span> <span class="o">//</span> <span class="mi">2</span><span class="p">),</span> <span class="n">n_frames</span><span class="o">=</span><span class="n">n_in</span><span class="p">,</span>
-                     <span class="n">prev</span><span class="o">=</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">prev_offset</span><span class="o">=</span><span class="n">lens</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">n_in</span> <span class="o">//</span> <span class="mi">2</span><span class="p">,</span> <span class="n">curve</span><span class="o">=</span><span class="n">s</span><span class="o">.</span><span class="n">transition</span><span class="p">)</span>
+                <span class="n">Part</span><span class="p">(</span>
+                    <span class="n">kind</span><span class="o">=</span><span class="s2">"blend"</span><span class="p">,</span>
+                    <span class="n">slot</span><span class="o">=</span><span class="n">i</span><span class="p">,</span>
+                    <span class="n">offset</span><span class="o">=-</span><span class="p">(</span><span class="n">n_in</span> <span class="o">//</span> <span class="mi">2</span><span class="p">),</span>
+                    <span class="n">n_frames</span><span class="o">=</span><span class="n">n_in</span><span class="p">,</span>
+                    <span class="n">prev</span><span class="o">=</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span>
+                    <span class="n">prev_offset</span><span class="o">=</span><span class="n">lens</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">n_in</span> <span class="o">//</span> <span class="mi">2</span><span class="p">,</span>
+                    <span class="n">curve</span><span class="o">=</span><span class="n">s</span><span class="o">.</span><span class="n">transition</span><span class="p">,</span>
+                <span class="p">)</span>
             <span class="p">)</span>
         <span class="n">head</span> <span class="o">=</span> <span class="n">n_in</span> <span class="o">-</span> <span class="n">n_in</span> <span class="o">//</span> <span class="mi">2</span>
         <span class="n">n_solo</span> <span class="o">=</span> <span class="n">lens</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="n">head</span> <span class="o">-</span> <span class="n">n_out</span> <span class="o">//</span> <span class="mi">2</span>
         <span class="k">if</span> <span class="n">n_solo</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Part</span><span class="p">(</span><span class="n">kind</span><span class="o">=</span><span class="s2">"solo"</span><span class="p">,</span> <span class="n">slot</span><span class="o">=</span><span class="n">i</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="n">head</span><span class="p">,</span> <span class="n">n_frames</span><span class="o">=</span><span class="n">n_solo</span><span class="p">))</span>
     <span class="k">return</span> <span class="n">parts</span><span class="p">,</span> <span class="p">{</span>
-        <span class="s2">"n_frames"</span><span class="p">:</span> <span class="n">bounds</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="s2">"n_parts"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">),</span>
+        <span class="s2">"n_frames"</span><span class="p">:</span> <span class="n">bounds</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+        <span class="s2">"n_parts"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">),</span>
         <span class="s2">"transitions_dropped"</span><span class="p">:</span> <span class="n">dropped</span><span class="p">,</span>
         <span class="s2">"empty_slots"</span><span class="p">:</span> <span class="p">[</span><span class="n">s</span><span class="o">.</span><span class="n">index</span> <span class="k">for</span> <span class="n">s</span><span class="p">,</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">slots</span><span class="p">,</span> <span class="n">lens</span><span class="p">)</span> <span class="k">if</span> <span class="n">n</span> <span class="o">==</span> <span class="mi">0</span><span class="p">],</span>
     <span class="p">}</span>
@@ -370,7 +382,9 @@
     <span class="k">return</span> <span class="n">s</span> <span class="k">if</span> <span class="n">s</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">""</span><span class="p">,</span> <span class="s2">"-"</span><span class="p">}</span> <span class="k">else</span> <span class="s2">"0"</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_ramp_exprs</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Keyframe</span><span class="p">],</span> <span class="o">*</span><span class="p">,</span> <span class="n">frame_offset</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">fps</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_ramp_exprs</span><span class="p">(</span>
+    <span class="n">path</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Keyframe</span><span class="p">],</span> <span class="o">*</span><span class="p">,</span> <span class="n">frame_offset</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">fps</span><span class="p">:</span> <span class="nb">int</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">"""``(size, x, y)`` expressions in ``on`` — sums of clamped linear ramps."""</span>
     <span class="n">t</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"((on+</span><span class="si">{</span><span class="n">frame_offset</span><span class="si">}</span><span class="s2">)/</span><span class="si">{</span><span class="n">fps</span><span class="si">}</span><span class="s2">)"</span>
     <span class="n">comps</span> <span class="o">=</span> <span class="p">[]</span>
@@ -389,7 +403,9 @@
 
 <div class="viewcode-block" id="zoompan_exprs">
 <a class="viewcode-back" href="../../../module_docs/muvid/montage/render.html#muvid.montage.zoompan_exprs">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">zoompan_exprs</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Keyframe</span><span class="p">],</span> <span class="o">*</span><span class="p">,</span> <span class="n">frame_offset</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">fps</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">zoompan_exprs</span><span class="p">(</span>
+    <span class="n">path</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Keyframe</span><span class="p">],</span> <span class="o">*</span><span class="p">,</span> <span class="n">frame_offset</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">fps</span><span class="p">:</span> <span class="nb">int</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">"""The ``z``/``x``/``y`` expressions for ``zoompan`` over a still.</span>
 
 <span class="sd">    ``on`` is the output frame counter; ``frame_offset`` shifts it so a part</span>
@@ -418,7 +434,9 @@
 
 <div class="viewcode-block" id="grade_filter">
 <a class="viewcode-back" href="../../../module_docs/muvid/montage/render.html#muvid.montage.grade_filter">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">grade_filter</span><span class="p">(</span><span class="n">grade</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">accent</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"#e0533d"</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">strength</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">TINT_STRENGTH</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">grade_filter</span><span class="p">(</span>
+    <span class="n">grade</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">accent</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"#e0533d"</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">strength</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">TINT_STRENGTH</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""The ffmpeg fragment for a grade, or ``""`` for none.</span>
 
 <span class="sd">    ``tint`` mixes ``strength`` of ``luma * accent`` into the frame — a closed</span>
@@ -457,16 +475,33 @@
 <span class="c1"># --------------------------------------------------------------------------</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_tile_input</span><span class="p">(</span><span class="n">tile</span><span class="p">:</span> <span class="n">Tile</span><span class="p">,</span> <span class="n">media</span><span class="p">:</span> <span class="n">Media</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">offset</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">n_frames</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">fps</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_tile_input</span><span class="p">(</span>
+    <span class="n">tile</span><span class="p">:</span> <span class="n">Tile</span><span class="p">,</span> <span class="n">media</span><span class="p">:</span> <span class="n">Media</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">offset</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">n_frames</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">fps</span><span class="p">:</span> <span class="nb">int</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
     <span class="k">if</span> <span class="n">media</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s2">"clip"</span><span class="p">:</span>
         <span class="n">seek</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">tile</span><span class="o">.</span><span class="n">source_in</span> <span class="o">+</span> <span class="n">offset</span> <span class="o">/</span> <span class="n">fps</span><span class="p">)</span>
-        <span class="k">return</span> <span class="p">[</span><span class="s2">"-ss"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">seek</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="s2">"-t"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="p">(</span><span class="n">n_frames</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">fps</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="s2">"-i"</span><span class="p">,</span> <span class="n">media</span><span class="o">.</span><span class="n">path</span><span class="p">]</span>
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="s2">"-ss"</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">seek</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="s2">"-t"</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="p">(</span><span class="n">n_frames</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">fps</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="s2">"-i"</span><span class="p">,</span>
+            <span class="n">media</span><span class="o">.</span><span class="n">path</span><span class="p">,</span>
+        <span class="p">]</span>
     <span class="k">return</span> <span class="p">[</span><span class="s2">"-i"</span><span class="p">,</span> <span class="n">media</span><span class="o">.</span><span class="n">path</span><span class="p">]</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_tile_chain</span><span class="p">(</span>
-    <span class="n">tile</span><span class="p">:</span> <span class="n">Tile</span><span class="p">,</span> <span class="n">media</span><span class="p">:</span> <span class="n">Media</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">src</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">out</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">tw</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">th</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">fps</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-    <span class="n">offset</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">n_frames</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">tile</span><span class="p">:</span> <span class="n">Tile</span><span class="p">,</span>
+    <span class="n">media</span><span class="p">:</span> <span class="n">Media</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">src</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">out</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">tw</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">th</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">fps</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">offset</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">n_frames</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
     <span class="k">if</span> <span class="n">media</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s2">"clip"</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">(</span>
@@ -483,8 +518,16 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_slot_graph</span><span class="p">(</span>
-    <span class="n">slot</span><span class="p">:</span> <span class="n">Slot</span><span class="p">,</span> <span class="n">plan</span><span class="p">:</span> <span class="n">Plan</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">canvas</span><span class="p">:</span> <span class="n">Canvas</span><span class="p">,</span> <span class="n">input_base</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">out</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="n">offset</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">n_frames</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">grade</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">bg</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">slot</span><span class="p">:</span> <span class="n">Slot</span><span class="p">,</span>
+    <span class="n">plan</span><span class="p">:</span> <span class="n">Plan</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">canvas</span><span class="p">:</span> <span class="n">Canvas</span><span class="p">,</span>
+    <span class="n">input_base</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">out</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">offset</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">n_frames</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">grade</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">bg</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">"""``(input args, filter chains)`` producing ``[out]`` at canvas size."""</span>
     <span class="n">by_index</span> <span class="o">=</span> <span class="p">{</span><span class="n">m</span><span class="o">.</span><span class="n">index</span><span class="p">:</span> <span class="n">m</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">plan</span><span class="o">.</span><span class="n">media</span><span class="p">}</span>
@@ -500,8 +543,17 @@
         <span class="n">media</span> <span class="o">=</span> <span class="n">by_index</span><span class="p">[</span><span class="n">tile</span><span class="o">.</span><span class="n">media</span><span class="p">]</span>
         <span class="n">inputs</span> <span class="o">+=</span> <span class="n">_tile_input</span><span class="p">(</span><span class="n">tile</span><span class="p">,</span> <span class="n">media</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="n">offset</span><span class="p">,</span> <span class="n">n_frames</span><span class="o">=</span><span class="n">n_frames</span><span class="p">,</span> <span class="n">fps</span><span class="o">=</span><span class="n">fps</span><span class="p">)</span>
         <span class="n">chains</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-            <span class="n">_tile_chain</span><span class="p">(</span><span class="n">tile</span><span class="p">,</span> <span class="n">media</span><span class="p">,</span> <span class="n">src</span><span class="o">=</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">input_base</span><span class="si">}</span><span class="s2">:v"</span><span class="p">,</span> <span class="n">out</span><span class="o">=</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">out</span><span class="si">}</span><span class="s2">_t"</span><span class="p">,</span> <span class="n">tw</span><span class="o">=</span><span class="n">w</span><span class="p">,</span> <span class="n">th</span><span class="o">=</span><span class="n">h</span><span class="p">,</span>
-                        <span class="n">fps</span><span class="o">=</span><span class="n">fps</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="n">offset</span><span class="p">,</span> <span class="n">n_frames</span><span class="o">=</span><span class="n">n_frames</span><span class="p">)</span>
+            <span class="n">_tile_chain</span><span class="p">(</span>
+                <span class="n">tile</span><span class="p">,</span>
+                <span class="n">media</span><span class="p">,</span>
+                <span class="n">src</span><span class="o">=</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">input_base</span><span class="si">}</span><span class="s2">:v"</span><span class="p">,</span>
+                <span class="n">out</span><span class="o">=</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">out</span><span class="si">}</span><span class="s2">_t"</span><span class="p">,</span>
+                <span class="n">tw</span><span class="o">=</span><span class="n">w</span><span class="p">,</span>
+                <span class="n">th</span><span class="o">=</span><span class="n">h</span><span class="p">,</span>
+                <span class="n">fps</span><span class="o">=</span><span class="n">fps</span><span class="p">,</span>
+                <span class="n">offset</span><span class="o">=</span><span class="n">offset</span><span class="p">,</span>
+                <span class="n">n_frames</span><span class="o">=</span><span class="n">n_frames</span><span class="p">,</span>
+            <span class="p">)</span>
         <span class="p">)</span>
         <span class="n">chains</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"[</span><span class="si">{</span><span class="n">out</span><span class="si">}</span><span class="s2">_t]</span><span class="si">{</span><span class="n">tail</span><span class="si">}</span><span class="s2">[</span><span class="si">{</span><span class="n">out</span><span class="si">}</span><span class="s2">]"</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">chains</span>
@@ -512,45 +564,97 @@
         <span class="n">inputs</span> <span class="o">+=</span> <span class="n">_tile_input</span><span class="p">(</span><span class="n">tile</span><span class="p">,</span> <span class="n">media</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="n">offset</span><span class="p">,</span> <span class="n">n_frames</span><span class="o">=</span><span class="n">n_frames</span><span class="p">,</span> <span class="n">fps</span><span class="o">=</span><span class="n">fps</span><span class="p">)</span>
         <span class="n">label</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">out</span><span class="si">}</span><span class="s2">_t</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">"</span>
         <span class="n">chains</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-            <span class="n">_tile_chain</span><span class="p">(</span><span class="n">tile</span><span class="p">,</span> <span class="n">media</span><span class="p">,</span> <span class="n">src</span><span class="o">=</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">input_base</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">k</span><span class="si">}</span><span class="s2">:v"</span><span class="p">,</span> <span class="n">out</span><span class="o">=</span><span class="n">label</span><span class="p">,</span> <span class="n">tw</span><span class="o">=</span><span class="n">tw</span><span class="p">,</span> <span class="n">th</span><span class="o">=</span><span class="n">th</span><span class="p">,</span>
-                        <span class="n">fps</span><span class="o">=</span><span class="n">fps</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="n">offset</span><span class="p">,</span> <span class="n">n_frames</span><span class="o">=</span><span class="n">n_frames</span><span class="p">)</span>
+            <span class="n">_tile_chain</span><span class="p">(</span>
+                <span class="n">tile</span><span class="p">,</span>
+                <span class="n">media</span><span class="p">,</span>
+                <span class="n">src</span><span class="o">=</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">input_base</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">k</span><span class="si">}</span><span class="s2">:v"</span><span class="p">,</span>
+                <span class="n">out</span><span class="o">=</span><span class="n">label</span><span class="p">,</span>
+                <span class="n">tw</span><span class="o">=</span><span class="n">tw</span><span class="p">,</span>
+                <span class="n">th</span><span class="o">=</span><span class="n">th</span><span class="p">,</span>
+                <span class="n">fps</span><span class="o">=</span><span class="n">fps</span><span class="p">,</span>
+                <span class="n">offset</span><span class="o">=</span><span class="n">offset</span><span class="p">,</span>
+                <span class="n">n_frames</span><span class="o">=</span><span class="n">n_frames</span><span class="p">,</span>
+            <span class="p">)</span>
         <span class="p">)</span>
         <span class="n">labels</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"[</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">]"</span><span class="p">)</span>
-    <span class="n">pad</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"pad=</span><span class="si">{</span><span class="n">w</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">h</span><span class="si">}</span><span class="s2">:(ow-iw)/2:(oh-ih)/2:color=</span><span class="si">{</span><span class="n">bg</span><span class="si">}</span><span class="s2">,"</span> <span class="k">if</span> <span class="p">(</span><span class="n">tw</span> <span class="o">*</span> <span class="mi">2</span><span class="p">,</span> <span class="n">th</span> <span class="o">*</span> <span class="mi">2</span><span class="p">)</span> <span class="o">!=</span> <span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="p">)</span> <span class="k">else</span> <span class="s2">""</span>
+    <span class="n">pad</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s2">"pad=</span><span class="si">{</span><span class="n">w</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">h</span><span class="si">}</span><span class="s2">:(ow-iw)/2:(oh-ih)/2:color=</span><span class="si">{</span><span class="n">bg</span><span class="si">}</span><span class="s2">,"</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">tw</span> <span class="o">*</span> <span class="mi">2</span><span class="p">,</span> <span class="n">th</span> <span class="o">*</span> <span class="mi">2</span><span class="p">)</span> <span class="o">!=</span> <span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="p">)</span>
+        <span class="k">else</span> <span class="s2">""</span>
+    <span class="p">)</span>
     <span class="n">chains</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-        <span class="s2">""</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">labels</span><span class="p">)</span> <span class="o">+</span> <span class="sa">f</span><span class="s2">"xstack=inputs=4:layout=0_0|w0_0|0_h0|w0_h0,</span><span class="si">{</span><span class="n">pad</span><span class="si">}{</span><span class="n">tail</span><span class="si">}</span><span class="s2">[</span><span class="si">{</span><span class="n">out</span><span class="si">}</span><span class="s2">]"</span>
+        <span class="s2">""</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">labels</span><span class="p">)</span>
+        <span class="o">+</span> <span class="sa">f</span><span class="s2">"xstack=inputs=4:layout=0_0|w0_0|0_h0|w0_h0,</span><span class="si">{</span><span class="n">pad</span><span class="si">}{</span><span class="n">tail</span><span class="si">}</span><span class="s2">[</span><span class="si">{</span><span class="n">out</span><span class="si">}</span><span class="s2">]"</span>
     <span class="p">)</span>
     <span class="k">return</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">chains</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_part_args</span><span class="p">(</span>
-    <span class="n">part</span><span class="p">:</span> <span class="n">Part</span><span class="p">,</span> <span class="n">plan</span><span class="p">:</span> <span class="n">Plan</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">canvas</span><span class="p">:</span> <span class="n">Canvas</span><span class="p">,</span> <span class="n">grade</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">bg</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">part</span><span class="p">:</span> <span class="n">Part</span><span class="p">,</span>
+    <span class="n">plan</span><span class="p">:</span> <span class="n">Plan</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">canvas</span><span class="p">:</span> <span class="n">Canvas</span><span class="p">,</span>
+    <span class="n">grade</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">bg</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">"""Everything before the encode arguments for one part."""</span>
     <span class="n">slots</span> <span class="o">=</span> <span class="n">plan</span><span class="o">.</span><span class="n">slots</span>
     <span class="k">if</span> <span class="n">part</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s2">"solo"</span><span class="p">:</span>
         <span class="n">inputs</span><span class="p">,</span> <span class="n">chains</span> <span class="o">=</span> <span class="n">_slot_graph</span><span class="p">(</span>
-            <span class="n">slots</span><span class="p">[</span><span class="n">part</span><span class="o">.</span><span class="n">slot</span><span class="p">],</span> <span class="n">plan</span><span class="p">,</span> <span class="n">canvas</span><span class="o">=</span><span class="n">canvas</span><span class="p">,</span> <span class="n">input_base</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">out</span><span class="o">=</span><span class="s2">"v"</span><span class="p">,</span>
-            <span class="n">offset</span><span class="o">=</span><span class="n">part</span><span class="o">.</span><span class="n">offset</span><span class="p">,</span> <span class="n">n_frames</span><span class="o">=</span><span class="n">part</span><span class="o">.</span><span class="n">n_frames</span><span class="p">,</span> <span class="n">grade</span><span class="o">=</span><span class="n">grade</span><span class="p">,</span> <span class="n">bg</span><span class="o">=</span><span class="n">bg</span><span class="p">,</span>
+            <span class="n">slots</span><span class="p">[</span><span class="n">part</span><span class="o">.</span><span class="n">slot</span><span class="p">],</span>
+            <span class="n">plan</span><span class="p">,</span>
+            <span class="n">canvas</span><span class="o">=</span><span class="n">canvas</span><span class="p">,</span>
+            <span class="n">input_base</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+            <span class="n">out</span><span class="o">=</span><span class="s2">"v"</span><span class="p">,</span>
+            <span class="n">offset</span><span class="o">=</span><span class="n">part</span><span class="o">.</span><span class="n">offset</span><span class="p">,</span>
+            <span class="n">n_frames</span><span class="o">=</span><span class="n">part</span><span class="o">.</span><span class="n">n_frames</span><span class="p">,</span>
+            <span class="n">grade</span><span class="o">=</span><span class="n">grade</span><span class="p">,</span>
+            <span class="n">bg</span><span class="o">=</span><span class="n">bg</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">assert</span> <span class="n">part</span><span class="o">.</span><span class="n">prev</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="n">in_a</span><span class="p">,</span> <span class="n">ch_a</span> <span class="o">=</span> <span class="n">_slot_graph</span><span class="p">(</span>
-            <span class="n">slots</span><span class="p">[</span><span class="n">part</span><span class="o">.</span><span class="n">prev</span><span class="p">],</span> <span class="n">plan</span><span class="p">,</span> <span class="n">canvas</span><span class="o">=</span><span class="n">canvas</span><span class="p">,</span> <span class="n">input_base</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">out</span><span class="o">=</span><span class="s2">"a"</span><span class="p">,</span>
-            <span class="n">offset</span><span class="o">=</span><span class="n">part</span><span class="o">.</span><span class="n">prev_offset</span><span class="p">,</span> <span class="n">n_frames</span><span class="o">=</span><span class="n">part</span><span class="o">.</span><span class="n">n_frames</span><span class="p">,</span> <span class="n">grade</span><span class="o">=</span><span class="n">grade</span><span class="p">,</span> <span class="n">bg</span><span class="o">=</span><span class="n">bg</span><span class="p">,</span>
+            <span class="n">slots</span><span class="p">[</span><span class="n">part</span><span class="o">.</span><span class="n">prev</span><span class="p">],</span>
+            <span class="n">plan</span><span class="p">,</span>
+            <span class="n">canvas</span><span class="o">=</span><span class="n">canvas</span><span class="p">,</span>
+            <span class="n">input_base</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+            <span class="n">out</span><span class="o">=</span><span class="s2">"a"</span><span class="p">,</span>
+            <span class="n">offset</span><span class="o">=</span><span class="n">part</span><span class="o">.</span><span class="n">prev_offset</span><span class="p">,</span>
+            <span class="n">n_frames</span><span class="o">=</span><span class="n">part</span><span class="o">.</span><span class="n">n_frames</span><span class="p">,</span>
+            <span class="n">grade</span><span class="o">=</span><span class="n">grade</span><span class="p">,</span>
+            <span class="n">bg</span><span class="o">=</span><span class="n">bg</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">n_a</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">in_a</span> <span class="k">if</span> <span class="n">x</span> <span class="o">==</span> <span class="s2">"-i"</span><span class="p">)</span>
         <span class="n">in_b</span><span class="p">,</span> <span class="n">ch_b</span> <span class="o">=</span> <span class="n">_slot_graph</span><span class="p">(</span>
-            <span class="n">slots</span><span class="p">[</span><span class="n">part</span><span class="o">.</span><span class="n">slot</span><span class="p">],</span> <span class="n">plan</span><span class="p">,</span> <span class="n">canvas</span><span class="o">=</span><span class="n">canvas</span><span class="p">,</span> <span class="n">input_base</span><span class="o">=</span><span class="n">n_a</span><span class="p">,</span> <span class="n">out</span><span class="o">=</span><span class="s2">"b"</span><span class="p">,</span>
-            <span class="n">offset</span><span class="o">=</span><span class="n">part</span><span class="o">.</span><span class="n">offset</span><span class="p">,</span> <span class="n">n_frames</span><span class="o">=</span><span class="n">part</span><span class="o">.</span><span class="n">n_frames</span><span class="p">,</span> <span class="n">grade</span><span class="o">=</span><span class="n">grade</span><span class="p">,</span> <span class="n">bg</span><span class="o">=</span><span class="n">bg</span><span class="p">,</span>
+            <span class="n">slots</span><span class="p">[</span><span class="n">part</span><span class="o">.</span><span class="n">slot</span><span class="p">],</span>
+            <span class="n">plan</span><span class="p">,</span>
+            <span class="n">canvas</span><span class="o">=</span><span class="n">canvas</span><span class="p">,</span>
+            <span class="n">input_base</span><span class="o">=</span><span class="n">n_a</span><span class="p">,</span>
+            <span class="n">out</span><span class="o">=</span><span class="s2">"b"</span><span class="p">,</span>
+            <span class="n">offset</span><span class="o">=</span><span class="n">part</span><span class="o">.</span><span class="n">offset</span><span class="p">,</span>
+            <span class="n">n_frames</span><span class="o">=</span><span class="n">part</span><span class="o">.</span><span class="n">n_frames</span><span class="p">,</span>
+            <span class="n">grade</span><span class="o">=</span><span class="n">grade</span><span class="p">,</span>
+            <span class="n">bg</span><span class="o">=</span><span class="n">bg</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">inputs</span> <span class="o">=</span> <span class="n">in_a</span> <span class="o">+</span> <span class="n">in_b</span>
-        <span class="n">chains</span> <span class="o">=</span> <span class="n">ch_a</span> <span class="o">+</span> <span class="n">ch_b</span> <span class="o">+</span> <span class="p">[</span>
-            <span class="sa">f</span><span class="s2">"[a][b]xfade=transition=</span><span class="si">{</span><span class="n">part</span><span class="o">.</span><span class="n">curve</span><span class="si">}</span><span class="s2">:duration=</span><span class="si">{</span><span class="n">part</span><span class="o">.</span><span class="n">n_frames</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">canvas</span><span class="o">.</span><span class="n">fps</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">"</span>
-            <span class="s2">":offset=0[v]"</span>
-        <span class="p">]</span>
-    <span class="k">return</span> <span class="p">[</span><span class="o">*</span><span class="n">inputs</span><span class="p">,</span> <span class="s2">"-filter_complex"</span><span class="p">,</span> <span class="s2">";"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">chains</span><span class="p">),</span> <span class="s2">"-map"</span><span class="p">,</span> <span class="s2">"[v]"</span><span class="p">,</span>
-            <span class="s2">"-frames:v"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">part</span><span class="o">.</span><span class="n">n_frames</span><span class="p">),</span> <span class="s2">"-an"</span><span class="p">]</span>
+        <span class="n">chains</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">ch_a</span>
+            <span class="o">+</span> <span class="n">ch_b</span>
+            <span class="o">+</span> <span class="p">[</span>
+                <span class="sa">f</span><span class="s2">"[a][b]xfade=transition=</span><span class="si">{</span><span class="n">part</span><span class="o">.</span><span class="n">curve</span><span class="si">}</span><span class="s2">:duration=</span><span class="si">{</span><span class="n">part</span><span class="o">.</span><span class="n">n_frames</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">canvas</span><span class="o">.</span><span class="n">fps</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">"</span>
+                <span class="s2">":offset=0[v]"</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="p">[</span>
+        <span class="o">*</span><span class="n">inputs</span><span class="p">,</span>
+        <span class="s2">"-filter_complex"</span><span class="p">,</span>
+        <span class="s2">";"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">chains</span><span class="p">),</span>
+        <span class="s2">"-map"</span><span class="p">,</span>
+        <span class="s2">"[v]"</span><span class="p">,</span>
+        <span class="s2">"-frames:v"</span><span class="p">,</span>
+        <span class="nb">str</span><span class="p">(</span><span class="n">part</span><span class="o">.</span><span class="n">n_frames</span><span class="p">),</span>
+        <span class="s2">"-an"</span><span class="p">,</span>
+    <span class="p">]</span>
 
 
 <span class="c1"># --------------------------------------------------------------------------</span>
@@ -592,11 +696,17 @@
 <span class="sd">        the parts count, and the verifier's findings.</span>
 <span class="sd">    """</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.visualize.ffmpeg</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-        <span class="n">media_duration</span><span class="p">,</span> <span class="n">require_ffmpeg</span><span class="p">,</span> <span class="n">require_filter</span><span class="p">,</span> <span class="n">run_ffmpeg</span><span class="p">,</span>
+        <span class="n">media_duration</span><span class="p">,</span>
+        <span class="n">require_ffmpeg</span><span class="p">,</span>
+        <span class="n">require_filter</span><span class="p">,</span>
+        <span class="n">run_ffmpeg</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.visualize.verify</span><span class="w"> </span><span class="kn">import</span> <span class="n">verify_video</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.visualize.video</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-        <span class="n">_audio_encode_args</span><span class="p">,</span> <span class="n">_container_args</span><span class="p">,</span> <span class="n">_gop_frames</span><span class="p">,</span> <span class="n">_video_encode_args</span><span class="p">,</span>
+        <span class="n">_audio_encode_args</span><span class="p">,</span>
+        <span class="n">_container_args</span><span class="p">,</span>
+        <span class="n">_gop_frames</span><span class="p">,</span>
+        <span class="n">_video_encode_args</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="k">if</span> <span class="n">canvas</span><span class="o">.</span><span class="n">width</span> <span class="o">%</span> <span class="mi">2</span> <span class="ow">or</span> <span class="n">canvas</span><span class="o">.</span><span class="n">height</span> <span class="o">%</span> <span class="mi">2</span><span class="p">:</span>
@@ -636,8 +746,11 @@
     <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">part</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">parts</span><span class="p">):</span>
         <span class="n">name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"part</span><span class="si">{</span><span class="n">i</span><span class="si">:</span><span class="s2">04d</span><span class="si">}</span><span class="s2">.mp4"</span>
         <span class="n">run_ffmpeg</span><span class="p">(</span>
-            <span class="p">[</span><span class="o">*</span><span class="n">_part_args</span><span class="p">(</span><span class="n">part</span><span class="p">,</span> <span class="n">plan</span><span class="p">,</span> <span class="n">canvas</span><span class="o">=</span><span class="n">canvas</span><span class="p">,</span> <span class="n">grade</span><span class="o">=</span><span class="n">grade_chain</span><span class="p">,</span> <span class="n">bg</span><span class="o">=</span><span class="n">bg</span><span class="p">),</span>
-             <span class="o">*</span><span class="n">encode</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">parts_dir</span> <span class="o">/</span> <span class="n">name</span><span class="p">)]</span>
+            <span class="p">[</span>
+                <span class="o">*</span><span class="n">_part_args</span><span class="p">(</span><span class="n">part</span><span class="p">,</span> <span class="n">plan</span><span class="p">,</span> <span class="n">canvas</span><span class="o">=</span><span class="n">canvas</span><span class="p">,</span> <span class="n">grade</span><span class="o">=</span><span class="n">grade_chain</span><span class="p">,</span> <span class="n">bg</span><span class="o">=</span><span class="n">bg</span><span class="p">),</span>
+                <span class="o">*</span><span class="n">encode</span><span class="p">,</span>
+                <span class="nb">str</span><span class="p">(</span><span class="n">parts_dir</span> <span class="o">/</span> <span class="n">name</span><span class="p">),</span>
+            <span class="p">]</span>
         <span class="p">)</span>
         <span class="n">names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
     <span class="c1"># Relative names in the list, resolved against the list's own directory —</span>
@@ -646,24 +759,36 @@
     <span class="n">concat_list</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="s2">""</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">"file </span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="se">\n</span><span class="s2">"</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">names</span><span class="p">),</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span>
     <span class="n">run_ffmpeg</span><span class="p">(</span>
         <span class="p">[</span>
-            <span class="s2">"-f"</span><span class="p">,</span> <span class="s2">"concat"</span><span class="p">,</span> <span class="s2">"-i"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">concat_list</span><span class="p">),</span>
-            <span class="s2">"-i"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">audio</span><span class="p">),</span>
-            <span class="s2">"-map"</span><span class="p">,</span> <span class="s2">"0:v"</span><span class="p">,</span> <span class="s2">"-map"</span><span class="p">,</span> <span class="s2">"1:a:0"</span><span class="p">,</span>
-            <span class="s2">"-c:v"</span><span class="p">,</span> <span class="s2">"copy"</span><span class="p">,</span>
+            <span class="s2">"-f"</span><span class="p">,</span>
+            <span class="s2">"concat"</span><span class="p">,</span>
+            <span class="s2">"-i"</span><span class="p">,</span>
+            <span class="nb">str</span><span class="p">(</span><span class="n">concat_list</span><span class="p">),</span>
+            <span class="s2">"-i"</span><span class="p">,</span>
+            <span class="nb">str</span><span class="p">(</span><span class="n">audio</span><span class="p">),</span>
+            <span class="s2">"-map"</span><span class="p">,</span>
+            <span class="s2">"0:v"</span><span class="p">,</span>
+            <span class="s2">"-map"</span><span class="p">,</span>
+            <span class="s2">"1:a:0"</span><span class="p">,</span>
+            <span class="s2">"-c:v"</span><span class="p">,</span>
+            <span class="s2">"copy"</span><span class="p">,</span>
             <span class="o">*</span><span class="n">_audio_encode_args</span><span class="p">(</span><span class="s2">"384k"</span><span class="p">),</span>
-            <span class="s2">"-t"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">plan</span><span class="o">.</span><span class="n">duration</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="s2">"-t"</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">plan</span><span class="o">.</span><span class="n">duration</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
             <span class="s2">"-shortest"</span><span class="p">,</span>
             <span class="o">*</span><span class="n">_container_args</span><span class="p">(),</span>
             <span class="c1"># The manifest promises video/mp4; say so rather than let ffmpeg</span>
             <span class="c1"># guess from the extension (the conformance kit renders to `out.bin`).</span>
-            <span class="s2">"-f"</span><span class="p">,</span> <span class="s2">"mp4"</span><span class="p">,</span>
+            <span class="s2">"-f"</span><span class="p">,</span>
+            <span class="s2">"mp4"</span><span class="p">,</span>
             <span class="nb">str</span><span class="p">(</span><span class="n">output</span><span class="p">),</span>
         <span class="p">]</span>
     <span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">keep_parts</span><span class="p">:</span>
         <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">parts_dir</span><span class="p">,</span> <span class="n">ignore_errors</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
-    <span class="n">checks</span> <span class="o">=</span> <span class="n">verify_video</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="n">audio</span><span class="o">=</span><span class="n">audio</span><span class="p">,</span> <span class="n">expected_canvas</span><span class="o">=</span><span class="p">(</span><span class="n">canvas</span><span class="o">.</span><span class="n">width</span><span class="p">,</span> <span class="n">canvas</span><span class="o">.</span><span class="n">height</span><span class="p">))</span>
+    <span class="n">checks</span> <span class="o">=</span> <span class="n">verify_video</span><span class="p">(</span>
+        <span class="n">output</span><span class="p">,</span> <span class="n">audio</span><span class="o">=</span><span class="n">audio</span><span class="p">,</span> <span class="n">expected_canvas</span><span class="o">=</span><span class="p">(</span><span class="n">canvas</span><span class="o">.</span><span class="n">width</span><span class="p">,</span> <span class="n">canvas</span><span class="o">.</span><span class="n">height</span><span class="p">)</span>
+    <span class="p">)</span>
     <span class="n">meta</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
         <span class="s2">"renderer"</span><span class="p">:</span> <span class="n">RENDERER_NAME</span><span class="p">,</span>
         <span class="s2">"canvas"</span><span class="p">:</span> <span class="p">[</span><span class="n">canvas</span><span class="o">.</span><span class="n">width</span><span class="p">,</span> <span class="n">canvas</span><span class="o">.</span><span class="n">height</span><span class="p">],</span>

@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.montage.pipeline &mdash; muvid 0.0.62 documentation</title>
+  <title>muvid.montage.pipeline &mdash; muvid 0.0.63 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=dea2dbc4"></script>
+      <script src="../../../_static/documentation_options.js?v=7ada5fdd"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -120,6 +120,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/montage/render.html">muvid.montage.render</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/montage/spec.html">muvid.montage.spec</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/montage/tools.html">muvid.montage.tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/paths.html">muvid.paths</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/project.html">muvid.project</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers.html">muvid.renderers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers/_common.html">muvid.renderers._common</a></li>
@@ -251,7 +252,9 @@
             <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">MAX_PIXELS</span><span class="si">}</span><span class="s2"> (MUVID_MONTAGE_MAX_PIXELS)"</span>
         <span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="mi">1</span> <span class="o">&lt;=</span> <span class="n">canvas</span><span class="o">.</span><span class="n">fps</span> <span class="o">&lt;=</span> <span class="n">MAX_FPS</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"fps </span><span class="si">{</span><span class="n">canvas</span><span class="o">.</span><span class="n">fps</span><span class="si">}</span><span class="s2"> is outside 1..</span><span class="si">{</span><span class="n">MAX_FPS</span><span class="si">}</span><span class="s2"> (MUVID_MONTAGE_MAX_FPS)"</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"fps </span><span class="si">{</span><span class="n">canvas</span><span class="o">.</span><span class="n">fps</span><span class="si">}</span><span class="s2"> is outside 1..</span><span class="si">{</span><span class="n">MAX_FPS</span><span class="si">}</span><span class="s2"> (MUVID_MONTAGE_MAX_FPS)"</span>
+        <span class="p">)</span>
     <span class="k">if</span> <span class="n">duration_s</span> <span class="o">&gt;</span> <span class="n">MAX_DURATION_S</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">"audio is </span><span class="si">{</span><span class="n">duration_s</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2">s; the render limit is </span><span class="si">{</span><span class="n">MAX_DURATION_S</span><span class="si">}</span><span class="s2">s "</span>
@@ -267,7 +270,9 @@
 
 <div class="viewcode-block" id="build_treatment">
 <a class="viewcode-back" href="../../../module_docs/muvid/montage/pipeline.html#muvid.montage.pipeline.build_treatment">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">build_treatment</span><span class="p">(</span><span class="n">params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">spec_mod</span><span class="o">.</span><span class="n">TreatmentSpec</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_treatment</span><span class="p">(</span>
+    <span class="n">params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">spec_mod</span><span class="o">.</span><span class="n">TreatmentSpec</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">str</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">"""``(treatment, repair_notes, source)`` from a request's params.</span>
 
 <span class="sd">    A supplied ``treatment`` is coerced and repaired; otherwise a one-scene</span>
@@ -296,7 +301,9 @@
         <span class="k">return</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)]</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
         <span class="k">return</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">value</span> <span class="k">if</span> <span class="n">v</span><span class="p">]</span>
-    <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"inputs[</span><span class="si">{</span><span class="n">what</span><span class="si">!r}</span><span class="s2">] must be a list of paths, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">"inputs[</span><span class="si">{</span><span class="n">what</span><span class="si">!r}</span><span class="s2">] must be a list of paths, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">"</span>
+    <span class="p">)</span>
 
 
 <div class="viewcode-block" id="render">
@@ -327,7 +334,9 @@
     <span class="n">clips</span> <span class="o">=</span> <span class="n">_paths</span><span class="p">(</span><span class="n">inputs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"clips"</span><span class="p">),</span> <span class="n">what</span><span class="o">=</span><span class="s2">"clips"</span><span class="p">)</span>
     <span class="n">cover</span> <span class="o">=</span> <span class="n">inputs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"cover"</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">photos</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">clips</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"montage needs inputs['photos'] and/or inputs['clips'] — the pool is empty"</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">"montage needs inputs['photos'] and/or inputs['clips'] — the pool is empty"</span>
+        <span class="p">)</span>
 
     <span class="n">canvas</span> <span class="o">=</span> <span class="n">Canvas</span><span class="p">(</span>
         <span class="n">width</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"width"</span><span class="p">,</span> <span class="n">DEFAULT_CANVAS</span><span class="o">.</span><span class="n">width</span><span class="p">)),</span>
@@ -342,7 +351,9 @@
 
     <span class="n">treatment</span><span class="p">,</span> <span class="n">repair_notes</span><span class="p">,</span> <span class="n">treatment_source</span> <span class="o">=</span> <span class="n">build_treatment</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"strict"</span><span class="p">)</span> <span class="ow">and</span> <span class="n">repair_notes</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"treatment needed repairs and strict=True: "</span> <span class="o">+</span> <span class="s2">"; "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">repair_notes</span><span class="p">))</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">"treatment needed repairs and strict=True: "</span> <span class="o">+</span> <span class="s2">"; "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">repair_notes</span><span class="p">)</span>
+        <span class="p">)</span>
 
     <span class="n">analysis</span> <span class="o">=</span> <span class="n">analyze</span><span class="p">(</span>
         <span class="n">audio</span><span class="p">,</span>

@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.montage.tools &mdash; muvid 0.0.62 documentation</title>
+  <title>muvid.montage.tools &mdash; muvid 0.0.63 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=dea2dbc4"></script>
+      <script src="../../../_static/documentation_options.js?v=7ada5fdd"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -120,6 +120,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/montage/render.html">muvid.montage.render</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/montage/spec.html">muvid.montage.spec</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/montage/tools.html">muvid.montage.tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/paths.html">muvid.paths</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/project.html">muvid.project</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers.html">muvid.renderers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers/_common.html">muvid.renderers._common</a></li>
@@ -275,7 +276,9 @@
 <span class="sd">    """</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.montage.analysis</span><span class="w"> </span><span class="kn">import</span> <span class="n">analyze</span>
 
-    <span class="k">return</span> <span class="n">analyze</span><span class="p">(</span><span class="n">audio</span><span class="p">,</span> <span class="n">beats</span><span class="o">=</span><span class="n">beats</span><span class="p">,</span> <span class="n">beats_per_bar</span><span class="o">=</span><span class="n">beats_per_bar</span><span class="p">,</span> <span class="n">sections</span><span class="o">=</span><span class="n">sections</span><span class="p">)</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span></div>
+    <span class="k">return</span> <span class="n">analyze</span><span class="p">(</span>
+        <span class="n">audio</span><span class="p">,</span> <span class="n">beats</span><span class="o">=</span><span class="n">beats</span><span class="p">,</span> <span class="n">beats_per_bar</span><span class="o">=</span><span class="n">beats_per_bar</span><span class="p">,</span> <span class="n">sections</span><span class="o">=</span><span class="n">sections</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span></div>
 
 
 
@@ -353,13 +356,21 @@
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">seq</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">MAX_MEDIA</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">seq</span><span class="p">)</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">; the bound is </span><span class="si">{</span><span class="n">MAX_MEDIA</span><span class="si">}</span><span class="s2"> per input"</span><span class="p">)</span>
     <span class="n">params</span> <span class="o">=</span> <span class="n">_params</span><span class="p">(</span>
-        <span class="n">treatment</span><span class="o">=</span><span class="n">treatment</span><span class="p">,</span> <span class="n">archetype</span><span class="o">=</span><span class="n">archetype</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="n">strict</span><span class="p">,</span> <span class="n">beats</span><span class="o">=</span><span class="n">beats</span><span class="p">,</span>
-        <span class="n">beats_per_bar</span><span class="o">=</span><span class="n">beats_per_bar</span><span class="p">,</span> <span class="n">sections</span><span class="o">=</span><span class="n">sections</span><span class="p">,</span>
+        <span class="n">treatment</span><span class="o">=</span><span class="n">treatment</span><span class="p">,</span>
+        <span class="n">archetype</span><span class="o">=</span><span class="n">archetype</span><span class="p">,</span>
+        <span class="n">strict</span><span class="o">=</span><span class="n">strict</span><span class="p">,</span>
+        <span class="n">beats</span><span class="o">=</span><span class="n">beats</span><span class="p">,</span>
+        <span class="n">beats_per_bar</span><span class="o">=</span><span class="n">beats_per_bar</span><span class="p">,</span>
+        <span class="n">sections</span><span class="o">=</span><span class="n">sections</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">spec</span><span class="p">,</span> <span class="n">notes</span><span class="p">,</span> <span class="n">source</span> <span class="o">=</span> <span class="n">build_treatment</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">strict</span> <span class="ow">and</span> <span class="n">notes</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"treatment needed repairs and strict=True: "</span> <span class="o">+</span> <span class="s2">"; "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">notes</span><span class="p">))</span>
-    <span class="n">analysis</span> <span class="o">=</span> <span class="n">analyze</span><span class="p">(</span><span class="n">audio</span><span class="p">,</span> <span class="n">beats</span><span class="o">=</span><span class="n">beats</span><span class="p">,</span> <span class="n">beats_per_bar</span><span class="o">=</span><span class="n">beats_per_bar</span><span class="p">,</span> <span class="n">sections</span><span class="o">=</span><span class="n">sections</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">"treatment needed repairs and strict=True: "</span> <span class="o">+</span> <span class="s2">"; "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">notes</span><span class="p">)</span>
+        <span class="p">)</span>
+    <span class="n">analysis</span> <span class="o">=</span> <span class="n">analyze</span><span class="p">(</span>
+        <span class="n">audio</span><span class="p">,</span> <span class="n">beats</span><span class="o">=</span><span class="n">beats</span><span class="p">,</span> <span class="n">beats_per_bar</span><span class="o">=</span><span class="n">beats_per_bar</span><span class="p">,</span> <span class="n">sections</span><span class="o">=</span><span class="n">sections</span>
+    <span class="p">)</span>
     <span class="n">media</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">probe_media</span><span class="p">(</span><span class="n">photos</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="s2">"photo"</span><span class="p">))</span>
     <span class="n">media</span> <span class="o">+=</span> <span class="nb">list</span><span class="p">(</span><span class="n">probe_media</span><span class="p">(</span><span class="n">clips</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="s2">"clip"</span><span class="p">,</span> <span class="n">start_index</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">media</span><span class="p">)))</span>
     <span class="k">if</span> <span class="n">cover</span><span class="p">:</span>
@@ -410,8 +421,14 @@
 
     <span class="n">inputs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"audio"</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">audio</span><span class="p">),</span> <span class="o">**</span><span class="n">_pool</span><span class="p">(</span><span class="n">photos</span><span class="p">,</span> <span class="n">clips</span><span class="p">,</span> <span class="n">cover</span><span class="p">)}</span>
     <span class="n">params</span> <span class="o">=</span> <span class="n">_params</span><span class="p">(</span>
-        <span class="n">treatment</span><span class="o">=</span><span class="n">treatment</span><span class="p">,</span> <span class="n">archetype</span><span class="o">=</span><span class="n">archetype</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="n">strict</span><span class="p">,</span> <span class="n">beats</span><span class="o">=</span><span class="n">beats</span><span class="p">,</span>
-        <span class="n">beats_per_bar</span><span class="o">=</span><span class="n">beats_per_bar</span><span class="p">,</span> <span class="n">sections</span><span class="o">=</span><span class="n">sections</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="n">height</span><span class="p">,</span>
+        <span class="n">treatment</span><span class="o">=</span><span class="n">treatment</span><span class="p">,</span>
+        <span class="n">archetype</span><span class="o">=</span><span class="n">archetype</span><span class="p">,</span>
+        <span class="n">strict</span><span class="o">=</span><span class="n">strict</span><span class="p">,</span>
+        <span class="n">beats</span><span class="o">=</span><span class="n">beats</span><span class="p">,</span>
+        <span class="n">beats_per_bar</span><span class="o">=</span><span class="n">beats_per_bar</span><span class="p">,</span>
+        <span class="n">sections</span><span class="o">=</span><span class="n">sections</span><span class="p">,</span>
+        <span class="n">width</span><span class="o">=</span><span class="n">width</span><span class="p">,</span>
+        <span class="n">height</span><span class="o">=</span><span class="n">height</span><span class="p">,</span>
         <span class="n">fps</span><span class="o">=</span><span class="n">fps</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">out</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>
@@ -420,8 +437,13 @@
         <span class="n">get_subgenre</span><span class="p">(</span><span class="n">MONTAGE</span><span class="o">.</span><span class="n">slug</span><span class="p">)</span>
     <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
         <span class="n">result</span> <span class="o">=</span> <span class="n">_render</span><span class="p">(</span>
-            <span class="n">RenderRequest</span><span class="p">(</span><span class="n">subgenre</span><span class="o">=</span><span class="n">MONTAGE</span><span class="o">.</span><span class="n">slug</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="n">inputs</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">,</span>
-                          <span class="n">workdir</span><span class="o">=</span><span class="n">wd</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="n">out</span><span class="p">)</span>
+            <span class="n">RenderRequest</span><span class="p">(</span>
+                <span class="n">subgenre</span><span class="o">=</span><span class="n">MONTAGE</span><span class="o">.</span><span class="n">slug</span><span class="p">,</span>
+                <span class="n">inputs</span><span class="o">=</span><span class="n">inputs</span><span class="p">,</span>
+                <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">,</span>
+                <span class="n">workdir</span><span class="o">=</span><span class="n">wd</span><span class="p">,</span>
+                <span class="n">output</span><span class="o">=</span><span class="n">out</span><span class="p">,</span>
+            <span class="p">)</span>
         <span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">result</span> <span class="o">=</span> <span class="n">render_subgenre</span><span class="p">(</span>

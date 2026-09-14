@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.footage.workspace &mdash; muvid 0.0.62 documentation</title>
+  <title>muvid.footage.workspace &mdash; muvid 0.0.63 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -15,7 +15,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=dea2dbc4"></script>
+      <script src="../../../_static/documentation_options.js?v=7ada5fdd"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -88,6 +88,7 @@
 <li class="toctree-l1"><a class="reference internal" href="strategy.html">muvid.footage.strategy</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">muvid.footage.workspace</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.footage.workspace.CANVASES"><code class="docutils literal notranslate"><span class="pre">CANVASES</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.footage.workspace.DATA_HOME_ENV_VAR"><code class="docutils literal notranslate"><span class="pre">DATA_HOME_ENV_VAR</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.footage.workspace.FootageWorkspace"><code class="docutils literal notranslate"><span class="pre">FootageWorkspace</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.footage.workspace.MusicVideoFootageProject"><code class="docutils literal notranslate"><span class="pre">MusicVideoFootageProject</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#muvid.footage.workspace.MusicVideoFootageProject.add_clip"><code class="docutils literal notranslate"><span class="pre">MusicVideoFootageProject.add_clip()</span></code></a></li>
@@ -102,6 +103,7 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.footage.workspace.atomic_write_bytes"><code class="docutils literal notranslate"><span class="pre">atomic_write_bytes()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.footage.workspace.atomic_write_text"><code class="docutils literal notranslate"><span class="pre">atomic_write_text()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.footage.workspace.data_root"><code class="docutils literal notranslate"><span class="pre">data_root()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../genre.html">muvid.genre</a></li>
@@ -140,6 +142,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../montage/render.html">muvid.montage.render</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../montage/spec.html">muvid.montage.spec</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../montage/tools.html">muvid.montage.tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../paths.html">muvid.paths</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../project.html">muvid.project</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../renderers.html">muvid.renderers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../renderers/_common.html">muvid.renderers._common</a></li>
@@ -234,6 +237,14 @@ clip, and the score tensor is keyed on that alignment’s fingerprint).</p>
 <dt class="sig sig-object py" id="muvid.footage.workspace.CANVASES">
 <span class="sig-prename descclassname"><span class="pre">muvid.footage.workspace.</span></span><span class="sig-name descname"><span class="pre">CANVASES</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'landscape':</span> <span class="pre">(1920,</span> <span class="pre">1080),</span> <span class="pre">'portrait':</span> <span class="pre">(1080,</span> <span class="pre">1920),</span> <span class="pre">'square':</span> <span class="pre">(1080,</span> <span class="pre">1080)}</span></span><a class="headerlink" href="#muvid.footage.workspace.CANVASES" title="Link to this definition"></a></dt>
 <dd><p>Named output canvases a project may choose at create (the genre Templates).</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="muvid.footage.workspace.DATA_HOME_ENV_VAR">
+<span class="sig-prename descclassname"><span class="pre">muvid.footage.workspace.</span></span><span class="sig-name descname"><span class="pre">DATA_HOME_ENV_VAR</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'MUVID_DATA_HOME'</span></span><a class="headerlink" href="#muvid.footage.workspace.DATA_HOME_ENV_VAR" title="Link to this definition"></a></dt>
+<dd><p>Re-exported from <a class="reference internal" href="../paths.html#module-muvid.paths" title="muvid.paths"><code class="xref py py-mod docutils literal notranslate"><span class="pre">muvid.paths</span></code></a>, the SSOT for where muvid’s data lives. Kept as
+names here because both are public API of this module (<code class="docutils literal notranslate"><span class="pre">muvid.mcp</span></code> re-exports
+<code class="docutils literal notranslate"><span class="pre">data_root</span></code>, and <code class="docutils literal notranslate"><span class="pre">downloads</span></code> imports <code class="docutils literal notranslate"><span class="pre">safe_component</span></code> from here).</p>
 </dd></dl>
 
 <dl class="py class">
@@ -393,6 +404,17 @@ through here. UTF-8 is a superset of the ASCII <code class="docutils literal not
 the bytes on disk are identical to what <code class="docutils literal notranslate"><span class="pre">write_text</span></code> produced and the locale-default
 <code class="docutils literal notranslate"><span class="pre">read_text</span></code> on the read side is untouched — the FORMAT does not change, only the
 way it gets there.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.footage.workspace.data_root">
+<span class="sig-prename descclassname"><span class="pre">muvid.footage.workspace.</span></span><span class="sig-name descname"><span class="pre">data_root</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Path</span></span></span><a class="reference internal" href="../../../_modules/muvid/footage/workspace.html#data_root"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.footage.workspace.data_root" title="Link to this definition"></a></dt>
+<dd><p>The muvid data root: <code class="docutils literal notranslate"><span class="pre">$MUVID_DATA_HOME</span></code> or <code class="docutils literal notranslate"><span class="pre">~/.local/share/muvid</span></code>.</p>
+<p>A thin forwarder rather than <code class="docutils literal notranslate"><span class="pre">data_root</span> <span class="pre">=</span> <span class="pre">data_home</span></code>: a plain alias keeps
+<code class="docutils literal notranslate"><span class="pre">__module__</span> <span class="pre">==</span> <span class="pre">&quot;muvid.paths&quot;</span></code>, which drops the name out of anything that filters
+a module’s members by where they were defined — <code class="docutils literal notranslate"><span class="pre">automodule</span> <span class="pre">:members:</span></code> (so this
+docstring would not render here) and this repo’s own drift-test idiom in
+<code class="docutils literal notranslate"><span class="pre">tests/test_mcp.py</span></code>. Costs one call; keeps the module’s surface introspectable.</p>
 </dd></dl>
 
 </section>

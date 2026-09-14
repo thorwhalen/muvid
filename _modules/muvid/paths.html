@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.subgenres &mdash; muvid 0.0.63 documentation</title>
+  <title>muvid.paths &mdash; muvid 0.0.63 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -164,7 +164,7 @@
   <ul class="wy-breadcrumbs">
       <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
           <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
-      <li class="breadcrumb-item active">muvid.subgenres</li>
+      <li class="breadcrumb-item active">muvid.paths</li>
       <li class="wy-breadcrumbs-aside">
       </li>
   </ul>
@@ -173,155 +173,136 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <h1>Source code for muvid.subgenres</h1><div class="highlight"><pre>
-<span></span><span class="sd">"""muvid subgenres — the plugin surface for *another kind of video*.</span>
+  <h1>Source code for muvid.paths</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""The ONE place muvid decides where its data lives.</span>
 
-<span class="sd">muvid's three parts each know how to make one thing. A **subgenre** is how a</span>
-<span class="sd">fourth kind gets added — by muvid, or by anyone else — without editing muvid.</span>
+<span class="sd">Every muvid part that persists anything answers *where* from here: the footage genre's</span>
+<span class="sd">stateful projects (``muvid/footage/workspace.py``), the visualizer's per-user render</span>
+<span class="sd">buckets (``muvid/mcp/workspace.py``), and — new with this module — the local, single-user</span>
+<span class="sd">project folders the part-3 pipeline and the part-4 subgenres work in.</span>
 
-<span class="sd">    from muvid.subgenres import Subgenre, register_subgenre</span>
+<span class="sd">Default root ``~/.local/share/muvid``, overridable with ``$MUVID_DATA_HOME``. Per the</span>
+<span class="sd">app-data-lifecycle rule this is the user-data dir and **never** the app/deploy tree: a</span>
+<span class="sd">deploy's ``rsync --delete`` treats anything it did not build as drift and erases it.</span>
 
-<span class="sd">    MY_THING = Subgenre(</span>
-<span class="sd">        slug="ransom-note",</span>
-<span class="sd">        title="Ransom note",</span>
-<span class="sd">        description="Lyrics cut from magazines, one word per beat.",</span>
-<span class="sd">        render="my_package.render:render",       # a STRING, imported lazily</span>
-<span class="sd">        inputs={"type": "object", "required": ["audio"],</span>
-<span class="sd">                "properties": {"audio": {"type": "string", "format": "path"}}},</span>
-<span class="sd">    )</span>
+<span class="sd">**Why this module exists at all, rather than a third copy of a four-line function.**</span>
+<span class="sd">``data_home`` and :func:`safe_component` were duplicated verbatim in the two workspace</span>
+<span class="sd">modules, and the part-3 surfaces had *no* copy — ``root`` is a required positional on</span>
+<span class="sd">every part-3 CLI verb **except ``serve``**, and on</span>
+<span class="sd">:class:`muvid.project.MusicVideoProject`, so nothing computed a default and the only</span>
+<span class="sd">written-down answer lived in prose: ``.claude/skills/muvid/SKILL.md`` and the ``README``</span>
+<span class="sd">both said ``~/muvid/&lt;song-stem&gt;``. That was followed literally, which put 36 MB of a real</span>
+<span class="sd">project — two generated song takes, three rendered videos, the poem sources — in</span>
+<span class="sd">``~/muvid/il-pleut``: an app-named directory under ``$HOME`` that no deploy, backup or</span>
+<span class="sd">tool owns. A default stated in prose drifts from the code and cannot be tested; one</span>
+<span class="sd">computed by a function can be both. So the fix is not a better sentence, it is</span>
+<span class="sd">:func:`project_root` plus a ``muvid project-root`` verb that the skill and the README</span>
+<span class="sd">*call* instead of a path they *state*.</span>
 
-<span class="sd">Ship it by pointing an entry point at the manifest::</span>
+<span class="sd">**``serve`` is the exception, and it is the one that actually wrote.** ``serve(root=".")``</span>
+<span class="sd">defaults to the cwd, which is a fine convention for "the project I am standing in" — but</span>
+<span class="sd">the UI has no create-a-project action and used to ``mkdir -p`` its way into whatever</span>
+<span class="sd">directory it was pointed at, so ``muvid serve`` in any folder plus one save in the browser</span>
+<span class="sd">scaffolded ``script/`` and ``.muvid/`` there. The fix is in ``muvid/ui/app.py``, which now</span>
+<span class="sd">refuses a root that is not a project, rather than here: the default is *right*, and it was</span>
+<span class="sd">the absent precondition that was wrong. Do not restate the old "required on every verb"</span>
+<span class="sd">claim — it was in this docstring, in ``facade`` and in ``CLAUDE.md``, and it was false in</span>
+<span class="sd">exactly the place it mattered.</span>
 
-<span class="sd">    [project.entry-points."muvid.subgenres.v1"]</span>
-<span class="sd">    ransom-note = "my_package.subgenre:MY_THING"</span>
-
-<span class="sd">Two things make this worth having over a plain dict:</span>
-
-<span class="sd">**The entry point's value is a manifest, not a renderer.** Listing every</span>
-<span class="sd">installed subgenre imports no rendering code, so a UI or an LLM can choose among</span>
-<span class="sd">twelve of them in microseconds and a plugin whose heavy dependency is missing</span>
-<span class="sd">degrades to a recorded error instead of taking the catalogue down.</span>
-
-<span class="sd">**It composes with ``nw`` rather than competing with it.** ``nw.Genre`` is the</span>
-<span class="sd">cross-package catalogue a host connector reads; a muvid subgenre is one more</span>
-<span class="sd">``nw.Template`` underneath muvid's own genre, carrying ``params={"subgenre":</span>
-<span class="sd">slug}``. So a plugin author depends on ``muvid`` and nothing else, and the</span>
-<span class="sd">connector picks the plugin up for free.</span>
-
-<span class="sd">Where each piece lives:</span>
-
-<span class="sd">* :mod:`muvid.subgenres._manifest` — the :class:`Subgenre` data, stdlib only.</span>
-<span class="sd">* :mod:`muvid.subgenres._registry` — registration, discovery, resolution.</span>
-<span class="sd">* :mod:`muvid.subgenres._contract` — the :class:`Renderer` protocol.</span>
-<span class="sd">* :mod:`muvid.subgenres.testing` — a conformance kit for plugin authors.</span>
-
-<span class="sd">This module imports nothing heavier than the standard library, so</span>
-<span class="sd">``import muvid.subgenres`` is safe on any import-safe path.</span>
+<span class="sd">A person choosing to keep their own working files in ``~/Downloads`` is a different thing</span>
+<span class="sd">and not this module's business — the rule is about where a *tool* writes by default.</span>
 <span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">muvid.subgenres._contract</span><span class="w"> </span><span class="kn">import</span> <span class="n">RenderRequest</span><span class="p">,</span> <span class="n">RenderResult</span><span class="p">,</span> <span class="n">Renderer</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">muvid.subgenres._manifest</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-    <span class="n">API_VERSION</span><span class="p">,</span>
-    <span class="n">ENTRY_POINT_GROUP</span><span class="p">,</span>
-    <span class="n">Example</span><span class="p">,</span>
-    <span class="n">Subgenre</span><span class="p">,</span>
-<span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">muvid.subgenres._registry</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-    <span class="n">get_subgenre</span><span class="p">,</span>
-    <span class="n">iter_subgenres</span><span class="p">,</span>
-    <span class="n">list_subgenres</span><span class="p">,</span>
-    <span class="n">register_subgenre</span><span class="p">,</span>
-    <span class="n">resolve_renderer</span><span class="p">,</span>
-    <span class="n">subgenre_catalog</span><span class="p">,</span>
-    <span class="n">unregister_subgenre</span><span class="p">,</span>
-<span class="p">)</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="s2">"API_VERSION"</span><span class="p">,</span>
-    <span class="s2">"ENTRY_POINT_GROUP"</span><span class="p">,</span>
-    <span class="s2">"Example"</span><span class="p">,</span>
-    <span class="s2">"RenderRequest"</span><span class="p">,</span>
-    <span class="s2">"RenderResult"</span><span class="p">,</span>
-    <span class="s2">"Renderer"</span><span class="p">,</span>
-    <span class="s2">"Subgenre"</span><span class="p">,</span>
-    <span class="s2">"get_subgenre"</span><span class="p">,</span>
-    <span class="s2">"iter_subgenres"</span><span class="p">,</span>
-    <span class="s2">"list_subgenres"</span><span class="p">,</span>
-    <span class="s2">"register_subgenre"</span><span class="p">,</span>
-    <span class="s2">"render_subgenre"</span><span class="p">,</span>
-    <span class="s2">"resolve_renderer"</span><span class="p">,</span>
-    <span class="s2">"subgenre_catalog"</span><span class="p">,</span>
-    <span class="s2">"unregister_subgenre"</span><span class="p">,</span>
-<span class="p">]</span>
+<span class="c1">#: Env var overriding the muvid data root. ONE knob for the root, never one per kind —</span>
+<span class="c1">#: N env vars where one belongs is the anti-pattern the app-data-lifecycle rule names.</span>
+<span class="n">DATA_HOME_ENV_VAR</span> <span class="o">=</span> <span class="s2">"MUVID_DATA_HOME"</span>
+
+<span class="c1">#: The ``{kind}`` subfolder local (single-user, non-connector) project folders live in.</span>
+<span class="c1">#: Data never goes at the root itself: leaving the root open is what let the footage</span>
+<span class="c1">#: genre add ``music_video/`` and the visualizer ``visualizer/`` without a migration.</span>
+<span class="c1">#:</span>
+<span class="c1">#: **Deliberately not the part-3 genre slug issue #4 will pick** (recommended there:</span>
+<span class="c1">#: ``music-video-ai``), and deliberately kept despite reading like</span>
+<span class="c1">#: ``music_video/projects/{email}/`` one level down. Two reasons. The connector layout is</span>
+<span class="c1">#: per-email and per-``project_id`` — ``{root}/{slug}/projects/{email}/{id}`` — while this</span>
+<span class="c1">#: is a local, single-user, per-*name* folder the CLI creates; they are different shapes,</span>
+<span class="c1">#: so #4 landing does not imply these folders move, and naming this after a slug that is</span>
+<span class="c1">#: still only *recommended* would pre-commit to it. The apparent collision is</span>
+<span class="c1">#: disambiguated by depth: ``projects/`` at depth 1 is local, ``projects/`` under a genre</span>
+<span class="c1">#: slug is the connector's. If #4 decides otherwise, this is a one-word change plus a</span>
+<span class="c1">#: migration of whatever exists by then — which is why it is a named constant.</span>
+<span class="n">PROJECTS_KIND</span> <span class="o">=</span> <span class="s2">"projects"</span>
 
 
-<div class="viewcode-block" id="render_subgenre">
-<a class="viewcode-back" href="../../module_docs/muvid/subgenres.html#muvid.subgenres.render_subgenre">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">render_subgenre</span><span class="p">(</span>
-    <span class="n">slug</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="o">*</span><span class="p">,</span>
-    <span class="n">inputs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
-    <span class="n">params</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">workdir</span><span class="p">,</span>
-    <span class="n">output</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RenderResult</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Render ``slug`` — the one call that imports plugin code.</span>
+<div class="viewcode-block" id="data_home">
+<a class="viewcode-back" href="../../module_docs/muvid/paths.html#muvid.paths.data_home">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">data_home</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The muvid data root: ``$MUVID_DATA_HOME`` or ``~/.local/share/muvid``.</span>
 
-<span class="sd">    Deliberately takes paths and primitives rather than a</span>
-<span class="sd">    :class:`~muvid.project.MusicVideoProject`: a plugin coupled to muvid's</span>
-<span class="sd">    project schema would break on every schema change, and could not be driven</span>
-<span class="sd">    from a CLI, an HTTP request or an MCP tool without muvid building the</span>
-<span class="sd">    project first. A plugin that needs more asks muvid for it through a narrow</span>
-<span class="sd">    accessor.</span>
+<span class="sd">    The override is ``expanduser``-ed and **required to be absolute**, because this path</span>
+<span class="sd">    is now printed by ``muvid project-root`` for a caller to interpolate. Without the</span>
+<span class="sd">    first, ``MUVID_DATA_HOME=~/store`` yields a *literal* ``~`` directory, so the printed</span>
+<span class="sd">    string and what :class:`muvid.project.MusicVideoProject` resolves it to are two</span>
+<span class="sd">    different places. Without the second, a relative override roots the whole data store</span>
+<span class="sd">    at the cwd — which, run from an app directory, is the very failure this module exists</span>
+<span class="sd">    to prevent, reached through its own knob. A misconfigured root is refused loudly</span>
+<span class="sd">    rather than read as something plausible.</span>
 <span class="sd">    """</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
-
-    <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.subgenres._schema</span><span class="w"> </span><span class="kn">import</span> <span class="n">SchemaError</span><span class="p">,</span> <span class="n">validate</span> <span class="k">as</span> <span class="n">_validate</span>
-
-    <span class="n">manifest</span> <span class="o">=</span> <span class="n">get_subgenre</span><span class="p">(</span><span class="n">slug</span><span class="p">)</span>
-    <span class="n">inputs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span>
-    <span class="n">params</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">params</span> <span class="ow">or</span> <span class="p">{})</span>
-
-    <span class="c1"># The manifest's schemas are a contract, and a contract nobody checks is</span>
-    <span class="c1"># decoration. Validate BEFORE resolving the renderer: a typo'd input should</span>
-    <span class="c1"># fail in microseconds, not after importing a rendering stack.</span>
-    <span class="n">problems</span> <span class="o">=</span> <span class="n">_validate</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span> <span class="n">manifest</span><span class="o">.</span><span class="n">inputs</span><span class="p">,</span> <span class="n">where</span><span class="o">=</span><span class="s2">"inputs"</span><span class="p">)</span>
-    <span class="n">problems</span> <span class="o">+=</span> <span class="n">_validate</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">manifest</span><span class="o">.</span><span class="n">params_schema</span><span class="p">,</span> <span class="n">where</span><span class="o">=</span><span class="s2">"params"</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">problems</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="n">SchemaError</span><span class="p">([</span><span class="sa">f</span><span class="s2">"subgenre </span><span class="si">{</span><span class="n">slug</span><span class="si">!r}</span><span class="s2">: </span><span class="si">{</span><span class="n">p</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">problems</span><span class="p">])</span>
-
-    <span class="n">workdir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">workdir</span><span class="p">)</span>
-    <span class="n">output</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>
-    <span class="c1"># The RenderRequest contract promises the renderer that workdir exists and</span>
-    <span class="c1"># output's parent exists. The HOST keeps that promise, not the plugin.</span>
-    <span class="n">workdir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">output</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-
-    <span class="n">renderer</span> <span class="o">=</span> <span class="n">resolve_renderer</span><span class="p">(</span><span class="n">slug</span><span class="p">)</span>
-    <span class="n">request</span> <span class="o">=</span> <span class="n">RenderRequest</span><span class="p">(</span>
-        <span class="n">subgenre</span><span class="o">=</span><span class="n">slug</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="n">inputs</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">,</span> <span class="n">workdir</span><span class="o">=</span><span class="n">workdir</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="n">output</span>
-    <span class="p">)</span>
-    <span class="n">result</span> <span class="o">=</span> <span class="n">renderer</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">RenderResult</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">"subgenre </span><span class="si">{</span><span class="n">slug</span><span class="si">!r}</span><span class="s2"> renderer returned </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">result</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">, "</span>
-            <span class="s2">"expected a muvid.subgenres.RenderResult"</span>
-        <span class="p">)</span>
-    <span class="c1"># A host serves request.output. A renderer that wrote somewhere else — or</span>
-    <span class="c1"># nowhere — must be a loud error here, not a 404 (or a served stray path)</span>
-    <span class="c1"># later. The conformance kit has always checked this; the runtime now agrees.</span>
-    <span class="k">if</span> <span class="n">Path</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">output</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span> <span class="o">!=</span> <span class="n">output</span><span class="o">.</span><span class="n">resolve</span><span class="p">():</span>
+    <span class="n">override</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">DATA_HOME_ENV_VAR</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">override</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">Path</span><span class="o">.</span><span class="n">home</span><span class="p">()</span> <span class="o">/</span> <span class="s2">".local"</span> <span class="o">/</span> <span class="s2">"share"</span> <span class="o">/</span> <span class="s2">"muvid"</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">override</span><span class="p">)</span><span class="o">.</span><span class="n">expanduser</span><span class="p">()</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">path</span><span class="o">.</span><span class="n">is_absolute</span><span class="p">():</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">"subgenre </span><span class="si">{</span><span class="n">slug</span><span class="si">!r}</span><span class="s2"> renderer reported output </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">output</span><span class="si">}</span><span class="s2">, "</span>
-            <span class="sa">f</span><span class="s2">"but was asked to write </span><span class="si">{</span><span class="n">output</span><span class="si">}</span><span class="s2">"</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">DATA_HOME_ENV_VAR</span><span class="si">}</span><span class="s2"> must be an absolute path, got </span><span class="si">{</span><span class="n">override</span><span class="si">!r}</span><span class="s2">. "</span>
+            <span class="s2">"A relative data root resolves against the current directory, so it would "</span>
+            <span class="s2">"follow the process around and can land inside an app directory."</span>
         <span class="p">)</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">output</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
-        <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">"subgenre </span><span class="si">{</span><span class="n">slug</span><span class="si">!r}</span><span class="s2"> renderer reported success but </span><span class="si">{</span><span class="n">output</span><span class="si">}</span><span class="s2"> does not exist"</span>
-        <span class="p">)</span>
-    <span class="k">return</span> <span class="n">result</span></div>
+    <span class="k">return</span> <span class="n">path</span></div>
+
+
+
+<div class="viewcode-block" id="safe_component">
+<a class="viewcode-back" href="../../module_docs/muvid/paths.html#muvid.paths.safe_component">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">safe_component</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">label</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""A single, traversal-safe path component (no ``/``, ``\\``, ``..``, or empties).</span>
+
+<span class="sd">    Every caller-supplied name reaching the data root goes through this. On the footage</span>
+<span class="sd">    MCP surface the names arrive from a remote OAuth caller, so there it is a trust</span>
+<span class="sd">    boundary rather than a tidiness check; :func:`project_root` is CLI-only and not on</span>
+<span class="sd">    that surface. Behaviour is unchanged from the two copies this replaced — notably</span>
+<span class="sd">    there is no length cap and no unicode normalisation, both pre-existing.</span>
+<span class="sd">    """</span>
+    <span class="n">v</span> <span class="o">=</span> <span class="p">(</span><span class="n">value</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">v</span> <span class="ow">or</span> <span class="n">v</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"."</span><span class="p">,</span> <span class="s2">".."</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">"/"</span> <span class="ow">in</span> <span class="n">v</span> <span class="ow">or</span> <span class="s2">"</span><span class="se">\\</span><span class="s2">"</span> <span class="ow">in</span> <span class="n">v</span> <span class="ow">or</span> <span class="s2">"</span><span class="se">\x00</span><span class="s2">"</span> <span class="ow">in</span> <span class="n">v</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"invalid </span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">value</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">v</span></div>
+
+
+
+<div class="viewcode-block" id="project_root">
+<a class="viewcode-back" href="../../module_docs/muvid/paths.html#muvid.paths.project_root">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">project_root</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">kind</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">PROJECTS_KIND</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Where a local muvid project named ``name`` belongs: ``{data_home}/{kind}/{name}``.</span>
+
+<span class="sd">    Returns the path without creating it — ``muvid init`` (or a subgenre's own renderer)</span>
+<span class="sd">    owns creation, and a resolver that made directories could not be used to *ask* where</span>
+<span class="sd">    a project would go.</span>
+
+<span class="sd">    ``kind`` is the seam for a surface that wants its own subtree rather than sharing</span>
+<span class="sd">    ``projects/``; the connector-facing genres already use their own (``music_video/``,</span>
+<span class="sd">    ``visualizer/``) through the workspace classes that own those layouts.</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="n">data_home</span><span class="p">()</span>
+        <span class="o">/</span> <span class="n">safe_component</span><span class="p">(</span><span class="n">kind</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"kind"</span><span class="p">)</span>
+        <span class="o">/</span> <span class="n">safe_component</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"project name"</span><span class="p">)</span>
+    <span class="p">)</span></div>
 
 </pre></div>
 

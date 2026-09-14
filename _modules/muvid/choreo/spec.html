@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.choreo.spec &mdash; muvid 0.0.62 documentation</title>
+  <title>muvid.choreo.spec &mdash; muvid 0.0.63 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=dea2dbc4"></script>
+      <script src="../../../_static/documentation_options.js?v=7ada5fdd"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -120,6 +120,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/montage/render.html">muvid.montage.render</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/montage/spec.html">muvid.montage.spec</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/montage/tools.html">muvid.montage.tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/paths.html">muvid.paths</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/project.html">muvid.project</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers.html">muvid.renderers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers/_common.html">muvid.renderers._common</a></li>
@@ -422,7 +423,8 @@
             <span class="n">raw</span> <span class="o">=</span> <span class="n">_mapping</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span>
             <span class="n">scenes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                 <span class="n">Scene</span><span class="p">(</span>
-                    <span class="n">applies_to</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">_seq</span><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"applies_to"</span><span class="p">)))</span> <span class="ow">or</span> <span class="p">(</span><span class="s2">"*"</span><span class="p">,),</span>
+                    <span class="n">applies_to</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">_seq</span><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"applies_to"</span><span class="p">)))</span>
+                    <span class="ow">or</span> <span class="p">(</span><span class="s2">"*"</span><span class="p">,),</span>
                     <span class="n">archetype</span><span class="o">=</span><span class="n">_text</span><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"archetype"</span><span class="p">),</span> <span class="s2">"fischinger"</span><span class="p">),</span>
                     <span class="n">params</span><span class="o">=</span><span class="n">_mapping</span><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"params"</span><span class="p">)),</span>
                 <span class="p">)</span>
@@ -465,7 +467,9 @@
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_bad_colour</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
     <span class="k">return</span> <span class="ow">not</span> <span class="p">(</span>
-        <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">==</span> <span class="mi">7</span> <span class="ow">and</span> <span class="n">value</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"#"</span>
+        <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
+        <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">==</span> <span class="mi">7</span>
+        <span class="ow">and</span> <span class="n">value</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"#"</span>
         <span class="ow">and</span> <span class="nb">all</span><span class="p">(</span><span class="n">c</span> <span class="ow">in</span> <span class="n">_HEX</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">value</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
     <span class="p">)</span>
 
@@ -486,22 +490,28 @@
         <span class="k">if</span> <span class="n">_bad_colour</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
             <span class="n">errs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"direction.palette.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">value</span><span class="si">!r}</span><span class="s2"> is not a #rrggbb colour"</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">d</span><span class="o">.</span><span class="n">background</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">BACKGROUNDS</span><span class="p">:</span>
-        <span class="n">errs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"direction.background </span><span class="si">{</span><span class="n">d</span><span class="o">.</span><span class="n">background</span><span class="si">!r}</span><span class="s2"> is not one of </span><span class="si">{</span><span class="n">_enum</span><span class="p">(</span><span class="n">BACKGROUNDS</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">errs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"direction.background </span><span class="si">{</span><span class="n">d</span><span class="o">.</span><span class="n">background</span><span class="si">!r}</span><span class="s2"> is not one of </span><span class="si">{</span><span class="n">_enum</span><span class="p">(</span><span class="n">BACKGROUNDS</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">)</span>
     <span class="k">if</span> <span class="n">d</span><span class="o">.</span><span class="n">density</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">DENSITIES</span><span class="p">:</span>
         <span class="n">errs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"direction.density </span><span class="si">{</span><span class="n">d</span><span class="o">.</span><span class="n">density</span><span class="si">!r}</span><span class="s2"> is not one of </span><span class="si">{</span><span class="n">_enum</span><span class="p">(</span><span class="n">DENSITIES</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">spec</span><span class="o">.</span><span class="n">scenes</span><span class="p">:</span>
         <span class="n">errs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"scenes is empty — at least one scene is required"</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">sc</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">scenes</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">sc</span><span class="o">.</span><span class="n">archetype</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">ARCHETYPES</span><span class="p">:</span>
-            <span class="n">errs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"scenes[</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">].archetype </span><span class="si">{</span><span class="n">sc</span><span class="o">.</span><span class="n">archetype</span><span class="si">!r}</span><span class="s2"> is not one of the known archetypes"</span><span class="p">)</span>
+            <span class="n">errs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"scenes[</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">].archetype </span><span class="si">{</span><span class="n">sc</span><span class="o">.</span><span class="n">archetype</span><span class="si">!r}</span><span class="s2"> is not one of the known archetypes"</span>
+            <span class="p">)</span>
         <span class="k">elif</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sc</span><span class="o">.</span><span class="n">params</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">):</span>
             <span class="n">errs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"scenes[</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">].params must be an object"</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">known</span> <span class="o">=</span> <span class="n">ARCHETYPE_PARAMS</span><span class="p">[</span><span class="n">sc</span><span class="o">.</span><span class="n">archetype</span><span class="p">]</span>
             <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">sc</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
                 <span class="k">if</span> <span class="n">k</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">known</span><span class="p">:</span>
-                    <span class="n">errs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"scenes[</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">].params.</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2"> is not a </span><span class="si">{</span><span class="n">sc</span><span class="o">.</span><span class="n">archetype</span><span class="si">}</span><span class="s2"> parameter "</span>
-                                <span class="sa">f</span><span class="s2">"(known: </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">known</span><span class="p">)</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
+                    <span class="n">errs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">"scenes[</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">].params.</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2"> is not a </span><span class="si">{</span><span class="n">sc</span><span class="o">.</span><span class="n">archetype</span><span class="si">}</span><span class="s2"> parameter "</span>
+                        <span class="sa">f</span><span class="s2">"(known: </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">known</span><span class="p">)</span><span class="si">}</span><span class="s2">)"</span>
+                    <span class="p">)</span>
                 <span class="k">elif</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">))</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">bool</span><span class="p">):</span>
                     <span class="n">errs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"scenes[</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">].params.</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2"> must be a number"</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">errs</span></div>
@@ -544,11 +554,13 @@
 
     <span class="n">scenes</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">sc</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">scenes</span> <span class="ow">or</span> <span class="p">(</span><span class="n">Scene</span><span class="p">(),)):</span>
-        <span class="n">archetype</span> <span class="o">=</span> <span class="n">pick</span><span class="p">(</span><span class="n">sc</span><span class="o">.</span><span class="n">archetype</span><span class="p">,</span> <span class="n">ARCHETYPES</span><span class="p">,</span> <span class="s2">"fischinger"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"scenes[</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">].archetype"</span><span class="p">)</span>
+        <span class="n">archetype</span> <span class="o">=</span> <span class="n">pick</span><span class="p">(</span>
+            <span class="n">sc</span><span class="o">.</span><span class="n">archetype</span><span class="p">,</span> <span class="n">ARCHETYPES</span><span class="p">,</span> <span class="s2">"fischinger"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"scenes[</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">].archetype"</span>
+        <span class="p">)</span>
         <span class="n">known</span> <span class="o">=</span> <span class="n">ARCHETYPE_PARAMS</span><span class="p">[</span><span class="n">archetype</span><span class="p">]</span>
         <span class="n">params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="n">dropped</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="p">(</span><span class="n">sc</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sc</span><span class="o">.</span><span class="n">params</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">)</span> <span class="k">else</span> <span class="p">()):</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">sc</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sc</span><span class="o">.</span><span class="n">params</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">)</span> <span class="k">else</span> <span class="p">():</span>
             <span class="k">if</span> <span class="n">k</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">known</span><span class="p">:</span>
                 <span class="n">dropped</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
                 <span class="k">continue</span>
@@ -569,8 +581,12 @@
         <span class="n">scenes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">replace</span><span class="p">(</span><span class="n">sc</span><span class="p">,</span> <span class="n">archetype</span><span class="o">=</span><span class="n">archetype</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">))</span>
 
     <span class="k">return</span> <span class="p">(</span>
-        <span class="n">TreatmentSpec</span><span class="p">(</span><span class="n">spec_version</span><span class="o">=</span><span class="n">SPEC_VERSION</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="n">spec</span><span class="o">.</span><span class="n">title</span><span class="p">,</span>
-                      <span class="n">direction</span><span class="o">=</span><span class="n">direction</span><span class="p">,</span> <span class="n">scenes</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="n">scenes</span><span class="p">)),</span>
+        <span class="n">TreatmentSpec</span><span class="p">(</span>
+            <span class="n">spec_version</span><span class="o">=</span><span class="n">SPEC_VERSION</span><span class="p">,</span>
+            <span class="n">title</span><span class="o">=</span><span class="n">spec</span><span class="o">.</span><span class="n">title</span><span class="p">,</span>
+            <span class="n">direction</span><span class="o">=</span><span class="n">direction</span><span class="p">,</span>
+            <span class="n">scenes</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="n">scenes</span><span class="p">),</span>
+        <span class="p">),</span>
         <span class="n">notes</span><span class="p">,</span>
     <span class="p">)</span></div>
 
@@ -578,7 +594,9 @@
 
 <div class="viewcode-block" id="coerce">
 <a class="viewcode-back" href="../../../module_docs/muvid/choreo/spec.html#muvid.choreo.coerce">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">coerce</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="n">TreatmentSpec</span> <span class="o">|</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">TreatmentSpec</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">coerce</span><span class="p">(</span>
+    <span class="n">obj</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="n">TreatmentSpec</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">TreatmentSpec</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">"""Whatever a caller produced -&gt; a renderable spec plus the repair notes."""</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">TreatmentSpec</span><span class="p">):</span>
         <span class="n">spec</span> <span class="o">=</span> <span class="n">obj</span>
@@ -625,12 +643,18 @@
                         <span class="s2">"properties"</span><span class="p">:</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">colour</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">asdict</span><span class="p">(</span><span class="n">Palette</span><span class="p">())},</span>
                     <span class="p">},</span>
                     <span class="s2">"background"</span><span class="p">:</span> <span class="p">{</span>
-                        <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"string"</span><span class="p">,</span> <span class="s2">"enum"</span><span class="p">:</span> <span class="n">_enum</span><span class="p">(</span><span class="n">BACKGROUNDS</span><span class="p">),</span>
-                        <span class="s2">"description"</span><span class="p">:</span> <span class="s2">"; "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">BACKGROUNDS</span><span class="o">.</span><span class="n">items</span><span class="p">()),</span>
+                        <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"string"</span><span class="p">,</span>
+                        <span class="s2">"enum"</span><span class="p">:</span> <span class="n">_enum</span><span class="p">(</span><span class="n">BACKGROUNDS</span><span class="p">),</span>
+                        <span class="s2">"description"</span><span class="p">:</span> <span class="s2">"; "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">BACKGROUNDS</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                        <span class="p">),</span>
                     <span class="p">},</span>
                     <span class="s2">"density"</span><span class="p">:</span> <span class="p">{</span>
-                        <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"string"</span><span class="p">,</span> <span class="s2">"enum"</span><span class="p">:</span> <span class="n">_enum</span><span class="p">(</span><span class="n">DENSITIES</span><span class="p">),</span>
-                        <span class="s2">"description"</span><span class="p">:</span> <span class="s2">"; "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">DENSITIES</span><span class="o">.</span><span class="n">items</span><span class="p">()),</span>
+                        <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"string"</span><span class="p">,</span>
+                        <span class="s2">"enum"</span><span class="p">:</span> <span class="n">_enum</span><span class="p">(</span><span class="n">DENSITIES</span><span class="p">),</span>
+                        <span class="s2">"description"</span><span class="p">:</span> <span class="s2">"; "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">DENSITIES</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                        <span class="p">),</span>
                     <span class="p">},</span>
                 <span class="p">},</span>
             <span class="p">},</span>
@@ -643,18 +667,23 @@
                     <span class="s2">"required"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"archetype"</span><span class="p">],</span>
                     <span class="s2">"properties"</span><span class="p">:</span> <span class="p">{</span>
                         <span class="s2">"applies_to"</span><span class="p">:</span> <span class="p">{</span>
-                            <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"array"</span><span class="p">,</span> <span class="s2">"items"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"string"</span><span class="p">},</span>
+                            <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"array"</span><span class="p">,</span>
+                            <span class="s2">"items"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"string"</span><span class="p">},</span>
                             <span class="s2">"description"</span><span class="p">:</span> <span class="s2">"Section tiers (low/mid/high), section "</span>
                             <span class="s2">"indices as strings, or ['*'] for the whole song."</span><span class="p">,</span>
                         <span class="p">},</span>
                         <span class="s2">"archetype"</span><span class="p">:</span> <span class="p">{</span>
-                            <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"string"</span><span class="p">,</span> <span class="s2">"enum"</span><span class="p">:</span> <span class="n">_enum</span><span class="p">(</span><span class="n">ARCHETYPES</span><span class="p">),</span>
-                            <span class="s2">"description"</span><span class="p">:</span> <span class="s2">"; "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">ARCHETYPES</span><span class="o">.</span><span class="n">items</span><span class="p">()),</span>
+                            <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"string"</span><span class="p">,</span>
+                            <span class="s2">"enum"</span><span class="p">:</span> <span class="n">_enum</span><span class="p">(</span><span class="n">ARCHETYPES</span><span class="p">),</span>
+                            <span class="s2">"description"</span><span class="p">:</span> <span class="s2">"; "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">ARCHETYPES</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                            <span class="p">),</span>
                         <span class="p">},</span>
                         <span class="s2">"params"</span><span class="p">:</span> <span class="p">{</span>
                             <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"object"</span><span class="p">,</span>
                             <span class="s2">"description"</span><span class="p">:</span> <span class="s2">"; "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
-                                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">a</span><span class="si">}</span><span class="s2">: "</span> <span class="o">+</span> <span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">a</span><span class="si">}</span><span class="s2">: "</span>
+                                <span class="o">+</span> <span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
                                     <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">d</span><span class="si">}</span><span class="s2">; default </span><span class="si">{</span><span class="n">dflt</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">lo</span><span class="si">}</span><span class="s2">..</span><span class="si">{</span><span class="n">hi</span><span class="si">}</span><span class="s2">)"</span>
                                     <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="p">(</span><span class="n">dflt</span><span class="p">,</span> <span class="n">lo</span><span class="p">,</span> <span class="n">hi</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span> <span class="ow">in</span> <span class="n">ps</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
                                 <span class="p">)</span>
@@ -678,8 +707,10 @@
         <span class="s2">"backgrounds"</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="n">BACKGROUNDS</span><span class="p">),</span>
         <span class="s2">"densities"</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="n">DENSITIES</span><span class="p">),</span>
         <span class="s2">"archetype_params"</span><span class="p">:</span> <span class="p">{</span>
-            <span class="n">a</span><span class="p">:</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="p">{</span><span class="s2">"default"</span><span class="p">:</span> <span class="n">d</span><span class="p">,</span> <span class="s2">"min"</span><span class="p">:</span> <span class="n">lo</span><span class="p">,</span> <span class="s2">"max"</span><span class="p">:</span> <span class="n">hi</span><span class="p">,</span> <span class="s2">"description"</span><span class="p">:</span> <span class="n">desc</span><span class="p">}</span>
-                <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">lo</span><span class="p">,</span> <span class="n">hi</span><span class="p">,</span> <span class="n">desc</span><span class="p">)</span> <span class="ow">in</span> <span class="n">ps</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+            <span class="n">a</span><span class="p">:</span> <span class="p">{</span>
+                <span class="n">k</span><span class="p">:</span> <span class="p">{</span><span class="s2">"default"</span><span class="p">:</span> <span class="n">d</span><span class="p">,</span> <span class="s2">"min"</span><span class="p">:</span> <span class="n">lo</span><span class="p">,</span> <span class="s2">"max"</span><span class="p">:</span> <span class="n">hi</span><span class="p">,</span> <span class="s2">"description"</span><span class="p">:</span> <span class="n">desc</span><span class="p">}</span>
+                <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">lo</span><span class="p">,</span> <span class="n">hi</span><span class="p">,</span> <span class="n">desc</span><span class="p">)</span> <span class="ow">in</span> <span class="n">ps</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="p">}</span>
             <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">ps</span> <span class="ow">in</span> <span class="n">ARCHETYPE_PARAMS</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
         <span class="p">},</span>
     <span class="p">}</span></div>

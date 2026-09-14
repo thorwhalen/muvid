@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.facade &mdash; muvid 0.0.62 documentation</title>
+  <title>muvid.facade &mdash; muvid 0.0.63 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=dea2dbc4"></script>
+      <script src="../../_static/documentation_options.js?v=7ada5fdd"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -120,6 +120,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/montage/render.html">muvid.montage.render</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/montage/spec.html">muvid.montage.spec</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/montage/tools.html">muvid.montage.tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/paths.html">muvid.paths</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/project.html">muvid.project</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/renderers.html">muvid.renderers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/renderers/_common.html">muvid.renderers._common</a></li>
@@ -192,6 +193,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">muvid</span><span class="w"> </span><span class="kn">import</span> <span class="n">environments</span> <span class="k">as</span> <span class="n">_envs</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">muvid</span><span class="w"> </span><span class="kn">import</span> <span class="n">events</span> <span class="k">as</span> <span class="n">_events</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">muvid</span><span class="w"> </span><span class="kn">import</span> <span class="n">lyrics</span> <span class="k">as</span> <span class="n">_lyrics</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">muvid</span><span class="w"> </span><span class="kn">import</span> <span class="n">paths</span> <span class="k">as</span> <span class="n">_paths</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">muvid</span><span class="w"> </span><span class="kn">import</span> <span class="n">script</span> <span class="k">as</span> <span class="n">_script</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.project</span><span class="w"> </span><span class="kn">import</span> <span class="n">MusicVideoProject</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.renderers</span><span class="w"> </span><span class="kn">import</span> <span class="n">render_all</span> <span class="k">as</span> <span class="n">_render_all</span><span class="p">,</span> <span class="n">render_shot</span> <span class="k">as</span> <span class="n">_render_shot</span>
@@ -201,6 +203,29 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_fal_events_log</span><span class="p">(</span><span class="n">project</span><span class="p">:</span> <span class="n">MusicVideoProject</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Path to the per-project fal events JSONL."""</span>
     <span class="k">return</span> <span class="n">project</span><span class="o">.</span><span class="n">root</span> <span class="o">/</span> <span class="s2">".muvid"</span> <span class="o">/</span> <span class="s2">"fal_events.jsonl"</span>
+
+
+<div class="viewcode-block" id="default_project_root">
+<a class="viewcode-back" href="../../module_docs/muvid/facade.html#muvid.default_project_root">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">default_project_root</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Where a project called ``name`` belongs by default, as an absolute path.</span>
+
+<span class="sd">    ``root`` is a required positional on every other verb here and on</span>
+<span class="sd">    :class:`muvid.project.MusicVideoProject`, deliberately — a pipeline that guessed</span>
+<span class="sd">    which project it was operating on would be worse than one that asks. But required</span>
+<span class="sd">    *everywhere* left **no** code answering where a NEW project should go, so the only</span>
+<span class="sd">    written-down answer lived in prose: the ``muvid`` skill and the ``README`` both said</span>
+<span class="sd">    ``~/muvid/&lt;song-stem&gt;``, which put a real project's 36 MB in an app-named directory</span>
+<span class="sd">    under ``$HOME`` that nothing owns. This is that answer in code, where it can be</span>
+<span class="sd">    tested and where callers — the skill, the README, the CLI, a script — can *ask*</span>
+<span class="sd">    instead of restating it. It creates nothing.</span>
+
+<span class="sd">    The CLI's ``serve`` is the one exception to "required": it defaults ``root`` to the</span>
+<span class="sd">    cwd. See ``muvid/paths.py`` — the default is right, and it was the UI's missing</span>
+<span class="sd">    is-this-a-project precondition that made it write.</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">_paths</span><span class="o">.</span><span class="n">project_root</span><span class="p">(</span><span class="n">name</span><span class="p">))</span></div>
+
 
 
 <div class="viewcode-block" id="init_project">

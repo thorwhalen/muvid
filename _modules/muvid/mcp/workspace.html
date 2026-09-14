@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.mcp.workspace &mdash; muvid 0.0.62 documentation</title>
+  <title>muvid.mcp.workspace &mdash; muvid 0.0.63 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=dea2dbc4"></script>
+      <script src="../../../_static/documentation_options.js?v=7ada5fdd"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -120,6 +120,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/montage/render.html">muvid.montage.render</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/montage/spec.html">muvid.montage.spec</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/montage/tools.html">muvid.montage.tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/paths.html">muvid.paths</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/project.html">muvid.project</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers.html">muvid.renderers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/muvid/renderers/_common.html">muvid.renderers._common</a></li>
@@ -197,30 +198,36 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">muvid.paths</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">DATA_HOME_ENV_VAR</span> <span class="k">as</span> <span class="n">_DATA_HOME_ENV_VAR</span><span class="p">,</span>
+    <span class="n">data_home</span><span class="p">,</span>
+    <span class="n">safe_component</span><span class="p">,</span>
+<span class="p">)</span>
+
 <span class="c1">#: Env var overriding the muvid data root (where per-user visualizer buckets live).</span>
-<span class="n">DATA_HOME_ENV_VAR</span> <span class="o">=</span> <span class="s2">"MUVID_DATA_HOME"</span>
+<span class="c1">#: Re-exported from :mod:`muvid.paths`, the SSOT — this module used to carry its own</span>
+<span class="c1">#: verbatim copy of both, beside a second copy in ``muvid/footage/workspace.py``.</span>
+<span class="n">DATA_HOME_ENV_VAR</span> <span class="o">=</span> <span class="n">_DATA_HOME_ENV_VAR</span>
 
 
 <div class="viewcode-block" id="data_root">
 <a class="viewcode-back" href="../../../module_docs/muvid/mcp/workspace.html#muvid.mcp.data_root">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">data_root</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""The muvid data root: ``$MUVID_DATA_HOME`` or ``~/.local/share/muvid``."""</span>
-    <span class="n">override</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">DATA_HOME_ENV_VAR</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">Path</span><span class="p">(</span><span class="n">override</span><span class="p">)</span> <span class="k">if</span> <span class="n">override</span> <span class="k">else</span> <span class="n">Path</span><span class="o">.</span><span class="n">home</span><span class="p">()</span> <span class="o">/</span> <span class="s2">".local"</span> <span class="o">/</span> <span class="s2">"share"</span> <span class="o">/</span> <span class="s2">"muvid"</span></div>
+<span class="w">    </span><span class="sd">"""The muvid data root: ``$MUVID_DATA_HOME`` or ``~/.local/share/muvid``.</span>
+
+<span class="sd">    Public API (``muvid.mcp`` re-exports it), so the name stays though the body moved.</span>
+<span class="sd">    A forwarder, not an alias, for the introspection reason given on the footage twin.</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="n">data_home</span><span class="p">()</span></div>
 
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_safe_component</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">label</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""A single, traversal-safe path component (no ``/``, ``\\``, ``..``, or empties)."""</span>
-    <span class="n">v</span> <span class="o">=</span> <span class="p">(</span><span class="n">value</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">v</span> <span class="ow">or</span> <span class="n">v</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"."</span><span class="p">,</span> <span class="s2">".."</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">"/"</span> <span class="ow">in</span> <span class="n">v</span> <span class="ow">or</span> <span class="s2">"</span><span class="se">\\</span><span class="s2">"</span> <span class="ow">in</span> <span class="n">v</span> <span class="ow">or</span> <span class="s2">"</span><span class="se">\x00</span><span class="s2">"</span> <span class="ow">in</span> <span class="n">v</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"invalid </span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">value</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">v</span>
+<span class="c1">#: Module-private, so an alias is fine here — nothing documents or introspects it.</span>
+<span class="n">_safe_component</span> <span class="o">=</span> <span class="n">safe_component</span>
 
 
 <div class="viewcode-block" id="VisualizerProject">

@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid.__main__ &mdash; muvid 0.0.62 documentation</title>
+  <title>muvid.__main__ &mdash; muvid 0.0.63 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=dea2dbc4"></script>
+      <script src="../../_static/documentation_options.js?v=7ada5fdd"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -120,6 +120,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/montage/render.html">muvid.montage.render</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/montage/spec.html">muvid.montage.spec</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/montage/tools.html">muvid.montage.tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/paths.html">muvid.paths</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/project.html">muvid.project</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/renderers.html">muvid.renderers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/muvid/renderers/_common.html">muvid.renderers._common</a></li>
@@ -188,6 +189,30 @@
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_print_json</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
     <span class="nb">print</span><span class="p">(</span><span class="n">_json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="nb">str</span><span class="p">))</span>
+
+
+<div class="viewcode-block" id="project_root">
+<a class="viewcode-back" href="../../module_docs/muvid/__main__.html#muvid.__main__.project_root">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">project_root</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Print where a project called NAME belongs by default.</span>
+
+<span class="sd">    Use this instead of writing a path by hand:</span>
+<span class="sd">    ``muvid init "$(muvid project-root my-song)" --song ...``. It prints</span>
+<span class="sd">    ``~/.local/share/muvid/projects/NAME`` (``$MUVID_DATA_HOME`` relocates the root)</span>
+<span class="sd">    and creates nothing. An app-named directory under ``$HOME`` — ``~/muvid/...`` —</span>
+<span class="sd">    is never the answer: an app directory holds code, not data.</span>
+<span class="sd">    """</span>
+    <span class="c1"># A clean message with a next action, not a traceback: this is the verb the skill</span>
+    <span class="c1"># tells agents to call, and `&lt;song-stem&gt;` derivation really does produce names with</span>
+    <span class="c1"># a slash in them ("AC/DC", a date), so the ValueError is a reachable user error.</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">facade</span><span class="o">.</span><span class="n">default_project_root</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
+    <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">SystemExit</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="se">\n</span><span class="s2">A project name is one path component. Try a slug: "</span>
+            <span class="s2">"lowercase, dashes for spaces, no slashes."</span>
+        <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span></div>
+
 
 
 <div class="viewcode-block" id="init">
@@ -463,6 +488,7 @@
 <span class="c1">#: plain functions: the parser is derived from these signatures and docstrings,</span>
 <span class="c1">#: so the command surface cannot drift from what is defined above.</span>
 <span class="n">COMMANDS</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">project_root</span><span class="p">,</span>
     <span class="n">init</span><span class="p">,</span>
     <span class="n">transcribe</span><span class="p">,</span>
     <span class="n">align</span><span class="p">,</span>

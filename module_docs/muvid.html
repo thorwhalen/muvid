@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>muvid &mdash; muvid 0.0.62 documentation</title>
+  <title>muvid &mdash; muvid 0.0.63 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
@@ -15,7 +15,7 @@
   
       <script src="../_static/jquery.js?v=5d32c60e"></script>
       <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../_static/documentation_options.js?v=dea2dbc4"></script>
+      <script src="../_static/documentation_options.js?v=7ada5fdd"></script>
       <script src="../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -64,6 +64,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#muvid.ShotSpec"><code class="docutils literal notranslate"><span class="pre">ShotSpec</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.SongInfo"><code class="docutils literal notranslate"><span class="pre">SongInfo</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.align_lyrics"><code class="docutils literal notranslate"><span class="pre">align_lyrics()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#muvid.default_project_root"><code class="docutils literal notranslate"><span class="pre">default_project_root()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.init_project"><code class="docutils literal notranslate"><span class="pre">init_project()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.render"><code class="docutils literal notranslate"><span class="pre">render()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#muvid.render_audio_video"><code class="docutils literal notranslate"><span class="pre">render_audio_video()</span></code></a></li>
@@ -144,6 +145,7 @@
 <li class="toctree-l1"><a class="reference internal" href="muvid/montage/render.html">muvid.montage.render</a></li>
 <li class="toctree-l1"><a class="reference internal" href="muvid/montage/spec.html">muvid.montage.spec</a></li>
 <li class="toctree-l1"><a class="reference internal" href="muvid/montage/tools.html">muvid.montage.tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="muvid/paths.html">muvid.paths</a></li>
 <li class="toctree-l1"><a class="reference internal" href="muvid/project.html">muvid.project</a></li>
 <li class="toctree-l1"><a class="reference internal" href="muvid/renderers.html">muvid.renderers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="muvid/renderers/_common.html">muvid.renderers._common</a></li>
@@ -308,6 +310,24 @@ isn’t supported by the basic compositor).</p>
 <a class="reference internal" href="muvid/align.html#muvid.align.list_aligners" title="muvid.align.list_aligners"><code class="xref py py-func docutils literal notranslate"><span class="pre">muvid.align.list_aligners()</span></code></a>); extra kwargs are forwarded to
 the chosen aligner. Defaults to <code class="docutils literal notranslate"><span class="pre">scribe-greedy</span></code>.</p>
 <p>Returns the path to the alignment store.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.default_project_root">
+<span class="sig-prename descclassname"><span class="pre">muvid.</span></span><span class="sig-name descname"><span class="pre">default_project_root</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../_modules/muvid/facade.html#default_project_root"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#muvid.default_project_root" title="Link to this definition"></a></dt>
+<dd><p>Where a project called <code class="docutils literal notranslate"><span class="pre">name</span></code> belongs by default, as an absolute path.</p>
+<p><code class="docutils literal notranslate"><span class="pre">root</span></code> is a required positional on every other verb here and on
+<a class="reference internal" href="muvid/project.html#muvid.project.MusicVideoProject" title="muvid.project.MusicVideoProject"><code class="xref py py-class docutils literal notranslate"><span class="pre">muvid.project.MusicVideoProject</span></code></a>, deliberately — a pipeline that guessed
+which project it was operating on would be worse than one that asks. But required
+<em>everywhere</em> left <strong>no</strong> code answering where a NEW project should go, so the only
+written-down answer lived in prose: the <code class="docutils literal notranslate"><span class="pre">muvid</span></code> skill and the <code class="docutils literal notranslate"><span class="pre">README</span></code> both said
+<code class="docutils literal notranslate"><span class="pre">~/muvid/&lt;song-stem&gt;</span></code>, which put a real project’s 36 MB in an app-named directory
+under <code class="docutils literal notranslate"><span class="pre">$HOME</span></code> that nothing owns. This is that answer in code, where it can be
+tested and where callers — the skill, the README, the CLI, a script — can <em>ask</em>
+instead of restating it. It creates nothing.</p>
+<p>The CLI’s <code class="docutils literal notranslate"><span class="pre">serve</span></code> is the one exception to “required”: it defaults <code class="docutils literal notranslate"><span class="pre">root</span></code> to the
+cwd. See <code class="docutils literal notranslate"><span class="pre">muvid/paths.py</span></code> — the default is right, and it was the UI’s missing
+is-this-a-project precondition that made it write.</p>
 </dd></dl>
 
 <dl class="py function">
