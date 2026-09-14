@@ -36,10 +36,17 @@ from muvid.paths import (
 #: verbatim copy of both, beside a second copy in ``muvid/footage/workspace.py``.
 DATA_HOME_ENV_VAR = _DATA_HOME_ENV_VAR
 
-#: The muvid data root: ``$MUVID_DATA_HOME`` or ``~/.local/share/muvid``. Public API
-#: (``muvid.mcp`` re-exports it), so the name stays even though the body moved.
-data_root = data_home
 
+def data_root() -> Path:
+    """The muvid data root: ``$MUVID_DATA_HOME`` or ``~/.local/share/muvid``.
+
+    Public API (``muvid.mcp`` re-exports it), so the name stays though the body moved.
+    A forwarder, not an alias, for the introspection reason given on the footage twin.
+    """
+    return data_home()
+
+
+#: Module-private, so an alias is fine here — nothing documents or introspects it.
 _safe_component = safe_component
 
 

@@ -70,8 +70,16 @@ CANVASES: dict[str, tuple[int, int]] = {
 DEFAULT_CANVAS_NAME = "landscape"
 
 
-#: The muvid data root: ``$MUVID_DATA_HOME`` or ``~/.local/share/muvid``.
-data_root = data_home
+def data_root() -> Path:
+    """The muvid data root: ``$MUVID_DATA_HOME`` or ``~/.local/share/muvid``.
+
+    A thin forwarder rather than ``data_root = data_home``: a plain alias keeps
+    ``__module__ == "muvid.paths"``, which drops the name out of anything that filters
+    a module's members by where they were defined — ``automodule :members:`` (so this
+    docstring would not render here) and this repo's own drift-test idiom in
+    ``tests/test_mcp.py``. Costs one call; keeps the module's surface introspectable.
+    """
+    return data_home()
 
 
 @dataclass(frozen=True)

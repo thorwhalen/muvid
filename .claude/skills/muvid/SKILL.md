@@ -78,7 +78,8 @@ the user what came out, and ask just enough questions to keep moving.
 ## The pipeline (eight stages, each idempotent)
 
 1. **init** — `muvid init <root> --song <audio>`. Fresh project, song
-   probed.
+   probed. For `<root>`, ask muvid: `root="$(muvid project-root <song-stem>)"`
+   — never hand-write a path (see "When the user starts from scratch" below).
 2. **transcribe** — `muvid transcribe <root>`. ElevenLabs Scribe writes
    `lyrics/transcript.json` and a draft `lyrics/lyrics.md`.
 3. **edit lyrics** — *user task*. The user opens `lyrics/lyrics.md`,

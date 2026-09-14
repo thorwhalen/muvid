@@ -34,12 +34,17 @@ def default_project_root(name: str) -> str:
 
     ``root`` is a required positional on every other verb here and on
     :class:`muvid.project.MusicVideoProject`, deliberately — a pipeline that guessed
-    which project it was operating on would be worse than one that asks. But "required
-    everywhere" left *no* code answering where a NEW project should go, so the only
-    written-down answer lived in prose (the ``muvid`` skill), said ``~/muvid/<song-stem>``,
-    and put a real project's 36 MB in an app-named directory under ``$HOME`` that nothing
-    owns. This is that answer in code, where it can be tested and where callers — the
-    skill, the CLI, a script — can *ask* instead of restating it. It creates nothing.
+    which project it was operating on would be worse than one that asks. But required
+    *everywhere* left **no** code answering where a NEW project should go, so the only
+    written-down answer lived in prose: the ``muvid`` skill and the ``README`` both said
+    ``~/muvid/<song-stem>``, which put a real project's 36 MB in an app-named directory
+    under ``$HOME`` that nothing owns. This is that answer in code, where it can be
+    tested and where callers — the skill, the README, the CLI, a script — can *ask*
+    instead of restating it. It creates nothing.
+
+    The CLI's ``serve`` is the one exception to "required": it defaults ``root`` to the
+    cwd. See ``muvid/paths.py`` — the default is right, and it was the UI's missing
+    is-this-a-project precondition that made it write.
     """
     return str(_paths.project_root(name))
 

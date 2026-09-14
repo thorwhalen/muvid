@@ -752,20 +752,42 @@ is the SSOT** — `data_home()`, `safe_component()` and `project_root()`; both w
 modules re-export the first two by name (`data_root` is public API of `muvid.mcp`) rather
 than carrying the verbatim copies they used to. Never inside the app/deploy tree.
 
-**Parts 3 and 4 had no default at all, and that is what actually leaked.** `root` is a
-required positional on every part-3 CLI verb and on `MusicVideoProject`, deliberately — a
-pipeline that guessed which project it was operating on would be worse than one that asks.
-But "required everywhere" meant no *code* answered where a NEW project should go, so the
-only written-down answer was prose in `.claude/skills/muvid/SKILL.md`, which said
-`~/muvid/<song-stem>`. An agent followed it literally and put 36 MB of a real project —
+**Part 3 had no default at all, and that is what actually leaked.** `root` is a required
+positional on every part-3 CLI verb **except `serve`**, and on `MusicVideoProject`,
+deliberately — a pipeline that guessed which project it was operating on would be worse
+than one that asks. But required *everywhere* meant no *code* answered where a NEW project
+should go, so the only written-down answer was prose — and in **two** places, not one:
+`.claude/skills/muvid/SKILL.md` and `README.md`, both saying
+`~/muvid/<song-stem>`. **The README is the one that matters most**, because
+`pyproject.toml` declares it as the `readme` so it ships to PyPI as the long_description,
+while the skill is repo-only and reaches no wheel; the first pass at this fix corrected the
+unpublished document and left the published one, which is why `tests/test_paths.py` now
+pins both and asserts the `readme =` declaration that makes the README the shipped site.
+An agent followed it literally and put 36 MB of a real project —
 two generated song takes, three rendered videos, the poem sources — in `~/muvid/il-pleut`,
 an app-named directory under `$HOME` that no tool, deploy or backup owns. The fix is
 `paths.project_root(name)` → `{root}/projects/{name}`, surfaced as `facade.default_project_root`
-and the `muvid project-root` verb, and the skill now *calls* it instead of restating a path.
-**A default stated in prose cannot be tested and drifts from the code; keep this one
-computed.** `tests/test_paths.py` pins the property (no default resolves directly under
-`$HOME`) rather than one bad string, and pins the skill text too, because a code-only fix
-would have left the sentence that caused it in place.
+and the `muvid project-root` verb, and both prose sites now *call* it instead of restating a
+path. **A default stated in prose cannot be tested and drifts from the code; keep this one
+computed.**
+
+**`serve` is the exception, and it is the one that actually wrote.** `serve(root=".")` is a
+fine default ("the project I am standing in"), but the UI has no create-a-project action and
+`set_script` did `mkdir -p` unconditionally — so `muvid serve` in any folder plus one save in
+the browser left `script/script.md` and `.muvid/decisions.jsonl` there, neither gitignored,
+reported as a 200. `muvid/ui/app.py` now refuses a root with no `project.json`. Note the
+shape: the *default* was right and the missing **precondition** was the bug, so the fix
+belongs at the consumer, not in `paths.py`.
+
+**Guard the property, and guard it at every site.** `tests/test_paths.py` pins that no
+default resolves directly under `$HOME` — not one bad string. The prose guard is worth
+reading before you touch it: the first version asserted one byte-sequence including its
+three-space indent, and measured against five plausible reintroductions (the sentence
+un-wrapped, reordered, re-indented, reworded, or as a `muvid init` example) it passed all
+five. The second version exempted every line at or below the cautionary paragraph's marker
+— a region-sized hole, and all five passed again simply by sitting lower in the file. What
+holds is exempting the **single line** carrying the marker. A region-based exemption is a
+hole the size of the rest of the document.
 
 ```
 {root}/music_video/projects/{email}/{project_id}/manifest.json   title, canvas, song, song_hash, clips

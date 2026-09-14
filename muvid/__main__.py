@@ -24,7 +24,16 @@ def project_root(name: str) -> None:
     and creates nothing. An app-named directory under ``$HOME`` — ``~/muvid/...`` —
     is never the answer: an app directory holds code, not data.
     """
-    print(facade.default_project_root(name))
+    # A clean message with a next action, not a traceback: this is the verb the skill
+    # tells agents to call, and `<song-stem>` derivation really does produce names with
+    # a slash in them ("AC/DC", a date), so the ValueError is a reachable user error.
+    try:
+        print(facade.default_project_root(name))
+    except ValueError as e:
+        raise SystemExit(
+            f"{e}\nA project name is one path component. Try a slug: "
+            "lowercase, dashes for spaces, no slashes."
+        ) from e
 
 
 def init(root: str, *, title: str = "", song: str = "") -> None:
