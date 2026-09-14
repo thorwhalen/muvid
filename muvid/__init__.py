@@ -33,6 +33,7 @@ _LAZY = {
     "align_lyrics": "muvid.facade",
     "compose": "muvid.facade",
     "curate_character": "muvid.facade",
+    "default_project_root": "muvid.facade",
     "generate_character_images": "muvid.facade",
     "init_project": "muvid.facade",
     "parse_script": "muvid.facade",

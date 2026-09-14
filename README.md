@@ -346,45 +346,54 @@ workspace and validates the request against the manifest's own schema first.
 
 ## 30-second tour
 
+Every verb takes the project root explicitly. Ask muvid where a project belongs rather
+than inventing a path: an app-named folder under your home directory is data sitting where
+only code belongs, and nothing backs it up or cleans it up.
+
+```bash
+root="$(muvid project-root park-bench)"   # → ~/.local/share/muvid/projects/park-bench
+                                          # $MUVID_DATA_HOME relocates the root
+```
+
 ```bash
 # Bootstrap a project around a song.
-muvid init ~/muvid/park-bench --song ~/Downloads/park_bench.mp3 --title "Park Bench"
+muvid init "$root" --song ~/Downloads/park_bench.mp3 --title "Park Bench"
 
 # Transcribe to a draft lyrics.md (you'll edit it).
-muvid transcribe ~/muvid/park-bench
+muvid transcribe "$root"
 
 # … you edit lyrics/lyrics.md to fix mishears and add [section] tags …
 
 # Align lyrics.md against the transcript and write lyrics/alignment.annot.
-muvid align ~/muvid/park-bench
+muvid align "$root"
 
 # Cast a character: card, then images, then lookbook curation.
-muvid character ~/muvid/park-bench maya --description "mid-30s, dark curly hair, wary eyes"
-muvid character-generate ~/muvid/park-bench maya --n 6
-muvid character-curate    ~/muvid/park-bench maya --k 8
+muvid character "$root" maya --description "mid-30s, dark curly hair, wary eyes"
+muvid character-generate "$root" maya --n 6
+muvid character-curate    "$root" maya --k 8
 
 # Establish an environment.
-muvid environment ~/muvid/park-bench park_bench --description "wooden park bench at dusk"
-muvid environment-render ~/muvid/park-bench park_bench
+muvid environment "$root" park_bench --description "wooden park bench at dusk"
+muvid environment-render "$root" park_bench
 
 # Write/edit script/script.md (let an agent draft it from the lyrics + cast),
 # then sync it back into project.json:
-muvid script-apply ~/muvid/park-bench
+muvid script-apply "$root"
 
 # Estimate cost before committing fal calls.
-muvid estimate-cost ~/muvid/park-bench
+muvid estimate-cost "$root"
 
 # Render every shot (optionally gated on a USD budget), then composite.
-muvid render  ~/muvid/park-bench --budget=2.50
-muvid compose ~/muvid/park-bench
-# → ~/muvid/park-bench/output/final.mp4
+muvid render  "$root" --budget=2.50
+muvid compose "$root"
+# → "$root"/output/final.mp4
 
 # Inspect progress.
-muvid status        ~/muvid/park-bench           # human-readable
-muvid status --json ~/muvid/park-bench           # structured shape
+muvid status        "$root"           # human-readable
+muvid status --json "$root"           # structured shape
 
 # Or open the local UI (FastAPI + single HTML page).
-muvid serve ~/muvid/park-bench
+muvid serve "$root"
 ```
 
 ### Pluggable aligners
@@ -407,7 +416,7 @@ of decisions:
 ```bash
 # decisions.json:
 # [{"keep": ["<image_id>"], "reject": [...], "stop": false}, ...]
-muvid character-curate-interactive ~/muvid/park-bench maya \
+muvid character-curate-interactive "$root" maya \
     --decisions decisions.json --k 8 --present 6
 ```
 

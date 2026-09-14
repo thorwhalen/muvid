@@ -50,8 +50,16 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from muvid.footage.edl import FootageAlignment
+from muvid.paths import (
+    DATA_HOME_ENV_VAR as _DATA_HOME_ENV_VAR,
+    data_home,
+    safe_component,
+)
 
-DATA_HOME_ENV_VAR = "MUVID_DATA_HOME"
+#: Re-exported from :mod:`muvid.paths`, the SSOT for where muvid's data lives. Kept as
+#: names here because both are public API of this module (``muvid.mcp`` re-exports
+#: ``data_root``, and ``downloads`` imports ``safe_component`` from here).
+DATA_HOME_ENV_VAR = _DATA_HOME_ENV_VAR
 
 #: Named output canvases a project may choose at create (the genre Templates).
 CANVASES: dict[str, tuple[int, int]] = {
@@ -63,15 +71,15 @@ DEFAULT_CANVAS_NAME = "landscape"
 
 
 def data_root() -> Path:
-    override = os.environ.get(DATA_HOME_ENV_VAR)
-    return Path(override) if override else Path.home() / ".local" / "share" / "muvid"
+    """The muvid data root: ``$MUVID_DATA_HOME`` or ``~/.local/share/muvid``.
 
-
-def safe_component(value: str, *, label: str) -> str:
-    v = (value or "").strip()
-    if not v or v in (".", "..") or "/" in v or "\\" in v or "\x00" in v:
-        raise ValueError(f"invalid {label}: {value!r}")
-    return v
+    A thin forwarder rather than ``data_root = data_home``: a plain alias keeps
+    ``__module__ == "muvid.paths"``, which drops the name out of anything that filters
+    a module's members by where they were defined — ``automodule :members:`` (so this
+    docstring would not render here) and this repo's own drift-test idiom in
+    ``tests/test_mcp.py``. Costs one call; keeps the module's surface introspectable.
+    """
+    return data_home()
 
 
 @dataclass(frozen=True)

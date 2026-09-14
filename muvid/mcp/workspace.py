@@ -21,27 +21,33 @@ app/deploy tree (a deploy's ``rsync --delete`` would erase it).
 from __future__ import annotations
 
 import json
-import os
 import time
 from dataclasses import dataclass
 from pathlib import Path
 
+from muvid.paths import (
+    DATA_HOME_ENV_VAR as _DATA_HOME_ENV_VAR,
+    data_home,
+    safe_component,
+)
+
 #: Env var overriding the muvid data root (where per-user visualizer buckets live).
-DATA_HOME_ENV_VAR = "MUVID_DATA_HOME"
+#: Re-exported from :mod:`muvid.paths`, the SSOT — this module used to carry its own
+#: verbatim copy of both, beside a second copy in ``muvid/footage/workspace.py``.
+DATA_HOME_ENV_VAR = _DATA_HOME_ENV_VAR
 
 
 def data_root() -> Path:
-    """The muvid data root: ``$MUVID_DATA_HOME`` or ``~/.local/share/muvid``."""
-    override = os.environ.get(DATA_HOME_ENV_VAR)
-    return Path(override) if override else Path.home() / ".local" / "share" / "muvid"
+    """The muvid data root: ``$MUVID_DATA_HOME`` or ``~/.local/share/muvid``.
+
+    Public API (``muvid.mcp`` re-exports it), so the name stays though the body moved.
+    A forwarder, not an alias, for the introspection reason given on the footage twin.
+    """
+    return data_home()
 
 
-def _safe_component(value: str, *, label: str) -> str:
-    """A single, traversal-safe path component (no ``/``, ``\\``, ``..``, or empties)."""
-    v = (value or "").strip()
-    if not v or v in (".", "..") or "/" in v or "\\" in v or "\x00" in v:
-        raise ValueError(f"invalid {label}: {value!r}")
-    return v
+#: Module-private, so an alias is fine here — nothing documents or introspects it.
+_safe_component = safe_component
 
 
 @dataclass(frozen=True)

@@ -95,6 +95,8 @@ def _now() -> str:
 
 
 def create_app(root: str | Path):
+    from muvid.project import PROJECT_FILE
+
     try:
         from fastapi import FastAPI, HTTPException  # type: ignore
         from fastapi.responses import HTMLResponse, FileResponse, PlainTextResponse  # type: ignore
@@ -107,6 +109,26 @@ def create_app(root: str | Path):
 
     global _PROJECT_ROOT
     _PROJECT_ROOT = Path(root).expanduser().resolve()
+
+    # REFUSE a directory that is not already a project, rather than growing one.
+    #
+    # `serve`'s `root` defaults to the cwd — the one part-3 verb where `root` is not a
+    # required positional. That default is fine ("the project I am standing in"), but the
+    # UI has no create-a-project action: every route assumes `project.json` exists, and
+    # `set_script` did `mkdir -p` unconditionally. Measured before this guard, `muvid
+    # serve` in an empty directory plus one save in the browser left `script/script.md`
+    # and `.muvid/decisions.jsonl` there — neither gitignored, so from a repo root that is
+    # untracked muvid data inside an app directory, which is the whole class of bug
+    # `muvid/paths.py` exists to close. Half a project scaffolded into the wrong folder is
+    # also the plausible-artifact shape: it looks like progress and reports success.
+    #
+    # `muvid init` is the verb that creates, and it takes an explicit root.
+    if not (_PROJECT_ROOT / PROJECT_FILE).is_file():
+        raise RuntimeError(
+            f"no muvid project at {_PROJECT_ROOT} (no {PROJECT_FILE}). "
+            f'Create one first: muvid init "$(muvid project-root <name>)" '
+            "--song <audio>, then point serve at that root with --root."
+        )
 
     from muvid import facade
 
