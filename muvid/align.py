@@ -30,6 +30,7 @@ can be edited by other tools.
 
 from __future__ import annotations
 
+import os
 import re
 from dataclasses import dataclass
 from pathlib import Path
@@ -473,6 +474,13 @@ def align_user_provided(
 
 # --- aligner: whisperx-lite (offline via faster-whisper) ------------------
 
+#: ``tiny`` is fast but, on sung/repetitive audio, produces a transcript so
+#: garbled that the greedy matcher walks past whole minutes before finding a
+#: plausible match (muvid#101: measured 53 s late on a repeated-word lyric).
+#: The lyric-video path is happy to wait, so default to a materially more
+#: accurate size; override per call or via this env var.
+WHISPERX_LITE_MODEL_SIZE = os.environ.get("MUVID_WHISPERX_LITE_MODEL_SIZE", "small")
+
 
 def align_whisperx_lite(
     lyrics: LyricsDoc,
@@ -480,7 +488,7 @@ def align_whisperx_lite(
     *,
     duration_s: float = 0.0,
     audio_path: Optional[str | Path] = None,
-    model_size: str = "tiny",
+    model_size: str = WHISPERX_LITE_MODEL_SIZE,
     lookahead: int = 6,
 ) -> AlignmentResult:
     """Local-only aligner that re-uses ``faster-whisper`` (no API).
@@ -492,6 +500,10 @@ def align_whisperx_lite(
 
     Trade-offs vs ``scribe-greedy``: free + offline; slower; less
     accurate on singing; needs torch + faster-whisper installed.
+
+    ``model_size`` defaults to :data:`WHISPERX_LITE_MODEL_SIZE` (``"small"``,
+    overridable via ``MUVID_WHISPERX_LITE_MODEL_SIZE``) rather than
+    faster-whisper's own ``"tiny"`` default — see muvid#101.
     """
     if audio_path is None:
         return align_scribe_greedy(
