@@ -420,7 +420,13 @@ def _concrete_page(*, sc, direction, lines, tt, canvas, **_) -> list[Cue]:
                         t_out=t_in,
                         t_gone=t_in + _IGNITE_CROSSFADE_S,
                         colour=direction.palette.dim,
-                        motion=sc.motion,
+                        # The ghost is already on the page, not being sung, so
+                        # it never carries the scene's motion: a `typewriter`
+                        # ghost would spell itself out across the whole pre-sung
+                        # gap (muvid#116). `fade` gives an instant arrival at 0
+                        # and the crossfade out at ignite; the INK cue below
+                        # carries `sc.motion`.
+                        motion="fade",
                         layer=0,
                     )
                 )

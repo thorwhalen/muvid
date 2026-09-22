@@ -183,3 +183,45 @@ def test_concrete_page_dim_persistence_emits_the_handover_as_two_cues_not_a_rend
     }
     # no ``extra["ignite_at"]`` renderer hint anymore — the overlap IS the signal
     assert all(not c.extra for c in scene.cues)
+
+
+@pytest.mark.parametrize("motion", ["typewriter", "rise", "pop", "wipe", "cut", "fade"])
+def test_concrete_page_dim_ghost_never_carries_the_scene_motion(motion):
+    """muvid#116: the dim ghost is already on the page, not being sung, so it
+    must not animate its own arrival. Under ``typewriter`` it used to spell
+    itself out letter by letter across the whole pre-sung gap. The ink cue
+    still carries the scene's motion."""
+    spec = S.TreatmentSpec(
+        scenes=(S.Scene(archetype="concrete_page", persistence="dim", motion=motion),)
+    )
+    scene = compile_scene(spec, _tt_one_line("hello there"), canvas=WIDE)
+    ghost = [c for c in scene.cues if c.layer == 0]
+    ink = [c for c in scene.cues if c.layer == 1]
+    assert ghost and ink
+    assert all(c.motion == "fade" for c in ghost)
+    assert all(c.motion == motion for c in ink)
+
+
+def test_concrete_page_dim_ghost_is_one_whole_word_event_under_typewriter():
+    """The ASS-side symptom of muvid#116, checked on the events the renderer
+    would write (pure code, no ffmpeg): a word sung at 10 s used to produce
+    five events 'h', 'he', ... spread over 0-10 s. The ghost must be ONE event,
+    the whole word, from 0 until it hands over."""
+    from muvid.lyricvid.render_ass import _events_for, _place
+
+    tt = from_words([("hello", 10.0, 10.5)], duration=12.0)
+    spec = S.TreatmentSpec(
+        scenes=(
+            S.Scene(archetype="concrete_page", persistence="dim", motion="typewriter"),
+        )
+    )
+    scene = compile_scene(spec, tt, canvas=WIDE)
+    (ghost,) = [c for c in scene.cues if c.layer == 0]
+    events = _events_for(
+        _place(ghost, canvas=WIDE, tracking=0.0, scene_end=scene.duration)
+    )
+    assert len(events) == 1, [(e.start, e.end, e.text) for e in events]
+    (ev,) = events
+    assert ev.text == "hello"
+    assert ev.start == 0.0
+    assert ev.end >= ghost.t_out  # stays whole until the handover to the ink
