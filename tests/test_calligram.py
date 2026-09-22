@@ -222,3 +222,19 @@ def test_the_width_constraint_binds_when_the_fan_is_wider_than_it_is_tall():
     assert scene.cues
     xs = [c.x for c in scene.cues]
     assert min(xs) >= 0.05 and max(xs) <= 0.95, (min(xs), max(xs))
+
+
+@pytest.mark.parametrize("motion", ["typewriter", "rise", "pop", "wipe", "cut", "fade"])
+def test_dim_ghost_never_carries_the_scene_motion(motion):
+    """muvid#116: the ghost is already on the page, so it must not animate its
+    own arrival at song start (under ``rise`` the whole calligram used to slide
+    up in ASS but not in web). The ink still carries the scene's motion."""
+    spec = S.TreatmentSpec(
+        scenes=(S.Scene(archetype="calligram", persistence="dim", motion=motion),)
+    )
+    scene = compile_scene(spec, _tt(IL_PLEUT), canvas=PORTRAIT)
+    ghost = [c for c in scene.cues if c.t_in == 0.0]
+    ink = [c for c in scene.cues if c.t_in > 0.0]
+    assert ghost and ink
+    assert all(c.motion == "fade" for c in ghost)
+    assert all(c.motion == motion for c in ink)

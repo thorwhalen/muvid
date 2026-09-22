@@ -601,7 +601,9 @@ def _calligram(*, sc, direction, lines, tt, canvas, **_) -> list[Cue]:
                     t_out=ignite,
                     t_gone=ignite + _IGNITE_CROSSFADE_S,
                     colour=direction.palette.dim,
-                    motion=sc.motion,
+                    # the ghost is already on the page: never the scene's
+                    # motion (muvid#116, same as concrete_page)
+                    motion="fade",
                     layer=0,
                 )
             )
