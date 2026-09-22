@@ -11,6 +11,13 @@ Regressions for the correctness review of #96:
 * the section fallback the spec's docstring promised was never implemented, so
   a treatment that named only ``chorus`` rendered the verses as nothing.
 * a word shorter than its attack never reached full opacity.
+
+Regression for muvid#108: ``concrete_page``'s ``persistence="dim"`` handover
+used to signal dim->bright through ``Cue.extra["ignite_at"]``, a hint only
+``render_web`` reads. Under the default ``ass`` renderer the page came up
+fully bright at frame 1 and never ignited, silently. It now emits the handover
+as an overlap of two cues, the same renderer-neutral construction
+``calligram`` already used (see ``test_calligram.py``'s twin of this test).
 """
 
 from __future__ import annotations
@@ -143,3 +150,36 @@ def test_json_schema_accepts_what_to_dict_emits():
                  S.TreatmentSpec(scenes=(S.Scene(archetype="shape_fill",
                                                  shape=S.ShapeRef()),))):
         jsonschema.validate(spec.to_dict(), schema)
+
+
+def test_concrete_page_dim_persistence_emits_the_handover_as_two_cues_not_a_renderer_effect():
+    """muvid#108: the old single-cue form signalled dim->bright through
+    ``Cue.extra["ignite_at"]``, which only ``render_web`` reads — under the
+    default ``ass`` renderer the page came up fully bright at frame 1 and
+    never ignited. Two overlapping cues (the ``calligram`` construction) work
+    on both backends without either renderer needing to change."""
+    text = "the night we met"
+    tt = _tt_one_line(text)
+    n_words = len(text.split())
+    spec = S.TreatmentSpec(
+        scenes=(S.Scene(archetype="concrete_page", persistence="dim", motion="fade"),)
+    )
+    scene = compile_scene(spec, tt, canvas=WIDE)
+    assert len(scene.cues) == 2 * n_words
+    ghost = [c for c in scene.cues if c.t_in == 0.0]
+    ink = [c for c in scene.cues if c.t_in > 0.0]
+    assert len(ghost) == len(ink) == n_words
+    # the ghost is dim, the ink is bright — plain Cue.colour, no dim_colour/dim_from
+    default_palette = S.Palette()
+    assert all(c.colour == default_palette.dim for c in ghost)
+    assert all(c.colour == default_palette.fg for c in ink)
+    assert all(c.dim_colour is None and c.dim_from is None for c in scene.cues)
+    assert all(c.t_gone is not None for c in ghost), "the ghost must clear"
+    assert all(c.layer < i.layer for c, i in zip(ghost, ink))
+    assert all(c.t_out is None for c in ink), "the ink must not be told to leave"
+    # every ghost hands over to its own word at the same place
+    assert {(round(c.x, 9), round(c.y, 9)) for c in ghost} == {
+        (round(c.x, 9), round(c.y, 9)) for c in ink
+    }
+    # no ``extra["ignite_at"]`` renderer hint anymore — the overlap IS the signal
+    assert all(not c.extra for c in scene.cues)
