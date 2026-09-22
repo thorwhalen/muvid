@@ -500,10 +500,18 @@ def _has(module: str) -> bool:
 
 
 def _transcribe_words_offline(audio: Path) -> list[tuple[str, float, float]]:
-    """Word timings straight from ``faster-whisper``, for the no-lyrics case."""
+    """Word timings straight from ``faster-whisper``, for the no-lyrics case.
+
+    Uses the same model size as the ``whisperx-lite`` aligner
+    (:data:`muvid.align.WHISPERX_LITE_MODEL_SIZE`, env
+    ``MUVID_WHISPERX_LITE_MODEL_SIZE``), so one setting governs every offline
+    transcription in the lyric-video path.
+    """
     from faster_whisper import WhisperModel
 
-    model = WhisperModel("small", device="cpu", compute_type="int8")
+    from muvid.align import WHISPERX_LITE_MODEL_SIZE
+
+    model = WhisperModel(WHISPERX_LITE_MODEL_SIZE, device="cpu", compute_type="int8")
     segments, _info = model.transcribe(
         str(audio), word_timestamps=True, condition_on_previous_text=False
     )

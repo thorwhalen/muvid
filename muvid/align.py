@@ -479,7 +479,7 @@ def align_user_provided(
 #: plausible match (muvid#101: measured 53 s late on a repeated-word lyric).
 #: The lyric-video path is happy to wait, so default to a materially more
 #: accurate size; override per call or via this env var.
-WHISPERX_LITE_MODEL_SIZE = os.environ.get("MUVID_WHISPERX_LITE_MODEL_SIZE", "small")
+WHISPERX_LITE_MODEL_SIZE = os.environ.get("MUVID_WHISPERX_LITE_MODEL_SIZE") or "small"
 
 
 def align_whisperx_lite(

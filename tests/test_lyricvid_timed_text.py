@@ -207,3 +207,34 @@ def test_plain_lrc_without_fraction_and_enhanced_lrc_word_stamps(tmp_path):
     assert [(w.text, w.start) for w in ws] == [("one", 1.0), ("two", 1.5)]
     assert out.measured is True
     assert out.source == "lrc-enhanced"
+
+
+def test_offline_transcription_uses_the_configured_model_size(monkeypatch, tmp_path):
+    """The no-lyrics transcription honours ``WHISPERX_LITE_MODEL_SIZE``.
+
+    Regression: it hardcoded ``"small"``, so ``MUVID_WHISPERX_LITE_MODEL_SIZE``
+    (e.g. ``tiny`` on a low-memory box) was silently ignored on this path while
+    the aligner path obeyed it. Uses a fake ``faster_whisper`` so no model is
+    downloaded.
+    """
+    import sys
+    import types
+
+    from muvid import align as align_mod
+
+    seen = {}
+
+    class FakeModel:
+        def __init__(self, size, **kw):
+            seen["size"] = size
+
+        def transcribe(self, path, **kw):
+            word = NS(word=" la", start=0.0, end=0.5)
+            return iter([NS(words=[word])]), None
+
+    monkeypatch.setitem(
+        sys.modules, "faster_whisper", types.SimpleNamespace(WhisperModel=FakeModel)
+    )
+    monkeypatch.setattr(align_mod, "WHISPERX_LITE_MODEL_SIZE", "tiny")
+    assert tt._transcribe_words_offline(tmp_path / "song.wav") == [("la", 0.0, 0.5)]
+    assert seen["size"] == "tiny"
