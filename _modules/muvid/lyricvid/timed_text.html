@@ -709,96 +709,104 @@
 </span><span id="line-500">
 </span><span id="line-501">
 </span><span id="line-502"><span class="k">def</span><span class="w"> </span><span class="nf">_transcribe_words_offline</span><span class="p">(</span><span class="n">audio</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]:</span>
-</span><span id="line-503"><span class="w">    </span><span class="sd">"""Word timings straight from ``faster-whisper``, for the no-lyrics case."""</span>
-</span><span id="line-504">    <span class="kn">from</span><span class="w"> </span><span class="nn">faster_whisper</span><span class="w"> </span><span class="kn">import</span> <span class="n">WhisperModel</span>
-</span><span id="line-505">
-</span><span id="line-506">    <span class="n">model</span> <span class="o">=</span> <span class="n">WhisperModel</span><span class="p">(</span><span class="s2">"small"</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="s2">"cpu"</span><span class="p">,</span> <span class="n">compute_type</span><span class="o">=</span><span class="s2">"int8"</span><span class="p">)</span>
-</span><span id="line-507">    <span class="n">segments</span><span class="p">,</span> <span class="n">_info</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">transcribe</span><span class="p">(</span>
-</span><span id="line-508">        <span class="nb">str</span><span class="p">(</span><span class="n">audio</span><span class="p">),</span> <span class="n">word_timestamps</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">condition_on_previous_text</span><span class="o">=</span><span class="kc">False</span>
-</span><span id="line-509">    <span class="p">)</span>
-</span><span id="line-510">    <span class="n">out</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
-</span><span id="line-511">    <span class="k">for</span> <span class="n">seg</span> <span class="ow">in</span> <span class="n">segments</span><span class="p">:</span>
-</span><span id="line-512">        <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">seg</span><span class="o">.</span><span class="n">words</span> <span class="ow">or</span> <span class="p">():</span>
-</span><span id="line-513">            <span class="n">text</span> <span class="o">=</span> <span class="n">w</span><span class="o">.</span><span class="n">word</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-</span><span id="line-514">            <span class="k">if</span> <span class="n">text</span><span class="p">:</span>
-</span><span id="line-515">                <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">text</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">start</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">end</span><span class="p">)))</span>
-</span><span id="line-516">    <span class="k">return</span> <span class="n">out</span>
-</span><span id="line-517">
-</span><span id="line-518">
+</span><span id="line-503"><span class="w">    </span><span class="sd">"""Word timings straight from ``faster-whisper``, for the no-lyrics case.</span>
+</span><span id="line-504">
+</span><span id="line-505"><span class="sd">    Uses the same model size as the ``whisperx-lite`` aligner</span>
+</span><span id="line-506"><span class="sd">    (:data:`muvid.align.WHISPERX_LITE_MODEL_SIZE`, env</span>
+</span><span id="line-507"><span class="sd">    ``MUVID_WHISPERX_LITE_MODEL_SIZE``), so one setting governs every offline</span>
+</span><span id="line-508"><span class="sd">    transcription in the lyric-video path.</span>
+</span><span id="line-509"><span class="sd">    """</span>
+</span><span id="line-510">    <span class="kn">from</span><span class="w"> </span><span class="nn">faster_whisper</span><span class="w"> </span><span class="kn">import</span> <span class="n">WhisperModel</span>
+</span><span id="line-511">
+</span><span id="line-512">    <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.align</span><span class="w"> </span><span class="kn">import</span> <span class="n">WHISPERX_LITE_MODEL_SIZE</span>
+</span><span id="line-513">
+</span><span id="line-514">    <span class="n">model</span> <span class="o">=</span> <span class="n">WhisperModel</span><span class="p">(</span><span class="n">WHISPERX_LITE_MODEL_SIZE</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="s2">"cpu"</span><span class="p">,</span> <span class="n">compute_type</span><span class="o">=</span><span class="s2">"int8"</span><span class="p">)</span>
+</span><span id="line-515">    <span class="n">segments</span><span class="p">,</span> <span class="n">_info</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">transcribe</span><span class="p">(</span>
+</span><span id="line-516">        <span class="nb">str</span><span class="p">(</span><span class="n">audio</span><span class="p">),</span> <span class="n">word_timestamps</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">condition_on_previous_text</span><span class="o">=</span><span class="kc">False</span>
+</span><span id="line-517">    <span class="p">)</span>
+</span><span id="line-518">    <span class="n">out</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+</span><span id="line-519">    <span class="k">for</span> <span class="n">seg</span> <span class="ow">in</span> <span class="n">segments</span><span class="p">:</span>
+</span><span id="line-520">        <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">seg</span><span class="o">.</span><span class="n">words</span> <span class="ow">or</span> <span class="p">():</span>
+</span><span id="line-521">            <span class="n">text</span> <span class="o">=</span> <span class="n">w</span><span class="o">.</span><span class="n">word</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+</span><span id="line-522">            <span class="k">if</span> <span class="n">text</span><span class="p">:</span>
+</span><span id="line-523">                <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">text</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">start</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">end</span><span class="p">)))</span>
+</span><span id="line-524">    <span class="k">return</span> <span class="n">out</span>
+</span><span id="line-525">
+</span><span id="line-526">
 <div class="viewcode-block" id="from_lyrics_and_audio">
 <a class="viewcode-back" href="../../../_autosummary/muvid.lyricvid.timed_text.html#muvid.lyricvid.from_lyrics_and_audio">[docs]</a>
-</span><span id="line-519"><span class="k">def</span><span class="w"> </span><span class="nf">from_lyrics_and_audio</span><span class="p">(</span>
-</span><span id="line-520">    <span class="n">audio</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span>
-</span><span id="line-521">    <span class="o">*</span><span class="p">,</span>
-</span><span id="line-522">    <span class="n">lyrics</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-</span><span id="line-523">    <span class="n">aligner</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-</span><span id="line-524">    <span class="n">duration</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
-</span><span id="line-525"><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TimedText</span><span class="p">:</span>
-</span><span id="line-526"><span class="w">    </span><span class="sd">"""Align ``lyrics`` to ``audio`` through muvid's aligner registry.</span>
-</span><span id="line-527">
-</span><span id="line-528"><span class="sd">    Goes through :func:`muvid.align.align_lyrics` rather than calling an ASR</span>
-</span><span id="line-529"><span class="sd">    directly, so a singing-grade aligner registered later is picked up here</span>
-</span><span id="line-530"><span class="sd">    for free. The aligner is chosen honestly by what is installed:</span>
-</span><span id="line-531">
-</span><span id="line-532"><span class="sd">    * ``whisperx-lite`` — offline, free, needs ``faster-whisper``. **Default</span>
-</span><span id="line-533"><span class="sd">      when available.** Runs on the audio itself.</span>
-</span><span id="line-534"><span class="sd">    * ``scribe-greedy`` — needs a Scribe transcript, which costs money and an</span>
-</span><span id="line-535"><span class="sd">      ElevenLabs key; only reached when asked for by name, never as a silent</span>
-</span><span id="line-536"><span class="sd">      fallback that spends.</span>
-</span><span id="line-537">
-</span><span id="line-538"><span class="sd">    With no ``lyrics`` at all there is nothing to align *to*; the transcript's</span>
-</span><span id="line-539"><span class="sd">    own words become the text (``source='transcript'``).</span>
-</span><span id="line-540">
-</span><span id="line-541"><span class="sd">    ``aligner`` may be any registered name; unknown names raise from</span>
-</span><span id="line-542"><span class="sd">    ``muvid.align`` with the registered list.</span>
-</span><span id="line-543"><span class="sd">    """</span>
-</span><span id="line-544">    <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.visualize.ffmpeg</span><span class="w"> </span><span class="kn">import</span> <span class="n">media_duration</span>
+</span><span id="line-527"><span class="k">def</span><span class="w"> </span><span class="nf">from_lyrics_and_audio</span><span class="p">(</span>
+</span><span id="line-528">    <span class="n">audio</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span>
+</span><span id="line-529">    <span class="o">*</span><span class="p">,</span>
+</span><span id="line-530">    <span class="n">lyrics</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="line-531">    <span class="n">aligner</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="line-532">    <span class="n">duration</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
+</span><span id="line-533"><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TimedText</span><span class="p">:</span>
+</span><span id="line-534"><span class="w">    </span><span class="sd">"""Align ``lyrics`` to ``audio`` through muvid's aligner registry.</span>
+</span><span id="line-535">
+</span><span id="line-536"><span class="sd">    Goes through :func:`muvid.align.align_lyrics` rather than calling an ASR</span>
+</span><span id="line-537"><span class="sd">    directly, so a singing-grade aligner registered later is picked up here</span>
+</span><span id="line-538"><span class="sd">    for free. The aligner is chosen honestly by what is installed:</span>
+</span><span id="line-539">
+</span><span id="line-540"><span class="sd">    * ``whisperx-lite`` — offline, free, needs ``faster-whisper``. **Default</span>
+</span><span id="line-541"><span class="sd">      when available.** Runs on the audio itself.</span>
+</span><span id="line-542"><span class="sd">    * ``scribe-greedy`` — needs a Scribe transcript, which costs money and an</span>
+</span><span id="line-543"><span class="sd">      ElevenLabs key; only reached when asked for by name, never as a silent</span>
+</span><span id="line-544"><span class="sd">      fallback that spends.</span>
 </span><span id="line-545">
-</span><span id="line-546">    <span class="n">audio</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">audio</span><span class="p">)</span>
-</span><span id="line-547">    <span class="k">if</span> <span class="ow">not</span> <span class="n">audio</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
-</span><span id="line-548">        <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"audio not found: </span><span class="si">{</span><span class="n">audio</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-</span><span id="line-549">    <span class="n">duration</span> <span class="o">=</span> <span class="n">duration</span> <span class="ow">or</span> <span class="n">media_duration</span><span class="p">(</span><span class="n">audio</span><span class="p">)</span>
-</span><span id="line-550">
-</span><span id="line-551">    <span class="k">if</span> <span class="n">lyrics</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-552">        <span class="k">if</span> <span class="ow">not</span> <span class="n">_has</span><span class="p">(</span><span class="s2">"faster_whisper"</span><span class="p">):</span>
-</span><span id="line-553">            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-</span><span id="line-554">                <span class="s2">"No lyrics were given, so the words must be transcribed — but "</span>
-</span><span id="line-555">                <span class="s2">"faster-whisper is not installed. Either `pip install "</span>
-</span><span id="line-556">                <span class="s2">"faster-whisper` (offline, free), or pass --lyrics / --subtitles."</span>
-</span><span id="line-557">            <span class="p">)</span>
-</span><span id="line-558">        <span class="k">return</span> <span class="n">from_words</span><span class="p">(</span>
-</span><span id="line-559">            <span class="n">_transcribe_words_offline</span><span class="p">(</span><span class="n">audio</span><span class="p">),</span> <span class="n">duration</span><span class="o">=</span><span class="n">duration</span><span class="p">,</span> <span class="n">source</span><span class="o">=</span><span class="s2">"transcript"</span>
-</span><span id="line-560">        <span class="p">)</span>
-</span><span id="line-561">
-</span><span id="line-562">    <span class="kn">from</span><span class="w"> </span><span class="nn">muvid</span><span class="w"> </span><span class="kn">import</span> <span class="n">align</span> <span class="k">as</span> <span class="n">align_mod</span>
-</span><span id="line-563">    <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.lyrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">parse_lyrics_md</span>
-</span><span id="line-564">
-</span><span id="line-565">    <span class="n">doc</span> <span class="o">=</span> <span class="n">parse_lyrics_md</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">lyrics</span><span class="p">)</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">))</span>
-</span><span id="line-566">    <span class="k">if</span> <span class="ow">not</span> <span class="n">doc</span><span class="o">.</span><span class="n">lines</span><span class="p">:</span>
-</span><span id="line-567">        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"no lyric lines found in </span><span class="si">{</span><span class="n">lyrics</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-</span><span id="line-568">
-</span><span id="line-569">    <span class="n">name</span> <span class="o">=</span> <span class="n">aligner</span>
-</span><span id="line-570">    <span class="n">kwargs</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{}</span>
-</span><span id="line-571">    <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-572">        <span class="k">if</span> <span class="n">_has</span><span class="p">(</span><span class="s2">"faster_whisper"</span><span class="p">):</span>
-</span><span id="line-573">            <span class="n">name</span> <span class="o">=</span> <span class="s2">"whisperx-lite"</span>
-</span><span id="line-574">        <span class="k">else</span><span class="p">:</span>
-</span><span id="line-575">            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-</span><span id="line-576">                <span class="s2">"No offline aligner is available: install faster-whisper "</span>
-</span><span id="line-577">                <span class="s2">"(`pip install faster-whisper`), pass --subtitles with timed "</span>
-</span><span id="line-578">                <span class="s2">"lines, or choose an aligner by name (see muvid.align.list_aligners)."</span>
-</span><span id="line-579">            <span class="p">)</span>
-</span><span id="line-580">    <span class="n">transcript</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{}</span>
-</span><span id="line-581">    <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">"whisperx-lite"</span><span class="p">:</span>
-</span><span id="line-582">        <span class="n">kwargs</span><span class="p">[</span><span class="s2">"audio_path"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">audio</span><span class="p">)</span>
-</span><span id="line-583">    <span class="k">elif</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">"scribe-greedy"</span><span class="p">:</span>
-</span><span id="line-584">        <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.lyrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">transcribe</span>  <span class="c1"># ElevenLabs Scribe: paid, keyed</span>
-</span><span id="line-585">
-</span><span id="line-586">        <span class="n">transcript</span> <span class="o">=</span> <span class="n">transcribe</span><span class="p">(</span><span class="n">audio</span><span class="p">)</span>
-</span><span id="line-587">    <span class="n">result</span> <span class="o">=</span> <span class="n">align_mod</span><span class="o">.</span><span class="n">align_lyrics</span><span class="p">(</span>
-</span><span id="line-588">        <span class="n">doc</span><span class="p">,</span> <span class="n">transcript</span><span class="p">,</span> <span class="n">duration_s</span><span class="o">=</span><span class="n">duration</span><span class="p">,</span> <span class="n">aligner</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
-</span><span id="line-589">    <span class="p">)</span>
-</span><span id="line-590">    <span class="k">return</span> <span class="n">from_alignment_result</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">duration</span><span class="o">=</span><span class="n">duration</span><span class="p">,</span> <span class="n">source</span><span class="o">=</span><span class="sa">f</span><span class="s2">"aligner:</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span></div>
+</span><span id="line-546"><span class="sd">    With no ``lyrics`` at all there is nothing to align *to*; the transcript's</span>
+</span><span id="line-547"><span class="sd">    own words become the text (``source='transcript'``).</span>
+</span><span id="line-548">
+</span><span id="line-549"><span class="sd">    ``aligner`` may be any registered name; unknown names raise from</span>
+</span><span id="line-550"><span class="sd">    ``muvid.align`` with the registered list.</span>
+</span><span id="line-551"><span class="sd">    """</span>
+</span><span id="line-552">    <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.visualize.ffmpeg</span><span class="w"> </span><span class="kn">import</span> <span class="n">media_duration</span>
+</span><span id="line-553">
+</span><span id="line-554">    <span class="n">audio</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">audio</span><span class="p">)</span>
+</span><span id="line-555">    <span class="k">if</span> <span class="ow">not</span> <span class="n">audio</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+</span><span id="line-556">        <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"audio not found: </span><span class="si">{</span><span class="n">audio</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</span><span id="line-557">    <span class="n">duration</span> <span class="o">=</span> <span class="n">duration</span> <span class="ow">or</span> <span class="n">media_duration</span><span class="p">(</span><span class="n">audio</span><span class="p">)</span>
+</span><span id="line-558">
+</span><span id="line-559">    <span class="k">if</span> <span class="n">lyrics</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-560">        <span class="k">if</span> <span class="ow">not</span> <span class="n">_has</span><span class="p">(</span><span class="s2">"faster_whisper"</span><span class="p">):</span>
+</span><span id="line-561">            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+</span><span id="line-562">                <span class="s2">"No lyrics were given, so the words must be transcribed — but "</span>
+</span><span id="line-563">                <span class="s2">"faster-whisper is not installed. Either `pip install "</span>
+</span><span id="line-564">                <span class="s2">"faster-whisper` (offline, free), or pass --lyrics / --subtitles."</span>
+</span><span id="line-565">            <span class="p">)</span>
+</span><span id="line-566">        <span class="k">return</span> <span class="n">from_words</span><span class="p">(</span>
+</span><span id="line-567">            <span class="n">_transcribe_words_offline</span><span class="p">(</span><span class="n">audio</span><span class="p">),</span> <span class="n">duration</span><span class="o">=</span><span class="n">duration</span><span class="p">,</span> <span class="n">source</span><span class="o">=</span><span class="s2">"transcript"</span>
+</span><span id="line-568">        <span class="p">)</span>
+</span><span id="line-569">
+</span><span id="line-570">    <span class="kn">from</span><span class="w"> </span><span class="nn">muvid</span><span class="w"> </span><span class="kn">import</span> <span class="n">align</span> <span class="k">as</span> <span class="n">align_mod</span>
+</span><span id="line-571">    <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.lyrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">parse_lyrics_md</span>
+</span><span id="line-572">
+</span><span id="line-573">    <span class="n">doc</span> <span class="o">=</span> <span class="n">parse_lyrics_md</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">lyrics</span><span class="p">)</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">))</span>
+</span><span id="line-574">    <span class="k">if</span> <span class="ow">not</span> <span class="n">doc</span><span class="o">.</span><span class="n">lines</span><span class="p">:</span>
+</span><span id="line-575">        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"no lyric lines found in </span><span class="si">{</span><span class="n">lyrics</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</span><span id="line-576">
+</span><span id="line-577">    <span class="n">name</span> <span class="o">=</span> <span class="n">aligner</span>
+</span><span id="line-578">    <span class="n">kwargs</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{}</span>
+</span><span id="line-579">    <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-580">        <span class="k">if</span> <span class="n">_has</span><span class="p">(</span><span class="s2">"faster_whisper"</span><span class="p">):</span>
+</span><span id="line-581">            <span class="n">name</span> <span class="o">=</span> <span class="s2">"whisperx-lite"</span>
+</span><span id="line-582">        <span class="k">else</span><span class="p">:</span>
+</span><span id="line-583">            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+</span><span id="line-584">                <span class="s2">"No offline aligner is available: install faster-whisper "</span>
+</span><span id="line-585">                <span class="s2">"(`pip install faster-whisper`), pass --subtitles with timed "</span>
+</span><span id="line-586">                <span class="s2">"lines, or choose an aligner by name (see muvid.align.list_aligners)."</span>
+</span><span id="line-587">            <span class="p">)</span>
+</span><span id="line-588">    <span class="n">transcript</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{}</span>
+</span><span id="line-589">    <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">"whisperx-lite"</span><span class="p">:</span>
+</span><span id="line-590">        <span class="n">kwargs</span><span class="p">[</span><span class="s2">"audio_path"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">audio</span><span class="p">)</span>
+</span><span id="line-591">    <span class="k">elif</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">"scribe-greedy"</span><span class="p">:</span>
+</span><span id="line-592">        <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.lyrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">transcribe</span>  <span class="c1"># ElevenLabs Scribe: paid, keyed</span>
+</span><span id="line-593">
+</span><span id="line-594">        <span class="n">transcript</span> <span class="o">=</span> <span class="n">transcribe</span><span class="p">(</span><span class="n">audio</span><span class="p">)</span>
+</span><span id="line-595">    <span class="n">result</span> <span class="o">=</span> <span class="n">align_mod</span><span class="o">.</span><span class="n">align_lyrics</span><span class="p">(</span>
+</span><span id="line-596">        <span class="n">doc</span><span class="p">,</span> <span class="n">transcript</span><span class="p">,</span> <span class="n">duration_s</span><span class="o">=</span><span class="n">duration</span><span class="p">,</span> <span class="n">aligner</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+</span><span id="line-597">    <span class="p">)</span>
+</span><span id="line-598">    <span class="k">return</span> <span class="n">from_alignment_result</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">duration</span><span class="o">=</span><span class="n">duration</span><span class="p">,</span> <span class="n">source</span><span class="o">=</span><span class="sa">f</span><span class="s2">"aligner:</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span></div>
 
 </span></code></pre></div>
     </div></div>
@@ -813,7 +821,7 @@
 </footer>
     </div>
     
-    <script src="../../../_static/documentation_options.js?v=152b4b09"></script>
+    <script src="../../../_static/documentation_options.js?v=22d3c163"></script>
     <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
