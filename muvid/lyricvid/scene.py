@@ -348,6 +348,12 @@ def _karaoke_wipe(*, sc, direction, lines, tt, canvas, **_) -> list[Cue]:
     return cues
 
 
+#: Seconds the dim->bright handover in ``concrete_page``/``calligram`` takes.
+#: Expressed as an overlap between two cues rather than as a renderer effect,
+#: so it works on both backends (see ``_concrete_page``, ``_calligram``).
+_IGNITE_CROSSFADE_S = 0.12
+
+
 @register_archetype("concrete_page")
 def _concrete_page(*, sc, direction, lines, tt, canvas, **_) -> list[Cue]:
     """The whole lyric typeset as one fixed page; words ignite in reading order.
@@ -356,6 +362,14 @@ def _concrete_page(*, sc, direction, lines, tt, canvas, **_) -> list[Cue]:
     shape the text makes is stable for the whole song, which is the entire
     point of the treatment. Words that have not been sung yet are either absent
     (``persistence`` other than ``dim``) or present in the dim colour.
+
+    The dim->bright handover (``persistence="dim"``) is expressed as an OVERLAP
+    OF TWO CUES, the same construction ``calligram`` uses, rather than as the
+    ``extra["ignite_at"]`` renderer hint the single-cue form used to rely on:
+    ``ignite_at`` is honoured by ``render_web`` only, so under the default
+    ``ass`` renderer the page came up fully bright at frame 1 and never
+    ignited (muvid#108). Two cues is renderer-neutral — both backends already
+    understand ``t_in``/``t_out``/``t_gone``/``layer``.
     """
     cues: list[Cue] = []
     rows = list(lines)
@@ -392,31 +406,56 @@ def _concrete_page(*, sc, direction, lines, tt, canvas, **_) -> list[Cue]:
                 + (cursor - row_w / 2 + (ww - _text_width(" ", size)) / 2)
                 / canvas.aspect
             )
-            cues.append(
-                Cue(
-                    text=wt,
-                    x=x,
-                    y=y,
-                    size=size,
-                    t_in=0.0 if show_all else t_in,
-                    t_full=t_full,
-                    t_out=None,
-                    t_gone=None,
-                    colour=direction.palette.fg,
-                    dim_colour=direction.palette.dim if show_all else None,
-                    dim_from=None,
-                    motion=sc.motion,
-                    extra={"ignite_at": t_in},
+            if show_all:
+                # dim->bright as an overlap of two cues (see docstring) instead
+                # of the extra["ignite_at"] hint, which only render_web reads.
+                cues.append(
+                    Cue(
+                        text=wt,
+                        x=x,
+                        y=y,
+                        size=size,
+                        t_in=0.0,
+                        t_full=0.0,
+                        t_out=t_in,
+                        t_gone=t_in + _IGNITE_CROSSFADE_S,
+                        colour=direction.palette.dim,
+                        motion=sc.motion,
+                        layer=0,
+                    )
                 )
-            )
+                cues.append(
+                    Cue(
+                        text=wt,
+                        x=x,
+                        y=y,
+                        size=size,
+                        t_in=t_in,
+                        t_full=t_in + _IGNITE_CROSSFADE_S,
+                        colour=direction.palette.fg,
+                        motion=sc.motion,
+                        layer=1,
+                    )
+                )
+            else:
+                cues.append(
+                    Cue(
+                        text=wt,
+                        x=x,
+                        y=y,
+                        size=size,
+                        t_in=t_in,
+                        t_full=t_full,
+                        t_out=None,
+                        t_gone=None,
+                        colour=direction.palette.fg,
+                        dim_colour=None,
+                        dim_from=None,
+                        motion=sc.motion,
+                    )
+                )
             cursor += ww
     return cues
-
-
-#: Seconds the dim->bright handover in a ``calligram`` takes. Expressed as an
-#: overlap between two cues rather than as a renderer effect, so it works on
-#: both backends (see ``_calligram``).
-_IGNITE_CROSSFADE_S = 0.12
 
 
 @register_archetype("calligram")

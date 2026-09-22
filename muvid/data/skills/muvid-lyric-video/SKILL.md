@@ -250,13 +250,13 @@ one ffmpeg on a machine. Check with
 `ffmpeg -filters | grep -w subtitles` and, if it is empty, put one that has it
 first on `PATH` (on this Mac: `/opt/homebrew/opt/ffmpeg@6/bin`).
 
-**Known gap — `concrete_page` + `persistence: "dim"` does nothing under `ass`.**
-That combination signals the dim→bright handover through `Cue.extra["ignite_at"]`,
-which only `render_web` reads; ASS implements the opposite ramp (`dim_from`,
-bright→dim). Under the default renderer the page therefore comes up fully
-bright at frame 1 and never ignites. `calligram` is unaffected — it emits the
-handover as an overlap of two cues, which both backends already understand. If
-you need a dimming `concrete_page`, pass `--renderer web`.
+**Fixed — `concrete_page` + `persistence: "dim"` used to do nothing under `ass`
+(muvid#108).** The dim→bright handover used to signal itself through
+`Cue.extra["ignite_at"]`, which only `render_web` read; under the default `ass`
+renderer the page came up fully bright at frame 1 and never ignited.
+`concrete_page` now emits the handover as an overlap of two cues, the same
+construction `calligram` already used, so both backends honour it the same
+way. No renderer flag needed.
 
 ## When it looks wrong
 
@@ -268,7 +268,6 @@ you need a dimming `concrete_page`, pass `--renderer web`.
 | a motion does nothing | not in the vocabulary; silently repaired | run `validate` and read `repairs` |
 | shape_fill drops words | they did not fit the outline | fewer words per scene, smaller `params.size`, or a rounder shape |
 | accented words split or vanish (`même` → `m`,`me`; `ô` gone) | muvid ≤ 0.0.61 tokenised ASCII-only | fixed in `muvid.align` / `lyricvid.timed_text`; upgrade muvid |
-| the page is bright from frame 1 and never ignites | `concrete_page` + `dim` under `ass` | `--renderer web`, or use `calligram` |
 | a calligram is a stack of centred rows | you used `concrete_page` | use `calligram` |
 | letters tiny | a calligram in landscape | render portrait, e.g. `--width 1440 --height 2560` |
 
