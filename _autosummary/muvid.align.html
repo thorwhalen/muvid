@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+
+<html :class="{ 'dark' : darkMode === true }" data-content_root="../" lang="en" x-data="{ darkMode: $persist(window.matchMedia('(prefers-color-scheme: dark)').matches), activeSection: ''}">
+<head>
+<script>
+    (function () {
+      // Set initial color scheme
+      if ((localStorage.getItem("_x_darkMode") === "true") || (window.matchMedia("(prefers-color-scheme: dark)").matches)) {
+        document.documentElement.classList.add("dark");
+      }
+
+      // Watch for media preference changes
+      window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (event) => {
+        localStorage.setItem("_x_darkMode", event.matches);
+        document.documentElement.classList.toggle("dark", event.matches);
+      });
+    })();
+  </script>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<meta charset="utf-8"/>
+<meta content="#ffffff" media="(prefers-color-scheme: light)" name="theme-color"/>
+<meta content="#030711" media="(prefers-color-scheme: dark)" name="theme-color"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<link href="muvid.align.html.md" rel="alternate" type="text/markdown"/>
+<link href="../llms.txt" rel="describedby" type="text/markdown"/>
+<link href="muvid.align.html.md" rel="alternate" type="text/markdown"/>
+<link href="llms.txt" rel="describedby"/>
+<title>muvid.align | muvid</title>
+<meta content="muvid.align | muvid" property="og:title"/>
+<meta content="muvid.align | muvid" name="twitter:title"/>
+<link href="../_static/pygments.css?v=d75fae25" rel="stylesheet" type="text/css"/>
+<link href="../_static/theme.css?v=d6d7c91b" rel="stylesheet" type="text/css"/>
+<link href="../_static/copybutton.css?v=76b2166b" rel="stylesheet" type="text/css"/>
+<link href="../_static/epythet.css?v=f9f95642" rel="stylesheet" type="text/css"/>
+<link href="../search.html" rel="search" title="Search"/>
+<link href="../genindex.html" rel="index" title="Index"/>
+<link href="muvid.characters.html" rel="next" title="muvid.characters"/>
+<link href="muvid.html" rel="prev" title="muvid"/>
+</head>
+<body :class="{ 'overflow-hidden': showSidebar }" class="min-h-screen font-sans antialiased bg-background text-foreground" x-data="{ showSidebar: false, showScrollTop: false }">
+<div @click.self="showSidebar = false" class="fixed inset-0 z-50 overflow-hidden bg-background/80 backdrop-blur-sm md:hidden" x-cloak="" x-show="showSidebar"></div><div class="relative flex flex-col min-h-screen" id="page"><a class="absolute top-0 left-0 z-[100] block bg-background p-4 text-xl transition -translate-x-full opacity-0 focus:translate-x-0 focus:opacity-100" href="#content">
+      Skip to content
+    </a><header class="sticky top-0 z-40 w-full border-b shadow-xs border-border bg-background/90 backdrop-blur"><div class="container flex items-center h-14">
+<div class="hidden mr-4 md:flex">
+<a class="flex items-center mr-6" href="../index.html"><span class="hidden font-bold sm:inline-block text-clip whitespace-nowrap">muvid</span>
+</a><nav class="flex items-center gap-6 text-sm font-medium">
+<a class="transition-colors hover:text-foreground/80 text-foreground/60" href="https://github.com/thorwhalen/muvid" rel="noopener nofollow">GitHub</a>
+</nav></div><button @click="showSidebar = true" class="inline-flex items-center justify-center h-10 px-0 py-2 mr-2 text-base font-medium transition-colors rounded-md hover:text-accent-foreground hover:bg-transparent md:hidden" type="button">
+<svg aria-hidden="true" fill="currentColor" height="24" viewbox="0 96 960 960" width="24" xmlns="http://www.w3.org/2000/svg">
+<path d="M152.587 825.087q-19.152 0-32.326-13.174t-13.174-32.326q0-19.152 13.174-32.326t32.326-13.174h440q19.152 0 32.326 13.174t13.174 32.326q0 19.152-13.174 32.326t-32.326 13.174h-440Zm0-203.587q-19.152 0-32.326-13.174T107.087 576q0-19.152 13.174-32.326t32.326-13.174h320q19.152 0 32.326 13.174T518.087 576q0 19.152-13.174 32.326T472.587 621.5h-320Zm0-203.587q-19.152 0-32.326-13.174t-13.174-32.326q0-19.152 13.174-32.326t32.326-13.174h440q19.152 0 32.326 13.174t13.174 32.326q0 19.152-13.174 32.326t-32.326 13.174h-440ZM708.913 576l112.174 112.174q12.674 12.674 12.674 31.826t-12.674 31.826Q808.413 764.5 789.261 764.5t-31.826-12.674l-144-144Q600 594.391 600 576t13.435-31.826l144-144q12.674-12.674 31.826-12.674t31.826 12.674q12.674 12.674 12.674 31.826t-12.674 31.826L708.913 576Z"></path>
+</svg>
+<span class="sr-only">Toggle navigation menu</span>
+</button>
+<div class="flex items-center justify-between flex-1 gap-2 sm:gap-4 md:justify-end">
+<div class="flex-1 w-full md:w-auto md:flex-none"><form @keydown.k.window.meta="$refs.search.focus()" action="../search.html" class="relative flex items-center group" id="searchbox" method="get">
+<input aria-label="Search the docs" class="inline-flex items-center font-medium transition-colors bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background border border-input hover:bg-accent focus:bg-accent hover:text-accent-foreground focus:text-accent-foreground hover:placeholder-accent-foreground py-2 px-4 relative h-9 w-full justify-start rounded-[0.5rem] text-sm text-muted-foreground sm:pr-12 md:w-40 lg:w-64" id="search-input" name="q" placeholder="Search ..." type="search" x-ref="search"/>
+<kbd class="pointer-events-none absolute right-1.5 top-2 hidden h-5 select-none text-muted-foreground items-center gap-1 rounded border border-border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex group-hover:bg-accent group-hover:text-accent-foreground">
+<span class="text-xs">⌘</span>
+    K
+  </kbd>
+</form>
+</div>
+<nav class="flex items-center gap-1">
+<button @click="darkMode = !darkMode" class="relative inline-flex items-center justify-center px-0 text-sm font-medium transition-colors rounded-md hover:bg-accent hover:text-accent-foreground h-9 w-9" title="Toggle color scheme" type="button">
+<svg class="absolute transition-all scale-100 rotate-0 dark:-rotate-90 dark:scale-0" fill="currentColor" height="16" viewbox="0 96 960 960" width="16" xmlns="http://www.w3.org/2000/svg">
+<path d="M480 685q45.456 0 77.228-31.772Q589 621.456 589 576q0-45.456-31.772-77.228Q525.456 467 480 467q-45.456 0-77.228 31.772Q371 530.544 371 576q0 45.456 31.772 77.228Q434.544 685 480 685Zm0 91q-83 0-141.5-58.5T280 576q0-83 58.5-141.5T480 376q83 0 141.5 58.5T680 576q0 83-58.5 141.5T480 776ZM80 621.5q-19.152 0-32.326-13.174T34.5 576q0-19.152 13.174-32.326T80 530.5h80q19.152 0 32.326 13.174T205.5 576q0 19.152-13.174 32.326T160 621.5H80Zm720 0q-19.152 0-32.326-13.174T754.5 576q0-19.152 13.174-32.326T800 530.5h80q19.152 0 32.326 13.174T925.5 576q0 19.152-13.174 32.326T880 621.5h-80Zm-320-320q-19.152 0-32.326-13.174T434.5 256v-80q0-19.152 13.174-32.326T480 130.5q19.152 0 32.326 13.174T525.5 176v80q0 19.152-13.174 32.326T480 301.5Zm0 720q-19.152 0-32.326-13.17Q434.5 995.152 434.5 976v-80q0-19.152 13.174-32.326T480 850.5q19.152 0 32.326 13.174T525.5 896v80q0 19.152-13.174 32.33-13.174 13.17-32.326 13.17ZM222.174 382.065l-43-42Q165.5 327.391 166 308.239t13.174-33.065q13.435-13.674 32.587-13.674t32.065 13.674l42.239 43q12.674 13.435 12.555 31.706-.12 18.272-12.555 31.946-12.674 13.674-31.445 13.413-18.772-.261-32.446-13.174Zm494 494.761-42.239-43q-12.674-13.435-12.674-32.087t12.674-31.565Q686.609 756.5 705.38 757q18.772.5 32.446 13.174l43 41.761Q794.5 824.609 794 843.761t-13.174 33.065Q767.391 890.5 748.239 890.5t-32.065-13.674Zm-42-494.761Q660.5 369.391 661 350.62q.5-18.772 13.174-32.446l41.761-43Q728.609 261.5 747.761 262t33.065 13.174q13.674 13.435 13.674 32.587t-13.674 32.065l-43 42.239q-13.435 12.674-31.706 12.555-18.272-.12-31.946-12.555Zm-495 494.761Q165.5 863.391 165.5 844.239t13.674-32.065l43-42.239q13.435-12.674 32.087-12.674t31.565 12.674Q299.5 782.609 299 801.38q-.5 18.772-13.174 32.446l-41.761 43Q231.391 890.5 212.239 890t-33.065-13.174ZM480 576Z"></path>
+</svg>
+<svg class="absolute transition-all scale-0 rotate-90 dark:rotate-0 dark:scale-100" fill="currentColor" height="16" viewbox="0 96 960 960" width="16" xmlns="http://www.w3.org/2000/svg">
+<path d="M480 936q-151 0-255.5-104.5T120 576q0-138 90-239.5T440 218q25-3 39 18t-1 44q-17 26-25.5 55t-8.5 61q0 90 63 153t153 63q31 0 61.5-9t54.5-25q21-14 43-1.5t19 39.5q-14 138-117.5 229T480 936Zm0-80q88 0 158-48.5T740 681q-20 5-40 8t-40 3q-123 0-209.5-86.5T364 396q0-20 3-40t8-40q-78 32-126.5 102T200 576q0 116 82 198t198 82Zm-10-270Z"></path>
+</svg>
+</button>
+</nav>
+</div>
+</div>
+</header>
+<div class="flex-1"><div class="container md:grid md:grid-cols-[220px_minmax(0,1fr)] md:gap-6 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-10"><aside :aria-hidden="!showSidebar" :class="{ 'translate-x-0': showSidebar }" class="fixed inset-y-0 left-0 md:top-14 z-50 md:z-30 bg-background md:bg-transparent transition-all duration-100 -translate-x-full md:translate-x-0 ml-0 p-6 md:p-0 md:-ml-2 md:h-[calc(100vh-3.5rem)] w-5/6 md:w-full overflow-y-auto border-r border-border md:sticky" id="left-sidebar">
+<a class="justify-start text-sm md:!hidden bg-background" href="../index.html"><span class="font-bold text-clip whitespace-nowrap">muvid</span>
+</a>
+<div class="relative overflow-hidden md:overflow-auto my-4 md:my-0">
+<div class="overflow-y-auto h-full w-full relative pr-6"><nav class="flex md:hidden flex-col font-medium mt-4">
+<a href="https://github.com/thorwhalen/muvid" rel="nofollow noopener">GitHub</a>
+</nav><nav class="table w-full min-w-full my-6 lg:my-8">
+<ul class="current">
+<li class="toctree-l1 current" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../api.html">API reference<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul class="current" x-show="expanded">
+<li class="toctree-l2 current" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="muvid.html">muvid<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul class="current" x-show="expanded">
+<li class="toctree-l3 current"><a class="current reference internal" href="#">muvid.align</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.characters.html">muvid.characters</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.choreo.html">muvid.choreo</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.compose.html">muvid.compose</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.contracts.html">muvid.contracts</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.cost.html">muvid.cost</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.data.html">muvid.data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.environments.html">muvid.environments</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.events.html">muvid.events</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.facade.html">muvid.facade</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.footage.html">muvid.footage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.lyrics.html">muvid.lyrics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.lyricvid.html">muvid.lyricvid</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.mcp.html">muvid.mcp</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.montage.html">muvid.montage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.paths.html">muvid.paths</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.project.html">muvid.project</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.renderers.html">muvid.renderers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.schema.html">muvid.schema</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.script.html">muvid.script</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.subgenres.html">muvid.subgenres</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.ui.html">muvid.ui</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.visualize.html">muvid.visualize</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../ai-agents.html">For AI agents</a></li>
+</ul>
+</nav>
+</div>
+</div>
+<button @click="showSidebar = false" class="absolute md:hidden right-4 top-4 rounded-sm opacity-70 transition-opacity hover:opacity-100" type="button">
+<svg class="h-4 w-4" fill="currentColor" height="24" stroke="none" viewbox="0 96 960 960" width="24" xmlns="http://www.w3.org/2000/svg">
+<path d="M480 632 284 828q-11 11-28 11t-28-11q-11-11-11-28t11-28l196-196-196-196q-11-11-11-28t11-28q11-11 28-11t28 11l196 196 196-196q11-11 28-11t28 11q11 11 11 28t-11 28L536 576l196 196q11 11 11 28t-11 28q-11 11-28 11t-28-11L480 632Z"></path>
+</svg>
+</button>
+</aside>
+<main class="relative py-6 lg:gap-10 lg:py-8 xl:grid xl:grid-cols-[1fr_300px]">
+<div class="w-full min-w-0 mx-auto">
+<nav aria-label="breadcrumbs" class="flex items-center mb-4 space-x-1 text-sm text-muted-foreground">
+<a class="overflow-hidden text-ellipsis whitespace-nowrap hover:text-foreground" href="../index.html">
+<span class="hidden md:inline">muvid</span>
+<svg aria-label="Home" class="md:hidden" fill="currentColor" height="18" stroke="none" viewbox="0 96 960 960" width="18" xmlns="http://www.w3.org/2000/svg">
+<path d="M240 856h120V616h240v240h120V496L480 316 240 496v360Zm-80 80V456l320-240 320 240v480H520V696h-80v240H160Zm320-350Z"></path>
+</svg>
+</a>
+<div class="mr-1">/</div><a class="hover:text-foreground overflow-hidden text-ellipsis whitespace-nowrap" href="../api.html">API reference</a>
+<div class="mr-1">/</div><a class="hover:text-foreground overflow-hidden text-ellipsis whitespace-nowrap" href="muvid.html">muvid</a>
+<div class="mr-1">/</div><span aria-current="page" class="font-medium text-foreground overflow-hidden text-ellipsis whitespace-nowrap">muvid.align</span>
+</nav>
+<div id="content" role="main">
+<section id="module-muvid.align">
+<span id="muvid-align"></span><h1>muvid.align<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#module-muvid.align">¶</a></h1>
+<p>Lyric → audio alignment.</p>
+<p>We have:</p>
+<ul class="simple">
+<li><p>a transcript (Scribe / faster-whisper) with word-level (text, start, end)</p></li>
+<li><p>a user-edited <code class="docutils literal notranslate"><span class="pre">LyricsDoc</span></code> with section labels + line text + optional
+manual line-start anchors</p></li>
+</ul>
+<p>We want a <code class="docutils literal notranslate"><span class="pre">lacing</span></code> store with three tiers (sections, lines, words) so
+the rest of the system can ask “which lines fall in shot X” without
+re-implementing interval math.</p>
+<p>Strategy (greedy token-match):</p>
+<ol class="arabic simple">
+<li><p>Tokenize each lyric line into normalized words.</p></li>
+<li><p>Walk the transcript word stream once, assigning each transcript word
+to the next unmatched lyric word that matches (case- and
+punctuation-insensitive). Tolerate small mismatches (transcript
+word missing in lyrics, vice versa) with a small lookahead window.</p></li>
+<li><p>From the matched words, derive line <code class="docutils literal notranslate"><span class="pre">[start,</span> <span class="pre">end]</span></code> as
+<code class="docutils literal notranslate"><span class="pre">(first_matched_word.start,</span> <span class="pre">last_matched_word.end)</span></code>. If a line has
+<em>no</em> matched words, fall back to the user’s manual anchor (if any),
+then to a linear interpolation between neighboring anchored lines.</p></li>
+<li><p>Sections inherit <code class="docutils literal notranslate"><span class="pre">[start,</span> <span class="pre">end]</span></code> from the union of their lines;
+if the user provided explicit <code class="docutils literal notranslate"><span class="pre">start_s</span></code> / <code class="docutils literal notranslate"><span class="pre">end_s</span></code> on a section,
+those win.</p></li>
+</ol>
+<p>The result is written as a <code class="docutils literal notranslate"><span class="pre">lacing.SqliteStore</span></code> so it round-trips and
+can be edited by other tools.</p>
+<p class="rubric">Module Attributes</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.align.AlignerName" title="muvid.align.AlignerName"><code class="xref py py-obj docutils literal notranslate"><span class="pre">AlignerName</span></code></a></p></td>
+<td><p>Built-in aligner names.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#muvid.align.WHISPERX_LITE_MODEL_SIZE" title="muvid.align.WHISPERX_LITE_MODEL_SIZE"><code class="xref py py-obj docutils literal notranslate"><span class="pre">WHISPERX_LITE_MODEL_SIZE</span></code></a></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">tiny</span></code> is fast but, on sung/repetitive audio, produces a transcript so garbled that the greedy matcher walks past whole minutes before finding a plausible match (muvid#101: measured 53 s late on a repeated-word lyric).</p></td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Functions</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.align.align_lyrics" title="muvid.align.align_lyrics"><code class="xref py py-obj docutils literal notranslate"><span class="pre">align_lyrics</span></code></a>(lyrics, transcript, *[, ...])</p></td>
+<td><p>Align a <code class="docutils literal notranslate"><span class="pre">LyricsDoc</span></code> to a transcript.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#muvid.align.align_scribe_greedy" title="muvid.align.align_scribe_greedy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">align_scribe_greedy</span></code></a>(lyrics, transcript, *[, ...])</p></td>
+<td><p>Greedy token-match against a word-timestamped transcript.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.align.align_stars" title="muvid.align.align_stars"><code class="xref py py-obj docutils literal notranslate"><span class="pre">align_stars</span></code></a>(lyrics, transcript, *[, duration_s])</p></td>
+<td><p>Singing-specific alignment (STARS / similar).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#muvid.align.align_user_provided" title="muvid.align.align_user_provided"><code class="xref py py-obj docutils literal notranslate"><span class="pre">align_user_provided</span></code></a>(lyrics, transcript, *[, ...])</p></td>
+<td><p>Use line-level timings the caller has already determined.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.align.align_whisperx_lite" title="muvid.align.align_whisperx_lite"><code class="xref py py-obj docutils literal notranslate"><span class="pre">align_whisperx_lite</span></code></a>(lyrics, transcript, *[, ...])</p></td>
+<td><p>Local-only aligner that re-uses <code class="docutils literal notranslate"><span class="pre">faster-whisper</span></code> (no API).</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">aligner_info</span></code>(name)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.align.list_aligners" title="muvid.align.list_aligners"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list_aligners</span></code></a>()</p></td>
+<td><p>Return all registered aligner names, sorted.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#muvid.align.register_aligner" title="muvid.align.register_aligner"><code class="xref py py-obj docutils literal notranslate"><span class="pre">register_aligner</span></code></a>(name, fn, *, description[, ...])</p></td>
+<td><p>Register an aligner under <code class="docutils literal notranslate"><span class="pre">name</span></code>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.align.write_alignment_store" title="muvid.align.write_alignment_store"><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_alignment_store</span></code></a>(alignment, *, path[, ...])</p></td>
+<td><p>Write alignment to a <code class="docutils literal notranslate"><span class="pre">lacing.SqliteStore</span></code> file (.annot).</p></td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Classes</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.align.AlignerSpec" title="muvid.align.AlignerSpec"><code class="xref py py-obj docutils literal notranslate"><span class="pre">AlignerSpec</span></code></a>(*, name, description, fn[, requires])</p></td>
+<td><p>One row in the aligner registry.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#muvid.align.AlignmentResult" title="muvid.align.AlignmentResult"><code class="xref py py-obj docutils literal notranslate"><span class="pre">AlignmentResult</span></code></a>(*, sections)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.align.LineAlignment" title="muvid.align.LineAlignment"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LineAlignment</span></code></a>(*, line_index, section_label, ...)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#muvid.align.SectionAlignment" title="muvid.align.SectionAlignment"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SectionAlignment</span></code></a>(*, label, title, start_s, ...)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.align.WordAlignment" title="muvid.align.WordAlignment"><code class="xref py py-obj docutils literal notranslate"><span class="pre">WordAlignment</span></code></a>(*, line_index, token_index, ...)</p></td>
+<td><p>One alignment between a lyric token and a transcript word.</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="muvid.align.AlignerName">
+<span class="sig-prename descclassname"><span class="pre">muvid.align.</span></span><span class="sig-name descname"><span class="pre">AlignerName</span></span><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#muvid.align.AlignerName" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#muvid.align.AlignerName'">¶</a></dt>
+<dd><p>Built-in aligner names. <code class="docutils literal notranslate"><span class="pre">align_lyrics(aligner=...)</span></code> accepts these
+plus any name added later via <a class="reference internal" href="#muvid.align.register_aligner" title="muvid.align.register_aligner"><code class="xref py py-func docutils literal notranslate"><span class="pre">register_aligner()</span></code></a>.</p>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="muvid.align.AlignerSpec">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">muvid.align.</span></span><span class="sig-name descname"><span class="pre">AlignerSpec</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">description</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">requires</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/muvid/align.html#AlignerSpec"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#muvid.align.AlignerSpec" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#muvid.align.AlignerSpec'">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/builtins/functions.html#object" rel="nofollow noopener" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code><svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a></p>
+<p>One row in the aligner registry.</p>
+<dl class="field-list simple">
+</dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="muvid.align.AlignmentResult">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">muvid.align.</span></span><span class="sig-name descname"><span class="pre">AlignmentResult</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">sections</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/muvid/align.html#AlignmentResult"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#muvid.align.AlignmentResult" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#muvid.align.AlignmentResult'">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/builtins/functions.html#object" rel="nofollow noopener" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code><svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a></p>
+<dl class="field-list simple">
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="muvid.align.AlignmentResult.lines_in">
+<span class="sig-name descname"><span class="pre">lines_in</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">start_s</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_s</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/muvid/align.html#AlignmentResult.lines_in"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#muvid.align.AlignmentResult.lines_in" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#muvid.align.AlignmentResult.lines_in'">¶</a></dt>
+<dd><p>Lines that fall (at least partially) inside <code class="docutils literal notranslate"><span class="pre">[start_s,</span> <span class="pre">end_s]</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" rel="nofollow noopener" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code><svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a>[<a class="reference internal" href="#muvid.align.LineAlignment" title="muvid.align.LineAlignment"><code class="xref py py-class docutils literal notranslate"><span class="pre">LineAlignment</span></code></a>]</span></p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="muvid.align.LineAlignment">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">muvid.align.</span></span><span class="sig-name descname"><span class="pre">LineAlignment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">line_index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">section_label</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">text</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_s</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_s</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">word_alignments</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/muvid/align.html#LineAlignment"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#muvid.align.LineAlignment" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#muvid.align.LineAlignment'">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/builtins/functions.html#object" rel="nofollow noopener" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code><svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a></p>
+<dl class="field-list simple">
+</dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="muvid.align.SectionAlignment">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">muvid.align.</span></span><span class="sig-name descname"><span class="pre">SectionAlignment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_s</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_s</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lines</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/muvid/align.html#SectionAlignment"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#muvid.align.SectionAlignment" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#muvid.align.SectionAlignment'">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/builtins/functions.html#object" rel="nofollow noopener" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code><svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a></p>
+<dl class="field-list simple">
+</dl>
+</dd></dl>
+<dl class="py data">
+<dt class="sig sig-object py" id="muvid.align.WHISPERX_LITE_MODEL_SIZE">
+<span class="sig-prename descclassname"><span class="pre">muvid.align.</span></span><span class="sig-name descname"><span class="pre">WHISPERX_LITE_MODEL_SIZE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'small'</span></span><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#muvid.align.WHISPERX_LITE_MODEL_SIZE" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#muvid.align.WHISPERX_LITE_MODEL_SIZE'">¶</a></dt>
+<dd><p><code class="docutils literal notranslate"><span class="pre">tiny</span></code> is fast but, on sung/repetitive audio, produces a transcript so
+garbled that the greedy matcher walks past whole minutes before finding a
+plausible match (muvid#101: measured 53 s late on a repeated-word lyric).
+The lyric-video path is happy to wait, so default to a materially more
+accurate size; override per call or via this env var.</p>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="muvid.align.WordAlignment">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">muvid.align.</span></span><span class="sig-name descname"><span class="pre">WordAlignment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">line_index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">token_index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">text</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_s</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_s</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">confidence</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/muvid/align.html#WordAlignment"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#muvid.align.WordAlignment" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#muvid.align.WordAlignment'">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/builtins/functions.html#object" rel="nofollow noopener" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code><svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a></p>
+<p>One alignment between a lyric token and a transcript word.</p>
+<dl class="field-list simple">
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.align.align_lyrics">
+<span class="sig-prename descclassname"><span class="pre">muvid.align.</span></span><span class="sig-name descname"><span class="pre">align_lyrics</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lyrics</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transcript</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">duration_s</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">aligner</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'scribe-greedy'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">aligner_kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/muvid/align.html#align_lyrics"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#muvid.align.align_lyrics" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#muvid.align.align_lyrics'">¶</a></dt>
+<dd><p>Align a <code class="docutils literal notranslate"><span class="pre">LyricsDoc</span></code> to a transcript.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>lyrics</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="muvid.lyrics.html#muvid.lyrics.LyricsDoc" title="muvid.lyrics.LyricsDoc"><code class="xref py py-class docutils literal notranslate"><span class="pre">LyricsDoc</span></code></a></span>) – User-edited lyrics document (the ground-truth text).</p></li>
+<li><p><strong>transcript</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#dict" rel="nofollow noopener" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code><svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a></span>) – Aligner-specific input. For <code class="docutils literal notranslate"><span class="pre">"scribe-greedy"</span></code>
+this is a Scribe / faster-whisper response with
+<code class="docutils literal notranslate"><span class="pre">words:</span> <span class="pre">[...]</span></code>. For <code class="docutils literal notranslate"><span class="pre">"user"</span></code> this can be empty if you
+pass <code class="docutils literal notranslate"><span class="pre">user_line_timings=...</span></code>. For <code class="docutils literal notranslate"><span class="pre">"whisperx-lite"</span></code> the
+transcript is ignored — the aligner runs on the audio
+directly (path passed via <code class="docutils literal notranslate"><span class="pre">audio_path=</span></code>).</p></li>
+<li><p><strong>duration_s</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" rel="nofollow noopener" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code><svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a></span>) – Used to extrapolate end times for lines with no
+matched words and no later anchor.</p></li>
+<li><p><strong>aligner</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" rel="nofollow noopener" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code><svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a></span>) – Name of a registered aligner. See <a class="reference internal" href="#muvid.align.list_aligners" title="muvid.align.list_aligners"><code class="xref py py-func docutils literal notranslate"><span class="pre">list_aligners()</span></code></a>.</p></li>
+<li><p><strong>**aligner_kwargs</strong> – Forwarded to the aligner.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="#muvid.align.AlignmentResult" title="muvid.align.AlignmentResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">AlignmentResult</span></code></a></span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#muvid.align.AlignmentResult" title="muvid.align.AlignmentResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">AlignmentResult</span></code></a>.</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.align.align_scribe_greedy">
+<span class="sig-prename descclassname"><span class="pre">muvid.align.</span></span><span class="sig-name descname"><span class="pre">align_scribe_greedy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lyrics</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transcript</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">duration_s</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lookahead</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">6</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/muvid/align.html#align_scribe_greedy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#muvid.align.align_scribe_greedy" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#muvid.align.align_scribe_greedy'">¶</a></dt>
+<dd><p>Greedy token-match against a word-timestamped transcript.</p>
+<p>Cheap, network-only (assumes the transcript came from Scribe or
+similar). Tolerates 1-character mishears between sung and written
+text. <code class="docutils literal notranslate"><span class="pre">duration_s</span></code> is used only when extrapolating end times.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="#muvid.align.AlignmentResult" title="muvid.align.AlignmentResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">AlignmentResult</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.align.align_stars">
+<span class="sig-prename descclassname"><span class="pre">muvid.align.</span></span><span class="sig-name descname"><span class="pre">align_stars</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lyrics</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transcript</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">duration_s</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/muvid/align.html#align_stars"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#muvid.align.align_stars" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#muvid.align.align_stars'">¶</a></dt>
+<dd><p>Singing-specific alignment (STARS / similar). Not yet implemented.</p>
+<p>See <code class="docutils literal notranslate"><span class="pre">misc/docs/alignment_references.md</span></code> for the literature
+motivating this aligner. The slot exists so callers can already
+write <code class="docutils literal notranslate"><span class="pre">aligner="stars"</span></code> and get a clear NotImplementedError.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="#muvid.align.AlignmentResult" title="muvid.align.AlignmentResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">AlignmentResult</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.align.align_user_provided">
+<span class="sig-prename descclassname"><span class="pre">muvid.align.</span></span><span class="sig-name descname"><span class="pre">align_user_provided</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lyrics</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transcript</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">duration_s</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">user_line_timings</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/muvid/align.html#align_user_provided"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#muvid.align.align_user_provided" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#muvid.align.align_user_provided'">¶</a></dt>
+<dd><p>Use line-level timings the caller has already determined.</p>
+<p>Useful when the user has hand-anchored every line, or when an
+external aligner has produced <code class="docutils literal notranslate"><span class="pre">line_index</span> <span class="pre">→</span> <span class="pre">(start,</span> <span class="pre">end)</span></code>
+timings and you don’t want any token-matching.</p>
+<p><code class="docutils literal notranslate"><span class="pre">user_line_timings</span></code> is a list of <code class="docutils literal notranslate"><span class="pre">{"line_index":</span> <span class="pre">int,</span>
+<span class="pre">"start_s":</span> <span class="pre">float,</span> <span class="pre">"end_s":</span> <span class="pre">float}</span></code>. If omitted, this aligner
+falls back to the manual anchors already on <code class="docutils literal notranslate"><span class="pre">lyrics</span></code> (the
+<code class="docutils literal notranslate"><span class="pre">//</span> <span class="pre">12.5</span></code> end-of-line markers in <code class="docutils literal notranslate"><span class="pre">lyrics.md</span></code>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="#muvid.align.AlignmentResult" title="muvid.align.AlignmentResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">AlignmentResult</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.align.align_whisperx_lite">
+<span class="sig-prename descclassname"><span class="pre">muvid.align.</span></span><span class="sig-name descname"><span class="pre">align_whisperx_lite</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lyrics</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transcript</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">duration_s</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">audio_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'small'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lookahead</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">6</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/muvid/align.html#align_whisperx_lite"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#muvid.align.align_whisperx_lite" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#muvid.align.align_whisperx_lite'">¶</a></dt>
+<dd><p>Local-only aligner that re-uses <code class="docutils literal notranslate"><span class="pre">faster-whisper</span></code> (no API).</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">transcript</span></code> argument is ignored when <code class="docutils literal notranslate"><span class="pre">audio_path</span></code> is given:
+we re-transcribe locally with faster-whisper and then run the same
+greedy match used by <code class="docutils literal notranslate"><span class="pre">scribe-greedy</span></code>. When <code class="docutils literal notranslate"><span class="pre">audio_path</span></code> is not
+given, we fall through and just use the supplied <code class="docutils literal notranslate"><span class="pre">transcript</span></code>.</p>
+<p>Trade-offs vs <code class="docutils literal notranslate"><span class="pre">scribe-greedy</span></code>: free + offline; slower; less
+accurate on singing; needs torch + faster-whisper installed.</p>
+<p><code class="docutils literal notranslate"><span class="pre">model_size</span></code> defaults to <a class="reference internal" href="#muvid.align.WHISPERX_LITE_MODEL_SIZE" title="muvid.align.WHISPERX_LITE_MODEL_SIZE"><code class="xref py py-data docutils literal notranslate"><span class="pre">WHISPERX_LITE_MODEL_SIZE</span></code></a> (<code class="docutils literal notranslate"><span class="pre">"small"</span></code>,
+overridable via <code class="docutils literal notranslate"><span class="pre">MUVID_WHISPERX_LITE_MODEL_SIZE</span></code>) rather than
+faster-whisper’s own <code class="docutils literal notranslate"><span class="pre">"tiny"</span></code> default — see muvid#101.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="#muvid.align.AlignmentResult" title="muvid.align.AlignmentResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">AlignmentResult</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.align.list_aligners">
+<span class="sig-prename descclassname"><span class="pre">muvid.align.</span></span><span class="sig-name descname"><span class="pre">list_aligners</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/muvid/align.html#list_aligners"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#muvid.align.list_aligners" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#muvid.align.list_aligners'">¶</a></dt>
+<dd><p>Return all registered aligner names, sorted.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" rel="nofollow noopener" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code><svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a>[<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" rel="nofollow noopener" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code><svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a>]</span></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.align.register_aligner">
+<span class="sig-prename descclassname"><span class="pre">muvid.align.</span></span><span class="sig-name descname"><span class="pre">register_aligner</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fn</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">description</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">requires</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/muvid/align.html#register_aligner"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#muvid.align.register_aligner" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#muvid.align.register_aligner'">¶</a></dt>
+<dd><p>Register an aligner under <code class="docutils literal notranslate"><span class="pre">name</span></code>.</p>
+<p>The function should accept <code class="docutils literal notranslate"><span class="pre">(lyrics,</span> <span class="pre">transcript,</span> <span class="pre">*,</span> <span class="pre">duration_s,</span>
+<span class="pre">\*\*kw)</span> <span class="pre">-&gt;</span> <span class="pre">AlignmentResult</span></code>. Extra keyword arguments forwarded by
+<a class="reference internal" href="#muvid.align.align_lyrics" title="muvid.align.align_lyrics"><code class="xref py py-func docutils literal notranslate"><span class="pre">align_lyrics()</span></code></a> are passed through.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" rel="nofollow noopener" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code><svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.align.write_alignment_store">
+<span class="sig-prename descclassname"><span class="pre">muvid.align.</span></span><span class="sig-name descname"><span class="pre">write_alignment_store</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alignment</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">asset_id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'song:audio'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/muvid/align.html#write_alignment_store"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#muvid.align.write_alignment_store" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#muvid.align.write_alignment_store'">¶</a></dt>
+<dd><p>Write alignment to a <code class="docutils literal notranslate"><span class="pre">lacing.SqliteStore</span></code> file (.annot).</p>
+<p>Uses <code class="xref py py-class docutils literal notranslate"><span class="pre">lacing.tracks.subtitle.SubtitleBuilder</span></code> for the
+standard <code class="docutils literal notranslate"><span class="pre">(sections,</span> <span class="pre">lines,</span> <span class="pre">words)</span></code> tier set.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" rel="nofollow noopener" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code><svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+</section>
+</div></div><aside class="hidden text-sm xl:block" id="right-sidebar">
+<div class="sticky top-16 -mt-10 max-h-[calc(100vh-5rem)] h-full overflow-y-auto pt-6 space-y-2"><p class="font-medium">On this page</p>
+<ul>
+<li><a :data-current="activeSection === '#muvid.align.AlignerName'" class="reference internal" href="#muvid.align.AlignerName"><code class="docutils literal notranslate"><span class="pre">AlignerName</span></code></a></li>
+<li><a :data-current="activeSection === '#muvid.align.AlignerSpec'" class="reference internal" href="#muvid.align.AlignerSpec"><code class="docutils literal notranslate"><span class="pre">AlignerSpec</span></code></a></li>
+<li><a :data-current="activeSection === '#muvid.align.AlignmentResult'" class="reference internal" href="#muvid.align.AlignmentResult"><code class="docutils literal notranslate"><span class="pre">AlignmentResult</span></code></a><ul>
+<li><a :data-current="activeSection === '#muvid.align.AlignmentResult.lines_in'" class="reference internal" href="#muvid.align.AlignmentResult.lines_in"><code class="docutils literal notranslate"><span class="pre">AlignmentResult.lines_in()</span></code></a></li>
+</ul>
+</li>
+<li><a :data-current="activeSection === '#muvid.align.LineAlignment'" class="reference internal" href="#muvid.align.LineAlignment"><code class="docutils literal notranslate"><span class="pre">LineAlignment</span></code></a></li>
+<li><a :data-current="activeSection === '#muvid.align.SectionAlignment'" class="reference internal" href="#muvid.align.SectionAlignment"><code class="docutils literal notranslate"><span class="pre">SectionAlignment</span></code></a></li>
+<li><a :data-current="activeSection === '#muvid.align.WHISPERX_LITE_MODEL_SIZE'" class="reference internal" href="#muvid.align.WHISPERX_LITE_MODEL_SIZE"><code class="docutils literal notranslate"><span class="pre">WHISPERX_LITE_MODEL_SIZE</span></code></a></li>
+<li><a :data-current="activeSection === '#muvid.align.WordAlignment'" class="reference internal" href="#muvid.align.WordAlignment"><code class="docutils literal notranslate"><span class="pre">WordAlignment</span></code></a></li>
+<li><a :data-current="activeSection === '#muvid.align.align_lyrics'" class="reference internal" href="#muvid.align.align_lyrics"><code class="docutils literal notranslate"><span class="pre">align_lyrics()</span></code></a></li>
+<li><a :data-current="activeSection === '#muvid.align.align_scribe_greedy'" class="reference internal" href="#muvid.align.align_scribe_greedy"><code class="docutils literal notranslate"><span class="pre">align_scribe_greedy()</span></code></a></li>
+<li><a :data-current="activeSection === '#muvid.align.align_stars'" class="reference internal" href="#muvid.align.align_stars"><code class="docutils literal notranslate"><span class="pre">align_stars()</span></code></a></li>
+<li><a :data-current="activeSection === '#muvid.align.align_user_provided'" class="reference internal" href="#muvid.align.align_user_provided"><code class="docutils literal notranslate"><span class="pre">align_user_provided()</span></code></a></li>
+<li><a :data-current="activeSection === '#muvid.align.align_whisperx_lite'" class="reference internal" href="#muvid.align.align_whisperx_lite"><code class="docutils literal notranslate"><span class="pre">align_whisperx_lite()</span></code></a></li>
+<li><a :data-current="activeSection === '#muvid.align.list_aligners'" class="reference internal" href="#muvid.align.list_aligners"><code class="docutils literal notranslate"><span class="pre">list_aligners()</span></code></a></li>
+<li><a :data-current="activeSection === '#muvid.align.register_aligner'" class="reference internal" href="#muvid.align.register_aligner"><code class="docutils literal notranslate"><span class="pre">register_aligner()</span></code></a></li>
+<li><a :data-current="activeSection === '#muvid.align.write_alignment_store'" class="reference internal" href="#muvid.align.write_alignment_store"><code class="docutils literal notranslate"><span class="pre">write_alignment_store()</span></code></a></li>
+</ul>
+</div>
+</aside>
+</main>
+</div>
+</div><footer class="py-6 border-t border-border md:py-0">
+<div class="container flex flex-col items-center justify-between gap-4 md:h-24 md:flex-row">
+<div class="flex flex-col items-center gap-4 px-8 md:flex-row md:gap-2 md:px-0">
+<p class="text-sm leading-loose text-center text-muted-foreground md:text-left"></p>
+</div>
+</div>
+</footer>
+</div>
+<script src="../_static/documentation_options.js?v=152b4b09"></script>
+<script src="../_static/doctools.js?v=fd6eb6e6"></script>
+<script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+<script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+<script src="../_static/copybutton.js?v=fd10adb8"></script>
+<script defer="defer" src="../_static/theme.js?v=5db23cf8"></script>
+</body>
+</html>

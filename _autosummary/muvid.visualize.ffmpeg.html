@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+
+<html :class="{ 'dark' : darkMode === true }" data-content_root="../" lang="en" x-data="{ darkMode: $persist(window.matchMedia('(prefers-color-scheme: dark)').matches), activeSection: ''}">
+<head>
+<script>
+    (function () {
+      // Set initial color scheme
+      if ((localStorage.getItem("_x_darkMode") === "true") || (window.matchMedia("(prefers-color-scheme: dark)").matches)) {
+        document.documentElement.classList.add("dark");
+      }
+
+      // Watch for media preference changes
+      window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (event) => {
+        localStorage.setItem("_x_darkMode", event.matches);
+        document.documentElement.classList.toggle("dark", event.matches);
+      });
+    })();
+  </script>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<meta charset="utf-8"/>
+<meta content="#ffffff" media="(prefers-color-scheme: light)" name="theme-color"/>
+<meta content="#030711" media="(prefers-color-scheme: dark)" name="theme-color"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<link href="muvid.visualize.ffmpeg.html.md" rel="alternate" type="text/markdown"/>
+<link href="../llms.txt" rel="describedby" type="text/markdown"/>
+<link href="muvid.visualize.ffmpeg.html.md" rel="alternate" type="text/markdown"/>
+<link href="llms.txt" rel="describedby"/>
+<title>muvid.visualize.ffmpeg | muvid</title>
+<meta content="muvid.visualize.ffmpeg | muvid" property="og:title"/>
+<meta content="muvid.visualize.ffmpeg | muvid" name="twitter:title"/>
+<link href="../_static/pygments.css?v=d75fae25" rel="stylesheet" type="text/css"/>
+<link href="../_static/theme.css?v=d6d7c91b" rel="stylesheet" type="text/css"/>
+<link href="../_static/copybutton.css?v=76b2166b" rel="stylesheet" type="text/css"/>
+<link href="../_static/epythet.css?v=f9f95642" rel="stylesheet" type="text/css"/>
+<link href="../search.html" rel="search" title="Search"/>
+<link href="../genindex.html" rel="index" title="Index"/>
+<link href="muvid.visualize.reactive.html" rel="next" title="muvid.visualize.reactive"/>
+<link href="muvid.visualize.canvas.html" rel="prev" title="muvid.visualize.canvas"/>
+</head>
+<body :class="{ 'overflow-hidden': showSidebar }" class="min-h-screen font-sans antialiased bg-background text-foreground" x-data="{ showSidebar: false, showScrollTop: false }">
+<div @click.self="showSidebar = false" class="fixed inset-0 z-50 overflow-hidden bg-background/80 backdrop-blur-sm md:hidden" x-cloak="" x-show="showSidebar"></div><div class="relative flex flex-col min-h-screen" id="page"><a class="absolute top-0 left-0 z-[100] block bg-background p-4 text-xl transition -translate-x-full opacity-0 focus:translate-x-0 focus:opacity-100" href="#content">
+      Skip to content
+    </a><header class="sticky top-0 z-40 w-full border-b shadow-xs border-border bg-background/90 backdrop-blur"><div class="container flex items-center h-14">
+<div class="hidden mr-4 md:flex">
+<a class="flex items-center mr-6" href="../index.html"><span class="hidden font-bold sm:inline-block text-clip whitespace-nowrap">muvid</span>
+</a><nav class="flex items-center gap-6 text-sm font-medium">
+<a class="transition-colors hover:text-foreground/80 text-foreground/60" href="https://github.com/thorwhalen/muvid" rel="noopener nofollow">GitHub</a>
+</nav></div><button @click="showSidebar = true" class="inline-flex items-center justify-center h-10 px-0 py-2 mr-2 text-base font-medium transition-colors rounded-md hover:text-accent-foreground hover:bg-transparent md:hidden" type="button">
+<svg aria-hidden="true" fill="currentColor" height="24" viewbox="0 96 960 960" width="24" xmlns="http://www.w3.org/2000/svg">
+<path d="M152.587 825.087q-19.152 0-32.326-13.174t-13.174-32.326q0-19.152 13.174-32.326t32.326-13.174h440q19.152 0 32.326 13.174t13.174 32.326q0 19.152-13.174 32.326t-32.326 13.174h-440Zm0-203.587q-19.152 0-32.326-13.174T107.087 576q0-19.152 13.174-32.326t32.326-13.174h320q19.152 0 32.326 13.174T518.087 576q0 19.152-13.174 32.326T472.587 621.5h-320Zm0-203.587q-19.152 0-32.326-13.174t-13.174-32.326q0-19.152 13.174-32.326t32.326-13.174h440q19.152 0 32.326 13.174t13.174 32.326q0 19.152-13.174 32.326t-32.326 13.174h-440ZM708.913 576l112.174 112.174q12.674 12.674 12.674 31.826t-12.674 31.826Q808.413 764.5 789.261 764.5t-31.826-12.674l-144-144Q600 594.391 600 576t13.435-31.826l144-144q12.674-12.674 31.826-12.674t31.826 12.674q12.674 12.674 12.674 31.826t-12.674 31.826L708.913 576Z"></path>
+</svg>
+<span class="sr-only">Toggle navigation menu</span>
+</button>
+<div class="flex items-center justify-between flex-1 gap-2 sm:gap-4 md:justify-end">
+<div class="flex-1 w-full md:w-auto md:flex-none"><form @keydown.k.window.meta="$refs.search.focus()" action="../search.html" class="relative flex items-center group" id="searchbox" method="get">
+<input aria-label="Search the docs" class="inline-flex items-center font-medium transition-colors bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background border border-input hover:bg-accent focus:bg-accent hover:text-accent-foreground focus:text-accent-foreground hover:placeholder-accent-foreground py-2 px-4 relative h-9 w-full justify-start rounded-[0.5rem] text-sm text-muted-foreground sm:pr-12 md:w-40 lg:w-64" id="search-input" name="q" placeholder="Search ..." type="search" x-ref="search"/>
+<kbd class="pointer-events-none absolute right-1.5 top-2 hidden h-5 select-none text-muted-foreground items-center gap-1 rounded border border-border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex group-hover:bg-accent group-hover:text-accent-foreground">
+<span class="text-xs">⌘</span>
+    K
+  </kbd>
+</form>
+</div>
+<nav class="flex items-center gap-1">
+<button @click="darkMode = !darkMode" class="relative inline-flex items-center justify-center px-0 text-sm font-medium transition-colors rounded-md hover:bg-accent hover:text-accent-foreground h-9 w-9" title="Toggle color scheme" type="button">
+<svg class="absolute transition-all scale-100 rotate-0 dark:-rotate-90 dark:scale-0" fill="currentColor" height="16" viewbox="0 96 960 960" width="16" xmlns="http://www.w3.org/2000/svg">
+<path d="M480 685q45.456 0 77.228-31.772Q589 621.456 589 576q0-45.456-31.772-77.228Q525.456 467 480 467q-45.456 0-77.228 31.772Q371 530.544 371 576q0 45.456 31.772 77.228Q434.544 685 480 685Zm0 91q-83 0-141.5-58.5T280 576q0-83 58.5-141.5T480 376q83 0 141.5 58.5T680 576q0 83-58.5 141.5T480 776ZM80 621.5q-19.152 0-32.326-13.174T34.5 576q0-19.152 13.174-32.326T80 530.5h80q19.152 0 32.326 13.174T205.5 576q0 19.152-13.174 32.326T160 621.5H80Zm720 0q-19.152 0-32.326-13.174T754.5 576q0-19.152 13.174-32.326T800 530.5h80q19.152 0 32.326 13.174T925.5 576q0 19.152-13.174 32.326T880 621.5h-80Zm-320-320q-19.152 0-32.326-13.174T434.5 256v-80q0-19.152 13.174-32.326T480 130.5q19.152 0 32.326 13.174T525.5 176v80q0 19.152-13.174 32.326T480 301.5Zm0 720q-19.152 0-32.326-13.17Q434.5 995.152 434.5 976v-80q0-19.152 13.174-32.326T480 850.5q19.152 0 32.326 13.174T525.5 896v80q0 19.152-13.174 32.33-13.174 13.17-32.326 13.17ZM222.174 382.065l-43-42Q165.5 327.391 166 308.239t13.174-33.065q13.435-13.674 32.587-13.674t32.065 13.674l42.239 43q12.674 13.435 12.555 31.706-.12 18.272-12.555 31.946-12.674 13.674-31.445 13.413-18.772-.261-32.446-13.174Zm494 494.761-42.239-43q-12.674-13.435-12.674-32.087t12.674-31.565Q686.609 756.5 705.38 757q18.772.5 32.446 13.174l43 41.761Q794.5 824.609 794 843.761t-13.174 33.065Q767.391 890.5 748.239 890.5t-32.065-13.674Zm-42-494.761Q660.5 369.391 661 350.62q.5-18.772 13.174-32.446l41.761-43Q728.609 261.5 747.761 262t33.065 13.174q13.674 13.435 13.674 32.587t-13.674 32.065l-43 42.239q-13.435 12.674-31.706 12.555-18.272-.12-31.946-12.555Zm-495 494.761Q165.5 863.391 165.5 844.239t13.674-32.065l43-42.239q13.435-12.674 32.087-12.674t31.565 12.674Q299.5 782.609 299 801.38q-.5 18.772-13.174 32.446l-41.761 43Q231.391 890.5 212.239 890t-33.065-13.174ZM480 576Z"></path>
+</svg>
+<svg class="absolute transition-all scale-0 rotate-90 dark:rotate-0 dark:scale-100" fill="currentColor" height="16" viewbox="0 96 960 960" width="16" xmlns="http://www.w3.org/2000/svg">
+<path d="M480 936q-151 0-255.5-104.5T120 576q0-138 90-239.5T440 218q25-3 39 18t-1 44q-17 26-25.5 55t-8.5 61q0 90 63 153t153 63q31 0 61.5-9t54.5-25q21-14 43-1.5t19 39.5q-14 138-117.5 229T480 936Zm0-80q88 0 158-48.5T740 681q-20 5-40 8t-40 3q-123 0-209.5-86.5T364 396q0-20 3-40t8-40q-78 32-126.5 102T200 576q0 116 82 198t198 82Zm-10-270Z"></path>
+</svg>
+</button>
+</nav>
+</div>
+</div>
+</header>
+<div class="flex-1"><div class="container md:grid md:grid-cols-[220px_minmax(0,1fr)] md:gap-6 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-10"><aside :aria-hidden="!showSidebar" :class="{ 'translate-x-0': showSidebar }" class="fixed inset-y-0 left-0 md:top-14 z-50 md:z-30 bg-background md:bg-transparent transition-all duration-100 -translate-x-full md:translate-x-0 ml-0 p-6 md:p-0 md:-ml-2 md:h-[calc(100vh-3.5rem)] w-5/6 md:w-full overflow-y-auto border-r border-border md:sticky" id="left-sidebar">
+<a class="justify-start text-sm md:!hidden bg-background" href="../index.html"><span class="font-bold text-clip whitespace-nowrap">muvid</span>
+</a>
+<div class="relative overflow-hidden md:overflow-auto my-4 md:my-0">
+<div class="overflow-y-auto h-full w-full relative pr-6"><nav class="flex md:hidden flex-col font-medium mt-4">
+<a href="https://github.com/thorwhalen/muvid" rel="nofollow noopener">GitHub</a>
+</nav><nav class="table w-full min-w-full my-6 lg:my-8">
+<ul class="current">
+<li class="toctree-l1 current" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../api.html">API reference<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul class="current" x-show="expanded">
+<li class="toctree-l2 current" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="muvid.html">muvid<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul class="current" x-show="expanded">
+<li class="toctree-l3"><a class="reference internal" href="muvid.align.html">muvid.align</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.characters.html">muvid.characters</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.choreo.html">muvid.choreo</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.compose.html">muvid.compose</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.contracts.html">muvid.contracts</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.cost.html">muvid.cost</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.data.html">muvid.data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.environments.html">muvid.environments</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.events.html">muvid.events</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.facade.html">muvid.facade</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.footage.html">muvid.footage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.lyrics.html">muvid.lyrics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.lyricvid.html">muvid.lyricvid</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.mcp.html">muvid.mcp</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.montage.html">muvid.montage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.paths.html">muvid.paths</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.project.html">muvid.project</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.renderers.html">muvid.renderers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.schema.html">muvid.schema</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.script.html">muvid.script</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.subgenres.html">muvid.subgenres</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.ui.html">muvid.ui</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="muvid.visualize.html">muvid.visualize</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../ai-agents.html">For AI agents</a></li>
+</ul>
+</nav>
+</div>
+</div>
+<button @click="showSidebar = false" class="absolute md:hidden right-4 top-4 rounded-sm opacity-70 transition-opacity hover:opacity-100" type="button">
+<svg class="h-4 w-4" fill="currentColor" height="24" stroke="none" viewbox="0 96 960 960" width="24" xmlns="http://www.w3.org/2000/svg">
+<path d="M480 632 284 828q-11 11-28 11t-28-11q-11-11-11-28t11-28l196-196-196-196q-11-11-11-28t11-28q11-11 28-11t28 11l196 196 196-196q11-11 28-11t28 11q11 11 11 28t-11 28L536 576l196 196q11 11 11 28t-11 28q-11 11-28 11t-28-11L480 632Z"></path>
+</svg>
+</button>
+</aside>
+<main class="relative py-6 lg:gap-10 lg:py-8 xl:grid xl:grid-cols-[1fr_300px]">
+<div class="w-full min-w-0 mx-auto">
+<nav aria-label="breadcrumbs" class="flex items-center mb-4 space-x-1 text-sm text-muted-foreground">
+<a class="overflow-hidden text-ellipsis whitespace-nowrap hover:text-foreground" href="../index.html">
+<span class="hidden md:inline">muvid</span>
+<svg aria-label="Home" class="md:hidden" fill="currentColor" height="18" stroke="none" viewbox="0 96 960 960" width="18" xmlns="http://www.w3.org/2000/svg">
+<path d="M240 856h120V616h240v240h120V496L480 316 240 496v360Zm-80 80V456l320-240 320 240v480H520V696h-80v240H160Zm320-350Z"></path>
+</svg>
+</a>
+<div class="mr-1">/</div><a class="hover:text-foreground overflow-hidden text-ellipsis whitespace-nowrap" href="../api.html">API reference</a>
+<div class="mr-1">/</div><a class="hover:text-foreground overflow-hidden text-ellipsis whitespace-nowrap" href="muvid.html">muvid</a>
+<div class="mr-1">/</div><a class="hover:text-foreground overflow-hidden text-ellipsis whitespace-nowrap" href="muvid.visualize.html">muvid.visualize</a>
+<div class="mr-1">/</div><span aria-current="page" class="font-medium text-foreground overflow-hidden text-ellipsis whitespace-nowrap">muvid.visualize.ffmpeg</span>
+</nav>
+<div id="content" role="main">
+<section id="module-muvid.visualize.ffmpeg">
+<span id="muvid-visualize-ffmpeg"></span><h1>muvid.visualize.ffmpeg<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#module-muvid.visualize.ffmpeg">¶</a></h1>
+<p>Low-level ffmpeg/ffprobe primitives shared across <a class="reference internal" href="muvid.visualize.html#module-muvid.visualize" title="muvid.visualize"><code class="xref py py-mod docutils literal notranslate"><span class="pre">muvid.visualize</span></code></a>.</p>
+<p>Thin, dependency-free wrappers around the <code class="docutils literal notranslate"><span class="pre">ffmpeg</span></code>/<code class="docutils literal notranslate"><span class="pre">ffprobe</span></code> binaries that
+<code class="docutils literal notranslate"><span class="pre">muvid.visualize</span></code> assumes on the PATH: running a command with a readable
+error, probing duration and streams, checking that an optional filter was
+compiled in, decoding raw PCM for an analysis pass, and measuring loudness
+(EBU R128) for two-pass normalization.</p>
+<p>Nothing here knows about music or a destination platform — it is the shared
+substrate under <a class="reference internal" href="muvid.visualize.canvas.html#module-muvid.visualize.canvas" title="muvid.visualize.canvas"><code class="xref py py-mod docutils literal notranslate"><span class="pre">muvid.visualize.canvas</span></code></a>, <a class="reference internal" href="muvid.visualize.visuals.html#module-muvid.visualize.visuals" title="muvid.visualize.visuals"><code class="xref py py-mod docutils literal notranslate"><span class="pre">muvid.visualize.visuals</span></code></a>,
+<a class="reference internal" href="muvid.visualize.reactive.html#module-muvid.visualize.reactive" title="muvid.visualize.reactive"><code class="xref py py-mod docutils literal notranslate"><span class="pre">muvid.visualize.reactive</span></code></a>, and <a class="reference internal" href="muvid.visualize.video.html#module-muvid.visualize.video" title="muvid.visualize.video"><code class="xref py py-mod docutils literal notranslate"><span class="pre">muvid.visualize.video</span></code></a>.</p>
+<p class="rubric">Module Attributes</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.visualize.ffmpeg.FFMPEG_TIMEOUT_ENV_VAR" title="muvid.visualize.ffmpeg.FFMPEG_TIMEOUT_ENV_VAR"><code class="xref py py-obj docutils literal notranslate"><span class="pre">FFMPEG_TIMEOUT_ENV_VAR</span></code></a></p></td>
+<td><p>Env var bounding a single ffmpeg invocation's wall-clock (seconds).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#muvid.visualize.ffmpeg.DEFAULT_LOUDNESS_I" title="muvid.visualize.ffmpeg.DEFAULT_LOUDNESS_I"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DEFAULT_LOUDNESS_I</span></code></a></p></td>
+<td><p>Loudness targets, in the units EBU R128 / ffmpeg <code class="docutils literal notranslate"><span class="pre">loudnorm</span></code> uses.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.visualize.ffmpeg.PCM_SAMPLE_FORMAT" title="muvid.visualize.ffmpeg.PCM_SAMPLE_FORMAT"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PCM_SAMPLE_FORMAT</span></code></a></p></td>
+<td><p>little-endian 32-bit float, which is exactly <code class="docutils literal notranslate"><span class="pre">numpy.float32</span></code>'s memory layout, so an analysis pass can read the bytes straight into an array with no conversion step.</p></td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Functions</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.visualize.ffmpeg.decode_pcm" title="muvid.visualize.ffmpeg.decode_pcm"><code class="xref py py-obj docutils literal notranslate"><span class="pre">decode_pcm</span></code></a>(audio, *, sample_rate[, channels])</p></td>
+<td><p>Decode <code class="docutils literal notranslate"><span class="pre">audio</span></code> to raw <a class="reference internal" href="#muvid.visualize.ffmpeg.PCM_SAMPLE_FORMAT" title="muvid.visualize.ffmpeg.PCM_SAMPLE_FORMAT"><code class="xref py py-data docutils literal notranslate"><span class="pre">PCM_SAMPLE_FORMAT</span></code></a> samples on stdout.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#muvid.visualize.ffmpeg.has_filter" title="muvid.visualize.ffmpeg.has_filter"><code class="xref py py-obj docutils literal notranslate"><span class="pre">has_filter</span></code></a>(name)</p></td>
+<td><p>Whether this ffmpeg build has the <code class="docutils literal notranslate"><span class="pre">name</span></code> filter compiled in.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.visualize.ffmpeg.measure_loudness" title="muvid.visualize.ffmpeg.measure_loudness"><code class="xref py py-obj docutils literal notranslate"><span class="pre">measure_loudness</span></code></a>(audio[, target])</p></td>
+<td><p>Analyse <code class="docutils literal notranslate"><span class="pre">audio</span></code> (loudnorm pass 1) and return <code class="docutils literal notranslate"><span class="pre">target</span></code> with the result.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#muvid.visualize.ffmpeg.media_duration" title="muvid.visualize.ffmpeg.media_duration"><code class="xref py py-obj docutils literal notranslate"><span class="pre">media_duration</span></code></a>(media)</p></td>
+<td><p>Duration of <code class="docutils literal notranslate"><span class="pre">media</span></code> in seconds.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.visualize.ffmpeg.probe" title="muvid.visualize.ffmpeg.probe"><code class="xref py py-obj docutils literal notranslate"><span class="pre">probe</span></code></a>(media)</p></td>
+<td><p>Return <code class="docutils literal notranslate"><span class="pre">ffprobe</span></code>'s <code class="docutils literal notranslate"><span class="pre">format</span></code> + <code class="docutils literal notranslate"><span class="pre">streams</span></code> JSON for <code class="docutils literal notranslate"><span class="pre">media</span></code>.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#muvid.visualize.ffmpeg.require_ffmpeg" title="muvid.visualize.ffmpeg.require_ffmpeg"><code class="xref py py-obj docutils literal notranslate"><span class="pre">require_ffmpeg</span></code></a>(*tools)</p></td>
+<td><p>Raise a helpful <a class="reference internal" href="#muvid.visualize.ffmpeg.FfmpegError" title="muvid.visualize.ffmpeg.FfmpegError"><code class="xref py py-class docutils literal notranslate"><span class="pre">FfmpegError</span></code></a> if any of <code class="docutils literal notranslate"><span class="pre">tools</span></code> is not on PATH.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.visualize.ffmpeg.require_filter" title="muvid.visualize.ffmpeg.require_filter"><code class="xref py py-obj docutils literal notranslate"><span class="pre">require_filter</span></code></a>(name, *, needed_for)</p></td>
+<td><p>Raise unless this ffmpeg build has the <code class="docutils literal notranslate"><span class="pre">name</span></code> filter.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#muvid.visualize.ffmpeg.run_ffmpeg" title="muvid.visualize.ffmpeg.run_ffmpeg"><code class="xref py py-obj docutils literal notranslate"><span class="pre">run_ffmpeg</span></code></a>(args, *[, overwrite])</p></td>
+<td><p>Run <code class="docutils literal notranslate"><span class="pre">ffmpeg</span></code> with <code class="docutils literal notranslate"><span class="pre">args</span></code>, raising a readable error on failure.</p></td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Classes</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.visualize.ffmpeg.Loudness" title="muvid.visualize.ffmpeg.Loudness"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Loudness</span></code></a>([integrated, true_peak, lra, measured])</p></td>
+<td><p>An EBU R128 loudness target, plus the measurement of a specific track.</p></td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Exceptions</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.visualize.ffmpeg.FfmpegError" title="muvid.visualize.ffmpeg.FfmpegError"><code class="xref py py-obj docutils literal notranslate"><span class="pre">FfmpegError</span></code></a></p></td>
+<td><p>An ffmpeg/ffprobe invocation failed, or a needed tool/filter is absent.</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py data">
+<dt class="sig sig-object py" id="muvid.visualize.ffmpeg.DEFAULT_LOUDNESS_I">
+<span class="sig-prename descclassname"><span class="pre">muvid.visualize.ffmpeg.</span></span><span class="sig-name descname"><span class="pre">DEFAULT_LOUDNESS_I</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">-14.0</span></span><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#muvid.visualize.ffmpeg.DEFAULT_LOUDNESS_I" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#muvid.visualize.ffmpeg.DEFAULT_LOUDNESS_I'">¶</a></dt>
+<dd><p>Loudness targets, in the units EBU R128 / ffmpeg <code class="docutils literal notranslate"><span class="pre">loudnorm</span></code> uses.
+The defaults match what YouTube normalizes playback to, so a track mastered
+here is neither turned down nor left quiet relative to the rest of a playlist.</p>
+</dd></dl>
+<dl class="py data">
+<dt class="sig sig-object py" id="muvid.visualize.ffmpeg.FFMPEG_TIMEOUT_ENV_VAR">
+<span class="sig-prename descclassname"><span class="pre">muvid.visualize.ffmpeg.</span></span><span class="sig-name descname"><span class="pre">FFMPEG_TIMEOUT_ENV_VAR</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'MUVID_FFMPEG_TIMEOUT_S'</span></span><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#muvid.visualize.ffmpeg.FFMPEG_TIMEOUT_ENV_VAR" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#muvid.visualize.ffmpeg.FFMPEG_TIMEOUT_ENV_VAR'">¶</a></dt>
+<dd><p>Env var bounding a single ffmpeg invocation’s wall-clock (seconds). Unset =
+no timeout (the historical behaviour). A long-running host (the reelee MCP
+connector renders synchronously over HTTP) sets this so an oversized or
+adversarial input can’t pin a worker indefinitely — a belt-and-braces bound
+on top of the caller’s own input-duration cap.</p>
+</dd></dl>
+<dl class="py exception">
+<dt class="sig sig-object py" id="muvid.visualize.ffmpeg.FfmpegError">
+<span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">muvid.visualize.ffmpeg.</span></span><span class="sig-name descname"><span class="pre">FfmpegError</span></span><a class="reference internal" href="../_modules/muvid/visualize/ffmpeg.html#FfmpegError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#muvid.visualize.ffmpeg.FfmpegError" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#muvid.visualize.ffmpeg.FfmpegError'">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/builtins/exceptions.html#RuntimeError" rel="nofollow noopener" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">RuntimeError</span></code><svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a></p>
+<p>An ffmpeg/ffprobe invocation failed, or a needed tool/filter is absent.</p>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="muvid.visualize.ffmpeg.Loudness">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">muvid.visualize.ffmpeg.</span></span><span class="sig-name descname"><span class="pre">Loudness</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">integrated</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-14.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">true_peak</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lra</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">11.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">measured</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/muvid/visualize/ffmpeg.html#Loudness"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#muvid.visualize.ffmpeg.Loudness" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#muvid.visualize.ffmpeg.Loudness'">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/builtins/functions.html#object" rel="nofollow noopener" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code><svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a></p>
+<p>An EBU R128 loudness target, plus the measurement of a specific track.</p>
+<p><code class="docutils literal notranslate"><span class="pre">measured</span></code> is the <code class="docutils literal notranslate"><span class="pre">loudnorm</span></code> analysis pass output (<code class="docutils literal notranslate"><span class="pre">None</span></code> until
+<a class="reference internal" href="#muvid.visualize.ffmpeg.measure_loudness" title="muvid.visualize.ffmpeg.measure_loudness"><code class="xref py py-func docutils literal notranslate"><span class="pre">measure_loudness()</span></code></a> has run). Carrying both lets <a class="reference internal" href="#muvid.visualize.ffmpeg.Loudness.filter_spec" title="muvid.visualize.ffmpeg.Loudness.filter_spec"><code class="xref py py-meth docutils literal notranslate"><span class="pre">filter_spec()</span></code></a>
+emit the accurate two-pass filter when a measurement exists and fall back
+to the (less accurate) single-pass form when it does not.</p>
+<dl class="field-list simple">
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="muvid.visualize.ffmpeg.Loudness.filter_spec">
+<span class="sig-name descname"><span class="pre">filter_spec</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/muvid/visualize/ffmpeg.html#Loudness.filter_spec"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#muvid.visualize.ffmpeg.Loudness.filter_spec" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#muvid.visualize.ffmpeg.Loudness.filter_spec'">¶</a></dt>
+<dd><p>The <code class="docutils literal notranslate"><span class="pre">loudnorm</span></code> filter string for this target.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" rel="nofollow noopener" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code><svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
+<dl class="py data">
+<dt class="sig sig-object py" id="muvid.visualize.ffmpeg.PCM_SAMPLE_FORMAT">
+<span class="sig-prename descclassname"><span class="pre">muvid.visualize.ffmpeg.</span></span><span class="sig-name descname"><span class="pre">PCM_SAMPLE_FORMAT</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'f32le'</span></span><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#muvid.visualize.ffmpeg.PCM_SAMPLE_FORMAT" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#muvid.visualize.ffmpeg.PCM_SAMPLE_FORMAT'">¶</a></dt>
+<dd><p>little-endian 32-bit float, which is
+exactly <code class="docutils literal notranslate"><span class="pre">numpy.float32</span></code>’s memory layout, so an analysis pass can read the
+bytes straight into an array with no conversion step.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Sample format the raw-PCM decode emits</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.visualize.ffmpeg.decode_pcm">
+<span class="sig-prename descclassname"><span class="pre">muvid.visualize.ffmpeg.</span></span><span class="sig-name descname"><span class="pre">decode_pcm</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">audio</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_rate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/muvid/visualize/ffmpeg.html#decode_pcm"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#muvid.visualize.ffmpeg.decode_pcm" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#muvid.visualize.ffmpeg.decode_pcm'">¶</a></dt>
+<dd><p>Decode <code class="docutils literal notranslate"><span class="pre">audio</span></code> to raw <a class="reference internal" href="#muvid.visualize.ffmpeg.PCM_SAMPLE_FORMAT" title="muvid.visualize.ffmpeg.PCM_SAMPLE_FORMAT"><code class="xref py py-data docutils literal notranslate"><span class="pre">PCM_SAMPLE_FORMAT</span></code></a> samples on stdout.</p>
+<p>Analysis passes (loudness envelopes, onset detection) want <em>samples</em>, not a
+container. This is the single place muvid turns a media file into raw PCM,
+so <code class="docutils literal notranslate"><span class="pre">$MUVID_FFMPEG_TIMEOUT_S</span></code> bounds that decode like every other one.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>audio</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" rel="nofollow noopener" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code><svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a> | <a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" rel="nofollow noopener" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code><svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a></span>) – The media file to decode.</p></li>
+<li><p><strong>sample_rate</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" rel="nofollow noopener" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code><svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a></span>) – Resample to this rate. Analysis rarely needs full quality,
+and a low rate keeps a long track’s decode cheap.</p></li>
+<li><p><strong>channels</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" rel="nofollow noopener" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code><svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a></span>) – Downmix to this many channels (1 = mono).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#bytes" rel="nofollow noopener" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bytes</span></code><svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a></span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The raw PCM bytes — empty when ffmpeg could not decode <code class="docutils literal notranslate"><span class="pre">audio</span></code>.
+Returning empty rather than raising lets a caller treat “no usable
+audio” as “no effect” (see <a class="reference internal" href="muvid.visualize.reactive.html#muvid.visualize.reactive.flash_filter" title="muvid.visualize.reactive.flash_filter"><code class="xref py py-func docutils literal notranslate"><span class="pre">muvid.visualize.reactive.flash_filter()</span></code></a>).</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.visualize.ffmpeg.has_filter">
+<span class="sig-prename descclassname"><span class="pre">muvid.visualize.ffmpeg.</span></span><span class="sig-name descname"><span class="pre">has_filter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/muvid/visualize/ffmpeg.html#has_filter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#muvid.visualize.ffmpeg.has_filter" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#muvid.visualize.ffmpeg.has_filter'">¶</a></dt>
+<dd><p>Whether this ffmpeg build has the <code class="docutils literal notranslate"><span class="pre">name</span></code> filter compiled in.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#bool" rel="nofollow noopener" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code><svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.visualize.ffmpeg.measure_loudness">
+<span class="sig-prename descclassname"><span class="pre">muvid.visualize.ffmpeg.</span></span><span class="sig-name descname"><span class="pre">measure_loudness</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">audio</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/muvid/visualize/ffmpeg.html#measure_loudness"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#muvid.visualize.ffmpeg.measure_loudness" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#muvid.visualize.ffmpeg.measure_loudness'">¶</a></dt>
+<dd><p>Analyse <code class="docutils literal notranslate"><span class="pre">audio</span></code> (loudnorm pass 1) and return <code class="docutils literal notranslate"><span class="pre">target</span></code> with the result.</p>
+<p>Two-pass <code class="docutils literal notranslate"><span class="pre">loudnorm</span></code> is the only accurate way to hit a loudness target:
+pass 1 measures the program loudness, pass 2 applies a <em>linear</em> gain from
+that measurement. Single-pass loudnorm is a dynamic normalizer and will
+both miss the target and squash the dynamics of music.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>audio</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" rel="nofollow noopener" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code><svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a> | <a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" rel="nofollow noopener" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code><svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a></span>) – The audio (or video) file to measure.</p></li>
+<li><p><strong>target</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="#muvid.visualize.ffmpeg.Loudness" title="muvid.visualize.ffmpeg.Loudness"><code class="xref py py-class docutils literal notranslate"><span class="pre">Loudness</span></code></a> | <a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" rel="nofollow noopener" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code><svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a></span>) – The loudness target; a default one is used when omitted.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="#muvid.visualize.ffmpeg.Loudness" title="muvid.visualize.ffmpeg.Loudness"><code class="xref py py-class docutils literal notranslate"><span class="pre">Loudness</span></code></a></span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A new <a class="reference internal" href="#muvid.visualize.ffmpeg.Loudness" title="muvid.visualize.ffmpeg.Loudness"><code class="xref py py-class docutils literal notranslate"><span class="pre">Loudness</span></code></a> with <code class="docutils literal notranslate"><span class="pre">measured</span></code> populated.</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.visualize.ffmpeg.media_duration">
+<span class="sig-prename descclassname"><span class="pre">muvid.visualize.ffmpeg.</span></span><span class="sig-name descname"><span class="pre">media_duration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">media</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/muvid/visualize/ffmpeg.html#media_duration"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#muvid.visualize.ffmpeg.media_duration" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#muvid.visualize.ffmpeg.media_duration'">¶</a></dt>
+<dd><p>Duration of <code class="docutils literal notranslate"><span class="pre">media</span></code> in seconds.</p>
+<p>Falls back to the longest stream duration when the container has none.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#muvid.visualize.ffmpeg.FfmpegError" title="muvid.visualize.ffmpeg.FfmpegError"><strong>FfmpegError</strong></a> – The duration could not be determined.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" rel="nofollow noopener" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code><svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.visualize.ffmpeg.probe">
+<span class="sig-prename descclassname"><span class="pre">muvid.visualize.ffmpeg.</span></span><span class="sig-name descname"><span class="pre">probe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">media</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/muvid/visualize/ffmpeg.html#probe"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#muvid.visualize.ffmpeg.probe" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#muvid.visualize.ffmpeg.probe'">¶</a></dt>
+<dd><p>Return <code class="docutils literal notranslate"><span class="pre">ffprobe</span></code>’s <code class="docutils literal notranslate"><span class="pre">format</span></code> + <code class="docutils literal notranslate"><span class="pre">streams</span></code> JSON for <code class="docutils literal notranslate"><span class="pre">media</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#dict" rel="nofollow noopener" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code><svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.visualize.ffmpeg.require_ffmpeg">
+<span class="sig-prename descclassname"><span class="pre">muvid.visualize.ffmpeg.</span></span><span class="sig-name descname"><span class="pre">require_ffmpeg</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">tools</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/muvid/visualize/ffmpeg.html#require_ffmpeg"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#muvid.visualize.ffmpeg.require_ffmpeg" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#muvid.visualize.ffmpeg.require_ffmpeg'">¶</a></dt>
+<dd><p>Raise a helpful <a class="reference internal" href="#muvid.visualize.ffmpeg.FfmpegError" title="muvid.visualize.ffmpeg.FfmpegError"><code class="xref py py-class docutils literal notranslate"><span class="pre">FfmpegError</span></code></a> if any of <code class="docutils literal notranslate"><span class="pre">tools</span></code> is not on PATH.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>*tools</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" rel="nofollow noopener" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code><svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a></span>) – Binaries to require (defaults to <code class="docutils literal notranslate"><span class="pre">ffmpeg</span></code> and <code class="docutils literal notranslate"><span class="pre">ffprobe</span></code>).</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#muvid.visualize.ffmpeg.FfmpegError" title="muvid.visualize.ffmpeg.FfmpegError"><strong>FfmpegError</strong></a> – With per-platform install instructions.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" rel="nofollow noopener" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code><svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.visualize.ffmpeg.require_filter">
+<span class="sig-prename descclassname"><span class="pre">muvid.visualize.ffmpeg.</span></span><span class="sig-name descname"><span class="pre">require_filter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">needed_for</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/muvid/visualize/ffmpeg.html#require_filter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#muvid.visualize.ffmpeg.require_filter" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#muvid.visualize.ffmpeg.require_filter'">¶</a></dt>
+<dd><p>Raise unless this ffmpeg build has the <code class="docutils literal notranslate"><span class="pre">name</span></code> filter.</p>
+<p>Filters like <code class="docutils literal notranslate"><span class="pre">drawtext</span></code> (libfreetype) and <code class="docutils literal notranslate"><span class="pre">showcqt</span></code> (libfftw/avfilter
+extras) are build-time options, so a working ffmpeg is not enough — the
+specific filter has to be there.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#muvid.visualize.ffmpeg.FfmpegError" title="muvid.visualize.ffmpeg.FfmpegError"><strong>FfmpegError</strong></a> – Naming the filter, the feature that needs it, and the fix.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" rel="nofollow noopener" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code><svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.visualize.ffmpeg.run_ffmpeg">
+<span class="sig-prename descclassname"><span class="pre">muvid.visualize.ffmpeg.</span></span><span class="sig-name descname"><span class="pre">run_ffmpeg</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/muvid/visualize/ffmpeg.html#run_ffmpeg"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#muvid.visualize.ffmpeg.run_ffmpeg" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#muvid.visualize.ffmpeg.run_ffmpeg'">¶</a></dt>
+<dd><p>Run <code class="docutils literal notranslate"><span class="pre">ffmpeg</span></code> with <code class="docutils literal notranslate"><span class="pre">args</span></code>, raising a readable error on failure.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>args</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" rel="nofollow noopener" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code><svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a>[<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" rel="nofollow noopener" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code><svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a>]</span>) – Arguments after the global flags (inputs, filters, output).</p></li>
+<li><p><strong>overwrite</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#bool" rel="nofollow noopener" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code><svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a></span>) – Pass <code class="docutils literal notranslate"><span class="pre">-y</span></code> (overwrite the output without prompting).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/subprocess.html#subprocess.CompletedProcess" rel="nofollow noopener" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">CompletedProcess</span></code><svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a></span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The completed process.</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#muvid.visualize.ffmpeg.FfmpegError" title="muvid.visualize.ffmpeg.FfmpegError"><strong>FfmpegError</strong></a> – ffmpeg exited non-zero; the message carries the tail of
+    stderr and the full command, which is what you actually need to
+    debug a filtergraph.</p>
+</dd>
+</dl>
+</dd></dl>
+</section>
+</div></div><aside class="hidden text-sm xl:block" id="right-sidebar">
+<div class="sticky top-16 -mt-10 max-h-[calc(100vh-5rem)] h-full overflow-y-auto pt-6 space-y-2"><p class="font-medium">On this page</p>
+<ul>
+<li><a :data-current="activeSection === '#muvid.visualize.ffmpeg.DEFAULT_LOUDNESS_I'" class="reference internal" href="#muvid.visualize.ffmpeg.DEFAULT_LOUDNESS_I"><code class="docutils literal notranslate"><span class="pre">DEFAULT_LOUDNESS_I</span></code></a></li>
+<li><a :data-current="activeSection === '#muvid.visualize.ffmpeg.FFMPEG_TIMEOUT_ENV_VAR'" class="reference internal" href="#muvid.visualize.ffmpeg.FFMPEG_TIMEOUT_ENV_VAR"><code class="docutils literal notranslate"><span class="pre">FFMPEG_TIMEOUT_ENV_VAR</span></code></a></li>
+<li><a :data-current="activeSection === '#muvid.visualize.ffmpeg.FfmpegError'" class="reference internal" href="#muvid.visualize.ffmpeg.FfmpegError"><code class="docutils literal notranslate"><span class="pre">FfmpegError</span></code></a></li>
+<li><a :data-current="activeSection === '#muvid.visualize.ffmpeg.Loudness'" class="reference internal" href="#muvid.visualize.ffmpeg.Loudness"><code class="docutils literal notranslate"><span class="pre">Loudness</span></code></a><ul>
+<li><a :data-current="activeSection === '#muvid.visualize.ffmpeg.Loudness.filter_spec'" class="reference internal" href="#muvid.visualize.ffmpeg.Loudness.filter_spec"><code class="docutils literal notranslate"><span class="pre">Loudness.filter_spec()</span></code></a></li>
+</ul>
+</li>
+<li><a :data-current="activeSection === '#muvid.visualize.ffmpeg.PCM_SAMPLE_FORMAT'" class="reference internal" href="#muvid.visualize.ffmpeg.PCM_SAMPLE_FORMAT"><code class="docutils literal notranslate"><span class="pre">PCM_SAMPLE_FORMAT</span></code></a></li>
+<li><a :data-current="activeSection === '#muvid.visualize.ffmpeg.decode_pcm'" class="reference internal" href="#muvid.visualize.ffmpeg.decode_pcm"><code class="docutils literal notranslate"><span class="pre">decode_pcm()</span></code></a></li>
+<li><a :data-current="activeSection === '#muvid.visualize.ffmpeg.has_filter'" class="reference internal" href="#muvid.visualize.ffmpeg.has_filter"><code class="docutils literal notranslate"><span class="pre">has_filter()</span></code></a></li>
+<li><a :data-current="activeSection === '#muvid.visualize.ffmpeg.measure_loudness'" class="reference internal" href="#muvid.visualize.ffmpeg.measure_loudness"><code class="docutils literal notranslate"><span class="pre">measure_loudness()</span></code></a></li>
+<li><a :data-current="activeSection === '#muvid.visualize.ffmpeg.media_duration'" class="reference internal" href="#muvid.visualize.ffmpeg.media_duration"><code class="docutils literal notranslate"><span class="pre">media_duration()</span></code></a></li>
+<li><a :data-current="activeSection === '#muvid.visualize.ffmpeg.probe'" class="reference internal" href="#muvid.visualize.ffmpeg.probe"><code class="docutils literal notranslate"><span class="pre">probe()</span></code></a></li>
+<li><a :data-current="activeSection === '#muvid.visualize.ffmpeg.require_ffmpeg'" class="reference internal" href="#muvid.visualize.ffmpeg.require_ffmpeg"><code class="docutils literal notranslate"><span class="pre">require_ffmpeg()</span></code></a></li>
+<li><a :data-current="activeSection === '#muvid.visualize.ffmpeg.require_filter'" class="reference internal" href="#muvid.visualize.ffmpeg.require_filter"><code class="docutils literal notranslate"><span class="pre">require_filter()</span></code></a></li>
+<li><a :data-current="activeSection === '#muvid.visualize.ffmpeg.run_ffmpeg'" class="reference internal" href="#muvid.visualize.ffmpeg.run_ffmpeg"><code class="docutils literal notranslate"><span class="pre">run_ffmpeg()</span></code></a></li>
+</ul>
+</div>
+</aside>
+</main>
+</div>
+</div><footer class="py-6 border-t border-border md:py-0">
+<div class="container flex flex-col items-center justify-between gap-4 md:h-24 md:flex-row">
+<div class="flex flex-col items-center gap-4 px-8 md:flex-row md:gap-2 md:px-0">
+<p class="text-sm leading-loose text-center text-muted-foreground md:text-left"></p>
+</div>
+</div>
+</footer>
+</div>
+<script src="../_static/documentation_options.js?v=152b4b09"></script>
+<script src="../_static/doctools.js?v=fd6eb6e6"></script>
+<script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+<script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+<script src="../_static/copybutton.js?v=fd10adb8"></script>
+<script defer="defer" src="../_static/theme.js?v=5db23cf8"></script>
+</body>
+</html>

@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+
+<html :class="{ 'dark' : darkMode === true }" data-content_root="../" lang="en" x-data="{ darkMode: $persist(window.matchMedia('(prefers-color-scheme: dark)').matches), activeSection: ''}">
+<head>
+<script>
+    (function () {
+      // Set initial color scheme
+      if ((localStorage.getItem("_x_darkMode") === "true") || (window.matchMedia("(prefers-color-scheme: dark)").matches)) {
+        document.documentElement.classList.add("dark");
+      }
+
+      // Watch for media preference changes
+      window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (event) => {
+        localStorage.setItem("_x_darkMode", event.matches);
+        document.documentElement.classList.toggle("dark", event.matches);
+      });
+    })();
+  </script>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<meta charset="utf-8"/>
+<meta content="#ffffff" media="(prefers-color-scheme: light)" name="theme-color"/>
+<meta content="#030711" media="(prefers-color-scheme: dark)" name="theme-color"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<link href="muvid.footage.strategy.html.md" rel="alternate" type="text/markdown"/>
+<link href="../llms.txt" rel="describedby" type="text/markdown"/>
+<link href="muvid.footage.strategy.html.md" rel="alternate" type="text/markdown"/>
+<link href="llms.txt" rel="describedby"/>
+<title>muvid.footage.strategy | muvid</title>
+<meta content="muvid.footage.strategy | muvid" property="og:title"/>
+<meta content="muvid.footage.strategy | muvid" name="twitter:title"/>
+<link href="../_static/pygments.css?v=d75fae25" rel="stylesheet" type="text/css"/>
+<link href="../_static/theme.css?v=d6d7c91b" rel="stylesheet" type="text/css"/>
+<link href="../_static/copybutton.css?v=76b2166b" rel="stylesheet" type="text/css"/>
+<link href="../_static/epythet.css?v=f9f95642" rel="stylesheet" type="text/css"/>
+<link href="../search.html" rel="search" title="Search"/>
+<link href="../genindex.html" rel="index" title="Index"/>
+<link href="muvid.footage.workspace.html" rel="next" title="muvid.footage.workspace"/>
+<link href="muvid.footage.select_score.html" rel="prev" title="muvid.footage.select_score"/>
+</head>
+<body :class="{ 'overflow-hidden': showSidebar }" class="min-h-screen font-sans antialiased bg-background text-foreground" x-data="{ showSidebar: false, showScrollTop: false }">
+<div @click.self="showSidebar = false" class="fixed inset-0 z-50 overflow-hidden bg-background/80 backdrop-blur-sm md:hidden" x-cloak="" x-show="showSidebar"></div><div class="relative flex flex-col min-h-screen" id="page"><a class="absolute top-0 left-0 z-[100] block bg-background p-4 text-xl transition -translate-x-full opacity-0 focus:translate-x-0 focus:opacity-100" href="#content">
+      Skip to content
+    </a><header class="sticky top-0 z-40 w-full border-b shadow-xs border-border bg-background/90 backdrop-blur"><div class="container flex items-center h-14">
+<div class="hidden mr-4 md:flex">
+<a class="flex items-center mr-6" href="../index.html"><span class="hidden font-bold sm:inline-block text-clip whitespace-nowrap">muvid</span>
+</a><nav class="flex items-center gap-6 text-sm font-medium">
+<a class="transition-colors hover:text-foreground/80 text-foreground/60" href="https://github.com/thorwhalen/muvid" rel="noopener nofollow">GitHub</a>
+</nav></div><button @click="showSidebar = true" class="inline-flex items-center justify-center h-10 px-0 py-2 mr-2 text-base font-medium transition-colors rounded-md hover:text-accent-foreground hover:bg-transparent md:hidden" type="button">
+<svg aria-hidden="true" fill="currentColor" height="24" viewbox="0 96 960 960" width="24" xmlns="http://www.w3.org/2000/svg">
+<path d="M152.587 825.087q-19.152 0-32.326-13.174t-13.174-32.326q0-19.152 13.174-32.326t32.326-13.174h440q19.152 0 32.326 13.174t13.174 32.326q0 19.152-13.174 32.326t-32.326 13.174h-440Zm0-203.587q-19.152 0-32.326-13.174T107.087 576q0-19.152 13.174-32.326t32.326-13.174h320q19.152 0 32.326 13.174T518.087 576q0 19.152-13.174 32.326T472.587 621.5h-320Zm0-203.587q-19.152 0-32.326-13.174t-13.174-32.326q0-19.152 13.174-32.326t32.326-13.174h440q19.152 0 32.326 13.174t13.174 32.326q0 19.152-13.174 32.326t-32.326 13.174h-440ZM708.913 576l112.174 112.174q12.674 12.674 12.674 31.826t-12.674 31.826Q808.413 764.5 789.261 764.5t-31.826-12.674l-144-144Q600 594.391 600 576t13.435-31.826l144-144q12.674-12.674 31.826-12.674t31.826 12.674q12.674 12.674 12.674 31.826t-12.674 31.826L708.913 576Z"></path>
+</svg>
+<span class="sr-only">Toggle navigation menu</span>
+</button>
+<div class="flex items-center justify-between flex-1 gap-2 sm:gap-4 md:justify-end">
+<div class="flex-1 w-full md:w-auto md:flex-none"><form @keydown.k.window.meta="$refs.search.focus()" action="../search.html" class="relative flex items-center group" id="searchbox" method="get">
+<input aria-label="Search the docs" class="inline-flex items-center font-medium transition-colors bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background border border-input hover:bg-accent focus:bg-accent hover:text-accent-foreground focus:text-accent-foreground hover:placeholder-accent-foreground py-2 px-4 relative h-9 w-full justify-start rounded-[0.5rem] text-sm text-muted-foreground sm:pr-12 md:w-40 lg:w-64" id="search-input" name="q" placeholder="Search ..." type="search" x-ref="search"/>
+<kbd class="pointer-events-none absolute right-1.5 top-2 hidden h-5 select-none text-muted-foreground items-center gap-1 rounded border border-border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex group-hover:bg-accent group-hover:text-accent-foreground">
+<span class="text-xs">⌘</span>
+    K
+  </kbd>
+</form>
+</div>
+<nav class="flex items-center gap-1">
+<button @click="darkMode = !darkMode" class="relative inline-flex items-center justify-center px-0 text-sm font-medium transition-colors rounded-md hover:bg-accent hover:text-accent-foreground h-9 w-9" title="Toggle color scheme" type="button">
+<svg class="absolute transition-all scale-100 rotate-0 dark:-rotate-90 dark:scale-0" fill="currentColor" height="16" viewbox="0 96 960 960" width="16" xmlns="http://www.w3.org/2000/svg">
+<path d="M480 685q45.456 0 77.228-31.772Q589 621.456 589 576q0-45.456-31.772-77.228Q525.456 467 480 467q-45.456 0-77.228 31.772Q371 530.544 371 576q0 45.456 31.772 77.228Q434.544 685 480 685Zm0 91q-83 0-141.5-58.5T280 576q0-83 58.5-141.5T480 376q83 0 141.5 58.5T680 576q0 83-58.5 141.5T480 776ZM80 621.5q-19.152 0-32.326-13.174T34.5 576q0-19.152 13.174-32.326T80 530.5h80q19.152 0 32.326 13.174T205.5 576q0 19.152-13.174 32.326T160 621.5H80Zm720 0q-19.152 0-32.326-13.174T754.5 576q0-19.152 13.174-32.326T800 530.5h80q19.152 0 32.326 13.174T925.5 576q0 19.152-13.174 32.326T880 621.5h-80Zm-320-320q-19.152 0-32.326-13.174T434.5 256v-80q0-19.152 13.174-32.326T480 130.5q19.152 0 32.326 13.174T525.5 176v80q0 19.152-13.174 32.326T480 301.5Zm0 720q-19.152 0-32.326-13.17Q434.5 995.152 434.5 976v-80q0-19.152 13.174-32.326T480 850.5q19.152 0 32.326 13.174T525.5 896v80q0 19.152-13.174 32.33-13.174 13.17-32.326 13.17ZM222.174 382.065l-43-42Q165.5 327.391 166 308.239t13.174-33.065q13.435-13.674 32.587-13.674t32.065 13.674l42.239 43q12.674 13.435 12.555 31.706-.12 18.272-12.555 31.946-12.674 13.674-31.445 13.413-18.772-.261-32.446-13.174Zm494 494.761-42.239-43q-12.674-13.435-12.674-32.087t12.674-31.565Q686.609 756.5 705.38 757q18.772.5 32.446 13.174l43 41.761Q794.5 824.609 794 843.761t-13.174 33.065Q767.391 890.5 748.239 890.5t-32.065-13.674Zm-42-494.761Q660.5 369.391 661 350.62q.5-18.772 13.174-32.446l41.761-43Q728.609 261.5 747.761 262t33.065 13.174q13.674 13.435 13.674 32.587t-13.674 32.065l-43 42.239q-13.435 12.674-31.706 12.555-18.272-.12-31.946-12.555Zm-495 494.761Q165.5 863.391 165.5 844.239t13.674-32.065l43-42.239q13.435-12.674 32.087-12.674t31.565 12.674Q299.5 782.609 299 801.38q-.5 18.772-13.174 32.446l-41.761 43Q231.391 890.5 212.239 890t-33.065-13.174ZM480 576Z"></path>
+</svg>
+<svg class="absolute transition-all scale-0 rotate-90 dark:rotate-0 dark:scale-100" fill="currentColor" height="16" viewbox="0 96 960 960" width="16" xmlns="http://www.w3.org/2000/svg">
+<path d="M480 936q-151 0-255.5-104.5T120 576q0-138 90-239.5T440 218q25-3 39 18t-1 44q-17 26-25.5 55t-8.5 61q0 90 63 153t153 63q31 0 61.5-9t54.5-25q21-14 43-1.5t19 39.5q-14 138-117.5 229T480 936Zm0-80q88 0 158-48.5T740 681q-20 5-40 8t-40 3q-123 0-209.5-86.5T364 396q0-20 3-40t8-40q-78 32-126.5 102T200 576q0 116 82 198t198 82Zm-10-270Z"></path>
+</svg>
+</button>
+</nav>
+</div>
+</div>
+</header>
+<div class="flex-1"><div class="container md:grid md:grid-cols-[220px_minmax(0,1fr)] md:gap-6 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-10"><aside :aria-hidden="!showSidebar" :class="{ 'translate-x-0': showSidebar }" class="fixed inset-y-0 left-0 md:top-14 z-50 md:z-30 bg-background md:bg-transparent transition-all duration-100 -translate-x-full md:translate-x-0 ml-0 p-6 md:p-0 md:-ml-2 md:h-[calc(100vh-3.5rem)] w-5/6 md:w-full overflow-y-auto border-r border-border md:sticky" id="left-sidebar">
+<a class="justify-start text-sm md:!hidden bg-background" href="../index.html"><span class="font-bold text-clip whitespace-nowrap">muvid</span>
+</a>
+<div class="relative overflow-hidden md:overflow-auto my-4 md:my-0">
+<div class="overflow-y-auto h-full w-full relative pr-6"><nav class="flex md:hidden flex-col font-medium mt-4">
+<a href="https://github.com/thorwhalen/muvid" rel="nofollow noopener">GitHub</a>
+</nav><nav class="table w-full min-w-full my-6 lg:my-8">
+<ul class="current">
+<li class="toctree-l1 current" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../api.html">API reference<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul class="current" x-show="expanded">
+<li class="toctree-l2 current" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="muvid.html">muvid<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul class="current" x-show="expanded">
+<li class="toctree-l3"><a class="reference internal" href="muvid.align.html">muvid.align</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.characters.html">muvid.characters</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.choreo.html">muvid.choreo</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.compose.html">muvid.compose</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.contracts.html">muvid.contracts</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.cost.html">muvid.cost</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.data.html">muvid.data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.environments.html">muvid.environments</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.events.html">muvid.events</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.facade.html">muvid.facade</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="muvid.footage.html">muvid.footage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.lyrics.html">muvid.lyrics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.lyricvid.html">muvid.lyricvid</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.mcp.html">muvid.mcp</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.montage.html">muvid.montage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.paths.html">muvid.paths</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.project.html">muvid.project</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.renderers.html">muvid.renderers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.schema.html">muvid.schema</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.script.html">muvid.script</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.subgenres.html">muvid.subgenres</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.ui.html">muvid.ui</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.visualize.html">muvid.visualize</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../ai-agents.html">For AI agents</a></li>
+</ul>
+</nav>
+</div>
+</div>
+<button @click="showSidebar = false" class="absolute md:hidden right-4 top-4 rounded-sm opacity-70 transition-opacity hover:opacity-100" type="button">
+<svg class="h-4 w-4" fill="currentColor" height="24" stroke="none" viewbox="0 96 960 960" width="24" xmlns="http://www.w3.org/2000/svg">
+<path d="M480 632 284 828q-11 11-28 11t-28-11q-11-11-11-28t11-28l196-196-196-196q-11-11-11-28t11-28q11-11 28-11t28 11l196 196 196-196q11-11 28-11t28 11q11 11 11 28t-11 28L536 576l196 196q11 11 11 28t-11 28q-11 11-28 11t-28-11L480 632Z"></path>
+</svg>
+</button>
+</aside>
+<main class="relative py-6 lg:gap-10 lg:py-8 xl:grid xl:grid-cols-[1fr_300px]">
+<div class="w-full min-w-0 mx-auto">
+<nav aria-label="breadcrumbs" class="flex items-center mb-4 space-x-1 text-sm text-muted-foreground">
+<a class="overflow-hidden text-ellipsis whitespace-nowrap hover:text-foreground" href="../index.html">
+<span class="hidden md:inline">muvid</span>
+<svg aria-label="Home" class="md:hidden" fill="currentColor" height="18" stroke="none" viewbox="0 96 960 960" width="18" xmlns="http://www.w3.org/2000/svg">
+<path d="M240 856h120V616h240v240h120V496L480 316 240 496v360Zm-80 80V456l320-240 320 240v480H520V696h-80v240H160Zm320-350Z"></path>
+</svg>
+</a>
+<div class="mr-1">/</div><a class="hover:text-foreground overflow-hidden text-ellipsis whitespace-nowrap" href="../api.html">API reference</a>
+<div class="mr-1">/</div><a class="hover:text-foreground overflow-hidden text-ellipsis whitespace-nowrap" href="muvid.html">muvid</a>
+<div class="mr-1">/</div><a class="hover:text-foreground overflow-hidden text-ellipsis whitespace-nowrap" href="muvid.footage.html">muvid.footage</a>
+<div class="mr-1">/</div><span aria-current="page" class="font-medium text-foreground overflow-hidden text-ellipsis whitespace-nowrap">muvid.footage.strategy</span>
+</nav>
+<div id="content" role="main">
+<section id="module-muvid.footage.strategy">
+<span id="muvid-footage-strategy"></span><h1>muvid.footage.strategy<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#module-muvid.footage.strategy">¶</a></h1>
+<p>The pluggable <code class="docutils literal notranslate"><span class="pre">SelectionStrategy</span></code> registry — alignments → an EDL.</p>
+<p>The user-extensible strategy pattern behind full-auto assembly: a strategy turns a set of
+<a class="reference internal" href="muvid.footage.edl.html#muvid.footage.edl.FootageAlignment" title="muvid.footage.edl.FootageAlignment"><code class="xref py py-class docutils literal notranslate"><span class="pre">FootageAlignment</span></code></a>s (which clip covers which span of the
+song, with a confidence) into an EDL (which clip to SHOW for each span). Strategies emit
+only <code class="docutils literal notranslate"><span class="pre">{song_start,</span> <span class="pre">song_end,</span> <span class="pre">clip_id}</span></code> — the <code class="docutils literal notranslate"><span class="pre">clip_in</span></code> sign convention lives in
+<a class="reference internal" href="muvid.footage.edl.html#muvid.footage.edl.derive_cuts" title="muvid.footage.edl.derive_cuts"><code class="xref py py-func docutils literal notranslate"><span class="pre">muvid.footage.edl.derive_cuts()</span></code></a> (SSOT), so a third-party strategy can’t desync the
+cut. Every strategy’s output still passes <a class="reference internal" href="muvid.footage.edl.html#muvid.footage.edl.validate_edl" title="muvid.footage.edl.validate_edl"><code class="xref py py-func docutils literal notranslate"><span class="pre">validate_edl()</span></code></a> before
+any cutting, so a strategy that leaves a gap fails loudly with the exact uncovered span.</p>
+<p>**A strategy sees <code class="docutils literal notranslate"><span class="pre">reliable</span></code> the way it already sees <code class="docutils literal notranslate"><span class="pre">overlaps</span></code>: as a preference**
+(muvid#88). Every built-in ranks a vouched clip above an unvouched one for the same span
+via <code class="xref py py-func docutils literal notranslate"><span class="pre">_prefer_vouched()</span></code>, and falls back to an unvouched clip only where nothing else
+covers the span — so one badly-aligned clip in a shoot costs the spans only it covered,
+not the whole edit. The strategies still decide nothing about trust: they never drop a
+source, and the verdict they read (<code class="docutils literal notranslate"><span class="pre">FootageAlignment.reliable</span></code>) is
+<a class="reference internal" href="muvid.footage.edl.html#muvid.footage.edl.vouches_for" title="muvid.footage.edl.vouches_for"><code class="xref py py-func docutils literal notranslate"><span class="pre">vouches_for()</span></code></a>’s. A third-party strategy that ranks clips itself
+should carry the same preference; <code class="docutils literal notranslate"><span class="pre">weighted</span></code> does it as a reward penalty rather than a
+special case (see <a class="reference internal" href="muvid.footage.select_score.html#module-muvid.footage.select_score" title="muvid.footage.select_score"><code class="xref py py-mod docutils literal notranslate"><span class="pre">muvid.footage.select_score</span></code></a>).</p>
+<p>Registry idiom mirrors <code class="docutils literal notranslate"><span class="pre">mixing.audio.segmentation</span></code> (a <code class="docutils literal notranslate"><span class="pre">strategy:</span> <span class="pre">str</span> <span class="pre">|</span> <span class="pre">callable</span></code> param</p>
+<ul class="simple">
+<li><p>a <code class="docutils literal notranslate"><span class="pre">_STRATEGIES</span></code> dict + <a class="reference internal" href="#muvid.footage.strategy.resolve_strategy" title="muvid.footage.strategy.resolve_strategy"><code class="xref py py-func docutils literal notranslate"><span class="pre">resolve_strategy()</span></code></a>) — the federation’s established shape.</p></li>
+</ul>
+<p>Register your own with <a class="reference internal" href="#muvid.footage.strategy.register_selection_strategy" title="muvid.footage.strategy.register_selection_strategy"><code class="xref py py-func docutils literal notranslate"><span class="pre">register_selection_strategy()</span></code></a>.</p>
+<p class="rubric">Module Attributes</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.footage.strategy.SelectionStrategy" title="muvid.footage.strategy.SelectionStrategy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SelectionStrategy</span></code></a></p></td>
+<td><p>alignments + song duration → an EDL (built-ins ignore song_duration but it is passed so a strategy MAY reason about the full timeline).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#muvid.footage.strategy.DEFAULT_STRATEGY" title="muvid.footage.strategy.DEFAULT_STRATEGY"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DEFAULT_STRATEGY</span></code></a></p></td>
+<td><p>The default auto-strategy when none is chosen.</p></td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Functions</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.footage.strategy.best_confidence" title="muvid.footage.strategy.best_confidence"><code class="xref py py-obj docutils literal notranslate"><span class="pre">best_confidence</span></code></a>(alignments, song_duration)</p></td>
+<td><p>For each covered span, show the highest-confidence clip (ties: longest coverage).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#muvid.footage.strategy.fewest_cuts" title="muvid.footage.strategy.fewest_cuts"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fewest_cuts</span></code></a>(alignments, song_duration)</p></td>
+<td><p>Stay on the current clip as long as it covers; only switch when it runs out (then to the clip extending furthest).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.footage.strategy.list_strategies" title="muvid.footage.strategy.list_strategies"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list_strategies</span></code></a>()</p></td>
+<td><p>All strategy slugs (eager + lazy), sorted.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#muvid.footage.strategy.longest_take" title="muvid.footage.strategy.longest_take"><code class="xref py py-obj docutils literal notranslate"><span class="pre">longest_take</span></code></a>(alignments, song_duration)</p></td>
+<td><p>Prefer the clip that keeps rolling longest — pick the one whose coverage extends furthest forward (ties: higher confidence).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.footage.strategy.register_lazy_strategy" title="muvid.footage.strategy.register_lazy_strategy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">register_lazy_strategy</span></code></a>(slug, target_ref)</p></td>
+<td><p>Register a strategy by a <code class="docutils literal notranslate"><span class="pre">"module:func"</span></code> reference, imported only on first use.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#muvid.footage.strategy.register_selection_strategy" title="muvid.footage.strategy.register_selection_strategy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">register_selection_strategy</span></code></a>(slug, fn)</p></td>
+<td><p>Register a selection strategy under <code class="docutils literal notranslate"><span class="pre">slug</span></code> (returns it, for inline use).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.footage.strategy.resolve_strategy" title="muvid.footage.strategy.resolve_strategy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">resolve_strategy</span></code></a>(strategy)</p></td>
+<td><p>Resolve a strategy name OR a bare callable to a <a class="reference internal" href="#muvid.footage.strategy.SelectionStrategy" title="muvid.footage.strategy.SelectionStrategy"><code class="xref py py-data docutils literal notranslate"><span class="pre">SelectionStrategy</span></code></a>.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#muvid.footage.strategy.select_edl" title="muvid.footage.strategy.select_edl"><code class="xref py py-obj docutils literal notranslate"><span class="pre">select_edl</span></code></a>(strategy, alignments, ...[, context])</p></td>
+<td><p>Run <code class="docutils literal notranslate"><span class="pre">strategy</span></code> (name or callable) to produce an EDL from <code class="docutils literal notranslate"><span class="pre">alignments</span></code>.</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py data">
+<dt class="sig sig-object py" id="muvid.footage.strategy.DEFAULT_STRATEGY">
+<span class="sig-prename descclassname"><span class="pre">muvid.footage.strategy.</span></span><span class="sig-name descname"><span class="pre">DEFAULT_STRATEGY</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'best_confidence'</span></span><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#muvid.footage.strategy.DEFAULT_STRATEGY" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#muvid.footage.strategy.DEFAULT_STRATEGY'">¶</a></dt>
+<dd><p>The default auto-strategy when none is chosen.</p>
+</dd></dl>
+<dl class="py data">
+<dt class="sig sig-object py" id="muvid.footage.strategy.SelectionStrategy">
+<span class="sig-prename descclassname"><span class="pre">muvid.footage.strategy.</span></span><span class="sig-name descname"><span class="pre">SelectionStrategy</span></span><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#muvid.footage.strategy.SelectionStrategy" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#muvid.footage.strategy.SelectionStrategy'">¶</a></dt>
+<dd><p>alignments + song duration → an EDL (built-ins ignore song_duration but it
+is passed so a strategy MAY reason about the full timeline).</p>
+<p><strong>Score-driven opt-in (progressive disclosure).</strong> A strategy that needs the score tensor</p>
+<ul class="simple">
+<li><p>beats declares a keyword-only <code class="docutils literal notranslate"><span class="pre">context</span></code> parameter (or <code class="docutils literal notranslate"><span class="pre">**kwargs</span></code>); <a class="reference internal" href="#muvid.footage.strategy.select_edl" title="muvid.footage.strategy.select_edl"><code class="xref py py-func docutils literal notranslate"><span class="pre">select_edl()</span></code></a>
+then passes a <code class="docutils literal notranslate"><span class="pre">SelectionContext</span></code> (defined in <a class="reference internal" href="muvid.footage.select_score.html#module-muvid.footage.select_score" title="muvid.footage.select_score"><code class="xref py py-mod docutils literal notranslate"><span class="pre">muvid.footage.select_score</span></code></a>) as
+<code class="docutils literal notranslate"><span class="pre">context=</span></code>. The built-ins take only <code class="docutils literal notranslate"><span class="pre">(alignments,</span> <span class="pre">song_duration)</span></code> and never see it —
+the exact same dispatch idiom as <code class="docutils literal notranslate"><span class="pre">nw.jobs._call_dispatch</span></code>. The magic parameter name is
+literally <code class="docutils literal notranslate"><span class="pre">context</span></code>.</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A strategy</p>
+</dd>
+</dl>
+<p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">Callable</span></code>[[…], <code class="xref py py-class docutils literal notranslate"><span class="pre">list[EdlEntry]</span></code>]</p>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.footage.strategy.best_confidence">
+<span class="sig-prename descclassname"><span class="pre">muvid.footage.strategy.</span></span><span class="sig-name descname"><span class="pre">best_confidence</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alignments</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">song_duration</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/muvid/footage/strategy.html#best_confidence"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#muvid.footage.strategy.best_confidence" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#muvid.footage.strategy.best_confidence'">¶</a></dt>
+<dd><p>For each covered span, show the highest-confidence clip (ties: longest coverage).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" rel="nofollow noopener" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code><svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a>[<a class="reference internal" href="muvid.footage.edl.html#muvid.footage.edl.EdlEntry" title="muvid.footage.edl.EdlEntry"><code class="xref py py-class docutils literal notranslate"><span class="pre">EdlEntry</span></code></a>]</span></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.footage.strategy.fewest_cuts">
+<span class="sig-prename descclassname"><span class="pre">muvid.footage.strategy.</span></span><span class="sig-name descname"><span class="pre">fewest_cuts</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alignments</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">song_duration</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/muvid/footage/strategy.html#fewest_cuts"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#muvid.footage.strategy.fewest_cuts" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#muvid.footage.strategy.fewest_cuts'">¶</a></dt>
+<dd><p>Stay on the current clip as long as it covers; only switch when it runs out
+(then to the clip extending furthest). Minimizes the number of cuts.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" rel="nofollow noopener" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code><svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a>[<a class="reference internal" href="muvid.footage.edl.html#muvid.footage.edl.EdlEntry" title="muvid.footage.edl.EdlEntry"><code class="xref py py-class docutils literal notranslate"><span class="pre">EdlEntry</span></code></a>]</span></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.footage.strategy.list_strategies">
+<span class="sig-prename descclassname"><span class="pre">muvid.footage.strategy.</span></span><span class="sig-name descname"><span class="pre">list_strategies</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/muvid/footage/strategy.html#list_strategies"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#muvid.footage.strategy.list_strategies" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#muvid.footage.strategy.list_strategies'">¶</a></dt>
+<dd><p>All strategy slugs (eager + lazy), sorted. Lazy slugs are NOT imported to list them.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" rel="nofollow noopener" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code><svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a>[<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" rel="nofollow noopener" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code><svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a>]</span></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.footage.strategy.longest_take">
+<span class="sig-prename descclassname"><span class="pre">muvid.footage.strategy.</span></span><span class="sig-name descname"><span class="pre">longest_take</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alignments</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">song_duration</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/muvid/footage/strategy.html#longest_take"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#muvid.footage.strategy.longest_take" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#muvid.footage.strategy.longest_take'">¶</a></dt>
+<dd><p>Prefer the clip that keeps rolling longest — pick the one whose coverage extends
+furthest forward (ties: higher confidence). Yields long, continuous takes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" rel="nofollow noopener" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code><svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a>[<a class="reference internal" href="muvid.footage.edl.html#muvid.footage.edl.EdlEntry" title="muvid.footage.edl.EdlEntry"><code class="xref py py-class docutils literal notranslate"><span class="pre">EdlEntry</span></code></a>]</span></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.footage.strategy.register_lazy_strategy">
+<span class="sig-prename descclassname"><span class="pre">muvid.footage.strategy.</span></span><span class="sig-name descname"><span class="pre">register_lazy_strategy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">slug</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_ref</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/muvid/footage/strategy.html#register_lazy_strategy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#muvid.footage.strategy.register_lazy_strategy" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#muvid.footage.strategy.register_lazy_strategy'">¶</a></dt>
+<dd><p>Register a strategy by a <code class="docutils literal notranslate"><span class="pre">"module:func"</span></code> reference, imported only on first use.</p>
+<p>Lets a heavy strategy (numpy DP, cv2, …) be <em>listed</em> and <em>named</em> without importing its
+module at registration time — the import happens in <a class="reference internal" href="#muvid.footage.strategy.resolve_strategy" title="muvid.footage.strategy.resolve_strategy"><code class="xref py py-func docutils literal notranslate"><span class="pre">resolve_strategy()</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" rel="nofollow noopener" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code><svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.footage.strategy.register_selection_strategy">
+<span class="sig-prename descclassname"><span class="pre">muvid.footage.strategy.</span></span><span class="sig-name descname"><span class="pre">register_selection_strategy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">slug</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fn</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/muvid/footage/strategy.html#register_selection_strategy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#muvid.footage.strategy.register_selection_strategy" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#muvid.footage.strategy.register_selection_strategy'">¶</a></dt>
+<dd><p>Register a selection strategy under <code class="docutils literal notranslate"><span class="pre">slug</span></code> (returns it, for inline use).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" rel="nofollow noopener" title="(in Python v3.14)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code><svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a>[<a class="reference external" href="https://docs.python.org/3/builtins/constants.html#Ellipsis" rel="nofollow noopener" title="(in Python v3.14)"><code class="xref py py-data docutils literal notranslate"><span class="pre">...</span></code><svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a>, <a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" rel="nofollow noopener" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code><svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a>[<a class="reference internal" href="muvid.footage.edl.html#muvid.footage.edl.EdlEntry" title="muvid.footage.edl.EdlEntry"><code class="xref py py-class docutils literal notranslate"><span class="pre">EdlEntry</span></code></a>]]</span></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.footage.strategy.resolve_strategy">
+<span class="sig-prename descclassname"><span class="pre">muvid.footage.strategy.</span></span><span class="sig-name descname"><span class="pre">resolve_strategy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">strategy</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/muvid/footage/strategy.html#resolve_strategy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#muvid.footage.strategy.resolve_strategy" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#muvid.footage.strategy.resolve_strategy'">¶</a></dt>
+<dd><p>Resolve a strategy name OR a bare callable to a <a class="reference internal" href="#muvid.footage.strategy.SelectionStrategy" title="muvid.footage.strategy.SelectionStrategy"><code class="xref py py-data docutils literal notranslate"><span class="pre">SelectionStrategy</span></code></a>.</p>
+<p>A lazy slug is imported here (and cached into the eager table) on first resolution.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" rel="nofollow noopener" title="(in Python v3.14)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code><svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a>[<a class="reference external" href="https://docs.python.org/3/builtins/constants.html#Ellipsis" rel="nofollow noopener" title="(in Python v3.14)"><code class="xref py py-data docutils literal notranslate"><span class="pre">...</span></code><svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a>, <a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" rel="nofollow noopener" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code><svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a>[<a class="reference internal" href="muvid.footage.edl.html#muvid.footage.edl.EdlEntry" title="muvid.footage.edl.EdlEntry"><code class="xref py py-class docutils literal notranslate"><span class="pre">EdlEntry</span></code></a>]]</span></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.footage.strategy.select_edl">
+<span class="sig-prename descclassname"><span class="pre">muvid.footage.strategy.</span></span><span class="sig-name descname"><span class="pre">select_edl</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">strategy</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alignments</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">song_duration</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/muvid/footage/strategy.html#select_edl"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#muvid.footage.strategy.select_edl" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#muvid.footage.strategy.select_edl'">¶</a></dt>
+<dd><p>Run <code class="docutils literal notranslate"><span class="pre">strategy</span></code> (name or callable) to produce an EDL from <code class="docutils literal notranslate"><span class="pre">alignments</span></code>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">context</span></code> (a <code class="docutils literal notranslate"><span class="pre">SelectionContext</span></code>) is passed to score-driven strategies that declare it;
+the alignment-only built-ins ignore it. See <a class="reference internal" href="#muvid.footage.strategy.SelectionStrategy" title="muvid.footage.strategy.SelectionStrategy"><code class="xref py py-data docutils literal notranslate"><span class="pre">SelectionStrategy</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" rel="nofollow noopener" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code><svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a>[<a class="reference internal" href="muvid.footage.edl.html#muvid.footage.edl.EdlEntry" title="muvid.footage.edl.EdlEntry"><code class="xref py py-class docutils literal notranslate"><span class="pre">EdlEntry</span></code></a>]</span></p>
+</dd>
+</dl>
+</dd></dl>
+</section>
+</div></div><aside class="hidden text-sm xl:block" id="right-sidebar">
+<div class="sticky top-16 -mt-10 max-h-[calc(100vh-5rem)] h-full overflow-y-auto pt-6 space-y-2"><p class="font-medium">On this page</p>
+<ul>
+<li><a :data-current="activeSection === '#muvid.footage.strategy.DEFAULT_STRATEGY'" class="reference internal" href="#muvid.footage.strategy.DEFAULT_STRATEGY"><code class="docutils literal notranslate"><span class="pre">DEFAULT_STRATEGY</span></code></a></li>
+<li><a :data-current="activeSection === '#muvid.footage.strategy.SelectionStrategy'" class="reference internal" href="#muvid.footage.strategy.SelectionStrategy"><code class="docutils literal notranslate"><span class="pre">SelectionStrategy</span></code></a></li>
+<li><a :data-current="activeSection === '#muvid.footage.strategy.best_confidence'" class="reference internal" href="#muvid.footage.strategy.best_confidence"><code class="docutils literal notranslate"><span class="pre">best_confidence()</span></code></a></li>
+<li><a :data-current="activeSection === '#muvid.footage.strategy.fewest_cuts'" class="reference internal" href="#muvid.footage.strategy.fewest_cuts"><code class="docutils literal notranslate"><span class="pre">fewest_cuts()</span></code></a></li>
+<li><a :data-current="activeSection === '#muvid.footage.strategy.list_strategies'" class="reference internal" href="#muvid.footage.strategy.list_strategies"><code class="docutils literal notranslate"><span class="pre">list_strategies()</span></code></a></li>
+<li><a :data-current="activeSection === '#muvid.footage.strategy.longest_take'" class="reference internal" href="#muvid.footage.strategy.longest_take"><code class="docutils literal notranslate"><span class="pre">longest_take()</span></code></a></li>
+<li><a :data-current="activeSection === '#muvid.footage.strategy.register_lazy_strategy'" class="reference internal" href="#muvid.footage.strategy.register_lazy_strategy"><code class="docutils literal notranslate"><span class="pre">register_lazy_strategy()</span></code></a></li>
+<li><a :data-current="activeSection === '#muvid.footage.strategy.register_selection_strategy'" class="reference internal" href="#muvid.footage.strategy.register_selection_strategy"><code class="docutils literal notranslate"><span class="pre">register_selection_strategy()</span></code></a></li>
+<li><a :data-current="activeSection === '#muvid.footage.strategy.resolve_strategy'" class="reference internal" href="#muvid.footage.strategy.resolve_strategy"><code class="docutils literal notranslate"><span class="pre">resolve_strategy()</span></code></a></li>
+<li><a :data-current="activeSection === '#muvid.footage.strategy.select_edl'" class="reference internal" href="#muvid.footage.strategy.select_edl"><code class="docutils literal notranslate"><span class="pre">select_edl()</span></code></a></li>
+</ul>
+</div>
+</aside>
+</main>
+</div>
+</div><footer class="py-6 border-t border-border md:py-0">
+<div class="container flex flex-col items-center justify-between gap-4 md:h-24 md:flex-row">
+<div class="flex flex-col items-center gap-4 px-8 md:flex-row md:gap-2 md:px-0">
+<p class="text-sm leading-loose text-center text-muted-foreground md:text-left"></p>
+</div>
+</div>
+</footer>
+</div>
+<script src="../_static/documentation_options.js?v=152b4b09"></script>
+<script src="../_static/doctools.js?v=fd6eb6e6"></script>
+<script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+<script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+<script src="../_static/copybutton.js?v=fd10adb8"></script>
+<script defer="defer" src="../_static/theme.js?v=5db23cf8"></script>
+</body>
+</html>

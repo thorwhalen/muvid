@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+
+<html :class="{ 'dark' : darkMode === true }" data-content_root="../" lang="en" x-data="{ darkMode: $persist(window.matchMedia('(prefers-color-scheme: dark)').matches), activeSection: ''}">
+<head>
+<script>
+    (function () {
+      // Set initial color scheme
+      if ((localStorage.getItem("_x_darkMode") === "true") || (window.matchMedia("(prefers-color-scheme: dark)").matches)) {
+        document.documentElement.classList.add("dark");
+      }
+
+      // Watch for media preference changes
+      window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (event) => {
+        localStorage.setItem("_x_darkMode", event.matches);
+        document.documentElement.classList.toggle("dark", event.matches);
+      });
+    })();
+  </script>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<meta charset="utf-8"/>
+<meta content="#ffffff" media="(prefers-color-scheme: light)" name="theme-color"/>
+<meta content="#030711" media="(prefers-color-scheme: dark)" name="theme-color"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<link href="muvid.footage.workspace.html.md" rel="alternate" type="text/markdown"/>
+<link href="../llms.txt" rel="describedby" type="text/markdown"/>
+<link href="muvid.footage.workspace.html.md" rel="alternate" type="text/markdown"/>
+<link href="llms.txt" rel="describedby"/>
+<title>muvid.footage.workspace | muvid</title>
+<meta content="muvid.footage.workspace | muvid" property="og:title"/>
+<meta content="muvid.footage.workspace | muvid" name="twitter:title"/>
+<link href="../_static/pygments.css?v=d75fae25" rel="stylesheet" type="text/css"/>
+<link href="../_static/theme.css?v=d6d7c91b" rel="stylesheet" type="text/css"/>
+<link href="../_static/copybutton.css?v=76b2166b" rel="stylesheet" type="text/css"/>
+<link href="../_static/epythet.css?v=f9f95642" rel="stylesheet" type="text/css"/>
+<link href="../search.html" rel="search" title="Search"/>
+<link href="../genindex.html" rel="index" title="Index"/>
+<link href="muvid.lyrics.html" rel="next" title="muvid.lyrics"/>
+<link href="muvid.footage.strategy.html" rel="prev" title="muvid.footage.strategy"/>
+</head>
+<body :class="{ 'overflow-hidden': showSidebar }" class="min-h-screen font-sans antialiased bg-background text-foreground" x-data="{ showSidebar: false, showScrollTop: false }">
+<div @click.self="showSidebar = false" class="fixed inset-0 z-50 overflow-hidden bg-background/80 backdrop-blur-sm md:hidden" x-cloak="" x-show="showSidebar"></div><div class="relative flex flex-col min-h-screen" id="page"><a class="absolute top-0 left-0 z-[100] block bg-background p-4 text-xl transition -translate-x-full opacity-0 focus:translate-x-0 focus:opacity-100" href="#content">
+      Skip to content
+    </a><header class="sticky top-0 z-40 w-full border-b shadow-xs border-border bg-background/90 backdrop-blur"><div class="container flex items-center h-14">
+<div class="hidden mr-4 md:flex">
+<a class="flex items-center mr-6" href="../index.html"><span class="hidden font-bold sm:inline-block text-clip whitespace-nowrap">muvid</span>
+</a><nav class="flex items-center gap-6 text-sm font-medium">
+<a class="transition-colors hover:text-foreground/80 text-foreground/60" href="https://github.com/thorwhalen/muvid" rel="noopener nofollow">GitHub</a>
+</nav></div><button @click="showSidebar = true" class="inline-flex items-center justify-center h-10 px-0 py-2 mr-2 text-base font-medium transition-colors rounded-md hover:text-accent-foreground hover:bg-transparent md:hidden" type="button">
+<svg aria-hidden="true" fill="currentColor" height="24" viewbox="0 96 960 960" width="24" xmlns="http://www.w3.org/2000/svg">
+<path d="M152.587 825.087q-19.152 0-32.326-13.174t-13.174-32.326q0-19.152 13.174-32.326t32.326-13.174h440q19.152 0 32.326 13.174t13.174 32.326q0 19.152-13.174 32.326t-32.326 13.174h-440Zm0-203.587q-19.152 0-32.326-13.174T107.087 576q0-19.152 13.174-32.326t32.326-13.174h320q19.152 0 32.326 13.174T518.087 576q0 19.152-13.174 32.326T472.587 621.5h-320Zm0-203.587q-19.152 0-32.326-13.174t-13.174-32.326q0-19.152 13.174-32.326t32.326-13.174h440q19.152 0 32.326 13.174t13.174 32.326q0 19.152-13.174 32.326t-32.326 13.174h-440ZM708.913 576l112.174 112.174q12.674 12.674 12.674 31.826t-12.674 31.826Q808.413 764.5 789.261 764.5t-31.826-12.674l-144-144Q600 594.391 600 576t13.435-31.826l144-144q12.674-12.674 31.826-12.674t31.826 12.674q12.674 12.674 12.674 31.826t-12.674 31.826L708.913 576Z"></path>
+</svg>
+<span class="sr-only">Toggle navigation menu</span>
+</button>
+<div class="flex items-center justify-between flex-1 gap-2 sm:gap-4 md:justify-end">
+<div class="flex-1 w-full md:w-auto md:flex-none"><form @keydown.k.window.meta="$refs.search.focus()" action="../search.html" class="relative flex items-center group" id="searchbox" method="get">
+<input aria-label="Search the docs" class="inline-flex items-center font-medium transition-colors bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background border border-input hover:bg-accent focus:bg-accent hover:text-accent-foreground focus:text-accent-foreground hover:placeholder-accent-foreground py-2 px-4 relative h-9 w-full justify-start rounded-[0.5rem] text-sm text-muted-foreground sm:pr-12 md:w-40 lg:w-64" id="search-input" name="q" placeholder="Search ..." type="search" x-ref="search"/>
+<kbd class="pointer-events-none absolute right-1.5 top-2 hidden h-5 select-none text-muted-foreground items-center gap-1 rounded border border-border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex group-hover:bg-accent group-hover:text-accent-foreground">
+<span class="text-xs">⌘</span>
+    K
+  </kbd>
+</form>
+</div>
+<nav class="flex items-center gap-1">
+<button @click="darkMode = !darkMode" class="relative inline-flex items-center justify-center px-0 text-sm font-medium transition-colors rounded-md hover:bg-accent hover:text-accent-foreground h-9 w-9" title="Toggle color scheme" type="button">
+<svg class="absolute transition-all scale-100 rotate-0 dark:-rotate-90 dark:scale-0" fill="currentColor" height="16" viewbox="0 96 960 960" width="16" xmlns="http://www.w3.org/2000/svg">
+<path d="M480 685q45.456 0 77.228-31.772Q589 621.456 589 576q0-45.456-31.772-77.228Q525.456 467 480 467q-45.456 0-77.228 31.772Q371 530.544 371 576q0 45.456 31.772 77.228Q434.544 685 480 685Zm0 91q-83 0-141.5-58.5T280 576q0-83 58.5-141.5T480 376q83 0 141.5 58.5T680 576q0 83-58.5 141.5T480 776ZM80 621.5q-19.152 0-32.326-13.174T34.5 576q0-19.152 13.174-32.326T80 530.5h80q19.152 0 32.326 13.174T205.5 576q0 19.152-13.174 32.326T160 621.5H80Zm720 0q-19.152 0-32.326-13.174T754.5 576q0-19.152 13.174-32.326T800 530.5h80q19.152 0 32.326 13.174T925.5 576q0 19.152-13.174 32.326T880 621.5h-80Zm-320-320q-19.152 0-32.326-13.174T434.5 256v-80q0-19.152 13.174-32.326T480 130.5q19.152 0 32.326 13.174T525.5 176v80q0 19.152-13.174 32.326T480 301.5Zm0 720q-19.152 0-32.326-13.17Q434.5 995.152 434.5 976v-80q0-19.152 13.174-32.326T480 850.5q19.152 0 32.326 13.174T525.5 896v80q0 19.152-13.174 32.33-13.174 13.17-32.326 13.17ZM222.174 382.065l-43-42Q165.5 327.391 166 308.239t13.174-33.065q13.435-13.674 32.587-13.674t32.065 13.674l42.239 43q12.674 13.435 12.555 31.706-.12 18.272-12.555 31.946-12.674 13.674-31.445 13.413-18.772-.261-32.446-13.174Zm494 494.761-42.239-43q-12.674-13.435-12.674-32.087t12.674-31.565Q686.609 756.5 705.38 757q18.772.5 32.446 13.174l43 41.761Q794.5 824.609 794 843.761t-13.174 33.065Q767.391 890.5 748.239 890.5t-32.065-13.674Zm-42-494.761Q660.5 369.391 661 350.62q.5-18.772 13.174-32.446l41.761-43Q728.609 261.5 747.761 262t33.065 13.174q13.674 13.435 13.674 32.587t-13.674 32.065l-43 42.239q-13.435 12.674-31.706 12.555-18.272-.12-31.946-12.555Zm-495 494.761Q165.5 863.391 165.5 844.239t13.674-32.065l43-42.239q13.435-12.674 32.087-12.674t31.565 12.674Q299.5 782.609 299 801.38q-.5 18.772-13.174 32.446l-41.761 43Q231.391 890.5 212.239 890t-33.065-13.174ZM480 576Z"></path>
+</svg>
+<svg class="absolute transition-all scale-0 rotate-90 dark:rotate-0 dark:scale-100" fill="currentColor" height="16" viewbox="0 96 960 960" width="16" xmlns="http://www.w3.org/2000/svg">
+<path d="M480 936q-151 0-255.5-104.5T120 576q0-138 90-239.5T440 218q25-3 39 18t-1 44q-17 26-25.5 55t-8.5 61q0 90 63 153t153 63q31 0 61.5-9t54.5-25q21-14 43-1.5t19 39.5q-14 138-117.5 229T480 936Zm0-80q88 0 158-48.5T740 681q-20 5-40 8t-40 3q-123 0-209.5-86.5T364 396q0-20 3-40t8-40q-78 32-126.5 102T200 576q0 116 82 198t198 82Zm-10-270Z"></path>
+</svg>
+</button>
+</nav>
+</div>
+</div>
+</header>
+<div class="flex-1"><div class="container md:grid md:grid-cols-[220px_minmax(0,1fr)] md:gap-6 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-10"><aside :aria-hidden="!showSidebar" :class="{ 'translate-x-0': showSidebar }" class="fixed inset-y-0 left-0 md:top-14 z-50 md:z-30 bg-background md:bg-transparent transition-all duration-100 -translate-x-full md:translate-x-0 ml-0 p-6 md:p-0 md:-ml-2 md:h-[calc(100vh-3.5rem)] w-5/6 md:w-full overflow-y-auto border-r border-border md:sticky" id="left-sidebar">
+<a class="justify-start text-sm md:!hidden bg-background" href="../index.html"><span class="font-bold text-clip whitespace-nowrap">muvid</span>
+</a>
+<div class="relative overflow-hidden md:overflow-auto my-4 md:my-0">
+<div class="overflow-y-auto h-full w-full relative pr-6"><nav class="flex md:hidden flex-col font-medium mt-4">
+<a href="https://github.com/thorwhalen/muvid" rel="nofollow noopener">GitHub</a>
+</nav><nav class="table w-full min-w-full my-6 lg:my-8">
+<ul class="current">
+<li class="toctree-l1 current" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../api.html">API reference<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul class="current" x-show="expanded">
+<li class="toctree-l2 current" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="muvid.html">muvid<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul class="current" x-show="expanded">
+<li class="toctree-l3"><a class="reference internal" href="muvid.align.html">muvid.align</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.characters.html">muvid.characters</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.choreo.html">muvid.choreo</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.compose.html">muvid.compose</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.contracts.html">muvid.contracts</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.cost.html">muvid.cost</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.data.html">muvid.data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.environments.html">muvid.environments</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.events.html">muvid.events</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.facade.html">muvid.facade</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="muvid.footage.html">muvid.footage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.lyrics.html">muvid.lyrics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.lyricvid.html">muvid.lyricvid</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.mcp.html">muvid.mcp</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.montage.html">muvid.montage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.paths.html">muvid.paths</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.project.html">muvid.project</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.renderers.html">muvid.renderers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.schema.html">muvid.schema</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.script.html">muvid.script</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.subgenres.html">muvid.subgenres</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.ui.html">muvid.ui</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.visualize.html">muvid.visualize</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../ai-agents.html">For AI agents</a></li>
+</ul>
+</nav>
+</div>
+</div>
+<button @click="showSidebar = false" class="absolute md:hidden right-4 top-4 rounded-sm opacity-70 transition-opacity hover:opacity-100" type="button">
+<svg class="h-4 w-4" fill="currentColor" height="24" stroke="none" viewbox="0 96 960 960" width="24" xmlns="http://www.w3.org/2000/svg">
+<path d="M480 632 284 828q-11 11-28 11t-28-11q-11-11-11-28t11-28l196-196-196-196q-11-11-11-28t11-28q11-11 28-11t28 11l196 196 196-196q11-11 28-11t28 11q11 11 11 28t-11 28L536 576l196 196q11 11 11 28t-11 28q-11 11-28 11t-28-11L480 632Z"></path>
+</svg>
+</button>
+</aside>
+<main class="relative py-6 lg:gap-10 lg:py-8 xl:grid xl:grid-cols-[1fr_300px]">
+<div class="w-full min-w-0 mx-auto">
+<nav aria-label="breadcrumbs" class="flex items-center mb-4 space-x-1 text-sm text-muted-foreground">
+<a class="overflow-hidden text-ellipsis whitespace-nowrap hover:text-foreground" href="../index.html">
+<span class="hidden md:inline">muvid</span>
+<svg aria-label="Home" class="md:hidden" fill="currentColor" height="18" stroke="none" viewbox="0 96 960 960" width="18" xmlns="http://www.w3.org/2000/svg">
+<path d="M240 856h120V616h240v240h120V496L480 316 240 496v360Zm-80 80V456l320-240 320 240v480H520V696h-80v240H160Zm320-350Z"></path>
+</svg>
+</a>
+<div class="mr-1">/</div><a class="hover:text-foreground overflow-hidden text-ellipsis whitespace-nowrap" href="../api.html">API reference</a>
+<div class="mr-1">/</div><a class="hover:text-foreground overflow-hidden text-ellipsis whitespace-nowrap" href="muvid.html">muvid</a>
+<div class="mr-1">/</div><a class="hover:text-foreground overflow-hidden text-ellipsis whitespace-nowrap" href="muvid.footage.html">muvid.footage</a>
+<div class="mr-1">/</div><span aria-current="page" class="font-medium text-foreground overflow-hidden text-ellipsis whitespace-nowrap">muvid.footage.workspace</span>
+</nav>
+<div id="content" role="main">
+<section id="module-muvid.footage.workspace">
+<span id="muvid-footage-workspace"></span><h1>muvid.footage.workspace<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#module-muvid.footage.workspace">¶</a></h1>
+<p>Per-user, STATEFUL project for the footage-aligned <code class="docutils literal notranslate"><span class="pre">music_video</span></code> genre.</p>
+<p>Unlike the visualizer (a pure function of audio+cover), a music-video project accumulates
+state across calls: one fixed song, several uploaded clips, a persisted alignment
+manifest, and rendered outputs. This is deliberately NEW infrastructure (not the stateless
+<code class="docutils literal notranslate"><span class="pre">VisualizerWorkspace</span></code>), reusing only the identity + fetch + tool-aggregation seams.</p>
+<p>Layout (default root <code class="docutils literal notranslate"><span class="pre">~/.local/share/muvid</span></code>; override via <code class="docutils literal notranslate"><span class="pre">MUVID_DATA_HOME</span></code> — shared
+with the visualizer’s root, different subtree). <strong>Never</strong> inside the app/deploy tree:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">{root}/music_video/projects/{email}/{project_id}/manifest.json</span></code> — title, canvas, song</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">.../song/song.&lt;ext&gt;</span></code> — the one fixed clean song</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">.../clips/{clip_id}.&lt;ext&gt;</span></code> — an uploaded footage clip</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">.../alignments.json</span></code> — the persisted per-clip alignment</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">.../renders/{render_id}/</span></code> — an assembled music video</p></li>
+</ul>
+<p><strong>Every JSON record here is replaced, never truncated in place</strong> (muvid#17 item 4).
+<code class="docutils literal notranslate"><span class="pre">manifest.json</span></code> and <code class="docutils literal notranslate"><span class="pre">alignments.json</span></code> used to be bare <code class="docutils literal notranslate"><span class="pre">write_text</span></code> calls — a
+truncate-then-write — while <code class="docutils literal notranslate"><span class="pre">manifest()</span></code> deliberately swallows <code class="docutils literal notranslate"><span class="pre">OSError</span></code>/<code class="docutils literal notranslate"><span class="pre">ValueError</span></code>
+so an unreadable project reads as an EMPTY one. Put together, a process killed between
+the truncate and the write left a project that presented as having no song and no clips:
+not an error a caller could act on, but a plausible state a caller would act on wrongly
+(re-uploading everything, or rendering nothing). The scoring layer three directories
+away already wrote tmp + <code class="docutils literal notranslate"><span class="pre">os.replace</span></code>; <a class="reference internal" href="#muvid.footage.workspace.atomic_write_text" title="muvid.footage.workspace.atomic_write_text"><code class="xref py py-func docutils literal notranslate"><span class="pre">atomic_write_text()</span></code></a> is the ONE such dance
+now, shared by every manifest/alignment/meta write here, <code class="docutils literal notranslate"><span class="pre">scoring/grid.py</span></code> (through
+<a class="reference internal" href="#muvid.footage.workspace.atomic_write_bytes" title="muvid.footage.workspace.atomic_write_bytes"><code class="xref py py-func docutils literal notranslate"><span class="pre">atomic_write_bytes()</span></code></a>, its <code class="docutils literal notranslate"><span class="pre">.npz</span></code> primitive) and <code class="docutils literal notranslate"><span class="pre">downloads.organise</span></code>. A reader
+sees the whole prior record or the whole new one. The on-disk FORMAT is untouched: that
+would be a migration.</p>
+<p><strong>Invalidation runs BEFORE the write that would make the stale artifact look current.</strong>
+<code class="docutils literal notranslate"><span class="pre">set_song</span></code> drops <code class="docutils literal notranslate"><span class="pre">alignments.json</span></code> and the score tracks first and replaces the manifest
+LAST, so no crash window leaves a manifest naming the new song beside an alignment measured
+against the old one — the offsets would then be read as if they belonged to it, which is
+muvid#59’s silently-out-of-sync video by another route.</p>
+<p>Invalidation is deliberate and lives here, beside the state it protects: <code class="docutils literal notranslate"><span class="pre">set_song</span></code>
+and <code class="docutils literal notranslate"><span class="pre">remove_clip</span></code> both drop <code class="docutils literal notranslate"><span class="pre">alignments.json</span></code> and every persisted score track,
+because the alignment is a measurement of exactly the song and the clip set that were
+present when it was taken (muvid#22 — a removed clip’s offset must not outlive the
+clip, and the score tensor is keyed on that alignment’s fingerprint).</p>
+<p class="rubric">Module Attributes</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.footage.workspace.DATA_HOME_ENV_VAR" title="muvid.footage.workspace.DATA_HOME_ENV_VAR"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DATA_HOME_ENV_VAR</span></code></a></p></td>
+<td><p>Re-exported from <a class="reference internal" href="muvid.paths.html#module-muvid.paths" title="muvid.paths"><code class="xref py py-mod docutils literal notranslate"><span class="pre">muvid.paths</span></code></a>, the SSOT for where muvid's data lives.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#muvid.footage.workspace.CANVASES" title="muvid.footage.workspace.CANVASES"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CANVASES</span></code></a></p></td>
+<td><p>Named output canvases a project may choose at create (the genre Templates).</p></td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Functions</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.footage.workspace.atomic_write_bytes" title="muvid.footage.workspace.atomic_write_bytes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">atomic_write_bytes</span></code></a>(path, data)</p></td>
+<td><p>Replace <code class="docutils literal notranslate"><span class="pre">path</span></code>'s content with <code class="docutils literal notranslate"><span class="pre">data</span></code> so a reader never sees a torn file.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#muvid.footage.workspace.atomic_write_text" title="muvid.footage.workspace.atomic_write_text"><code class="xref py py-obj docutils literal notranslate"><span class="pre">atomic_write_text</span></code></a>(path, text)</p></td>
+<td><p>Atomically replace <code class="docutils literal notranslate"><span class="pre">path</span></code> with <code class="docutils literal notranslate"><span class="pre">text</span></code> (UTF-8) — see <a class="reference internal" href="#muvid.footage.workspace.atomic_write_bytes" title="muvid.footage.workspace.atomic_write_bytes"><code class="xref py py-func docutils literal notranslate"><span class="pre">atomic_write_bytes()</span></code></a>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.footage.workspace.data_root" title="muvid.footage.workspace.data_root"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data_root</span></code></a>()</p></td>
+<td><p>The muvid data root: <code class="docutils literal notranslate"><span class="pre">$MUVID_DATA_HOME</span></code> or <code class="docutils literal notranslate"><span class="pre">~/.local/share/muvid</span></code>.</p></td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Classes</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.footage.workspace.FootageWorkspace" title="muvid.footage.workspace.FootageWorkspace"><code class="xref py py-obj docutils literal notranslate"><span class="pre">FootageWorkspace</span></code></a>(email, root)</p></td>
+<td><p>A caller's private music-video area, addressed by <code class="docutils literal notranslate"><span class="pre">email</span></code>.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#muvid.footage.workspace.MusicVideoFootageProject" title="muvid.footage.workspace.MusicVideoFootageProject"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MusicVideoFootageProject</span></code></a>(email, project_id, root)</p></td>
+<td><p>One caller's stateful music-video project (song + clips + alignments + renders).</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py data">
+<dt class="sig sig-object py" id="muvid.footage.workspace.CANVASES">
+<span class="sig-prename descclassname"><span class="pre">muvid.footage.workspace.</span></span><span class="sig-name descname"><span class="pre">CANVASES</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#dict" rel="nofollow noopener" title="(in Python v3.14)"><span class="pre">dict</span><svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" rel="nofollow noopener" title="(in Python v3.14)"><span class="pre">str</span><svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#tuple" rel="nofollow noopener" title="(in Python v3.14)"><span class="pre">tuple</span><svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" rel="nofollow noopener" title="(in Python v3.14)"><span class="pre">int</span><svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" rel="nofollow noopener" title="(in Python v3.14)"><span class="pre">int</span><svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'landscape':</span> <span class="pre">(1920,</span> <span class="pre">1080),</span> <span class="pre">'portrait':</span> <span class="pre">(1080,</span> <span class="pre">1920),</span> <span class="pre">'square':</span> <span class="pre">(1080,</span> <span class="pre">1080)}</span></span><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#muvid.footage.workspace.CANVASES" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#muvid.footage.workspace.CANVASES'">¶</a></dt>
+<dd><p>Named output canvases a project may choose at create (the genre Templates).</p>
+</dd></dl>
+<dl class="py data">
+<dt class="sig sig-object py" id="muvid.footage.workspace.DATA_HOME_ENV_VAR">
+<span class="sig-prename descclassname"><span class="pre">muvid.footage.workspace.</span></span><span class="sig-name descname"><span class="pre">DATA_HOME_ENV_VAR</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'MUVID_DATA_HOME'</span></span><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#muvid.footage.workspace.DATA_HOME_ENV_VAR" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#muvid.footage.workspace.DATA_HOME_ENV_VAR'">¶</a></dt>
+<dd><p>Re-exported from <a class="reference internal" href="muvid.paths.html#module-muvid.paths" title="muvid.paths"><code class="xref py py-mod docutils literal notranslate"><span class="pre">muvid.paths</span></code></a>, the SSOT for where muvid’s data lives. Kept as
+names here because both are public API of this module (<code class="docutils literal notranslate"><span class="pre">muvid.mcp</span></code> re-exports
+<code class="docutils literal notranslate"><span class="pre">data_root</span></code>, and <code class="docutils literal notranslate"><span class="pre">downloads</span></code> imports <code class="docutils literal notranslate"><span class="pre">safe_component</span></code> from here).</p>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="muvid.footage.workspace.FootageWorkspace">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">muvid.footage.workspace.</span></span><span class="sig-name descname"><span class="pre">FootageWorkspace</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">email</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">root</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/muvid/footage/workspace.html#FootageWorkspace"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#muvid.footage.workspace.FootageWorkspace" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#muvid.footage.workspace.FootageWorkspace'">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/builtins/functions.html#object" rel="nofollow noopener" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code><svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a></p>
+<p>A caller’s private music-video area, addressed by <code class="docutils literal notranslate"><span class="pre">email</span></code>.</p>
+<dl class="field-list simple">
+</dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="muvid.footage.workspace.MusicVideoFootageProject">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">muvid.footage.workspace.</span></span><span class="sig-name descname"><span class="pre">MusicVideoFootageProject</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">email</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">project_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">root</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/muvid/footage/workspace.html#MusicVideoFootageProject"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#muvid.footage.workspace.MusicVideoFootageProject" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#muvid.footage.workspace.MusicVideoFootageProject'">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/builtins/functions.html#object" rel="nofollow noopener" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code><svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a></p>
+<p>One caller’s stateful music-video project (song + clips + alignments + renders).</p>
+<dl class="field-list simple">
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="muvid.footage.workspace.MusicVideoFootageProject.add_clip">
+<span class="sig-name descname"><span class="pre">add_clip</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">clip_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">src_path</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">ext</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/muvid/footage/workspace.html#MusicVideoFootageProject.add_clip"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#muvid.footage.workspace.MusicVideoFootageProject.add_clip" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#muvid.footage.workspace.MusicVideoFootageProject.add_clip'">¶</a></dt>
+<dd><p>Store a footage clip from a local file; returns its <code class="docutils literal notranslate"><span class="pre">clip_id</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" rel="nofollow noopener" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code><svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="muvid.footage.workspace.MusicVideoFootageProject.ensure_render_refs">
+<span class="sig-name descname"><span class="pre">ensure_render_refs</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/muvid/footage/workspace.html#MusicVideoFootageProject.ensure_render_refs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#muvid.footage.workspace.MusicVideoFootageProject.ensure_render_refs" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#muvid.footage.workspace.MusicVideoFootageProject.ensure_render_refs'">¶</a></dt>
+<dd><p>Give every render a stable, speakable reference; return <code class="docutils literal notranslate"><span class="pre">{id:</span> <span class="pre">n}</span></code>.</p>
+<p>A render id is a uuid4 slice (<code class="docutils literal notranslate"><span class="pre">b02fc05417ea</span></code>) — fine for a URL, useless
+in a sentence. Nobody can ask for “a bit less of the wide shot in
+b02fc05417ea”. So each render also carries a small ordinal, rendered as
+<code class="docutils literal notranslate"><span class="pre">cut</span> <span class="pre">4</span></code> by <code class="xref py py-func docutils literal notranslate"><span class="pre">nw.delivery.format_ref()</span></code> at the delivery boundary.</p>
+<p>This module stores the INTEGER only. The word “cut” belongs to
+<code class="docutils literal notranslate"><span class="pre">nw.delivery</span></code> and is spelled in exactly one place; core muvid does not
+depend on nw (it is in the <code class="docutils literal notranslate"><span class="pre">mcp</span></code> extra, so <code class="docutils literal notranslate"><span class="pre">muvid.visualize</span></code> and
+downstreams like <code class="docutils literal notranslate"><span class="pre">yb</span></code> stay lightweight), and a local second spelling
+is precisely the drift <code class="docutils literal notranslate"><span class="pre">nw.delivery</span></code> exists to prevent.</p>
+<p>Two properties make it worth persisting rather than deriving:</p>
+<ul class="simple">
+<li><p><strong>Stable.</strong> Assigned once, at creation, and never renumbered. A
+position in a sorted list would shift under the user every time they
+rendered again, so the reference they wrote down would rot.</p></li>
+<li><p><strong>Chronological.</strong> Backfill runs OLDEST first, so <code class="docutils literal notranslate"><span class="pre">cut</span> <span class="pre">1</span></code> is the
+first thing they made, which is what someone means by “the first cut”.</p></li>
+</ul>
+<p>Self-healing on read, in the same spirit as an open-time schema
+migration: renders made before refs existed acquire one the first time
+anything lists or resolves them, and the assignment is written back so
+it never moves again.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#dict" rel="nofollow noopener" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code><svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="muvid.footage.workspace.MusicVideoFootageProject.invalidate_scores">
+<span class="sig-name descname"><span class="pre">invalidate_scores</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/muvid/footage/workspace.html#MusicVideoFootageProject.invalidate_scores"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#muvid.footage.workspace.MusicVideoFootageProject.invalidate_scores" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#muvid.footage.workspace.MusicVideoFootageProject.invalidate_scores'">¶</a></dt>
+<dd><p>Delete persisted score tracks — the primary invalidation on song/offset change.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" rel="nofollow noopener" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code><svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="muvid.footage.workspace.MusicVideoFootageProject.next_render_ref">
+<span class="sig-name descname"><span class="pre">next_render_ref</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/muvid/footage/workspace.html#MusicVideoFootageProject.next_render_ref"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#muvid.footage.workspace.MusicVideoFootageProject.next_render_ref" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#muvid.footage.workspace.MusicVideoFootageProject.next_render_ref'">¶</a></dt>
+<dd><p>The ordinal the next render will carry (1-based, never reused).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" rel="nofollow noopener" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code><svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="muvid.footage.workspace.MusicVideoFootageProject.remove_clip">
+<span class="sig-name descname"><span class="pre">remove_clip</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">clip_id</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/muvid/footage/workspace.html#MusicVideoFootageProject.remove_clip"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#muvid.footage.workspace.MusicVideoFootageProject.remove_clip" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#muvid.footage.workspace.MusicVideoFootageProject.remove_clip'">¶</a></dt>
+<dd><p>Delete one clip — its file(s) and its manifest entry — and invalidate what
+was measured against it (muvid#22).</p>
+<p>A removal changes the clip SET the alignment describes, so <code class="docutils literal notranslate"><span class="pre">alignments.json</span></code>
+is dropped and, with it, every persisted score track — the same invalidation
+<code class="docutils literal notranslate"><span class="pre">set_song</span></code> performs, and for the same reason: scores are keyed on the alignment
+fingerprint, which no longer matches. Whole-artifact, not surgical: pruning one
+record from the alignment would still move the fingerprint and strand the
+score manifest, and editing that manifest in place is a migration-surface change
+this method deliberately does not make.</p>
+<p>The steps run in an order where every crash-intermediate state is a valid
+project: alignment and scores go first (leaving “present, unaligned”), then the
+manifest (leaving at worst an orphan file <code class="docutils literal notranslate"><span class="pre">add_clip</span></code> would sweep), then the
+file — never a manifest entry pointing at a file that is gone.</p>
+<p>Returns what happened: <code class="docutils literal notranslate"><span class="pre">{clip_id,</span> <span class="pre">name,</span> <span class="pre">files,</span> <span class="pre">alignment_invalidated,</span>
+<span class="pre">scores_invalidated}</span></code>. Raises <code class="docutils literal notranslate"><span class="pre">KeyError</span></code> for a <code class="docutils literal notranslate"><span class="pre">clip_id</span></code> the manifest does
+not hold; the MCP tool turns that into a refusal naming the known ids.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#dict" rel="nofollow noopener" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code><svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="muvid.footage.workspace.MusicVideoFootageProject.renders_dir">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">renders_dir</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" rel="nofollow noopener" title="(in Python v3.14)"><span class="pre">Path</span><svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a></span><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#muvid.footage.workspace.MusicVideoFootageProject.renders_dir" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#muvid.footage.workspace.MusicVideoFootageProject.renders_dir'">¶</a></dt>
+<dd><p>Where this project’s renders live.</p>
+<p>Named to match <code class="docutils literal notranslate"><span class="pre">VisualizerProject.renders_dir</span></code> so anything that spans
+both muvid genres — <code class="docutils literal notranslate"><span class="pre">muvid.downloads</span></code> — sees one shape instead of
+branching on which drawer it is looking in.</p>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="muvid.footage.workspace.MusicVideoFootageProject.set_song">
+<span class="sig-name descname"><span class="pre">set_song</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">src_path</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">ext</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/muvid/footage/workspace.html#MusicVideoFootageProject.set_song"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#muvid.footage.workspace.MusicVideoFootageProject.set_song" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#muvid.footage.workspace.MusicVideoFootageProject.set_song'">¶</a></dt>
+<dd><p>Store (replacing) the project’s one clean song from a local file.</p>
+<p>The order of operations is the contract (muvid#17 item 4), in three phases:</p>
+<ol class="arabic simple">
+<li><p><strong>Everything that can fail runs first, against a staged copy</strong> — the copy
+itself, the duration probe, the content hash. A missing source or an
+un-probeable file raises here and the project is exactly as it was: the old
+song, its alignment and its scores all still stand.</p></li>
+<li><p><strong>What the old song vouched for is dropped</strong> — <code class="docutils literal notranslate"><span class="pre">alignments.json</span></code> and the
+score tracks — BEFORE the manifest can name the new song. The song is the
+alignment reference, so an offset measured against the old one is meaningless
+against the new one; but nothing on disk ties an alignment record to a song,
+so a manifest that named the new song beside the old alignment would have
+those offsets read as its own and cut a video silently out of sync (the
+muvid#59 failure shape, by a different route). Dropping first means the worst
+a crash can leave is a project that demands a fresh <code class="docutils literal notranslate"><span class="pre">align_footage</span></code>.</p></li>
+<li><p><strong>The song file lands, then the manifest is replaced LAST</strong> — it names the
+file, so the file must exist before any reader can be pointed at it.</p></li>
+</ol>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" rel="nofollow noopener" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code><svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="muvid.footage.workspace.MusicVideoFootageProject.song_hash">
+<span class="sig-name descname"><span class="pre">song_hash</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/muvid/footage/workspace.html#MusicVideoFootageProject.song_hash"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#muvid.footage.workspace.MusicVideoFootageProject.song_hash" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#muvid.footage.workspace.MusicVideoFootageProject.song_hash'">¶</a></dt>
+<dd><p>The clean song’s content hash (cached in the manifest; computed if missing).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" rel="nofollow noopener" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code><svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.footage.workspace.atomic_write_bytes">
+<span class="sig-prename descclassname"><span class="pre">muvid.footage.workspace.</span></span><span class="sig-name descname"><span class="pre">atomic_write_bytes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/muvid/footage/workspace.html#atomic_write_bytes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#muvid.footage.workspace.atomic_write_bytes" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#muvid.footage.workspace.atomic_write_bytes'">¶</a></dt>
+<dd><p>Replace <code class="docutils literal notranslate"><span class="pre">path</span></code>’s content with <code class="docutils literal notranslate"><span class="pre">data</span></code> so a reader never sees a torn file.</p>
+<p>The ONE tmp + fsync + <code class="docutils literal notranslate"><span class="pre">os.replace</span></code> dance in the package (muvid#17 item 4); every
+JSON record in this module goes through <a class="reference internal" href="#muvid.footage.workspace.atomic_write_text" title="muvid.footage.workspace.atomic_write_text"><code class="xref py py-func docutils literal notranslate"><span class="pre">atomic_write_text()</span></code></a>, and the
+scoring layer’s <code class="docutils literal notranslate"><span class="pre">.npz</span></code> arrays come here directly. The pieces, and why each is
+load-bearing:</p>
+<ul class="simple">
+<li><p>**The temp file is created in <code class="docutils literal notranslate"><span class="pre">path</span></code>’s own directory** (<code class="docutils literal notranslate"><span class="pre">tempfile.mkstemp</span></code>,
+so a concurrent writer gets its own name rather than racing on a fixed
+<code class="docutils literal notranslate"><span class="pre">.tmp</span></code>). <code class="docutils literal notranslate"><span class="pre">os.replace</span></code> is only a rename — and only atomic — within one
+filesystem; a temp under <code class="docutils literal notranslate"><span class="pre">/tmp</span></code> would make it a copy with a torn window.</p></li>
+<li><p><strong>The temp is fsync’d before the rename.</strong> Without it the rename can reach the
+journal before the data reaches the disk, and a power cut leaves the new name
+pointing at zeros — the failure mode a rename alone is wrongly believed to
+exclude.</p></li>
+<li><p><strong>The directory is fsync’d after the rename, best-effort.</strong> That is what makes
+the rename itself — and any <code class="docutils literal notranslate"><span class="pre">unlink</span></code> a caller did in the same directory just
+before it, which is how <a class="reference internal" href="#muvid.footage.workspace.MusicVideoFootageProject.set_song" title="muvid.footage.workspace.MusicVideoFootageProject.set_song"><code class="xref py py-meth docutils literal notranslate"><span class="pre">MusicVideoFootageProject.set_song()</span></code></a> orders its
+invalidation — durable. Directories cannot be opened for fsync on every platform
+(Windows), so an <code class="docutils literal notranslate"><span class="pre">OSError</span></code> there is the one exception swallowed: the data is
+already safe on disk; only the metadata’s promptness is lost.</p></li>
+<li><p><strong>On any failure the temp is removed and the error propagates.</strong> <code class="docutils literal notranslate"><span class="pre">write_text</span></code>
+raised too; the difference is that <code class="docutils literal notranslate"><span class="pre">path</span></code> still holds the previous complete
+record instead of a truncated one.</p></li>
+</ul>
+<p><code class="docutils literal notranslate"><span class="pre">mkstemp</span></code> creates the file <code class="docutils literal notranslate"><span class="pre">0600</span></code>, which is what these per-user records want and
+what <code class="docutils literal notranslate"><span class="pre">downloads.organise</span></code> already did for <code class="docutils literal notranslate"><span class="pre">meta.json</span></code>; the mode of an existing
+file is not carried over, deliberately, so the outcome does not depend on history.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" rel="nofollow noopener" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code><svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.footage.workspace.atomic_write_text">
+<span class="sig-prename descclassname"><span class="pre">muvid.footage.workspace.</span></span><span class="sig-name descname"><span class="pre">atomic_write_text</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">text</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/muvid/footage/workspace.html#atomic_write_text"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#muvid.footage.workspace.atomic_write_text" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#muvid.footage.workspace.atomic_write_text'">¶</a></dt>
+<dd><p>Atomically replace <code class="docutils literal notranslate"><span class="pre">path</span></code> with <code class="docutils literal notranslate"><span class="pre">text</span></code> (UTF-8) — see <a class="reference internal" href="#muvid.footage.workspace.atomic_write_bytes" title="muvid.footage.workspace.atomic_write_bytes"><code class="xref py py-func docutils literal notranslate"><span class="pre">atomic_write_bytes()</span></code></a>.</p>
+<p>Every <code class="docutils literal notranslate"><span class="pre">manifest.json</span></code>, <code class="docutils literal notranslate"><span class="pre">alignments.json</span></code> and render <code class="docutils literal notranslate"><span class="pre">meta.json</span></code> write goes
+through here. UTF-8 is a superset of the ASCII <code class="docutils literal notranslate"><span class="pre">json.dumps</span></code> emits by default, so
+the bytes on disk are identical to what <code class="docutils literal notranslate"><span class="pre">write_text</span></code> produced and the locale-default
+<code class="docutils literal notranslate"><span class="pre">read_text</span></code> on the read side is untouched — the FORMAT does not change, only the
+way it gets there.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" rel="nofollow noopener" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code><svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.footage.workspace.data_root">
+<span class="sig-prename descclassname"><span class="pre">muvid.footage.workspace.</span></span><span class="sig-name descname"><span class="pre">data_root</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/muvid/footage/workspace.html#data_root"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#muvid.footage.workspace.data_root" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#muvid.footage.workspace.data_root'">¶</a></dt>
+<dd><p>The muvid data root: <code class="docutils literal notranslate"><span class="pre">$MUVID_DATA_HOME</span></code> or <code class="docutils literal notranslate"><span class="pre">~/.local/share/muvid</span></code>.</p>
+<p>A thin forwarder rather than <code class="docutils literal notranslate"><span class="pre">data_root</span> <span class="pre">=</span> <span class="pre">data_home</span></code>: a plain alias keeps
+<code class="docutils literal notranslate"><span class="pre">__module__</span> <span class="pre">==</span> <span class="pre">"muvid.paths"</span></code>, which drops the name out of anything that filters
+a module’s members by where they were defined — <code class="docutils literal notranslate"><span class="pre">automodule</span> <span class="pre">:members:</span></code> (so this
+docstring would not render here) and this repo’s own drift-test idiom in
+<code class="docutils literal notranslate"><span class="pre">tests/test_mcp.py</span></code>. Costs one call; keeps the module’s surface introspectable.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" rel="nofollow noopener" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code><svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+</section>
+</div></div><aside class="hidden text-sm xl:block" id="right-sidebar">
+<div class="sticky top-16 -mt-10 max-h-[calc(100vh-5rem)] h-full overflow-y-auto pt-6 space-y-2"><p class="font-medium">On this page</p>
+<ul>
+<li><a :data-current="activeSection === '#muvid.footage.workspace.CANVASES'" class="reference internal" href="#muvid.footage.workspace.CANVASES"><code class="docutils literal notranslate"><span class="pre">CANVASES</span></code></a></li>
+<li><a :data-current="activeSection === '#muvid.footage.workspace.DATA_HOME_ENV_VAR'" class="reference internal" href="#muvid.footage.workspace.DATA_HOME_ENV_VAR"><code class="docutils literal notranslate"><span class="pre">DATA_HOME_ENV_VAR</span></code></a></li>
+<li><a :data-current="activeSection === '#muvid.footage.workspace.FootageWorkspace'" class="reference internal" href="#muvid.footage.workspace.FootageWorkspace"><code class="docutils literal notranslate"><span class="pre">FootageWorkspace</span></code></a></li>
+<li><a :data-current="activeSection === '#muvid.footage.workspace.MusicVideoFootageProject'" class="reference internal" href="#muvid.footage.workspace.MusicVideoFootageProject"><code class="docutils literal notranslate"><span class="pre">MusicVideoFootageProject</span></code></a><ul>
+<li><a :data-current="activeSection === '#muvid.footage.workspace.MusicVideoFootageProject.add_clip'" class="reference internal" href="#muvid.footage.workspace.MusicVideoFootageProject.add_clip"><code class="docutils literal notranslate"><span class="pre">MusicVideoFootageProject.add_clip()</span></code></a></li>
+<li><a :data-current="activeSection === '#muvid.footage.workspace.MusicVideoFootageProject.ensure_render_refs'" class="reference internal" href="#muvid.footage.workspace.MusicVideoFootageProject.ensure_render_refs"><code class="docutils literal notranslate"><span class="pre">MusicVideoFootageProject.ensure_render_refs()</span></code></a></li>
+<li><a :data-current="activeSection === '#muvid.footage.workspace.MusicVideoFootageProject.invalidate_scores'" class="reference internal" href="#muvid.footage.workspace.MusicVideoFootageProject.invalidate_scores"><code class="docutils literal notranslate"><span class="pre">MusicVideoFootageProject.invalidate_scores()</span></code></a></li>
+<li><a :data-current="activeSection === '#muvid.footage.workspace.MusicVideoFootageProject.next_render_ref'" class="reference internal" href="#muvid.footage.workspace.MusicVideoFootageProject.next_render_ref"><code class="docutils literal notranslate"><span class="pre">MusicVideoFootageProject.next_render_ref()</span></code></a></li>
+<li><a :data-current="activeSection === '#muvid.footage.workspace.MusicVideoFootageProject.remove_clip'" class="reference internal" href="#muvid.footage.workspace.MusicVideoFootageProject.remove_clip"><code class="docutils literal notranslate"><span class="pre">MusicVideoFootageProject.remove_clip()</span></code></a></li>
+<li><a :data-current="activeSection === '#muvid.footage.workspace.MusicVideoFootageProject.renders_dir'" class="reference internal" href="#muvid.footage.workspace.MusicVideoFootageProject.renders_dir"><code class="docutils literal notranslate"><span class="pre">MusicVideoFootageProject.renders_dir</span></code></a></li>
+<li><a :data-current="activeSection === '#muvid.footage.workspace.MusicVideoFootageProject.set_song'" class="reference internal" href="#muvid.footage.workspace.MusicVideoFootageProject.set_song"><code class="docutils literal notranslate"><span class="pre">MusicVideoFootageProject.set_song()</span></code></a></li>
+<li><a :data-current="activeSection === '#muvid.footage.workspace.MusicVideoFootageProject.song_hash'" class="reference internal" href="#muvid.footage.workspace.MusicVideoFootageProject.song_hash"><code class="docutils literal notranslate"><span class="pre">MusicVideoFootageProject.song_hash()</span></code></a></li>
+</ul>
+</li>
+<li><a :data-current="activeSection === '#muvid.footage.workspace.atomic_write_bytes'" class="reference internal" href="#muvid.footage.workspace.atomic_write_bytes"><code class="docutils literal notranslate"><span class="pre">atomic_write_bytes()</span></code></a></li>
+<li><a :data-current="activeSection === '#muvid.footage.workspace.atomic_write_text'" class="reference internal" href="#muvid.footage.workspace.atomic_write_text"><code class="docutils literal notranslate"><span class="pre">atomic_write_text()</span></code></a></li>
+<li><a :data-current="activeSection === '#muvid.footage.workspace.data_root'" class="reference internal" href="#muvid.footage.workspace.data_root"><code class="docutils literal notranslate"><span class="pre">data_root()</span></code></a></li>
+</ul>
+</div>
+</aside>
+</main>
+</div>
+</div><footer class="py-6 border-t border-border md:py-0">
+<div class="container flex flex-col items-center justify-between gap-4 md:h-24 md:flex-row">
+<div class="flex flex-col items-center gap-4 px-8 md:flex-row md:gap-2 md:px-0">
+<p class="text-sm leading-loose text-center text-muted-foreground md:text-left"></p>
+</div>
+</div>
+</footer>
+</div>
+<script src="../_static/documentation_options.js?v=152b4b09"></script>
+<script src="../_static/doctools.js?v=fd6eb6e6"></script>
+<script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+<script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+<script src="../_static/copybutton.js?v=fd10adb8"></script>
+<script defer="defer" src="../_static/theme.js?v=5db23cf8"></script>
+</body>
+</html>
