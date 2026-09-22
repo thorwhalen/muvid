@@ -2,7 +2,7 @@
 
 # About this build
 
-This documentation was built on **2026-09-22 17:21 UTC** from commit <a href="https://github.com/thorwhalen/muvid/commit/2aca317d8725d783ca5da3e9c0e745f21503a2d1"><code>2aca317</code></a> on branch <code>main</code>, for **muvid 0.0.67** (from <code>pyproject.toml</code>).
+This documentation was built on **2026-09-22 17:39 UTC** from commit <a href="https://github.com/thorwhalen/muvid/commit/bc499a982aa7ca16139f012adc09cc81464cce93"><code>bc499a9</code></a> on branch <code>main</code>, for **muvid 0.0.68** (from <code>pyproject.toml</code>).
 
 #### NOTE
 Nothing suggests a mismatch: the tree was clean at the commit above, and the documented version is the one on PyPI.
@@ -11,9 +11,9 @@ Nothing suggests a mismatch: the tree was clean at the commit above, and the doc
 
 |                     |                                                                                                                                                         |
 |---------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Commit              | <a href="https://github.com/thorwhalen/muvid/commit/2aca317d8725d783ca5da3e9c0e745f21503a2d1"><code>2aca317d8725d783ca5da3e9c0e745f21503a2d1</code></a> |
+| Commit              | <a href="https://github.com/thorwhalen/muvid/commit/bc499a982aa7ca16139f012adc09cc81464cce93"><code>bc499a982aa7ca16139f012adc09cc81464cce93</code></a> |
 | Branch              | <code>main</code>                                                                                                                                       |
-| Tags at this commit | <code>0.0.67</code>                                                                                                                                     |
+| Tags at this commit | <code>0.0.68</code>                                                                                                                                     |
 | Working tree        | clean                                                                                                                                                   |
 | Remote              | <code>https://github.com/thorwhalen/muvid</code>                                                                                                        |
 
@@ -22,9 +22,9 @@ Nothing suggests a mismatch: the tree was clean at the commit above, and the doc
 |              |                                                                                            |
 |--------------|--------------------------------------------------------------------------------------------|
 | Repository   | <code>thorwhalen/muvid</code>                                                              |
-| Run          | <a href="https://github.com/thorwhalen/muvid/actions/runs/35759383315">35759383315</a>     |
+| Run          | <a href="https://github.com/thorwhalen/muvid/actions/runs/35761311080">35761311080</a>     |
 | Ref          | <code>refs/heads/main</code>                                                               |
-| Event commit | <code>3ea2536ff4f538f3bd7708507899df81609a6bf3</code> (in the history of the built commit) |
+| Event commit | <code>74a130cba68a9fd275bc4c379ea00de28ef01de6</code> (in the history of the built commit) |
 
 ## Tools
 
@@ -49,13 +49,13 @@ Nothing suggests a mismatch: the tree was clean at the commit above, and the doc
 
 ## Package on PyPI
 
-Latest release: <a href="https://pypi.org/project/muvid/0.0.67/">0.0.67</a>, the same as the documented version.
+Latest release: <a href="https://pypi.org/project/muvid/0.0.68/">0.0.68</a>, the same as the documented version.
 
 ## Reproduce
 
 ```bash
 git clone https://github.com/thorwhalen/muvid && cd muvid
-git checkout 2aca317d8725d783ca5da3e9c0e745f21503a2d1
+git checkout bc499a982aa7ca16139f012adc09cc81464cce93
 pip install "epythet==0.2.12"
 epythet quickstart . --ignore tests/ scrap/ examples/
 ```
