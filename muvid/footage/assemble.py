@@ -635,14 +635,36 @@ def _render_first_usable(candidates, part: Path, **render_kwargs) -> None:
     )
 
 
-def _audio_args(song_path: str) -> list[str]:
+def _audio_args(
+    song_path: str,
+    *,
+    fade_out_s: float = 0.0,
+    total_s: float = 0.0,
+    trimmed_head: bool = False,
+) -> list[str]:
     """Stream-copy the master when it already is the delivery contract; else encode to it.
 
     Bit-identical audio (muvid#21 item 5) and the fixed 2ch@48kHz delivery contract
     (muvid#24 B3) are only simultaneously satisfiable when the master is already
     aac/48000/2ch — so that is exactly the copy condition, decided by probe, not hope.
+    A tail fade (``fade_out_s`` over the last seconds of a ``total_s`` render) is a
+    filter, so it always encodes. So does a render that starts after the song does
+    (``trimmed_head``): a stream copy after an input ``-ss`` begins on an AAC packet
+    boundary rather than at the seek point, and the picture, cut exactly, would run
+    that fraction of a frame out of sync with the music.
     """
     from muvid.visualize.ffmpeg import probe
+
+    encode = ["-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-ac", "2"]
+    if trimmed_head and not (fade_out_s > 0 and total_s > 0):
+        return encode
+    if fade_out_s > 0 and total_s > 0:
+        fade = min(fade_out_s, total_s)
+        return [
+            "-af",
+            f"afade=t=out:st={max(0.0, total_s - fade):.6f}:d={fade:.6f}",
+            *encode,
+        ]
 
     try:
         astreams = [
@@ -659,7 +681,7 @@ def _audio_args(song_path: str) -> list[str]:
         and a.get("channels") == 2
     ):
         return ["-c:a", "copy"]
-    return ["-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-ac", "2"]
+    return encode
 
 
 def _has_video_frames(part: Path) -> bool:
@@ -689,6 +711,8 @@ def assemble_music_video(
     crf: int = 20,
     preset: str = "veryfast",
     on_note=None,
+    fade_out_s: float = 0.0,
+    should_cancel=None,
 ) -> Path:
     """Render ``cuts`` (a validated, contiguous, gap-filled EDL) into ``out_path``.
 
@@ -708,6 +732,15 @@ def assemble_music_video(
             about. A callback rather than a changed return type, because the
             return type is a public contract and because ``catch_warnings``
             mutates process-global state that concurrent renders would share.
+        fade_out_s: fade the song out over this many seconds at the END of the
+            render. For an edit that stops before the song does (a trimmed
+            ``span``), so the music does not stop dead mid-bar; ``0`` (the default)
+            keeps the master untouched — and, for an aac/48k/2ch master, stream-copied
+            bit for bit. A fade re-encodes the audio (a filter cannot run on a copy).
+        should_cancel: a zero-argument callable polled before every part and before the
+            mux; when it returns True the render stops there (its parts are removed)
+            and :class:`~muvid.footage.errors.FootageCancelled` is raised — so a
+            cancelled render ends within one cut's encode rather than minutes later.
     """
     from muvid.visualize.ffmpeg import require_ffmpeg, require_filter, run_ffmpeg
 
@@ -729,8 +762,16 @@ def assemble_music_video(
         plan = _part_plan(cuts, fps, on_note)
         if any(p.kind == "xfade" for p in plan):
             require_filter("xfade", needed_for="EDL transitions")
+
+        def stop_if_asked(where: str) -> None:
+            if should_cancel is not None and should_cancel():
+                from muvid.footage.errors import FootageCancelled
+
+                raise FootageCancelled(f"render stopped {where}")
+
         names = []
         for i, p in enumerate(plan):
+            stop_if_asked(f"before part {i} of {len(plan)}")
             if p.n_frames == 0:  # a sub-frame cut owns no grid frame — _frame_counts
                 continue
             name = f"part{i:04d}.mp4"
@@ -766,6 +807,7 @@ def assemble_music_video(
         # Concat-demuxer entries resolve relative to the LIST file, and the names are
         # ours (partNNNN.mp4) — plain relative names, so the demuxer's default "safe"
         # mode is fine and no quoting/escaping surface exists here.
+        stop_if_asked("before the final mux")
         concat_list = parts_dir / "parts.txt"
         concat_list.write_text("".join(f"file {n}\n" for n in names))
         song_start = cuts[0].song_start
@@ -793,7 +835,12 @@ def assemble_music_video(
                 f"{total:.6f}",
                 "-c:v",
                 "copy",
-                *_audio_args(song_path),
+                *_audio_args(
+                    song_path,
+                    fade_out_s=fade_out_s,
+                    total_s=total,
+                    trimmed_head=song_start > 1e-3,
+                ),
                 # Delivery contract (muvid#24 B3): no edit lists, moov up front.
                 "-use_editlist",
                 "0",

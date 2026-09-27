@@ -66,6 +66,7 @@ def verify_video(
     check_loudness: bool = False,
     duration_tolerance: float = DURATION_TOLERANCE,
     expected_canvas: tuple[int, int] | None = None,
+    expected_duration: float | None = None,
 ) -> list[Check]:
     """Check ``video`` against YouTube's expectations; return one result per check.
 
@@ -82,6 +83,9 @@ def verify_video(
             given, the aspect/resolution checks verify the output matches it —
             a deliberate portrait render must not fail a hard-coded 16:9 check.
             When ``None``, the classic YouTube-landscape expectations apply.
+        expected_duration: The length the render was ASKED for, when that is not
+            the whole of ``audio`` — a trimmed edit renders only part of the song.
+            Arms the duration check on its own, and wins over ``audio``'s length.
 
     Returns:
         A list of :class:`Check`. Falsy checks are the problems; :func:`report`
@@ -178,8 +182,14 @@ def verify_video(
     )
     checks.append(_verify_no_edit_lists(video))
 
-    if audio is not None:
-        song = media_duration(audio)
+    if audio is not None or expected_duration is not None:
+        # `expected_duration` wins when a render deliberately covers only PART of the
+        # song (a trimmed edit): the audio is then the master cut to that span.
+        song = (
+            float(expected_duration)
+            if expected_duration is not None
+            else media_duration(audio)
+        )
         # The VIDEO STREAM's duration, not the container's: the container reports the
         # longest stream, which is usually the audio — exactly the stream this check is
         # comparing against. A render whose video track came up short (a source-exhausted

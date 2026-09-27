@@ -445,6 +445,12 @@ class UnreliableAlignmentError(ValueError):
         )
 
 
+#: ``FootageAlignment.source`` values: the aligner found the offset, or a person set it.
+MEASURED = "measured"
+DECLARED = "declared"
+ALIGNMENT_SOURCES = (MEASURED, DECLARED)
+
+
 @dataclass(frozen=True)
 class FootageAlignment:
     """Where one uploaded clip sits on the song timeline (muvid's per-clip record).
@@ -507,6 +513,13 @@ class FootageAlignment:
     #: actually missing, since its near-ties (0.993/0.989/0.987) are invisible to any
     #: fraction that does not look at the runner-up.
     margin: float | None = None
+    #: How the offset is KNOWN: :data:`MEASURED` (the aligner found it by audio) or
+    #: :data:`DECLARED` (a person set it — ``muvid.footage.service.set_offset``). A
+    #: declared record carries ``reliable=True`` because a person vouched for it, and
+    #: ``confidence=1.0`` / ``support=None`` because no measurement was made; read
+    #: ``source`` before reading either as evidence. Records on disk that predate the
+    #: field were all written by the aligner, so it defaults to measured.
+    source: str = "measured"
 
     def to_dict(self) -> dict:
         return {
@@ -521,6 +534,7 @@ class FootageAlignment:
             "window_s": self.window_s,
             "hop_s": self.hop_s,
             "margin": self.margin,
+            "source": self.source,
         }
 
     @classmethod
@@ -574,6 +588,9 @@ class FootageAlignment:
             window_s=window_s,
             hop_s=hop_s,
             margin=margin,
+            # Absent means the aligner wrote it: every record before `source` existed
+            # came from `align_footage`, and nothing else wrote alignments.json.
+            source=str(d.get("source") or MEASURED),
         )
 
 
@@ -865,8 +882,15 @@ def _as_entry(e) -> EdlEntry:
     )
 
 
-def fill_gaps(entries: Sequence, song_duration: float) -> list[EdlEntry]:
+def fill_gaps(
+    entries: Sequence, song_duration: float, *, start: float = 0.0
+) -> list[EdlEntry]:
     """Make an edit span the WHOLE song by inserting explicit gap entries.
+
+    ``start`` (default 0) and ``song_duration`` bound the span being filled: an edit
+    that covers only PART of the song (a named edit's ``span``) fills ``[start,
+    song_duration]`` with ``song_duration`` passed as the span's END, and an entry
+    outside that span is refused like one outside the song.
 
     Three holes become gap entries (muvid#21 items 1+2, one mechanism): the head
     (``[0, first.song_start]`` — without this, footage starting at t=5 s silently loses
@@ -894,13 +918,13 @@ def fill_gaps(entries: Sequence, song_duration: float) -> list[EdlEntry]:
     # the phantom gap inserted to reach it — an entry the caller never wrote. Note the
     # entries are also SORTED here: an out-of-order list is normalised, not rejected.
     for e in ordered:
-        if e.song_start < -_EPS or e.song_end > song_duration + _EPS:
+        if e.song_start < start - _EPS or e.song_end > song_duration + _EPS:
             raise ValueError(
                 f"EDL entry [{e.song_start:.3f}, {e.song_end:.3f}] is outside the "
-                f"song [0, {song_duration:.3f}]"
+                f"{'span' if start else 'song'} [{start:g}, {song_duration:.3f}]"
             )
     out: list[EdlEntry] = []
-    cursor = 0.0
+    cursor = float(start)
     for e in ordered:
         if e.song_start - cursor > _EPS:
             out.append(EdlEntry(cursor, e.song_start, ""))

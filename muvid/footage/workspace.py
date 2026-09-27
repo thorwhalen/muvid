@@ -13,6 +13,15 @@ with the visualizer's root, different subtree). **Never** inside the app/deploy 
 - ``.../clips/{clip_id}.<ext>`` — an uploaded footage clip
 - ``.../alignments.json`` — the persisted per-clip alignment
 - ``.../renders/{render_id}/`` — an assembled music video
+- ``.../edits/{edit_id}.json`` — a named, persisted edit (an EDL plus how it was made)
+- ``.../cover.jpg`` — the project's cover frame (hosted projects only)
+
+**The catalog seam.** ``MusicVideoFootageProject(..., media_catalog=None)``: when a host
+places the project (:class:`muvid.Project`), every song, clip, render and cover that
+lands here is also registered in the host's artifact catalog
+(:class:`muvid.catalog.HostArtifactCatalog`) and its ``artifact_id`` recorded beside it,
+so the host can serve the bytes. ``None`` — the MCP connector's per-caller workspace —
+registers nothing and records nothing, so its on-disk records are unchanged.
 
 **Every JSON record here is replaced, never truncated in place** (muvid#17 item 4).
 ``manifest.json`` and ``alignments.json`` used to be bare ``write_text`` calls — a
@@ -44,12 +53,15 @@ from __future__ import annotations
 
 import json
 import os
+import re
+import shutil
 import tempfile
 import time
-from dataclasses import dataclass
+from contextlib import contextmanager
+from dataclasses import dataclass, field
 from pathlib import Path
 
-from muvid.footage.edl import FootageAlignment
+from muvid.footage.edl import DECLARED, FootageAlignment
 from muvid.paths import (
     DATA_HOME_ENV_VAR as _DATA_HOME_ENV_VAR,
     data_home,
@@ -82,6 +94,110 @@ def data_root() -> Path:
     return data_home()
 
 
+#: What a caller-chosen id (a clip's, an edit's) may be — after surrounding whitespace is
+#: dropped. Letters, digits, ``_`` and ``-`` only: an id names a FILE (``clips/<id>.mp4``,
+#: ``edits/<id>.json``), and a looser rule let ``*`` through to a glob that deleted every
+#: clip, and ``" c1"`` replace ``c1``'s bytes under a different manifest key.
+ID_PATTERN = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
+
+
+def normalise_id(value: str, *, label: str) -> str:
+    """``value`` stripped, and refused (``ValueError``) unless it matches
+    :data:`ID_PATTERN`.
+
+    >>> normalise_id(" c01 ", label="clip_id")
+    'c01'
+    >>> normalise_id("*", label="clip_id")
+    Traceback (most recent call last):
+        ...
+    ValueError: invalid clip_id '*': use 1-64 letters, digits, '_' or '-'
+    """
+    v = (value or "").strip() if isinstance(value, str) else ""
+    if not ID_PATTERN.fullmatch(v):
+        raise ValueError(
+            f"invalid {label} {value!r}: use 1-64 letters, digits, '_' or '-'"
+        )
+    return v
+
+
+def _files_with_stem(directory: Path, stem: str) -> list[Path]:
+    """The files in ``directory`` whose name is exactly ``<stem>.<one extension>`` — an
+    exact match, never a glob, so ``A`` does not reach ``A.x.mp4``."""
+    if not directory.is_dir():
+        return []
+    return [
+        p
+        for p in directory.iterdir()
+        if p.is_file() and p.suffix and p.name[: -len(p.suffix)] == stem
+    ]
+
+
+def replace_file(src, dest) -> Path:
+    """Put a copy of ``src`` at ``dest`` as a NEW file (temp sibling + ``os.replace``).
+
+    Never writes into an existing ``dest``: a project's media is hardlinked into the
+    host's content-addressed catalog (``blobs/<sha256>``), so an in-place overwrite would
+    silently change the bytes behind an id that names the old ones. A rename gives
+    ``dest`` a new inode and leaves the blob exactly as it was.
+    """
+    dest = Path(dest)
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp = tempfile.mkstemp(
+        dir=str(dest.parent), prefix=f".{dest.name}.", suffix=".tmp"
+    )
+    os.close(fd)
+    try:
+        shutil.copyfile(src, tmp)
+        os.replace(tmp, dest)
+    except BaseException:
+        Path(tmp).unlink(missing_ok=True)
+        raise
+    return dest
+
+
+@contextmanager
+def fresh_output(dest):
+    """A temp path beside ``dest`` for a writer that cannot be told to be careful
+    (ffmpeg); on success it is renamed onto ``dest`` — a new inode, as in
+    :func:`replace_file` — and on failure removed."""
+    dest = Path(dest)
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    tmp = dest.with_name(f".{dest.stem}.{os.getpid()}.tmp{dest.suffix}")
+    try:
+        yield tmp
+        os.replace(tmp, dest)
+    finally:
+        tmp.unlink(missing_ok=True)
+
+
+@contextmanager
+def file_lock(path):
+    """An exclusive advisory lock on ``path`` for a read-modify-write (POSIX ``flock``;
+    ``msvcrt.locking`` on Windows). Serialises concurrent edits of one project's files;
+    each write is also atomic, so a reader never needs the lock."""
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(path, "a+b") as f:
+        try:
+            import fcntl
+
+            fcntl.flock(f.fileno(), fcntl.LOCK_EX)
+            try:
+                yield
+            finally:
+                fcntl.flock(f.fileno(), fcntl.LOCK_UN)
+        except ImportError:  # Windows
+            import msvcrt
+
+            f.seek(0)
+            msvcrt.locking(f.fileno(), msvcrt.LK_LOCK, 1)
+            try:
+                yield
+            finally:
+                f.seek(0)
+                msvcrt.locking(f.fileno(), msvcrt.LK_UNLCK, 1)
+
+
 @dataclass(frozen=True)
 class MusicVideoFootageProject:
     """One caller's stateful music-video project (song + clips + alignments + renders)."""
@@ -89,6 +205,21 @@ class MusicVideoFootageProject:
     email: str
     project_id: str
     root: Path
+    #: Where this project's media is registered for a host to serve it — a
+    #: :class:`muvid.catalog.HostArtifactCatalog` (anything with its ``register``), or
+    #: ``None`` for the MCP workspace, which registers nothing.
+    media_catalog: object = field(default=None, compare=False, repr=False)
+    #: What :meth:`manifest` reads before anything is written — a hosted project's
+    #: title and canvas come from its genre envelope, so READING its footage creates
+    #: nothing; the first write persists them.
+    defaults: dict = field(default_factory=dict, compare=False, repr=False)
+
+    # -- the host catalog ------------------------------------------------------
+    def _register(self, path, *, kind: str, **meta) -> "str | None":
+        """Register ``path`` in the host catalog; its id, or ``None`` with no catalog."""
+        if self.media_catalog is None:
+            return None
+        return self.media_catalog.register(path, kind=kind, **meta)
 
     # -- manifest ------------------------------------------------------------
     def _manifest_path(self) -> Path:
@@ -98,9 +229,15 @@ class MusicVideoFootageProject:
         try:
             return json.loads(self._manifest_path().read_text())
         except (OSError, ValueError):
-            return {"title": self.project_id, "canvas": DEFAULT_CANVAS_NAME}
+            return {
+                "title": self.project_id,
+                "canvas": DEFAULT_CANVAS_NAME,
+                **self.defaults,
+            }
 
     def _write_manifest(self, m: dict) -> None:
+        self.root.mkdir(parents=True, exist_ok=True)
+        m.setdefault("created", time.time())
         atomic_write_text(self._manifest_path(), json.dumps(m, indent=2))
 
     def canvas(self) -> tuple[int, int]:
@@ -109,7 +246,14 @@ class MusicVideoFootageProject:
         )
 
     # -- the fixed song ------------------------------------------------------
-    def set_song(self, src_path: str, *, ext: str) -> None:
+    def set_song(
+        self,
+        src_path: str,
+        *,
+        ext: str,
+        name: str = "",
+        duration_s: "float | None" = None,
+    ) -> None:
         """Store (replacing) the project's one clean song from a local file.
 
         The order of operations is the contract (muvid#17 item 4), in three phases:
@@ -128,6 +272,11 @@ class MusicVideoFootageProject:
            a crash can leave is a project that demands a fresh ``align_footage``.
         3. **The song file lands, then the manifest is replaced LAST** — it names the
            file, so the file must exist before any reader can be pointed at it.
+
+        ``name`` is the display name (an uploaded file's original name); ``duration_s``
+        is a duration the caller already probed, so a 100 MB song is not probed twice.
+        With a host catalog the song is registered too, and its id recorded as
+        ``song_artifact_id`` (it equals ``song_hash``: both are the SHA-256 of the bytes).
         """
         import shutil
 
@@ -136,6 +285,7 @@ class MusicVideoFootageProject:
         dest = song_dir / f"song{suffix}"
         # Phase 1: stage beside the song dir (same filesystem, so the final move is a
         # rename) and measure. Nothing the project owns has been touched yet.
+        self.root.mkdir(parents=True, exist_ok=True)
         fd, staged_name = tempfile.mkstemp(
             dir=str(self.root), prefix=".song.", suffix=suffix
         )
@@ -143,7 +293,9 @@ class MusicVideoFootageProject:
         staged = Path(staged_name)
         try:
             shutil.copyfile(src_path, staged)
-            duration = _probe_duration(staged)
+            duration = (
+                float(duration_s) if duration_s is not None else _probe_duration(staged)
+            )
             # Compute the song hash ONCE here (chunked) and cache it — scoring/reads
             # compare the stored hash rather than re-hashing a 100 MB file on every poll.
             digest = _hash_file(staged)
@@ -161,11 +313,17 @@ class MusicVideoFootageProject:
         except BaseException:
             staged.unlink(missing_ok=True)
             raise
-        # Phase 3b: the manifest, LAST.
+        # Phase 3b: the manifest, LAST — after the catalog, so a manifest never names an
+        # artifact id the host cannot resolve.
+        artifact_id = self._register(
+            dest, kind="audio", artifact_id=digest, duration_s=duration
+        )
         m = self.manifest()
         m["song"] = dest.name
         m["song_duration"] = duration
         m["song_hash"] = digest
+        _set_or_drop(m, "song_name", name or None)
+        _set_or_drop(m, "song_artifact_id", artifact_id)
         self._write_manifest(m)
 
     def song_hash(self) -> str:
@@ -202,19 +360,21 @@ class MusicVideoFootageProject:
         """Store a footage clip from a local file; returns its ``clip_id``."""
         import shutil
 
-        cid = safe_component(clip_id, label="clip_id")
+        cid = normalise_id(clip_id, label="clip_id")
         clips_dir = self.root / "clips"
         clips_dir.mkdir(parents=True, exist_ok=True)
         # Remove any prior file for this clip_id (a re-add with a different extension would
         # otherwise orphan the old one) before writing the new one.
-        for old in clips_dir.glob(f"{cid}.*"):
+        for old in _files_with_stem(clips_dir, cid):
             old.unlink()
-        dest = clips_dir / f"{cid}{_safe_ext(ext)}"
-        shutil.copyfile(src_path, dest)
+        dest = replace_file(src_path, clips_dir / f"{cid}{_safe_ext(ext)}")
+        artifact_id = self._register(dest, kind="video")
         m = self.manifest()
         clips = m.setdefault("clips", [])
         clips[:] = [c for c in clips if c.get("clip_id") != cid]
-        clips.append({"clip_id": cid, "file": dest.name, "name": name or cid})
+        entry = {"clip_id": cid, "file": dest.name, "name": name or cid}
+        _set_or_drop(entry, "artifact_id", artifact_id)
+        clips.append(entry)
         self._write_manifest(m)
         return cid
 
@@ -239,7 +399,7 @@ class MusicVideoFootageProject:
         scores_invalidated}``. Raises ``KeyError`` for a ``clip_id`` the manifest does
         not hold; the MCP tool turns that into a refusal naming the known ids.
         """
-        cid = safe_component(clip_id, label="clip_id")
+        cid = normalise_id(clip_id, label="clip_id")
         m = self.manifest()
         clips = list(m.get("clips", []))
         entry = next((c for c in clips if c.get("clip_id") == cid), None)
@@ -247,14 +407,23 @@ class MusicVideoFootageProject:
             raise KeyError(cid)
         alignment = self.root / "alignments.json"
         had_alignment = alignment.exists()
+        # A DECLARED offset is not a measurement of the clip set — a person set it for
+        # one clip — so it outlives another clip's removal. Only measurements go.
+        kept = [
+            a
+            for a in self.load_alignments()
+            if a.source == DECLARED and a.clip_id != cid
+        ]
         alignment.unlink(missing_ok=True)
+        if kept:
+            self.save_alignments(kept)
         had_scores = (self.root / "scores").exists()
         self.invalidate_scores()
         m["clips"] = [c for c in clips if c.get("clip_id") != cid]
         self._write_manifest(m)
         removed_files = []
         # The same sweep add_clip uses: any extension this id was ever stored under.
-        for old in (self.root / "clips").glob(f"{cid}.*"):
+        for old in _files_with_stem(self.root / "clips", cid):
             old.unlink()
             removed_files.append(old.name)
         return {
@@ -272,13 +441,102 @@ class MusicVideoFootageProject:
         return out
 
     def list_clips(self) -> list[dict]:
-        return [
-            {"clip_id": c["clip_id"], "name": c.get("name", c["clip_id"])}
-            for c in self.manifest().get("clips", [])
-        ]
+        """``[{clip_id, name}]`` — plus ``artifact_id`` when the host catalog holds it."""
+        rows = []
+        for c in self.manifest().get("clips", []):
+            row = {"clip_id": c["clip_id"], "name": c.get("name", c["clip_id"])}
+            _set_or_drop(row, "artifact_id", c.get("artifact_id"))
+            rows.append(row)
+        return rows
+
+    def song_info(self) -> "dict | None":
+        """The song's display facts (``None`` before one is set)."""
+        m = self.manifest()
+        if not m.get("song"):
+            return None
+        info = {
+            "file": m["song"],
+            "name": m.get("song_name") or m["song"],
+            "duration": m.get("song_duration"),
+        }
+        _set_or_drop(info, "artifact_id", m.get("song_artifact_id"))
+        return info
+
+    # -- named edits ---------------------------------------------------------
+    @property
+    def edits_dir(self) -> Path:
+        return self.root / "edits"
+
+    def _edit_path(self, edit_id: str) -> Path:
+        return self.edits_dir / f"{normalise_id(edit_id, label='edit_id')}.json"
+
+    def edits_lock(self):
+        """Serialise a read-modify-write of this project's edits (see :func:`file_lock`)."""
+        return file_lock(self.edits_dir / ".lock")
+
+    def has_edit(self, edit_id: str) -> bool:
+        return self._edit_path(edit_id).exists()
+
+    def write_edit(self, edit_id: str, record: dict) -> None:
+        """Persist one named edit record (replacing it atomically)."""
+        self.edits_dir.mkdir(parents=True, exist_ok=True)
+        atomic_write_text(self._edit_path(edit_id), json.dumps(record, indent=2))
+
+    def read_edit(self, edit_id: str) -> dict:
+        """One edit record; ``KeyError`` if there is no such edit."""
+        path = self._edit_path(edit_id)
+        try:
+            return json.loads(path.read_text())
+        except FileNotFoundError:
+            raise KeyError(edit_id) from None
+
+    def delete_edit(self, edit_id: str) -> bool:
+        """Remove one edit record; whether it existed."""
+        path = self._edit_path(edit_id)
+        existed = path.exists()
+        path.unlink(missing_ok=True)
+        return existed
+
+    def list_edit_records(self) -> list[dict]:
+        """Every readable edit record, oldest first (by its ``created`` stamp)."""
+        if not self.edits_dir.exists():
+            return []
+        rows = []
+        for p in sorted(self.edits_dir.glob("*.json")):
+            try:
+                rec = json.loads(p.read_text())
+            except (OSError, ValueError):
+                continue
+            if isinstance(rec, dict):
+                rec.setdefault("edit_id", p.stem)
+                rows.append(rec)
+        rows.sort(key=lambda r: (r.get("created") or 0, r["edit_id"]))
+        return rows
+
+    # -- cover ---------------------------------------------------------------
+    def cover_info(self) -> "dict | None":
+        """``{file, artifact_id, taken_from}`` of the cover frame, or ``None``."""
+        cover = self.manifest().get("cover")
+        return dict(cover) if isinstance(cover, dict) else None
+
+    def set_cover(self, image_path, *, taken_from: str) -> "str | None":
+        """Store ``image_path`` as ``cover.jpg``, register it; return its artifact id."""
+        import shutil
+
+        dest = self.root / "cover.jpg"
+        if Path(image_path) != dest:
+            replace_file(image_path, dest)
+        artifact_id = self._register(dest, kind="image")
+        m = self.manifest()
+        cover = {"file": dest.name, "taken_from": taken_from}
+        _set_or_drop(cover, "artifact_id", artifact_id)
+        m["cover"] = cover
+        self._write_manifest(m)
+        return artifact_id
 
     # -- alignments ----------------------------------------------------------
     def save_alignments(self, aligns: list[FootageAlignment]) -> None:
+        self.root.mkdir(parents=True, exist_ok=True)
         atomic_write_text(
             self.root / "alignments.json",
             json.dumps([a.to_dict() for a in aligns], indent=2),
@@ -410,6 +668,16 @@ class MusicVideoFootageProject:
         return rows
 
 
+def _set_or_drop(d: dict, key: str, value) -> None:
+    """``d[key] = value``, or remove ``key`` when ``value`` is ``None`` (omit-when-absent,
+    so a record written without a host catalog is byte-identical to one written before
+    the catalog existed)."""
+    if value is None:
+        d.pop(key, None)
+    else:
+        d[key] = value
+
+
 def _safe_ext(ext: str) -> str:
     e = (ext or "").strip().lower().lstrip(".")
     if not e or not e.isalnum() or len(e) > 5:
@@ -509,6 +777,41 @@ def atomic_write_text(path: Path, text: str) -> None:
     atomic_write_bytes(path, text.encode("utf-8"))
 
 
+def init_footage_project(
+    root: Path,
+    *,
+    project_id: str,
+    title: str = "",
+    canvas: str = DEFAULT_CANVAS_NAME,
+    media_catalog=None,
+    email: str = "",
+) -> MusicVideoFootageProject:
+    """A footage project rooted at ``root``, writing its manifest if there is none yet.
+
+    The one place a footage manifest is born, for both the MCP workspace (below) and a
+    host-placed :class:`muvid.Project` (whose footage lives at ``<project>/footage``).
+    Idempotent: an existing manifest is left exactly as it is.
+    """
+    root = Path(root)
+    if not (root / "manifest.json").exists():
+        root.mkdir(parents=True, exist_ok=True)
+        canvas_name = canvas if canvas in CANVASES else DEFAULT_CANVAS_NAME
+        atomic_write_text(
+            root / "manifest.json",
+            json.dumps(
+                {
+                    "title": title or project_id,
+                    "canvas": canvas_name,
+                    "created": time.time(),
+                },
+                indent=2,
+            ),
+        )
+    return MusicVideoFootageProject(
+        email, project_id, root, media_catalog=media_catalog
+    )
+
+
 @dataclass(frozen=True)
 class FootageWorkspace:
     """A caller's private music-video area, addressed by ``email``."""
@@ -540,20 +843,9 @@ class FootageWorkspace:
             raise FileExistsError(
                 f"project {project_id!r} already exists for {self.email}"
             )
-        root.mkdir(parents=True, exist_ok=True)
-        canvas_name = canvas if canvas in CANVASES else DEFAULT_CANVAS_NAME
-        atomic_write_text(
-            root / "manifest.json",
-            json.dumps(
-                {
-                    "title": title or project_id,
-                    "canvas": canvas_name,
-                    "created": time.time(),
-                },
-                indent=2,
-            ),
+        return init_footage_project(
+            root, project_id=project_id, title=title, canvas=canvas, email=self.email
         )
-        return MusicVideoFootageProject(self.email, project_id, root)
 
     def open_project(self, project_id: str) -> MusicVideoFootageProject:
         root = self.project_root(project_id)

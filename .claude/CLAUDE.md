@@ -7,7 +7,7 @@ table before touching anything:
 | # | part | entry points | state | status |
 |---|---|---|---|---|
 | 1 | **Visualizer** — ffmpeg-only, deterministic, no AI, no network | `muvid/visualize/`, nw genre `music-visualizer` (`muvid/genre.py`) | stateless | shipped; `yb` publishes through it |
-| 2 | **Footage assembly** — align N phone recordings of ONE song, score, select, EDL, assemble | `muvid/footage/`, `muvid/genre_music_video.py`, `muvid/mcp/footage_tools.py` + `scoring_tools.py` | **stateful, on disk** | shipped; **the active workstream**; serves live connector traffic |
+| 2 | **Footage assembly** — align N phone recordings of ONE song, score, select, EDL, assemble | `muvid/footage/` — the operations are `muvid/footage/service.py` (the SSOT); `muvid/genre_music_video.py` (nw genre + its `nw.GenreOp` catalogue); `muvid/mcp/footage_tools.py` + `scoring_tools.py` (MCP transport); `muvid/production.py` (`muvid.Project`, host-placed); `muvid/importing/` | **stateful, on disk** | shipped; **the active workstream**; serves live connector traffic |
 | 3 | **Full-AI narrative pipeline** — transcribe → align → cast → environments → script → render → compose | `muvid/facade.py`, `muvid/renderers/`, `muvid/lyrics.py`, `muvid/align.py`, `muvid/script.py`, `muvid/compose.py` | project folder | works end to end; **not** an nw genre; the shrink-toward-nw candidate (issue #4) |
 | 4 | **Subgenre plugins** — the surface for "another kind of video", by muvid or anyone. Ships three: **`lyric-video`** (measured word times → treatment → computed scene → ASS or browser render), **`choreo`** (audio only → per-band onset events → objects with persistence, Fischinger/"Star Guitar" visual music, numpy→ffmpeg), **`montage`** (a pool of stills/clips → a planner on the beat grid with a reuse policy → one ffmpeg graph) | `muvid/subgenres/` (the surface), `muvid/lyricvid/`, `muvid/choreo/`, `muvid/montage/`, `muvid/genre_lyric_video.py` + `muvid/genre_subgenres.py` (nw bridges), `muvid/mcp/lyricvid_tools.py` + `subgenre_tools.py` | stateless | shipped; `lyric-video` has the first COSTED tool; `choreo` and `montage` are discovered purely through their entry points — nothing in muvid names them |
 
@@ -391,7 +391,7 @@ comment both mis-scoped a one-day change as a federation migration:**
 So the compatibility surface is **not** a schema version. It is two concrete things:
 
 - **`renders/{render_id}/meta.json["edl"]`** — the only place an EDL is persisted
-  (`workspace.py`'s `write_render_meta`, fed by `footage_tools._edl_json`). `_as_entry`
+  (`workspace.py`'s `write_render_meta`, fed by `service.edl_json`) — and, since the named edits, **`edits/{edit_id}.json["edl"]`**, written by the same function. `_as_entry`
   reads three keys by name and ignores the rest, so an old build reading a newer record
   renders hard cuts — degraded, never wrong, in both directions.
 - **The live MCP wire.** `footage_editor_document` and `footage_edl_from_annotations` are
@@ -405,7 +405,7 @@ read-by-name**: emit the key only when it is set (so every existing document and
 stays byte-identical) and read it defensively.
 
 **Emitting is the half that gets forgotten, so it is now a table rather than an `if`.**
-`transition` was hand-written into `footage_tools._edl_json` and survived; `crop`,
+`transition` was hand-written into what is now `service.edl_json` and survived; `crop`,
 `crop_end` and `look` were each added to `EdlEntry` and *not* — so a caller's framing
 and grade were accepted, honoured by the renderer, and absent from both the returned
 `edl` and the `meta.json` beside the file they styled, while the tool's own note says
@@ -625,6 +625,27 @@ against the recording in CI, and the imported-`an` tests are the recording's *fr
 check on a developer machine. Same shape as reelee-web's `schemas/destructive-tools.json`.
 Refresh with `tests.test_animation_camera._refresh_snapshot()`.
 
+## The operations — one catalogue, every surface derived from it
+
+`muvid/footage/service.py` is the single source of truth for what can be done to a footage project: plain functions `(fp, *, ...) -> dict` over a `MusicVideoFootageProject`, raising `FootageError` (a `ValueError`, `muvid/footage/errors.py`) on refusal — never a transport's error type — with **model-facing docstrings**. `FOOTAGE_OP_SPECS` at the bottom is the catalogue (name · plain-language title · effect `read|write|render|destroy` · runs `now|job`, plus `hide` for transport-filled parameters like `duration_s`). Three consumers derive from it and list nothing again:
+
+- `muvid/genre_music_video.py` turns each row into an `nw.GenreOp` (`FOOTAGE_OPS`, `nw.register_genre_ops("music_video", …)`) whose `fn` takes the HOST's project and runs the op on its `.footage` — this is what reelee's generic `/api/genre-ops` routes serve. `genre_lyric_video.py` registers one view-only `status` op the same way.
+- `muvid/mcp/footage_tools.py` / `scoring_tools.py` are transports: resolve `project_id` to the caller's workspace, call the service, turn `FootageError` into `ToolError` (carrying the root cause). URL fetching, the scoring `nw.jobs` job and the render's download claim are the only logic left there.
+- Titles are button and command titles: plain imperative, and never mention money (nothing here spends).
+
+**Three rules the first review of this surface had to add, each a bug it found:**
+
+- **Never write into an existing project media file.** Song, clips, renders, sources and covers are hardlinked into the host catalog as `blobs/<sha256>`; an in-place overwrite (`shutil.copyfile` onto an existing path, `ffmpeg -y` onto one) changes the bytes behind an id that names the old ones. Every (re)write goes through `workspace.replace_file` (temp sibling + `os.replace`, a new inode) or `workspace.fresh_output` (for ffmpeg). `tests/test_footage_service.py` re-hashes every blob after an import → changed-bytes re-import → cover refresh.
+- **Ids are names, not patterns.** A clip or edit id is `^[A-Za-z0-9_-]{1,64}$` after stripping (`workspace.normalise_id`), uniqueness is checked on the normalised id, and files are matched by exact stem (`_files_with_stem`) — never a glob. `safe_component` let `*` through to a glob that deleted every clip.
+- **Refusal and cancellation are the host's contract, from nw.** `FootageError` derives from `nw.GenreOpRefused` and `FootageCancelled` from `nw.GenreOpCancelled` (when nw is importable; plain `ValueError`/`Exception` otherwise, since core does not depend on nw). `render` and `score` take a host-supplied `should_cancel` (a `host_param`); the assembler polls it before every part and before the mux. `align` is one estimator call with no step to stop between, so it is not cancellable. Upload ops carry `max_upload_bytes` (the song/clip caps) for the host to enforce while streaming.
+- **A client never names a server file.** `set_song`/`add_clip` declare `path`/`filename` as `nw.GenreOp.host_params` (`OpSpec.host_params`): absent from the served schema, supplied only by the host through `op.run(project, params, host={...})`.
+
+Also: `muvid.create_project_at(..., genre=, template=)` records the nw genre envelope itself (reelee lists and opens a project by it), reading `Project.footage` creates nothing (its defaults come from the envelope; the first write persists them), edit read-modify-writes run under `edits_lock()`, hosted replies carry project-relative paths only (`public_render`), and the MCP transport rewrites op names to TOOL names in docstrings, refusals and `next_step` (`footage_tools._as_tool_names`). Named looks (`muvid/footage/named_looks.py`, the `looks` op) are the menu a screen offers; `set_cut(look={"name": ..., **params})` compiles one for the cut, zooms bounded at 1.15, raw filter strings still accepted.
+
+**Keep the service import-light** (stdlib + `edl` at module top): the genre module imports it at registration to read signatures, and `tests/test_footage.py::test_import_genre_is_light` guards that.
+
+**Named edits** (`save_edit`, `set_cut`, `split_cut`, `merge_cut`, `replace_edit`, `delete_edit`, `render(edit_id=…)`) validate every change through `validate_edl` with `allow_unreliable=True` — an edit is a plan; the trust refusal (muvid#59) stays where the encode is, in `render`/`assemble`. `set_cut` moving a boundary moves the neighbour's, so an edit is always one contiguous timeline. An edit may cover **part** of the song: its optional `span: [start_s, end_s]` (absent = the whole song, one spelling on disk) bounds gap-filling (`edl.fill_gaps(..., start=)`) and validation, `set_span` trims or widens it, and `render` renders only that stretch — the assembler already muxes the master for `[first cut, last cut]`, so the video AND the song are cut to it; the song fades out over `service.TAIL_FADE_S` (the assembler's `fade_out_s`, which re-encodes the audio) when the span ends before the song does, and `verify_video(expected_duration=)` checks the render against the span's length rather than the song's. A whole-song render passes neither argument and is byte-for-byte unchanged.
+
 ## Connector duty — `muvid_*` tools are live
 
 `muvid/mcp/__init__.py` declares the tool surface a host connector aggregates via
@@ -633,6 +654,8 @@ Refresh with `tests.test_animation_camera._refresh_snapshot()`.
 - `VISUALIZER_TOOLS` — `muvid/mcp/tools.py`
 - `FOOTAGE_TOOLS` — `muvid/mcp/footage_tools.py`
 - `SCORING_TOOLS` — `muvid/mcp/scoring_tools.py`
+
+`FOOTAGE_TOOLS` and `SCORING_TOOLS` are **computed, not written**: `muvid/mcp/_footage_ops.py` maps every row of `muvid.footage.service.FOOTAGE_OP_SPECS` to the tool serving it — a hand-written one where the transport differs (URL fetch, the `nw.jobs` scoring job, the download claim on a render, or a name that already shipped) and otherwise a GENERATED `footage_<op>` tool built from the operation's own signature and docstring — plus the named transport-only tools. Adding an operation to the catalogue adds its tool; `tests/test_footage_service.py` asserts the lists are exactly that derivation.
 
 These run on the deployed reelee AV connector against real user projects on disk.
 **The package's declared surface and the connector's live surface are two different
@@ -796,18 +819,21 @@ hole the size of the rest of the document.
                                               .../alignments.json
                                               .../scores/                (ScoreTensor .npz + manifest)
                                               .../renders/{render_id}/   (final.mp4 + meta.json)
+                                              .../edits/{edit_id}.json   (a named edit: edl + name + how_made + created/modified [+ span])
 ```
+
+A **host-placed** production (`muvid.Project`, created with `projects_dir` — the studio's path) is an `nw.Project` folder with the same footage layout one level down at `<project>/footage/` (plus `cover.jpg`), a lyric video's song/sources/renders at `<project>/lyric/`, and the host's artifact catalog at `<project>/.reelee/artifacts/` (every song, clip, render and cover hardlinked there by content hash — `muvid/catalog.py`, a knowing duplicate of braidio's writer that should move into nw). The MCP workspace passes no catalog, so its records carry no `artifact_id` and are byte-identical to before.
 
 Anything that changes the shape of `manifest.json`, `alignments.json`, the score
 manifest, or the `music_video` path segment is a **migration**, and existing users'
-projects are the thing being migrated. `FootageAlignment.from_dict` already carries three
-such compatibility reads, and they are three DIFFERENT kinds of read. `overlaps`
+projects are the thing being migrated. `FootageAlignment.from_dict` carries four
+such compatibility reads, and the first three are three DIFFERENT kinds of read. `overlaps`
 defaults True (a record was only ever persisted when it overlapped). `support`
 defaults `None`, deliberately not `0.0` — a zero would read as a measurement of
 total disagreement that nobody made. `reliable` is not defaulted at all: it is
 **derived** from the record's own `confidence` via `vouches_for`, because a blanket
 `True` would render exactly muvid#59's offsets and drop them out of the weak list
-at the same time. When you add a field here, decide which of those three it is.
+at the same time. When you add a field here, decide which of those three it is. The fourth, `source` (`measured` | `declared`, from `service.set_offset`), is the `overlaps` kind: absent defaults to `measured`, because the aligner was the only writer of `alignments.json` before a person could declare an offset. A declared record carries `reliable=True` (a person vouched) and `confidence=1.0` / `support=None` (nothing was measured) — read `source` before reading either as evidence. `align` keeps declared records unless `keep_declared=False`, and `remove_clip` keeps the remaining clips' declared records while dropping every measured one.
 
 Invalidation is deliberate: `set_song` drops `alignments.json` and every score track
 (the song is the alignment reference); `align_footage` only invalidates scores when

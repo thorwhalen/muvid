@@ -1,16 +1,25 @@
 """MCP tools for the footage-aligned ``music_video`` genre (thorwhalen/reelee#229).
 
 Module-level tool functions (referenced ``muvid.mcp.footage_tools:<name>``) a host
-aggregates via :func:`muvid.mcp.register_tools`. All FREE (ffmpeg + numpy only, no AI/keys).
-The caller is resolved from the OAuth token; all work lands in that caller's stateful
-:class:`~muvid.footage.workspace.FootageWorkspace` project. Media URLs are fetched
-server-side through the SSRF-guarded, size/time-bounded fetch (video streams straight to
-disk); alignment + assembly are bounded by hard resource caps and
-``$MUVID_FFMPEG_TIMEOUT_S`` (assembly runs one bounded single-input ffmpeg per cut, so
-memory does not grow with cut count) — the connector renders synchronously over HTTP.
+aggregates via :func:`muvid.mcp.register_tools`. All ffmpeg + numpy only, no AI/keys.
+
+**A transport, not an implementation.** The operations live in
+:mod:`muvid.footage.service`; each tool here resolves ``project_id`` to the caller's
+stateful :class:`~muvid.footage.workspace.FootageWorkspace` project (the caller comes
+from the OAuth token), calls the operation, and turns its
+:class:`~muvid.footage.errors.FootageError` into a fastmcp ``ToolError``. What stays here
+is what only this surface does: fetching a URL (SSRF-guarded, size/time-bounded, streamed
+to disk — the service takes a local file), expanding a shared folder, the per-caller
+project listing, and the download claim on a render.
+
+The tool list is derived from the operations catalogue (:mod:`muvid.mcp._footage_ops`):
+operations without a hand-written tool here get a GENERATED one, ``footage_<op>``, built
+at import from the operation's own signature and docstring (the named-edit operations:
+``footage_set_offset``, ``footage_save_edit``, ``footage_set_cut`` …).
 
 Workflow: ``create_project(genre='music_video')`` → ``set_song`` → ``add_footage`` ×N →
-``align_footage`` → (``footage_timeline`` to inspect) → ``assemble_music_video``.
+``align_footage`` → (``footage_timeline`` to inspect) → ``propose_edit(save=true)`` →
+``footage_set_cut`` … → ``footage_render`` (or ``assemble_music_video`` in one call).
 Lifecycle around it (muvid#22): ``list_music_video_projects`` finds a project whose id
 was lost, and ``remove_footage`` takes a clip back out — which invalidates the
 alignment, exactly as ``set_song`` does.
@@ -18,44 +27,85 @@ alignment, exactly as ``set_song`` does.
 
 from __future__ import annotations
 
-import json
+import inspect
 import os
-import time
-import uuid
+from contextlib import contextmanager
 from pathlib import Path
 from urllib.parse import urlparse
 
-from muvid.footage.align import MIN_CONFIDENCE, MIN_MARGIN, MIN_SUPPORT
+from muvid.footage import service
+from muvid.footage.errors import FootageError
+from muvid.footage.service import EDL_OPTIONAL_FIELDS as _EDL_OPTIONAL_FIELDS  # noqa: F401
+from muvid.footage.service import edl_json as _edl_json  # noqa: F401
+import re
+
+from muvid.mcp._footage_ops import GENERATED_OPS, op_tool_name
 from muvid.mcp.identity import current_email
 
-# -- resource caps (env-tunable) --------------------------------------------
-_MAX_CLIPS = int(os.environ.get("MUVID_FOOTAGE_MAX_CLIPS", "8"))
-_CLIP_MAX_BYTES = int(os.environ.get("MUVID_FOOTAGE_MAX_BYTES", str(400 * 1024 * 1024)))
-_CLIP_MAX_DURATION_S = int(
-    os.environ.get("MUVID_FOOTAGE_MAX_CLIP_DURATION_S", str(12 * 60))
-)
-_SONG_MAX_BYTES = int(
-    os.environ.get("MUVID_FOOTAGE_SONG_MAX_BYTES", str(100 * 1024 * 1024))
-)
-_SONG_MAX_DURATION_S = int(
-    os.environ.get("MUVID_FOOTAGE_MAX_SONG_DURATION_S", str(12 * 60))
-)
-#: Re-exported, not re-declared: the threshold and the verdict it feeds now live with
-#: the aligner (``muvid.footage.align``), because the same number has to decide what
-#: this tool REPORTS and what ``validate_edl`` REFUSES, and two copies of a calibrated
-#: constant is how those two answers drift apart (muvid#59).
-_MIN_CONFIDENCE = MIN_CONFIDENCE
+# -- resource caps: the service's, read here for the fetch path -----------------
+#: Re-exported from :mod:`muvid.footage.service` (the one place they are declared). The
+#: fetch path checks them BEFORE a download lands in the project; the service checks the
+#: same numbers again for every other way a file arrives.
+_MAX_CLIPS = service.MAX_CLIPS
+_CLIP_MAX_BYTES = service.CLIP_MAX_BYTES
+_CLIP_MAX_DURATION_S = service.CLIP_MAX_DURATION_S
+_SONG_MAX_BYTES = service.SONG_MAX_BYTES
+_SONG_MAX_DURATION_S = service.SONG_MAX_DURATION_S
+_MIN_CONFIDENCE = service.MIN_CONFIDENCE
 #: Total-bytes cap for a folder archive (env ``MUVID_FOOTAGE_FOLDER_MAX_BYTES``). A shoot
 #: is several clips, so this is necessarily larger than the per-clip cap.
 _FOLDER_MAX_BYTES = int(
     os.environ.get("MUVID_FOOTAGE_FOLDER_MAX_BYTES", str(3 * 1024 * 1024 * 1024))
 )
+#: Media extensions an archive member must carry to be treated as footage.
+_VIDEO_EXTENSIONS = ("mp4", "mov", "m4v", "webm", "avi", "mkv", "mpg", "mpeg", "3gp")
 
 
 def _tool_error(msg: str):
     from fastmcp.exceptions import ToolError
 
     return ToolError(msg)
+
+
+def _renamings() -> list:
+    """``(pattern, tool)`` pairs rewriting an operation's name to the tool serving it.
+
+    The service speaks in OPERATION names (``set_cut``, ``align``) because the studio
+    does; a connector caller only has TOOLS (``footage_set_cut``, ``align_footage``). A
+    name in double backticks is always an op reference; a bare one is rewritten only when
+    it contains ``_`` (``set_offset``), since bare ``render`` or ``align`` is plain English.
+    """
+    rows = []
+    for spec in service.FOOTAGE_OP_SPECS:
+        tool = op_tool_name(spec.name)
+        if tool == spec.name:
+            continue
+        rows.append((re.compile(rf"``{spec.name}``"), f"``{tool}``"))
+        if "_" in spec.name:
+            rows.append((re.compile(rf"(?<![\w]){spec.name}(?![\w])"), tool))
+    return rows
+
+
+_RENAMINGS = _renamings()
+
+
+def _as_tool_names(text: str) -> str:
+    """``text`` with operation names replaced by the tool names a caller can call."""
+    for pattern, tool in _RENAMINGS:
+        text = pattern.sub(tool, text)
+    return text
+
+
+@contextmanager
+def _refusals():
+    """A service refusal becomes a clean ``ToolError`` carrying the original cause —
+    phrased in TOOL names, the only names a connector caller can act on."""
+    try:
+        yield
+    except FootageError as e:
+        # The ROOT cause rides along (an ImportError naming the missing extra, the
+        # validator's error), so the translation adds a type and loses nothing.
+        raise _tool_error(_as_tool_names(str(e))) from (e.__cause__ or e)
 
 
 def _workspace():
@@ -72,6 +122,14 @@ def _open(project_id: str):
         raise _tool_error(f"no such project {project_id!r}") from e
 
 
+def _call(project_id: str, op, **params) -> dict:
+    """Open the caller's project, run ``op`` on it, answer ``{project_id, **result}``."""
+    proj = _open(project_id)
+    with _refusals():
+        out = op(proj, **params)
+    return {"project_id": project_id, **out}
+
+
 def _url_ext(url: str, default: str) -> str:
     suffix = Path(urlparse(url).path).suffix.lstrip(".").lower()
     return suffix or default
@@ -81,10 +139,6 @@ def _duration(path) -> float:
     from muvid.visualize.ffmpeg import media_duration
 
     return float(media_duration(path))
-
-
-#: Media extensions an archive member must carry to be treated as footage.
-_VIDEO_EXTENSIONS = ("mp4", "mov", "m4v", "webm", "avi", "mkv", "mpg", "mpeg", "3gp")
 
 
 def _resolve_media_url(url: str, *, what: str) -> str:
@@ -120,11 +174,11 @@ def set_song(project_id: str, *, url: str) -> dict:
     This is the reference every uploaded clip is aligned to and whose audio the final
     video uses. Replaces any previous song. Duration/size-capped.
     """
+    import tempfile
+
     from muvid.mcp._fetch import FetchError, fetch_to_file_streaming
 
     proj = _open(project_id)
-    import tempfile
-
     direct = _resolve_media_url(url, what="song")
     with tempfile.TemporaryDirectory() as tmp:
         ext = _url_ext(url, "") or _url_ext(direct, "mp3")
@@ -140,8 +194,9 @@ def set_song(project_id: str, *, url: str) -> dict:
             raise _tool_error(
                 f"song is {dur:.0f}s; the {_SONG_MAX_DURATION_S}s limit is exceeded"
             )
-        proj.set_song(str(tmp_song), ext=ext)
-    return {"project_id": project_id, "song_duration": round(dur, 2)}
+        with _refusals():
+            out = service.set_song(proj, path=str(tmp_song), ext=ext, duration_s=dur)
+    return {"project_id": project_id, **out}
 
 
 def add_footage(project_id: str, *, url: str, name: str = "") -> dict:
@@ -154,19 +209,17 @@ def add_footage(project_id: str, *, url: str, name: str = "") -> dict:
     For a whole shoot in one folder, use :func:`add_footage_folder` — a folder link holds
     many files and is refused here by name.
     """
-    from muvid.mcp._fetch import FetchError, fetch_to_file_streaming
-
     import tempfile
+
+    from muvid.mcp._fetch import FetchError, fetch_to_file_streaming
 
     proj = _open(project_id)
     if len(proj.list_clips()) >= _MAX_CLIPS:
         raise _tool_error(f"clip limit reached ({_MAX_CLIPS}); this is a bounded v1")
     direct = _resolve_media_url(url, what="clip")
-    clip_id = uuid.uuid4().hex[:8]
     ext = _url_ext(url, "") or _url_ext(direct, "mp4")
-    # Fetch into a tempdir, then hand off to add_clip (which copies into clips/ under the
-    # sanitized name) — so the download path and the stored path are distinct + sanitized,
-    # and a failed/oversized fetch leaves no orphan in the project.
+    # Fetch into a tempdir, then hand off to the service (which copies into clips/ under
+    # the sanitized name) — so a failed/oversized fetch leaves no orphan in the project.
     with tempfile.TemporaryDirectory() as tmp:
         tmp_clip = Path(tmp) / f"clip.{ext}"
         try:
@@ -180,8 +233,11 @@ def add_footage(project_id: str, *, url: str, name: str = "") -> dict:
             raise _tool_error(
                 f"clip is {dur:.0f}s; the {_CLIP_MAX_DURATION_S}s limit is exceeded"
             )
-        proj.add_clip(clip_id, str(tmp_clip), ext=ext, name=name)
-    return {"project_id": project_id, "clip_id": clip_id, "name": name or clip_id}
+        with _refusals():
+            out = service.add_clip(
+                proj, path=str(tmp_clip), ext=ext, name=name, duration_s=dur
+            )
+    return {"project_id": project_id, **out}
 
 
 def add_footage_folder(project_id: str, *, url: str, name_prefix: str = "") -> dict:
@@ -252,12 +308,22 @@ def add_footage_folder(project_id: str, *, url: str, name_prefix: str = "") -> d
                     }
                 )
                 continue
-            clip_id = uuid.uuid4().hex[:8]
             label = f"{name_prefix}{member.stem}" if name_prefix else member.stem
-            proj.add_clip(
-                clip_id, str(member), ext=member.suffix.lstrip(".").lower(), name=label
+            try:
+                out = service.add_clip(
+                    proj,
+                    path=str(member),
+                    ext=member.suffix.lstrip(".").lower(),
+                    name=label,
+                    duration_s=dur,
+                )
+            except FootageError as e:
+                # One refused member must not lose the ones already added: named, and on.
+                skipped.append({"name": member.name, "reason": _as_tool_names(str(e))})
+                continue
+            added.append(
+                {"clip_id": out["clip_id"], "name": label, "duration": round(dur, 2)}
             )
-            added.append({"clip_id": clip_id, "name": label, "duration": round(dur, 2)})
     return {
         "project_id": project_id,
         "added": added,
@@ -266,7 +332,7 @@ def add_footage_folder(project_id: str, *, url: str, name_prefix: str = "") -> d
     }
 
 
-def align_footage(project_id: str) -> dict:
+def align_footage(project_id: str, *, keep_declared: bool = True) -> dict:
     """Align every uploaded clip to the song by audio, and persist the result. Free.
 
     Returns each clip's offset, a confidence in [0,1], its ``support`` (the fraction of
@@ -295,130 +361,7 @@ def align_footage(project_id: str) -> dict:
 
     Run this after adding/removing clips and before assembling.
     """
-    from muvid.footage.align import align_footage as _align
-    from muvid.footage.scoring.grid import align_fingerprint
-
-    proj = _open(project_id)
-    if not proj.has_song():
-        raise _tool_error("no song set — call set_song first")
-    clips = list(proj.clip_paths().items())
-    if not clips:
-        raise _tool_error("no footage added — call add_footage first")
-    old_fingerprint = align_fingerprint(proj.load_alignments())
-    aligns = _align(str(proj.song_path()), clips, song_duration=proj.song_duration())
-    proj.save_alignments(aligns)
-    # Scores are keyed to the offsets they were computed under (align_fingerprint is that
-    # key's SSOT), so a re-align that reproduces the same offsets must not throw away the
-    # most expensive artifact in the pipeline (muvid#24 B4). Correctness does not depend on
-    # deleting here — the read path refuses stale scores via manifest_is_current — this
-    # only reclaims storage the moment the scores are known to be stale.
-    if align_fingerprint(aligns) != old_fingerprint:
-        proj.invalidate_scores()
-    # Every clip has a record now, so "did not overlap" is a REPORTED PROPERTY of a clip
-    # that is still there, not an inference from something missing. A clip is never removed
-    # from the project or from the alignment artifact by anything but an explicit request:
-    # choosing what goes into an edit is a matter of referencing sources and intervals, and
-    # a source must stay referenceable whatever its measurements say.
-    aligned_ids = {a.clip_id for a in aligns}
-    no_overlap = [a.clip_id for a in aligns if not a.overlaps]
-    missing = [cid for cid, _ in clips if cid not in aligned_ids]
-    # A confidence is guidance, not a verdict — so say what produced it and what it is being
-    # compared against. A bare list of rejected ids is undiagnosable: the caller cannot tell
-    # a genuinely unrelated clip from a correctly-aligned one that the threshold happened to
-    # miss (muvid#15).
-    return {
-        "project_id": project_id,
-        "alignments": [a.to_dict() for a in aligns],
-        "low_confidence": [
-            {"clip_id": a.clip_id, "confidence": round(a.confidence, 3)}
-            for a in aligns
-            if a.confidence < _MIN_CONFIDENCE
-        ],
-        # The list that has TEETH, kept separate from `low_confidence` because they
-        # answer different questions: one is a number to look at, the other is what
-        # the render will refuse. They coincide today for a whole-clip estimator and
-        # deliberately will not once support is measured (muvid#59).
-        "unreliable": [
-            {
-                "clip_id": a.clip_id,
-                "confidence": round(a.confidence, 3),
-                "support": _round_support(a.support),
-                # The separator, and the one to read first: negative means the clip's
-                # own evidence prefers a DIFFERENT offset, which is why it was refused.
-                "margin": _round_support(a.margin),
-                "window_s": _round_support(a.window_s),
-            }
-            for a in aligns
-            if not a.reliable
-        ],
-        # REPORTED, never enforced — the same posture as `offset_consensus` below.
-        # `support: null` means the estimator could not hold a vote at all: it fits its
-        # window to the clip down to a 3 s floor, so this is only a clip shorter than
-        # `window_floor + hop` = 4.5 s (measured: 4.4 s unvoted, 4.5 s the first with a
-        # number). The offset then rests on a single measurement and the verdict falls
-        # back to the confidence coefficient.
-        #
-        # SAY THE HAZARD, because this list is the only place it is visible: a clip in
-        # here can be `reliable: true` AND WRONG. Measured on a repeating fixture, a
-        # 4.4 s clip landing 7.99 s out is vouched at confidence 0.381, while the same
-        # material at 4.5 s — one vote away — is refused (margin -0.252). The
-        # coefficient does not rank correctness in this band (on the muvid#59 shoot the
-        # WRONG offset scored highest of three, 0.834 against 0.566 and 0.621), so
-        # nothing else flags it. Refusing the whole band would take the correct short
-        # clips with it and re-break the compatibility read muvid#87 fixed, so the band
-        # is named rather than gated — muvid#91 owns that decision.
-        "no_consensus": [a.clip_id for a in aligns if a.support is None],
-        "confidence_metric": "onset-envelope correlation at the waveform's lag",
-        "confidence_threshold": _MIN_CONFIDENCE,
-        # Support must EXCEED this, and the strictness is the meaning: at exactly this
-        # value every window had the offset on its ballot and none found it unaided.
-        # A FLOOR on how much evidence reached the offset...
-        "support_threshold": MIN_SUPPORT,
-        "support_threshold_is_exclusive": True,
-        # ...and the SEPARATOR, which is what actually does the work: measured on the
-        # muvid#59 material, margin>0 passes 24/24 correct and 0/6 noise where a support
-        # threshold alone passed 18/24. Negative margin = the evidence prefers elsewhere.
-        "margin_threshold": MIN_MARGIN,
-        "margin_threshold_is_exclusive": True,
-        "offset_consensus": _offset_consensus(aligns),
-        # Usable-for-an-edit, not present-in-the-project: these clips are still here, still
-        # listed, still addressable — they just cover no part of the song.
-        "no_overlap_with_song": no_overlap,
-        # Should always be empty. Non-empty means a clip lost its record somewhere upstream,
-        # which is a bug, not a verdict about the footage.
-        "unrecorded": missing,
-    }
-
-
-def _offset_consensus(aligns) -> dict:
-    """How well the clips AGREE on their offsets — evidence a per-clip score cannot give.
-
-    Several devices recording one performance land at nearly the same offset, so a clip far
-    from the cluster is the suspect one regardless of its confidence. This separates real
-    footage from unrelated material where the per-clip number does not: on a real shoot,
-    five clips clustered within 1.6 s while the outlier sat 79 s away — yet one of the five
-    scored *below* the confidence threshold and one of them scored barely above it.
-
-    Reported, never enforced: it is a signal for the caller, not another silent gate.
-    """
-    if len(aligns) < 2:
-        return {"median_offset": None, "outliers": []}
-    offsets = sorted(a.offset_s for a in aligns)
-    median = offsets[len(offsets) // 2]
-    spread = [abs(a.offset_s - median) for a in aligns]
-    # Anything more than 5 s from the median is not the same take.
-    return {
-        "median_offset": round(median, 3),
-        "outliers": [
-            {
-                "clip_id": a.clip_id,
-                "offset_s": round(a.offset_s, 2),
-                "from_median": round(d, 2),
-            }
-            for a, d in zip(aligns, spread)
-            if d > 5.0
-        ],
-    }
+    return _call(project_id, service.align, keep_declared=keep_declared)
 
 
 def footage_timeline(project_id: str) -> dict:
@@ -427,204 +370,7 @@ def footage_timeline(project_id: str) -> dict:
     The surface for choosing which parts to use before ``assemble_music_video``. Built from
     the persisted alignment (run ``align_footage`` first).
     """
-    proj = _open(project_id)
-    aligns = proj.load_alignments()
-    if not aligns:
-        raise _tool_error("no alignment yet — call align_footage first")
-    song_dur = proj.song_duration()
-    boundaries = sorted({0.0, song_dur} | {b for a in aligns for b in a.coverage})
-    spans = []
-    for lo, hi in zip(boundaries, boundaries[1:]):
-        if hi - lo <= 1e-3:
-            continue
-        mid = (lo + hi) / 2
-        covering = [
-            {"clip_id": a.clip_id, "confidence": round(a.confidence, 3)}
-            for a in aligns
-            if a.coverage[0] - 1e-6 <= mid < a.coverage[1] + 1e-6
-        ]
-        spans.append(
-            {
-                "song_start": round(lo, 2),
-                "song_end": round(hi, 2),
-                "covered_by": covering,
-            }
-        )
-    return {
-        "project_id": project_id,
-        "song_duration": round(song_dur, 2),
-        "spans": spans,
-        "uncovered": [s for s in spans if not s["covered_by"]],
-    }
-
-
-#: Every optional :class:`~muvid.footage.edl.EdlEntry` field :func:`_edl_json`
-#: carries, and how to render it. **The list is the round trip.** ``_as_entry``
-#: reads all of these back by name, so a field missing from here is a direction
-#: the caller gave, the renderer honoured, and the returned/persisted edit does
-#: not contain — which is worse than a field that was never accepted, because the
-#: tool's own contract says this list "must feed straight back as the edl= argument
-#: and reproduce the same render". ``crop``/``crop_end`` (muvid#60) and ``look``
-#: (the looks seam) were each dropped this way; ``transition`` (muvid#34) was
-#: hand-written and survived, which is exactly why the three are now one table
-#: rather than three ``if``s the next field forgets to join.
-#:
-#: Each row is ``(field, render, absent)``, where ``absent`` is the value that
-#: means "omit this key". It is a column rather than a hardcoded ``None`` because
-#: ``look_time_varying`` (muvid#73) is a **boolean** whose absent value is
-#: ``False``, and ``False is not None`` — an ``is not None`` test would have
-#: emitted it on every entry ever written, changing every existing
-#: ``renders/*/meta.json`` and every DECISION body for a field almost none of
-#: them use. Same omit-when-absent contract, one generalisation.
-_EDL_OPTIONAL_FIELDS = (
-    ("transition", lambda v: v.to_dict(), None),
-    ("crop", lambda v: v.to_dict(), None),
-    ("crop_end", lambda v: v.to_dict(), None),
-    ("look", str, None),
-    ("look_time_varying", bool, False),
-)
-
-
-def _edl_json(e) -> dict:
-    """One EDL entry as JSON — full precision (it must feed back verbatim), gaps as null.
-
-    Optional fields are emitted ONLY when set (:data:`_EDL_OPTIONAL_FIELDS`). That
-    omit-when-absent rule is what keeps every existing ``renders/*/meta.json``
-    byte-identical — the compatibility surface named in ``.claude/CLAUDE.md``, since
-    these bodies have no schema version to bump — and keeps the render -> edit ->
-    re-render round trip (muvid#21 item 3) exact for an edit that uses none of them.
-    Values are plain dicts, not the frozen dataclasses: ``write_render_meta`` runs
-    ``json.dumps`` over this, which has no encoder for a dataclass.
-
-    ``bool`` as ``look_time_varying``'s renderer is doing real work, not
-    decoration: the field's value is a ``LookFragment``-derived flag and a plain
-    ``bool()`` is what guarantees the JSON carries ``true``/``false`` rather than
-    something ``json.dumps`` would reject or a subclass would smuggle through.
-    """
-    out = {
-        "song_start": e.song_start,
-        "song_end": e.song_end,
-        "clip_id": e.clip_id or None,
-    }
-    for field, render, absent in _EDL_OPTIONAL_FIELDS:
-        v = getattr(e, field, absent)
-        if v != absent:
-            out[field] = render(v)
-    return out
-
-
-def _round_support(support: float | None) -> float | None:
-    """``None`` stays ``None`` over the wire — "not measured" is not "measured zero"."""
-    return None if support is None else round(float(support), 3)
-
-
-def _coverage_report(entries, aligns, song_dur: float, *, excluded=()) -> dict:
-    """What the song's timeline looks like under ``entries`` — covered, weak, and MISSING.
-
-    Answers the three questions a person actually has about a proposed edit, in the form the
-    directive requires: an aggregate percentage is not enough, so uncovered audio is named
-    with explicit start and end times, and a span whose only footage is weakly aligned is
-    listed separately with the confidence that makes it weak.
-
-    Pass only FOOTAGE entries: a gap entry renders fill, and filled is not covered — the
-    user still has no footage there, which is precisely what this report exists to say.
-
-    ``excluded`` (muvid#88) is the fourth question, and it is a different one from
-    ``uncovered``: those spans DID have footage and the edit gave them up because the only
-    clip covering them is one the aligner will not vouch for. They appear in ``uncovered``
-    as well — the user has no usable footage there either way — and here with the clip and
-    the three numbers the verdict rests on, which is what makes it actionable (re-align
-    that clip, shoot again, or re-run with ``allow_unreliable``). ``weak_segments`` and
-    ``excluded`` are therefore mutually exclusive on any one span: a weak span made the cut,
-    an excluded one did not.
-    """
-    by_id = {a.clip_id: a for a in aligns}
-    covered = sorted((e.song_start, e.song_end) for e in entries)
-    gaps, cursor = [], 0.0
-    for lo, hi in covered:
-        if lo - cursor > 1e-3:
-            gaps.append({"song_start": round(cursor, 2), "song_end": round(lo, 2)})
-        cursor = max(cursor, hi)
-    if song_dur - cursor > 1e-3:
-        gaps.append({"song_start": round(cursor, 2), "song_end": round(song_dur, 2)})
-    # `reliable`, not a bare confidence comparison: the verdict is the aligner's
-    # (muvid.footage.align.vouches_for), so this report says exactly what
-    # validate_edl will refuse rather than a second opinion that can drift from it.
-    weak = [
-        {
-            "song_start": round(e.song_start, 2),
-            "song_end": round(e.song_end, 2),
-            "clip_id": e.clip_id,
-            "confidence": round(by_id[e.clip_id].confidence, 3),
-            "support": _round_support(by_id[e.clip_id].support),
-            "margin": _round_support(by_id[e.clip_id].margin),
-        }
-        for e in entries
-        if e.clip_id in by_id and not by_id[e.clip_id].reliable
-    ]
-    covered_s = sum(hi - lo for lo, hi in covered)
-    return {
-        "song_duration": round(song_dur, 2),
-        "covered_seconds": round(covered_s, 2),
-        "coverage_fraction": round(covered_s / song_dur, 4) if song_dur else 0.0,
-        "uncovered": gaps,
-        "weak_segments": weak,
-        "excluded": [x.to_dict() for x in excluded],
-        "confidence_threshold": _MIN_CONFIDENCE,
-    }
-
-
-def _exclusion_note(x) -> str:
-    """One ``warnings`` line per span the recovery gave up (muvid#88).
-
-    The reply's own contract says ``warnings`` is the whole of a caller's ability to know
-    what the render PLAN found, and a hole in the video is the largest such finding there
-    is. Nesting it only under ``coverage.excluded`` meant an agent reading ``ok`` and
-    ``warnings`` — which is what the docstring tells it to read — could ship a black
-    stretch without ever seeing why.
-    """
-    from muvid.footage.edl import UNVOUCHED_SELECTION
-
-    why = (
-        "a clip the aligner vouches for covers that span, but the selection did not use "
-        "it — try another strategy or selection config"
-        if x.reason == UNVOUCHED_SELECTION
-        else "no clip the aligner vouches for covers that span — re-align or re-shoot"
-    )
-    numbers = f"confidence {x.confidence:.3f}"
-    if x.support is not None:
-        numbers += f", support {x.support:.2f}"
-    if x.margin is not None:
-        numbers += f", margin {x.margin:+.2f}"
-    return (
-        f"set aside {x.song_end - x.song_start:.1f} s of clip {x.clip_id!r} at "
-        f"{x.song_start:.1f}-{x.song_end:.1f} s ({numbers}): {why}. It renders as a gap."
-    )
-
-
-def _auto_edl(aligns, song_dur: float, *, strategy, context, recover: bool):
-    """The auto path, in one place: select -> set aside -> gap-fill (muvid#88).
-
-    Both tools that build an edit from a strategy go through this, so ``propose_edit``
-    cannot propose an edit ``assemble_music_video`` would not produce — the two are
-    documented as the same edit and the recovery is the kind of step that drifts between
-    two call sites otherwise.
-
-    ``recover=False`` (i.e. the caller passed ``allow_unreliable``) skips the exclusion
-    entirely: someone who has said they want the unvouched footage rendered means the
-    footage, not a gap where it would have been.
-
-    Returns ``(entries, excluded)``; the caller still passes ``entries`` through
-    ``validate_edl``, which stays the ONE gate.
-    """
-    from muvid.footage.edl import exclude_unvouched, fill_gaps
-    from muvid.footage.strategy import select_edl
-
-    selected = select_edl(strategy, aligns, song_dur, context=context)
-    excluded = []
-    if recover:
-        selected, excluded = exclude_unvouched(selected, aligns)
-    return fill_gaps(selected, song_dur), excluded
+    return _call(project_id, service.timeline)
 
 
 def propose_edit(
@@ -634,6 +380,8 @@ def propose_edit(
     preset: str = "",
     weights: dict | None = None,
     config: dict | None = None,
+    save: bool = False,
+    name: str = "",
 ) -> dict:
     """Propose an EDL **without rendering it** — the cheap half of assembly. Free, seconds.
 
@@ -649,96 +397,45 @@ def propose_edit(
     the song and every segment that made the cut despite weak alignment. Same arguments as
     ``assemble_music_video``'s auto path, and the same edit it would build — including the
     ``coverage.excluded`` recovery described there.
+
+    ``save=true`` also keeps it as a named edit (``name``, default "Edit N") and returns
+    its ``edit_id`` — change it cut by cut with ``footage_set_cut`` /
+    ``footage_split_cut`` / ``footage_merge_cut`` and render it with ``footage_render``.
     """
-    from muvid.footage.edl import validate_edl
-    from muvid.footage.strategy import DEFAULT_STRATEGY
-
-    proj = _open(project_id)
-    if not proj.has_song():
-        raise _tool_error("no song set — call set_song first")
-    aligns = proj.load_alignments()
-    if not aligns:
-        raise _tool_error("no alignment — call align_footage first")
-    song_dur = proj.song_duration()
-    has_selection_config = bool(preset or weights or config)
-    strat = strategy or ("weighted" if has_selection_config else DEFAULT_STRATEGY)
-    try:
-        context = _selection_context(proj, strat, preset, weights, config)
-        proposal, excluded = _auto_edl(
-            aligns, song_dur, strategy=strat, context=context, recover=True
-        )
-        entries = validate_edl(
-            proposal,
-            aligns,
-            song_dur,
-            canvas=proj.canvas(),
-            # This tool renders nothing; refusing here would deny the caller the very
-            # diagnosis they came for, since `coverage.weak_segments` names each
-            # unvouched span and the time it covers. The refusal belongs where the
-            # encode does — `assemble_music_video` (muvid#59). After muvid#88 that
-            # difference is narrow: the recovery above has already set aside every
-            # span an assemble would have refused, EXCEPT in the one case it declines
-            # to act on — a shoot with no trustworthy clip at all, where this returns
-            # the unvouched edit with `weak_segments` naming every span of it and
-            # `excluded` empty, and the assemble refuses.
-            allow_unreliable=True,
-        )
-    except (ValueError, KeyError) as e:
-        raise _tool_error(f"could not build a valid edit: {e}") from e
-    return {
-        "project_id": project_id,
-        "strategy": strat,
-        "edl": [_edl_json(e) for e in entries],
-        "assemble_refusal": _assemble_refusal(entries, aligns, song_dur, proj.canvas()),
-        "coverage": _coverage_report(
-            [e for e in entries if not e.is_gap],
-            aligns,
-            song_dur,
-            excluded=excluded,
-        ),
-        "warnings": [_exclusion_note(x) for x in excluded],
-    }
+    return _call(
+        project_id,
+        service.propose_edit,
+        strategy=strategy,
+        preset=preset,
+        weights=weights,
+        config=config,
+        save=save,
+        name=name,
+    )
 
 
-def _assemble_refusal(entries, aligns, song_dur: float, canvas) -> "dict | None":
-    """``None`` if assembling this proposal would render; the refusal if it would not.
+def _render_claims(project_id: str):
+    """The keys only this surface can put on a render record: the retrieval claim a
+    host's download route signs (reelee#252), and the next action naming the tool."""
 
-    ``propose_edit`` validates with ``allow_unreliable=True`` so it can diagnose rather
-    than refuse — which left one case indistinguishable from success: a shoot where NO
-    clip is trustworthy comes back as a full unvouched edit with ``excluded`` empty, and
-    nothing in the reply said the render would be refused. So the question is put to the
-    GATE rather than answered by re-implementing its predicate here; two gates that can
-    disagree is the thing muvid#88 exists to avoid.
-    """
-    from muvid.footage.edl import UnreliableAlignmentError, validate_edl
+    def annotate(render_id: str, ref_n: int) -> dict:
+        from muvid.downloads import claim
+        from nw.delivery import format_ref
 
-    try:
-        validate_edl(entries, aligns, song_dur, canvas=canvas)
-    except UnreliableAlignmentError as e:
         return {
-            "error": "unreliable_alignment",
-            "clip_ids": e.clip_ids,
-            "message": str(e),
+            # `video` stays a server-side path — useful to an operator, unreadable to a
+            # remote caller; the claim is the caller's handle.
+            "download": claim(project_id, render_id),
+            # What the caller should DO next, naming the tool that does it
+            # (thorwhalen/reelee#322).
+            "note": (
+                f"Call `reelee_get_download_url(genre='muvid', project_id='{project_id}', "
+                f"artifact_id='{render_id}')` for a link to watch and download this. "
+                f"You can refer to it as “{format_ref(ref_n)}” from now on."
+            ),
         }
-    return None
 
-
-def _resolve_canvas(proj, canvas: str) -> tuple[int, int]:
-    """The render canvas: an explicit per-render override, else the project's.
-
-    The project canvas is fixed at create time, but re-rendering the same edit as portrait
-    must not require a new project and a re-upload of every asset (muvid#21 item 7) —
-    rendering is cheap and repeatable BY DESIGN, so the render call owns this knob.
-    """
-    from muvid.footage.workspace import CANVASES
-
-    if not canvas:
-        return proj.canvas()
-    if canvas not in CANVASES:
-        raise _tool_error(
-            f"unknown canvas {canvas!r}; choose one of {sorted(CANVASES)}"
-        )
-    return CANVASES[canvas]
+    return annotate
 
 
 def assemble_music_video(
@@ -751,6 +448,7 @@ def assemble_music_video(
     config: dict | None = None,
     canvas: str = "",
     allow_unreliable: bool = False,
+    span: list | None = None,
 ) -> dict:
     """Assemble the music video — auto (a selection ``strategy``) or an explicit ``edl``. Free.
 
@@ -806,6 +504,11 @@ def assemble_music_video(
       ``list_strategies``; default ``best_confidence``) builds the edit from the alignments.
     - ``canvas``: render-time override ("landscape"/"portrait"/"square") — the same edit
       re-rendered in another shape, no new project needed. Default: the project's canvas.
+    - ``span``: ``[start_s, end_s]`` — render only that stretch of the song (a trimmed
+      edit): the ``edl`` is gap-filled within it, the video is that long, and the song is
+      cut to it and faded out at the end when it stops before the song does. A render
+      of a trimmed edit records its ``span``; pass it back with its ``edl`` to reproduce
+      it. Default: the whole song.
     - **A clip the aligner will not vouch for costs its own spans, not the whole edit**
       (muvid#88). On the auto path the strategy prefers a vouched clip wherever one
       covers the span, so an untrustworthy clip is simply not chosen while any other
@@ -839,252 +542,60 @@ def assemble_music_video(
     these findings used to be Python warnings on the server's stderr, which a
     remote caller has no access to.
     """
-    from muvid.footage.assemble import assemble_music_video as _assemble
-    from muvid.footage.edl import (
-        UnreliableAlignmentError,
-        derive_cuts,
-        fill_gaps,
-        validate_edl,
-    )
-    from muvid.footage.strategy import DEFAULT_STRATEGY
-    from muvid.visualize import failures, report, verify_video
-
     proj = _open(project_id)
-    if not proj.has_song():
-        raise _tool_error("no song set — call set_song first")
-    aligns = proj.load_alignments()
-    if not aligns:
-        raise _tool_error("no alignment — call align_footage first")
-    song_dur = proj.song_duration()
-    # Resolved BEFORE validation, not after: a caller-supplied `look` is bounded
-    # against the canvas it will be rendered onto (muvid#75), and the canvas is
-    # also what a `canvas=` override changes. Resolving it afterwards — where this
-    # line used to sit — would have bounded a portrait render against the
-    # project's landscape canvas, i.e. the gate and the renderer disagreeing about
-    # the one number the bound is relative to.
-    canvas_wh = _resolve_canvas(proj, canvas)
-
-    has_selection_config = bool(preset or weights or config)
-    try:
-        if edl is not None:
-            if has_selection_config:
-                raise ValueError(
-                    "selection config (preset/weights/config) can't accompany an explicit edl"
-                )
-            entries = validate_edl(
-                fill_gaps(edl, song_dur),
-                aligns,
-                song_dur,
-                canvas=canvas_wh,
-                allow_unreliable=allow_unreliable,
-            )
-            used_strategy = None
-            # The caller named these clips; nothing is set aside on their behalf
-            # (muvid#88 is about the AUTO path, where nobody chose the bad clip).
-            excluded = []
-        else:
-            strat = strategy or (
-                "weighted" if has_selection_config else DEFAULT_STRATEGY
-            )
-            if has_selection_config and strat != "weighted":
-                raise ValueError(
-                    f"selection config only applies to strategy='weighted' (got {strat!r})"
-                )
-            context = _selection_context(proj, strat, preset, weights, config)
-            proposal, excluded = _auto_edl(
-                aligns,
-                song_dur,
-                strategy=strat,
-                context=context,
-                # A caller who opted in wants the footage rendered, not set aside.
-                recover=not allow_unreliable,
-            )
-            entries = validate_edl(
-                proposal,
-                aligns,
-                song_dur,
-                canvas=canvas_wh,
-                allow_unreliable=allow_unreliable,
-            )
-            used_strategy = strat
-    except UnreliableAlignmentError as e:
-        # Named separately from the generic "could not build a valid edit" because the
-        # remedy is different in kind: nothing about the EDL is malformed, and re-writing
-        # it will not help — the OFFSETS are not trustworthy, and the caller has to
-        # re-align, drop those clips, or say they want them anyway.
-        raise _tool_error(f"{e} (clips: {', '.join(e.clip_ids)})") from e
-    except (ValueError, KeyError) as e:
-        raise _tool_error(f"could not build a valid edit: {e}") from e
-
-    cuts = derive_cuts(entries, aligns, proj.clip_paths())
-    render_id = uuid.uuid4().hex[:12]
-    # The reference a human can actually say. Assigned here, at creation, so it
-    # never renumbers under them (see MusicVideoFootageProject.ensure_render_refs).
-    ref_n = proj.next_render_ref()
-    render_dir = proj.new_render_dir(render_id)
-    # The render-plan findings, on their way to the CALLER. `_part_plan` raises
-    # them as `AssemblyWarning`s, which reach this process's stderr and stop
-    # there — and on the deployed per-caller connector the caller has no stderr,
-    # so a muvid#73 hitch came back as an `ok` render with nothing said about it.
-    # A warning the caller cannot see is the silent no-op this repo refuses
-    # everywhere else, so the sink is threaded in and its contents are returned.
-    notes: list[str] = [_exclusion_note(x) for x in excluded]
-    try:
-        out = _assemble(
-            cuts,
-            str(proj.song_path()),
-            str(render_dir / "final.mp4"),
-            canvas=canvas_wh,
-            on_note=notes.append,
+    with _refusals():
+        return service.assemble(
+            proj,
+            strategy=strategy,
+            edl=edl,
+            preset=preset,
+            weights=weights,
+            config=config,
+            canvas=canvas,
+            allow_unreliable=allow_unreliable,
+            annotate=_render_claims(project_id),
+            span=span,
         )
-        # audio= arms the duration-match check — the one that catches a mis-built
-        # filtergraph (muvid#24 B3); correct now BECAUSE every EDL is gap-filled to the
-        # full song. expected_canvas keeps the aspect/resolution checks honest for a
-        # deliberate portrait/square render — without it, verify hard-fails every
-        # non-16:9 canvas the canvas= override exists to produce.
-        checks = verify_video(
-            out, audio=str(proj.song_path()), expected_canvas=canvas_wh
-        )
-    except Exception:
-        import shutil
-
-        shutil.rmtree(render_dir, ignore_errors=True)
-        raise
-
-    meta = {
-        "render_id": render_id,
-        # `cut 4` — what the caller says when they want to talk about this
-        # render. The integer is the durable fact; the wording is nw's.
-        "ref_n": ref_n,
-        "ref": _format_ref(ref_n),
-        "video": str(out),
-        "strategy": used_strategy,
-        "canvas": list(canvas_wh),
-        # "rendered", not "covered": after gap-filling this is always the whole song —
-        # where the user actually HAS footage is the coverage report's business.
-        "rendered_span": [
-            round(entries[0].song_start, 2),
-            round(entries[-1].song_end, 2),
-        ],
-        # Full precision, NOT rounded: this list must feed straight back as the edl=
-        # argument and reproduce the same render. round(x, 2) moved boundaries by up to
-        # 5 ms — past validate_edl's 1 ms tolerance, so the render → edit → re-render loop
-        # could fail outright, and even when it validated it re-rendered a different video
-        # (muvid#21 item 3). propose_edit already returns full precision; same contract.
-        "edl": [_edl_json(e) for e in entries],
-        "coverage": _coverage_report(
-            [e for e in entries if not e.is_gap], aligns, song_dur, excluded=excluded
-        ),
-        "ok": not failures(checks),
-        "checks": report(checks),
-        # What the render PLAN found: a transition that rounded to zero frames at
-        # this fps, a time-varying look on a blended boundary (muvid#73). Neither
-        # fails the render — `ok` stays true — so this list is the whole of the
-        # caller's ability to know. ALWAYS present, empty when clean: an absent
-        # key makes "old build" and "nothing to report" the same reading, which
-        # is the ambiguity the omit-when-absent rule exists to avoid for EDL
-        # fields whose absent value is meaningful. Here the meaningful value is
-        # "nothing", and a caller has to be able to rely on being told it.
-        "warnings": notes,
-        # The retrieval claim: what a host's generic download route (reelee#252) turns
-        # into a signed short-lived URL. `video` stays a server-side path — useful to an
-        # operator, unreadable to a remote caller; the claim is the caller's handle.
-        "download": _download_claim(project_id, render_id),
-        # What the caller should DO next, naming the tool that does it. The
-        # previous wording ("ask the host to sign the `download` claim") named
-        # no tool, and no tool could sign a muvid claim anyway — so a user who
-        # followed it exactly still ended with nothing (thorwhalen/reelee#322).
-        "note": (
-            f"Call `reelee_get_download_url(genre='muvid', project_id='{project_id}', "
-            f"artifact_id='{render_id}')` for a link to watch and download this. "
-            f"You can refer to it as \u201c{_format_ref(ref_n)}\u201d from now on."
-        ),
-    }
-    proj.write_render_meta(render_id, meta)
-    return meta
 
 
-def _selection_context(proj, strat, preset, weights, config):
-    """Build a ``SelectionContext`` from persisted scores for the ``weighted`` strategy.
+def footage_render(
+    project_id: str, *, edit_id: str, canvas: str = "", allow_unreliable: bool = False
+) -> dict:
+    """Render a SAVED edit (``propose_edit(save=true)`` / ``footage_save_edit``) into a
+    music video. Free, minutes.
 
-    Returns ``None`` for alignment-only strategies (they ignore context). When scores are
-    absent, the tensor is ``None`` and ``weighted_selection`` raises a clear "run scoring
-    first" the caller surfaces — so no scores gives a helpful error, not a silent bad edit.
+    Same render, same refusal and same reply as ``assemble_music_video`` with that edit's
+    cut list as ``edl`` — plus ``edit_id``, so the video says which edit it came from.
+    ``canvas`` re-renders the same edit as "landscape"/"portrait"/"square". Refused when
+    the edit cuts to a clip whose offset the aligner will not vouch for, unless
+    ``allow_unreliable`` (see ``assemble_music_video``). Read the returned ``warnings``.
     """
-    if strat != "weighted":
-        return None
-    from muvid.footage.scoring.grid import (
-        align_fingerprint,
-        load_manifest,
-        load_tensor,
-        manifest_is_current,
-    )
-    from muvid.footage.select_score import SelectionContext, resolve_config
-
-    manifest = load_manifest(proj.root) or {}
-    beats = manifest.get("beats", {})
-    # Stale scores (a re-align since scoring) must NOT drive a weighted edit — treat the tensor
-    # as absent so weighted_selection raises the clear "run scoring first" the caller surfaces.
-    fresh = manifest_is_current(
-        manifest,
-        song_hash=proj.song_hash() if proj.has_song() else "",
-        align_fingerprint=align_fingerprint(proj.load_alignments()),
-    )
-    return SelectionContext(
-        tensor=load_tensor(proj.root) if fresh else None,
-        beat_times=beats.get("beat_times", []),
-        downbeat_times=beats.get("downbeat_times", []),
-        shot_boundaries=manifest.get("shot_boundaries"),
-        config=resolve_config(preset=preset or None, weights=weights, config=config),
-    )
-
-
-def _download_claim(project_id: str, render_id: str) -> dict:
-    from muvid.downloads import claim
-
-    return claim(project_id, render_id)
-
-
-def _format_ref(n: int) -> str:
-    from nw.delivery import format_ref
-
-    return format_ref(n)
+    proj = _open(project_id)
+    with _refusals():
+        return service.render(
+            proj,
+            edit_id=edit_id,
+            canvas=canvas,
+            allow_unreliable=allow_unreliable,
+            annotate=_render_claims(project_id),
+        )
 
 
 def footage_status(project_id: str) -> dict:
-    """Your project's song, clips, alignment summary, and renders. Free."""
-    proj = _open(project_id)
-    m = proj.manifest()
-    return {
-        "project_id": project_id,
-        "title": m.get("title", project_id),
-        "canvas": m.get("canvas"),
-        "has_song": proj.has_song(),
-        "song_duration": round(proj.song_duration(), 2) if proj.has_song() else None,
-        "clips": proj.list_clips(),
-        "aligned": [a.clip_id for a in proj.load_alignments()],
-        "renders": proj.list_renders(),
-    }
+    """Your project's song, clips, alignment summary, and renders. Free.
 
-
-# -- the master beat grid, on its own (thorwhalen/muvid#18 item 5) ------------
-
-#: Where the song's beat grid is cached: beside the score tensor it feeds, under the
-#: project's ``scores/`` dir, so it shares that dir's lifecycle (``set_song`` and a
-#: re-align that changed the offsets both rmtree it — the second is more than the grid
-#: needs, since it depends on the song alone, but a recompute is seconds and a second
-#: invalidation policy is a second thing to get wrong). Keyed on ``song_hash`` on top
-#: of that, so a record is never served for a song it was not measured on.
-_BEAT_GRID_CACHE_NAME = "beat_grid.json"
-#: Rounded exactly as ``grid.save_scores`` rounds a scoring run's manifest, so the two
-#: records of the same song's grid agree to the digit.
-_BEAT_TIME_DECIMALS = 4
-_TEMPO_DECIMALS = 3
-#: The ``source`` vocabulary of a ``beat_grid`` reply — how the grid was obtained, in
-#: the order the tool tries them (cheapest first; the estimator runs last, once).
-_BEAT_GRID_FROM_CACHE = "cache"
-_BEAT_GRID_FROM_SCORES = "scores"
-_BEAT_GRID_COMPUTED = "computed"
+    Also: each clip's offset and whether it was measured or declared (``alignments``),
+    the saved ``edits``, and ``next_step`` — the operation that moves the project on.
+    """
+    out = _call(project_id, service.status)
+    step = out.get("next_step")
+    if step:
+        out["next_step"] = {
+            **step,
+            "op": op_tool_name(step["op"]),
+            "why": _as_tool_names(step["why"]),
+        }
+    return out
 
 
 def beat_grid(project_id: str) -> dict:
@@ -1112,157 +623,7 @@ def beat_grid(project_id: str) -> dict:
     backend has no downbeat tracker, and an empty list would read as "this song has
     no downbeats", a measurement nobody made (gate, don't zero).
     """
-    proj = _open(project_id)
-    if not proj.has_song():
-        raise _tool_error("no song set — call set_song first")
-    source, record = _beat_grid_record(proj, song_hash=proj.song_hash())
-    return _beat_grid_reply(
-        project_id, record, source=source, song_duration=proj.song_duration()
-    )
-
-
-def _beat_grid_record(proj, *, song_hash: str) -> tuple[str, dict]:
-    """``(source, record)`` from the cheapest source that can answer for THIS song.
-
-    Each source either answers with a record measured on ``song_hash`` or declines with
-    ``None``; the estimator is last and never declines (it computes, caches, or raises).
-    Adding a source is a row here, not a branch in the tool.
-    """
-    cache_path = _beat_grid_cache_path(proj)
-
-    def compute():
-        return _compute_beat_grid(proj, cache_path=cache_path, song_hash=song_hash)
-
-    sources = (
-        (_BEAT_GRID_FROM_CACHE, lambda: _read_beat_grid_cache(cache_path, song_hash)),
-        (_BEAT_GRID_FROM_SCORES, lambda: _beat_grid_from_scores(proj, song_hash)),
-        (_BEAT_GRID_COMPUTED, compute),
-    )
-    for source, load in sources:
-        record = load()
-        if record is not None:
-            return source, record
-    raise AssertionError("the computed source never declines")  # pragma: no cover
-
-
-def _beat_grid_cache_path(proj) -> Path:
-    from muvid.footage.scoring.grid import scores_dir  # the dir name's SSOT
-
-    return scores_dir(proj.root) / _BEAT_GRID_CACHE_NAME
-
-
-def _read_beat_grid_cache(path: Path, song_hash: str) -> dict | None:
-    """The cached record if it was measured on THIS song, else ``None``.
-
-    Absent, torn (a concurrent writer) or unreadable is a miss — recomputed, never
-    served — and so is a record carrying another song's hash (the ``scores/`` dir
-    outlives a hand-edited manifest or a copied project tree; the key does not).
-    """
-    try:
-        record = json.loads(path.read_text())
-    except (OSError, ValueError):
-        return None
-    if not isinstance(record, dict) or record.get("song_hash") != song_hash:
-        return None
-    return record
-
-
-def _beat_grid_from_scores(proj, song_hash: str) -> dict | None:
-    """Lift the grid out of a scoring run's manifest when one exists for THIS song.
-
-    ``score_project`` computes exactly this grid as its first stage and persists it in
-    ``scores/manifest.json``, so a scored project has already paid for it. Only the
-    song hash has to match: that manifest goes stale for SCORES the moment the
-    alignment changes (``manifest_is_current`` checks the fingerprint too), but the
-    beat grid depends on the song alone.
-    """
-    from muvid.footage.scoring.grid import load_manifest
-
-    manifest = load_manifest(proj.root)
-    if not manifest or manifest.get("song_hash") != song_hash:
-        return None
-    beats = manifest.get("beats")
-    if not isinstance(beats, dict) or not isinstance(beats.get("beat_times"), list):
-        return None
-    return {
-        "song_hash": song_hash,
-        "tempo_bpm": manifest.get("tempo_bpm"),
-        "beat_times": beats["beat_times"],
-        "downbeat_times": beats.get("downbeat_times") or [],
-    }
-
-
-def _compute_beat_grid(proj, *, cache_path: Path, song_hash: str) -> dict:
-    """Run ``mixing.audio.beat_grid`` on the song and write the record to the cache.
-
-    Imported HERE, not at module top: ``mixing.audio`` is core but the estimator's
-    librosa is the ``scoring`` extra, and this module is on the connector's import-safe
-    path. The ONLY exception translated is ``ImportError`` — the way ``mixing`` reports
-    a missing optional package — so a caller gets the install hint instead of a
-    traceback; whatever else the estimator raises is a ``mixing`` regression and
-    propagates untouched (never a broad except around a sibling's call).
-    """
-    try:
-        from mixing.audio import beat_grid as estimate
-
-        grid = estimate(str(proj.song_path()))
-    except ImportError as e:
-        raise _tool_error(
-            "the beat grid needs librosa, which the 'scoring' extra provides — "
-            f"pip install 'muvid[scoring]' ({e})"
-        ) from e
-    record = _as_beat_grid_record(grid, song_hash=song_hash)
-    _write_beat_grid_cache(cache_path, record)
-    return record
-
-
-def _as_beat_grid_record(grid, *, song_hash: str) -> dict:
-    """The cache record: the three ``BeatGrid`` fields muvid reads (the same three the
-    scoring orchestrator reads), rounded like the scores manifest, plus the key."""
-    import math
-
-    tempo = float(grid.tempo_bpm)
-    return {
-        "song_hash": song_hash,
-        "tempo_bpm": round(tempo, _TEMPO_DECIMALS) if math.isfinite(tempo) else None,
-        "beat_times": [round(float(t), _BEAT_TIME_DECIMALS) for t in grid.beat_times],
-        "downbeat_times": [
-            round(float(t), _BEAT_TIME_DECIMALS) for t in grid.downbeat_times
-        ],
-        "computed_at": time.time(),
-    }
-
-
-def _write_beat_grid_cache(path: Path, record: dict) -> None:
-    """tmp + ``os.replace`` (the same crash-consistency as the score files), so a
-    concurrent call never reads a torn record. The reply is already correct by the
-    time this runs: a cache that cannot be written (a scoring job's rmtree racing this
-    call, a read-only tree) costs the NEXT call a recompute, nothing more."""
-    try:
-        path.parent.mkdir(parents=True, exist_ok=True)
-        tmp = path.with_name(path.name + ".tmp")
-        tmp.write_text(json.dumps(record, indent=2))
-        os.replace(tmp, path)
-    except OSError:
-        pass
-
-
-def _beat_grid_reply(
-    project_id: str, record: dict, *, source: str, song_duration: float
-) -> dict:
-    beats = list(record.get("beat_times") or [])
-    reply = {
-        "project_id": project_id,
-        "tempo_bpm": record.get("tempo_bpm"),
-        "beats": beats,
-        "n_beats": len(beats),
-        "song_duration": song_duration,
-        "source": source,
-    }
-    downbeats = list(record.get("downbeat_times") or [])
-    if downbeats:  # measured → reported; unmeasured → absent (never an empty list)
-        reply["downbeats"] = downbeats
-    return reply
+    return _call(project_id, service.beat_grid)
 
 
 def _alignment_covers_clips(proj) -> bool:
@@ -1333,39 +694,12 @@ def remove_footage(project_id: str, *, clip_id: str) -> dict:
     refusal changes nothing on disk. Returns what was removed, the clips that remain,
     and whether an alignment / score tracks were actually dropped.
     """
-    proj = _open(project_id)
-    known = proj.list_clips()
-    if clip_id not in {c["clip_id"] for c in known}:
-        raise _tool_error(_unknown_clip_message(clip_id, known))
-    removed = proj.remove_clip(clip_id)
-    return {
-        "project_id": project_id,
-        "removed": {"clip_id": removed["clip_id"], "name": removed["name"]},
-        "clips": proj.list_clips(),
-        "alignment_invalidated": removed["alignment_invalidated"],
-        "scores_invalidated": removed["scores_invalidated"],
-    }
-
-
-def _unknown_clip_message(clip_id: str, known: list[dict]) -> str:
-    if not known:
-        return f"unknown clip_id {clip_id!r} — this project has no clips (add_footage first)"
-    listed = ", ".join(
-        (
-            c["clip_id"]
-            if c.get("name", c["clip_id"]) == c["clip_id"]
-            else f"{c['clip_id']} ({c['name']})"
-        )
-        for c in known
-    )
-    return f"unknown clip_id {clip_id!r} — this project's clips are: {listed}"
+    return _call(project_id, service.remove_clip, clip_id=clip_id)
 
 
 def list_strategies() -> dict:
     """The selection strategies available for full-auto assembly. Free."""
-    from muvid.footage.strategy import DEFAULT_STRATEGY, list_strategies as _ls
-
-    return {"strategies": _ls(), "default": DEFAULT_STRATEGY}
+    return service.strategies()
 
 
 def footage_editor_document(project_id: str) -> dict:
@@ -1380,21 +714,9 @@ def footage_editor_document(project_id: str) -> dict:
     After a human edits the DECISION tier, feed its annotations back to
     ``assemble_music_video`` via ``footage_edl_from_annotations``.
     """
-    try:
-        from muvid.footage.lacing_bridge import editor_document
-    except ImportError as e:
-        raise _tool_error(
-            "the lacing-native editor bridge needs the 'editor' extra "
-            "(pip install 'muvid[editor]')"
-        ) from e
-
     proj = _open(project_id)
-    if not proj.load_alignments():
-        raise _tool_error("no alignment yet — call align_footage first")
-    try:
-        return editor_document(proj)
-    except ValueError as e:
-        raise _tool_error(str(e)) from e
+    with _refusals():
+        return service.editor_document(proj)
 
 
 def footage_edl_from_annotations(project_id: str, *, annotations: list[dict]) -> dict:
@@ -1407,27 +729,44 @@ def footage_edl_from_annotations(project_id: str, *, annotations: list[dict]) ->
     song other than this project's are refused, not read (muvid#35), so a clipboard from
     another project fails saying so instead of splicing in the wrong spans.
     """
-    try:
-        from muvid.footage.lacing_bridge import edl_from_annotations
-        from lacing.model import Annotation
-    except ImportError as e:
-        raise _tool_error(
-            "the lacing-native editor bridge needs the 'editor' extra "
-            "(pip install 'muvid[editor]')"
-        ) from e
+    return _call(project_id, service.edl_from_annotations, annotations=annotations)
 
-    proj = _open(project_id)  # authorizes the caller against this project
-    try:
-        parsed = [Annotation.model_validate(a) for a in annotations]
-    except Exception as e:  # noqa: BLE001 — surface a clean ToolError, not a raw pydantic one
-        raise _tool_error(f"could not read annotations: {e}") from e
-    try:
-        edl = edl_from_annotations(
-            parsed,
-            # No song set yet — nothing to cross-check against, so stay permissive
-            # (song_hash() would raise FileNotFoundError on a songless project).
-            expected_song_asset_id=proj.song_hash() if proj.has_song() else None,
-        )
-    except ValueError as e:
-        raise _tool_error(str(e)) from e
-    return {"project_id": project_id, "edl": edl}
+
+# -- generated tools: one per catalogue operation with no hand-written tool ----------
+
+
+def _op_tool(op_name: str):
+    """A tool ``footage_<op>(project_id, **params)`` over :mod:`muvid.footage.service`.
+
+    Its signature is the operation's own minus the project (and minus what the catalogue
+    hides), its docstring the operation's — so the tool cannot drift from the operation
+    it serves.
+    """
+    spec = next(s for s in service.FOOTAGE_OP_SPECS if s.name == op_name)
+    op = getattr(service, op_name)
+    sig = inspect.signature(op, eval_str=True)
+    params = [p for p in list(sig.parameters.values())[1:] if p.name not in spec.hide]
+    project_param = inspect.Parameter(
+        "project_id", inspect.Parameter.POSITIONAL_OR_KEYWORD, annotation=str
+    )
+
+    def tool(project_id: str, **kwargs) -> dict:
+        return _call(project_id, op, **kwargs)
+
+    tool.__name__ = tool.__qualname__ = op_tool_name(op_name)
+    tool.__module__ = __name__
+    tool.__doc__ = _as_tool_names(op.__doc__ or "")
+    tool.__signature__ = sig.replace(
+        parameters=[project_param, *params], return_annotation=dict
+    )
+    tool.__annotations__ = {
+        "project_id": str,
+        **{p.name: p.annotation for p in params},
+        "return": dict,
+    }
+    return tool
+
+
+for _op_name in GENERATED_OPS:
+    globals()[op_tool_name(_op_name)] = _op_tool(_op_name)
+del _op_name
