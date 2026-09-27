@@ -1691,6 +1691,33 @@ def set_span(fp, *, edit_id: str, start_s: float, end_s: float) -> dict:
     return _edit_reply(fp, record)
 
 
+@_edits_locked
+def rename_edit(fp, *, edit_id: str, name: str) -> dict:
+    """Give an edit a new name — what the edit picker and the renders made from it show.
+
+    Only the name changes; the cuts, the span and the edit's id stay as they are, and
+    the rename can be undone like any other change. Returns the edit.
+    """
+    record, _entries = _edit_entries(fp, edit_id)
+    name = (name or "").strip()
+    if not name:
+        raise FootageError("an edit's name cannot be empty")
+    if len(name) > EDIT_NAME_MAX_LEN:
+        raise FootageError(
+            f"an edit's name can be at most {EDIT_NAME_MAX_LEN} characters, "
+            f"got {len(name)}"
+        )
+    previous = record
+    record = dict(record, name=name, modified=time.time())
+    _commit(fp, previous, record)
+    return _edit_reply(fp, record)
+
+
+#: The longest name an edit may carry — long enough for a description, short enough
+#: to fit a picker.
+EDIT_NAME_MAX_LEN = 120
+
+
 #: How many earlier versions of one edit are kept for ``undo_edit`` (env-tunable).
 EDIT_HISTORY_LIMIT = int(os.environ.get("MUVID_EDIT_HISTORY_LIMIT", "100"))
 
@@ -2597,6 +2624,7 @@ FOOTAGE_OP_SPECS: tuple[OpSpec, ...] = (
     OpSpec("split_cut", "Split a cut here", "write"),
     OpSpec("merge_cut", "Join a cut to its neighbour", "write"),
     OpSpec("set_span", "Choose which part of the song the video covers", "write"),
+    OpSpec("rename_edit", "Rename an edit", "write"),
     OpSpec("looks", "List the looks", "read"),
     OpSpec("undo_edit", "Undo", "write"),
     OpSpec("redo_edit", "Redo", "write"),
