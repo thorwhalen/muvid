@@ -268,9 +268,9 @@ def named_look_catalogue() -> list[dict]:
     return [look.to_dict() for look in NAMED_LOOKS]
 
 
-def compile_named_look(spec: Mapping, *, canvas, fps: float, duration_s: float):
-    """``{"name": ..., **params}`` → the cut's filter fragment (a ``LookFragment``,
-    which says whether it is time-varying). Unknown names and parameters are refused."""
+def resolve_named_look(spec: Mapping) -> dict:
+    """``{"name": ..., **params}`` checked, with every parameter's value filled in (the
+    defaults included) — the spec a cut records so a screen can show the choice."""
     spec = dict(spec)
     name = spec.pop("name", None)
     look = _BY_NAME.get(name)
@@ -283,7 +283,17 @@ def compile_named_look(spec: Mapping, *, canvas, fps: float, duration_s: float):
             f"not {unknown}"
         )
     params = {k: p.coerce(k, spec.get(k, p.default)) for k, p in look.params.items()}
-    return look.build(canvas=canvas, fps=fps, duration_s=duration_s, **params)
+    return {"name": name, **params}
+
+
+def compile_named_look(spec: Mapping, *, canvas, fps: float, duration_s: float):
+    """``{"name": ..., **params}`` → the cut's filter fragment (a ``LookFragment``,
+    which says whether it is time-varying). Unknown names and parameters are refused."""
+    resolved = resolve_named_look(spec)
+    name = resolved.pop("name")
+    return _BY_NAME[name].build(
+        canvas=canvas, fps=fps, duration_s=duration_s, **resolved
+    )
 
 
 __all__ = [
@@ -292,5 +302,6 @@ __all__ = [
     "NamedLookError",
     "MAX_ZOOM",
     "named_look_catalogue",
+    "resolve_named_look",
     "compile_named_look",
 ]

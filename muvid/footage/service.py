@@ -330,7 +330,7 @@ def _next_step(fp, aligns, edit_rows, render_rows) -> dict:
 # =============================================================================
 
 
-def align(fp, *, keep_declared: bool = True) -> dict:
+def align(fp) -> dict:
     """Find where each video sits on the song by listening to its own audio, and save it.
 
     Returns each clip's offset, a confidence in [0,1], its ``support`` (the fraction of
@@ -357,9 +357,10 @@ def align(fp, *, keep_declared: bool = True) -> dict:
       clips with it. So if a short clip looks out of sync in the render, this list is
       the first place to look — and muvid#91 is where that trade-off is being decided.
 
-    A clip whose offset a person DECLARED (``set_offset``) is kept as declared and not
-    re-measured, unless ``keep_declared=false``; those are listed in ``kept_declared``.
-    Every measured record says ``source: "measured"``.
+    A clip whose offset a person DECLARED (``set_offset``) is ALWAYS left alone — a
+    person placed it, usually because the aligner got it wrong (muvid#59) — and is named
+    in ``kept_declared``. To have one measured again, ``clear_offset`` it first. Every
+    measured record says ``source: "measured"``.
 
     Run this after adding/removing clips and before cutting.
     """
@@ -372,11 +373,7 @@ def align(fp, *, keep_declared: bool = True) -> dict:
     if not clips:
         raise FootageError("no footage added — call add_footage first")
     previous = fp.load_alignments()
-    declared = (
-        {a.clip_id: a for a in previous if a.source == DECLARED}
-        if keep_declared
-        else {}
-    )
+    declared = {a.clip_id: a for a in previous if a.source == DECLARED}
     to_measure = [(cid, p) for cid, p in clips if cid not in declared]
     measured = (
         _align(str(fp.song_path()), to_measure, song_duration=fp.song_duration())
@@ -485,6 +482,38 @@ def set_offset(fp, *, clip_id: str, offset_s: float) -> dict:
     if stale:
         fp.invalidate_scores()
     return {"alignment": record.to_dict(), "scores_invalidated": stale}
+
+
+def clear_offset(fp, *, clip_id: str) -> dict:
+    """Forget where I placed this video: remove a hand-declared offset, so the next
+    ``align`` measures the clip by its audio instead.
+
+    Only a DECLARED offset can be forgotten (a measured one is replaced by aligning
+    again); an unknown clip, or one with no declared offset, is refused. Until ``align``
+    runs again the clip has no place on the song, and footage scores made with the old
+    offset are dropped.
+    """
+    from muvid.footage.scoring.grid import align_fingerprint
+
+    known = fp.list_clips()
+    if clip_id not in {c["clip_id"] for c in known}:
+        raise FootageError(_unknown_clip_message(clip_id, known))
+    previous = fp.load_alignments()
+    record = next((a for a in previous if a.clip_id == clip_id), None)
+    if record is None or record.source != DECLARED:
+        raise FootageError(
+            f"clip {clip_id!r} has no offset placed by hand — nothing to forget"
+        )
+    aligns = [a for a in previous if a.clip_id != clip_id]
+    fp.save_alignments(aligns)
+    stale = align_fingerprint(aligns) != align_fingerprint(previous)
+    if stale:
+        fp.invalidate_scores()
+    return {
+        "cleared": clip_id,
+        "offset_s": record.offset_s,
+        "scores_invalidated": stale,
+    }
 
 
 def declared_alignment(
@@ -923,6 +952,7 @@ EDL_OPTIONAL_FIELDS = (
     ("crop_end", lambda v: v.to_dict(), None),
     ("look", str, None),
     ("look_time_varying", bool, False),
+    ("look_spec", dict, None),
 )
 
 
@@ -1077,6 +1107,19 @@ def _span_of(record: dict) -> Optional[tuple[float, float]]:
     return (float(span[0]), float(span[1])) if span else None
 
 
+def _windowed(entries, span) -> list:
+    """What of a whole-song edit renders inside ``span``: its cuts clipped to the window
+    and gap-filled across it. The edit itself is never changed by this — a span is a
+    render-time WINDOW, so trimming to it loses nothing and widening it restores
+    exactly what was there."""
+    from muvid.footage.edl import fill_gaps
+
+    if span is None:
+        return list(entries)
+    kept = _trim_to_span([e for e in entries if not e.is_gap], span)
+    return fill_gaps(kept, span[1], start=span[0])
+
+
 def _trim_to_span(entries, span) -> list:
     """Entries clipped to ``span``: whole entries outside it dropped, straddling ones
     cut at its boundaries (a pan re-derived where it was at the cut), and the blend of an
@@ -1177,8 +1220,6 @@ def propose_edit(
     from muvid.footage.edl import validate_edl
     from muvid.footage.strategy import DEFAULT_STRATEGY
 
-    from muvid.footage.edl import fill_gaps
-
     aligns = _require_song_and_alignment(fp)
     song_dur = fp.song_duration()
     span = _check_span(fp, span)
@@ -1190,7 +1231,6 @@ def propose_edit(
             aligns, song_dur, strategy=strat, context=context, recover=True
         )
         if span is not None:
-            proposal = fill_gaps(_trim_to_span(proposal, span), span[1], start=span[0])
             excluded = [
                 x for x in excluded if x.song_end > span[0] and x.song_start < span[1]
             ]
@@ -1199,14 +1239,22 @@ def propose_edit(
         entries = validate_edl(
             proposal, aligns, song_dur, canvas=fp.canvas(), allow_unreliable=True
         )
+        # The edit is the whole song; the span is the window that renders.
+        window = validate_edl(
+            _windowed(entries, span),
+            aligns,
+            song_dur,
+            canvas=fp.canvas(),
+            allow_unreliable=True,
+        )
     except (ValueError, KeyError) as e:
         raise FootageError(f"could not build a valid edit: {e}") from e
     out = {
         "strategy": strat,
         "edl": [edl_json(e) for e in entries],
-        "assemble_refusal": assemble_refusal(entries, aligns, song_dur, fp.canvas()),
+        "assemble_refusal": assemble_refusal(window, aligns, song_dur, fp.canvas()),
         "coverage": coverage_report(
-            [e for e in entries if not e.is_gap],
+            [e for e in window if not e.is_gap],
             aligns,
             song_dur,
             excluded=excluded,
@@ -1282,7 +1330,7 @@ def save_edit(
     cut to it; default the whole song. Returns the saved edit.
     """
     span = _check_span(fp, span)
-    entries = _validated_entries(fp, edl, span=span)
+    entries = _validated_entries(fp, edl)
     edit_id = _normalised_id(edit_id, label="edit_id") if edit_id else ""
     if edit_id and fp.has_edit(edit_id):
         raise FootageError(
@@ -1321,7 +1369,7 @@ def replace_edit(fp, *, edit_id: str, edl: list[dict]) -> dict:
     once. The new list is checked exactly as ``save_edit`` checks one; on refusal the
     edit is left as it was. The previous list is not kept."""
     record = _read_edit(fp, edit_id)
-    entries = _validated_entries(fp, edl, span=_span_of(record))
+    entries = _validated_entries(fp, edl)
     return _store_changed(fp, record, entries)
 
 
@@ -1346,7 +1394,9 @@ def set_cut(
       boundary moves with it, so the edit stays one continuous timeline; a move that
       would swallow a neighbour whole is refused (join them with ``merge_cut``).
     - ``look``: a NAMED look from ``looks`` — ``{"name": "slow_push", "zoom": 1.08}``,
-      compiled for this cut's length and the project's canvas — or, for power users,
+      compiled for this cut's length and the project's canvas and kept on the cut as
+      ``look_spec`` (with every parameter's value) so it can be shown and changed —
+      or, for power users,
       one raw ffmpeg filter chain (allowlisted; set ``look_time_varying`` for one that
       moves). ``""`` removes it.
 
@@ -1361,13 +1411,17 @@ def set_cut(
     if clip_id is not None and (clip_id or "") != e.clip_id:
         changes.update(clip_id=clip_id or "", crop=None, crop_end=None)
         if not clip_id:  # a gap carries no picture, so no look either
-            changes.update(look=None, look_time_varying=False, transition=None)
+            changes.update(
+                look=None, look_time_varying=False, look_spec=None, transition=None
+            )
     if isinstance(look, dict):
-        fragment = _named_look(fp, look, duration_s=e.song_end - e.song_start)
+        spec, fragment = _named_look(fp, look, duration_s=e.song_end - e.song_start)
         changes["look"] = str(fragment)
         changes["look_time_varying"] = bool(fragment.time_varying)
+        changes["look_spec"] = spec  # so a screen can show and re-edit the choice
     elif look is not None:
         changes["look"] = look or None
+        changes["look_spec"] = None  # a hand-written filter names no look
         if not look:
             changes["look_time_varying"] = False
     if look_time_varying is not None:
@@ -1399,14 +1453,20 @@ def set_cut(
 def _named_look(fp, spec: dict, *, duration_s: float):
     from muvid.footage.assemble import DEFAULT_FPS
     from muvid.footage.look import LookError
-    from muvid.footage.named_looks import NamedLookError, compile_named_look
+    from muvid.footage.named_looks import (
+        NamedLookError,
+        compile_named_look,
+        resolve_named_look,
+    )
 
     try:
-        return compile_named_look(
-            spec, canvas=fp.canvas(), fps=DEFAULT_FPS, duration_s=duration_s
+        resolved = resolve_named_look(spec)
+        fragment = compile_named_look(
+            resolved, canvas=fp.canvas(), fps=DEFAULT_FPS, duration_s=duration_s
         )
     except (NamedLookError, LookError) as e:
         raise FootageError(str(e)) from e
+    return resolved, fragment
 
 
 def looks(fp=None) -> dict:
@@ -1503,20 +1563,21 @@ def delete_edit(fp, *, edit_id: str) -> dict:
 
 @_edits_locked
 def set_span(fp, *, edit_id: str, start_s: float, end_s: float) -> dict:
-    """Choose which part of the song a saved edit covers — trim its start and end.
+    """Choose which part of the song the video covers — where it starts and ends.
 
-    The video made from the edit then runs from ``start_s`` to ``end_s`` of the song,
-    with the song cut to match (and faded out at the end when it stops before the song
-    does). Cuts outside the new span are dropped, cuts across its edges are shortened,
-    and a span wider than the cuts is filled with black. ``start_s=0`` and
-    ``end_s`` = the song's length is the whole song again. Returns the changed edit.
+    **Trimming loses nothing.** The span is a window on the edit, not a cut of it: every
+    cut is kept whole, and only what is RENDERED is limited to ``start_s``..``end_s``
+    (the song cut to match, faded out at the end when it stops before the song does;
+    cuts across an edge are shortened in the render only). Widening the span again —
+    ``start_s=0`` and ``end_s`` = the song's length is the whole song — brings back
+    exactly what was there. Returns the edit, with its ``span``.
     """
-    record, entries = _edit_entries(fp, edit_id)
+    record, _entries = _edit_entries(fp, edit_id)
     span = _check_span(fp, (start_s, end_s))
-    trimmed = _trim_to_span([e for e in entries if not e.is_gap], span)
-    record = dict(record)
+    record = dict(record, modified=time.time())
     _set_or_pop(record, "span", list(span) if span else None)
-    return _store_changed(fp, record, trimmed)
+    fp.write_edit(record["edit_id"], record)
+    return _edit_reply(fp, record)
 
 
 def _set_or_pop(d: dict, key: str, value) -> None:
@@ -1593,9 +1654,9 @@ def _check_index(entries, index: int) -> int:
     return i
 
 
-def _validated_entries(fp, edl, *, span=None) -> list:
-    """``edl`` gap-filled (over ``span``, default the whole song) and checked against the
-    current alignment — structurally.
+def _validated_entries(fp, edl) -> list:
+    """``edl`` gap-filled over the whole song and checked against the current alignment
+    — structurally. (An edit's ``span`` never trims what is stored: it is a window.)
 
     ``allow_unreliable=True``: an edit is a plan, and the trust refusal belongs where the
     encode does (:func:`render`); ``edits`` reports which clips it would refuse.
@@ -1604,10 +1665,9 @@ def _validated_entries(fp, edl, *, span=None) -> list:
 
     aligns = _require_song_and_alignment(fp)
     song_dur = fp.song_duration()
-    start, end = span if span is not None else (0.0, song_dur)
     try:
         return validate_edl(
-            fill_gaps(edl, end, start=start),
+            fill_gaps(edl, song_dur),
             aligns,
             song_dur,
             canvas=fp.canvas(),
@@ -1618,7 +1678,7 @@ def _validated_entries(fp, edl, *, span=None) -> list:
 
 
 def _store_changed(fp, record: dict, entries, *, changed: Optional[int] = None) -> dict:
-    validated = _validated_entries(fp, entries, span=_span_of(record))
+    validated = _validated_entries(fp, entries)
     record = dict(record, edl=[edl_json(e) for e in validated], modified=time.time())
     fp.write_edit(record["edit_id"], record)
     reply = _edit_reply(fp, record)
@@ -1637,6 +1697,14 @@ def _edit_check(fp, record: dict) -> tuple[Optional[str], list, list]:
     try:
         entries = validate_edl(
             record.get("edl") or [],
+            aligns,
+            fp.song_duration(),
+            canvas=fp.canvas(),
+            allow_unreliable=True,
+        )
+        # what renders: the window (the whole song unless the edit has a span)
+        entries = validate_edl(
+            _windowed(entries, _span_of(record)),
             aligns,
             fp.song_duration(),
             canvas=fp.canvas(),
@@ -1781,9 +1849,18 @@ def assemble(
                     "explicit edl"
                 )
             span = _check_span(fp, span)
-            start, end = span if span is not None else (0.0, song_dur)
+            # The edit over the whole song (structure only), then the window that
+            # renders — where the trust gate applies: a clip outside the span is not
+            # rendered, so it is not refused.
+            whole = validate_edl(
+                fill_gaps(edl, song_dur),
+                aligns,
+                song_dur,
+                canvas=canvas_wh,
+                allow_unreliable=True,
+            )
             entries = validate_edl(
-                fill_gaps(edl, end, start=start),
+                _windowed(whole, span),
                 aligns,
                 song_dur,
                 canvas=canvas_wh,
@@ -2315,6 +2392,7 @@ FOOTAGE_OP_SPECS: tuple[OpSpec, ...] = (
     OpSpec("remove_clip", "Remove a video", "destroy"),
     OpSpec("align", "Find where each video fits", "write", runs="job"),
     OpSpec("set_offset", "Place a video on the song by hand", "write"),
+    OpSpec("clear_offset", "Forget where I placed this video", "destroy"),
     OpSpec("timeline", "Show which videos cover which parts of the song", "read"),
     OpSpec("beat_grid", "Find the beat", "read"),
     OpSpec(

@@ -178,6 +178,8 @@ def _edl_body(e) -> dict:
     # and the body must carry the plain value.
     if getattr(e, "look_time_varying", False):
         body["look_time_varying"] = True
+    if getattr(e, "look_spec", None) is not None:
+        body["look_spec"] = dict(e.look_spec)
     return body
 
 
@@ -280,6 +282,15 @@ def edl_from_annotations(
         raw = a.body.get("look_time_varying")
         if isinstance(raw, bool) and raw:
             entry["look_time_varying"] = True
+        # Same skip-shaped read: a named look's spec is carried only when it has the
+        # shape `_as_entry` accepts, and only beside the look it describes.
+        raw = a.body.get("look_spec")
+        if (
+            isinstance(raw, dict)
+            and isinstance(raw.get("name"), str)
+            and "look" in entry
+        ):
+            entry["look_spec"] = dict(raw)
         out.append(entry)
     return sorted(out, key=lambda e: e["song_start"])
 

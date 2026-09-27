@@ -375,17 +375,18 @@ def _import_edit(fp, edit: Mapping, edl: list[dict]) -> str:
             fp, edit_id=edit["id"], start_s=wanted_span[0], end_s=wanted_span[1]
         )
         verdict = "replaced"
-    proposed = [service.edl_json(e) for e in _normalised(edl, wanted_span)]
+    proposed = [service.edl_json(e) for e in _normalised(edl, fp.song_duration())]
     if service.get_edit(fp, edit_id=edit["id"])["edl"] != proposed:
         service.replace_edit(fp, edit_id=edit["id"], edl=edl)
         verdict = "replaced"
     return verdict
 
 
-def _normalised(edl, span):
+def _normalised(edl, song_duration: float):
+    """The edit as stored: the whole song, gap-filled (a span is only a window)."""
     from muvid.footage.edl import fill_gaps
 
-    return fill_gaps(edl, span[1], start=span[0])
+    return fill_gaps(edl, song_duration)
 
 
 # -- lyric video -----------------------------------------------------------------

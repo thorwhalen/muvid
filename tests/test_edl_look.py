@@ -1230,6 +1230,7 @@ def test_every_optional_edl_field_is_carried_by_the_returned_edl():
         "crop_end",
         "look",
         "look_time_varying",
+        "look_spec",
     ], (
         f"EdlEntry grew or lost an optional field ({optional}). Decide whether it "
         "belongs in the returned/persisted edit, add it to "
@@ -1245,10 +1246,12 @@ def test_every_optional_edl_field_is_carried_by_the_returned_edl():
         # to survive the trip is `True`, and a `look` has to accompany it or
         # `validate_edl` refuses the pair.
         "look_time_varying": True,
+        # A named look's spec rides beside the look it describes (no look, no spec).
+        "look_spec": {"name": "vivid", "amount": 1.2},
     }
     for field in optional:
         kwargs = {field: values[field]}
-        if field == "look_time_varying":
+        if field in ("look_time_varying", "look_spec"):
             kwargs["look"] = _GREY
         e = EdlEntry(0.0, 4.0, "A", **kwargs)
         assert field in _edl_json(e), (
