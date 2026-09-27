@@ -274,6 +274,93 @@ def test_render_renders_the_saved_edit_and_records_it(fp, monkeypatch):
     assert rows[0]["edit_id"] == "e" and rows[0]["render_id"] == meta["render_id"]
 
 
+# -- edit spans: an edit may cover PART of the song -----------------------------------
+
+
+def test_an_edit_can_cover_part_of_the_song(fp):
+    saved = service.save_edit(
+        fp,
+        edl=[{"song_start": 4.0, "song_end": 12.0, "clip_id": "A"}],
+        edit_id="part",
+        span=[2.0, 14.0],
+    )
+    assert saved["span"] == [2.0, 14.0]
+    assert [(e["song_start"], e["song_end"], e["clip_id"]) for e in saved["edl"]] == [
+        (2.0, 4.0, None),
+        (4.0, 12.0, "A"),
+        (12.0, 14.0, None),
+    ]
+    assert saved["coverage"]["uncovered"] == [
+        {"song_start": 2.0, "song_end": 4.0},
+        {"song_start": 12.0, "song_end": 14.0},
+    ]
+    assert json.loads((fp.root / "edits" / "part.json").read_text())["span"] == [2, 14]
+    whole = service.save_edit(fp, edl=_edl_ab(), edit_id="whole")
+    assert whole["span"] == [0.0, SONG_S]
+    assert "span" not in json.loads((fp.root / "edits" / "whole.json").read_text())
+
+
+def test_a_cut_outside_the_span_is_refused(fp):
+    with pytest.raises(FootageError, match="outside the span"):
+        service.save_edit(fp, edl=_edl_ab(), edit_id="x", span=[1.0, 20.0])
+    with pytest.raises(FootageError, match="not a stretch of the song"):
+        service.save_edit(fp, edl=_edl_ab(), edit_id="x", span=[5.0, 99.0])
+
+
+def test_set_span_trims_and_widens(fp):
+    edl = _edl_ab()
+    edl[1]["crop"] = {"x": 0.0, "y": 0.0, "w": 0.5, "h": 0.5}
+    edl[1]["crop_end"] = {"x": 0.5, "y": 0.0, "w": 0.5, "h": 0.5}
+    service.save_edit(fp, edl=edl, edit_id="e")
+    out = service.set_span(fp, edit_id="e", start_s=0.0, end_s=21.0)
+    assert out["span"] == [0.0, 21.0]
+    last = out["edl"][-1]
+    assert (last["song_start"], last["song_end"], last["clip_id"]) == (12.0, 21.0, "B")
+    # the pan is re-derived where it was at 21 s: half way across 12..30
+    assert last["crop_end"]["x"] == pytest.approx(0.25)
+    out = service.set_span(fp, edit_id="e", start_s=13.0, end_s=21.0)
+    assert [e["clip_id"] for e in out["edl"]] == ["B"]
+    out = service.set_span(fp, edit_id="e", start_s=0.0, end_s=SONG_S)
+    assert out["span"] == [0.0, SONG_S]
+    assert [e["clip_id"] for e in out["edl"]] == [None, "B", None]
+    assert "span" not in json.loads((fp.root / "edits" / "e.json").read_text())
+
+
+def test_propose_edit_within_a_span(fp):
+    out = service.propose_edit(fp, span=[5.0, 25.0])
+    assert out["span"] == [5.0, 25.0]
+    assert out["edl"][0]["song_start"] == 5.0 and out["edl"][-1]["song_end"] == 25.0
+    assert service.get_edit(fp, edit_id=out["edit_id"])["span"] == [5.0, 25.0]
+
+
+def test_render_of_a_trimmed_edit_renders_only_its_span(fp, monkeypatch):
+    import muvid.footage.assemble as A
+    import muvid.visualize as V
+
+    seen = {}
+
+    def fake_assemble(cuts, song, out, canvas, on_note=None, **kw):
+        seen.update(kw, span=(cuts[0].song_start, cuts[-1].song_end))
+        Path(out).write_bytes(b"video")
+        return Path(out)
+
+    def fake_verify(out, **kw):
+        seen["verify"] = kw
+        return []
+
+    monkeypatch.setattr(A, "assemble_music_video", fake_assemble)
+    monkeypatch.setattr(V, "verify_video", fake_verify)
+    monkeypatch.setattr(V, "failures", lambda c: [])
+    monkeypatch.setattr(V, "report", lambda c: "ok")
+    service.save_edit(fp, edl=_edl_ab(), edit_id="e")
+    service.set_span(fp, edit_id="e", start_s=3.0, end_s=20.0)
+    meta = service.render(fp, edit_id="e")
+    assert seen["span"] == (3.0, 20.0) and meta["rendered_span"] == [3.0, 20.0]
+    assert seen["fade_out_s"] == service.TAIL_FADE_S
+    assert seen["verify"]["expected_duration"] == pytest.approx(17.0)
+    assert meta["coverage"]["span"] == [3.0, 20.0]
+
+
 # -- the catalogue: service ↔ nw registry ↔ MCP tools ----------------------------------
 
 
@@ -588,6 +675,7 @@ def test_importer_is_idempotent_and_fills_every_part(tmp_path):
                 "name": "V1",
                 "edl_path": "edl.json",
                 "how_made": "planned by hand",
+                "span": [0.0, 5.0],
             }
         ],
         "renders": [
@@ -613,8 +701,16 @@ def test_importer_is_idempotent_and_fills_every_part(tmp_path):
     fp = project.footage
     edit = service.get_edit(fp, edit_id="v1")
     assert edit["problem"] is None and edit["edl"][0]["crop_end"]["x"] == 0.5
+    assert edit["span"] == [0.0, 5.0] and edit["edl"][-1]["song_end"] == 5.0
     render = service.renders(fp)["renders"][0]
     assert render["edit_id"] == "v1" and render["label"] == "Final"
+    assert render["rendered_span"] == [0.0, 5.0]
+    # the real encoder: a trimmed edit renders only its span, song cut and faded
+    meta = service.render(fp, edit_id="v1")
+    from muvid.visualize.ffmpeg import media_duration
+
+    assert meta["ok"], meta["checks"]
+    assert media_duration(meta["video"]) == pytest.approx(5.0, abs=0.15)
     catalog = project.media_catalog
     status = service.status(fp)
     ids = [
@@ -625,7 +721,7 @@ def test_importer_is_idempotent_and_fills_every_part(tmp_path):
     ]
     assert all(catalog.has(i) for i in ids)
     assert project.cover_artifact_id() == status["cover_artifact_id"]
-    assert len(fp.list_renders()) == 1  # re-import did not add a second render
+    assert len(fp.list_renders()) == 2  # the import's one (not doubled) + ours
 
 
 @needs_ffmpeg

@@ -22,8 +22,9 @@ Two kinds of manifest (paths absolute, ``~``-expanded, or relative to the manife
      "clips": [{"id": "c01", "path": "footage/01.mp4", "name": "Camera A",
                 "offset_s": 28.854}],                    # offset_s = a DECLARED offset
      "edits": [{"id": "v1", "name": "V1", "edl_path": "work/edl_v1d.json",
-                "how_made": "…"}],                       # or "edl": [...] inline, or
-                                                         # "whole_song": "c01" (one shot)
+                "how_made": "…",                         # or "edl": [...] inline, or
+                "span": [0.162, 157.13]}],               # "whole_song": "c01" (one shot);
+                                                         # span: default the whole song
      "renders": [{"id": "v1e", "path": "out/v1e.mp4", "edit_id": "v1", "label": "V1"}]}
 
 ``lyric-video`` — a lyric video (view-only in v1)::
@@ -304,29 +305,41 @@ def _source_sizes(manifest: Mapping, resolve, *, fp=None) -> dict:
 
 
 def _import_edit(fp, edit: Mapping, edl: list[dict]) -> str:
+    """Save the edit, or bring an existing one in line with the manifest — its ``span``
+    (the part of the song it covers, default the whole song) and its cut list."""
     from muvid.footage import service
 
-    if fp.has_edit(edit["id"]):
-        current = service.get_edit(fp, edit_id=edit["id"])
-        proposed = [service.edl_json(e) for e in _normalised(fp, edl)]
-        if current["edl"] == proposed:
-            return "unchanged"
+    span = edit.get("span")
+    if not fp.has_edit(edit["id"]):
+        service.save_edit(
+            fp,
+            edl=edl,
+            name=edit.get("name") or edit["id"],
+            how_made=edit.get("how_made") or "imported",
+            edit_id=edit["id"],
+            span=span,
+        )
+        return "saved"
+    current = service.get_edit(fp, edit_id=edit["id"])
+    whole = [0.0, fp.song_duration()]
+    wanted_span = [float(x) for x in span] if span else whole
+    verdict = "unchanged"
+    if current["span"] != wanted_span:
+        service.set_span(
+            fp, edit_id=edit["id"], start_s=wanted_span[0], end_s=wanted_span[1]
+        )
+        verdict = "replaced"
+    proposed = [service.edl_json(e) for e in _normalised(edl, wanted_span)]
+    if service.get_edit(fp, edit_id=edit["id"])["edl"] != proposed:
         service.replace_edit(fp, edit_id=edit["id"], edl=edl)
-        return "replaced"
-    service.save_edit(
-        fp,
-        edl=edl,
-        name=edit.get("name") or edit["id"],
-        how_made=edit.get("how_made") or "imported",
-        edit_id=edit["id"],
-    )
-    return "saved"
+        verdict = "replaced"
+    return verdict
 
 
-def _normalised(fp, edl):
+def _normalised(edl, span):
     from muvid.footage.edl import fill_gaps
 
-    return fill_gaps(edl, fp.song_duration())
+    return fill_gaps(edl, span[1], start=span[0])
 
 
 # -- lyric video -----------------------------------------------------------------

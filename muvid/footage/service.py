@@ -88,6 +88,10 @@ DEFAULT_SCORE_HOP_S = 0.1
 OUTLIER_FROM_MEDIAN_S = 5.0
 #: Spans shorter than this (seconds) are float noise, as in :mod:`muvid.footage.edl`.
 _EPS = 1e-3
+#: How long the song fades out at the end of a render that stops before the song does
+#: (a trimmed edit's ``span``) — long enough not to cut the music off mid-note, short
+#: enough not to eat the last bar the edit chose to end on.
+TAIL_FADE_S = 1.5
 #: Where in its source the cover frame is taken, as a fraction of the duration — past
 #: the opening (often black or a count-in), well before the end.
 COVER_AT_FRACTION = 0.25
@@ -928,23 +932,27 @@ def _round_opt(x: Optional[float]) -> Optional[float]:
     return None if x is None else round(float(x), 3)
 
 
-def coverage_report(entries, aligns, song_dur: float, *, excluded=()) -> dict:
+def coverage_report(
+    entries, aligns, song_dur: float, *, excluded=(), span=None
+) -> dict:
     """What the song's timeline looks like under ``entries`` — covered, weak, MISSING.
 
     Pass only FOOTAGE entries: a gap renders fill, and filled is not covered. Uncovered
     audio is named with explicit start/end times; a span whose only footage is weakly
     aligned is listed with the numbers that make it weak; ``excluded`` (muvid#88) names
     spans the auto path gave up because only an unvouched clip covered them.
+    ``span`` (a trimmed edit's ``(start, end)``) bounds what counts as uncovered.
     """
     by_id = {a.clip_id: a for a in aligns}
+    lo_bound, hi_bound = span if span is not None else (0.0, song_dur)
     covered = sorted((e.song_start, e.song_end) for e in entries)
-    gaps, cursor = [], 0.0
+    gaps, cursor = [], float(lo_bound)
     for lo, hi in covered:
         if lo - cursor > _EPS:
             gaps.append({"song_start": round(cursor, 2), "song_end": round(lo, 2)})
         cursor = max(cursor, hi)
-    if song_dur - cursor > _EPS:
-        gaps.append({"song_start": round(cursor, 2), "song_end": round(song_dur, 2)})
+    if hi_bound - cursor > _EPS:
+        gaps.append({"song_start": round(cursor, 2), "song_end": round(hi_bound, 2)})
     # `reliable`, not a bare confidence comparison: the verdict is the aligner's, so this
     # report says exactly what validate_edl will refuse.
     weak = [
@@ -960,15 +968,19 @@ def coverage_report(entries, aligns, song_dur: float, *, excluded=()) -> dict:
         if e.clip_id in by_id and not by_id[e.clip_id].reliable
     ]
     covered_s = sum(hi - lo for lo, hi in covered)
-    return {
+    length = hi_bound - lo_bound
+    report = {
         "song_duration": round(song_dur, 2),
         "covered_seconds": round(covered_s, 2),
-        "coverage_fraction": round(covered_s / song_dur, 4) if song_dur else 0.0,
+        "coverage_fraction": round(covered_s / length, 4) if length else 0.0,
         "uncovered": gaps,
         "weak_segments": weak,
         "excluded": [x.to_dict() for x in excluded],
         "confidence_threshold": _MIN_CONFIDENCE,
     }
+    if span is not None:
+        report["span"] = [lo_bound, hi_bound]
+    return report
 
 
 def exclusion_note(x) -> str:
@@ -1017,6 +1029,55 @@ def _require_song_and_alignment(fp) -> list:
     if not aligns:
         raise FootageError("no alignment — call align_footage first")
     return aligns
+
+
+def _check_span(fp, span) -> Optional[tuple[float, float]]:
+    """``span`` as ``(start, end)`` inside the song, or ``None`` for the whole song.
+
+    A span equal to the whole song is normalised to ``None``, so "the whole song" has
+    one spelling on disk and follows the song if its length is ever re-probed.
+    """
+    if span is None:
+        return None
+    try:
+        start, end = (float(x) for x in span)
+    except (TypeError, ValueError) as e:
+        raise FootageError(f"span must be [start_s, end_s], got {span!r}") from e
+    song_dur = fp.song_duration()
+    if not (0.0 - _EPS <= start < end <= song_dur + _EPS) or end - start <= _EPS:
+        raise FootageError(
+            f"span [{start:g}, {end:g}] is not a stretch of the song [0, {song_dur:.3f}]"
+        )
+    start, end = max(0.0, start), min(song_dur, end)
+    if start <= _EPS and song_dur - end <= _EPS:
+        return None
+    return start, end
+
+
+def _span_of(record: dict) -> Optional[tuple[float, float]]:
+    span = record.get("span")
+    return (float(span[0]), float(span[1])) if span else None
+
+
+def _trim_to_span(entries, span) -> list:
+    """Entries clipped to ``span``: whole entries outside it dropped, straddling ones
+    cut at its boundaries (a pan re-derived where it was at the cut), and the blend of an
+    entry that now opens the span dropped — nothing precedes it to blend from."""
+    if span is None:
+        return list(entries)
+    start, end = span
+    out = []
+    for e in entries:
+        if e.song_end <= start + _EPS or e.song_start >= end - _EPS:
+            continue
+        lo, hi = max(e.song_start, start), min(e.song_end, end)
+        changes = {"song_start": lo, "song_end": hi}
+        if e.crop_end is not None:
+            changes.update(crop=_crop_at(e, lo), crop_end=_crop_at(e, hi))
+        if lo <= start + _EPS:
+            changes["transition"] = None
+        out.append(replace(e, **changes))
+    return out
 
 
 def _selection_context(fp, strat, preset, weights, config):
@@ -1077,9 +1138,11 @@ def propose_edit(
     config: Optional[dict] = None,
     save: bool = True,
     name: str = "",
+    span: Optional[tuple[float, float]] = None,
 ) -> dict:
-    """Cut it for me: build an edit of the whole song from the placed videos, and (by
-    default) save it as a named edit — without rendering anything.
+    """Cut it for me: build an edit of the whole song — or of ``span`` (``[start_s,
+    end_s]``, the part of the song the video covers) — from the placed videos, and (by
+    default) save it as a named edit, without rendering anything.
 
     ``strategy`` picks how (see ``strategies``; default ``best_confidence``). Giving a
     ``preset`` ("energetic"/"contemplative"), per-metric ``weights`` or a ``config``
@@ -1096,8 +1159,11 @@ def propose_edit(
     from muvid.footage.edl import validate_edl
     from muvid.footage.strategy import DEFAULT_STRATEGY
 
+    from muvid.footage.edl import fill_gaps
+
     aligns = _require_song_and_alignment(fp)
     song_dur = fp.song_duration()
+    span = _check_span(fp, span)
     has_selection_config = bool(preset or weights or config)
     strat = strategy or ("weighted" if has_selection_config else DEFAULT_STRATEGY)
     try:
@@ -1105,6 +1171,11 @@ def propose_edit(
         proposal, excluded = _auto_edl(
             aligns, song_dur, strategy=strat, context=context, recover=True
         )
+        if span is not None:
+            proposal = fill_gaps(_trim_to_span(proposal, span), span[1], start=span[0])
+            excluded = [
+                x for x in excluded if x.song_end > span[0] and x.song_start < span[1]
+            ]
         # This renders nothing; refusing here would deny the diagnosis the caller came
         # for — the refusal belongs where the encode does (muvid#59).
         entries = validate_edl(
@@ -1117,10 +1188,16 @@ def propose_edit(
         "edl": [edl_json(e) for e in entries],
         "assemble_refusal": assemble_refusal(entries, aligns, song_dur, fp.canvas()),
         "coverage": coverage_report(
-            [e for e in entries if not e.is_gap], aligns, song_dur, excluded=excluded
+            [e for e in entries if not e.is_gap],
+            aligns,
+            song_dur,
+            excluded=excluded,
+            span=span,
         ),
         "warnings": [exclusion_note(x) for x in excluded],
     }
+    if span is not None:
+        out["span"] = list(span)
     if save:
         selection = {"strategy": strat}
         for key, value in (
@@ -1132,7 +1209,7 @@ def propose_edit(
                 selection[key] = value
         how = f"cut automatically ({strat}{', ' + preset if preset else ''})"
         record = _new_edit_record(
-            fp, out["edl"], name=name or _default_edit_name(fp), how_made=how
+            fp, out["edl"], name=name or _default_edit_name(fp), how_made=how, span=span
         )
         record["selection"] = selection
         fp.write_edit(record["edit_id"], record)
@@ -1151,6 +1228,7 @@ def save_edit(
     name: str = "",
     how_made: str = "by hand",
     edit_id: str = "",
+    span: Optional[tuple[float, float]] = None,
 ) -> dict:
     """Save a cut list as a new named edit.
 
@@ -1159,9 +1237,12 @@ def save_edit(
     form ``get_edit`` returns and ``propose_edit`` produces. Holes are filled with gap
     entries; the list is checked (order, overlap, every span inside its clip's coverage)
     and refused with the reason if it does not hold. ``edit_id`` fixes the id (an
-    existing one is refused — use ``replace_edit``). Returns the saved edit.
+    existing one is refused — use ``replace_edit``). ``span`` (``[start_s, end_s]``)
+    makes the edit cover only that part of the song — its render is that long, the song
+    cut to it; default the whole song. Returns the saved edit.
     """
-    entries = _validated_entries(fp, edl)
+    span = _check_span(fp, span)
+    entries = _validated_entries(fp, edl, span=span)
     if edit_id and fp.has_edit(edit_id):
         raise FootageError(
             f"edit {edit_id!r} already exists — use replace_edit to change it"
@@ -1172,6 +1253,7 @@ def save_edit(
         name=name or _default_edit_name(fp),
         how_made=how_made,
         edit_id=edit_id,
+        span=span,
     )
     fp.write_edit(record["edit_id"], record)
     return _edit_reply(fp, record)
@@ -1197,7 +1279,7 @@ def replace_edit(fp, *, edit_id: str, edl: list[dict]) -> dict:
     once. The new list is checked exactly as ``save_edit`` checks one; on refusal the
     edit is left as it was. The previous list is not kept."""
     record = _read_edit(fp, edit_id)
-    entries = _validated_entries(fp, edl)
+    entries = _validated_entries(fp, edl, span=_span_of(record))
     return _store_changed(fp, record, entries)
 
 
@@ -1346,14 +1428,44 @@ def delete_edit(fp, *, edit_id: str) -> dict:
     return {"deleted": edit_id, "edits": [r["edit_id"] for r in fp.list_edit_records()]}
 
 
+def set_span(fp, *, edit_id: str, start_s: float, end_s: float) -> dict:
+    """Choose which part of the song a saved edit covers — trim its start and end.
+
+    The video made from the edit then runs from ``start_s`` to ``end_s`` of the song,
+    with the song cut to match (and faded out at the end when it stops before the song
+    does). Cuts outside the new span are dropped, cuts across its edges are shortened,
+    and a span wider than the cuts is filled with black. ``start_s=0`` and
+    ``end_s`` = the song's length is the whole song again. Returns the changed edit.
+    """
+    record, entries = _edit_entries(fp, edit_id)
+    span = _check_span(fp, (start_s, end_s))
+    trimmed = _trim_to_span([e for e in entries if not e.is_gap], span)
+    record = dict(record)
+    _set_or_pop(record, "span", list(span) if span else None)
+    return _store_changed(fp, record, trimmed)
+
+
+def _set_or_pop(d: dict, key: str, value) -> None:
+    if value is None:
+        d.pop(key, None)
+    else:
+        d[key] = value
+
+
 def _new_edit_record(
-    fp, edl: list[dict], *, name: str, how_made: str, edit_id: str = ""
+    fp,
+    edl: list[dict],
+    *,
+    name: str,
+    how_made: str,
+    edit_id: str = "",
+    span: Optional[tuple[float, float]] = None,
 ) -> dict:
     from muvid.paths import safe_component
 
     now = time.time()
     eid = safe_component(edit_id, label="edit_id") if edit_id else _fresh_edit_id(fp)
-    return {
+    record = {
         "edit_id": eid,
         "name": name,
         "how_made": how_made,
@@ -1361,6 +1473,11 @@ def _new_edit_record(
         "modified": now,
         "edl": edl,
     }
+    # Absent = the whole song: one spelling on disk, and every edit saved before spans
+    # existed reads as what it was.
+    if span is not None:
+        record["span"] = [span[0], span[1]]
+    return record
 
 
 def _fresh_edit_id(fp) -> str:
@@ -1404,8 +1521,9 @@ def _check_index(entries, index: int) -> int:
     return i
 
 
-def _validated_entries(fp, edl) -> list:
-    """``edl`` gap-filled and checked against the current alignment — structurally.
+def _validated_entries(fp, edl, *, span=None) -> list:
+    """``edl`` gap-filled (over ``span``, default the whole song) and checked against the
+    current alignment — structurally.
 
     ``allow_unreliable=True``: an edit is a plan, and the trust refusal belongs where the
     encode does (:func:`render`); ``edits`` reports which clips it would refuse.
@@ -1414,9 +1532,10 @@ def _validated_entries(fp, edl) -> list:
 
     aligns = _require_song_and_alignment(fp)
     song_dur = fp.song_duration()
+    start, end = span if span is not None else (0.0, song_dur)
     try:
         return validate_edl(
-            fill_gaps(edl, song_dur),
+            fill_gaps(edl, end, start=start),
             aligns,
             song_dur,
             canvas=fp.canvas(),
@@ -1427,7 +1546,7 @@ def _validated_entries(fp, edl) -> list:
 
 
 def _store_changed(fp, record: dict, entries, *, changed: Optional[int] = None) -> dict:
-    validated = _validated_entries(fp, entries)
+    validated = _validated_entries(fp, entries, span=_span_of(record))
     record = dict(record, edl=[edl_json(e) for e in validated], modified=time.time())
     fp.write_edit(record["edit_id"], record)
     reply = _edit_reply(fp, record)
@@ -1473,9 +1592,18 @@ def _edit_summary(fp, record: dict) -> dict:
         "modified": record.get("modified"),
         "n_cuts": sum(1 for e in edl if e.get("clip_id")),
         "n_entries": len(edl),
+        "span": _effective_span(fp, record),
         "problem": problem,
         "unreliable": unreliable,
     }
+
+
+def _effective_span(fp, record: dict) -> Optional[list]:
+    """The part of the song an edit covers: its ``span``, else the whole song."""
+    span = _span_of(record)
+    if span is not None:
+        return list(span)
+    return [0.0, fp.song_duration()] if fp.has_song() else None
 
 
 def _edit_reply(fp, record: dict) -> dict:
@@ -1486,6 +1614,7 @@ def _edit_reply(fp, record: dict) -> dict:
             [e for e in entries if not e.is_gap],
             fp.load_alignments(),
             fp.song_duration(),
+            span=_span_of(record),
         )
     return reply
 
@@ -1540,6 +1669,7 @@ def assemble(
     edit_id: Optional[str] = None,
     label: str = "",
     annotate=None,
+    span: Optional[tuple[float, float]] = None,
 ) -> dict:
     """Assemble and render a music video — auto (a ``strategy``) or an explicit ``edl``.
 
@@ -1550,7 +1680,9 @@ def assemble(
 
     ``edit_id`` / ``label`` are recorded in the meta; ``annotate(render_id, ref_n)`` is
     the transport's hook for keys only it can fill (the MCP download claim) — merged into
-    the meta before it is written.
+    the meta before it is written. ``span`` (an explicit ``edl``'s part of the song)
+    renders only that stretch: the video AND the song cut to it, the song faded out over
+    :data:`TAIL_FADE_S` when the span ends before the song does.
     """
     from muvid.footage.assemble import assemble_music_video as _assemble
     from muvid.footage.edl import (
@@ -1575,8 +1707,9 @@ def assemble(
                     "selection config (preset/weights/config) can't accompany an "
                     "explicit edl"
                 )
+            start, end = span if span is not None else (0.0, song_dur)
             entries = validate_edl(
-                fill_gaps(edl, song_dur),
+                fill_gaps(edl, end, start=start),
                 aligns,
                 song_dur,
                 canvas=canvas_wh,
@@ -1622,6 +1755,12 @@ def assemble(
     render_dir = fp.new_render_dir(render_id)
     # The render-plan findings, on their way to the CALLER (who has no stderr).
     notes: list[str] = [exclusion_note(x) for x in excluded]
+    # A render that covers only part of the song is that part's length, and its music
+    # stops early — so the check is told the length, and the song fades out. Neither
+    # argument is passed for a whole-song render, which is byte-for-byte what it was.
+    rendered = entries[-1].song_end - entries[0].song_start
+    partial = rendered < song_dur - _EPS
+    tail = {"fade_out_s": TAIL_FADE_S} if entries[-1].song_end < song_dur - _EPS else {}
     try:
         out = _assemble(
             cuts,
@@ -1629,10 +1768,16 @@ def assemble(
             str(render_dir / "final.mp4"),
             canvas=canvas_wh,
             on_note=notes.append,
+            **tail,
         )
         # audio= arms the duration-match check (muvid#24 B3); expected_canvas keeps the
         # aspect checks honest for a deliberate portrait/square render.
-        checks = verify_video(out, audio=str(fp.song_path()), expected_canvas=canvas_wh)
+        checks = verify_video(
+            out,
+            audio=str(fp.song_path()),
+            expected_canvas=canvas_wh,
+            **({"expected_duration": rendered} if partial else {}),
+        )
     except Exception:
         import shutil
 
@@ -1646,7 +1791,8 @@ def assemble(
         "video": str(out),
         "strategy": used_strategy,
         "canvas": list(canvas_wh),
-        # "rendered", not "covered": after gap-filling this is always the whole song.
+        # "rendered", not "covered": after gap-filling this is the edit's whole span
+        # (the whole song unless the edit was trimmed).
         "rendered_span": [
             round(entries[0].song_start, 2),
             round(entries[-1].song_end, 2),
@@ -1655,7 +1801,11 @@ def assemble(
         # reproduce the same render (muvid#21 item 3).
         "edl": [edl_json(e) for e in entries],
         "coverage": coverage_report(
-            [e for e in entries if not e.is_gap], aligns, song_dur, excluded=excluded
+            [e for e in entries if not e.is_gap],
+            aligns,
+            song_dur,
+            excluded=excluded,
+            span=span,
         ),
         "ok": not failures(checks),
         "checks": report(checks),
@@ -1688,7 +1838,9 @@ def render(
     """Make the video: render a saved edit onto the canvas, over the clean song.
 
     Slow (minutes of encoding for a full song), so hosts run it in the background. The
-    video is exactly the song's length; gaps render black. ``canvas`` ("landscape" /
+    video is exactly as long as the part of the song the edit covers (its ``span``,
+    default the whole song; see ``set_span``), with the song cut to match and faded out
+    at the end when it stops early; gaps render black. ``canvas`` ("landscape" /
     "portrait" / "square") re-renders the same edit in another shape; default: the
     project's.
 
@@ -1708,6 +1860,7 @@ def render(
         edit_id=edit_id,
         label=record.get("name") or "",
         annotate=annotate,
+        span=_span_of(record),
     )
 
 
@@ -1757,6 +1910,9 @@ def import_render(
     previous = json.loads(meta_path.read_text()) if meta_path.exists() else {}
     ref_n = previous.get("ref_n") or fp.next_render_ref()
     duration = _probe_duration(dest)
+    # Where on the song the video sits: its edit's span when it names one, else the
+    # opening of the song (a video made elsewhere starts where its song starts).
+    span = _span_of(fp.read_edit(edit_id)) if edit_id and fp.has_edit(edit_id) else None
     meta = {
         "render_id": render_id,
         "ref_n": ref_n,
@@ -1764,7 +1920,11 @@ def import_render(
         "video": str(dest),
         "strategy": None,
         "canvas": frame_size(dest),
-        "rendered_span": [0.0, round(duration, 2)],
+        "rendered_span": (
+            [round(span[0], 2), round(span[1], 2)]
+            if span
+            else [0.0, round(duration, 2)]
+        ),
         "imported": True,
         "warnings": [],
     }
@@ -2034,6 +2194,7 @@ FOOTAGE_OP_SPECS: tuple[OpSpec, ...] = (
     OpSpec("set_cut", "Change a cut", "write"),
     OpSpec("split_cut", "Split a cut here", "write"),
     OpSpec("merge_cut", "Join a cut to its neighbour", "write"),
+    OpSpec("set_span", "Choose which part of the song the video covers", "write"),
     OpSpec("delete_edit", "Delete an edit", "destroy"),
     OpSpec("render", "Make the video", "render", runs="job", hide=("annotate",)),
     OpSpec("renders", "List the finished videos", "read"),

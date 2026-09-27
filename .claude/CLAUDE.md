@@ -635,7 +635,7 @@ Refresh with `tests.test_animation_camera._refresh_snapshot()`.
 
 **Keep the service import-light** (stdlib + `edl` at module top): the genre module imports it at registration to read signatures, and `tests/test_footage.py::test_import_genre_is_light` guards that.
 
-**Named edits** (`save_edit`, `set_cut`, `split_cut`, `merge_cut`, `replace_edit`, `delete_edit`, `render(edit_id=…)`) validate every change through `validate_edl` with `allow_unreliable=True` — an edit is a plan; the trust refusal (muvid#59) stays where the encode is, in `render`/`assemble`. `set_cut` moving a boundary moves the neighbour's, so an edit is always one contiguous timeline.
+**Named edits** (`save_edit`, `set_cut`, `split_cut`, `merge_cut`, `replace_edit`, `delete_edit`, `render(edit_id=…)`) validate every change through `validate_edl` with `allow_unreliable=True` — an edit is a plan; the trust refusal (muvid#59) stays where the encode is, in `render`/`assemble`. `set_cut` moving a boundary moves the neighbour's, so an edit is always one contiguous timeline. An edit may cover **part** of the song: its optional `span: [start_s, end_s]` (absent = the whole song, one spelling on disk) bounds gap-filling (`edl.fill_gaps(..., start=)`) and validation, `set_span` trims or widens it, and `render` renders only that stretch — the assembler already muxes the master for `[first cut, last cut]`, so the video AND the song are cut to it; the song fades out over `service.TAIL_FADE_S` (the assembler's `fade_out_s`, which re-encodes the audio) when the span ends before the song does, and `verify_video(expected_duration=)` checks the render against the span's length rather than the song's. A whole-song render passes neither argument and is byte-for-byte unchanged.
 
 ## Connector duty — `muvid_*` tools are live
 
@@ -810,7 +810,7 @@ hole the size of the rest of the document.
                                               .../alignments.json
                                               .../scores/                (ScoreTensor .npz + manifest)
                                               .../renders/{render_id}/   (final.mp4 + meta.json)
-                                              .../edits/{edit_id}.json   (a named edit: edl + name + how_made + created/modified)
+                                              .../edits/{edit_id}.json   (a named edit: edl + name + how_made + created/modified [+ span])
 ```
 
 A **host-placed** production (`muvid.Project`, created with `projects_dir` — the studio's path) is an `nw.Project` folder with the same footage layout one level down at `<project>/footage/` (plus `cover.jpg`), a lyric video's song/sources/renders at `<project>/lyric/`, and the host's artifact catalog at `<project>/.reelee/artifacts/` (every song, clip, render and cover hardlinked there by content hash — `muvid/catalog.py`, a knowing duplicate of braidio's writer that should move into nw). The MCP workspace passes no catalog, so its records carry no `artifact_id` and are byte-identical to before.

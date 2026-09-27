@@ -635,14 +635,27 @@ def _render_first_usable(candidates, part: Path, **render_kwargs) -> None:
     )
 
 
-def _audio_args(song_path: str) -> list[str]:
+def _audio_args(
+    song_path: str, *, fade_out_s: float = 0.0, total_s: float = 0.0
+) -> list[str]:
     """Stream-copy the master when it already is the delivery contract; else encode to it.
 
     Bit-identical audio (muvid#21 item 5) and the fixed 2ch@48kHz delivery contract
     (muvid#24 B3) are only simultaneously satisfiable when the master is already
     aac/48000/2ch — so that is exactly the copy condition, decided by probe, not hope.
+    A tail fade (``fade_out_s`` over the last seconds of a ``total_s`` render) is a
+    filter, so it always encodes.
     """
     from muvid.visualize.ffmpeg import probe
+
+    encode = ["-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-ac", "2"]
+    if fade_out_s > 0 and total_s > 0:
+        fade = min(fade_out_s, total_s)
+        return [
+            "-af",
+            f"afade=t=out:st={max(0.0, total_s - fade):.6f}:d={fade:.6f}",
+            *encode,
+        ]
 
     try:
         astreams = [
@@ -659,7 +672,7 @@ def _audio_args(song_path: str) -> list[str]:
         and a.get("channels") == 2
     ):
         return ["-c:a", "copy"]
-    return ["-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-ac", "2"]
+    return encode
 
 
 def _has_video_frames(part: Path) -> bool:
@@ -689,6 +702,7 @@ def assemble_music_video(
     crf: int = 20,
     preset: str = "veryfast",
     on_note=None,
+    fade_out_s: float = 0.0,
 ) -> Path:
     """Render ``cuts`` (a validated, contiguous, gap-filled EDL) into ``out_path``.
 
@@ -708,6 +722,11 @@ def assemble_music_video(
             about. A callback rather than a changed return type, because the
             return type is a public contract and because ``catch_warnings``
             mutates process-global state that concurrent renders would share.
+        fade_out_s: fade the song out over this many seconds at the END of the
+            render. For an edit that stops before the song does (a trimmed
+            ``span``), so the music does not stop dead mid-bar; ``0`` (the default)
+            keeps the master untouched — and, for an aac/48k/2ch master, stream-copied
+            bit for bit. A fade re-encodes the audio (a filter cannot run on a copy).
     """
     from muvid.visualize.ffmpeg import require_ffmpeg, require_filter, run_ffmpeg
 
@@ -793,7 +812,7 @@ def assemble_music_video(
                 f"{total:.6f}",
                 "-c:v",
                 "copy",
-                *_audio_args(song_path),
+                *_audio_args(song_path, fade_out_s=fade_out_s, total_s=total),
                 # Delivery contract (muvid#24 B3): no edit lists, moov up front.
                 "-use_editlist",
                 "0",

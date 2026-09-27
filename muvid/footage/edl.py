@@ -882,8 +882,15 @@ def _as_entry(e) -> EdlEntry:
     )
 
 
-def fill_gaps(entries: Sequence, song_duration: float) -> list[EdlEntry]:
+def fill_gaps(
+    entries: Sequence, song_duration: float, *, start: float = 0.0
+) -> list[EdlEntry]:
     """Make an edit span the WHOLE song by inserting explicit gap entries.
+
+    ``start`` (default 0) and ``song_duration`` bound the span being filled: an edit
+    that covers only PART of the song (a named edit's ``span``) fills ``[start,
+    song_duration]`` with ``song_duration`` passed as the span's END, and an entry
+    outside that span is refused like one outside the song.
 
     Three holes become gap entries (muvid#21 items 1+2, one mechanism): the head
     (``[0, first.song_start]`` — without this, footage starting at t=5 s silently loses
@@ -911,13 +918,13 @@ def fill_gaps(entries: Sequence, song_duration: float) -> list[EdlEntry]:
     # the phantom gap inserted to reach it — an entry the caller never wrote. Note the
     # entries are also SORTED here: an out-of-order list is normalised, not rejected.
     for e in ordered:
-        if e.song_start < -_EPS or e.song_end > song_duration + _EPS:
+        if e.song_start < start - _EPS or e.song_end > song_duration + _EPS:
             raise ValueError(
                 f"EDL entry [{e.song_start:.3f}, {e.song_end:.3f}] is outside the "
-                f"song [0, {song_duration:.3f}]"
+                f"{'span' if start else 'song'} [{start:g}, {song_duration:.3f}]"
             )
     out: list[EdlEntry] = []
-    cursor = 0.0
+    cursor = float(start)
     for e in ordered:
         if e.song_start - cursor > _EPS:
             out.append(EdlEntry(cursor, e.song_start, ""))
