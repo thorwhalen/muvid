@@ -176,7 +176,10 @@ rendering on another canvas re-uses the fragment as compiled.</p>
 <tr class="row-odd"><td><p><a class="reference internal" href="#muvid.footage.named_looks.named_look_catalogue" title="muvid.footage.named_looks.named_look_catalogue"><code class="xref py py-obj docutils literal notranslate"><span class="pre">named_look_catalogue</span></code></a>()</p></td>
 <td><p>The menu as JSON rows (name, title, description, kind, params_schema).</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#muvid.footage.named_looks.compile_named_look" title="muvid.footage.named_looks.compile_named_look"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compile_named_look</span></code></a>(spec, *, canvas, fps, ...)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#muvid.footage.named_looks.resolve_named_look" title="muvid.footage.named_looks.resolve_named_look"><code class="xref py py-obj docutils literal notranslate"><span class="pre">resolve_named_look</span></code></a>(spec)</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">{"name":</span> <span class="pre">...,</span> <span class="pre">**params}</span></code> checked, with every parameter's value filled in (the defaults included) — the spec a cut records so a screen can show the choice.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.footage.named_looks.compile_named_look" title="muvid.footage.named_looks.compile_named_look"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compile_named_look</span></code></a>(spec, *, canvas, fps, ...)</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">{"name":</span> <span class="pre">...,</span> <span class="pre">**params}</span></code> → the cut's filter fragment (a <code class="docutils literal notranslate"><span class="pre">LookFragment</span></code>, which says whether it is time-varying).</p></td>
 </tr>
 </tbody>
@@ -234,6 +237,17 @@ which says whether it is time-varying). Unknown names and parameters are refused
 </dd>
 </dl>
 </dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.footage.named_looks.resolve_named_look">
+<span class="sig-prename descclassname"><span class="pre">muvid.footage.named_looks.</span></span><span class="sig-name descname"><span class="pre">resolve_named_look</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spec</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/muvid/footage/named_looks.html#resolve_named_look"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#muvid.footage.named_looks.resolve_named_look" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#muvid.footage.named_looks.resolve_named_look'">¶</a></dt>
+<dd><p><code class="docutils literal notranslate"><span class="pre">{"name":</span> <span class="pre">...,</span> <span class="pre">**params}</span></code> checked, with every parameter’s value filled in (the
+defaults included) — the spec a cut records so a screen can show the choice.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#dict" rel="nofollow noopener" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code><svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a></span></p>
+</dd>
+</dl>
+</dd></dl>
 </section>
 </div></div><aside class="hidden text-sm xl:block" id="right-sidebar">
 <div class="sticky top-16 -mt-10 max-h-[calc(100vh-5rem)] h-full overflow-y-auto pt-6 space-y-2"><p class="font-medium">On this page</p>
@@ -243,6 +257,7 @@ which says whether it is time-varying). Unknown names and parameters are refused
 <li><a :data-current="activeSection === '#muvid.footage.named_looks.NamedLookError'" class="reference internal" href="#muvid.footage.named_looks.NamedLookError"><code class="docutils literal notranslate"><span class="pre">NamedLookError</span></code></a></li>
 <li><a :data-current="activeSection === '#muvid.footage.named_looks.compile_named_look'" class="reference internal" href="#muvid.footage.named_looks.compile_named_look"><code class="docutils literal notranslate"><span class="pre">compile_named_look()</span></code></a></li>
 <li><a :data-current="activeSection === '#muvid.footage.named_looks.named_look_catalogue'" class="reference internal" href="#muvid.footage.named_looks.named_look_catalogue"><code class="docutils literal notranslate"><span class="pre">named_look_catalogue()</span></code></a></li>
+<li><a :data-current="activeSection === '#muvid.footage.named_looks.resolve_named_look'" class="reference internal" href="#muvid.footage.named_looks.resolve_named_look"><code class="docutils literal notranslate"><span class="pre">resolve_named_look()</span></code></a></li>
 </ul>
 </div>
 </aside>
@@ -256,7 +271,7 @@ which says whether it is time-varying). Unknown names and parameters are refused
 </div>
 </footer>
 </div>
-<script src="../_static/documentation_options.js?v=cac962a1"></script>
+<script src="../_static/documentation_options.js?v=29ed05f3"></script>
 <script src="../_static/doctools.js?v=fd6eb6e6"></script>
 <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
 <script src="../_static/clipboard.min.js?v=a7894cd8"></script>

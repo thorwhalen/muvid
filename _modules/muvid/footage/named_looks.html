@@ -464,11 +464,11 @@
 
 </span><span id="line-269">
 </span><span id="line-270">
-<div class="viewcode-block" id="compile_named_look">
-<a class="viewcode-back" href="../../../_autosummary/muvid.footage.named_looks.html#muvid.footage.named_looks.compile_named_look">[docs]</a>
-</span><span id="line-271"><span class="k">def</span><span class="w"> </span><span class="nf">compile_named_look</span><span class="p">(</span><span class="n">spec</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">canvas</span><span class="p">,</span> <span class="n">fps</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">duration_s</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
-</span><span id="line-272"><span class="w">    </span><span class="sd">"""``{"name": ..., **params}`` → the cut's filter fragment (a ``LookFragment``,</span>
-</span><span id="line-273"><span class="sd">    which says whether it is time-varying). Unknown names and parameters are refused."""</span>
+<div class="viewcode-block" id="resolve_named_look">
+<a class="viewcode-back" href="../../../_autosummary/muvid.footage.named_looks.html#muvid.footage.named_looks.resolve_named_look">[docs]</a>
+</span><span id="line-271"><span class="k">def</span><span class="w"> </span><span class="nf">resolve_named_look</span><span class="p">(</span><span class="n">spec</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+</span><span id="line-272"><span class="w">    </span><span class="sd">"""``{"name": ..., **params}`` checked, with every parameter's value filled in (the</span>
+</span><span id="line-273"><span class="sd">    defaults included) — the spec a cut records so a screen can show the choice."""</span>
 </span><span id="line-274">    <span class="n">spec</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
 </span><span id="line-275">    <span class="n">name</span> <span class="o">=</span> <span class="n">spec</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"name"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
 </span><span id="line-276">    <span class="n">look</span> <span class="o">=</span> <span class="n">_BY_NAME</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
@@ -481,18 +481,32 @@
 </span><span id="line-283">            <span class="sa">f</span><span class="s2">"not </span><span class="si">{</span><span class="n">unknown</span><span class="si">}</span><span class="s2">"</span>
 </span><span id="line-284">        <span class="p">)</span>
 </span><span id="line-285">    <span class="n">params</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">p</span><span class="o">.</span><span class="n">coerce</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">spec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">default</span><span class="p">))</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">look</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
-</span><span id="line-286">    <span class="k">return</span> <span class="n">look</span><span class="o">.</span><span class="n">build</span><span class="p">(</span><span class="n">canvas</span><span class="o">=</span><span class="n">canvas</span><span class="p">,</span> <span class="n">fps</span><span class="o">=</span><span class="n">fps</span><span class="p">,</span> <span class="n">duration_s</span><span class="o">=</span><span class="n">duration_s</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span></div>
+</span><span id="line-286">    <span class="k">return</span> <span class="p">{</span><span class="s2">"name"</span><span class="p">:</span> <span class="n">name</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">}</span></div>
 
 </span><span id="line-287">
 </span><span id="line-288">
-</span><span id="line-289"><span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
-</span><span id="line-290">    <span class="s2">"NAMED_LOOKS"</span><span class="p">,</span>
-</span><span id="line-291">    <span class="s2">"NamedLook"</span><span class="p">,</span>
-</span><span id="line-292">    <span class="s2">"NamedLookError"</span><span class="p">,</span>
-</span><span id="line-293">    <span class="s2">"MAX_ZOOM"</span><span class="p">,</span>
-</span><span id="line-294">    <span class="s2">"named_look_catalogue"</span><span class="p">,</span>
-</span><span id="line-295">    <span class="s2">"compile_named_look"</span><span class="p">,</span>
-</span><span id="line-296"><span class="p">]</span>
+<div class="viewcode-block" id="compile_named_look">
+<a class="viewcode-back" href="../../../_autosummary/muvid.footage.named_looks.html#muvid.footage.named_looks.compile_named_look">[docs]</a>
+</span><span id="line-289"><span class="k">def</span><span class="w"> </span><span class="nf">compile_named_look</span><span class="p">(</span><span class="n">spec</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">canvas</span><span class="p">,</span> <span class="n">fps</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">duration_s</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+</span><span id="line-290"><span class="w">    </span><span class="sd">"""``{"name": ..., **params}`` → the cut's filter fragment (a ``LookFragment``,</span>
+</span><span id="line-291"><span class="sd">    which says whether it is time-varying). Unknown names and parameters are refused."""</span>
+</span><span id="line-292">    <span class="n">resolved</span> <span class="o">=</span> <span class="n">resolve_named_look</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
+</span><span id="line-293">    <span class="n">name</span> <span class="o">=</span> <span class="n">resolved</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"name"</span><span class="p">)</span>
+</span><span id="line-294">    <span class="k">return</span> <span class="n">_BY_NAME</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">build</span><span class="p">(</span>
+</span><span id="line-295">        <span class="n">canvas</span><span class="o">=</span><span class="n">canvas</span><span class="p">,</span> <span class="n">fps</span><span class="o">=</span><span class="n">fps</span><span class="p">,</span> <span class="n">duration_s</span><span class="o">=</span><span class="n">duration_s</span><span class="p">,</span> <span class="o">**</span><span class="n">resolved</span>
+</span><span id="line-296">    <span class="p">)</span></div>
+
+</span><span id="line-297">
+</span><span id="line-298">
+</span><span id="line-299"><span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+</span><span id="line-300">    <span class="s2">"NAMED_LOOKS"</span><span class="p">,</span>
+</span><span id="line-301">    <span class="s2">"NamedLook"</span><span class="p">,</span>
+</span><span id="line-302">    <span class="s2">"NamedLookError"</span><span class="p">,</span>
+</span><span id="line-303">    <span class="s2">"MAX_ZOOM"</span><span class="p">,</span>
+</span><span id="line-304">    <span class="s2">"named_look_catalogue"</span><span class="p">,</span>
+</span><span id="line-305">    <span class="s2">"resolve_named_look"</span><span class="p">,</span>
+</span><span id="line-306">    <span class="s2">"compile_named_look"</span><span class="p">,</span>
+</span><span id="line-307"><span class="p">]</span>
 </span></code></pre></div>
     </div></div>
           </main>
@@ -506,7 +520,7 @@
 </footer>
     </div>
     
-    <script src="../../../_static/documentation_options.js?v=cac962a1"></script>
+    <script src="../../../_static/documentation_options.js?v=29ed05f3"></script>
     <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>

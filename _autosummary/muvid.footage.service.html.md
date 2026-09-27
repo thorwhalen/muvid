@@ -53,8 +53,9 @@ trust refusal belongs where the encode does, in [`render()`](#muvid.footage.serv
 | [`set_song`](#muvid.footage.service.set_song)(fp, \*, path[, ext, filename, ...])     | Set the project's song — the clean master every video is aligned to and whose audio the finished video uses.                                                                                                                 |
 | [`add_clip`](#muvid.footage.service.add_clip)(fp, \*, path[, name, filename, ...])    | Add one footage video — a recording of the song — to the project.                                                                                                                                                            |
 | [`remove_clip`](#muvid.footage.service.remove_clip)(fp, \*, clip_id)                     | Remove one footage video from the project — its stored file and its entry.                                                                                                                                                   |
-| [`align`](#muvid.footage.service.align)(fp, \*[, keep_declared])                   | Find where each video sits on the song by listening to its own audio, and save it.                                                                                                                                           |
+| [`align`](#muvid.footage.service.align)(fp)                                        | Find where each video sits on the song by listening to its own audio, and save it.                                                                                                                                           |
 | [`set_offset`](#muvid.footage.service.set_offset)(fp, \*, clip_id, offset_s)            | Place one video on the song BY HAND: the song time at which the video's own first frame plays (negative = the video starts before the song does).                                                                            |
+| [`clear_offset`](#muvid.footage.service.clear_offset)(fp, \*, clip_id)                    | Forget where I placed this video: remove a hand-declared offset, so the next `align` measures the clip by its audio instead.                                                                                                 |
 | [`timeline`](#muvid.footage.service.timeline)(fp)                                     | Which videos cover which spans of the song (overlaps shown), from the saved alignment — the map for choosing what to cut to.                                                                                                 |
 | [`beat_grid`](#muvid.footage.service.beat_grid)(fp)                                    | The song's beat grid — tempo and beat instants on the song timeline — without looking at the footage.                                                                                                                        |
 | [`score`](#muvid.footage.service.score)(fp, \*[, hop_s, metrics, should_cancel])   | Look at the footage: score every placed video, on the song's own timeline — picture quality and how its movement sits on the beat — and save the curves.                                                                     |
@@ -68,7 +69,7 @@ trust refusal belongs where the encode does, in [`render()`](#muvid.footage.serv
 | [`set_cut`](#muvid.footage.service.set_cut)(fp, \*, edit_id, index[, clip_id, ...])  | Change one cut of a saved edit (`index` is its position in `get_edit`'s edl).                                                                                                                                                |
 | [`split_cut`](#muvid.footage.service.split_cut)(fp, \*, edit_id, at_s)                 | Split the cut playing at song time `at_s` into two cuts of the same video.                                                                                                                                                   |
 | [`merge_cut`](#muvid.footage.service.merge_cut)(fp, \*, edit_id, index[, into])        | Join cut `index` to its neighbour: the neighbour (`into` "previous" or "next") takes over its span, so the neighbour's video must cover it.                                                                                  |
-| [`set_span`](#muvid.footage.service.set_span)(fp, \*, edit_id, start_s, end_s)        | Choose which part of the song a saved edit covers — trim its start and end.                                                                                                                                                  |
+| [`set_span`](#muvid.footage.service.set_span)(fp, \*, edit_id, start_s, end_s)        | Choose which part of the song the video covers — where it starts and ends.                                                                                                                                                   |
 | [`looks`](#muvid.footage.service.looks)([fp])                                      | The looks a cut can take — camera moves (punch in, slow push, slow pull, pans) and grades (vivid, black and white, posterize, cartoon) — each with its `params_schema`.                                                      |
 | [`delete_edit`](#muvid.footage.service.delete_edit)(fp, \*, edit_id)                     | Delete a saved edit.                                                                                                                                                                                                         |
 | [`render`](#muvid.footage.service.render)(fp, \*, edit_id[, canvas, ...])           | Make the video: render a saved edit onto the canvas, over the clean song.                                                                                                                                                    |
@@ -102,7 +103,7 @@ trust refusal belongs where the encode does, in [`render()`](#muvid.footage.serv
 |-------------------------------------------------------------------|--------------------------------------------------------------------|
 | [`FootageCancelled`](#muvid.footage.service.FootageCancelled) | An operation stopped between steps because its host asked it to.   |
 
-### muvid.footage.service.EDL_OPTIONAL_FIELDS *= (('transition', <function <lambda>>, None), ('crop', <function <lambda>>, None), ('crop_end', <function <lambda>>, None), ('look', <class 'str'>, None), ('look_time_varying', <class 'bool'>, False))*
+### muvid.footage.service.EDL_OPTIONAL_FIELDS *= (('transition', <function <lambda>>, None), ('crop', <function <lambda>>, None), ('crop_end', <function <lambda>>, None), ('look', <class 'str'>, None), ('look_time_varying', <class 'bool'>, False), ('look_spec', <class 'dict'>, None))*
 
 Every optional [`EdlEntry`](muvid.footage.edl.html.md#muvid.footage.edl.EdlEntry) field [`edl_json()`](#muvid.footage.service.edl_json) carries,
 and how to render it. **The list is the round trip.** `_as_entry` reads all of
@@ -165,7 +166,7 @@ the `clip_id`, its `name` and `duration` (and `artifact_id` when hosted).
 * **Return type:**
   [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
 
-### muvid.footage.service.align(fp, , keep_declared=True)
+### muvid.footage.service.align(fp)
 
 Find where each video sits on the song by listening to its own audio, and save it.
 
@@ -193,9 +194,10 @@ whole-clip measurement), and its coverage of the song, plus these lists:
   clips with it. So if a short clip looks out of sync in the render, this list is
   the first place to look — and muvid#91 is where that trade-off is being decided.
 
-A clip whose offset a person DECLARED (`set_offset`) is kept as declared and not
-re-measured, unless `keep_declared=false`; those are listed in `kept_declared`.
-Every measured record says `source: "measured"`.
+A clip whose offset a person DECLARED (`set_offset`) is ALWAYS left alone — a
+person placed it, usually because the aligner got it wrong (muvid#59) — and is named
+in `kept_declared`. To have one measured again, `clear_offset` it first. Every
+measured record says `source: "measured"`.
 
 Run this after adding/removing clips and before cutting.
 
@@ -244,6 +246,19 @@ Needs a song; no alignment is required.
 Returns `tempo_bpm`, `beats` (seconds, ascending), `n_beats`,
 `song_duration` and `source`. `downbeats` is present only when the estimator
 measured any — an empty list would read as “no downbeats”, a measurement nobody made.
+
+* **Return type:**
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+
+### muvid.footage.service.clear_offset(fp, , clip_id)
+
+Forget where I placed this video: remove a hand-declared offset, so the next
+`align` measures the clip by its audio instead.
+
+Only a DECLARED offset can be forgotten (a measured one is replaced by aligning
+again); an unknown clip, or one with no declared offset, is refused. Until `align`
+runs again the clip has no place on the song, and footage scores made with the old
+offset are dropped.
 
 * **Return type:**
   [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
@@ -560,7 +575,9 @@ Change one cut of a saved edit (`index` is its position in `get_edit`’s edl).
   boundary moves with it, so the edit stays one continuous timeline; a move that
   would swallow a neighbour whole is refused (join them with `merge_cut`).
 - `look`: a NAMED look from `looks` — `{"name": "slow_push", "zoom": 1.08}`,
-  compiled for this cut’s length and the project’s canvas — or, for power users,
+  compiled for this cut’s length and the project’s canvas and kept on the cut as
+  `look_spec` (with every parameter’s value) so it can be shown and changed —
+  or, for power users,
   one raw ffmpeg filter chain (allowlisted; set `look_time_varying` for one that
   moves). `""` removes it.
 
@@ -605,13 +622,14 @@ was dropped.
 
 ### muvid.footage.service.set_span(fp, , edit_id, start_s, end_s)
 
-Choose which part of the song a saved edit covers — trim its start and end.
+Choose which part of the song the video covers — where it starts and ends.
 
-The video made from the edit then runs from `start_s` to `end_s` of the song,
-with the song cut to match (and faded out at the end when it stops before the song
-does). Cuts outside the new span are dropped, cuts across its edges are shortened,
-and a span wider than the cuts is filled with black. `start_s=0` and
-`end_s` = the song’s length is the whole song again. Returns the changed edit.
+**Trimming loses nothing.** The span is a window on the edit, not a cut of it: every
+cut is kept whole, and only what is RENDERED is limited to `start_s`..\`\`end_s\`\`
+(the song cut to match, faded out at the end when it stops before the song does;
+cuts across an edge are shortened in the render only). Widening the span again —
+`start_s=0` and `end_s` = the song’s length is the whole song — brings back
+exactly what was there. Returns the edit, with its `span`.
 
 * **Return type:**
   [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)

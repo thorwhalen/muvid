@@ -179,70 +179,73 @@ alignment, exactly as <code class="docutils literal notranslate"><span class="pr
 <tr class="row-odd"><td><p><a class="reference internal" href="#muvid.mcp.footage_tools.beat_grid" title="muvid.mcp.footage_tools.beat_grid"><code class="xref py py-obj docutils literal notranslate"><span class="pre">beat_grid</span></code></a>(project_id)</p></td>
 <td><p>The song's beat grid — tempo and beat instants on the song timeline — WITHOUT running the scoring job.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#muvid.mcp.footage_tools.footage_delete_edit" title="muvid.mcp.footage_tools.footage_delete_edit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">footage_delete_edit</span></code></a>(project_id, *, edit_id)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#muvid.mcp.footage_tools.footage_clear_offset" title="muvid.mcp.footage_tools.footage_clear_offset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">footage_clear_offset</span></code></a>(project_id, *, clip_id)</p></td>
+<td><p>Forget where I placed this video: remove a hand-declared offset, so the next <code class="docutils literal notranslate"><span class="pre">align_footage</span></code> measures the clip by its audio instead.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.mcp.footage_tools.footage_delete_edit" title="muvid.mcp.footage_tools.footage_delete_edit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">footage_delete_edit</span></code></a>(project_id, *, edit_id)</p></td>
 <td><p>Delete a saved edit.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.mcp.footage_tools.footage_editor_document" title="muvid.mcp.footage_tools.footage_editor_document"><code class="xref py py-obj docutils literal notranslate"><span class="pre">footage_editor_document</span></code></a>(project_id)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#muvid.mcp.footage_tools.footage_editor_document" title="muvid.mcp.footage_tools.footage_editor_document"><code class="xref py py-obj docutils literal notranslate"><span class="pre">footage_editor_document</span></code></a>(project_id)</p></td>
 <td><p>The project as lacing-native standoff annotations, for a multitrack editor.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#muvid.mcp.footage_tools.footage_edits" title="muvid.mcp.footage_tools.footage_edits"><code class="xref py py-obj docutils literal notranslate"><span class="pre">footage_edits</span></code></a>(project_id)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.mcp.footage_tools.footage_edits" title="muvid.mcp.footage_tools.footage_edits"><code class="xref py py-obj docutils literal notranslate"><span class="pre">footage_edits</span></code></a>(project_id)</p></td>
 <td><p>The saved edits, oldest first: each one's <code class="docutils literal notranslate"><span class="pre">edit_id</span></code>, <code class="docutils literal notranslate"><span class="pre">name</span></code>, how it was made, how many cuts it has, and <code class="docutils literal notranslate"><span class="pre">problem</span></code> — why it would not validate against the current alignment (<code class="docutils literal notranslate"><span class="pre">null</span></code> when it does).</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.mcp.footage_tools.footage_edl_from_annotations" title="muvid.mcp.footage_tools.footage_edl_from_annotations"><code class="xref py py-obj docutils literal notranslate"><span class="pre">footage_edl_from_annotations</span></code></a>(project_id, *, ...)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#muvid.mcp.footage_tools.footage_edl_from_annotations" title="muvid.mcp.footage_tools.footage_edl_from_annotations"><code class="xref py py-obj docutils literal notranslate"><span class="pre">footage_edl_from_annotations</span></code></a>(project_id, *, ...)</p></td>
 <td><p>The DECISION tier's annotations, turned back into an <code class="docutils literal notranslate"><span class="pre">edl=</span></code> argument.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#muvid.mcp.footage_tools.footage_get_edit" title="muvid.mcp.footage_tools.footage_get_edit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">footage_get_edit</span></code></a>(project_id, *, edit_id)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.mcp.footage_tools.footage_get_edit" title="muvid.mcp.footage_tools.footage_get_edit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">footage_get_edit</span></code></a>(project_id, *, edit_id)</p></td>
 <td><p>One saved edit: its cut list (<code class="docutils literal notranslate"><span class="pre">edl</span></code>, every span of the song, gaps as <code class="docutils literal notranslate"><span class="pre">clip_id:</span> <span class="pre">null</span></code>), its name and history, and a <code class="docutils literal notranslate"><span class="pre">coverage</span></code> report.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.mcp.footage_tools.footage_looks" title="muvid.mcp.footage_tools.footage_looks"><code class="xref py py-obj docutils literal notranslate"><span class="pre">footage_looks</span></code></a>(project_id)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#muvid.mcp.footage_tools.footage_looks" title="muvid.mcp.footage_tools.footage_looks"><code class="xref py py-obj docutils literal notranslate"><span class="pre">footage_looks</span></code></a>(project_id)</p></td>
 <td><p>The looks a cut can take — camera moves (punch in, slow push, slow pull, pans) and grades (vivid, black and white, posterize, cartoon) — each with its <code class="docutils literal notranslate"><span class="pre">params_schema</span></code>.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#muvid.mcp.footage_tools.footage_merge_cut" title="muvid.mcp.footage_tools.footage_merge_cut"><code class="xref py py-obj docutils literal notranslate"><span class="pre">footage_merge_cut</span></code></a>(project_id, *, edit_id, index)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.mcp.footage_tools.footage_merge_cut" title="muvid.mcp.footage_tools.footage_merge_cut"><code class="xref py py-obj docutils literal notranslate"><span class="pre">footage_merge_cut</span></code></a>(project_id, *, edit_id, index)</p></td>
 <td><p>Join cut <code class="docutils literal notranslate"><span class="pre">index</span></code> to its neighbour: the neighbour (<code class="docutils literal notranslate"><span class="pre">into</span></code> "previous" or "next") takes over its span, so the neighbour's video must cover it.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.mcp.footage_tools.footage_render" title="muvid.mcp.footage_tools.footage_render"><code class="xref py py-obj docutils literal notranslate"><span class="pre">footage_render</span></code></a>(project_id, *, edit_id[, ...])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#muvid.mcp.footage_tools.footage_render" title="muvid.mcp.footage_tools.footage_render"><code class="xref py py-obj docutils literal notranslate"><span class="pre">footage_render</span></code></a>(project_id, *, edit_id[, ...])</p></td>
 <td><p>Render a SAVED edit (<code class="docutils literal notranslate"><span class="pre">propose_edit(save=true)</span></code> / <code class="docutils literal notranslate"><span class="pre">footage_save_edit</span></code>) into a music video.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#muvid.mcp.footage_tools.footage_renders" title="muvid.mcp.footage_tools.footage_renders"><code class="xref py py-obj docutils literal notranslate"><span class="pre">footage_renders</span></code></a>(project_id)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.mcp.footage_tools.footage_renders" title="muvid.mcp.footage_tools.footage_renders"><code class="xref py py-obj docutils literal notranslate"><span class="pre">footage_renders</span></code></a>(project_id)</p></td>
 <td><p>The finished videos, newest first: each one's <code class="docutils literal notranslate"><span class="pre">render_id</span></code>, speakable <code class="docutils literal notranslate"><span class="pre">ref</span></code>, the <code class="docutils literal notranslate"><span class="pre">edit_id</span></code> it was made from, its <code class="docutils literal notranslate"><span class="pre">label</span></code>, canvas, <code class="docutils literal notranslate"><span class="pre">ok</span></code>, the number of <code class="docutils literal notranslate"><span class="pre">warnings</span></code>, and <code class="docutils literal notranslate"><span class="pre">artifact_id</span></code> to play it by when the project is hosted.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.mcp.footage_tools.footage_replace_edit" title="muvid.mcp.footage_tools.footage_replace_edit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">footage_replace_edit</span></code></a>(project_id, *, edit_id, edl)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#muvid.mcp.footage_tools.footage_replace_edit" title="muvid.mcp.footage_tools.footage_replace_edit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">footage_replace_edit</span></code></a>(project_id, *, edit_id, edl)</p></td>
 <td><p>Replace a saved edit's whole cut list — the power tool for rewriting an edit at once.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#muvid.mcp.footage_tools.footage_save_edit" title="muvid.mcp.footage_tools.footage_save_edit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">footage_save_edit</span></code></a>(project_id, *, edl[, ...])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.mcp.footage_tools.footage_save_edit" title="muvid.mcp.footage_tools.footage_save_edit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">footage_save_edit</span></code></a>(project_id, *, edl[, ...])</p></td>
 <td><p>Save a cut list as a new named edit.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.mcp.footage_tools.footage_set_cut" title="muvid.mcp.footage_tools.footage_set_cut"><code class="xref py py-obj docutils literal notranslate"><span class="pre">footage_set_cut</span></code></a>(project_id, *, edit_id, index)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#muvid.mcp.footage_tools.footage_set_cut" title="muvid.mcp.footage_tools.footage_set_cut"><code class="xref py py-obj docutils literal notranslate"><span class="pre">footage_set_cut</span></code></a>(project_id, *, edit_id, index)</p></td>
 <td><p>Change one cut of a saved edit (<code class="docutils literal notranslate"><span class="pre">index</span></code> is its position in <code class="docutils literal notranslate"><span class="pre">footage_get_edit</span></code>'s edl).</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#muvid.mcp.footage_tools.footage_set_offset" title="muvid.mcp.footage_tools.footage_set_offset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">footage_set_offset</span></code></a>(project_id, *, clip_id, ...)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.mcp.footage_tools.footage_set_offset" title="muvid.mcp.footage_tools.footage_set_offset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">footage_set_offset</span></code></a>(project_id, *, clip_id, ...)</p></td>
 <td><p>Place one video on the song BY HAND: the song time at which the video's own first frame plays (negative = the video starts before the song does).</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.mcp.footage_tools.footage_set_span" title="muvid.mcp.footage_tools.footage_set_span"><code class="xref py py-obj docutils literal notranslate"><span class="pre">footage_set_span</span></code></a>(project_id, *, edit_id, ...)</p></td>
-<td><p>Choose which part of the song a saved edit covers — trim its start and end.</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#muvid.mcp.footage_tools.footage_set_span" title="muvid.mcp.footage_tools.footage_set_span"><code class="xref py py-obj docutils literal notranslate"><span class="pre">footage_set_span</span></code></a>(project_id, *, edit_id, ...)</p></td>
+<td><p>Choose which part of the song the video covers — where it starts and ends.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#muvid.mcp.footage_tools.footage_split_cut" title="muvid.mcp.footage_tools.footage_split_cut"><code class="xref py py-obj docutils literal notranslate"><span class="pre">footage_split_cut</span></code></a>(project_id, *, edit_id, at_s)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.mcp.footage_tools.footage_split_cut" title="muvid.mcp.footage_tools.footage_split_cut"><code class="xref py py-obj docutils literal notranslate"><span class="pre">footage_split_cut</span></code></a>(project_id, *, edit_id, at_s)</p></td>
 <td><p>Split the cut playing at song time <code class="docutils literal notranslate"><span class="pre">at_s</span></code> into two cuts of the same video.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.mcp.footage_tools.footage_status" title="muvid.mcp.footage_tools.footage_status"><code class="xref py py-obj docutils literal notranslate"><span class="pre">footage_status</span></code></a>(project_id)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#muvid.mcp.footage_tools.footage_status" title="muvid.mcp.footage_tools.footage_status"><code class="xref py py-obj docutils literal notranslate"><span class="pre">footage_status</span></code></a>(project_id)</p></td>
 <td><p>Your project's song, clips, alignment summary, and renders.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#muvid.mcp.footage_tools.footage_timeline" title="muvid.mcp.footage_tools.footage_timeline"><code class="xref py py-obj docutils literal notranslate"><span class="pre">footage_timeline</span></code></a>(project_id)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.mcp.footage_tools.footage_timeline" title="muvid.mcp.footage_tools.footage_timeline"><code class="xref py py-obj docutils literal notranslate"><span class="pre">footage_timeline</span></code></a>(project_id)</p></td>
 <td><p>The coverage map: which clips cover which spans of the song (overlaps shown).</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.mcp.footage_tools.list_music_video_projects" title="muvid.mcp.footage_tools.list_music_video_projects"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list_music_video_projects</span></code></a>()</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#muvid.mcp.footage_tools.list_music_video_projects" title="muvid.mcp.footage_tools.list_music_video_projects"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list_music_video_projects</span></code></a>()</p></td>
 <td><p>List YOUR music_video (footage) projects, newest-modified first.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#muvid.mcp.footage_tools.list_strategies" title="muvid.mcp.footage_tools.list_strategies"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list_strategies</span></code></a>()</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.mcp.footage_tools.list_strategies" title="muvid.mcp.footage_tools.list_strategies"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list_strategies</span></code></a>()</p></td>
 <td><p>The selection strategies available for full-auto assembly.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.mcp.footage_tools.propose_edit" title="muvid.mcp.footage_tools.propose_edit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">propose_edit</span></code></a>(project_id, *[, strategy, ...])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#muvid.mcp.footage_tools.propose_edit" title="muvid.mcp.footage_tools.propose_edit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">propose_edit</span></code></a>(project_id, *[, strategy, ...])</p></td>
 <td><p>Propose an EDL <strong>without rendering it</strong> — the cheap half of assembly.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#muvid.mcp.footage_tools.remove_footage" title="muvid.mcp.footage_tools.remove_footage"><code class="xref py py-obj docutils literal notranslate"><span class="pre">remove_footage</span></code></a>(project_id, *, clip_id)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.mcp.footage_tools.remove_footage" title="muvid.mcp.footage_tools.remove_footage"><code class="xref py py-obj docutils literal notranslate"><span class="pre">remove_footage</span></code></a>(project_id, *, clip_id)</p></td>
 <td><p>Remove one footage clip from the project — its stored file and its entry.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.mcp.footage_tools.set_song" title="muvid.mcp.footage_tools.set_song"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_song</span></code></a>(project_id, *, url)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#muvid.mcp.footage_tools.set_song" title="muvid.mcp.footage_tools.set_song"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_song</span></code></a>(project_id, *, url)</p></td>
 <td><p>Set the project's fixed clean song from an http(s) URL.</p></td>
 </tr>
 </tbody>
@@ -308,6 +311,9 @@ clips with it. So if a short clip looks out of sync in the render, this list is
 the first place to look — and muvid#91 is where that trade-off is being decided.</p></li>
 </ul>
 <p>Run this after adding/removing clips and before assembling.</p>
+<p>A clip placed by hand (<code class="docutils literal notranslate"><span class="pre">footage_set_offset</span></code>) is left as placed and named in
+<code class="docutils literal notranslate"><span class="pre">kept_declared</span></code>; <code class="docutils literal notranslate"><span class="pre">keep_declared=false</span></code> forgets those first
+(<code class="docutils literal notranslate"><span class="pre">footage_clear_offset</span></code>) and measures every clip.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#dict" rel="nofollow noopener" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code><svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a></span></p>
@@ -436,6 +442,21 @@ is a clean error naming the install, never a traceback. Needs a song
 <code class="docutils literal notranslate"><span class="pre">downbeats</span></code> is present only when the estimator measured any — the librosa
 backend has no downbeat tracker, and an empty list would read as “this song has
 no downbeats”, a measurement nobody made (gate, don’t zero).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#dict" rel="nofollow noopener" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code><svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.mcp.footage_tools.footage_clear_offset">
+<span class="sig-prename descclassname"><span class="pre">muvid.mcp.footage_tools.</span></span><span class="sig-name descname"><span class="pre">footage_clear_offset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">project_id</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">clip_id</span></span></em><span class="sig-paren">)</span><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#muvid.mcp.footage_tools.footage_clear_offset" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#muvid.mcp.footage_tools.footage_clear_offset'">¶</a></dt>
+<dd><p>Forget where I placed this video: remove a hand-declared offset, so the next
+<code class="docutils literal notranslate"><span class="pre">align_footage</span></code> measures the clip by its audio instead.</p>
+<p>Only a DECLARED offset can be forgotten (a measured one is replaced by aligning
+again); an unknown clip, or one with no declared offset, is refused. Until <code class="docutils literal notranslate"><span class="pre">align_footage</span></code>
+runs again the clip has no place on the song, and footage scores made with the old
+offset are dropped.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#dict" rel="nofollow noopener" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code><svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a></span></p>
@@ -605,7 +626,9 @@ for the old video’s frame; its <code class="docutils literal notranslate"><spa
 boundary moves with it, so the edit stays one continuous timeline; a move that
 would swallow a neighbour whole is refused (join them with <code class="docutils literal notranslate"><span class="pre">footage_merge_cut</span></code>).</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">look</span></code>: a NAMED look from <code class="docutils literal notranslate"><span class="pre">footage_looks</span></code> — <code class="docutils literal notranslate"><span class="pre">{"name":</span> <span class="pre">"slow_push",</span> <span class="pre">"zoom":</span> <span class="pre">1.08}</span></code>,
-compiled for this cut’s length and the project’s canvas — or, for power users,
+compiled for this cut’s length and the project’s canvas and kept on the cut as
+<code class="docutils literal notranslate"><span class="pre">look_spec</span></code> (with every parameter’s value) so it can be shown and changed —
+or, for power users,
 one raw ffmpeg filter chain (allowlisted; set <code class="docutils literal notranslate"><span class="pre">look_time_varying</span></code> for one that
 moves). <code class="docutils literal notranslate"><span class="pre">""</span></code> removes it.</p></li>
 </ul>
@@ -636,12 +659,13 @@ scores stale, so they are dropped.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="muvid.mcp.footage_tools.footage_set_span">
 <span class="sig-prename descclassname"><span class="pre">muvid.mcp.footage_tools.</span></span><span class="sig-name descname"><span class="pre">footage_set_span</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">project_id</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">edit_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_s</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_s</span></span></em><span class="sig-paren">)</span><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#muvid.mcp.footage_tools.footage_set_span" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#muvid.mcp.footage_tools.footage_set_span'">¶</a></dt>
-<dd><p>Choose which part of the song a saved edit covers — trim its start and end.</p>
-<p>The video made from the edit then runs from <code class="docutils literal notranslate"><span class="pre">start_s</span></code> to <code class="docutils literal notranslate"><span class="pre">end_s</span></code> of the song,
-with the song cut to match (and faded out at the end when it stops before the song
-does). Cuts outside the new span are dropped, cuts across its edges are shortened,
-and a span wider than the cuts is filled with black. <code class="docutils literal notranslate"><span class="pre">start_s=0</span></code> and
-<code class="docutils literal notranslate"><span class="pre">end_s</span></code> = the song’s length is the whole song again. Returns the changed edit.</p>
+<dd><p>Choose which part of the song the video covers — where it starts and ends.</p>
+<p><strong>Trimming loses nothing.</strong> The span is a window on the edit, not a cut of it: every
+cut is kept whole, and only what is RENDERED is limited to <code class="docutils literal notranslate"><span class="pre">start_s</span></code>..``end_s``
+(the song cut to match, faded out at the end when it stops before the song does;
+cuts across an edge are shortened in the render only). Widening the span again —
+<code class="docutils literal notranslate"><span class="pre">start_s=0</span></code> and <code class="docutils literal notranslate"><span class="pre">end_s</span></code> = the song’s length is the whole song — brings back
+exactly what was there. Returns the edit, with its <code class="docutils literal notranslate"><span class="pre">span</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#dict" rel="nofollow noopener" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code><svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a></span></p>
@@ -787,6 +811,7 @@ video uses. Replaces any previous song. Duration/size-capped.</p>
 <li><a :data-current="activeSection === '#muvid.mcp.footage_tools.align_footage'" class="reference internal" href="#muvid.mcp.footage_tools.align_footage"><code class="docutils literal notranslate"><span class="pre">align_footage()</span></code></a></li>
 <li><a :data-current="activeSection === '#muvid.mcp.footage_tools.assemble_music_video'" class="reference internal" href="#muvid.mcp.footage_tools.assemble_music_video"><code class="docutils literal notranslate"><span class="pre">assemble_music_video()</span></code></a></li>
 <li><a :data-current="activeSection === '#muvid.mcp.footage_tools.beat_grid'" class="reference internal" href="#muvid.mcp.footage_tools.beat_grid"><code class="docutils literal notranslate"><span class="pre">beat_grid()</span></code></a></li>
+<li><a :data-current="activeSection === '#muvid.mcp.footage_tools.footage_clear_offset'" class="reference internal" href="#muvid.mcp.footage_tools.footage_clear_offset"><code class="docutils literal notranslate"><span class="pre">footage_clear_offset()</span></code></a></li>
 <li><a :data-current="activeSection === '#muvid.mcp.footage_tools.footage_delete_edit'" class="reference internal" href="#muvid.mcp.footage_tools.footage_delete_edit"><code class="docutils literal notranslate"><span class="pre">footage_delete_edit()</span></code></a></li>
 <li><a :data-current="activeSection === '#muvid.mcp.footage_tools.footage_editor_document'" class="reference internal" href="#muvid.mcp.footage_tools.footage_editor_document"><code class="docutils literal notranslate"><span class="pre">footage_editor_document()</span></code></a></li>
 <li><a :data-current="activeSection === '#muvid.mcp.footage_tools.footage_edits'" class="reference internal" href="#muvid.mcp.footage_tools.footage_edits"><code class="docutils literal notranslate"><span class="pre">footage_edits()</span></code></a></li>
@@ -822,7 +847,7 @@ video uses. Replaces any previous song. Duration/size-capped.</p>
 </div>
 </footer>
 </div>
-<script src="../_static/documentation_options.js?v=cac962a1"></script>
+<script src="../_static/documentation_options.js?v=29ed05f3"></script>
 <script src="../_static/doctools.js?v=fd6eb6e6"></script>
 <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
 <script src="../_static/clipboard.min.js?v=a7894cd8"></script>

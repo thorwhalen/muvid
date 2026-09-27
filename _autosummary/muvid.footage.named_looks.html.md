@@ -33,9 +33,10 @@ Import-light: the menu is data, and `looks` is imported only to compile.
 
 ### Functions
 
-| [`named_look_catalogue`](#muvid.footage.named_looks.named_look_catalogue)()                         | The menu as JSON rows (name, title, description, kind, params_schema).                                           |
-|-------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------|
-| [`compile_named_look`](#muvid.footage.named_looks.compile_named_look)(spec, \*, canvas, fps, ...) | `{"name": ..., **params}` → the cut's filter fragment (a `LookFragment`, which says whether it is time-varying). |
+| [`named_look_catalogue`](#muvid.footage.named_looks.named_look_catalogue)()                         | The menu as JSON rows (name, title, description, kind, params_schema).                                                                                      |
+|-------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [`resolve_named_look`](#muvid.footage.named_looks.resolve_named_look)(spec)                       | `{"name": ..., **params}` checked, with every parameter's value filled in (the defaults included) — the spec a cut records so a screen can show the choice. |
+| [`compile_named_look`](#muvid.footage.named_looks.compile_named_look)(spec, \*, canvas, fps, ...) | `{"name": ..., **params}` → the cut's filter fragment (a `LookFragment`, which says whether it is time-varying).                                            |
 
 ### Classes
 
@@ -74,3 +75,11 @@ The menu as JSON rows (name, title, description, kind, params_schema).
 
 * **Return type:**
   [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)]
+
+### muvid.footage.named_looks.resolve_named_look(spec)
+
+`{"name": ..., **params}` checked, with every parameter’s value filled in (the
+defaults included) — the spec a cut records so a screen can show the choice.
+
+* **Return type:**
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)

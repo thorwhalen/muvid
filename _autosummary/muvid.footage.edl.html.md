@@ -158,7 +158,7 @@ it for free.
 
 Every reason [`exclude_unvouched()`](#muvid.footage.edl.exclude_unvouched) can give, for a caller matching on the value.
 
-### *class* muvid.footage.edl.EdlEntry(song_start, song_end, clip_id, transition=None, crop=None, crop_end=None, look=None, look_time_varying=False)
+### *class* muvid.footage.edl.EdlEntry(song_start, song_end, clip_id, transition=None, crop=None, crop_end=None, look=None, look_time_varying=False, look_spec=None)
 
 Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
@@ -211,6 +211,15 @@ canvas. The first two of those would break the bounded-memory invariant
 the assembler rests on; the allowlist is what keeps a look from writing
 this machine’s disk; and the last two are what keep an allowlisted filter
 from spending 900 MB of it (muvid#75).
+
+#### look_spec *: [dict](https://docs.python.org/3/builtins/stdtypes.html#dict) | [None](https://docs.python.org/3/builtins/constants.html#None)* *= None*
+
+WHICH named look produced [`look`](#muvid.footage.edl.EdlEntry.look) — `{"name": "slow_push", "zoom": 1.08}`
+([`muvid.footage.named_looks`](muvid.footage.named_looks.html.md#module-muvid.footage.named_looks)) — so a screen can show and re-edit the choice
+rather than a filter string. Descriptive only: `look` is what renders, and the
+two are set together by `service.set_cut`. `None` (the default, and always
+for a hand-written filter) emits nothing — additive in both directions. Excluded
+from the hash because a dict is not hashable; equality still compares it.
 
 #### look_time_varying *: [bool](https://docs.python.org/3/builtins/functions.html#bool)* *= False*
 

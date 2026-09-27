@@ -34,6 +34,7 @@ alignment, exactly as `set_song` does.
 | [`align_footage`](#muvid.mcp.footage_tools.align_footage)(project_id, \*[, keep_declared])     | Align every uploaded clip to the song by audio, and persist the result.                                                                                                                                                      |
 | [`assemble_music_video`](#muvid.mcp.footage_tools.assemble_music_video)(project_id, \*[, ...])        | Assemble the music video — auto (a selection `strategy`) or an explicit `edl`.                                                                                                                                               |
 | [`beat_grid`](#muvid.mcp.footage_tools.beat_grid)(project_id)                              | The song's beat grid — tempo and beat instants on the song timeline — WITHOUT running the scoring job.                                                                                                                       |
+| [`footage_clear_offset`](#muvid.mcp.footage_tools.footage_clear_offset)(project_id, \*, clip_id)      | Forget where I placed this video: remove a hand-declared offset, so the next `align_footage` measures the clip by its audio instead.                                                                                         |
 | [`footage_delete_edit`](#muvid.mcp.footage_tools.footage_delete_edit)(project_id, \*, edit_id)       | Delete a saved edit.                                                                                                                                                                                                         |
 | [`footage_editor_document`](#muvid.mcp.footage_tools.footage_editor_document)(project_id)                | The project as lacing-native standoff annotations, for a multitrack editor.                                                                                                                                                  |
 | [`footage_edits`](#muvid.mcp.footage_tools.footage_edits)(project_id)                          | The saved edits, oldest first: each one's `edit_id`, `name`, how it was made, how many cuts it has, and `problem` — why it would not validate against the current alignment (`null` when it does).                           |
@@ -47,7 +48,7 @@ alignment, exactly as `set_song` does.
 | [`footage_save_edit`](#muvid.mcp.footage_tools.footage_save_edit)(project_id, \*, edl[, ...])      | Save a cut list as a new named edit.                                                                                                                                                                                         |
 | [`footage_set_cut`](#muvid.mcp.footage_tools.footage_set_cut)(project_id, \*, edit_id, index)    | Change one cut of a saved edit (`index` is its position in `footage_get_edit`'s edl).                                                                                                                                        |
 | [`footage_set_offset`](#muvid.mcp.footage_tools.footage_set_offset)(project_id, \*, clip_id, ...)   | Place one video on the song BY HAND: the song time at which the video's own first frame plays (negative = the video starts before the song does).                                                                            |
-| [`footage_set_span`](#muvid.mcp.footage_tools.footage_set_span)(project_id, \*, edit_id, ...)     | Choose which part of the song a saved edit covers — trim its start and end.                                                                                                                                                  |
+| [`footage_set_span`](#muvid.mcp.footage_tools.footage_set_span)(project_id, \*, edit_id, ...)     | Choose which part of the song the video covers — where it starts and ends.                                                                                                                                                   |
 | [`footage_split_cut`](#muvid.mcp.footage_tools.footage_split_cut)(project_id, \*, edit_id, at_s)   | Split the cut playing at song time `at_s` into two cuts of the same video.                                                                                                                                                   |
 | [`footage_status`](#muvid.mcp.footage_tools.footage_status)(project_id)                         | Your project's song, clips, alignment summary, and renders.                                                                                                                                                                  |
 | [`footage_timeline`](#muvid.mcp.footage_tools.footage_timeline)(project_id)                       | The coverage map: which clips cover which spans of the song (overlaps shown).                                                                                                                                                |
@@ -117,6 +118,10 @@ whole-clip measurement), and its coverage of the song, plus two lists:
   the first place to look — and muvid#91 is where that trade-off is being decided.
 
 Run this after adding/removing clips and before assembling.
+
+A clip placed by hand (`footage_set_offset`) is left as placed and named in
+`kept_declared`; `keep_declared=false` forgets those first
+(`footage_clear_offset`) and measures every clip.
 
 * **Return type:**
   [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
@@ -243,6 +248,19 @@ Returns `tempo_bpm`, `beats` (seconds, ascending), `n_beats`,
 `downbeats` is present only when the estimator measured any — the librosa
 backend has no downbeat tracker, and an empty list would read as “this song has
 no downbeats”, a measurement nobody made (gate, don’t zero).
+
+* **Return type:**
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+
+### muvid.mcp.footage_tools.footage_clear_offset(project_id, , clip_id)
+
+Forget where I placed this video: remove a hand-declared offset, so the next
+`align_footage` measures the clip by its audio instead.
+
+Only a DECLARED offset can be forgotten (a measured one is replaced by aligning
+again); an unknown clip, or one with no declared offset, is refused. Until `align_footage`
+runs again the clip has no place on the song, and footage scores made with the old
+offset are dropped.
 
 * **Return type:**
   [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
@@ -381,7 +399,9 @@ Change one cut of a saved edit (`index` is its position in `footage_get_edit`’
   boundary moves with it, so the edit stays one continuous timeline; a move that
   would swallow a neighbour whole is refused (join them with `footage_merge_cut`).
 - `look`: a NAMED look from `footage_looks` — `{"name": "slow_push", "zoom": 1.08}`,
-  compiled for this cut’s length and the project’s canvas — or, for power users,
+  compiled for this cut’s length and the project’s canvas and kept on the cut as
+  `look_spec` (with every parameter’s value) so it can be shown and changed —
+  or, for power users,
   one raw ffmpeg filter chain (allowlisted; set `look_time_varying` for one that
   moves). `""` removes it.
 
@@ -407,13 +427,14 @@ scores stale, so they are dropped.
 
 ### muvid.mcp.footage_tools.footage_set_span(project_id, , edit_id, start_s, end_s)
 
-Choose which part of the song a saved edit covers — trim its start and end.
+Choose which part of the song the video covers — where it starts and ends.
 
-The video made from the edit then runs from `start_s` to `end_s` of the song,
-with the song cut to match (and faded out at the end when it stops before the song
-does). Cuts outside the new span are dropped, cuts across its edges are shortened,
-and a span wider than the cuts is filled with black. `start_s=0` and
-`end_s` = the song’s length is the whole song again. Returns the changed edit.
+**Trimming loses nothing.** The span is a window on the edit, not a cut of it: every
+cut is kept whole, and only what is RENDERED is limited to `start_s`..\`\`end_s\`\`
+(the song cut to match, faded out at the end when it stops before the song does;
+cuts across an edge are shortened in the render only). Widening the span again —
+`start_s=0` and `end_s` = the song’s length is the whole song — brings back
+exactly what was there. Returns the edit, with its `span`.
 
 * **Return type:**
   [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
