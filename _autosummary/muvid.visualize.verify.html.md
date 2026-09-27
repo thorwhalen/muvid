@@ -68,7 +68,7 @@ Render `checks` as an aligned, readable block.
 * **Return type:**
   [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
 
-### muvid.visualize.verify.verify_video(video, , audio=None, thumbnail=None, loudness=None, check_loudness=False, duration_tolerance=0.5, expected_canvas=None)
+### muvid.visualize.verify.verify_video(video, , audio=None, thumbnail=None, loudness=None, check_loudness=False, duration_tolerance=0.5, expected_canvas=None, expected_duration=None)
 
 Check `video` against YouTube’s expectations; return one result per check.
 
@@ -85,6 +85,9 @@ Check `video` against YouTube’s expectations; return one result per check.
     given, the aspect/resolution checks verify the output matches it —
     a deliberate portrait render must not fail a hard-coded 16:9 check.
     When `None`, the classic YouTube-landscape expectations apply.
+  * **expected_duration** ([`float`](https://docs.python.org/3/builtins/functions.html#float) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – The length the render was ASKED for, when that is not
+    the whole of `audio` — a trimmed edit renders only part of the song.
+    Arms the duration check on its own, and wins over `audio`’s length.
 * **Return type:**
   [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`Check`](#muvid.visualize.verify.Check)]
 * **Returns:**

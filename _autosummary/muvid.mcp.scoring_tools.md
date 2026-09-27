@@ -6,6 +6,10 @@ A background scoring job (via `nw.jobs` — the federation’s durable/cancellab
 facade, reused rather than a second system) computes per-clip score tracks; the editor +
 `assemble_music_video(strategy='weighted')` read them. All FREE (no AI/keys).
 
+A transport over [`muvid.footage.service`](muvid.footage.service.md#module-muvid.footage.service) (`require_scorable`, `run_scoring`,
+`scores`): what stays here is the connector’s own job — enqueueing on `nw.jobs` and the
+bounded long-poll over it. A host runs the same `score` operation as its own job.
+
 Key design decisions (LOCKED, see `misc/docs/footage_scoring_design.md`):
 
 - **Scoring is keyed on INPUTS ONLY** (`song_hash` + an alignment fingerprint + the metric

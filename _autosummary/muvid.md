@@ -9,6 +9,9 @@ Two independent halves:
   environments, write a shot script, render and compose. The verbs below are
   also the CLI. Project model: [`MusicVideoProject`](#muvid.MusicVideoProject) and the schema
   dataclasses.
+- **Hosted productions** (`muvid.Project`, needs `nw`): a music video or a
+  lyric video a host (the reelee studio) places and serves — an `nw.Project` whose
+  footage operations are [`muvid.footage.service`](muvid.footage.service.md#module-muvid.footage.service).
 - **Visualizer** ([`muvid.visualize`](muvid.visualize.md#module-muvid.visualize), needs only `ffmpeg` + `mixing`):
   turn a song and a cover into a still / Ken Burns / audio-reactive music video,
   plus a thumbnail. Deterministic, no AI, no network.
@@ -245,6 +248,7 @@ tags. Returns the path to the lyrics markdown.
 
 | [`align`](muvid.align.md#module-muvid.align)               | Lyric → audio alignment.                                                             |
 |-----------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------|
+| [`catalog`](muvid.catalog.md#module-muvid.catalog)           | Make a hosted production's media *retrievable* — the host's artifact catalog.        |
 | [`characters`](muvid.characters.md#module-muvid.characters)     | Character cards + reference image curation via lookbook.                             |
 | [`choreo`](muvid.choreo.md#module-muvid.choreo)             | Choreo — event-driven visual music, muvid's second subgenre plugin.                  |
 | [`compose`](muvid.compose.md#module-muvid.compose)           | Compose all rendered shots into the final music video.                               |
@@ -255,6 +259,7 @@ tags. Returns the path to the lyrics markdown.
 | [`events`](muvid.events.md#module-muvid.events)             | Surface fal progress events into the muvid project.                                  |
 | [`facade`](muvid.facade.md#module-muvid.facade)             | Top-level facade — the verbs the CLI / skill / UI all call.                          |
 | [`footage`](muvid.footage.md#module-muvid.footage)           | Footage-aligned music video — align several device recordings of one song, assemble. |
+| [`importing`](muvid.importing.md#module-muvid.importing)       | Bring a finished production into a host's projects dir as a `muvid.Project`.         |
 | [`lyrics`](muvid.lyrics.md#module-muvid.lyrics)             | Lyrics — transcription and markdown round-trip.                                      |
 | [`lyricvid`](muvid.lyricvid.md#module-muvid.lyricvid)         | Lyric video (kinetic typography) — muvid's first subgenre plugin.                    |
 | [`mcp`](muvid.mcp.md#module-muvid.mcp)                   | muvid MCP server — the `music-visualizer` tool surface for a remote connector.       |

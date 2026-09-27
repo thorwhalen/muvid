@@ -15,6 +15,15 @@ with the visualizer’s root, different subtree). **Never** inside the app/deplo
 - `.../clips/{clip_id}.<ext>` — an uploaded footage clip
 - `.../alignments.json` — the persisted per-clip alignment
 - `.../renders/{render_id}/` — an assembled music video
+- `.../edits/{edit_id}.json` — a named, persisted edit (an EDL plus how it was made)
+- `.../cover.jpg` — the project’s cover frame (hosted projects only)
+
+**The catalog seam.** `MusicVideoFootageProject(..., media_catalog=None)`: when a host
+places the project (`muvid.Project`), every song, clip, render and cover that
+lands here is also registered in the host’s artifact catalog
+([`muvid.catalog.HostArtifactCatalog`](muvid.catalog.md#muvid.catalog.HostArtifactCatalog)) and its `artifact_id` recorded beside it,
+so the host can serve the bytes. `None` — the MCP connector’s per-caller workspace —
+registers nothing and records nothing, so its on-disk records are unchanged.
 
 **Every JSON record here is replaced, never truncated in place** (muvid#17 item 4).
 `manifest.json` and `alignments.json` used to be bare `write_text` calls — a
@@ -46,13 +55,19 @@ clip, and the score tensor is keyed on that alignment’s fingerprint).
 | [`DATA_HOME_ENV_VAR`](#muvid.footage.workspace.DATA_HOME_ENV_VAR)   | Re-exported from [`muvid.paths`](muvid.paths.md#module-muvid.paths), the SSOT for where muvid's data lives.   |
 |----------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------|
 | [`CANVASES`](#muvid.footage.workspace.CANVASES)            | Named output canvases a project may choose at create (the genre Templates).                                                                |
+| [`ID_PATTERN`](#muvid.footage.workspace.ID_PATTERN)          | What a caller-chosen id (a clip's, an edit's) may be — after surrounding whitespace is dropped.                                            |
 
 ### Functions
 
-| [`atomic_write_bytes`](#muvid.footage.workspace.atomic_write_bytes)(path, data)   | Replace `path`'s content with `data` so a reader never sees a torn file.                                                   |
-|-----------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------|
-| [`atomic_write_text`](#muvid.footage.workspace.atomic_write_text)(path, text)    | Atomically replace `path` with `text` (UTF-8) — see [`atomic_write_bytes()`](#muvid.footage.workspace.atomic_write_bytes). |
-| [`data_root`](#muvid.footage.workspace.data_root)()                      | The muvid data root: `$MUVID_DATA_HOME` or `~/.local/share/muvid`.                                                         |
+| [`atomic_write_bytes`](#muvid.footage.workspace.atomic_write_bytes)(path, data)                    | Replace `path`'s content with `data` so a reader never sees a torn file.                                                                                                                                                               |
+|----------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [`atomic_write_text`](#muvid.footage.workspace.atomic_write_text)(path, text)                     | Atomically replace `path` with `text` (UTF-8) — see [`atomic_write_bytes()`](#muvid.footage.workspace.atomic_write_bytes).                                                                                                             |
+| [`data_root`](#muvid.footage.workspace.data_root)()                                       | The muvid data root: `$MUVID_DATA_HOME` or `~/.local/share/muvid`.                                                                                                                                                                     |
+| [`file_lock`](#muvid.footage.workspace.file_lock)(path)                                   | An exclusive advisory lock on `path` for a read-modify-write (POSIX `flock`; `msvcrt.locking` on Windows).                                                                                                                             |
+| [`fresh_output`](#muvid.footage.workspace.fresh_output)(dest)                                | A temp path beside `dest` for a writer that cannot be told to be careful (ffmpeg); on success it is renamed onto `dest` — a new inode, as in [`replace_file()`](#muvid.footage.workspace.replace_file) — and on failure removed. |
+| [`init_footage_project`](#muvid.footage.workspace.init_footage_project)(root, \*, project_id[, ...]) | A footage project rooted at `root`, writing its manifest if there is none yet.                                                                                                                                                         |
+| [`normalise_id`](#muvid.footage.workspace.normalise_id)(value, \*, label)                    | `value` stripped, and refused (`ValueError`) unless it matches [`ID_PATTERN`](#muvid.footage.workspace.ID_PATTERN).                                                                                                            |
+| [`replace_file`](#muvid.footage.workspace.replace_file)(src, dest)                           | Put a copy of `src` at `dest` as a NEW file (temp sibling + `os.replace`).                                                                                                                                                             |
 
 ### Classes
 
@@ -76,7 +91,14 @@ Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
 A caller’s private music-video area, addressed by `email`.
 
-### *class* muvid.footage.workspace.MusicVideoFootageProject(email, project_id, root)
+### muvid.footage.workspace.ID_PATTERN *= re.compile('^[A-Za-z0-9_-]{1,64}$')*
+
+What a caller-chosen id (a clip’s, an edit’s) may be — after surrounding whitespace is
+dropped. Letters, digits, `_` and `-` only: an id names a FILE (`clips/<id>.mp4`,
+`edits/<id>.json`), and a looser rule let `*` through to a glob that deleted every
+clip, and `" c1"` replace `c1`’s bytes under a different manifest key.
+
+### *class* muvid.footage.workspace.MusicVideoFootageProject(email, project_id, root, media_catalog=None, defaults=<factory>)
 
 Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
@@ -88,6 +110,30 @@ Store a footage clip from a local file; returns its `clip_id`.
 
 * **Return type:**
   [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+
+#### cover_info()
+
+`{file, artifact_id, taken_from}` of the cover frame, or `None`.
+
+* **Return type:**
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict) | [`None`](https://docs.python.org/3/builtins/constants.html#None)
+
+#### defaults *: [dict](https://docs.python.org/3/builtins/stdtypes.html#dict)*
+
+What `manifest()` reads before anything is written — a hosted project’s
+title and canvas come from its genre envelope, so READING its footage creates
+nothing; the first write persists them.
+
+#### delete_edit(edit_id)
+
+Remove one edit record; whether it existed.
+
+* **Return type:**
+  [`bool`](https://docs.python.org/3/builtins/functions.html#bool)
+
+#### edits_lock()
+
+Serialise a read-modify-write of this project’s edits (see [`file_lock()`](#muvid.footage.workspace.file_lock)).
 
 #### ensure_render_refs()
 
@@ -127,12 +173,39 @@ Delete persisted score tracks — the primary invalidation on song/offset change
 * **Return type:**
   [`None`](https://docs.python.org/3/builtins/constants.html#None)
 
+#### list_clips()
+
+`[{clip_id, name}]` — plus `artifact_id` when the host catalog holds it.
+
+* **Return type:**
+  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)]
+
+#### list_edit_records()
+
+Every readable edit record, oldest first (by its `created` stamp).
+
+* **Return type:**
+  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)]
+
+#### media_catalog *: [object](https://docs.python.org/3/builtins/functions.html#object)* *= None*
+
+Where this project’s media is registered for a host to serve it — a
+[`muvid.catalog.HostArtifactCatalog`](muvid.catalog.md#muvid.catalog.HostArtifactCatalog) (anything with its `register`), or
+`None` for the MCP workspace, which registers nothing.
+
 #### next_render_ref()
 
 The ordinal the next render will carry (1-based, never reused).
 
 * **Return type:**
   [`int`](https://docs.python.org/3/builtins/functions.html#int)
+
+#### read_edit(edit_id)
+
+One edit record; `KeyError` if there is no such edit.
+
+* **Return type:**
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
 
 #### remove_clip(clip_id)
 
@@ -167,7 +240,14 @@ Named to match `VisualizerProject.renders_dir` so anything that spans
 both muvid genres — `muvid.downloads` — sees one shape instead of
 branching on which drawer it is looking in.
 
-#### set_song(src_path, , ext)
+#### set_cover(image_path, , taken_from)
+
+Store `image_path` as `cover.jpg`, register it; return its artifact id.
+
+* **Return type:**
+  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`None`](https://docs.python.org/3/builtins/constants.html#None)
+
+#### set_song(src_path, , ext, name='', duration_s=None)
 
 Store (replacing) the project’s one clean song from a local file.
 
@@ -188,6 +268,11 @@ The order of operations is the contract (muvid#17 item 4), in three phases:
 3. **The song file lands, then the manifest is replaced LAST** — it names the
    file, so the file must exist before any reader can be pointed at it.
 
+`name` is the display name (an uploaded file’s original name); `duration_s`
+is a duration the caller already probed, so a 100 MB song is not probed twice.
+With a host catalog the song is registered too, and its id recorded as
+`song_artifact_id` (it equals `song_hash`: both are the SHA-256 of the bytes).
+
 * **Return type:**
   [`None`](https://docs.python.org/3/builtins/constants.html#None)
 
@@ -197,6 +282,20 @@ The clean song’s content hash (cached in the manifest; computed if missing).
 
 * **Return type:**
   [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+
+#### song_info()
+
+The song’s display facts (`None` before one is set).
+
+* **Return type:**
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict) | [`None`](https://docs.python.org/3/builtins/constants.html#None)
+
+#### write_edit(edit_id, record)
+
+Persist one named edit record (replacing it atomically).
+
+* **Return type:**
+  [`None`](https://docs.python.org/3/builtins/constants.html#None)
 
 ### muvid.footage.workspace.atomic_write_bytes(path, data)
 
@@ -254,6 +353,58 @@ A thin forwarder rather than `data_root = data_home`: a plain alias keeps
 a module’s members by where they were defined — `automodule :members:` (so this
 docstring would not render here) and this repo’s own drift-test idiom in
 `tests/test_mcp.py`. Costs one call; keeps the module’s surface introspectable.
+
+* **Return type:**
+  [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)
+
+### muvid.footage.workspace.file_lock(path)
+
+An exclusive advisory lock on `path` for a read-modify-write (POSIX `flock`;
+`msvcrt.locking` on Windows). Serialises concurrent edits of one project’s files;
+each write is also atomic, so a reader never needs the lock.
+
+### muvid.footage.workspace.fresh_output(dest)
+
+A temp path beside `dest` for a writer that cannot be told to be careful
+(ffmpeg); on success it is renamed onto `dest` — a new inode, as in
+[`replace_file()`](#muvid.footage.workspace.replace_file) — and on failure removed.
+
+### muvid.footage.workspace.init_footage_project(root, , project_id, title='', canvas='landscape', media_catalog=None, email='')
+
+A footage project rooted at `root`, writing its manifest if there is none yet.
+
+The one place a footage manifest is born, for both the MCP workspace (below) and a
+host-placed `muvid.Project` (whose footage lives at `<project>/footage`).
+Idempotent: an existing manifest is left exactly as it is.
+
+* **Return type:**
+  [`MusicVideoFootageProject`](#muvid.footage.workspace.MusicVideoFootageProject)
+
+### muvid.footage.workspace.normalise_id(value, , label)
+
+`value` stripped, and refused (`ValueError`) unless it matches
+[`ID_PATTERN`](#muvid.footage.workspace.ID_PATTERN).
+
+* **Return type:**
+  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+
+```pycon
+>>> normalise_id(" c01 ", label="clip_id")
+'c01'
+>>> normalise_id("*", label="clip_id")
+Traceback (most recent call last):
+    ...
+ValueError: invalid clip_id '*': use 1-64 letters, digits, '_' or '-'
+```
+
+### muvid.footage.workspace.replace_file(src, dest)
+
+Put a copy of `src` at `dest` as a NEW file (temp sibling + `os.replace`).
+
+Never writes into an existing `dest`: a project’s media is hardlinked into the
+host’s content-addressed catalog (`blobs/<sha256>`), so an in-place overwrite would
+silently change the bytes behind an id that names the old ones. A rename gives
+`dest` a new inode and leaves the blob exactly as it was.
 
 * **Return type:**
   [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)

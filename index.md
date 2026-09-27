@@ -176,14 +176,7 @@ it peaks at 2–3 GB on CPU. Turning it on takes the extra, `MUVID_SCORING_ENABL
 `MUVID_SYNCNET_WEIGHTS` — muvid never downloads model weights at runtime. Without all
 three it skips cleanly rather than scoring zero.
 
-**As a hosted genre.** `muvid.genre_music_video` registers `music_video` as an `nw.Genre`
-(canvas presets as its Templates) with a project factory backed by
-`muvid.footage.workspace.FootageWorkspace` — a stateful per-user project (one song, N
-clips, a persisted alignment, score tracks, renders) under `~/.local/share/muvid`
-(`MUVID_DATA_HOME` to relocate). `muvid.mcp.footage_tools` and `muvid.mcp.scoring_tools`
-expose it as MCP tools (`set_song`, `add_footage`, `remove_footage`, `align_footage`,
-`propose_edit`, `footage_timeline`, `score_footage`, `assemble_music_video`,
-`list_music_video_projects`, …), all free.
+**As a hosted genre.** `muvid.genre_music_video` registers `music_video` as an `nw.Genre` (canvas presets as its Templates) with a project factory. Every operation on a footage project — set the song, add or remove a video, find where each fits (`align`) or place one by hand (`set_offset`), score, cut (`propose_edit`), keep and change named edits cut by cut (`save_edit`, `set_cut`, `split_cut`, `merge_cut`, `replace_edit`), trim an edit to part of the song (`set_span`), render — is a plain function in `muvid.footage.service`, listed once in its `FOOTAGE_OP_SPECS` and registered with nw as `nw.GenreOp`s, so a host serves them without importing muvid’s internals. `muvid.mcp.footage_tools` and `muvid.mcp.scoring_tools` expose the same operations as MCP tools (`set_song`, `add_footage`, `align_footage`, `propose_edit`, `assemble_music_video`, `footage_set_cut`, `footage_render`, …) over a stateful per-user workspace under `~/.local/share/muvid` (`MUVID_DATA_HOME` to relocate). A host that serves the project itself (the reelee studio) creates it where it wants with `projects_dir` — a `muvid.Project`, an `nw.Project` whose media is registered in the host’s artifact catalog — and `python -m muvid.importing MANIFEST PROJECTS_DIR` brings a finished production into one.
 
 **As an editor document.** `pip install 'muvid[editor]'` adds
 `muvid.footage.lacing_bridge`, which exports a project as
@@ -492,10 +485,14 @@ muvid/
   downloads.py        claim()/resolve() — muvid owns resolution, the host owns transport
   visualize/          part 1: the ffmpeg-only audio visualizer (+ its visual registry)
   footage/            part 2: align, edl, strategy, select_score, assemble, workspace
+    service.py        the footage operations (the SSOT every surface derives from)
     scoring/          the score tensor: grid, frames, quality, motionbeat, segment, lipsync
     lacing_bridge.py  project ⇄ lacing standoff annotations (the editor document)
   genre.py            registers the `music-visualizer` nw genre (and imports the next)
-  genre_music_video.py  registers the `music_video` footage genre
+  genre_music_video.py  registers the `music_video` footage genre and its operations
+  production.py       muvid.Project — a production a host places and serves
+  catalog.py          registers hosted media in the host's artifact catalog
+  importing/          python -m muvid.importing — finished productions into a host
   mcp/                the MCP tool surface: tools, footage_tools, scoring_tools
   ui/
     app.py            FastAPI app

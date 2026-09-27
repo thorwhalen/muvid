@@ -114,6 +114,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../api.html">API reference</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../_autosummary/muvid.html">muvid</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/muvid.align.html">muvid.align</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/muvid.catalog.html">muvid.catalog</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/muvid.characters.html">muvid.characters</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/muvid.choreo.html">muvid.choreo</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/muvid.compose.html">muvid.compose</a></li>
@@ -124,6 +125,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/muvid.events.html">muvid.events</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/muvid.facade.html">muvid.facade</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/muvid.footage.html">muvid.footage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/muvid.importing.html">muvid.importing</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/muvid.lyrics.html">muvid.lyrics</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/muvid.lyricvid.html">muvid.lyricvid</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/muvid.mcp.html">muvid.mcp</a></li>
@@ -234,122 +236,95 @@
 </span><span id="line-49">    <span class="s2">"render_visualizer"</span><span class="p">,</span>
 </span><span id="line-50"><span class="p">]</span>
 </span><span id="line-51">
-</span><span id="line-52"><span class="c1">#: The footage-aligned ``music_video`` genre tools (muvid.mcp.footage_tools).</span>
-</span><span id="line-53"><span class="n">FOOTAGE_TOOLS</span> <span class="o">=</span> <span class="p">[</span>
-</span><span id="line-54">    <span class="s2">"set_song"</span><span class="p">,</span>
-</span><span id="line-55">    <span class="s2">"add_footage"</span><span class="p">,</span>
-</span><span id="line-56">    <span class="s2">"add_footage_folder"</span><span class="p">,</span>
-</span><span id="line-57">    <span class="s2">"align_footage"</span><span class="p">,</span>
-</span><span id="line-58">    <span class="s2">"propose_edit"</span><span class="p">,</span>
-</span><span id="line-59">    <span class="s2">"footage_timeline"</span><span class="p">,</span>
-</span><span id="line-60">    <span class="s2">"assemble_music_video"</span><span class="p">,</span>
-</span><span id="line-61">    <span class="s2">"footage_status"</span><span class="p">,</span>
-</span><span id="line-62">    <span class="s2">"list_strategies"</span><span class="p">,</span>
-</span><span id="line-63">    <span class="c1"># The lacing-native editor bridge (muvid#31): the read half (project → the</span>
-</span><span id="line-64">    <span class="c1"># three body schemas a multitrack editor renders) and the write half (an</span>
-</span><span id="line-65">    <span class="c1"># edited DECISION lane → an ``edl=`` argument). Both free and read-only.</span>
-</span><span id="line-66">    <span class="s2">"footage_editor_document"</span><span class="p">,</span>
-</span><span id="line-67">    <span class="s2">"footage_edl_from_annotations"</span><span class="p">,</span>
-</span><span id="line-68">    <span class="c1"># The song's beat grid on its own (muvid#18 item 5): the grid used to be reachable</span>
-</span><span id="line-69">    <span class="c1"># only as a side effect of the cv2-heavy score_footage job. Free, cached per song.</span>
-</span><span id="line-70">    <span class="s2">"beat_grid"</span><span class="p">,</span>
-</span><span id="line-71">    <span class="c1"># Clip lifecycle (muvid#22): the way back to a lost project_id, and the way a</span>
-</span><span id="line-72">    <span class="c1"># mistaken upload stops being permanent. Both free; remove_footage invalidates</span>
-</span><span id="line-73">    <span class="c1"># the alignment the same way set_song does.</span>
-</span><span id="line-74">    <span class="s2">"list_music_video_projects"</span><span class="p">,</span>
-</span><span id="line-75">    <span class="s2">"remove_footage"</span><span class="p">,</span>
-</span><span id="line-76"><span class="p">]</span>
-</span><span id="line-77">
-</span><span id="line-78"><span class="c1">#: The footage SCORING tools (muvid.mcp.scoring_tools) — the background scoring job + the</span>
-</span><span id="line-79"><span class="c1">#: editor's score-track reads (thorwhalen/muvid#13). Also free.</span>
-</span><span id="line-80"><span class="n">SCORING_TOOLS</span> <span class="o">=</span> <span class="p">[</span>
-</span><span id="line-81">    <span class="s2">"score_footage"</span><span class="p">,</span>
-</span><span id="line-82">    <span class="s2">"footage_score_status"</span><span class="p">,</span>
-</span><span id="line-83">    <span class="s2">"footage_scores"</span><span class="p">,</span>
-</span><span id="line-84"><span class="p">]</span>
-</span><span id="line-85">
-</span><span id="line-86"><span class="c1">#: All tools this package exposes (all free). Bare names; a host may prefix them.</span>
-</span><span id="line-87"><span class="n">TOOL_NAMES</span> <span class="o">=</span> <span class="p">(</span>
-</span><span id="line-88">    <span class="n">VISUALIZER_TOOLS</span> <span class="o">+</span> <span class="n">FOOTAGE_TOOLS</span> <span class="o">+</span> <span class="n">SCORING_TOOLS</span> <span class="o">+</span> <span class="n">LYRICVID_TOOLS</span> <span class="o">+</span> <span class="n">SUBGENRE_TOOLS</span>
-</span><span id="line-89"><span class="p">)</span>
-</span><span id="line-90">
-</span><span id="line-91"><span class="c1">#: Alias — muvid has no costed tools.</span>
-</span><span id="line-92"><span class="n">FREE_TOOLS</span> <span class="o">=</span> <span class="p">[</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">TOOL_NAMES</span> <span class="k">if</span> <span class="n">n</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">LYRICVID_COSTED</span><span class="p">]</span>
-</span><span id="line-93"><span class="n">COSTED_TOOLS</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">LYRICVID_COSTED</span><span class="p">)</span>
-</span><span id="line-94">
-</span><span id="line-95"><span class="c1">#: Bare tool name → its ``module:function`` reference (tools live in three modules).</span>
-</span><span id="line-96"><span class="n">TOOL_REFS</span> <span class="o">=</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"muvid.mcp.tools:</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">VISUALIZER_TOOLS</span><span class="p">}</span>
-</span><span id="line-97"><span class="n">TOOL_REFS</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">name</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"muvid.mcp.footage_tools:</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">FOOTAGE_TOOLS</span><span class="p">})</span>
-</span><span id="line-98"><span class="n">TOOL_REFS</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">name</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"muvid.mcp.scoring_tools:</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">SCORING_TOOLS</span><span class="p">})</span>
-</span><span id="line-99"><span class="n">TOOL_REFS</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">name</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"muvid.mcp.lyricvid_tools:</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">LYRICVID_TOOLS</span><span class="p">})</span>
-</span><span id="line-100"><span class="n">TOOL_REFS</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">name</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"muvid.mcp.subgenre_tools:</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">SUBGENRE_TOOLS</span><span class="p">})</span>
-</span><span id="line-101">
-</span><span id="line-102">
+</span><span id="line-52"><span class="c1">#: The footage-aligned ``music_video`` genre tools (muvid.mcp.footage_tools) and the</span>
+</span><span id="line-53"><span class="c1">#: footage SCORING tools (muvid.mcp.scoring_tools — the background scoring job + the</span>
+</span><span id="line-54"><span class="c1">#: editor's score-track reads, thorwhalen/muvid#13). Both lists are DERIVED from the</span>
+</span><span id="line-55"><span class="c1">#: operations catalogue (``muvid.footage.service.FOOTAGE_OP_SPECS``) plus the named</span>
+</span><span id="line-56"><span class="c1">#: transport-only tools — see :mod:`muvid.mcp._footage_ops`; never list them by hand.</span>
+</span><span id="line-57"><span class="kn">from</span><span class="w"> </span><span class="nn">muvid.mcp._footage_ops</span><span class="w"> </span><span class="kn">import</span> <span class="n">FOOTAGE_TOOLS</span><span class="p">,</span> <span class="n">SCORING_TOOLS</span>  <span class="c1"># noqa: E402</span>
+</span><span id="line-58">
+</span><span id="line-59"><span class="c1">#: All tools this package exposes (all free). Bare names; a host may prefix them.</span>
+</span><span id="line-60"><span class="n">TOOL_NAMES</span> <span class="o">=</span> <span class="p">(</span>
+</span><span id="line-61">    <span class="n">VISUALIZER_TOOLS</span> <span class="o">+</span> <span class="n">FOOTAGE_TOOLS</span> <span class="o">+</span> <span class="n">SCORING_TOOLS</span> <span class="o">+</span> <span class="n">LYRICVID_TOOLS</span> <span class="o">+</span> <span class="n">SUBGENRE_TOOLS</span>
+</span><span id="line-62"><span class="p">)</span>
+</span><span id="line-63">
+</span><span id="line-64"><span class="c1">#: Alias — muvid has no costed tools.</span>
+</span><span id="line-65"><span class="n">FREE_TOOLS</span> <span class="o">=</span> <span class="p">[</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">TOOL_NAMES</span> <span class="k">if</span> <span class="n">n</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">LYRICVID_COSTED</span><span class="p">]</span>
+</span><span id="line-66"><span class="n">COSTED_TOOLS</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">LYRICVID_COSTED</span><span class="p">)</span>
+</span><span id="line-67">
+</span><span id="line-68"><span class="c1">#: Bare tool name → its ``module:function`` reference (tools live in three modules).</span>
+</span><span id="line-69"><span class="n">TOOL_REFS</span> <span class="o">=</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"muvid.mcp.tools:</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">VISUALIZER_TOOLS</span><span class="p">}</span>
+</span><span id="line-70"><span class="n">TOOL_REFS</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">name</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"muvid.mcp.footage_tools:</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">FOOTAGE_TOOLS</span><span class="p">})</span>
+</span><span id="line-71"><span class="n">TOOL_REFS</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">name</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"muvid.mcp.scoring_tools:</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">SCORING_TOOLS</span><span class="p">})</span>
+</span><span id="line-72"><span class="n">TOOL_REFS</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">name</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"muvid.mcp.lyricvid_tools:</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">LYRICVID_TOOLS</span><span class="p">})</span>
+</span><span id="line-73"><span class="n">TOOL_REFS</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">name</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"muvid.mcp.subgenre_tools:</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">SUBGENRE_TOOLS</span><span class="p">})</span>
+</span><span id="line-74">
+</span><span id="line-75">
 <div class="viewcode-block" id="register_tools">
 <a class="viewcode-back" href="../../_autosummary/muvid.mcp.html#muvid.mcp.register_tools">[docs]</a>
-</span><span id="line-103"><span class="k">def</span><span class="w"> </span><span class="nf">register_tools</span><span class="p">(</span><span class="n">server</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span> <span class="n">include</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-</span><span id="line-104"><span class="w">    </span><span class="sd">"""Register muvid's MCP tools onto an EXISTING FastMCP ``server`` — the aggregation</span>
-</span><span id="line-105"><span class="sd">    seam for a host connector (the unified reelee connector, muvid#3).</span>
-</span><span id="line-106">
-</span><span id="line-107"><span class="sd">    Mirrors ``braidio.mcp.register_tools`` / ``falaw.bridges.mcp.register_tools``.</span>
-</span><span id="line-108"><span class="sd">    ``prefix`` namespaces the tool names (e.g. ``"muvid_"``) to avoid collisions;</span>
-</span><span id="line-109"><span class="sd">    ``include`` / ``exclude`` (sets of bare names) select a subset. Returns the</span>
-</span><span id="line-110"><span class="sd">    registered (prefixed) names. The host installs identity/metering separately —</span>
-</span><span id="line-111"><span class="sd">    muvid's tools resolve the caller via :func:`current_email`, which works under any</span>
-</span><span id="line-112"><span class="sd">    host middleware.</span>
-</span><span id="line-113"><span class="sd">    """</span>
-</span><span id="line-114">    <span class="kn">from</span><span class="w"> </span><span class="nn">py2mcp.util</span><span class="w"> </span><span class="kn">import</span> <span class="n">import_object</span>
-</span><span id="line-115">
-</span><span id="line-116">    <span class="n">names</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">include</span><span class="p">)</span> <span class="k">if</span> <span class="n">include</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">list</span><span class="p">(</span><span class="n">TOOL_NAMES</span><span class="p">)</span>
-</span><span id="line-117">    <span class="n">skip</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">exclude</span> <span class="ow">or</span> <span class="p">())</span>
-</span><span id="line-118">    <span class="n">registered</span> <span class="o">=</span> <span class="p">[]</span>
-</span><span id="line-119">    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">names</span><span class="p">:</span>
-</span><span id="line-120">        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">skip</span><span class="p">:</span>
-</span><span id="line-121">            <span class="k">continue</span>
-</span><span id="line-122">        <span class="n">fn</span> <span class="o">=</span> <span class="n">import_object</span><span class="p">(</span><span class="n">TOOL_REFS</span><span class="p">[</span><span class="n">name</span><span class="p">])</span>
-</span><span id="line-123">        <span class="n">server</span><span class="o">.</span><span class="n">tool</span><span class="p">(</span>
-</span><span id="line-124">            <span class="n">fn</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">prefix</span><span class="si">}{</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="p">(</span><span class="n">fn</span><span class="o">.</span><span class="vm">__doc__</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="ow">or</span> <span class="kc">None</span>
-</span><span id="line-125">        <span class="p">)</span>
-</span><span id="line-126">        <span class="n">registered</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">prefix</span><span class="si">}{</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-</span><span id="line-127">    <span class="k">return</span> <span class="n">registered</span></div>
+</span><span id="line-76"><span class="k">def</span><span class="w"> </span><span class="nf">register_tools</span><span class="p">(</span><span class="n">server</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span> <span class="n">include</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+</span><span id="line-77"><span class="w">    </span><span class="sd">"""Register muvid's MCP tools onto an EXISTING FastMCP ``server`` — the aggregation</span>
+</span><span id="line-78"><span class="sd">    seam for a host connector (the unified reelee connector, muvid#3).</span>
+</span><span id="line-79">
+</span><span id="line-80"><span class="sd">    Mirrors ``braidio.mcp.register_tools`` / ``falaw.bridges.mcp.register_tools``.</span>
+</span><span id="line-81"><span class="sd">    ``prefix`` namespaces the tool names (e.g. ``"muvid_"``) to avoid collisions;</span>
+</span><span id="line-82"><span class="sd">    ``include`` / ``exclude`` (sets of bare names) select a subset. Returns the</span>
+</span><span id="line-83"><span class="sd">    registered (prefixed) names. The host installs identity/metering separately —</span>
+</span><span id="line-84"><span class="sd">    muvid's tools resolve the caller via :func:`current_email`, which works under any</span>
+</span><span id="line-85"><span class="sd">    host middleware.</span>
+</span><span id="line-86"><span class="sd">    """</span>
+</span><span id="line-87">    <span class="kn">from</span><span class="w"> </span><span class="nn">py2mcp.util</span><span class="w"> </span><span class="kn">import</span> <span class="n">import_object</span>
+</span><span id="line-88">
+</span><span id="line-89">    <span class="n">names</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">include</span><span class="p">)</span> <span class="k">if</span> <span class="n">include</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">list</span><span class="p">(</span><span class="n">TOOL_NAMES</span><span class="p">)</span>
+</span><span id="line-90">    <span class="n">skip</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">exclude</span> <span class="ow">or</span> <span class="p">())</span>
+</span><span id="line-91">    <span class="n">registered</span> <span class="o">=</span> <span class="p">[]</span>
+</span><span id="line-92">    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">names</span><span class="p">:</span>
+</span><span id="line-93">        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">skip</span><span class="p">:</span>
+</span><span id="line-94">            <span class="k">continue</span>
+</span><span id="line-95">        <span class="n">fn</span> <span class="o">=</span> <span class="n">import_object</span><span class="p">(</span><span class="n">TOOL_REFS</span><span class="p">[</span><span class="n">name</span><span class="p">])</span>
+</span><span id="line-96">        <span class="n">server</span><span class="o">.</span><span class="n">tool</span><span class="p">(</span>
+</span><span id="line-97">            <span class="n">fn</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">prefix</span><span class="si">}{</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="p">(</span><span class="n">fn</span><span class="o">.</span><span class="vm">__doc__</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="ow">or</span> <span class="kc">None</span>
+</span><span id="line-98">        <span class="p">)</span>
+</span><span id="line-99">        <span class="n">registered</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">prefix</span><span class="si">}{</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</span><span id="line-100">    <span class="k">return</span> <span class="n">registered</span></div>
 
-</span><span id="line-128">
-</span><span id="line-129">
+</span><span id="line-101">
+</span><span id="line-102">
 <div class="viewcode-block" id="build_server">
 <a class="viewcode-back" href="../../_autosummary/muvid.mcp.html#muvid.mcp.build_server">[docs]</a>
-</span><span id="line-130"><span class="k">def</span><span class="w"> </span><span class="nf">build_server</span><span class="p">(</span>
-</span><span id="line-131">    <span class="o">*</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"muvid"</span><span class="p">,</span> <span class="n">instructions</span><span class="o">=</span><span class="n">INSTRUCTIONS</span><span class="p">,</span> <span class="n">auth</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">middleware</span><span class="o">=</span><span class="kc">None</span>
-</span><span id="line-132"><span class="p">):</span>
-</span><span id="line-133"><span class="w">    </span><span class="sd">"""Assemble a standalone FastMCP server exposing muvid's tools (stdio dev/testing).</span>
-</span><span id="line-134">
-</span><span id="line-135"><span class="sd">    The hosted path aggregates onto the reelee connector via :func:`register_tools`;</span>
-</span><span id="line-136"><span class="sd">    this is the convenience builder for ``muvid.mcp`` on its own.</span>
-</span><span id="line-137"><span class="sd">    """</span>
-</span><span id="line-138">    <span class="kn">from</span><span class="w"> </span><span class="nn">fastmcp</span><span class="w"> </span><span class="kn">import</span> <span class="n">FastMCP</span>
-</span><span id="line-139">
-</span><span id="line-140">    <span class="n">server</span> <span class="o">=</span> <span class="n">FastMCP</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">instructions</span><span class="o">=</span><span class="n">instructions</span><span class="p">,</span> <span class="n">auth</span><span class="o">=</span><span class="n">auth</span><span class="p">)</span>
-</span><span id="line-141">    <span class="k">if</span> <span class="n">middleware</span><span class="p">:</span>
-</span><span id="line-142">        <span class="k">for</span> <span class="n">mw</span> <span class="ow">in</span> <span class="n">middleware</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">middleware</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">))</span> <span class="k">else</span> <span class="p">[</span><span class="n">middleware</span><span class="p">]:</span>
-</span><span id="line-143">            <span class="n">server</span><span class="o">.</span><span class="n">add_middleware</span><span class="p">(</span><span class="n">mw</span><span class="p">)</span>
-</span><span id="line-144">    <span class="n">register_tools</span><span class="p">(</span><span class="n">server</span><span class="p">)</span>
-</span><span id="line-145">    <span class="k">return</span> <span class="n">server</span></div>
+</span><span id="line-103"><span class="k">def</span><span class="w"> </span><span class="nf">build_server</span><span class="p">(</span>
+</span><span id="line-104">    <span class="o">*</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"muvid"</span><span class="p">,</span> <span class="n">instructions</span><span class="o">=</span><span class="n">INSTRUCTIONS</span><span class="p">,</span> <span class="n">auth</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">middleware</span><span class="o">=</span><span class="kc">None</span>
+</span><span id="line-105"><span class="p">):</span>
+</span><span id="line-106"><span class="w">    </span><span class="sd">"""Assemble a standalone FastMCP server exposing muvid's tools (stdio dev/testing).</span>
+</span><span id="line-107">
+</span><span id="line-108"><span class="sd">    The hosted path aggregates onto the reelee connector via :func:`register_tools`;</span>
+</span><span id="line-109"><span class="sd">    this is the convenience builder for ``muvid.mcp`` on its own.</span>
+</span><span id="line-110"><span class="sd">    """</span>
+</span><span id="line-111">    <span class="kn">from</span><span class="w"> </span><span class="nn">fastmcp</span><span class="w"> </span><span class="kn">import</span> <span class="n">FastMCP</span>
+</span><span id="line-112">
+</span><span id="line-113">    <span class="n">server</span> <span class="o">=</span> <span class="n">FastMCP</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">instructions</span><span class="o">=</span><span class="n">instructions</span><span class="p">,</span> <span class="n">auth</span><span class="o">=</span><span class="n">auth</span><span class="p">)</span>
+</span><span id="line-114">    <span class="k">if</span> <span class="n">middleware</span><span class="p">:</span>
+</span><span id="line-115">        <span class="k">for</span> <span class="n">mw</span> <span class="ow">in</span> <span class="n">middleware</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">middleware</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">))</span> <span class="k">else</span> <span class="p">[</span><span class="n">middleware</span><span class="p">]:</span>
+</span><span id="line-116">            <span class="n">server</span><span class="o">.</span><span class="n">add_middleware</span><span class="p">(</span><span class="n">mw</span><span class="p">)</span>
+</span><span id="line-117">    <span class="n">register_tools</span><span class="p">(</span><span class="n">server</span><span class="p">)</span>
+</span><span id="line-118">    <span class="k">return</span> <span class="n">server</span></div>
 
-</span><span id="line-146">
-</span><span id="line-147">
-</span><span id="line-148"><span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
-</span><span id="line-149">    <span class="s2">"TOOL_NAMES"</span><span class="p">,</span>
-</span><span id="line-150">    <span class="s2">"FREE_TOOLS"</span><span class="p">,</span>
-</span><span id="line-151">    <span class="s2">"COSTED_TOOLS"</span><span class="p">,</span>
-</span><span id="line-152">    <span class="s2">"TOOL_REFS"</span><span class="p">,</span>
-</span><span id="line-153">    <span class="s2">"INSTRUCTIONS"</span><span class="p">,</span>
-</span><span id="line-154">    <span class="s2">"register_tools"</span><span class="p">,</span>
-</span><span id="line-155">    <span class="s2">"build_server"</span><span class="p">,</span>
-</span><span id="line-156">    <span class="s2">"current_email"</span><span class="p">,</span>
-</span><span id="line-157">    <span class="s2">"token_email"</span><span class="p">,</span>
-</span><span id="line-158">    <span class="s2">"use_email"</span><span class="p">,</span>
-</span><span id="line-159">    <span class="s2">"VisualizerWorkspace"</span><span class="p">,</span>
-</span><span id="line-160">    <span class="s2">"data_root"</span><span class="p">,</span>
-</span><span id="line-161"><span class="p">]</span>
+</span><span id="line-119">
+</span><span id="line-120">
+</span><span id="line-121"><span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+</span><span id="line-122">    <span class="s2">"TOOL_NAMES"</span><span class="p">,</span>
+</span><span id="line-123">    <span class="s2">"FREE_TOOLS"</span><span class="p">,</span>
+</span><span id="line-124">    <span class="s2">"COSTED_TOOLS"</span><span class="p">,</span>
+</span><span id="line-125">    <span class="s2">"TOOL_REFS"</span><span class="p">,</span>
+</span><span id="line-126">    <span class="s2">"INSTRUCTIONS"</span><span class="p">,</span>
+</span><span id="line-127">    <span class="s2">"register_tools"</span><span class="p">,</span>
+</span><span id="line-128">    <span class="s2">"build_server"</span><span class="p">,</span>
+</span><span id="line-129">    <span class="s2">"current_email"</span><span class="p">,</span>
+</span><span id="line-130">    <span class="s2">"token_email"</span><span class="p">,</span>
+</span><span id="line-131">    <span class="s2">"use_email"</span><span class="p">,</span>
+</span><span id="line-132">    <span class="s2">"VisualizerWorkspace"</span><span class="p">,</span>
+</span><span id="line-133">    <span class="s2">"data_root"</span><span class="p">,</span>
+</span><span id="line-134"><span class="p">]</span>
 </span></code></pre></div>
     </div></div>
           </main>
@@ -363,7 +338,7 @@
 </footer>
     </div>
     
-    <script src="../../_static/documentation_options.js?v=6eb1e6b8"></script>
+    <script src="../../_static/documentation_options.js?v=cac962a1"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>

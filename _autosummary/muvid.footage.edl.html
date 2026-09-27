@@ -34,7 +34,7 @@
 <link href="../_static/epythet.css?v=f9f95642" rel="stylesheet" type="text/css"/>
 <link href="../search.html" rel="search" title="Search"/>
 <link href="../genindex.html" rel="index" title="Index"/>
-<link href="muvid.footage.lacing_bridge.html" rel="next" title="muvid.footage.lacing_bridge"/>
+<link href="muvid.footage.errors.html" rel="next" title="muvid.footage.errors"/>
 <link href="muvid.footage.assemble.html" rel="prev" title="muvid.footage.assemble"/>
 </head>
 <body :class="{ 'overflow-hidden': showSidebar }" class="min-h-screen font-sans antialiased bg-background text-foreground" x-data="{ showSidebar: false, showScrollTop: false }">
@@ -84,6 +84,7 @@
 <li class="toctree-l1 current" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../api.html">API reference<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul class="current" x-show="expanded">
 <li class="toctree-l2 current" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="muvid.html">muvid<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul class="current" x-show="expanded">
 <li class="toctree-l3"><a class="reference internal" href="muvid.align.html">muvid.align</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.catalog.html">muvid.catalog</a></li>
 <li class="toctree-l3"><a class="reference internal" href="muvid.characters.html">muvid.characters</a></li>
 <li class="toctree-l3"><a class="reference internal" href="muvid.choreo.html">muvid.choreo</a></li>
 <li class="toctree-l3"><a class="reference internal" href="muvid.compose.html">muvid.compose</a></li>
@@ -94,6 +95,7 @@
 <li class="toctree-l3"><a class="reference internal" href="muvid.events.html">muvid.events</a></li>
 <li class="toctree-l3"><a class="reference internal" href="muvid.facade.html">muvid.facade</a></li>
 <li class="toctree-l3 current"><a class="reference internal" href="muvid.footage.html">muvid.footage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.importing.html">muvid.importing</a></li>
 <li class="toctree-l3"><a class="reference internal" href="muvid.lyrics.html">muvid.lyrics</a></li>
 <li class="toctree-l3"><a class="reference internal" href="muvid.lyricvid.html">muvid.lyricvid</a></li>
 <li class="toctree-l3"><a class="reference internal" href="muvid.mcp.html">muvid.mcp</a></li>
@@ -196,16 +198,19 @@ implicitly, so spans stay one-per-song-span and nothing about reading an EDL cha
 <tr class="row-even"><td><p><a class="reference internal" href="#muvid.footage.edl.MIN_MARGIN" title="muvid.footage.edl.MIN_MARGIN"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MIN_MARGIN</span></code></a></p></td>
 <td><p>Margin must EXCEED this for an offset to be vouched for (env <code class="docutils literal notranslate"><span class="pre">MUVID_FOOTAGE_MIN_MARGIN</span></code>).</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.footage.edl.NO_VOUCHED_COVERAGE" title="muvid.footage.edl.NO_VOUCHED_COVERAGE"><code class="xref py py-obj docutils literal notranslate"><span class="pre">NO_VOUCHED_COVERAGE</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.footage.edl.MEASURED" title="muvid.footage.edl.MEASURED"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MEASURED</span></code></a></p></td>
+<td><p>the aligner found the offset, or a person set it.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#muvid.footage.edl.NO_VOUCHED_COVERAGE" title="muvid.footage.edl.NO_VOUCHED_COVERAGE"><code class="xref py py-obj docutils literal notranslate"><span class="pre">NO_VOUCHED_COVERAGE</span></code></a></p></td>
 <td><p>nothing the aligner vouches for covers it at all.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#muvid.footage.edl.UNVOUCHED_SELECTION" title="muvid.footage.edl.UNVOUCHED_SELECTION"><code class="xref py py-obj docutils literal notranslate"><span class="pre">UNVOUCHED_SELECTION</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.footage.edl.UNVOUCHED_SELECTION" title="muvid.footage.edl.UNVOUCHED_SELECTION"><code class="xref py py-obj docutils literal notranslate"><span class="pre">UNVOUCHED_SELECTION</span></code></a></p></td>
 <td><p>A vouched clip DOES cover the span and the strategy cut to an unvouched one anyway — so the loss is the SELECTOR's, not the footage's.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.footage.edl.EXCLUSION_REASONS" title="muvid.footage.edl.EXCLUSION_REASONS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">EXCLUSION_REASONS</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#muvid.footage.edl.EXCLUSION_REASONS" title="muvid.footage.edl.EXCLUSION_REASONS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">EXCLUSION_REASONS</span></code></a></p></td>
 <td><p>Every reason <a class="reference internal" href="#muvid.footage.edl.exclude_unvouched" title="muvid.footage.edl.exclude_unvouched"><code class="xref py py-func docutils literal notranslate"><span class="pre">exclude_unvouched()</span></code></a> can give, for a caller matching on the value.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#muvid.footage.edl.LOOK_FILTERS" title="muvid.footage.edl.LOOK_FILTERS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LOOK_FILTERS</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.footage.edl.LOOK_FILTERS" title="muvid.footage.edl.LOOK_FILTERS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LOOK_FILTERS</span></code></a></p></td>
 <td><p>The filters a <code class="docutils literal notranslate"><span class="pre">look</span></code> may name.</p></td>
 </tr>
 </tbody>
@@ -219,7 +224,7 @@ implicitly, so spans stay one-per-song-span and nothing about reading an EDL cha
 <tr class="row-even"><td><p><a class="reference internal" href="#muvid.footage.edl.exclude_unvouched" title="muvid.footage.edl.exclude_unvouched"><code class="xref py py-obj docutils literal notranslate"><span class="pre">exclude_unvouched</span></code></a>(edl, alignments)</p></td>
 <td><p>Set aside the spans of an AUTO edit whose only footage is unvouched (muvid#88).</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.footage.edl.fill_gaps" title="muvid.footage.edl.fill_gaps"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fill_gaps</span></code></a>(entries, song_duration)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.footage.edl.fill_gaps" title="muvid.footage.edl.fill_gaps"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fill_gaps</span></code></a>(entries, song_duration, *[, start])</p></td>
 <td><p>Make an edit span the WHOLE song by inserting explicit gap entries.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#muvid.footage.edl.validate_edl" title="muvid.footage.edl.validate_edl"><code class="xref py py-obj docutils literal notranslate"><span class="pre">validate_edl</span></code></a>(edl, alignments, song_duration, *)</p></td>
@@ -474,7 +479,7 @@ disagree about why.</p>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="muvid.footage.edl.FootageAlignment">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">muvid.footage.edl.</span></span><span class="sig-name descname"><span class="pre">FootageAlignment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">clip_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">offset_s</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">confidence</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">duration_s</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coverage</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overlaps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">support</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reliable</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">window_s</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hop_s</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">margin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/muvid/footage/edl.html#FootageAlignment"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#muvid.footage.edl.FootageAlignment" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#muvid.footage.edl.FootageAlignment'">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">muvid.footage.edl.</span></span><span class="sig-name descname"><span class="pre">FootageAlignment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">clip_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">offset_s</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">confidence</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">duration_s</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coverage</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overlaps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">support</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reliable</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">window_s</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hop_s</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">margin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">source</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'measured'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/muvid/footage/edl.html#FootageAlignment"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#muvid.footage.edl.FootageAlignment" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#muvid.footage.edl.FootageAlignment'">¶</a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/builtins/functions.html#object" rel="nofollow noopener" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code><svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a></p>
 <p>Where one uploaded clip sits on the song timeline (muvid’s per-clip record).</p>
 <p>Mirrors <code class="docutils literal notranslate"><span class="pre">mixing.audio.ClipAlignment</span></code> but keyed by the caller-facing <code class="docutils literal notranslate"><span class="pre">clip_id</span></code> and
@@ -509,6 +514,21 @@ and not to be cut to without the caller saying so” — see
 <p>Defaults True for a record built in code; a record read from disk that predates
 the field gets its verdict DERIVED instead (see <code class="xref py py-meth docutils literal notranslate"><span class="pre">from_dict()</span></code>), never
 assumed.</p>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="muvid.footage.edl.FootageAlignment.source">
+<span class="sig-name descname"><span class="pre">source</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" rel="nofollow noopener" title="(in Python v3.14)"><span class="pre">str</span><svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'measured'</span></span><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#muvid.footage.edl.FootageAlignment.source" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#muvid.footage.edl.FootageAlignment.source'">¶</a></dt>
+<dd><p><a class="reference internal" href="#muvid.footage.edl.MEASURED" title="muvid.footage.edl.MEASURED"><code class="xref py py-data docutils literal notranslate"><span class="pre">MEASURED</span></code></a> (the aligner found it by audio) or
+<code class="xref py py-data docutils literal notranslate"><span class="pre">DECLARED</span></code> (a person set it — <code class="docutils literal notranslate"><span class="pre">muvid.footage.service.set_offset</span></code>). A
+declared record carries <code class="docutils literal notranslate"><span class="pre">reliable=True</span></code> because a person vouched for it, and
+<code class="docutils literal notranslate"><span class="pre">confidence=1.0</span></code> / <code class="docutils literal notranslate"><span class="pre">support=None</span></code> because no measurement was made; read
+<code class="docutils literal notranslate"><span class="pre">source</span></code> before reading either as evidence. Records on disk that predate the
+field were all written by the aligner, so it defaults to measured.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>How the offset is KNOWN</p>
+</dd>
+</dl>
 </dd></dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="muvid.footage.edl.FootageAlignment.support">
@@ -677,6 +697,16 @@ extrapolates to. (ffmpeg 9.0.1, three frames from a 64x48 source,
 <p>Bigger than the canvas is never useful — the delivered frame IS the canvas, so
 anything past it is resampled straight back down — which is why a <em>small</em>
 multiple is the whole of the legitimate range.</p>
+</dd></dl>
+<dl class="py data">
+<dt class="sig sig-object py" id="muvid.footage.edl.MEASURED">
+<span class="sig-prename descclassname"><span class="pre">muvid.footage.edl.</span></span><span class="sig-name descname"><span class="pre">MEASURED</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'measured'</span></span><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#muvid.footage.edl.MEASURED" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#muvid.footage.edl.MEASURED'">¶</a></dt>
+<dd><p>the aligner found the offset, or a person set it.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">FootageAlignment.source</span></code> values</p>
+</dd>
+</dl>
 </dd></dl>
 <dl class="py data">
 <dt class="sig sig-object py" id="muvid.footage.edl.MIN_CONFIDENCE">
@@ -986,8 +1016,12 @@ pan.</p>
 </dd></dl>
 <dl class="py function">
 <dt class="sig sig-object py" id="muvid.footage.edl.fill_gaps">
-<span class="sig-prename descclassname"><span class="pre">muvid.footage.edl.</span></span><span class="sig-name descname"><span class="pre">fill_gaps</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entries</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">song_duration</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/muvid/footage/edl.html#fill_gaps"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#muvid.footage.edl.fill_gaps" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#muvid.footage.edl.fill_gaps'">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">muvid.footage.edl.</span></span><span class="sig-name descname"><span class="pre">fill_gaps</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entries</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">song_duration</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/muvid/footage/edl.html#fill_gaps"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#muvid.footage.edl.fill_gaps" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#muvid.footage.edl.fill_gaps'">¶</a></dt>
 <dd><p>Make an edit span the WHOLE song by inserting explicit gap entries.</p>
+<p><code class="docutils literal notranslate"><span class="pre">start</span></code> (default 0) and <code class="docutils literal notranslate"><span class="pre">song_duration</span></code> bound the span being filled: an edit
+that covers only PART of the song (a named edit’s <code class="docutils literal notranslate"><span class="pre">span</span></code>) fills <code class="docutils literal notranslate"><span class="pre">[start,</span>
+<span class="pre">song_duration]</span></code> with <code class="docutils literal notranslate"><span class="pre">song_duration</span></code> passed as the span’s END, and an entry
+outside that span is refused like one outside the song.</p>
 <p>Three holes become gap entries (muvid#21 items 1+2, one mechanism): the head
 (<code class="docutils literal notranslate"><span class="pre">[0,</span> <span class="pre">first.song_start]</span></code> — without this, footage starting at t=5 s silently loses
 the intro), interior holes between consecutive entries, and the tail
@@ -1178,6 +1212,7 @@ diagnostic; it does <strong>not</strong> enter the verdict, for the reason above
 <li><a :data-current="activeSection === '#muvid.footage.edl.FootageAlignment.margin'" class="reference internal" href="#muvid.footage.edl.FootageAlignment.margin"><code class="docutils literal notranslate"><span class="pre">FootageAlignment.margin</span></code></a></li>
 <li><a :data-current="activeSection === '#muvid.footage.edl.FootageAlignment.overlaps'" class="reference internal" href="#muvid.footage.edl.FootageAlignment.overlaps"><code class="docutils literal notranslate"><span class="pre">FootageAlignment.overlaps</span></code></a></li>
 <li><a :data-current="activeSection === '#muvid.footage.edl.FootageAlignment.reliable'" class="reference internal" href="#muvid.footage.edl.FootageAlignment.reliable"><code class="docutils literal notranslate"><span class="pre">FootageAlignment.reliable</span></code></a></li>
+<li><a :data-current="activeSection === '#muvid.footage.edl.FootageAlignment.source'" class="reference internal" href="#muvid.footage.edl.FootageAlignment.source"><code class="docutils literal notranslate"><span class="pre">FootageAlignment.source</span></code></a></li>
 <li><a :data-current="activeSection === '#muvid.footage.edl.FootageAlignment.support'" class="reference internal" href="#muvid.footage.edl.FootageAlignment.support"><code class="docutils literal notranslate"><span class="pre">FootageAlignment.support</span></code></a></li>
 <li><a :data-current="activeSection === '#muvid.footage.edl.FootageAlignment.window_s'" class="reference internal" href="#muvid.footage.edl.FootageAlignment.window_s"><code class="docutils literal notranslate"><span class="pre">FootageAlignment.window_s</span></code></a></li>
 </ul>
@@ -1186,6 +1221,7 @@ diagnostic; it does <strong>not</strong> enter the verdict, for the reason above
 <li><a :data-current="activeSection === '#muvid.footage.edl.MAX_EDL_ENTRIES'" class="reference internal" href="#muvid.footage.edl.MAX_EDL_ENTRIES"><code class="docutils literal notranslate"><span class="pre">MAX_EDL_ENTRIES</span></code></a></li>
 <li><a :data-current="activeSection === '#muvid.footage.edl.MAX_LOOK_LINKS'" class="reference internal" href="#muvid.footage.edl.MAX_LOOK_LINKS"><code class="docutils literal notranslate"><span class="pre">MAX_LOOK_LINKS</span></code></a></li>
 <li><a :data-current="activeSection === '#muvid.footage.edl.MAX_LOOK_SCALE'" class="reference internal" href="#muvid.footage.edl.MAX_LOOK_SCALE"><code class="docutils literal notranslate"><span class="pre">MAX_LOOK_SCALE</span></code></a></li>
+<li><a :data-current="activeSection === '#muvid.footage.edl.MEASURED'" class="reference internal" href="#muvid.footage.edl.MEASURED"><code class="docutils literal notranslate"><span class="pre">MEASURED</span></code></a></li>
 <li><a :data-current="activeSection === '#muvid.footage.edl.MIN_CONFIDENCE'" class="reference internal" href="#muvid.footage.edl.MIN_CONFIDENCE"><code class="docutils literal notranslate"><span class="pre">MIN_CONFIDENCE</span></code></a></li>
 <li><a :data-current="activeSection === '#muvid.footage.edl.MIN_MARGIN'" class="reference internal" href="#muvid.footage.edl.MIN_MARGIN"><code class="docutils literal notranslate"><span class="pre">MIN_MARGIN</span></code></a></li>
 <li><a :data-current="activeSection === '#muvid.footage.edl.MIN_SUPPORT'" class="reference internal" href="#muvid.footage.edl.MIN_SUPPORT"><code class="docutils literal notranslate"><span class="pre">MIN_SUPPORT</span></code></a></li>
@@ -1217,7 +1253,7 @@ diagnostic; it does <strong>not</strong> enter the verdict, for the reason above
 </div>
 </footer>
 </div>
-<script src="../_static/documentation_options.js?v=6eb1e6b8"></script>
+<script src="../_static/documentation_options.js?v=cac962a1"></script>
 <script src="../_static/doctools.js?v=fd6eb6e6"></script>
 <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
 <script src="../_static/clipboard.min.js?v=a7894cd8"></script>

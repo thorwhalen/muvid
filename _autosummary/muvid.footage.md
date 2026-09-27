@@ -193,7 +193,7 @@ JSON-ready. `support`/`margin` stay `None` — “not measured” is not zero.
 * **Return type:**
   [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
 
-### *class* muvid.footage.FootageAlignment(clip_id, offset_s, confidence, duration_s, coverage, overlaps=True, support=None, reliable=True, window_s=None, hop_s=None, margin=None)
+### *class* muvid.footage.FootageAlignment(clip_id, offset_s, confidence, duration_s, coverage, overlaps=True, support=None, reliable=True, window_s=None, hop_s=None, margin=None, source='measured')
 
 Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
@@ -229,6 +229,18 @@ and not to be cut to without the caller saying so” — see
 Defaults True for a record built in code; a record read from disk that predates
 the field gets its verdict DERIVED instead (see `from_dict()`), never
 assumed.
+
+#### source *: [str](https://docs.python.org/3/builtins/stdtypes.html#str)* *= 'measured'*
+
+`MEASURED` (the aligner found it by audio) or
+`DECLARED` (a person set it — `muvid.footage.service.set_offset`). A
+declared record carries `reliable=True` because a person vouched for it, and
+`confidence=1.0` / `support=None` because no measurement was made; read
+`source` before reading either as evidence. Records on disk that predate the
+field were all written by the aligner, so it defaults to measured.
+
+* **Type:**
+  How the offset is KNOWN
 
 #### support *: [float](https://docs.python.org/3/builtins/functions.html#float) | [None](https://docs.python.org/3/builtins/constants.html#None)* *= None*
 
@@ -730,13 +742,16 @@ Returns the normalized list of [`EdlEntry`](#muvid.footage.EdlEntry).
 
 ### Modules
 
-| [`align`](muvid.footage.align.md#module-muvid.footage.align)                 | Align a set of footage clips to the song — a thin wrapper over `mixing.audio`.              |
-|---------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------|
-| [`assemble`](muvid.footage.assemble.md#module-muvid.footage.assemble)           | Assemble validated cuts into a music video, in BOUNDED memory.                              |
-| [`edl`](muvid.footage.edl.md#module-muvid.footage.edl)                     | EDL data types + the `validate_edl` single-source-of-truth gate.                            |
-| [`lacing_bridge`](muvid.footage.lacing_bridge.md#module-muvid.footage.lacing_bridge) | muvid project → lacing standoff records, and the DECISION tier back to an EDL.              |
-| [`look`](muvid.footage.look.md#module-muvid.footage.look)                   | Compile a `looks` artifact into the fragment the assembler splices.                         |
-| [`scoring`](muvid.footage.scoring.md#module-muvid.footage.scoring)             | Footage scoring — per-clip score tracks on the shared song-time grid (thorwhalen/muvid#13). |
-| [`select_score`](muvid.footage.select_score.md#module-muvid.footage.select_score)   | The score-driven `weighted` selection strategy: a beat-snapped semi-Markov Viterbi DP.      |
-| [`strategy`](muvid.footage.strategy.md#module-muvid.footage.strategy)           | The pluggable `SelectionStrategy` registry — alignments → an EDL.                           |
-| [`workspace`](muvid.footage.workspace.md#module-muvid.footage.workspace)         | Per-user, STATEFUL project for the footage-aligned `music_video` genre.                     |
+| [`align`](muvid.footage.align.md#module-muvid.footage.align)                 | Align a set of footage clips to the song — a thin wrapper over `mixing.audio`.                                                                                      |
+|---------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [`assemble`](muvid.footage.assemble.md#module-muvid.footage.assemble)           | Assemble validated cuts into a music video, in BOUNDED memory.                                                                                                      |
+| [`edl`](muvid.footage.edl.md#module-muvid.footage.edl)                     | EDL data types + the `validate_edl` single-source-of-truth gate.                                                                                                    |
+| [`errors`](muvid.footage.errors.md#module-muvid.footage.errors)               | The refusal and cancellation types of the footage operations ([`muvid.footage.service`](muvid.footage.service.md#module-muvid.footage.service)). |
+| [`lacing_bridge`](muvid.footage.lacing_bridge.md#module-muvid.footage.lacing_bridge) | muvid project → lacing standoff records, and the DECISION tier back to an EDL.                                                                                      |
+| [`look`](muvid.footage.look.md#module-muvid.footage.look)                   | Compile a `looks` artifact into the fragment the assembler splices.                                                                                                 |
+| [`named_looks`](muvid.footage.named_looks.md#module-muvid.footage.named_looks)     | Named looks — the camera moves and grades a person can pick for a cut.                                                                                              |
+| [`scoring`](muvid.footage.scoring.md#module-muvid.footage.scoring)             | Footage scoring — per-clip score tracks on the shared song-time grid (thorwhalen/muvid#13).                                                                         |
+| [`select_score`](muvid.footage.select_score.md#module-muvid.footage.select_score)   | The score-driven `weighted` selection strategy: a beat-snapped semi-Markov Viterbi DP.                                                                              |
+| [`service`](muvid.footage.service.md#module-muvid.footage.service)             | The footage operations — one function per thing you can do to a music-video project.                                                                                |
+| [`strategy`](muvid.footage.strategy.md#module-muvid.footage.strategy)           | The pluggable `SelectionStrategy` registry — alignments → an EDL.                                                                                                   |
+| [`workspace`](muvid.footage.workspace.md#module-muvid.footage.workspace)         | Per-user, STATEFUL project for the footage-aligned `music_video` genre.                                                                                             |

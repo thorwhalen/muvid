@@ -131,7 +131,7 @@ concurrent callers, so one render could swallow or steal another’s warnings.
 
 Default output frame rate for the assembled video.
 
-### muvid.footage.assemble.assemble_music_video(cuts, song_path, out_path, , canvas=(1920, 1080), fps=30, crf=20, preset='veryfast', on_note=None)
+### muvid.footage.assemble.assemble_music_video(cuts, song_path, out_path, , canvas=(1920, 1080), fps=30, crf=20, preset='veryfast', on_note=None, fade_out_s=0.0, should_cancel=None)
 
 Render `cuts` (a validated, contiguous, gap-filled EDL) into `out_path`.
 
@@ -141,15 +141,24 @@ cuts[-1].song_end]` — which, for EDLs produced by `fill_gaps`, is the whole so
 Returns `out_path`.
 
 * **Parameters:**
-  **on_note** – optional `str -> None` sink for the render-plan findings
-  `_part_plan()` raises (a transition that rounds to zero frames; a
-  time-varying look on a blended boundary — muvid#73). They are ALWAYS
-  raised as [`AssemblyWarning`](#muvid.footage.assemble.AssemblyWarning) as well; this is the additional
-  path, and the only one a remote caller can see. `assemble_music_video`
-  is a live per-caller MCP tool, so a finding that reaches only the
-  server’s stderr is a hitch the caller is billed for and never told
-  about. A callback rather than a changed return type, because the
-  return type is a public contract and because `catch_warnings`
-  mutates process-global state that concurrent renders would share.
+  * **on_note** – optional `str -> None` sink for the render-plan findings
+    `_part_plan()` raises (a transition that rounds to zero frames; a
+    time-varying look on a blended boundary — muvid#73). They are ALWAYS
+    raised as [`AssemblyWarning`](#muvid.footage.assemble.AssemblyWarning) as well; this is the additional
+    path, and the only one a remote caller can see. `assemble_music_video`
+    is a live per-caller MCP tool, so a finding that reaches only the
+    server’s stderr is a hitch the caller is billed for and never told
+    about. A callback rather than a changed return type, because the
+    return type is a public contract and because `catch_warnings`
+    mutates process-global state that concurrent renders would share.
+  * **fade_out_s** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – fade the song out over this many seconds at the END of the
+    render. For an edit that stops before the song does (a trimmed
+    `span`), so the music does not stop dead mid-bar; `0` (the default)
+    keeps the master untouched — and, for an aac/48k/2ch master, stream-copied
+    bit for bit. A fade re-encodes the audio (a filter cannot run on a copy).
+  * **should_cancel** – a zero-argument callable polled before every part and before the
+    mux; when it returns True the render stops there (its parts are removed)
+    and [`FootageCancelled`](muvid.footage.errors.html.md#muvid.footage.errors.FootageCancelled) is raised — so a
+    cancelled render ends within one cut’s encode rather than minutes later.
 * **Return type:**
   [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)

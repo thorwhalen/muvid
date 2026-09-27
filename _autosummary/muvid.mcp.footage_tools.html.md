@@ -3,37 +3,59 @@
 MCP tools for the footage-aligned `music_video` genre (thorwhalen/reelee#229).
 
 Module-level tool functions (referenced `muvid.mcp.footage_tools:<name>`) a host
-aggregates via [`muvid.mcp.register_tools()`](muvid.mcp.html.md#muvid.mcp.register_tools). All FREE (ffmpeg + numpy only, no AI/keys).
-The caller is resolved from the OAuth token; all work lands in that caller’s stateful
-[`FootageWorkspace`](muvid.footage.workspace.html.md#muvid.footage.workspace.FootageWorkspace) project. Media URLs are fetched
-server-side through the SSRF-guarded, size/time-bounded fetch (video streams straight to
-disk); alignment + assembly are bounded by hard resource caps and
-`$MUVID_FFMPEG_TIMEOUT_S` (assembly runs one bounded single-input ffmpeg per cut, so
-memory does not grow with cut count) — the connector renders synchronously over HTTP.
+aggregates via [`muvid.mcp.register_tools()`](muvid.mcp.html.md#muvid.mcp.register_tools). All ffmpeg + numpy only, no AI/keys.
+
+**A transport, not an implementation.** The operations live in
+[`muvid.footage.service`](muvid.footage.service.html.md#module-muvid.footage.service); each tool here resolves `project_id` to the caller’s
+stateful [`FootageWorkspace`](muvid.footage.workspace.html.md#muvid.footage.workspace.FootageWorkspace) project (the caller comes
+from the OAuth token), calls the operation, and turns its
+[`FootageError`](muvid.footage.errors.html.md#muvid.footage.errors.FootageError) into a fastmcp `ToolError`. What stays here
+is what only this surface does: fetching a URL (SSRF-guarded, size/time-bounded, streamed
+to disk — the service takes a local file), expanding a shared folder, the per-caller
+project listing, and the download claim on a render.
+
+The tool list is derived from the operations catalogue (`muvid.mcp._footage_ops`):
+operations without a hand-written tool here get a GENERATED one, `footage_<op>`, built
+at import from the operation’s own signature and docstring (the named-edit operations:
+`footage_set_offset`, `footage_save_edit`, `footage_set_cut` …).
 
 Workflow: `create_project(genre='music_video')` → `set_song` → `add_footage` ×N →
-`align_footage` → (`footage_timeline` to inspect) → `assemble_music_video`.
+`align_footage` → (`footage_timeline` to inspect) → `propose_edit(save=true)` →
+`footage_set_cut` … → `footage_render` (or `assemble_music_video` in one call).
 Lifecycle around it (muvid#22): `list_music_video_projects` finds a project whose id
 was lost, and `remove_footage` takes a clip back out — which invalidates the
 alignment, exactly as `set_song` does.
 
 ### Functions
 
-| [`add_footage`](#muvid.mcp.footage_tools.add_footage)(project_id, \*, url[, name])          | Add a footage video clip from an http(s) URL (a recording of the song).                                |
-|----------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------|
-| [`add_footage_folder`](#muvid.mcp.footage_tools.add_footage_folder)(project_id, \*, url[, ...])    | Add EVERY clip in a shared folder (Drive / Dropbox / OneDrive) in one call.                            |
-| [`align_footage`](#muvid.mcp.footage_tools.align_footage)(project_id)                         | Align every uploaded clip to the song by audio, and persist the result.                                |
-| [`assemble_music_video`](#muvid.mcp.footage_tools.assemble_music_video)(project_id, \*[, ...])       | Assemble the music video — auto (a selection `strategy`) or an explicit `edl`.                         |
-| [`beat_grid`](#muvid.mcp.footage_tools.beat_grid)(project_id)                             | The song's beat grid — tempo and beat instants on the song timeline — WITHOUT running the scoring job. |
-| [`footage_editor_document`](#muvid.mcp.footage_tools.footage_editor_document)(project_id)               | The project as lacing-native standoff annotations, for a multitrack editor.                            |
-| [`footage_edl_from_annotations`](#muvid.mcp.footage_tools.footage_edl_from_annotations)(project_id, \*, ...) | The DECISION tier's annotations, turned back into an `edl=` argument.                                  |
-| [`footage_status`](#muvid.mcp.footage_tools.footage_status)(project_id)                        | Your project's song, clips, alignment summary, and renders.                                            |
-| [`footage_timeline`](#muvid.mcp.footage_tools.footage_timeline)(project_id)                      | The coverage map: which clips cover which spans of the song (overlaps shown).                          |
-| [`list_music_video_projects`](#muvid.mcp.footage_tools.list_music_video_projects)()                       | List YOUR music_video (footage) projects, newest-modified first.                                       |
-| [`list_strategies`](#muvid.mcp.footage_tools.list_strategies)()                                 | The selection strategies available for full-auto assembly.                                             |
-| [`propose_edit`](#muvid.mcp.footage_tools.propose_edit)(project_id, \*[, strategy, ...])     | Propose an EDL **without rendering it** — the cheap half of assembly.                                  |
-| [`remove_footage`](#muvid.mcp.footage_tools.remove_footage)(project_id, \*, clip_id)           | Remove one footage clip from the project — its stored file and its entry.                              |
-| [`set_song`](#muvid.mcp.footage_tools.set_song)(project_id, \*, url)                     | Set the project's fixed clean song from an http(s) URL.                                                |
+| [`add_footage`](#muvid.mcp.footage_tools.add_footage)(project_id, \*, url[, name])           | Add a footage video clip from an http(s) URL (a recording of the song).                                                                                                                                                      |
+|-----------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [`add_footage_folder`](#muvid.mcp.footage_tools.add_footage_folder)(project_id, \*, url[, ...])     | Add EVERY clip in a shared folder (Drive / Dropbox / OneDrive) in one call.                                                                                                                                                  |
+| [`align_footage`](#muvid.mcp.footage_tools.align_footage)(project_id, \*[, keep_declared])     | Align every uploaded clip to the song by audio, and persist the result.                                                                                                                                                      |
+| [`assemble_music_video`](#muvid.mcp.footage_tools.assemble_music_video)(project_id, \*[, ...])        | Assemble the music video — auto (a selection `strategy`) or an explicit `edl`.                                                                                                                                               |
+| [`beat_grid`](#muvid.mcp.footage_tools.beat_grid)(project_id)                              | The song's beat grid — tempo and beat instants on the song timeline — WITHOUT running the scoring job.                                                                                                                       |
+| [`footage_delete_edit`](#muvid.mcp.footage_tools.footage_delete_edit)(project_id, \*, edit_id)       | Delete a saved edit.                                                                                                                                                                                                         |
+| [`footage_editor_document`](#muvid.mcp.footage_tools.footage_editor_document)(project_id)                | The project as lacing-native standoff annotations, for a multitrack editor.                                                                                                                                                  |
+| [`footage_edits`](#muvid.mcp.footage_tools.footage_edits)(project_id)                          | The saved edits, oldest first: each one's `edit_id`, `name`, how it was made, how many cuts it has, and `problem` — why it would not validate against the current alignment (`null` when it does).                           |
+| [`footage_edl_from_annotations`](#muvid.mcp.footage_tools.footage_edl_from_annotations)(project_id, \*, ...)  | The DECISION tier's annotations, turned back into an `edl=` argument.                                                                                                                                                        |
+| [`footage_get_edit`](#muvid.mcp.footage_tools.footage_get_edit)(project_id, \*, edit_id)          | One saved edit: its cut list (`edl`, every span of the song, gaps as `clip_id: null`), its name and history, and a `coverage` report.                                                                                        |
+| [`footage_looks`](#muvid.mcp.footage_tools.footage_looks)(project_id)                          | The looks a cut can take — camera moves (punch in, slow push, slow pull, pans) and grades (vivid, black and white, posterize, cartoon) — each with its `params_schema`.                                                      |
+| [`footage_merge_cut`](#muvid.mcp.footage_tools.footage_merge_cut)(project_id, \*, edit_id, index)  | Join cut `index` to its neighbour: the neighbour (`into` "previous" or "next") takes over its span, so the neighbour's video must cover it.                                                                                  |
+| [`footage_render`](#muvid.mcp.footage_tools.footage_render)(project_id, \*, edit_id[, ...])     | Render a SAVED edit (`propose_edit(save=true)` / `footage_save_edit`) into a music video.                                                                                                                                    |
+| [`footage_renders`](#muvid.mcp.footage_tools.footage_renders)(project_id)                        | The finished videos, newest first: each one's `render_id`, speakable `ref`, the `edit_id` it was made from, its `label`, canvas, `ok`, the number of `warnings`, and `artifact_id` to play it by when the project is hosted. |
+| [`footage_replace_edit`](#muvid.mcp.footage_tools.footage_replace_edit)(project_id, \*, edit_id, edl) | Replace a saved edit's whole cut list — the power tool for rewriting an edit at once.                                                                                                                                        |
+| [`footage_save_edit`](#muvid.mcp.footage_tools.footage_save_edit)(project_id, \*, edl[, ...])      | Save a cut list as a new named edit.                                                                                                                                                                                         |
+| [`footage_set_cut`](#muvid.mcp.footage_tools.footage_set_cut)(project_id, \*, edit_id, index)    | Change one cut of a saved edit (`index` is its position in `footage_get_edit`'s edl).                                                                                                                                        |
+| [`footage_set_offset`](#muvid.mcp.footage_tools.footage_set_offset)(project_id, \*, clip_id, ...)   | Place one video on the song BY HAND: the song time at which the video's own first frame plays (negative = the video starts before the song does).                                                                            |
+| [`footage_set_span`](#muvid.mcp.footage_tools.footage_set_span)(project_id, \*, edit_id, ...)     | Choose which part of the song a saved edit covers — trim its start and end.                                                                                                                                                  |
+| [`footage_split_cut`](#muvid.mcp.footage_tools.footage_split_cut)(project_id, \*, edit_id, at_s)   | Split the cut playing at song time `at_s` into two cuts of the same video.                                                                                                                                                   |
+| [`footage_status`](#muvid.mcp.footage_tools.footage_status)(project_id)                         | Your project's song, clips, alignment summary, and renders.                                                                                                                                                                  |
+| [`footage_timeline`](#muvid.mcp.footage_tools.footage_timeline)(project_id)                       | The coverage map: which clips cover which spans of the song (overlaps shown).                                                                                                                                                |
+| [`list_music_video_projects`](#muvid.mcp.footage_tools.list_music_video_projects)()                        | List YOUR music_video (footage) projects, newest-modified first.                                                                                                                                                             |
+| [`list_strategies`](#muvid.mcp.footage_tools.list_strategies)()                                  | The selection strategies available for full-auto assembly.                                                                                                                                                                   |
+| [`propose_edit`](#muvid.mcp.footage_tools.propose_edit)(project_id, \*[, strategy, ...])      | Propose an EDL **without rendering it** — the cheap half of assembly.                                                                                                                                                        |
+| [`remove_footage`](#muvid.mcp.footage_tools.remove_footage)(project_id, \*, clip_id)            | Remove one footage clip from the project — its stored file and its entry.                                                                                                                                                    |
+| [`set_song`](#muvid.mcp.footage_tools.set_song)(project_id, \*, url)                      | Set the project's fixed clean song from an http(s) URL.                                                                                                                                                                      |
 
 ### muvid.mcp.footage_tools.add_footage(project_id, , url, name='')
 
@@ -66,7 +88,7 @@ Returns the added clips and the skipped members. Run `align_footage` afterwards.
 * **Return type:**
   [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
 
-### muvid.mcp.footage_tools.align_footage(project_id)
+### muvid.mcp.footage_tools.align_footage(project_id, , keep_declared=True)
 
 Align every uploaded clip to the song by audio, and persist the result. Free.
 
@@ -99,7 +121,7 @@ Run this after adding/removing clips and before assembling.
 * **Return type:**
   [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
 
-### muvid.mcp.footage_tools.assemble_music_video(project_id, , strategy='', edl=None, preset='', weights=None, config=None, canvas='', allow_unreliable=False)
+### muvid.mcp.footage_tools.assemble_music_video(project_id, , strategy='', edl=None, preset='', weights=None, config=None, canvas='', allow_unreliable=False, span=None)
 
 Assemble the music video — auto (a selection `strategy`) or an explicit `edl`. Free.
 
@@ -155,6 +177,11 @@ Assemble the music video — auto (a selection `strategy`) or an explicit `edl`.
   `list_strategies`; default `best_confidence`) builds the edit from the alignments.
 - `canvas`: render-time override (“landscape”/”portrait”/”square”) — the same edit
   re-rendered in another shape, no new project needed. Default: the project’s canvas.
+- `span`: `[start_s, end_s]` — render only that stretch of the song (a trimmed
+  edit): the `edl` is gap-filled within it, the video is that long, and the song is
+  cut to it and faded out at the end when it stops before the song does. A render
+  of a trimmed edit records its `span`; pass it back with its `edl` to reproduce
+  it. Default: the whole song.
 - **A clip the aligner will not vouch for costs its own spans, not the whole edit**
   (muvid#88). On the auto path the strategy prefers a vouched clip wherever one
   covers the span, so an untrustworthy clip is simply not chosen while any other
@@ -220,6 +247,14 @@ no downbeats”, a measurement nobody made (gate, don’t zero).
 * **Return type:**
   [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
 
+### muvid.mcp.footage_tools.footage_delete_edit(project_id, , edit_id)
+
+Delete a saved edit. Videos already rendered from it are kept (they still name
+the edit they came from). An unknown `edit_id` is refused, naming the edits.
+
+* **Return type:**
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+
 ### muvid.mcp.footage_tools.footage_editor_document(project_id)
 
 The project as lacing-native standoff annotations, for a multitrack editor. Free.
@@ -232,6 +267,16 @@ content hash, on one shared song-time axis (thorwhalen/reelee-web#203). Needs th
 
 After a human edits the DECISION tier, feed its annotations back to
 `assemble_music_video` via `footage_edl_from_annotations`.
+
+* **Return type:**
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+
+### muvid.mcp.footage_tools.footage_edits(project_id)
+
+The saved edits, oldest first: each one’s `edit_id`, `name`, how it was made,
+how many cuts it has, and `problem` — why it would not validate against the
+current alignment (`null` when it does). `unreliable` names clips it cuts to
+whose offsets rendering would refuse.
 
 * **Return type:**
   [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
@@ -250,9 +295,146 @@ another project fails saying so instead of splicing in the wrong spans.
 * **Return type:**
   [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
 
+### muvid.mcp.footage_tools.footage_get_edit(project_id, , edit_id)
+
+One saved edit: its cut list (`edl`, every span of the song, gaps as
+`clip_id: null`), its name and history, and a `coverage` report. Cut indexes in
+`footage_set_cut`/`footage_merge_cut` refer to positions in this `edl`.
+
+* **Return type:**
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+
+### muvid.mcp.footage_tools.footage_looks(project_id)
+
+The looks a cut can take — camera moves (punch in, slow push, slow pull, pans)
+and grades (vivid, black and white, posterize, cartoon) — each with its
+`params_schema`. Give one to `footage_set_cut` as `look={"name": ..., **params}`.
+
+* **Return type:**
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+
+### muvid.mcp.footage_tools.footage_merge_cut(project_id, , edit_id, index, into='previous')
+
+Join cut `index` to its neighbour: the neighbour (`into` “previous” or
+“next”) takes over its span, so the neighbour’s video must cover it. The joined
+cut keeps the neighbour’s video, framing and look. Returns the changed edit.
+
+* **Return type:**
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+
+### muvid.mcp.footage_tools.footage_render(project_id, , edit_id, canvas='', allow_unreliable=False)
+
+Render a SAVED edit (`propose_edit(save=true)` / `footage_save_edit`) into a
+music video. Free, minutes.
+
+Same render, same refusal and same reply as `assemble_music_video` with that edit’s
+cut list as `edl` — plus `edit_id`, so the video says which edit it came from.
+`canvas` re-renders the same edit as “landscape”/”portrait”/”square”. Refused when
+the edit cuts to a clip whose offset the aligner will not vouch for, unless
+`allow_unreliable` (see `assemble_music_video`). Read the returned `warnings`.
+
+* **Return type:**
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+
+### muvid.mcp.footage_tools.footage_renders(project_id)
+
+The finished videos, newest first: each one’s `render_id`, speakable `ref`,
+the `edit_id` it was made from, its `label`, canvas, `ok`, the number of
+`warnings`, and `artifact_id` to play it by when the project is hosted.
+
+* **Return type:**
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+
+### muvid.mcp.footage_tools.footage_replace_edit(project_id, , edit_id, edl)
+
+Replace a saved edit’s whole cut list — the power tool for rewriting an edit at
+once. The new list is checked exactly as `footage_save_edit` checks one; on refusal the
+edit is left as it was. The previous list is not kept.
+
+* **Return type:**
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+
+### muvid.mcp.footage_tools.footage_save_edit(project_id, , edl, name='', how_made='by hand', edit_id='', span=None)
+
+Save a cut list as a new named edit.
+
+`edl` is a list of `{song_start, song_end, clip_id}` spans (plus optional
+`transition`/`crop`/`crop_end`/`look`/`look_time_varying`), in the same
+form `footage_get_edit` returns and `propose_edit` produces. Holes are filled with gap
+entries; the list is checked (order, overlap, every span inside its clip’s coverage)
+and refused with the reason if it does not hold. `edit_id` fixes the id (an
+existing one is refused — use `footage_replace_edit`). `span` (`[start_s, end_s]`)
+makes the edit cover only that part of the song — its render is that long, the song
+cut to it; default the whole song. Returns the saved edit.
+
+* **Return type:**
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+
+### muvid.mcp.footage_tools.footage_set_cut(project_id, , edit_id, index, clip_id=None, song_start=None, song_end=None, look=None, look_time_varying=None)
+
+Change one cut of a saved edit (`index` is its position in `footage_get_edit`’s edl).
+
+- `clip_id`: show another video over this span (`""` makes it a gap). The new
+  video must cover the span. Its framing (`crop`) is dropped, since it was chosen
+  for the old video’s frame; its `look` is kept.
+- `song_start` / `song_end`: move the cut’s boundaries. The neighbouring cut’s
+  boundary moves with it, so the edit stays one continuous timeline; a move that
+  would swallow a neighbour whole is refused (join them with `footage_merge_cut`).
+- `look`: a NAMED look from `footage_looks` — `{"name": "slow_push", "zoom": 1.08}`,
+  compiled for this cut’s length and the project’s canvas — or, for power users,
+  one raw ffmpeg filter chain (allowlisted; set `look_time_varying` for one that
+  moves). `""` removes it.
+
+Parameters left out are unchanged. The changed edit is checked and saved; returns it.
+
+* **Return type:**
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+
+### muvid.mcp.footage_tools.footage_set_offset(project_id, , clip_id, offset_s)
+
+Place one video on the song BY HAND: the song time at which the video’s own
+first frame plays (negative = the video starts before the song does).
+
+Use it when `align_footage` gets a clip wrong — on long, repetitive songs it can land a
+whole chorus away (muvid#59) — or when you already know the offset. The offset is
+recorded as `source: "declared"` and trusted for rendering (a person vouched for
+it); how much of the song the clip covers is computed from the two durations.
+`align_footage` keeps it unless told otherwise. Changing an offset makes the footage
+scores stale, so they are dropped.
+
+* **Return type:**
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+
+### muvid.mcp.footage_tools.footage_set_span(project_id, , edit_id, start_s, end_s)
+
+Choose which part of the song a saved edit covers — trim its start and end.
+
+The video made from the edit then runs from `start_s` to `end_s` of the song,
+with the song cut to match (and faded out at the end when it stops before the song
+does). Cuts outside the new span are dropped, cuts across its edges are shortened,
+and a span wider than the cuts is filled with black. `start_s=0` and
+`end_s` = the song’s length is the whole song again. Returns the changed edit.
+
+* **Return type:**
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+
+### muvid.mcp.footage_tools.footage_split_cut(project_id, , edit_id, at_s)
+
+Split the cut playing at song time `at_s` into two cuts of the same video.
+
+The two halves keep the cut’s video, framing and look; a moving framing (a pan) is
+divided where it was at `at_s`. Refused on a boundary (nothing to split). Returns
+the changed edit; `changed` is the index of the second half.
+
+* **Return type:**
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+
 ### muvid.mcp.footage_tools.footage_status(project_id)
 
 Your project’s song, clips, alignment summary, and renders. Free.
+
+Also: each clip’s offset and whether it was measured or declared (`alignments`),
+the saved `edits`, and `next_step` — the operation that moves the project on.
 
 * **Return type:**
   [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
@@ -296,7 +478,7 @@ The selection strategies available for full-auto assembly. Free.
 * **Return type:**
   [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
 
-### muvid.mcp.footage_tools.propose_edit(project_id, , strategy='', preset='', weights=None, config=None)
+### muvid.mcp.footage_tools.propose_edit(project_id, , strategy='', preset='', weights=None, config=None, save=False, name='')
 
 Propose an EDL **without rendering it** — the cheap half of assembly. Free, seconds.
 
@@ -312,6 +494,10 @@ footage covers as explicit gap entries, `clip_id: null`, rendered as black), the
 the song and every segment that made the cut despite weak alignment. Same arguments as
 `assemble_music_video`’s auto path, and the same edit it would build — including the
 `coverage.excluded` recovery described there.
+
+`save=true` also keeps it as a named edit (`name`, default “Edit N”) and returns
+its `edit_id` — change it cut by cut with `footage_set_cut` /
+`footage_split_cut` / `footage_merge_cut` and render it with `footage_render`.
 
 * **Return type:**
   [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)

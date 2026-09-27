@@ -84,6 +84,7 @@
 <li class="toctree-l1 current" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../api.html">API reference<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul class="current" x-show="expanded">
 <li class="toctree-l2 current" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="current reference internal expandable" href="#">muvid<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
 <li class="toctree-l3"><a class="reference internal" href="muvid.align.html">muvid.align</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.catalog.html">muvid.catalog</a></li>
 <li class="toctree-l3"><a class="reference internal" href="muvid.characters.html">muvid.characters</a></li>
 <li class="toctree-l3"><a class="reference internal" href="muvid.choreo.html">muvid.choreo</a></li>
 <li class="toctree-l3"><a class="reference internal" href="muvid.compose.html">muvid.compose</a></li>
@@ -94,6 +95,7 @@
 <li class="toctree-l3"><a class="reference internal" href="muvid.events.html">muvid.events</a></li>
 <li class="toctree-l3"><a class="reference internal" href="muvid.facade.html">muvid.facade</a></li>
 <li class="toctree-l3"><a class="reference internal" href="muvid.footage.html">muvid.footage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muvid.importing.html">muvid.importing</a></li>
 <li class="toctree-l3"><a class="reference internal" href="muvid.lyrics.html">muvid.lyrics</a></li>
 <li class="toctree-l3"><a class="reference internal" href="muvid.lyricvid.html">muvid.lyricvid</a></li>
 <li class="toctree-l3"><a class="reference internal" href="muvid.mcp.html">muvid.mcp</a></li>
@@ -144,6 +146,9 @@
 environments, write a shot script, render and compose. The verbs below are
 also the CLI. Project model: <a class="reference internal" href="#muvid.MusicVideoProject" title="muvid.MusicVideoProject"><code class="xref py py-class docutils literal notranslate"><span class="pre">MusicVideoProject</span></code></a> and the schema
 dataclasses.</p></li>
+<li><p><strong>Hosted productions</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">muvid.Project</span></code>, needs <code class="docutils literal notranslate"><span class="pre">nw</span></code>): a music video or a
+lyric video a host (the reelee studio) places and serves — an <code class="docutils literal notranslate"><span class="pre">nw.Project</span></code> whose
+footage operations are <a class="reference internal" href="muvid.footage.service.html#module-muvid.footage.service" title="muvid.footage.service"><code class="xref py py-mod docutils literal notranslate"><span class="pre">muvid.footage.service</span></code></a>.</p></li>
 <li><p><strong>Visualizer</strong> (<a class="reference internal" href="muvid.visualize.html#module-muvid.visualize" title="muvid.visualize"><code class="xref py py-mod docutils literal notranslate"><span class="pre">muvid.visualize</span></code></a>, needs only <code class="docutils literal notranslate"><span class="pre">ffmpeg</span></code> + <code class="docutils literal notranslate"><span class="pre">mixing</span></code>):
 turn a song and a cover into a still / Ken Burns / audio-reactive music video,
 plus a thumbnail. Deterministic, no AI, no network.</p>
@@ -417,35 +422,41 @@ tags. Returns the path to the lyrics markdown.</p>
 <tr class="row-odd"><td><p><a class="reference internal" href="muvid.align.html#module-muvid.align" title="muvid.align"><code class="xref py py-obj docutils literal notranslate"><span class="pre">align</span></code></a></p></td>
 <td><p>Lyric → audio alignment.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="muvid.characters.html#module-muvid.characters" title="muvid.characters"><code class="xref py py-obj docutils literal notranslate"><span class="pre">characters</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="muvid.catalog.html#module-muvid.catalog" title="muvid.catalog"><code class="xref py py-obj docutils literal notranslate"><span class="pre">catalog</span></code></a></p></td>
+<td><p>Make a hosted production's media <em>retrievable</em> — the host's artifact catalog.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="muvid.characters.html#module-muvid.characters" title="muvid.characters"><code class="xref py py-obj docutils literal notranslate"><span class="pre">characters</span></code></a></p></td>
 <td><p>Character cards + reference image curation via lookbook.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="muvid.choreo.html#module-muvid.choreo" title="muvid.choreo"><code class="xref py py-obj docutils literal notranslate"><span class="pre">choreo</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="muvid.choreo.html#module-muvid.choreo" title="muvid.choreo"><code class="xref py py-obj docutils literal notranslate"><span class="pre">choreo</span></code></a></p></td>
 <td><p>Choreo — event-driven visual music, muvid's second subgenre plugin.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="muvid.compose.html#module-muvid.compose" title="muvid.compose"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compose</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="muvid.compose.html#module-muvid.compose" title="muvid.compose"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compose</span></code></a></p></td>
 <td><p>Compose all rendered shots into the final music video.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="muvid.contracts.html#module-muvid.contracts" title="muvid.contracts"><code class="xref py py-obj docutils literal notranslate"><span class="pre">contracts</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="muvid.contracts.html#module-muvid.contracts" title="muvid.contracts"><code class="xref py py-obj docutils literal notranslate"><span class="pre">contracts</span></code></a></p></td>
 <td><p>Adapters between muvid's SSOT and sibling-package shapes.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="muvid.cost.html#module-muvid.cost" title="muvid.cost"><code class="xref py py-obj docutils literal notranslate"><span class="pre">cost</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="muvid.cost.html#module-muvid.cost" title="muvid.cost"><code class="xref py py-obj docutils literal notranslate"><span class="pre">cost</span></code></a></p></td>
 <td><p>Cost estimation for a muvid project.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="muvid.data.html#module-muvid.data" title="muvid.data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="muvid.data.html#module-muvid.data" title="muvid.data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data</span></code></a></p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="muvid.environments.html#module-muvid.environments" title="muvid.environments"><code class="xref py py-obj docutils literal notranslate"><span class="pre">environments</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="muvid.environments.html#module-muvid.environments" title="muvid.environments"><code class="xref py py-obj docutils literal notranslate"><span class="pre">environments</span></code></a></p></td>
 <td><p>Environment cards + canonical establishing image generation.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="muvid.events.html#module-muvid.events" title="muvid.events"><code class="xref py py-obj docutils literal notranslate"><span class="pre">events</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="muvid.events.html#module-muvid.events" title="muvid.events"><code class="xref py py-obj docutils literal notranslate"><span class="pre">events</span></code></a></p></td>
 <td><p>Surface fal progress events into the muvid project.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="muvid.facade.html#module-muvid.facade" title="muvid.facade"><code class="xref py py-obj docutils literal notranslate"><span class="pre">facade</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="muvid.facade.html#module-muvid.facade" title="muvid.facade"><code class="xref py py-obj docutils literal notranslate"><span class="pre">facade</span></code></a></p></td>
 <td><p>Top-level facade — the verbs the CLI / skill / UI all call.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="muvid.footage.html#module-muvid.footage" title="muvid.footage"><code class="xref py py-obj docutils literal notranslate"><span class="pre">footage</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="muvid.footage.html#module-muvid.footage" title="muvid.footage"><code class="xref py py-obj docutils literal notranslate"><span class="pre">footage</span></code></a></p></td>
 <td><p>Footage-aligned music video — align several device recordings of one song, assemble.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="muvid.importing.html#module-muvid.importing" title="muvid.importing"><code class="xref py py-obj docutils literal notranslate"><span class="pre">importing</span></code></a></p></td>
+<td><p>Bring a finished production into a host's projects dir as a <code class="xref py py-class docutils literal notranslate"><span class="pre">muvid.Project</span></code>.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="muvid.lyrics.html#module-muvid.lyrics" title="muvid.lyrics"><code class="xref py py-obj docutils literal notranslate"><span class="pre">lyrics</span></code></a></p></td>
 <td><p>Lyrics — transcription and markdown round-trip.</p></td>
@@ -522,7 +533,7 @@ tags. Returns the path to the lyrics markdown.</p>
 </div>
 </footer>
 </div>
-<script src="../_static/documentation_options.js?v=6eb1e6b8"></script>
+<script src="../_static/documentation_options.js?v=cac962a1"></script>
 <script src="../_static/doctools.js?v=fd6eb6e6"></script>
 <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
 <script src="../_static/clipboard.min.js?v=a7894cd8"></script>

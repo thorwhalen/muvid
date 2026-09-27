@@ -83,6 +83,7 @@
 <li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="api.html">API reference<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
 <li class="toctree-l2" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="_autosummary/muvid.html">muvid<button @click.prevent.stop="expanded = !expanded" type="button" x-cloak=""><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-cloak="" x-show="expanded">
 <li class="toctree-l3"><a class="reference internal" href="_autosummary/muvid.align.html">muvid.align</a></li>
+<li class="toctree-l3"><a class="reference internal" href="_autosummary/muvid.catalog.html">muvid.catalog</a></li>
 <li class="toctree-l3"><a class="reference internal" href="_autosummary/muvid.characters.html">muvid.characters</a></li>
 <li class="toctree-l3"><a class="reference internal" href="_autosummary/muvid.choreo.html">muvid.choreo</a></li>
 <li class="toctree-l3"><a class="reference internal" href="_autosummary/muvid.compose.html">muvid.compose</a></li>
@@ -93,6 +94,7 @@
 <li class="toctree-l3"><a class="reference internal" href="_autosummary/muvid.events.html">muvid.events</a></li>
 <li class="toctree-l3"><a class="reference internal" href="_autosummary/muvid.facade.html">muvid.facade</a></li>
 <li class="toctree-l3"><a class="reference internal" href="_autosummary/muvid.footage.html">muvid.footage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="_autosummary/muvid.importing.html">muvid.importing</a></li>
 <li class="toctree-l3"><a class="reference internal" href="_autosummary/muvid.lyrics.html">muvid.lyrics</a></li>
 <li class="toctree-l3"><a class="reference internal" href="_autosummary/muvid.lyricvid.html">muvid.lyricvid</a></li>
 <li class="toctree-l3"><a class="reference internal" href="_autosummary/muvid.mcp.html">muvid.mcp</a></li>
@@ -334,14 +336,7 @@ it peaks at 2–3 GB on CPU. Turning it on takes the extra, <code class="docutil
 <em>and</em> weights you point at yourself via <code class="docutils literal notranslate"><span class="pre">MUVID_SYNCNET_S3FD_WEIGHTS</span></code> /
 <code class="docutils literal notranslate"><span class="pre">MUVID_SYNCNET_WEIGHTS</span></code> — muvid never downloads model weights at runtime. Without all
 three it skips cleanly rather than scoring zero.</p>
-<p><strong>As a hosted genre.</strong> <code class="docutils literal notranslate"><span class="pre">muvid.genre_music_video</span></code> registers <code class="docutils literal notranslate"><span class="pre">music_video</span></code> as an <code class="docutils literal notranslate"><span class="pre">nw.Genre</span></code>
-(canvas presets as its Templates) with a project factory backed by
-<code class="docutils literal notranslate"><span class="pre">muvid.footage.workspace.FootageWorkspace</span></code> — a stateful per-user project (one song, N
-clips, a persisted alignment, score tracks, renders) under <code class="docutils literal notranslate"><span class="pre">~/.local/share/muvid</span></code>
-(<code class="docutils literal notranslate"><span class="pre">MUVID_DATA_HOME</span></code> to relocate). <code class="docutils literal notranslate"><span class="pre">muvid.mcp.footage_tools</span></code> and <code class="docutils literal notranslate"><span class="pre">muvid.mcp.scoring_tools</span></code>
-expose it as MCP tools (<code class="docutils literal notranslate"><span class="pre">set_song</span></code>, <code class="docutils literal notranslate"><span class="pre">add_footage</span></code>, <code class="docutils literal notranslate"><span class="pre">remove_footage</span></code>, <code class="docutils literal notranslate"><span class="pre">align_footage</span></code>,
-<code class="docutils literal notranslate"><span class="pre">propose_edit</span></code>, <code class="docutils literal notranslate"><span class="pre">footage_timeline</span></code>, <code class="docutils literal notranslate"><span class="pre">score_footage</span></code>, <code class="docutils literal notranslate"><span class="pre">assemble_music_video</span></code>,
-<code class="docutils literal notranslate"><span class="pre">list_music_video_projects</span></code>, …), all free.</p>
+<p><strong>As a hosted genre.</strong> <code class="docutils literal notranslate"><span class="pre">muvid.genre_music_video</span></code> registers <code class="docutils literal notranslate"><span class="pre">music_video</span></code> as an <code class="docutils literal notranslate"><span class="pre">nw.Genre</span></code> (canvas presets as its Templates) with a project factory. Every operation on a footage project — set the song, add or remove a video, find where each fits (<code class="docutils literal notranslate"><span class="pre">align</span></code>) or place one by hand (<code class="docutils literal notranslate"><span class="pre">set_offset</span></code>), score, cut (<code class="docutils literal notranslate"><span class="pre">propose_edit</span></code>), keep and change named edits cut by cut (<code class="docutils literal notranslate"><span class="pre">save_edit</span></code>, <code class="docutils literal notranslate"><span class="pre">set_cut</span></code>, <code class="docutils literal notranslate"><span class="pre">split_cut</span></code>, <code class="docutils literal notranslate"><span class="pre">merge_cut</span></code>, <code class="docutils literal notranslate"><span class="pre">replace_edit</span></code>), trim an edit to part of the song (<code class="docutils literal notranslate"><span class="pre">set_span</span></code>), render — is a plain function in <code class="docutils literal notranslate"><span class="pre">muvid.footage.service</span></code>, listed once in its <code class="docutils literal notranslate"><span class="pre">FOOTAGE_OP_SPECS</span></code> and registered with nw as <code class="docutils literal notranslate"><span class="pre">nw.GenreOp</span></code>s, so a host serves them without importing muvid’s internals. <code class="docutils literal notranslate"><span class="pre">muvid.mcp.footage_tools</span></code> and <code class="docutils literal notranslate"><span class="pre">muvid.mcp.scoring_tools</span></code> expose the same operations as MCP tools (<code class="docutils literal notranslate"><span class="pre">set_song</span></code>, <code class="docutils literal notranslate"><span class="pre">add_footage</span></code>, <code class="docutils literal notranslate"><span class="pre">align_footage</span></code>, <code class="docutils literal notranslate"><span class="pre">propose_edit</span></code>, <code class="docutils literal notranslate"><span class="pre">assemble_music_video</span></code>, <code class="docutils literal notranslate"><span class="pre">footage_set_cut</span></code>, <code class="docutils literal notranslate"><span class="pre">footage_render</span></code>, …) over a stateful per-user workspace under <code class="docutils literal notranslate"><span class="pre">~/.local/share/muvid</span></code> (<code class="docutils literal notranslate"><span class="pre">MUVID_DATA_HOME</span></code> to relocate). A host that serves the project itself (the reelee studio) creates it where it wants with <code class="docutils literal notranslate"><span class="pre">projects_dir</span></code> — a <code class="docutils literal notranslate"><span class="pre">muvid.Project</span></code>, an <code class="docutils literal notranslate"><span class="pre">nw.Project</span></code> whose media is registered in the host’s artifact catalog — and <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">muvid.importing</span> <span class="pre">MANIFEST</span> <span class="pre">PROJECTS_DIR</span></code> brings a finished production into one.</p>
 <p><strong>As an editor document.</strong> <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">'muvid[editor]'</span></code> adds
 <code class="docutils literal notranslate"><span class="pre">muvid.footage.lacing_bridge</span></code>, which exports a project as
 <a class="reference external" href="https://github.com/thorwhalen/lacing" rel="nofollow noopener"><code class="docutils literal notranslate"><span class="pre">lacing</span></code><svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a> standoff annotations — three body
@@ -665,28 +660,32 @@ Claude Code skills) through the eight stages. It will:</p>
 </span><span id="line-23">  downloads.py        claim()/resolve() — muvid owns resolution, the host owns transport
 </span><span id="line-24">  visualize/          part 1: the ffmpeg-only audio visualizer (+ its visual registry)
 </span><span id="line-25">  footage/            part 2: align, edl, strategy, select_score, assemble, workspace
-</span><span id="line-26">    scoring/          the score tensor: grid, frames, quality, motionbeat, segment, lipsync
-</span><span id="line-27">    lacing_bridge.py  project ⇄ lacing standoff annotations (the editor document)
-</span><span id="line-28">  genre.py            registers the `music-visualizer` nw genre (and imports the next)
-</span><span id="line-29">  genre_music_video.py  registers the `music_video` footage genre
-</span><span id="line-30">  mcp/                the MCP tool surface: tools, footage_tools, scoring_tools
-</span><span id="line-31">  ui/
-</span><span id="line-32">    app.py            FastAPI app
-</span><span id="line-33">    static/index.html single-page UI
-</span><span id="line-34">.claude/CLAUDE.md               agent &amp; contributor guide (start here)
-</span><span id="line-35">.claude/skills/                 muvid, muvid-visualize, muvid-score-footage,
-</span><span id="line-36">                                muvid-choose-footage-segments
-</span><span id="line-37">misc/docs/design.md             part 3's design rationale
-</span><span id="line-38">misc/docs/footage_scoring_design.md    part 2's LOCKED design decisions
-</span><span id="line-39">misc/docs/footage_scoring_research.md  the citations behind them
-</span><span id="line-40">misc/docs/improvement_ideas.md  v0 audit + post-audit follow-through
+</span><span id="line-26">    service.py        the footage operations (the SSOT every surface derives from)
+</span><span id="line-27">    scoring/          the score tensor: grid, frames, quality, motionbeat, segment, lipsync
+</span><span id="line-28">    lacing_bridge.py  project ⇄ lacing standoff annotations (the editor document)
+</span><span id="line-29">  genre.py            registers the `music-visualizer` nw genre (and imports the next)
+</span><span id="line-30">  genre_music_video.py  registers the `music_video` footage genre and its operations
+</span><span id="line-31">  production.py       muvid.Project — a production a host places and serves
+</span><span id="line-32">  catalog.py          registers hosted media in the host's artifact catalog
+</span><span id="line-33">  importing/          python -m muvid.importing — finished productions into a host
+</span><span id="line-34">  mcp/                the MCP tool surface: tools, footage_tools, scoring_tools
+</span><span id="line-35">  ui/
+</span><span id="line-36">    app.py            FastAPI app
+</span><span id="line-37">    static/index.html single-page UI
+</span><span id="line-38">.claude/CLAUDE.md               agent &amp; contributor guide (start here)
+</span><span id="line-39">.claude/skills/                 muvid, muvid-visualize, muvid-score-footage,
+</span><span id="line-40">                                muvid-choose-footage-segments
+</span><span id="line-41">misc/docs/design.md             part 3's design rationale
+</span><span id="line-42">misc/docs/footage_scoring_design.md    part 2's LOCKED design decisions
+</span><span id="line-43">misc/docs/footage_scoring_research.md  the citations behind them
+</span><span id="line-44">misc/docs/improvement_ideas.md  v0 audit + post-audit follow-through
 </span></code></pre></div>
 </div>
 <p class="epythet-aggregates">This documentation as a single file: <a href="muvid.md">muvid.md</a> (Markdown, for agents).</p>
 
 </section>
 </section>
-<p class="epythet-provenance" style="font-size:.8em;opacity:.65;margin-top:2.5em;text-align:right">built 2026-09-22 17:39 UTC from <a href="https://github.com/thorwhalen/muvid/commit/bc499a982aa7ca16139f012adc09cc81464cce93">bc499a9</a> (main) · muvid 0.0.68 · <a href="about-this-build.html">about this build</a></p>
+<p class="epythet-provenance" style="font-size:.8em;opacity:.65;margin-top:2.5em;text-align:right">built 2026-09-27 10:46 UTC from <a href="https://github.com/thorwhalen/muvid/commit/678eb21855ed01377bd4335ea7a61ca1559af116">678eb21</a> (main) · muvid 0.0.69 · <a href="about-this-build.html">about this build</a></p>
 </div></div><aside class="hidden text-sm xl:block" id="right-sidebar">
 <div class="sticky top-16 -mt-10 max-h-[calc(100vh-5rem)] h-full overflow-y-auto pt-6 space-y-2"><p class="font-medium">On this page</p>
 <ul>
@@ -719,7 +718,7 @@ Claude Code skills) through the eight stages. It will:</p>
 </div>
 </footer>
 </div>
-<script src="_static/documentation_options.js?v=6eb1e6b8"></script>
+<script src="_static/documentation_options.js?v=cac962a1"></script>
 <script src="_static/doctools.js?v=fd6eb6e6"></script>
 <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
 <script src="_static/clipboard.min.js?v=a7894cd8"></script>

@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="en" data-content_root="../../"
+  x-data="{ darkMode: $persist(window.matchMedia('(prefers-color-scheme: dark)').matches), activeSection: ''}"
+  :class="{ 'dark' : darkMode === true }">
+
+<head>
+  <script>
+    (function () {
+      // Set initial color scheme
+      if ((localStorage.getItem("_x_darkMode") === "true") || (window.matchMedia("(prefers-color-scheme: dark)").matches)) {
+        document.documentElement.classList.add("dark");
+      }
+
+      // Watch for media preference changes
+      window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (event) => {
+        localStorage.setItem("_x_darkMode", event.matches);
+        document.documentElement.classList.toggle("dark", event.matches);
+      });
+    })();
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="utf-8" />
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff" />
+  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#030711" />
+  
+<link rel="alternate" type="text/markdown" href="importing.html.md">
+<link rel="describedby" href="../../llms.txt" type="text/markdown">
+  <title>muvid.importing | muvid</title>
+  <meta property="og:title" content="muvid.importing | muvid" />
+  <meta name="twitter:title" content="muvid.importing | muvid" />
+  <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=d75fae25" />
+  <link rel="stylesheet" type="text/css" href="../../_static/theme.css?v=d6d7c91b" />
+  <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
+  <link rel="stylesheet" type="text/css" href="../../_static/epythet.css?v=f9f95642" />
+  <link rel="search" title="Search" href="../../search.html" />
+  <link rel="index" title="Index" href="../../genindex.html" />
+</head>
+
+<body x-data="{ showSidebar: false, showScrollTop: false }"
+  class="min-h-screen font-sans antialiased bg-background text-foreground" :class="{ 'overflow-hidden': showSidebar }">
+  <div x-cloak x-show="showSidebar"
+    class="fixed inset-0 z-50 overflow-hidden bg-background/80 backdrop-blur-sm md:hidden"
+    @click.self="showSidebar = false"></div><div id="page" class="relative flex flex-col min-h-screen"><a href="#content"
+      class="absolute top-0 left-0 z-[100] block bg-background p-4 text-xl transition -translate-x-full opacity-0 focus:translate-x-0 focus:opacity-100">
+      Skip to content
+    </a><header class="sticky top-0 z-40 w-full border-b shadow-xs border-border bg-background/90 backdrop-blur"><div class="container flex items-center h-14">
+    <div class="hidden mr-4 md:flex">
+      <a href="../../index.html" class="flex items-center mr-6"><span class="hidden font-bold sm:inline-block text-clip whitespace-nowrap">muvid</span>
+      </a><nav class="flex items-center gap-6 text-sm font-medium">
+        <a href="https://github.com/thorwhalen/muvid" class="transition-colors hover:text-foreground/80 text-foreground/60" rel="noopener nofollow">GitHub</a>
+      </nav></div><button
+      class="inline-flex items-center justify-center h-10 px-0 py-2 mr-2 text-base font-medium transition-colors rounded-md hover:text-accent-foreground hover:bg-transparent md:hidden"
+      type="button" @click="showSidebar = true">
+      <svg xmlns="http://www.w3.org/2000/svg" height="24" width="24" viewBox="0 96 960 960" aria-hidden="true"
+        fill="currentColor">
+        <path
+          d="M152.587 825.087q-19.152 0-32.326-13.174t-13.174-32.326q0-19.152 13.174-32.326t32.326-13.174h440q19.152 0 32.326 13.174t13.174 32.326q0 19.152-13.174 32.326t-32.326 13.174h-440Zm0-203.587q-19.152 0-32.326-13.174T107.087 576q0-19.152 13.174-32.326t32.326-13.174h320q19.152 0 32.326 13.174T518.087 576q0 19.152-13.174 32.326T472.587 621.5h-320Zm0-203.587q-19.152 0-32.326-13.174t-13.174-32.326q0-19.152 13.174-32.326t32.326-13.174h440q19.152 0 32.326 13.174t13.174 32.326q0 19.152-13.174 32.326t-32.326 13.174h-440ZM708.913 576l112.174 112.174q12.674 12.674 12.674 31.826t-12.674 31.826Q808.413 764.5 789.261 764.5t-31.826-12.674l-144-144Q600 594.391 600 576t13.435-31.826l144-144q12.674-12.674 31.826-12.674t31.826 12.674q12.674 12.674 12.674 31.826t-12.674 31.826L708.913 576Z" />
+      </svg>
+      <span class="sr-only">Toggle navigation menu</span>
+    </button>
+    <div class="flex items-center justify-between flex-1 gap-2 sm:gap-4 md:justify-end">
+      <div class="flex-1 w-full md:w-auto md:flex-none"><form id="searchbox"
+      action="../../search.html"
+      method="get"
+      class="relative flex items-center group"
+      @keydown.k.window.meta="$refs.search.focus()">
+  <input x-ref="search"
+          name="q"
+          id="search-input"
+          type="search"
+          aria-label="Search the docs"
+          placeholder="Search ..."
+          class="inline-flex items-center font-medium transition-colors bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background border border-input hover:bg-accent focus:bg-accent hover:text-accent-foreground focus:text-accent-foreground hover:placeholder-accent-foreground py-2 px-4 relative h-9 w-full justify-start rounded-[0.5rem] text-sm text-muted-foreground sm:pr-12 md:w-40 lg:w-64" />
+  <kbd class="pointer-events-none absolute right-1.5 top-2 hidden h-5 select-none text-muted-foreground items-center gap-1 rounded border border-border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex group-hover:bg-accent group-hover:text-accent-foreground">
+    <span class="text-xs">⌘</span>
+    K
+  </kbd>
+</form>
+      </div>
+      <nav class="flex items-center gap-1">
+        <button @click="darkMode = !darkMode"
+          class="relative inline-flex items-center justify-center px-0 text-sm font-medium transition-colors rounded-md hover:bg-accent hover:text-accent-foreground h-9 w-9"
+          type="button"
+          title="Toggle color scheme">
+          <svg xmlns="http://www.w3.org/2000/svg" height="16" width="16" viewBox="0 96 960 960" fill="currentColor"
+            class="absolute transition-all scale-100 rotate-0 dark:-rotate-90 dark:scale-0">
+            <path
+              d="M480 685q45.456 0 77.228-31.772Q589 621.456 589 576q0-45.456-31.772-77.228Q525.456 467 480 467q-45.456 0-77.228 31.772Q371 530.544 371 576q0 45.456 31.772 77.228Q434.544 685 480 685Zm0 91q-83 0-141.5-58.5T280 576q0-83 58.5-141.5T480 376q83 0 141.5 58.5T680 576q0 83-58.5 141.5T480 776ZM80 621.5q-19.152 0-32.326-13.174T34.5 576q0-19.152 13.174-32.326T80 530.5h80q19.152 0 32.326 13.174T205.5 576q0 19.152-13.174 32.326T160 621.5H80Zm720 0q-19.152 0-32.326-13.174T754.5 576q0-19.152 13.174-32.326T800 530.5h80q19.152 0 32.326 13.174T925.5 576q0 19.152-13.174 32.326T880 621.5h-80Zm-320-320q-19.152 0-32.326-13.174T434.5 256v-80q0-19.152 13.174-32.326T480 130.5q19.152 0 32.326 13.174T525.5 176v80q0 19.152-13.174 32.326T480 301.5Zm0 720q-19.152 0-32.326-13.17Q434.5 995.152 434.5 976v-80q0-19.152 13.174-32.326T480 850.5q19.152 0 32.326 13.174T525.5 896v80q0 19.152-13.174 32.33-13.174 13.17-32.326 13.17ZM222.174 382.065l-43-42Q165.5 327.391 166 308.239t13.174-33.065q13.435-13.674 32.587-13.674t32.065 13.674l42.239 43q12.674 13.435 12.555 31.706-.12 18.272-12.555 31.946-12.674 13.674-31.445 13.413-18.772-.261-32.446-13.174Zm494 494.761-42.239-43q-12.674-13.435-12.674-32.087t12.674-31.565Q686.609 756.5 705.38 757q18.772.5 32.446 13.174l43 41.761Q794.5 824.609 794 843.761t-13.174 33.065Q767.391 890.5 748.239 890.5t-32.065-13.674Zm-42-494.761Q660.5 369.391 661 350.62q.5-18.772 13.174-32.446l41.761-43Q728.609 261.5 747.761 262t33.065 13.174q13.674 13.435 13.674 32.587t-13.674 32.065l-43 42.239q-13.435 12.674-31.706 12.555-18.272-.12-31.946-12.555Zm-495 494.761Q165.5 863.391 165.5 844.239t13.674-32.065l43-42.239q13.435-12.674 32.087-12.674t31.565 12.674Q299.5 782.609 299 801.38q-.5 18.772-13.174 32.446l-41.761 43Q231.391 890.5 212.239 890t-33.065-13.174ZM480 576Z" />
+          </svg>
+          <svg xmlns="http://www.w3.org/2000/svg" height="16" width="16" viewBox="0 96 960 960" fill="currentColor"
+            class="absolute transition-all scale-0 rotate-90 dark:rotate-0 dark:scale-100">
+            <path
+              d="M480 936q-151 0-255.5-104.5T120 576q0-138 90-239.5T440 218q25-3 39 18t-1 44q-17 26-25.5 55t-8.5 61q0 90 63 153t153 63q31 0 61.5-9t54.5-25q21-14 43-1.5t19 39.5q-14 138-117.5 229T480 936Zm0-80q88 0 158-48.5T740 681q-20 5-40 8t-40 3q-123 0-209.5-86.5T364 396q0-20 3-40t8-40q-78 32-126.5 102T200 576q0 116 82 198t198 82Zm-10-270Z" />
+          </svg>
+        </button>
+      </nav>
+    </div>
+  </div>
+</header>
+
+    <div class="flex-1"><div
+        class="container md:grid md:grid-cols-[220px_minmax(0,1fr)] md:gap-6 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-10"><aside id="left-sidebar"
+  class="fixed inset-y-0 left-0 md:top-14 z-50 md:z-30 bg-background md:bg-transparent transition-all duration-100 -translate-x-full md:translate-x-0 ml-0 p-6 md:p-0 md:-ml-2 md:h-[calc(100vh-3.5rem)] w-5/6 md:w-full overflow-y-auto border-r border-border md:sticky"
+  :aria-hidden="!showSidebar" :class="{ 'translate-x-0': showSidebar }">
+
+    <a href="../../index.html" class="justify-start text-sm md:!hidden bg-background"><span class="font-bold text-clip whitespace-nowrap">muvid</span>
+    </a>
+
+    <div class="relative overflow-hidden md:overflow-auto my-4 md:my-0">
+      <div class="overflow-y-auto h-full w-full relative pr-6"><nav class="flex md:hidden flex-col font-medium mt-4">
+  <a href="https://github.com/thorwhalen/muvid" rel="nofollow noopener">GitHub</a>
+</nav><nav class="table w-full min-w-full my-6 lg:my-8">
+  <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">API reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../_autosummary/muvid.html">muvid</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/muvid.align.html">muvid.align</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/muvid.catalog.html">muvid.catalog</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/muvid.characters.html">muvid.characters</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/muvid.choreo.html">muvid.choreo</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/muvid.compose.html">muvid.compose</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/muvid.contracts.html">muvid.contracts</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/muvid.cost.html">muvid.cost</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/muvid.data.html">muvid.data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/muvid.environments.html">muvid.environments</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/muvid.events.html">muvid.events</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/muvid.facade.html">muvid.facade</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/muvid.footage.html">muvid.footage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/muvid.importing.html">muvid.importing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/muvid.lyrics.html">muvid.lyrics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/muvid.lyricvid.html">muvid.lyricvid</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/muvid.mcp.html">muvid.mcp</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/muvid.montage.html">muvid.montage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/muvid.paths.html">muvid.paths</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/muvid.project.html">muvid.project</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/muvid.renderers.html">muvid.renderers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/muvid.schema.html">muvid.schema</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/muvid.script.html">muvid.script</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/muvid.subgenres.html">muvid.subgenres</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/muvid.ui.html">muvid.ui</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/muvid.visualize.html">muvid.visualize</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../ai-agents.html">For AI agents</a></li>
+</ul>
+
+</nav>
+      </div>
+    </div>
+    <button type="button" @click="showSidebar = false"
+      class="absolute md:hidden right-4 top-4 rounded-sm opacity-70 transition-opacity hover:opacity-100">
+      <svg xmlns="http://www.w3.org/2000/svg" height="24" width="24" viewBox="0 96 960 960" fill="currentColor"
+        stroke="none" class="h-4 w-4">
+        <path
+          d="M480 632 284 828q-11 11-28 11t-28-11q-11-11-11-28t11-28l196-196-196-196q-11-11-11-28t11-28q11-11 28-11t28 11l196 196 196-196q11-11 28-11t28 11q11 11 11 28t-11 28L536 576l196 196q11 11 11 28t-11 28q-11 11-28 11t-28-11L480 632Z" />
+      </svg>
+    </button>
+  </aside>
+          <main class="relative py-6 lg:gap-10 lg:py-8 xl:grid xl:grid-cols-[1fr_300px]">
+<div class="w-full min-w-0 mx-auto">
+<nav aria-label="breadcrumbs"
+     class="flex items-center mb-4 space-x-1 text-sm text-muted-foreground">
+  <a class="overflow-hidden text-ellipsis whitespace-nowrap hover:text-foreground"
+     href="../../index.html">
+    <span class="hidden md:inline">muvid</span>
+    <svg xmlns="http://www.w3.org/2000/svg"
+         height="18"
+         width="18"
+         viewBox="0 96 960 960"
+         aria-label="Home"
+         fill="currentColor"
+         stroke="none"
+         class="md:hidden">
+      <path d="M240 856h120V616h240v240h120V496L480 316 240 496v360Zm-80 80V456l320-240 320 240v480H520V696h-80v240H160Zm320-350Z" />
+    </svg>
+  </a>
+  
+<div class="mr-1">/</div><a class="hover:text-foreground overflow-hidden text-ellipsis whitespace-nowrap"
+       href="../index.html">Module code</a>
+    
+<div class="mr-1">/</div><span aria-current="page"
+        class="font-medium text-foreground overflow-hidden text-ellipsis whitespace-nowrap">muvid.importing</span>
+</nav>
+
+    <div id="content" role="main">
+      <h1>Source code for muvid.importing</h1><div class="highlight"><pre>
+<span></span><code><span id="line-1"><span class="sd">"""Bring a finished production into a host's projects dir as a :class:`muvid.Project`.</span>
+</span><span id="line-2">
+</span><span id="line-3"><span class="sd">The verb is :func:`import_production`; the CLI door is</span>
+</span><span id="line-4"><span class="sd">``python -m muvid.importing MANIFEST PROJECTS_DIR [--dry-run]``. One JSON manifest per</span>
+</span><span id="line-5"><span class="sd">production says where its pieces are; the importer creates (or reopens) the project at</span>
+</span><span id="line-6"><span class="sd">``PROJECTS_DIR/&lt;id&gt;`` exactly as a host would (``nw.create_genre_project`` with</span>
+</span><span id="line-7"><span class="sd">placement, so the genre envelope is recorded and the host opens it as a</span>
+</span><span id="line-8"><span class="sd">``muvid.Project``), and fills it through the SAME operations the studio and the</span>
+</span><span id="line-9"><span class="sd">connector use (:mod:`muvid.footage.service`) — so an imported edit is validated by</span>
+</span><span id="line-10"><span class="sd">``validate_edl`` like any other, and every file lands in the host's artifact catalog.</span>
+</span><span id="line-11">
+</span><span id="line-12"><span class="sd">**Idempotent**: run it twice and you have one project. The song, a clip or a render</span>
+</span><span id="line-13"><span class="sd">whose bytes are already there is left alone; an offset or an edit that already says the</span>
+</span><span id="line-14"><span class="sd">same thing is not rewritten.</span>
+</span><span id="line-15">
+</span><span id="line-16"><span class="sd">Two kinds of manifest (paths absolute, ``~``-expanded, or relative to the manifest):</span>
+</span><span id="line-17">
+</span><span id="line-18"><span class="sd">``footage`` — a music video cut from footage::</span>
+</span><span id="line-19">
+</span><span id="line-20"><span class="sd">    {"kind": "footage", "id": "que_calor", "title": "Que Calor", "canvas": "landscape",</span>
+</span><span id="line-21"><span class="sd">     "song": {"path": "source/master.m4a"}              # or {"path": x.mp4, "extract_audio": true}</span>
+</span><span id="line-22"><span class="sd">     "clips": [{"id": "c01", "path": "footage/01.mp4", "name": "Camera A",</span>
+</span><span id="line-23"><span class="sd">                "offset_s": 28.854}],                    # offset_s = a DECLARED offset</span>
+</span><span id="line-24"><span class="sd">     "edits": [{"id": "v1", "name": "V1", "edl_path": "work/edl_v1d.json",</span>
+</span><span id="line-25"><span class="sd">                "how_made": "…",                         # or "edl": [...] inline, or</span>
+</span><span id="line-26"><span class="sd">                "span": [0.162, 157.13]}],               # "whole_song": "c01" (one shot);</span>
+</span><span id="line-27"><span class="sd">                                                         # span: default the whole song</span>
+</span><span id="line-28"><span class="sd">     "renders": [{"id": "v1e", "path": "out/v1e.mp4", "edit_id": "v1", "label": "V1"}]}</span>
+</span><span id="line-29">
+</span><span id="line-30"><span class="sd">``lyric-video`` — a lyric video (view-only in v1)::</span>
+</span><span id="line-31">
+</span><span id="line-32"><span class="sd">    {"kind": "lyric-video", "id": "il_pleut", "title": "Il Pleut",</span>
+</span><span id="line-33"><span class="sd">     "template": "calligram", "song": {"path": "…"},</span>
+</span><span id="line-34"><span class="sd">     "sources": [{"role": "lyrics", "path": "…"}],     # role: lyrics|treatment|timings|poem|other</span>
+</span><span id="line-35"><span class="sd">     "renders": [{"id": "readable_v3", "path": "…", "label": "…"}]}</span>
+</span><span id="line-36">
+</span><span id="line-37"><span class="sd">Manifests name private paths, so they live beside the data or under</span>
+</span><span id="line-38"><span class="sd">``~/.local/share/muvid/imports/`` — never in a repository.</span>
+</span><span id="line-39"><span class="sd">"""</span>
+</span><span id="line-40">
+</span><span id="line-41"><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+</span><span id="line-42">
+</span><span id="line-43"><span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+</span><span id="line-44"><span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
+</span><span id="line-45"><span class="kn">import</span><span class="w"> </span><span class="nn">tempfile</span>
+</span><span id="line-46"><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+</span><span id="line-47"><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Optional</span>
+</span><span id="line-48">
+</span><span id="line-49"><span class="kn">from</span><span class="w"> </span><span class="nn">muvid.importing._edl</span><span class="w"> </span><span class="kn">import</span> <span class="n">clip_in_drift</span><span class="p">,</span> <span class="n">edl_from_document</span><span class="p">,</span> <span class="n">is_framing_edl</span>
+</span><span id="line-50">
+</span><span id="line-51"><span class="c1">#: The manifest kinds and the genre each is created as.</span>
+</span><span id="line-52"><span class="n">KIND_GENRES</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"footage"</span><span class="p">:</span> <span class="s2">"music_video"</span><span class="p">,</span> <span class="s2">"lyric-video"</span><span class="p">:</span> <span class="s2">"lyric-video"</span><span class="p">}</span>
+</span><span id="line-53"><span class="c1">#: Offsets closer than this (seconds) are the same declaration.</span>
+</span><span id="line-54"><span class="n">_OFFSET_TOLERANCE_S</span> <span class="o">=</span> <span class="mf">1e-6</span>
+</span><span id="line-55">
+</span><span id="line-56">
+<div class="viewcode-block" id="ImportRefused">
+<a class="viewcode-back" href="../../_autosummary/muvid.importing.html#muvid.importing.ImportRefused">[docs]</a>
+</span><span id="line-57"><span class="k">class</span><span class="w"> </span><span class="nc">ImportRefused</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">):</span>
+</span><span id="line-58"><span class="w">    </span><span class="sd">"""The manifest cannot be imported as written (the message says which part)."""</span></div>
+
+</span><span id="line-59">
+</span><span id="line-60">
+<div class="viewcode-block" id="load_manifest">
+<a class="viewcode-back" href="../../_autosummary/muvid.importing.html#muvid.importing.load_manifest">[docs]</a>
+</span><span id="line-61"><span class="k">def</span><span class="w"> </span><span class="nf">load_manifest</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">dict</span><span class="p">,</span> <span class="n">Path</span><span class="p">]:</span>
+</span><span id="line-62"><span class="w">    </span><span class="sd">"""``(manifest, base_dir)`` — relative paths in it resolve against ``base_dir``."""</span>
+</span><span id="line-63">    <span class="n">path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="o">.</span><span class="n">expanduser</span><span class="p">()</span>
+</span><span id="line-64">    <span class="n">manifest</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">read_text</span><span class="p">())</span>
+</span><span id="line-65">    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">manifest</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+</span><span id="line-66">        <span class="k">raise</span> <span class="n">ImportRefused</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">path</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">: a manifest is a JSON object"</span><span class="p">)</span>
+</span><span id="line-67">    <span class="k">return</span> <span class="n">manifest</span><span class="p">,</span> <span class="n">path</span><span class="o">.</span><span class="n">parent</span></div>
+
+</span><span id="line-68">
+</span><span id="line-69">
+<div class="viewcode-block" id="import_production">
+<a class="viewcode-back" href="../../_autosummary/muvid.importing.html#muvid.importing.import_production">[docs]</a>
+</span><span id="line-70"><span class="k">def</span><span class="w"> </span><span class="nf">import_production</span><span class="p">(</span>
+</span><span id="line-71">    <span class="n">manifest</span><span class="p">,</span>
+</span><span id="line-72">    <span class="n">projects_dir</span><span class="p">,</span>
+</span><span id="line-73">    <span class="o">*</span><span class="p">,</span>
+</span><span id="line-74">    <span class="n">base_dir</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+</span><span id="line-75">    <span class="n">dry_run</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+</span><span id="line-76">    <span class="n">caller</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"importer"</span><span class="p">,</span>
+</span><span id="line-77"><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+</span><span id="line-78"><span class="w">    </span><span class="sd">"""Import one production; returns a report of what was done (or would be).</span>
+</span><span id="line-79">
+</span><span id="line-80"><span class="sd">    ``manifest`` is a dict or a path to one; ``projects_dir`` is the host's projects</span>
+</span><span id="line-81"><span class="sd">    directory (the project lands at ``projects_dir/&lt;id&gt;``). ``dry_run`` checks every</span>
+</span><span id="line-82"><span class="sd">    file and every edit conversion and writes nothing.</span>
+</span><span id="line-83"><span class="sd">    """</span>
+</span><span id="line-84">    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">manifest</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">):</span>
+</span><span id="line-85">        <span class="n">manifest</span><span class="p">,</span> <span class="n">default_base</span> <span class="o">=</span> <span class="n">load_manifest</span><span class="p">(</span><span class="n">manifest</span><span class="p">)</span>
+</span><span id="line-86">        <span class="n">base_dir</span> <span class="o">=</span> <span class="n">base_dir</span> <span class="ow">or</span> <span class="n">default_base</span>
+</span><span id="line-87">    <span class="n">base</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">base_dir</span> <span class="ow">or</span> <span class="s2">"."</span><span class="p">)</span><span class="o">.</span><span class="n">expanduser</span><span class="p">()</span>
+</span><span id="line-88">    <span class="n">kind</span> <span class="o">=</span> <span class="n">manifest</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"kind"</span><span class="p">)</span>
+</span><span id="line-89">    <span class="k">if</span> <span class="n">kind</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">KIND_GENRES</span><span class="p">:</span>
+</span><span id="line-90">        <span class="k">raise</span> <span class="n">ImportRefused</span><span class="p">(</span>
+</span><span id="line-91">            <span class="sa">f</span><span class="s2">"unknown manifest kind </span><span class="si">{</span><span class="n">kind</span><span class="si">!r}</span><span class="s2">; one of </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">KIND_GENRES</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
+</span><span id="line-92">        <span class="p">)</span>
+</span><span id="line-93">    <span class="n">pid</span> <span class="o">=</span> <span class="n">manifest</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"id"</span><span class="p">)</span>
+</span><span id="line-94">    <span class="k">if</span> <span class="ow">not</span> <span class="n">pid</span><span class="p">:</span>
+</span><span id="line-95">        <span class="k">raise</span> <span class="n">ImportRefused</span><span class="p">(</span><span class="s2">"the manifest has no 'id'"</span><span class="p">)</span>
+</span><span id="line-96">    <span class="n">resolve</span> <span class="o">=</span> <span class="n">_resolver</span><span class="p">(</span><span class="n">base</span><span class="p">)</span>
+</span><span id="line-97">    <span class="n">_check_files</span><span class="p">(</span><span class="n">manifest</span><span class="p">,</span> <span class="n">resolve</span><span class="p">)</span>
+</span><span id="line-98">    <span class="n">report</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="n">pid</span><span class="p">,</span> <span class="s2">"kind"</span><span class="p">:</span> <span class="n">kind</span><span class="p">,</span> <span class="s2">"dry_run"</span><span class="p">:</span> <span class="n">dry_run</span><span class="p">}</span>
+</span><span id="line-99">    <span class="k">if</span> <span class="n">dry_run</span><span class="p">:</span>
+</span><span id="line-100">        <span class="k">if</span> <span class="n">kind</span> <span class="o">==</span> <span class="s2">"footage"</span><span class="p">:</span>
+</span><span id="line-101">            <span class="n">report</span><span class="p">[</span><span class="s2">"edits"</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+</span><span id="line-102">                <span class="n">e</span><span class="p">[</span><span class="s2">"id"</span><span class="p">]:</span> <span class="p">(</span>
+</span><span id="line-103">                    <span class="sa">f</span><span class="s2">"one shot of </span><span class="si">{</span><span class="n">e</span><span class="p">[</span><span class="s1">'whole_song'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span>
+</span><span id="line-104">                    <span class="k">if</span> <span class="s2">"whole_song"</span> <span class="ow">in</span> <span class="n">e</span>
+</span><span id="line-105">                    <span class="k">else</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">_edit_edl</span><span class="p">(</span><span class="n">e</span><span class="p">,</span><span class="w"> </span><span class="n">manifest</span><span class="p">,</span><span class="w"> </span><span class="n">resolve</span><span class="p">))</span><span class="si">}</span><span class="s2"> entries"</span>
+</span><span id="line-106">                <span class="p">)</span>
+</span><span id="line-107">                <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">manifest</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"edits"</span><span class="p">,</span> <span class="p">[])</span>
+</span><span id="line-108">            <span class="p">}</span>
+</span><span id="line-109">        <span class="k">return</span> <span class="n">report</span>
+</span><span id="line-110">    <span class="n">project</span><span class="p">,</span> <span class="n">created</span> <span class="o">=</span> <span class="n">_open_or_create</span><span class="p">(</span><span class="n">manifest</span><span class="p">,</span> <span class="n">Path</span><span class="p">(</span><span class="n">projects_dir</span><span class="p">),</span> <span class="n">caller</span><span class="o">=</span><span class="n">caller</span><span class="p">)</span>
+</span><span id="line-111">    <span class="n">report</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">project</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">project</span><span class="o">.</span><span class="n">root</span><span class="p">),</span> <span class="n">created</span><span class="o">=</span><span class="n">created</span><span class="p">)</span>
+</span><span id="line-112">    <span class="k">if</span> <span class="n">kind</span> <span class="o">==</span> <span class="s2">"footage"</span><span class="p">:</span>
+</span><span id="line-113">        <span class="n">report</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">_import_footage</span><span class="p">(</span><span class="n">project</span><span class="o">.</span><span class="n">footage</span><span class="p">,</span> <span class="n">manifest</span><span class="p">,</span> <span class="n">resolve</span><span class="p">))</span>
+</span><span id="line-114">    <span class="k">else</span><span class="p">:</span>
+</span><span id="line-115">        <span class="n">report</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">_import_lyric</span><span class="p">(</span><span class="n">project</span><span class="o">.</span><span class="n">lyric</span><span class="p">,</span> <span class="n">manifest</span><span class="p">,</span> <span class="n">resolve</span><span class="p">))</span>
+</span><span id="line-116">    <span class="k">return</span> <span class="n">report</span></div>
+
+</span><span id="line-117">
+</span><span id="line-118">
+</span><span id="line-119"><span class="c1"># -- the project ---------------------------------------------------------------</span>
+</span><span id="line-120">
+</span><span id="line-121">
+</span><span id="line-122"><span class="k">def</span><span class="w"> </span><span class="nf">_open_or_create</span><span class="p">(</span><span class="n">manifest</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">projects_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">caller</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+</span><span id="line-123"><span class="w">    </span><span class="sd">"""``(muvid.Project, created)`` — created through nw as a host would."""</span>
+</span><span id="line-124">    <span class="kn">import</span><span class="w"> </span><span class="nn">nw</span>
+</span><span id="line-125">
+</span><span id="line-126">    <span class="kn">import</span><span class="w"> </span><span class="nn">muvid.genre</span>  <span class="c1"># noqa: F401 — registers muvid's genres and their factories</span>
+</span><span id="line-127">    <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.production</span><span class="w"> </span><span class="kn">import</span> <span class="n">Project</span>
+</span><span id="line-128">
+</span><span id="line-129">    <span class="n">genre</span> <span class="o">=</span> <span class="n">KIND_GENRES</span><span class="p">[</span><span class="n">manifest</span><span class="p">[</span><span class="s2">"kind"</span><span class="p">]]</span>
+</span><span id="line-130">    <span class="n">root</span> <span class="o">=</span> <span class="n">projects_dir</span> <span class="o">/</span> <span class="n">manifest</span><span class="p">[</span><span class="s2">"id"</span><span class="p">]</span>
+</span><span id="line-131">    <span class="k">if</span> <span class="p">(</span><span class="n">root</span> <span class="o">/</span> <span class="s2">"project.json"</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+</span><span id="line-132">        <span class="n">project</span> <span class="o">=</span> <span class="n">Project</span><span class="p">(</span><span class="n">root</span><span class="p">)</span>
+</span><span id="line-133">        <span class="k">if</span> <span class="n">project</span><span class="o">.</span><span class="n">genre</span> <span class="o">!=</span> <span class="n">genre</span><span class="p">:</span>
+</span><span id="line-134">            <span class="k">raise</span> <span class="n">ImportRefused</span><span class="p">(</span>
+</span><span id="line-135">                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">root</span><span class="si">}</span><span class="s2"> is a </span><span class="si">{</span><span class="n">project</span><span class="o">.</span><span class="n">genre</span><span class="si">!r}</span><span class="s2"> project, not a </span><span class="si">{</span><span class="n">genre</span><span class="si">!r}</span><span class="s2"> one"</span>
+</span><span id="line-136">            <span class="p">)</span>
+</span><span id="line-137">        <span class="k">return</span> <span class="n">project</span><span class="p">,</span> <span class="kc">False</span>
+</span><span id="line-138">    <span class="n">template</span> <span class="o">=</span> <span class="p">(</span>
+</span><span id="line-139">        <span class="n">manifest</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"canvas"</span><span class="p">)</span> <span class="k">if</span> <span class="n">genre</span> <span class="o">==</span> <span class="s2">"music_video"</span> <span class="k">else</span> <span class="n">manifest</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"template"</span><span class="p">)</span>
+</span><span id="line-140">    <span class="p">)</span>
+</span><span id="line-141">    <span class="n">nw</span><span class="o">.</span><span class="n">create_genre_project</span><span class="p">(</span>
+</span><span id="line-142">        <span class="n">genre</span><span class="p">,</span>
+</span><span id="line-143">        <span class="n">caller</span><span class="p">,</span>
+</span><span id="line-144">        <span class="n">manifest</span><span class="p">[</span><span class="s2">"id"</span><span class="p">],</span>
+</span><span id="line-145">        <span class="n">title</span><span class="o">=</span><span class="n">manifest</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"title"</span><span class="p">)</span> <span class="ow">or</span> <span class="n">manifest</span><span class="p">[</span><span class="s2">"id"</span><span class="p">],</span>
+</span><span id="line-146">        <span class="n">template</span><span class="o">=</span><span class="n">template</span><span class="p">,</span>
+</span><span id="line-147">        <span class="n">projects_dir</span><span class="o">=</span><span class="n">projects_dir</span><span class="p">,</span>
+</span><span id="line-148">    <span class="p">)</span>
+</span><span id="line-149">    <span class="k">return</span> <span class="n">Project</span><span class="p">(</span><span class="n">root</span><span class="p">),</span> <span class="kc">True</span>
+</span><span id="line-150">
+</span><span id="line-151">
+</span><span id="line-152"><span class="c1"># -- footage ---------------------------------------------------------------------</span>
+</span><span id="line-153">
+</span><span id="line-154">
+</span><span id="line-155"><span class="k">def</span><span class="w"> </span><span class="nf">_import_footage</span><span class="p">(</span><span class="n">fp</span><span class="p">,</span> <span class="n">manifest</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">resolve</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+</span><span id="line-156">    <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.footage</span><span class="w"> </span><span class="kn">import</span> <span class="n">service</span>
+</span><span id="line-157">
+</span><span id="line-158">    <span class="n">report</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{}</span>
+</span><span id="line-159">    <span class="n">report</span><span class="p">[</span><span class="s2">"song"</span><span class="p">]</span> <span class="o">=</span> <span class="n">_import_song</span><span class="p">(</span><span class="n">fp</span><span class="p">,</span> <span class="n">manifest</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"song"</span><span class="p">),</span> <span class="n">resolve</span><span class="p">)</span>
+</span><span id="line-160">    <span class="n">clips</span> <span class="o">=</span> <span class="p">{}</span>
+</span><span id="line-161">    <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">manifest</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"clips"</span><span class="p">,</span> <span class="p">[]):</span>
+</span><span id="line-162">        <span class="n">clips</span><span class="p">[</span><span class="n">c</span><span class="p">[</span><span class="s2">"id"</span><span class="p">]]</span> <span class="o">=</span> <span class="n">_import_clip</span><span class="p">(</span><span class="n">fp</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">resolve</span><span class="p">)</span>
+</span><span id="line-163">    <span class="n">report</span><span class="p">[</span><span class="s2">"clips"</span><span class="p">]</span> <span class="o">=</span> <span class="n">clips</span>
+</span><span id="line-164">    <span class="n">offsets</span> <span class="o">=</span> <span class="p">{}</span>
+</span><span id="line-165">    <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">manifest</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"clips"</span><span class="p">,</span> <span class="p">[]):</span>
+</span><span id="line-166">        <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"offset_s"</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-167">            <span class="n">offsets</span><span class="p">[</span><span class="n">c</span><span class="p">[</span><span class="s2">"id"</span><span class="p">]]</span> <span class="o">=</span> <span class="n">_import_offset</span><span class="p">(</span><span class="n">fp</span><span class="p">,</span> <span class="n">c</span><span class="p">[</span><span class="s2">"id"</span><span class="p">],</span> <span class="nb">float</span><span class="p">(</span><span class="n">c</span><span class="p">[</span><span class="s2">"offset_s"</span><span class="p">]))</span>
+</span><span id="line-168">    <span class="n">report</span><span class="p">[</span><span class="s2">"offsets"</span><span class="p">]</span> <span class="o">=</span> <span class="n">offsets</span>
+</span><span id="line-169">    <span class="n">report</span><span class="p">[</span><span class="s2">"edits"</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+</span><span id="line-170">        <span class="n">e</span><span class="p">[</span><span class="s2">"id"</span><span class="p">]:</span> <span class="n">_import_edit</span><span class="p">(</span><span class="n">fp</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">_edit_edl</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">manifest</span><span class="p">,</span> <span class="n">resolve</span><span class="p">,</span> <span class="n">fp</span><span class="o">=</span><span class="n">fp</span><span class="p">))</span>
+</span><span id="line-171">        <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">manifest</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"edits"</span><span class="p">,</span> <span class="p">[])</span>
+</span><span id="line-172">    <span class="p">}</span>
+</span><span id="line-173">    <span class="n">drift</span> <span class="o">=</span> <span class="p">{}</span>
+</span><span id="line-174">    <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">manifest</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"edits"</span><span class="p">,</span> <span class="p">[]):</span>
+</span><span id="line-175">        <span class="n">rows</span> <span class="o">=</span> <span class="n">_edit_drift</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">manifest</span><span class="p">,</span> <span class="n">resolve</span><span class="p">,</span> <span class="n">fp</span><span class="o">=</span><span class="n">fp</span><span class="p">)</span>
+</span><span id="line-176">        <span class="k">if</span> <span class="n">rows</span><span class="p">:</span>
+</span><span id="line-177">            <span class="n">drift</span><span class="p">[</span><span class="n">e</span><span class="p">[</span><span class="s2">"id"</span><span class="p">]]</span> <span class="o">=</span> <span class="n">rows</span>
+</span><span id="line-178">    <span class="n">report</span><span class="p">[</span><span class="s2">"clip_in_drift"</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+</span><span id="line-179">        <span class="n">eid</span><span class="p">:</span> <span class="p">{</span>
+</span><span id="line-180">            <span class="s2">"cuts_over_one_frame"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">rows</span><span class="p">),</span>
+</span><span id="line-181">            <span class="s2">"max_drift_s"</span><span class="p">:</span> <span class="nb">max</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s2">"drift_s"</span><span class="p">])</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">),</span>
+</span><span id="line-182">            <span class="s2">"cuts"</span><span class="p">:</span> <span class="n">rows</span><span class="p">,</span>
+</span><span id="line-183">        <span class="p">}</span>
+</span><span id="line-184">        <span class="k">for</span> <span class="n">eid</span><span class="p">,</span> <span class="n">rows</span> <span class="ow">in</span> <span class="n">drift</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+</span><span id="line-185">    <span class="p">}</span>
+</span><span id="line-186">    <span class="n">report</span><span class="p">[</span><span class="s2">"warnings"</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+</span><span id="line-187">        <span class="sa">f</span><span class="s2">"edit </span><span class="si">{</span><span class="n">eid</span><span class="si">!r}</span><span class="s2">: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span><span class="si">}</span><span class="s2"> cut(s) start more than one frame from where the "</span>
+</span><span id="line-188">        <span class="sa">f</span><span class="s2">"planner cut them (up to </span><span class="si">{</span><span class="nb">max</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s1">'drift_s'</span><span class="p">])</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">r</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">rows</span><span class="p">)</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> s) — muvid "</span>
+</span><span id="line-189">        <span class="s2">"derives each in-point from the clip's offset, so those cuts show different "</span>
+</span><span id="line-190">        <span class="s2">"frames than the original render"</span>
+</span><span id="line-191">        <span class="k">for</span> <span class="n">eid</span><span class="p">,</span> <span class="n">rows</span> <span class="ow">in</span> <span class="n">drift</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+</span><span id="line-192">    <span class="p">]</span>
+</span><span id="line-193">    <span class="n">report</span><span class="p">[</span><span class="s2">"renders"</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+</span><span id="line-194">        <span class="n">r</span><span class="p">[</span><span class="s2">"id"</span><span class="p">]:</span> <span class="n">service</span><span class="o">.</span><span class="n">import_render</span><span class="p">(</span>
+</span><span id="line-195">            <span class="n">fp</span><span class="p">,</span>
+</span><span id="line-196">            <span class="n">path</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">resolve</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s2">"path"</span><span class="p">])),</span>
+</span><span id="line-197">            <span class="n">render_id</span><span class="o">=</span><span class="n">r</span><span class="p">[</span><span class="s2">"id"</span><span class="p">],</span>
+</span><span id="line-198">            <span class="n">label</span><span class="o">=</span><span class="n">r</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"label"</span><span class="p">,</span> <span class="s2">""</span><span class="p">),</span>
+</span><span id="line-199">            <span class="n">edit_id</span><span class="o">=</span><span class="n">r</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"edit_id"</span><span class="p">,</span> <span class="s2">""</span><span class="p">),</span>
+</span><span id="line-200">        <span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"artifact_id"</span><span class="p">)</span>
+</span><span id="line-201">        <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">manifest</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"renders"</span><span class="p">,</span> <span class="p">[])</span>
+</span><span id="line-202">    <span class="p">}</span>
+</span><span id="line-203">    <span class="n">report</span><span class="p">[</span><span class="s2">"cover_artifact_id"</span><span class="p">]</span> <span class="o">=</span> <span class="n">service</span><span class="o">.</span><span class="n">refresh_cover</span><span class="p">(</span><span class="n">fp</span><span class="p">)</span>
+</span><span id="line-204">    <span class="k">return</span> <span class="n">report</span>
+</span><span id="line-205">
+</span><span id="line-206">
+</span><span id="line-207"><span class="k">def</span><span class="w"> </span><span class="nf">_import_song</span><span class="p">(</span><span class="n">fp</span><span class="p">,</span> <span class="n">song</span><span class="p">,</span> <span class="n">resolve</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="line-208">    <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.catalog</span><span class="w"> </span><span class="kn">import</span> <span class="n">hash_file</span>
+</span><span id="line-209">    <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.footage</span><span class="w"> </span><span class="kn">import</span> <span class="n">service</span>
+</span><span id="line-210">
+</span><span id="line-211">    <span class="k">if</span> <span class="ow">not</span> <span class="n">song</span><span class="p">:</span>
+</span><span id="line-212">        <span class="k">return</span> <span class="s2">"none"</span>
+</span><span id="line-213">    <span class="n">spec</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"path"</span><span class="p">:</span> <span class="n">song</span><span class="p">}</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">song</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="nb">dict</span><span class="p">(</span><span class="n">song</span><span class="p">)</span>
+</span><span id="line-214">    <span class="n">src</span> <span class="o">=</span> <span class="n">resolve</span><span class="p">(</span><span class="n">spec</span><span class="p">[</span><span class="s2">"path"</span><span class="p">])</span>
+</span><span id="line-215">    <span class="k">with</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">TemporaryDirectory</span><span class="p">()</span> <span class="k">as</span> <span class="n">tmp</span><span class="p">:</span>
+</span><span id="line-216">        <span class="k">if</span> <span class="n">spec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"extract_audio"</span><span class="p">):</span>
+</span><span id="line-217">            <span class="n">src</span> <span class="o">=</span> <span class="n">_extract_audio</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">Path</span><span class="p">(</span><span class="n">tmp</span><span class="p">)</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">src</span><span class="o">.</span><span class="n">stem</span><span class="si">}</span><span class="s2">.m4a"</span><span class="p">)</span>
+</span><span id="line-218">        <span class="k">if</span> <span class="n">fp</span><span class="o">.</span><span class="n">has_song</span><span class="p">()</span> <span class="ow">and</span> <span class="n">fp</span><span class="o">.</span><span class="n">song_hash</span><span class="p">()</span> <span class="o">==</span> <span class="n">hash_file</span><span class="p">(</span><span class="n">src</span><span class="p">):</span>
+</span><span id="line-219">            <span class="k">return</span> <span class="s2">"unchanged"</span>
+</span><span id="line-220">        <span class="n">service</span><span class="o">.</span><span class="n">set_song</span><span class="p">(</span>
+</span><span id="line-221">            <span class="n">fp</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">src</span><span class="p">),</span> <span class="n">filename</span><span class="o">=</span><span class="n">spec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"name"</span><span class="p">)</span> <span class="ow">or</span> <span class="n">Path</span><span class="p">(</span><span class="n">spec</span><span class="p">[</span><span class="s2">"path"</span><span class="p">])</span><span class="o">.</span><span class="n">name</span>
+</span><span id="line-222">        <span class="p">)</span>
+</span><span id="line-223">    <span class="k">return</span> <span class="s2">"set"</span>
+</span><span id="line-224">
+</span><span id="line-225">
+</span><span id="line-226"><span class="k">def</span><span class="w"> </span><span class="nf">_extract_audio</span><span class="p">(</span><span class="n">video</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">dest</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+</span><span id="line-227"><span class="w">    </span><span class="sd">"""The audio track of ``video`` as-is (stream copy, bit-exact, no metadata), so the</span>
+</span><span id="line-228"><span class="sd">    same source always yields the same bytes and a re-import sees "unchanged"."""</span>
+</span><span id="line-229">    <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+</span><span id="line-230">        <span class="p">[</span>
+</span><span id="line-231">            <span class="s2">"ffmpeg"</span><span class="p">,</span>
+</span><span id="line-232">            <span class="s2">"-hide_banner"</span><span class="p">,</span>
+</span><span id="line-233">            <span class="s2">"-loglevel"</span><span class="p">,</span>
+</span><span id="line-234">            <span class="s2">"error"</span><span class="p">,</span>
+</span><span id="line-235">            <span class="s2">"-y"</span><span class="p">,</span>
+</span><span id="line-236">            <span class="s2">"-i"</span><span class="p">,</span>
+</span><span id="line-237">            <span class="nb">str</span><span class="p">(</span><span class="n">video</span><span class="p">),</span>
+</span><span id="line-238">            <span class="s2">"-vn"</span><span class="p">,</span>
+</span><span id="line-239">            <span class="s2">"-map"</span><span class="p">,</span>
+</span><span id="line-240">            <span class="s2">"0:a:0"</span><span class="p">,</span>
+</span><span id="line-241">            <span class="s2">"-c:a"</span><span class="p">,</span>
+</span><span id="line-242">            <span class="s2">"copy"</span><span class="p">,</span>
+</span><span id="line-243">            <span class="s2">"-map_metadata"</span><span class="p">,</span>
+</span><span id="line-244">            <span class="s2">"-1"</span><span class="p">,</span>
+</span><span id="line-245">            <span class="s2">"-fflags"</span><span class="p">,</span>
+</span><span id="line-246">            <span class="s2">"+bitexact"</span><span class="p">,</span>
+</span><span id="line-247">            <span class="s2">"-flags:a"</span><span class="p">,</span>
+</span><span id="line-248">            <span class="s2">"+bitexact"</span><span class="p">,</span>
+</span><span id="line-249">            <span class="nb">str</span><span class="p">(</span><span class="n">dest</span><span class="p">),</span>
+</span><span id="line-250">        <span class="p">],</span>
+</span><span id="line-251">        <span class="n">check</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+</span><span id="line-252">    <span class="p">)</span>
+</span><span id="line-253">    <span class="k">return</span> <span class="n">dest</span>
+</span><span id="line-254">
+</span><span id="line-255">
+</span><span id="line-256"><span class="k">def</span><span class="w"> </span><span class="nf">_import_clip</span><span class="p">(</span><span class="n">fp</span><span class="p">,</span> <span class="n">clip</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">resolve</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="line-257">    <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.catalog</span><span class="w"> </span><span class="kn">import</span> <span class="n">hash_file</span>
+</span><span id="line-258">    <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.footage</span><span class="w"> </span><span class="kn">import</span> <span class="n">service</span>
+</span><span id="line-259">
+</span><span id="line-260">    <span class="n">src</span> <span class="o">=</span> <span class="n">resolve</span><span class="p">(</span><span class="n">clip</span><span class="p">[</span><span class="s2">"path"</span><span class="p">])</span>
+</span><span id="line-261">    <span class="n">stored</span> <span class="o">=</span> <span class="n">fp</span><span class="o">.</span><span class="n">clip_paths</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">clip</span><span class="p">[</span><span class="s2">"id"</span><span class="p">])</span>
+</span><span id="line-262">    <span class="k">if</span> <span class="n">stored</span> <span class="ow">and</span> <span class="n">Path</span><span class="p">(</span><span class="n">stored</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span> <span class="ow">and</span> <span class="n">hash_file</span><span class="p">(</span><span class="n">stored</span><span class="p">)</span> <span class="o">==</span> <span class="n">hash_file</span><span class="p">(</span><span class="n">src</span><span class="p">):</span>
+</span><span id="line-263">        <span class="k">return</span> <span class="s2">"unchanged"</span>
+</span><span id="line-264">    <span class="n">verdict</span> <span class="o">=</span> <span class="s2">"added"</span>
+</span><span id="line-265">    <span class="k">if</span> <span class="n">stored</span><span class="p">:</span>
+</span><span id="line-266">        <span class="n">service</span><span class="o">.</span><span class="n">remove_clip</span><span class="p">(</span><span class="n">fp</span><span class="p">,</span> <span class="n">clip_id</span><span class="o">=</span><span class="n">clip</span><span class="p">[</span><span class="s2">"id"</span><span class="p">])</span>
+</span><span id="line-267">        <span class="n">verdict</span> <span class="o">=</span> <span class="s2">"replaced"</span>
+</span><span id="line-268">    <span class="n">service</span><span class="o">.</span><span class="n">add_clip</span><span class="p">(</span>
+</span><span id="line-269">        <span class="n">fp</span><span class="p">,</span>
+</span><span id="line-270">        <span class="n">path</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">src</span><span class="p">),</span>
+</span><span id="line-271">        <span class="n">clip_id</span><span class="o">=</span><span class="n">clip</span><span class="p">[</span><span class="s2">"id"</span><span class="p">],</span>
+</span><span id="line-272">        <span class="n">name</span><span class="o">=</span><span class="n">clip</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"name"</span><span class="p">,</span> <span class="s2">""</span><span class="p">),</span>
+</span><span id="line-273">        <span class="n">filename</span><span class="o">=</span><span class="n">src</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+</span><span id="line-274">    <span class="p">)</span>
+</span><span id="line-275">    <span class="k">return</span> <span class="n">verdict</span>
+</span><span id="line-276">
+</span><span id="line-277">
+</span><span id="line-278"><span class="k">def</span><span class="w"> </span><span class="nf">_import_offset</span><span class="p">(</span><span class="n">fp</span><span class="p">,</span> <span class="n">clip_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">offset_s</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="line-279">    <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.footage</span><span class="w"> </span><span class="kn">import</span> <span class="n">service</span>
+</span><span id="line-280">    <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.footage.edl</span><span class="w"> </span><span class="kn">import</span> <span class="n">DECLARED</span>
+</span><span id="line-281">
+</span><span id="line-282">    <span class="n">current</span> <span class="o">=</span> <span class="nb">next</span><span class="p">((</span><span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">fp</span><span class="o">.</span><span class="n">load_alignments</span><span class="p">()</span> <span class="k">if</span> <span class="n">a</span><span class="o">.</span><span class="n">clip_id</span> <span class="o">==</span> <span class="n">clip_id</span><span class="p">),</span> <span class="kc">None</span><span class="p">)</span>
+</span><span id="line-283">    <span class="k">if</span> <span class="p">(</span>
+</span><span id="line-284">        <span class="n">current</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+</span><span id="line-285">        <span class="ow">and</span> <span class="n">current</span><span class="o">.</span><span class="n">source</span> <span class="o">==</span> <span class="n">DECLARED</span>
+</span><span id="line-286">        <span class="ow">and</span> <span class="nb">abs</span><span class="p">(</span><span class="n">current</span><span class="o">.</span><span class="n">offset_s</span> <span class="o">-</span> <span class="n">offset_s</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">_OFFSET_TOLERANCE_S</span>
+</span><span id="line-287">    <span class="p">):</span>
+</span><span id="line-288">        <span class="k">return</span> <span class="s2">"unchanged"</span>
+</span><span id="line-289">    <span class="n">service</span><span class="o">.</span><span class="n">set_offset</span><span class="p">(</span><span class="n">fp</span><span class="p">,</span> <span class="n">clip_id</span><span class="o">=</span><span class="n">clip_id</span><span class="p">,</span> <span class="n">offset_s</span><span class="o">=</span><span class="n">offset_s</span><span class="p">)</span>
+</span><span id="line-290">    <span class="k">return</span> <span class="s2">"declared"</span>
+</span><span id="line-291">
+</span><span id="line-292">
+</span><span id="line-293"><span class="k">def</span><span class="w"> </span><span class="nf">_edit_edl</span><span class="p">(</span><span class="n">edit</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">manifest</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">resolve</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">fp</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]:</span>
+</span><span id="line-294"><span class="w">    </span><span class="sd">"""The muvid EDL an edit entry of the manifest means (converted if need be).</span>
+</span><span id="line-295">
+</span><span id="line-296"><span class="sd">    ``whole_song: &lt;clip_id&gt;`` is one shot of that clip over the whole song — the edit of</span>
+</span><span id="line-297"><span class="sd">    a production that was never cut (its song length is the project's, so it needs one).</span>
+</span><span id="line-298"><span class="sd">    """</span>
+</span><span id="line-299">    <span class="k">if</span> <span class="s2">"whole_song"</span> <span class="ow">in</span> <span class="n">edit</span><span class="p">:</span>
+</span><span id="line-300">        <span class="k">return</span> <span class="p">[</span>
+</span><span id="line-301">            <span class="p">{</span>
+</span><span id="line-302">                <span class="s2">"song_start"</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span>
+</span><span id="line-303">                <span class="s2">"song_end"</span><span class="p">:</span> <span class="n">fp</span><span class="o">.</span><span class="n">song_duration</span><span class="p">(),</span>
+</span><span id="line-304">                <span class="s2">"clip_id"</span><span class="p">:</span> <span class="n">edit</span><span class="p">[</span><span class="s2">"whole_song"</span><span class="p">],</span>
+</span><span id="line-305">            <span class="p">}</span>
+</span><span id="line-306">        <span class="p">]</span>
+</span><span id="line-307">    <span class="n">doc</span> <span class="o">=</span> <span class="n">edit</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"edl"</span><span class="p">)</span>
+</span><span id="line-308">    <span class="k">if</span> <span class="n">doc</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-309">        <span class="n">doc</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">resolve</span><span class="p">(</span><span class="n">edit</span><span class="p">[</span><span class="s2">"edl_path"</span><span class="p">])</span><span class="o">.</span><span class="n">read_text</span><span class="p">())</span>
+</span><span id="line-310">    <span class="n">sizes</span> <span class="o">=</span> <span class="n">_source_sizes</span><span class="p">(</span><span class="n">manifest</span><span class="p">,</span> <span class="n">resolve</span><span class="p">,</span> <span class="n">fp</span><span class="o">=</span><span class="n">fp</span><span class="p">)</span> <span class="k">if</span> <span class="n">is_framing_edl</span><span class="p">(</span><span class="n">doc</span><span class="p">)</span> <span class="k">else</span> <span class="p">{}</span>
+</span><span id="line-311">    <span class="k">return</span> <span class="n">edl_from_document</span><span class="p">(</span><span class="n">doc</span><span class="p">,</span> <span class="n">source_sizes</span><span class="o">=</span><span class="n">sizes</span><span class="p">)</span>
+</span><span id="line-312">
+</span><span id="line-313">
+</span><span id="line-314"><span class="k">def</span><span class="w"> </span><span class="nf">_edit_drift</span><span class="p">(</span><span class="n">edit</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">manifest</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">resolve</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">fp</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]:</span>
+</span><span id="line-315"><span class="w">    </span><span class="sd">"""The planner in-points (``clip_in``) that disagree with muvid's by over a frame."""</span>
+</span><span id="line-316">    <span class="k">if</span> <span class="s2">"edl_path"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">edit</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">edit</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"edl"</span><span class="p">),</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)):</span>
+</span><span id="line-317">        <span class="k">return</span> <span class="p">[]</span>
+</span><span id="line-318">    <span class="n">doc</span> <span class="o">=</span> <span class="n">edit</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"edl"</span><span class="p">)</span>
+</span><span id="line-319">    <span class="k">if</span> <span class="n">doc</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-320">        <span class="n">doc</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">resolve</span><span class="p">(</span><span class="n">edit</span><span class="p">[</span><span class="s2">"edl_path"</span><span class="p">])</span><span class="o">.</span><span class="n">read_text</span><span class="p">())</span>
+</span><span id="line-321">    <span class="n">offsets</span> <span class="o">=</span> <span class="p">{</span>
+</span><span id="line-322">        <span class="n">c</span><span class="p">[</span><span class="s2">"id"</span><span class="p">]:</span> <span class="nb">float</span><span class="p">(</span><span class="n">c</span><span class="p">[</span><span class="s2">"offset_s"</span><span class="p">])</span>
+</span><span id="line-323">        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">manifest</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"clips"</span><span class="p">,</span> <span class="p">[])</span>
+</span><span id="line-324">        <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"offset_s"</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+</span><span id="line-325">    <span class="p">}</span>
+</span><span id="line-326">    <span class="k">return</span> <span class="n">clip_in_drift</span><span class="p">(</span><span class="n">doc</span><span class="p">,</span> <span class="n">offsets</span><span class="o">=</span><span class="n">offsets</span><span class="p">,</span> <span class="n">fps</span><span class="o">=</span><span class="n">_clip_rates</span><span class="p">(</span><span class="n">fp</span><span class="p">))</span>
+</span><span id="line-327">
+</span><span id="line-328">
+</span><span id="line-329"><span class="k">def</span><span class="w"> </span><span class="nf">_clip_rates</span><span class="p">(</span><span class="n">fp</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+</span><span id="line-330">    <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.footage.service</span><span class="w"> </span><span class="kn">import</span> <span class="n">frame_rate</span>
+</span><span id="line-331">
+</span><span id="line-332">    <span class="n">rates</span> <span class="o">=</span> <span class="p">{}</span>
+</span><span id="line-333">    <span class="k">for</span> <span class="n">cid</span><span class="p">,</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">fp</span><span class="o">.</span><span class="n">clip_paths</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+</span><span id="line-334">        <span class="n">rate</span> <span class="o">=</span> <span class="n">frame_rate</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+</span><span id="line-335">        <span class="k">if</span> <span class="n">rate</span><span class="p">:</span>
+</span><span id="line-336">            <span class="n">rates</span><span class="p">[</span><span class="n">cid</span><span class="p">]</span> <span class="o">=</span> <span class="n">rate</span>
+</span><span id="line-337">    <span class="k">return</span> <span class="n">rates</span>
+</span><span id="line-338">
+</span><span id="line-339">
+</span><span id="line-340"><span class="k">def</span><span class="w"> </span><span class="nf">_source_sizes</span><span class="p">(</span><span class="n">manifest</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">resolve</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">fp</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+</span><span id="line-341"><span class="w">    </span><span class="sd">"""Each clip's DISPLAYED frame size, from the project's copy or the source file."""</span>
+</span><span id="line-342">    <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.footage.service</span><span class="w"> </span><span class="kn">import</span> <span class="n">frame_size</span>
+</span><span id="line-343">
+</span><span id="line-344">    <span class="n">stored</span> <span class="o">=</span> <span class="n">fp</span><span class="o">.</span><span class="n">clip_paths</span><span class="p">()</span> <span class="k">if</span> <span class="n">fp</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">{}</span>
+</span><span id="line-345">    <span class="n">sizes</span> <span class="o">=</span> <span class="p">{}</span>
+</span><span id="line-346">    <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">manifest</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"clips"</span><span class="p">,</span> <span class="p">[]):</span>
+</span><span id="line-347">        <span class="n">size</span> <span class="o">=</span> <span class="n">frame_size</span><span class="p">(</span><span class="n">stored</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">c</span><span class="p">[</span><span class="s2">"id"</span><span class="p">])</span> <span class="ow">or</span> <span class="n">resolve</span><span class="p">(</span><span class="n">c</span><span class="p">[</span><span class="s2">"path"</span><span class="p">]))</span>
+</span><span id="line-348">        <span class="k">if</span> <span class="n">size</span><span class="p">:</span>
+</span><span id="line-349">            <span class="n">sizes</span><span class="p">[</span><span class="n">c</span><span class="p">[</span><span class="s2">"id"</span><span class="p">]]</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">size</span><span class="p">)</span>
+</span><span id="line-350">    <span class="k">return</span> <span class="n">sizes</span>
+</span><span id="line-351">
+</span><span id="line-352">
+</span><span id="line-353"><span class="k">def</span><span class="w"> </span><span class="nf">_import_edit</span><span class="p">(</span><span class="n">fp</span><span class="p">,</span> <span class="n">edit</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">edl</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="line-354"><span class="w">    </span><span class="sd">"""Save the edit, or bring an existing one in line with the manifest — its ``span``</span>
+</span><span id="line-355"><span class="sd">    (the part of the song it covers, default the whole song) and its cut list."""</span>
+</span><span id="line-356">    <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.footage</span><span class="w"> </span><span class="kn">import</span> <span class="n">service</span>
+</span><span id="line-357">
+</span><span id="line-358">    <span class="n">span</span> <span class="o">=</span> <span class="n">edit</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"span"</span><span class="p">)</span>
+</span><span id="line-359">    <span class="k">if</span> <span class="ow">not</span> <span class="n">fp</span><span class="o">.</span><span class="n">has_edit</span><span class="p">(</span><span class="n">edit</span><span class="p">[</span><span class="s2">"id"</span><span class="p">]):</span>
+</span><span id="line-360">        <span class="n">service</span><span class="o">.</span><span class="n">save_edit</span><span class="p">(</span>
+</span><span id="line-361">            <span class="n">fp</span><span class="p">,</span>
+</span><span id="line-362">            <span class="n">edl</span><span class="o">=</span><span class="n">edl</span><span class="p">,</span>
+</span><span id="line-363">            <span class="n">name</span><span class="o">=</span><span class="n">edit</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"name"</span><span class="p">)</span> <span class="ow">or</span> <span class="n">edit</span><span class="p">[</span><span class="s2">"id"</span><span class="p">],</span>
+</span><span id="line-364">            <span class="n">how_made</span><span class="o">=</span><span class="n">edit</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"how_made"</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">"imported"</span><span class="p">,</span>
+</span><span id="line-365">            <span class="n">edit_id</span><span class="o">=</span><span class="n">edit</span><span class="p">[</span><span class="s2">"id"</span><span class="p">],</span>
+</span><span id="line-366">            <span class="n">span</span><span class="o">=</span><span class="n">span</span><span class="p">,</span>
+</span><span id="line-367">        <span class="p">)</span>
+</span><span id="line-368">        <span class="k">return</span> <span class="s2">"saved"</span>
+</span><span id="line-369">    <span class="n">current</span> <span class="o">=</span> <span class="n">service</span><span class="o">.</span><span class="n">get_edit</span><span class="p">(</span><span class="n">fp</span><span class="p">,</span> <span class="n">edit_id</span><span class="o">=</span><span class="n">edit</span><span class="p">[</span><span class="s2">"id"</span><span class="p">])</span>
+</span><span id="line-370">    <span class="n">whole</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">fp</span><span class="o">.</span><span class="n">song_duration</span><span class="p">()]</span>
+</span><span id="line-371">    <span class="n">wanted_span</span> <span class="o">=</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">span</span><span class="p">]</span> <span class="k">if</span> <span class="n">span</span> <span class="k">else</span> <span class="n">whole</span>
+</span><span id="line-372">    <span class="n">verdict</span> <span class="o">=</span> <span class="s2">"unchanged"</span>
+</span><span id="line-373">    <span class="k">if</span> <span class="n">current</span><span class="p">[</span><span class="s2">"span"</span><span class="p">]</span> <span class="o">!=</span> <span class="n">wanted_span</span><span class="p">:</span>
+</span><span id="line-374">        <span class="n">service</span><span class="o">.</span><span class="n">set_span</span><span class="p">(</span>
+</span><span id="line-375">            <span class="n">fp</span><span class="p">,</span> <span class="n">edit_id</span><span class="o">=</span><span class="n">edit</span><span class="p">[</span><span class="s2">"id"</span><span class="p">],</span> <span class="n">start_s</span><span class="o">=</span><span class="n">wanted_span</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">end_s</span><span class="o">=</span><span class="n">wanted_span</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+</span><span id="line-376">        <span class="p">)</span>
+</span><span id="line-377">        <span class="n">verdict</span> <span class="o">=</span> <span class="s2">"replaced"</span>
+</span><span id="line-378">    <span class="n">proposed</span> <span class="o">=</span> <span class="p">[</span><span class="n">service</span><span class="o">.</span><span class="n">edl_json</span><span class="p">(</span><span class="n">e</span><span class="p">)</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">_normalised</span><span class="p">(</span><span class="n">edl</span><span class="p">,</span> <span class="n">wanted_span</span><span class="p">)]</span>
+</span><span id="line-379">    <span class="k">if</span> <span class="n">service</span><span class="o">.</span><span class="n">get_edit</span><span class="p">(</span><span class="n">fp</span><span class="p">,</span> <span class="n">edit_id</span><span class="o">=</span><span class="n">edit</span><span class="p">[</span><span class="s2">"id"</span><span class="p">])[</span><span class="s2">"edl"</span><span class="p">]</span> <span class="o">!=</span> <span class="n">proposed</span><span class="p">:</span>
+</span><span id="line-380">        <span class="n">service</span><span class="o">.</span><span class="n">replace_edit</span><span class="p">(</span><span class="n">fp</span><span class="p">,</span> <span class="n">edit_id</span><span class="o">=</span><span class="n">edit</span><span class="p">[</span><span class="s2">"id"</span><span class="p">],</span> <span class="n">edl</span><span class="o">=</span><span class="n">edl</span><span class="p">)</span>
+</span><span id="line-381">        <span class="n">verdict</span> <span class="o">=</span> <span class="s2">"replaced"</span>
+</span><span id="line-382">    <span class="k">return</span> <span class="n">verdict</span>
+</span><span id="line-383">
+</span><span id="line-384">
+</span><span id="line-385"><span class="k">def</span><span class="w"> </span><span class="nf">_normalised</span><span class="p">(</span><span class="n">edl</span><span class="p">,</span> <span class="n">span</span><span class="p">):</span>
+</span><span id="line-386">    <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.footage.edl</span><span class="w"> </span><span class="kn">import</span> <span class="n">fill_gaps</span>
+</span><span id="line-387">
+</span><span id="line-388">    <span class="k">return</span> <span class="n">fill_gaps</span><span class="p">(</span><span class="n">edl</span><span class="p">,</span> <span class="n">span</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">start</span><span class="o">=</span><span class="n">span</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+</span><span id="line-389">
+</span><span id="line-390">
+</span><span id="line-391"><span class="c1"># -- lyric video -----------------------------------------------------------------</span>
+</span><span id="line-392">
+</span><span id="line-393">
+</span><span id="line-394"><span class="k">def</span><span class="w"> </span><span class="nf">_import_lyric</span><span class="p">(</span><span class="n">production</span><span class="p">,</span> <span class="n">manifest</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">resolve</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+</span><span id="line-395">    <span class="n">report</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{}</span>
+</span><span id="line-396">    <span class="n">song</span> <span class="o">=</span> <span class="n">manifest</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"song"</span><span class="p">)</span>
+</span><span id="line-397">    <span class="k">if</span> <span class="n">song</span><span class="p">:</span>
+</span><span id="line-398">        <span class="n">spec</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"path"</span><span class="p">:</span> <span class="n">song</span><span class="p">}</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">song</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="nb">dict</span><span class="p">(</span><span class="n">song</span><span class="p">)</span>
+</span><span id="line-399">        <span class="n">report</span><span class="p">[</span><span class="s2">"song"</span><span class="p">]</span> <span class="o">=</span> <span class="n">production</span><span class="o">.</span><span class="n">set_song</span><span class="p">(</span>
+</span><span id="line-400">            <span class="n">resolve</span><span class="p">(</span><span class="n">spec</span><span class="p">[</span><span class="s2">"path"</span><span class="p">]),</span> <span class="n">name</span><span class="o">=</span><span class="n">spec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"name"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span>
+</span><span id="line-401">        <span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"artifact_id"</span><span class="p">)</span>
+</span><span id="line-402">    <span class="n">report</span><span class="p">[</span><span class="s2">"sources"</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+</span><span id="line-403">        <span class="n">s</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"name"</span><span class="p">)</span> <span class="ow">or</span> <span class="n">Path</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="s2">"path"</span><span class="p">])</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">production</span><span class="o">.</span><span class="n">add_source</span><span class="p">(</span>
+</span><span id="line-404">            <span class="n">resolve</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="s2">"path"</span><span class="p">]),</span> <span class="n">role</span><span class="o">=</span><span class="n">s</span><span class="p">[</span><span class="s2">"role"</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="n">s</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"name"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span>
+</span><span id="line-405">        <span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"artifact_id"</span><span class="p">)</span>
+</span><span id="line-406">        <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">manifest</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"sources"</span><span class="p">,</span> <span class="p">[])</span>
+</span><span id="line-407">    <span class="p">}</span>
+</span><span id="line-408">    <span class="n">report</span><span class="p">[</span><span class="s2">"renders"</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+</span><span id="line-409">        <span class="n">r</span><span class="p">[</span><span class="s2">"id"</span><span class="p">]:</span> <span class="n">production</span><span class="o">.</span><span class="n">add_render</span><span class="p">(</span>
+</span><span id="line-410">            <span class="n">resolve</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s2">"path"</span><span class="p">]),</span> <span class="n">render_id</span><span class="o">=</span><span class="n">r</span><span class="p">[</span><span class="s2">"id"</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="n">r</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"label"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span>
+</span><span id="line-411">        <span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"artifact_id"</span><span class="p">)</span>
+</span><span id="line-412">        <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">manifest</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"renders"</span><span class="p">,</span> <span class="p">[])</span>
+</span><span id="line-413">    <span class="p">}</span>
+</span><span id="line-414">    <span class="n">report</span><span class="p">[</span><span class="s2">"cover_artifact_id"</span><span class="p">]</span> <span class="o">=</span> <span class="n">production</span><span class="o">.</span><span class="n">refresh_cover</span><span class="p">()</span>
+</span><span id="line-415">    <span class="k">return</span> <span class="n">report</span>
+</span><span id="line-416">
+</span><span id="line-417">
+</span><span id="line-418"><span class="c1"># -- files -------------------------------------------------------------------------</span>
+</span><span id="line-419">
+</span><span id="line-420">
+</span><span id="line-421"><span class="k">def</span><span class="w"> </span><span class="nf">_resolver</span><span class="p">(</span><span class="n">base</span><span class="p">:</span> <span class="n">Path</span><span class="p">):</span>
+</span><span id="line-422">    <span class="k">def</span><span class="w"> </span><span class="nf">resolve</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+</span><span id="line-423">        <span class="n">path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">p</span><span class="p">)</span><span class="o">.</span><span class="n">expanduser</span><span class="p">()</span>
+</span><span id="line-424">        <span class="k">return</span> <span class="n">path</span> <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">is_absolute</span><span class="p">()</span> <span class="k">else</span> <span class="n">base</span> <span class="o">/</span> <span class="n">path</span>
+</span><span id="line-425">
+</span><span id="line-426">    <span class="k">return</span> <span class="n">resolve</span>
+</span><span id="line-427">
+</span><span id="line-428">
+</span><span id="line-429"><span class="k">def</span><span class="w"> </span><span class="nf">_check_files</span><span class="p">(</span><span class="n">manifest</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">resolve</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-430"><span class="w">    </span><span class="sd">"""Every file the manifest names exists AND can be read — checked before anything</span>
+</span><span id="line-431"><span class="sd">    is written. Readability is its own check because macOS can refuse a file that</span>
+</span><span id="line-432"><span class="sd">    plainly exists (a Downloads file carrying an app-scoped ``com.apple.macl`` answers</span>
+</span><span id="line-433"><span class="sd">    ``Operation not permitted``), and finding that halfway through an import leaves a</span>
+</span><span id="line-434"><span class="sd">    half-built project."""</span>
+</span><span id="line-435">    <span class="n">named</span> <span class="o">=</span> <span class="p">[]</span>
+</span><span id="line-436">    <span class="n">song</span> <span class="o">=</span> <span class="n">manifest</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"song"</span><span class="p">)</span>
+</span><span id="line-437">    <span class="k">if</span> <span class="n">song</span><span class="p">:</span>
+</span><span id="line-438">        <span class="n">named</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">song</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">song</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="n">song</span><span class="p">[</span><span class="s2">"path"</span><span class="p">])</span>
+</span><span id="line-439">    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"clips"</span><span class="p">,</span> <span class="s2">"renders"</span><span class="p">,</span> <span class="s2">"sources"</span><span class="p">):</span>
+</span><span id="line-440">        <span class="n">named</span> <span class="o">+=</span> <span class="p">[</span><span class="n">item</span><span class="p">[</span><span class="s2">"path"</span><span class="p">]</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">manifest</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="p">[])]</span>
+</span><span id="line-441">    <span class="n">named</span> <span class="o">+=</span> <span class="p">[</span><span class="n">e</span><span class="p">[</span><span class="s2">"edl_path"</span><span class="p">]</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">manifest</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"edits"</span><span class="p">,</span> <span class="p">[])</span> <span class="k">if</span> <span class="s2">"edl_path"</span> <span class="ow">in</span> <span class="n">e</span><span class="p">]</span>
+</span><span id="line-442">    <span class="n">missing</span> <span class="o">=</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">resolve</span><span class="p">(</span><span class="n">p</span><span class="p">))</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">named</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">resolve</span><span class="p">(</span><span class="n">p</span><span class="p">)</span><span class="o">.</span><span class="n">is_file</span><span class="p">()]</span>
+</span><span id="line-443">    <span class="k">if</span> <span class="n">missing</span><span class="p">:</span>
+</span><span id="line-444">        <span class="k">raise</span> <span class="n">ImportRefused</span><span class="p">(</span><span class="sa">f</span><span class="s2">"missing files: </span><span class="si">{</span><span class="n">missing</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</span><span id="line-445">    <span class="n">unreadable</span> <span class="o">=</span> <span class="p">[]</span>
+</span><span id="line-446">    <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">named</span><span class="p">:</span>
+</span><span id="line-447">        <span class="k">try</span><span class="p">:</span>
+</span><span id="line-448">            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">resolve</span><span class="p">(</span><span class="n">p</span><span class="p">),</span> <span class="s2">"rb"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+</span><span id="line-449">                <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+</span><span id="line-450">        <span class="k">except</span> <span class="ne">OSError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+</span><span id="line-451">            <span class="n">unreadable</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">resolve</span><span class="p">(</span><span class="n">p</span><span class="p">)</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">strerror</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
+</span><span id="line-452">    <span class="k">if</span> <span class="n">unreadable</span><span class="p">:</span>
+</span><span id="line-453">        <span class="k">raise</span> <span class="n">ImportRefused</span><span class="p">(</span><span class="sa">f</span><span class="s2">"unreadable files: </span><span class="si">{</span><span class="n">unreadable</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</span><span id="line-454">
+</span><span id="line-455">
+</span><span id="line-456"><span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"import_production"</span><span class="p">,</span> <span class="s2">"load_manifest"</span><span class="p">,</span> <span class="s2">"ImportRefused"</span><span class="p">,</span> <span class="s2">"edl_from_document"</span><span class="p">]</span>
+</span></code></pre></div>
+    </div></div>
+          </main>
+        </div>
+      </div><footer class="py-6 border-t border-border md:py-0">
+    <div class="container flex flex-col items-center justify-between gap-4 md:h-24 md:flex-row">
+      <div class="flex flex-col items-center gap-4 px-8 md:flex-row md:gap-2 md:px-0">
+        <p class="text-sm leading-loose text-center text-muted-foreground md:text-left"></p>
+</div>
+</div>
+</footer>
+    </div>
+    
+    <script src="../../_static/documentation_options.js?v=cac962a1"></script>
+    <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../../_static/copybutton.js?v=fd10adb8"></script>
+    <script defer="defer" src="../../_static/theme.js?v=5db23cf8"></script>
+    <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
+
+
+
+const initStyles = () => {
+    const defaultStyle = document.createElement('style');
+    defaultStyle.textContent = "pre.mermaid {\n    /* Same as .mermaid-container > pre */\n    display: block;\n    width: 100%;\n}\n\npre.mermaid > svg {\n    /* Same as .mermaid-container > pre > svg */\n    height: 500px;\n    width: 100%;\n    max-width: 100% !important;\n}";
+    document.head.appendChild(defaultStyle);
+
+    const fullscreenStyle = document.createElement('style');
+    fullscreenStyle.textContent = ".mermaid-container {\n    position: relative;\n    display: flex;\n    flex-direction: row;\n    width: 100%;\n}\n\n.mermaid-container > pre {\n    display: block;\n    width: 100%;\n}\n\n.mermaid-container > pre > svg {\n    height: 500px;\n    width: 100%;\n    max-width: 100% !important;\n}\n\n.mermaid-fullscreen-btn {\n    position: absolute;\n    width: 28px;\n    height: 28px;\n    background: rgba(255, 255, 255, 0.95);\n    border: 1px solid rgba(0, 0, 0, 0.3);\n    border-radius: 4px;\n    cursor: pointer;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    transition: all 0.2s;\n    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);\n    font-size: 14px;\n    line-height: 1;\n    padding: 0;\n    color: #333;\n}\n\n.mermaid-fullscreen-btn:hover {\n    opacity: 100% !important;\n    background: rgba(255, 255, 255, 1);\n    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);\n    transform: scale(1.1);\n}\n\n.mermaid-fullscreen-btn.dark-theme {\n    background: rgba(50, 50, 50, 0.95);\n    border: 1px solid rgba(255, 255, 255, 0.3);\n    color: #e0e0e0;\n}\n\n.mermaid-fullscreen-btn.dark-theme:hover {\n    background: rgba(60, 60, 60, 1);\n    box-shadow: 0 3px 10px rgba(255, 255, 255, 0.2);\n}\n\n.mermaid-fullscreen-modal {\n    display: none;\n    position: fixed !important;\n    top: 0 !important;\n    left: 0 !important;\n    width: 95vw;\n    height: 100vh;\n    background: rgba(255, 255, 255, 0.98);\n    z-index: 9999;\n    padding: 20px;\n    overflow: auto;\n}\n\n.mermaid-fullscreen-modal.dark-theme {\n    background: rgba(0, 0, 0, 0.98);\n}\n\n.mermaid-fullscreen-modal.active {\n    display: flex;\n    align-items: center;\n    justify-content: center;\n}\n\n.mermaid-container-fullscreen {\n    position: relative;\n    width: 95vw;\n    height: 90vh;\n    max-width: 95vw;\n    max-height: 90vh;\n    background: white;\n    border-radius: 8px;\n    padding: 20px;\n    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);\n    overflow: auto;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n}\n\n.mermaid-container-fullscreen.dark-theme {\n    background: #1a1a1a;\n    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);\n}\n\n.mermaid-container-fullscreen pre.mermaid {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n}\n\n.mermaid-container-fullscreen .mermaid svg {\n    height: 100% !important;\n    width: 100% !important;\n    cursor: grab;\n}\n\n.mermaid-fullscreen-close {\n    position: fixed !important;\n    top: 20px !important;\n    right: 20px !important;\n    width: 40px;\n    height: 40px;\n    background: rgba(255, 255, 255, 0.95);\n    border: 1px solid rgba(0, 0, 0, 0.2);\n    border-radius: 50%;\n    cursor: pointer;\n    z-index: 10000;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);\n    transition: all 0.2s;\n    font-size: 24px;\n    line-height: 1;\n    color: #333;\n}\n\n.mermaid-fullscreen-close:hover {\n    background: white;\n    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);\n    transform: scale(1.1);\n}\n\n.mermaid-fullscreen-close.dark-theme {\n    background: rgba(50, 50, 50, 0.95);\n    border: 1px solid rgba(255, 255, 255, 0.2);\n    color: #e0e0e0;\n}\n\n.mermaid-fullscreen-close.dark-theme:hover {\n    background: rgba(60, 60, 60, 1);\n    box-shadow: 0 6px 16px rgba(255, 255, 255, 0.2);\n}\n\n.mermaid-fullscreen-modal .mermaid-fullscreen-btn {\n    display: none !important;\n}";
+    document.head.appendChild(fullscreenStyle);
+}
+
+// Detect if page has dark background
+const isDarkTheme = () => {
+    // We use a set of heuristics:
+    // 1. Check for common dark mode classes or attributes
+    // 2. Check computed background color brightness
+    if (document.documentElement.classList.contains('dark') ||
+        document.documentElement.getAttribute('data-theme') === 'dark' ||
+        document.body.classList.contains('dark') ||
+        document.body.getAttribute('data-theme') === 'dark') {
+        // console.log("Dark theme detected via class/attribute");
+        return true;
+    }
+    if (document.documentElement.classList.contains('light') ||
+        document.documentElement.getAttribute('data-theme') === 'light' ||
+        document.body.classList.contains('light') ||
+        document.body.getAttribute('data-theme') === 'light') {
+        // console.log("Light theme detected via class/attribute");
+        return false;
+    }
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        // console.log("Dark theme detected via prefers-color-scheme");
+        return true;
+    }
+    const bgColor = window.getComputedStyle(document.body).backgroundColor;
+    const match = bgColor.match(/rgb\((\d+),\s*(\d+),\s*(\d+)/);
+    if (match) {
+        const r = parseInt(match[1]);
+        const g = parseInt(match[2]);
+        const b = parseInt(match[3]);
+        const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+        // console.log("Background color brightness:", brightness);
+        return brightness < 128;
+    }
+    // console.log("No dark or light theme detected, defaulting to light theme");
+    return false;
+};
+
+let darkTheme = isDarkTheme();
+let modal = null;
+let modalContent = null;
+let previousScrollOffset = [window.scrollX, window.scrollY];
+let _lazyObserver = null;
+let _renderQueue = Promise.resolve();
+let closeModal = () => {};
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modal?.classList.contains('active')) {
+        closeModal();
+    }
+});
+
+// Apply d3 zoom to each SVG. Idempotent: an SVG already wrapped is skipped,
+// so this is safe to call both for the initial batch and for diagrams that
+// render lazily once they become visible.
+const addZoomToSvgs = (svgs) => {
+    svgs.each(function() {
+        if (this.getAttribute('data-zoom-applied') === 'true') return;
+        var svg = d3.select(this);
+        svg.html("<g class='wrapper'>" + svg.html() + "</g>");
+        var inner = svg.select("g");
+        var zoom = d3.zoom().on("zoom", function(event) {
+            inner.attr("transform", event.transform);
+        });
+        svg.call(zoom);
+        this.setAttribute('data-zoom-applied', 'true');
+    });
+};
+
+const runMermaid = async (rerun) => {
+    console.log("Running mermaid diagrams, rerun =", rerun);
+    // clear all existing mermaid charts
+    let all_mermaids = document.querySelectorAll(".mermaid");
+
+    if (rerun) {
+        // Disconnect any previous lazy rendering observer
+        if (_lazyObserver) {
+            _lazyObserver.disconnect();
+            _lazyObserver = null;
+        }
+
+        all_mermaids.forEach((el) => {
+            el.removeAttribute('data-mermaid-deferred');
+            el.removeAttribute('data-mermaid-render-failed');
+            if(!el.hasAttribute("data-original-code")) {
+                // store original code
+                // console.log(`Storing original code for first run: `, el.innerHTML);
+                el.setAttribute('data-original-code', el.innerHTML);
+            }
+            if(el.getAttribute("data-processed") === "true") {
+                // remove and restore original
+                el.removeAttribute("data-processed");
+                // console.log(`Restoring original code for re-run: `, el.getAttribute('data-original-code'));
+                el.innerHTML = el.getAttribute('data-original-code');
+            } else {
+                // store original code
+                // console.log(`Storing original code for re-run: `, el.innerHTML);
+                el.setAttribute('data-original-code', el.innerHTML);
+            }
+        });
+
+        // Separate visible and hidden elements. Mermaid's layout engine measures
+        // text dimensions via the DOM, which fails for elements hidden by a parent
+        // (e.g., Reveal.js non-active slides, sphinx-design unopened tabs),
+        // producing broken SVGs. Render visible elements now, defer hidden ones.
+        const visible = [];
+        const hidden = [];
+        all_mermaids.forEach((el) => {
+            // offsetParent is null for display:none ancestors.
+            // getClientRects().length > 0 catches position:fixed elements
+            // (which also have null offsetParent but are still visible).
+            if (el.offsetParent !== null || el.getClientRects().length > 0) {
+                visible.push(el);
+            } else {
+                hidden.push(el);
+                el.setAttribute('data-mermaid-deferred', 'true');
+            }
+        });
+
+        if (visible.length > 0) {
+            try {
+                await mermaid.run({ nodes: visible });
+            } catch (e) {
+                console.error("Mermaid rendering failed:", e);
+            }
+        }
+
+        // Lazily render hidden elements when they become visible.
+        // Uses a promise chain (_renderQueue) to serialize rendering,
+        // since IntersectionObserver may report multiple entries at once
+        // and mermaid.run() is not safe to call concurrently.
+        if (hidden.length > 0) {
+            if (typeof IntersectionObserver === 'undefined') {
+                console.warn("IntersectionObserver not available; hidden mermaid diagrams will not render.");
+            } else {
+                _renderQueue = Promise.resolve();
+                _lazyObserver = new IntersectionObserver((entries) => {
+                    for (const entry of entries) {
+                        if (entry.isIntersecting && entry.target.getAttribute("data-processed") !== "true") {
+                            _lazyObserver.unobserve(entry.target);
+                            const el = entry.target;
+                            _renderQueue = _renderQueue.then(async () => {
+                                try {
+                                    await mermaid.run({ nodes: [el] });
+                                    el.removeAttribute('data-mermaid-deferred');
+                                    // Apply zoom to the now-rendered diagram, matching
+                                    // the decoration visible diagrams receive.
+                                    if (false) {
+                                        addZoomToSvgs(d3.selectAll("").select(function() {
+                                            return this.querySelector("svg");
+                                        }));
+                                    }
+                                } catch (e) {
+                                    console.error("Mermaid deferred rendering failed:", e);
+                                    el.removeAttribute('data-mermaid-deferred');
+                                    el.setAttribute('data-mermaid-render-failed', 'true');
+                                }
+                            });
+                        }
+                    }
+                });
+                hidden.forEach((el) => _lazyObserver.observe(el));
+            }
+        }
+    }
+
+    all_mermaids = document.querySelectorAll(".mermaid");
+    // Exclude deferred (hidden) and render-failed elements from completion checks
+    const mermaids_active = document.querySelectorAll(".mermaid:not([data-mermaid-deferred]):not([data-mermaid-render-failed])");
+    const mermaids_processed = document.querySelectorAll(".mermaid:not([data-mermaid-deferred]):not([data-mermaid-render-failed])[data-processed='true']");
+
+    if (false) {
+        const mermaids_to_add_zoom = 0 === -1 ? mermaids_active.length : 0;
+        if(mermaids_to_add_zoom > 0) {
+            var svgs = d3.selectAll("").select(function() {
+                return this.querySelector("svg");
+            });
+            // Wait until every active (visible) diagram has rendered. Deferred
+            // diagrams are excluded, so a fixed d3_node_count that counts a
+            // hidden diagram no longer loops forever waiting for its SVG.
+            if(mermaids_active.length !== mermaids_processed.length) {
+                setTimeout(() => runMermaid(false), 200);
+                return;
+            }
+            addZoomToSvgs(svgs);
+        }
+    } else if(mermaids_active.length !== mermaids_processed.length) {
+        // Wait for mermaid to process all diagrams
+        setTimeout(() => runMermaid(false), 200);
+        return;
+    }
+
+    // Stop here if not adding fullscreen capability
+    if (!true) return;
+
+    if (modal !== null ) {
+        // Destroy existing modal
+        modal.remove();
+        modal = null;
+        modalContent = null;
+    }
+
+    modal = document.createElement('div');
+    modal.className = 'mermaid-fullscreen-modal' + (darkTheme ? ' dark-theme' : '');
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-label', 'Fullscreen diagram viewer');
+    modal.innerHTML = `
+        <button class="mermaid-fullscreen-close${darkTheme ? ' dark-theme' : ''}" aria-label="Close fullscreen">✕</button>
+        <div class="mermaid-container-fullscreen${darkTheme ? ' dark-theme' : ''}"></div>
+    `;
+    document.body.appendChild(modal);
+
+    modalContent = modal.querySelector('.mermaid-container-fullscreen');
+    const closeBtn = modal.querySelector('.mermaid-fullscreen-close');
+
+    closeModal = () => {
+        modal.classList.remove('active');
+        modalContent.innerHTML = '';
+        document.body.style.overflow = ''
+        window.scrollTo({left: previousScrollOffset[0], top: previousScrollOffset[1], behavior: 'instant'});
+    };
+
+    closeBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
+    document.querySelectorAll('.mermaid').forEach((mermaidDiv) => {
+        if (mermaidDiv.parentNode.classList.contains('mermaid-container') ||
+            mermaidDiv.closest('.mermaid-fullscreen-modal')) {
+            // Already processed, adjust button class if needed
+            const existingBtn = mermaidDiv.parentNode.querySelector('.mermaid-fullscreen-btn');
+            if (existingBtn) {
+                existingBtn.className = 'mermaid-fullscreen-btn' + (darkTheme ? ' dark-theme' : '');
+            }
+            return;
+        }
+
+        const container = document.createElement('div');
+        container.className = 'mermaid-container';
+        mermaidDiv.parentNode.insertBefore(container, mermaidDiv);
+        container.appendChild(mermaidDiv);
+
+        const fullscreenBtn = document.createElement('button');
+        fullscreenBtn.className = 'mermaid-fullscreen-btn' + (darkTheme ? ' dark-theme' : '');
+        fullscreenBtn.setAttribute('aria-label', 'View diagram in fullscreen');
+        fullscreenBtn.textContent = "\u26f6";
+        fullscreenBtn.style.opacity = "50%";
+
+        // Calculate dynamic position based on diagram's margin and padding
+        const diagramStyle = window.getComputedStyle(mermaidDiv);
+        const marginTop = parseFloat(diagramStyle.marginTop) || 0;
+        const marginRight = parseFloat(diagramStyle.marginRight) || 0;
+        const paddingTop = parseFloat(diagramStyle.paddingTop) || 0;
+        const paddingRight = parseFloat(diagramStyle.paddingRight) || 0;
+        fullscreenBtn.style.top = `${marginTop + paddingTop + 4}px`;
+        fullscreenBtn.style.right = `${marginRight + paddingRight + 4}px`;
+
+        fullscreenBtn.addEventListener('click', () => {
+            previousScrollOffset = [window.scrollX, window.scrollY];
+            const clone = mermaidDiv.cloneNode(true);
+            modalContent.innerHTML = '';
+            modalContent.appendChild(clone);
+
+            const svg = clone.querySelector('svg');
+            if (svg) {
+                svg.removeAttribute('width');
+                svg.removeAttribute('height');
+                svg.style.width = '100%';
+                svg.style.height = 'auto';
+                svg.style.maxWidth = '100%';
+                svg.style.display = 'block';
+
+                if (false) {
+                    setTimeout(() => {
+                        const g = svg.querySelector('g');
+                        if (g) {
+                            var svgD3 = d3.select(svg);
+                            svgD3.html("<g class='wrapper'>" + svgD3.html() + "</g>");
+                            var inner = svgD3.select("g");
+                            var zoom = d3.zoom().on("zoom", function(event) {
+                                inner.attr("transform", event.transform);
+                            });
+                            svgD3.call(zoom);
+                        }
+                    }, 100);
+                }
+            }
+
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        });
+        container.appendChild(fullscreenBtn);
+    });
+};
+
+
+
+const load = async () => {
+    initStyles();
+
+
+    await runMermaid(true);
+
+    const reRunIfThemeChanges = async () => {
+        const newDarkTheme = isDarkTheme();
+        if (newDarkTheme !== darkTheme) {
+            darkTheme = newDarkTheme;
+            console.log("Theme change detected, re-running mermaid with", darkTheme ? "dark" : "default", "theme");
+            await mermaid.initialize(
+                {...{"startOnLoad": false},
+                ...{ darkMode: darkTheme, theme: darkTheme ? "dark" : "default" },
+                }
+            );
+            await runMermaid(true);
+        }
+    };
+
+    // Update theme classes when theme changes
+    const themeObserver = new MutationObserver(reRunIfThemeChanges);
+    themeObserver.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['class', 'style', 'data-theme']
+    });
+    themeObserver.observe(document.body, {
+        attributes: true,
+        attributeFilter: ['class', 'style', 'data-theme']
+    });
+};
+
+
+
+
+
+console.log("Initializing mermaid with", darkTheme ? "dark" : "default", "theme");
+mermaid.initialize(
+    {...{"startOnLoad": false},
+    ...{ darkMode: darkTheme, theme: darkTheme ? "dark" : "default" },
+    }
+);
+
+window.addEventListener("load", load);
+window.runMermaid = runMermaid;</script>
+    
+</body>
+
+</html>

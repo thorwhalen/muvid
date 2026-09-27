@@ -43,6 +43,7 @@ implicitly, so spans stay one-per-song-span and nothing about reading an EDL cha
 | [`MIN_CONFIDENCE`](#muvid.footage.edl.MIN_CONFIDENCE)      | Below this, a whole-clip correlation coefficient does not vouch for its offset (env `MUVID_FOOTAGE_MIN_CONFIDENCE`).                                                                                                                                            |
 | [`MIN_SUPPORT`](#muvid.footage.edl.MIN_SUPPORT)         | Support must EXCEED this for an offset to be vouched for (env `MUVID_FOOTAGE_MIN_SUPPORT`).                                                                                                                                                                     |
 | [`MIN_MARGIN`](#muvid.footage.edl.MIN_MARGIN)          | Margin must EXCEED this for an offset to be vouched for (env `MUVID_FOOTAGE_MIN_MARGIN`).                                                                                                                                                                       |
+| [`MEASURED`](#muvid.footage.edl.MEASURED)            | the aligner found the offset, or a person set it.                                                                                                                                                                                                               |
 | [`NO_VOUCHED_COVERAGE`](#muvid.footage.edl.NO_VOUCHED_COVERAGE) | nothing the aligner vouches for covers it at all.                                                                                                                                                                                                               |
 | [`UNVOUCHED_SELECTION`](#muvid.footage.edl.UNVOUCHED_SELECTION) | A vouched clip DOES cover the span and the strategy cut to an unvouched one anyway — so the loss is the SELECTOR's, not the footage's.                                                                                                                          |
 | [`EXCLUSION_REASONS`](#muvid.footage.edl.EXCLUSION_REASONS)   | Every reason [`exclude_unvouched()`](#muvid.footage.edl.exclude_unvouched) can give, for a caller matching on the value.                                                                                                                                 |
@@ -53,7 +54,7 @@ implicitly, so spans stay one-per-song-span and nothing about reading an EDL cha
 | [`derive_cuts`](#muvid.footage.edl.derive_cuts)(edl, alignments, clip_paths)         | Turn a *validated* EDL into render-ready cuts — the ONE place `clip_in` is derived.   |
 |---------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------|
 | [`exclude_unvouched`](#muvid.footage.edl.exclude_unvouched)(edl, alignments)               | Set aside the spans of an AUTO edit whose only footage is unvouched (muvid#88).       |
-| [`fill_gaps`](#muvid.footage.edl.fill_gaps)(entries, song_duration)                | Make an edit span the WHOLE song by inserting explicit gap entries.                   |
+| [`fill_gaps`](#muvid.footage.edl.fill_gaps)(entries, song_duration, \*[, start])   | Make an edit span the WHOLE song by inserting explicit gap entries.                   |
 | [`validate_edl`](#muvid.footage.edl.validate_edl)(edl, alignments, song_duration, \*) | Validate an EDL (from a strategy OR a caller) — the ONE gate before any cutting.      |
 | [`vouches_for`](#muvid.footage.edl.vouches_for)(\*, confidence, support[, ...])      | Does the aligner vouch for this offset? The ONE place that verdict is reached.        |
 
@@ -276,7 +277,7 @@ JSON-ready. `support`/`margin` stay `None` — “not measured” is not zero.
 * **Return type:**
   [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
 
-### *class* muvid.footage.edl.FootageAlignment(clip_id, offset_s, confidence, duration_s, coverage, overlaps=True, support=None, reliable=True, window_s=None, hop_s=None, margin=None)
+### *class* muvid.footage.edl.FootageAlignment(clip_id, offset_s, confidence, duration_s, coverage, overlaps=True, support=None, reliable=True, window_s=None, hop_s=None, margin=None, source='measured')
 
 Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
@@ -312,6 +313,18 @@ and not to be cut to without the caller saying so” — see
 Defaults True for a record built in code; a record read from disk that predates
 the field gets its verdict DERIVED instead (see `from_dict()`), never
 assumed.
+
+#### source *: [str](https://docs.python.org/3/builtins/stdtypes.html#str)* *= 'measured'*
+
+[`MEASURED`](#muvid.footage.edl.MEASURED) (the aligner found it by audio) or
+`DECLARED` (a person set it — `muvid.footage.service.set_offset`). A
+declared record carries `reliable=True` because a person vouched for it, and
+`confidence=1.0` / `support=None` because no measurement was made; read
+`source` before reading either as evidence. Records on disk that predate the
+field were all written by the aligner, so it defaults to measured.
+
+* **Type:**
+  How the offset is KNOWN
 
 #### support *: [float](https://docs.python.org/3/builtins/functions.html#float) | [None](https://docs.python.org/3/builtins/constants.html#None)* *= None*
 
@@ -467,6 +480,13 @@ How many times the delivery canvas a `look` may ask for, PER DIMENSION
 Bigger than the canvas is never useful — the delivered frame IS the canvas, so
 anything past it is resampled straight back down — which is why a *small*
 multiple is the whole of the legitimate range.
+
+### muvid.footage.edl.MEASURED *= 'measured'*
+
+the aligner found the offset, or a person set it.
+
+* **Type:**
+  `FootageAlignment.source` values
 
 ### muvid.footage.edl.MIN_CONFIDENCE *= 0.1*
 
@@ -736,9 +756,14 @@ Returns `(entries, excluded)`.
 * **Return type:**
   [`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`EdlEntry`](#muvid.footage.edl.EdlEntry)], [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`ExcludedSpan`](#muvid.footage.edl.ExcludedSpan)]]
 
-### muvid.footage.edl.fill_gaps(entries, song_duration)
+### muvid.footage.edl.fill_gaps(entries, song_duration, , start=0.0)
 
 Make an edit span the WHOLE song by inserting explicit gap entries.
+
+`start` (default 0) and `song_duration` bound the span being filled: an edit
+that covers only PART of the song (a named edit’s `span`) fills `[start,
+song_duration]` with `song_duration` passed as the span’s END, and an entry
+outside that span is refused like one outside the song.
 
 Three holes become gap entries (muvid#21 items 1+2, one mechanism): the head
 (`[0, first.song_start]` — without this, footage starting at t=5 s silently loses
