@@ -193,6 +193,7 @@ def add_clip(
     fp.add_clip(cid, str(src), ext=_ext_of(ext, filename, src), name=label)
     _record_clip_duration(fp, cid, dur)
     _ensure_cover(fp)
+    _prepare_filmstrip(fp, cid)
     out = {"clip_id": cid, "name": label, "duration": round(dur, 2)}
     row = next((c for c in fp.list_clips() if c["clip_id"] == cid), {})
     if row.get("artifact_id"):
@@ -631,8 +632,12 @@ def beat_grid(fp) -> dict:
     Needs a song; no alignment is required.
 
     Returns ``tempo_bpm``, ``beats`` (seconds, ascending), ``n_beats``,
-    ``song_duration`` and ``source``. ``downbeats`` is present only when the estimator
-    measured any — an empty list would read as "no downbeats", a measurement nobody made.
+    ``song_duration`` and ``source``, and for numbering bars: ``downbeats`` (the beats
+    that start a bar), ``downbeats_source`` — ``measured`` (the estimator found them),
+    ``derived`` (the beat phase carrying the most onset energy, ``beats_per_bar`` beats
+    to a bar — muvid.montage's rule) or ``first_beat`` (no onset energy to vote with, so
+    bars start on the first beat) — ``beats_per_bar`` and ``bar_of_beat`` (each beat's
+    bar number, 1 for the first bar, 0 for a pickup before it).
     """
     if not fp.has_song():
         raise FootageError("no song set — call set_song first")
@@ -646,10 +651,34 @@ def beat_grid(fp) -> dict:
         "song_duration": fp.song_duration(),
         "source": source,
     }
-    downbeats = list(record.get("downbeat_times") or [])
-    if downbeats:  # measured → reported; unmeasured → absent (never an empty list)
-        reply["downbeats"] = downbeats
+    reply.update(_bars(beats, record))
     return reply
+
+
+#: Beats to a bar when the estimator does not say (4/4, as muvid.montage assumes).
+BEATS_PER_BAR = 4
+
+
+def _bars(beats: list, record: dict) -> dict:
+    """The bar numbering of a grid: measured downbeats when there are any, else the
+    onset-energy vote over the beat phases, else the first beat (said which)."""
+    import bisect
+
+    measured = list(record.get("downbeat_times") or [])
+    if measured:
+        downbeats, source = measured, "measured"
+    else:
+        from muvid.montage.analysis import downbeats_from_beats
+
+        energy = list(record.get("onset_at_beats") or [])
+        downbeats = list(downbeats_from_beats(beats, energy, BEATS_PER_BAR))
+        source = "derived" if energy else "first_beat"
+    return {
+        "downbeats": downbeats,
+        "downbeats_source": source,
+        "beats_per_bar": BEATS_PER_BAR,
+        "bar_of_beat": [bisect.bisect_right(downbeats, t + 1e-9) for t in beats],
+    }
 
 
 def _beat_grid_record(fp, *, song_hash: str) -> tuple[str, dict]:
@@ -724,10 +753,25 @@ def _compute_beat_grid(fp, *, cache_path: Path, song_hash: str) -> dict:
         "downbeat_times": [
             round(float(t), _BEAT_TIME_DECIMALS) for t in grid.downbeat_times
         ],
+        # the onset energy AT each beat — what the downbeat vote reads (bar numbers)
+        "onset_at_beats": _onset_at_beats(grid),
         "computed_at": time.time(),
     }
     _write_json_quietly(cache_path, record)
     return record
+
+
+def _onset_at_beats(grid) -> list:
+    """The estimator's onset envelope sampled at each beat (``[]`` when it has none)."""
+    env = getattr(grid, "onset_env", None)
+    hop = getattr(grid, "onset_hop_s", None)
+    if env is None or not hop or not len(env):
+        return []
+    last = len(env) - 1
+    return [
+        round(float(env[min(last, max(0, round(float(t) / hop)))]), 4)
+        for t in grid.beat_times
+    ]
 
 
 def _write_json_quietly(path: Path, record: dict) -> None:
@@ -1469,6 +1513,72 @@ def _named_look(fp, spec: dict, *, duration_s: float):
     return resolved, fragment
 
 
+def filmstrips(fp) -> dict:
+    """Every video's filmstrip — thumbnails to draw each camera's lane.
+
+    Per clip: sprite sheets of ``frame_w`` x ``frame_h`` frames (``cols`` x ``rows`` to
+    a sheet, left to right then down), sampled at ``fps`` frames per second of the
+    CLIP's own time — frame ``i`` is the clip at ``i / fps`` s, which sits at song time
+    ``offset + i / fps``. Each sheet is an ``artifact_id`` (when the project is hosted),
+    with its ``first_frame`` and ``n_frames``. Made once per clip and kept; a clip that
+    has none yet takes a few seconds the first time.
+
+    Returns ``{fps, clips: {clip_id: {duration_s, n_frames, frame_w, frame_h, sheets:
+    [{artifact_id, cols, rows, first_frame, n_frames}]}}}``.
+    """
+    from muvid.footage.media_views import FILMSTRIP_FPS
+
+    return {
+        "fps": FILMSTRIP_FPS,
+        "clips": {c["clip_id"]: _filmstrip(fp, c["clip_id"]) for c in fp.list_clips()},
+    }
+
+
+def filmstrip(fp, *, clip_id: str) -> dict:
+    """One video's filmstrip (the same record ``filmstrips`` gives per clip, with its
+    ``clip_id`` and ``fps``)."""
+    from muvid.footage.media_views import FILMSTRIP_FPS
+
+    known = fp.list_clips()
+    if clip_id not in {c["clip_id"] for c in known}:
+        raise FootageError(_unknown_clip_message(clip_id, known))
+    return {"clip_id": clip_id, "fps": FILMSTRIP_FPS, **_filmstrip(fp, clip_id)}
+
+
+def _filmstrip(fp, clip_id: str) -> dict:
+    from muvid.footage.media_views import clip_filmstrip
+    from muvid.visualize.ffmpeg import FfmpegError
+
+    try:
+        return clip_filmstrip(fp, clip_id)
+    except (FfmpegError, ValueError) as e:
+        raise FootageError(
+            f"could not read video {clip_id!r} for its filmstrip: {e}"
+        ) from e
+
+
+def peaks(fp, *, n: int = 2000) -> dict:
+    """The song's waveform, to draw under the timeline: ``n`` equal slices of the song,
+    each the loudest moment in it (mono), scaled so the loudest slice is 1.0.
+
+    Returns ``{duration_s, n, peaks: [0..1, ...]}``; slice ``i`` covers song time
+    ``i * duration_s / n`` to ``(i + 1) * duration_s / n``. Kept per song and ``n``.
+    """
+    from muvid.footage.media_views import PEAKS_MAX_N, PEAKS_MIN_N, song_peaks
+    from muvid.visualize.ffmpeg import FfmpegError
+
+    if not fp.has_song():
+        raise FootageError("no song set — call set_song first")
+    if not PEAKS_MIN_N <= int(n) <= PEAKS_MAX_N:
+        raise FootageError(
+            f"n must be between {PEAKS_MIN_N} and {PEAKS_MAX_N}, got {n}"
+        )
+    try:
+        return song_peaks(fp, n=int(n))
+    except FfmpegError as e:
+        raise FootageError(f"could not read the song for its waveform: {e}") from e
+
+
 def looks(fp=None) -> dict:
     """The looks a cut can take — camera moves (punch in, slow push, slow pull, pans)
     and grades (vivid, black and white, posterize, cartoon) — each with its
@@ -1574,10 +1684,55 @@ def set_span(fp, *, edit_id: str, start_s: float, end_s: float) -> dict:
     """
     record, _entries = _edit_entries(fp, edit_id)
     span = _check_span(fp, (start_s, end_s))
+    previous = record
     record = dict(record, modified=time.time())
     _set_or_pop(record, "span", list(span) if span else None)
-    fp.write_edit(record["edit_id"], record)
+    _commit(fp, previous, record)
     return _edit_reply(fp, record)
+
+
+#: How many earlier versions of one edit are kept for ``undo_edit`` (env-tunable).
+EDIT_HISTORY_LIMIT = int(os.environ.get("MUVID_EDIT_HISTORY_LIMIT", "100"))
+
+
+def _commit(fp, previous: dict, record: dict) -> None:
+    """Write ``record`` over ``previous``, keeping ``previous`` for undo (and clearing
+    redo — a new change forks the history). Callers hold the edits lock."""
+    history = fp.read_edit_history(record["edit_id"])
+    history["undo"] = (history["undo"] + [previous])[-EDIT_HISTORY_LIMIT:]
+    history["redo"] = []
+    fp.write_edit_history(record["edit_id"], history)
+    fp.write_edit(record["edit_id"], record)
+
+
+def _step_history(fp, edit_id: str, *, back: bool) -> dict:
+    current = _read_edit(fp, edit_id)
+    history = fp.read_edit_history(edit_id)
+    source, dest = ("undo", "redo") if back else ("redo", "undo")
+    if not history[source]:
+        raise FootageError(
+            f"nothing to {'undo' if back else 'redo'} on edit {edit_id!r}"
+        )
+    restored = dict(history[source].pop(), edit_id=edit_id)
+    history[dest] = (history[dest] + [current])[-EDIT_HISTORY_LIMIT:]
+    fp.write_edit_history(edit_id, history)
+    fp.write_edit(edit_id, restored)
+    return _edit_reply(fp, restored)
+
+
+@_edits_locked
+def undo_edit(fp, *, edit_id: str) -> dict:
+    """Undo the last change to a saved edit (a cut changed, split, joined, the span, a
+    whole replacement — by a person or by the assistant). Returns the edit as it now
+    is; ``redo_edit`` puts the change back. Up to 100 changes are kept per edit."""
+    return _step_history(fp, edit_id, back=True)
+
+
+@_edits_locked
+def redo_edit(fp, *, edit_id: str) -> dict:
+    """Redo the change ``undo_edit`` last took back. A new change after an undo
+    discards what could be redone. Returns the edit as it now is."""
+    return _step_history(fp, edit_id, back=False)
 
 
 def _set_or_pop(d: dict, key: str, value) -> None:
@@ -1679,8 +1834,9 @@ def _validated_entries(fp, edl) -> list:
 
 def _store_changed(fp, record: dict, entries, *, changed: Optional[int] = None) -> dict:
     validated = _validated_entries(fp, entries)
+    previous = record
     record = dict(record, edl=[edl_json(e) for e in validated], modified=time.time())
-    fp.write_edit(record["edit_id"], record)
+    _commit(fp, previous, record)
     reply = _edit_reply(fp, record)
     if changed is not None:
         reply["changed"] = changed
@@ -1735,7 +1891,14 @@ def _edit_summary(fp, record: dict) -> dict:
         "span": _effective_span(fp, record),
         "problem": problem,
         "unreliable": unreliable,
+        **_history_flags(fp, record["edit_id"]),
     }
+
+
+def _history_flags(fp, edit_id: str) -> dict:
+    read = getattr(fp, "read_edit_history", None)
+    history = read(edit_id) if read is not None else {"undo": [], "redo": []}
+    return {"can_undo": bool(history["undo"]), "can_redo": bool(history["redo"])}
 
 
 def _effective_span(fp, record: dict) -> Optional[list]:
@@ -2302,6 +2465,24 @@ def refresh_cover(fp) -> Optional[str]:
         return fp.set_cover(tmp, taken_from=taken_from)
 
 
+def _prepare_filmstrip(fp, clip_id: str) -> None:
+    """Make a hosted clip's filmstrip at ingest, so the Edit tab opens with it.
+
+    Only where a host will draw it (a catalog), and a clip ffmpeg cannot sample is
+    left without one — ``filmstrips`` retries and reports it then; failing an upload
+    over thumbnails would lose the clip for the sake of its preview.
+    """
+    if getattr(fp, "media_catalog", None) is None:
+        return
+    from muvid.footage.media_views import clip_filmstrip
+    from muvid.visualize.ffmpeg import FfmpegError
+
+    try:
+        clip_filmstrip(fp, clip_id)
+    except (FfmpegError, ValueError):  # retried, and reported, by `filmstrips`
+        pass
+
+
 def _ensure_cover(fp) -> None:
     """A cover as soon as there is a picture to take it from, and not replaced after."""
     if getattr(fp, "media_catalog", None) is not None and fp.cover_info() is None:
@@ -2395,6 +2576,9 @@ FOOTAGE_OP_SPECS: tuple[OpSpec, ...] = (
     OpSpec("clear_offset", "Forget where I placed this video", "destroy"),
     OpSpec("timeline", "Show which videos cover which parts of the song", "read"),
     OpSpec("beat_grid", "Find the beat", "read"),
+    OpSpec("peaks", "Show the song's waveform", "read"),
+    OpSpec("filmstrips", "Show the videos' filmstrips", "read"),
+    OpSpec("filmstrip", "Show one video's filmstrip", "read"),
     OpSpec(
         "score",
         "Look at the footage",
@@ -2414,6 +2598,8 @@ FOOTAGE_OP_SPECS: tuple[OpSpec, ...] = (
     OpSpec("merge_cut", "Join a cut to its neighbour", "write"),
     OpSpec("set_span", "Choose which part of the song the video covers", "write"),
     OpSpec("looks", "List the looks", "read"),
+    OpSpec("undo_edit", "Undo", "write"),
+    OpSpec("redo_edit", "Redo", "write"),
     OpSpec("delete_edit", "Delete an edit", "destroy"),
     OpSpec(
         "render",

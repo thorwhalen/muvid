@@ -1193,3 +1193,127 @@ def test_a_cancelled_render_stops_between_cuts_and_leaves_nothing(tmp_path):
     assert not list((fp.root / "renders").glob("*/final.mp4"))
     with pytest.raises(FootageCancelled):
         service.render(fp, edit_id="e", should_cancel=lambda: True)
+
+
+# -- the Edit tab: filmstrips, peaks, bars, undo/redo ---------------------------------
+
+
+@needs_ffmpeg
+def test_filmstrips_peaks_are_made_once_and_registered(tmp_path):
+    import time
+
+    import muvid
+
+    muvid.create_project_at(tmp_path, "mv")
+    project = muvid.Project(tmp_path / "mv")
+    fp = project.footage
+    service.set_song(fp, path=str(_tone(tmp_path / "s.wav", seconds=6.0)))
+    # a portrait and a landscape camera: frame_w is per clip
+    service.add_clip(
+        fp,
+        path=str(_video(tmp_path / "p.mp4", seconds=61.0, size="180x320")),
+        clip_id="p",
+    )
+    service.add_clip(fp, path=str(_video(tmp_path / "l.mp4", seconds=4.0)), clip_id="l")
+    t0 = time.time()
+    out = service.filmstrips(fp)
+    assert time.time() - t0 < 1.0  # made at ingest; this is a cache read
+    assert out["fps"] == 2.0 and set(out["clips"]) == {"p", "l"}
+    p = out["clips"]["p"]
+    assert (p["frame_h"], p["n_frames"]) == (90, 122)
+    assert p["frame_w"] < out["clips"]["l"]["frame_w"]  # 50 vs 120: aspects differ
+    assert [(s["first_frame"], s["n_frames"], s["rows"]) for s in p["sheets"]] == [
+        (0, 100, 10),
+        (100, 22, 3),
+    ]
+    assert all(project.media_catalog.has(s["artifact_id"]) for s in p["sheets"])
+    assert service.filmstrip(fp, clip_id="p") == {"clip_id": "p", "fps": 2.0, **p}
+    with pytest.raises(FootageError, match="unknown clip_id"):
+        service.filmstrip(fp, clip_id="zz")
+
+    wave = service.peaks(fp, n=50)
+    assert wave["n"] == 50 and len(wave["peaks"]) == 50
+    assert max(wave["peaks"]) == 1.0 and min(wave["peaks"]) >= 0.0
+    assert wave["duration_s"] == pytest.approx(6.0, abs=0.05)
+    assert service.peaks(fp, n=50) == wave  # cached
+    with pytest.raises(FootageError, match="between"):
+        service.peaks(fp, n=0)
+
+
+def test_beat_grid_numbers_bars(fp, monkeypatch):
+    from types import SimpleNamespace
+
+    import numpy as np
+
+    beats = [0.5 * i for i in range(1, 11)]
+    env = np.zeros(200)
+    for t in beats[1::4]:  # the 2nd beat of every 4 carries the onsets
+        env[int(round(t / 0.05))] = 1.0
+    monkeypatch.setattr(
+        "mixing.audio.beat_grid",
+        lambda audio, **kw: SimpleNamespace(
+            beat_times=beats,
+            downbeat_times=[],
+            tempo_bpm=120.0,
+            onset_env=env,
+            onset_hop_s=0.05,
+        ),
+    )
+    monkeypatch.setattr(service, "_read_beat_grid_cache", lambda *a: None)
+    grid = service.beat_grid(fp)
+    assert grid["downbeats_source"] == "derived" and grid["beats_per_bar"] == 4
+    assert grid["downbeats"] == [1.0, 3.0, 5.0]
+    assert grid["bar_of_beat"] == [0, 1, 1, 1, 1, 2, 2, 2, 2, 3]
+
+
+def test_undo_and_redo_edits(fp):
+    service.save_edit(fp, edl=_edl_ab(), edit_id="e")
+    first = service.get_edit(fp, edit_id="e")
+    assert (first["can_undo"], first["can_redo"]) == (False, False)
+    with pytest.raises(FootageError, match="nothing to undo"):
+        service.undo_edit(fp, edit_id="e")
+    split = service.split_cut(fp, edit_id="e", at_s=6.0)
+    assert split["can_undo"] and not split["can_redo"]
+    spanned = service.set_span(fp, edit_id="e", start_s=2.0, end_s=20.0)
+    back = service.undo_edit(fp, edit_id="e")
+    assert back["edl"] == split["edl"] and back["span"] == [0.0, SONG_S]
+    assert back["can_undo"] and back["can_redo"]
+    back = service.undo_edit(fp, edit_id="e")
+    assert back["edl"] == first["edl"] and not back["can_undo"]
+    again = service.redo_edit(fp, edit_id="e")
+    assert again["edl"] == split["edl"]
+    # a new change after an undo forks: redo is gone
+    service.merge_cut(fp, edit_id="e", index=1, into="previous")
+    assert not service.get_edit(fp, edit_id="e")["can_redo"]
+    assert spanned["span"] == [2.0, 20.0]
+
+
+def test_history_is_bounded(fp, monkeypatch):
+    monkeypatch.setattr(service, "EDIT_HISTORY_LIMIT", 3)
+    service.save_edit(fp, edl=_edl_ab(), edit_id="e")
+    for start in (1.0, 2.0, 3.0, 4.0, 5.0):
+        service.set_span(fp, edit_id="e", start_s=start, end_s=20.0)
+    for _ in range(3):
+        service.undo_edit(fp, edit_id="e")
+    assert service.get_edit(fp, edit_id="e")["span"] == [2.0, 20.0]
+    with pytest.raises(FootageError, match="nothing to undo"):
+        service.undo_edit(fp, edit_id="e")
+
+
+@needs_ffmpeg
+def test_each_filmstrip_sheet_holds_its_own_frames(tmp_path):
+    """Every sheet is a different stretch of the clip — a bug once wrote the clip's
+    last tile over all of them."""
+    import hashlib
+
+    from muvid.footage.media_views import _make_filmstrip
+
+    clip = _video(tmp_path / "c.mp4", seconds=120.0)
+    index = _make_filmstrip(
+        clip, tmp_path / "strip", fps=2, height=90, cols=10, rows=10
+    )
+    digests = [
+        hashlib.sha256((tmp_path / "strip" / s["file"]).read_bytes()).hexdigest()
+        for s in index["sheets"]
+    ]
+    assert len(digests) == 3 and len(set(digests)) == 3

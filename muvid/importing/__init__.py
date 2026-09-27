@@ -201,6 +201,8 @@ def _import_footage(fp, manifest: Mapping, resolve) -> dict:
         for r in manifest.get("renders", [])
     }
     report["cover_artifact_id"] = service.refresh_cover(fp)
+    strips = service.filmstrips(fp)["clips"] if fp.list_clips() else {}
+    report["filmstrips"] = {cid: len(f["sheets"]) for cid, f in strips.items()}
     return report
 
 

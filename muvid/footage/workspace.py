@@ -491,11 +491,31 @@ class MusicVideoFootageProject:
             raise KeyError(edit_id) from None
 
     def delete_edit(self, edit_id: str) -> bool:
-        """Remove one edit record; whether it existed."""
+        """Remove one edit record (and its undo history); whether it existed."""
         path = self._edit_path(edit_id)
         existed = path.exists()
         path.unlink(missing_ok=True)
+        self._history_path(edit_id).unlink(missing_ok=True)
         return existed
+
+    def _history_path(self, edit_id: str) -> Path:
+        # A sibling directory, so `list_edit_records`' *.json glob never sees it.
+        name = normalise_id(edit_id, label="edit_id")
+        return self.edits_dir / ".history" / f"{name}.json"
+
+    def read_edit_history(self, edit_id: str) -> dict:
+        """``{"undo": [...], "redo": [...]}`` — earlier/later versions of one edit."""
+        try:
+            h = json.loads(self._history_path(edit_id).read_text())
+        except (OSError, ValueError):
+            h = {}
+        return {"undo": list(h.get("undo") or []), "redo": list(h.get("redo") or [])}
+
+    def write_edit_history(self, edit_id: str, history: dict) -> None:
+        """Persist one edit's undo/redo stacks (atomically; callers hold the lock)."""
+        path = self._history_path(edit_id)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        atomic_write_text(path, json.dumps(history))
 
     def list_edit_records(self) -> list[dict]:
         """Every readable edit record, oldest first (by its ``created`` stamp)."""
