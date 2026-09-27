@@ -73,6 +73,7 @@ trust refusal belongs where the encode does, in [`render()`](#muvid.footage.serv
 | [`split_cut`](#muvid.footage.service.split_cut)(fp, \*, edit_id, at_s)                 | Split the cut playing at song time `at_s` into two cuts of the same video.                                                                                                                                                   |
 | [`merge_cut`](#muvid.footage.service.merge_cut)(fp, \*, edit_id, index[, into])        | Join cut `index` to its neighbour: the neighbour (`into` "previous" or "next") takes over its span, so the neighbour's video must cover it.                                                                                  |
 | [`set_span`](#muvid.footage.service.set_span)(fp, \*, edit_id, start_s, end_s)        | Choose which part of the song the video covers — where it starts and ends.                                                                                                                                                   |
+| [`rename_edit`](#muvid.footage.service.rename_edit)(fp, \*, edit_id, name)               | Give an edit a new name — what the edit picker and the renders made from it show.                                                                                                                                            |
 | [`looks`](#muvid.footage.service.looks)([fp])                                      | The looks a cut can take — camera moves (punch in, slow push, slow pull, pans) and grades (vivid, black and white, posterize, cartoon) — each with its `params_schema`.                                                      |
 | [`undo_edit`](#muvid.footage.service.undo_edit)(fp, \*, edit_id)                       | Undo the last change to a saved edit (a cut changed, split, joined, the span, a whole replacement — by a person or by the assistant).                                                                                        |
 | [`redo_edit`](#muvid.footage.service.redo_edit)(fp, \*, edit_id)                       | Redo the change `undo_edit` last took back.                                                                                                                                                                                  |
@@ -511,6 +512,16 @@ untouched. Removal INVALIDATES every measured offset and every footage score, as
 changing the song does — the alignment describes the clip set it was measured on —
 so run `align` again before cutting. Offsets a person DECLARED for the remaining
 clips are kept. An unknown `clip_id` is refused, naming the project’s clips.
+
+* **Return type:**
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+
+### muvid.footage.service.rename_edit(fp, , edit_id, name)
+
+Give an edit a new name — what the edit picker and the renders made from it show.
+
+Only the name changes; the cuts, the span and the edit’s id stay as they are, and
+the rename can be undone like any other change. Returns the edit.
 
 * **Return type:**
   [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)

@@ -260,73 +260,76 @@ trust refusal belongs where the encode does, in <a class="reference internal" hr
 <tr class="row-even"><td><p><a class="reference internal" href="#muvid.footage.service.set_span" title="muvid.footage.service.set_span"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_span</span></code></a>(fp, *, edit_id, start_s, end_s)</p></td>
 <td><p>Choose which part of the song the video covers — where it starts and ends.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.footage.service.looks" title="muvid.footage.service.looks"><code class="xref py py-obj docutils literal notranslate"><span class="pre">looks</span></code></a>([fp])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.footage.service.rename_edit" title="muvid.footage.service.rename_edit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">rename_edit</span></code></a>(fp, *, edit_id, name)</p></td>
+<td><p>Give an edit a new name — what the edit picker and the renders made from it show.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#muvid.footage.service.looks" title="muvid.footage.service.looks"><code class="xref py py-obj docutils literal notranslate"><span class="pre">looks</span></code></a>([fp])</p></td>
 <td><p>The looks a cut can take — camera moves (punch in, slow push, slow pull, pans) and grades (vivid, black and white, posterize, cartoon) — each with its <code class="docutils literal notranslate"><span class="pre">params_schema</span></code>.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#muvid.footage.service.undo_edit" title="muvid.footage.service.undo_edit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">undo_edit</span></code></a>(fp, *, edit_id)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.footage.service.undo_edit" title="muvid.footage.service.undo_edit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">undo_edit</span></code></a>(fp, *, edit_id)</p></td>
 <td><p>Undo the last change to a saved edit (a cut changed, split, joined, the span, a whole replacement — by a person or by the assistant).</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.footage.service.redo_edit" title="muvid.footage.service.redo_edit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">redo_edit</span></code></a>(fp, *, edit_id)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#muvid.footage.service.redo_edit" title="muvid.footage.service.redo_edit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">redo_edit</span></code></a>(fp, *, edit_id)</p></td>
 <td><p>Redo the change <code class="docutils literal notranslate"><span class="pre">undo_edit</span></code> last took back.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#muvid.footage.service.delete_edit" title="muvid.footage.service.delete_edit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">delete_edit</span></code></a>(fp, *, edit_id)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.footage.service.delete_edit" title="muvid.footage.service.delete_edit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">delete_edit</span></code></a>(fp, *, edit_id)</p></td>
 <td><p>Delete a saved edit.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.footage.service.render" title="muvid.footage.service.render"><code class="xref py py-obj docutils literal notranslate"><span class="pre">render</span></code></a>(fp, *, edit_id[, canvas, ...])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#muvid.footage.service.render" title="muvid.footage.service.render"><code class="xref py py-obj docutils literal notranslate"><span class="pre">render</span></code></a>(fp, *, edit_id[, canvas, ...])</p></td>
 <td><p>Make the video: render a saved edit onto the canvas, over the clean song.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#muvid.footage.service.renders" title="muvid.footage.service.renders"><code class="xref py py-obj docutils literal notranslate"><span class="pre">renders</span></code></a>(fp)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.footage.service.renders" title="muvid.footage.service.renders"><code class="xref py py-obj docutils literal notranslate"><span class="pre">renders</span></code></a>(fp)</p></td>
 <td><p>The finished videos, newest first: each one's <code class="docutils literal notranslate"><span class="pre">render_id</span></code>, speakable <code class="docutils literal notranslate"><span class="pre">ref</span></code>, the <code class="docutils literal notranslate"><span class="pre">edit_id</span></code> it was made from, its <code class="docutils literal notranslate"><span class="pre">label</span></code>, canvas, <code class="docutils literal notranslate"><span class="pre">ok</span></code>, the number of <code class="docutils literal notranslate"><span class="pre">warnings</span></code>, and <code class="docutils literal notranslate"><span class="pre">artifact_id</span></code> to play it by when the project is hosted.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.footage.service.editor_document" title="muvid.footage.service.editor_document"><code class="xref py py-obj docutils literal notranslate"><span class="pre">editor_document</span></code></a>(fp)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#muvid.footage.service.editor_document" title="muvid.footage.service.editor_document"><code class="xref py py-obj docutils literal notranslate"><span class="pre">editor_document</span></code></a>(fp)</p></td>
 <td><p>The project as lacing-native standoff annotations, for a multitrack editor.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#muvid.footage.service.assemble" title="muvid.footage.service.assemble"><code class="xref py py-obj docutils literal notranslate"><span class="pre">assemble</span></code></a>(fp, *[, strategy, edl, preset, ...])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.footage.service.assemble" title="muvid.footage.service.assemble"><code class="xref py py-obj docutils literal notranslate"><span class="pre">assemble</span></code></a>(fp, *[, strategy, edl, preset, ...])</p></td>
 <td><p>Assemble and render a music video — auto (a <code class="docutils literal notranslate"><span class="pre">strategy</span></code>) or an explicit <code class="docutils literal notranslate"><span class="pre">edl</span></code>.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.footage.service.declared_alignment" title="muvid.footage.service.declared_alignment"><code class="xref py py-obj docutils literal notranslate"><span class="pre">declared_alignment</span></code></a>(clip_id, offset_s, *, ...)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#muvid.footage.service.declared_alignment" title="muvid.footage.service.declared_alignment"><code class="xref py py-obj docutils literal notranslate"><span class="pre">declared_alignment</span></code></a>(clip_id, offset_s, *, ...)</p></td>
 <td><p>The alignment record of a DECLARED offset — coverage computed, nothing measured.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#muvid.footage.service.edl_from_annotations" title="muvid.footage.service.edl_from_annotations"><code class="xref py py-obj docutils literal notranslate"><span class="pre">edl_from_annotations</span></code></a>(fp, *, annotations)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.footage.service.edl_from_annotations" title="muvid.footage.service.edl_from_annotations"><code class="xref py py-obj docutils literal notranslate"><span class="pre">edl_from_annotations</span></code></a>(fp, *, annotations)</p></td>
 <td><p>The editor's DECISION-tier annotations turned back into a cut list (<code class="docutils literal notranslate"><span class="pre">edl</span></code>), ready for <code class="docutils literal notranslate"><span class="pre">save_edit</span></code> / <code class="docutils literal notranslate"><span class="pre">replace_edit</span></code> — a faithful read, not a re-selection.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.footage.service.edl_json" title="muvid.footage.service.edl_json"><code class="xref py py-obj docutils literal notranslate"><span class="pre">edl_json</span></code></a>(e)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#muvid.footage.service.edl_json" title="muvid.footage.service.edl_json"><code class="xref py py-obj docutils literal notranslate"><span class="pre">edl_json</span></code></a>(e)</p></td>
 <td><p>One EDL entry as JSON — full precision (it must feed back verbatim), gaps as null.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#muvid.footage.service.coverage_report" title="muvid.footage.service.coverage_report"><code class="xref py py-obj docutils literal notranslate"><span class="pre">coverage_report</span></code></a>(entries, aligns, song_dur, *)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.footage.service.coverage_report" title="muvid.footage.service.coverage_report"><code class="xref py py-obj docutils literal notranslate"><span class="pre">coverage_report</span></code></a>(entries, aligns, song_dur, *)</p></td>
 <td><p>What the song's timeline looks like under <code class="docutils literal notranslate"><span class="pre">entries</span></code> — covered, weak, MISSING.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.footage.service.exclusion_note" title="muvid.footage.service.exclusion_note"><code class="xref py py-obj docutils literal notranslate"><span class="pre">exclusion_note</span></code></a>(x)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#muvid.footage.service.exclusion_note" title="muvid.footage.service.exclusion_note"><code class="xref py py-obj docutils literal notranslate"><span class="pre">exclusion_note</span></code></a>(x)</p></td>
 <td><p>One <code class="docutils literal notranslate"><span class="pre">warnings</span></code> line per span the auto path set aside (muvid#88).</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#muvid.footage.service.assemble_refusal" title="muvid.footage.service.assemble_refusal"><code class="xref py py-obj docutils literal notranslate"><span class="pre">assemble_refusal</span></code></a>(entries, aligns, song_dur, ...)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.footage.service.assemble_refusal" title="muvid.footage.service.assemble_refusal"><code class="xref py py-obj docutils literal notranslate"><span class="pre">assemble_refusal</span></code></a>(entries, aligns, song_dur, ...)</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">None</span></code> if rendering this edit would go ahead; the refusal if it would not — put to the GATE rather than re-implemented here.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.footage.service.resolve_canvas" title="muvid.footage.service.resolve_canvas"><code class="xref py py-obj docutils literal notranslate"><span class="pre">resolve_canvas</span></code></a>(fp, canvas)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#muvid.footage.service.resolve_canvas" title="muvid.footage.service.resolve_canvas"><code class="xref py py-obj docutils literal notranslate"><span class="pre">resolve_canvas</span></code></a>(fp, canvas)</p></td>
 <td><p>The render canvas: an explicit per-render override, else the project's.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#muvid.footage.service.refresh_cover" title="muvid.footage.service.refresh_cover"><code class="xref py py-obj docutils literal notranslate"><span class="pre">refresh_cover</span></code></a>(fp)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.footage.service.refresh_cover" title="muvid.footage.service.refresh_cover"><code class="xref py py-obj docutils literal notranslate"><span class="pre">refresh_cover</span></code></a>(fp)</p></td>
 <td><p>Take the project's cover frame again — from the newest render, else from the first clip — and register it.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.footage.service.grab_cover_frame" title="muvid.footage.service.grab_cover_frame"><code class="xref py py-obj docutils literal notranslate"><span class="pre">grab_cover_frame</span></code></a>(video, dest)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#muvid.footage.service.grab_cover_frame" title="muvid.footage.service.grab_cover_frame"><code class="xref py py-obj docutils literal notranslate"><span class="pre">grab_cover_frame</span></code></a>(video, dest)</p></td>
 <td><p>Write one JPEG frame of <code class="docutils literal notranslate"><span class="pre">video</span></code> to <code class="docutils literal notranslate"><span class="pre">dest</span></code> — <code class="xref py py-data docutils literal notranslate"><span class="pre">COVER_AT_FRACTION</span></code> of the way in, <code class="xref py py-data docutils literal notranslate"><span class="pre">COVER_WIDTH</span></code> wide.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#muvid.footage.service.import_render" title="muvid.footage.service.import_render"><code class="xref py py-obj docutils literal notranslate"><span class="pre">import_render</span></code></a>(fp, *, path, render_id[, ...])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.footage.service.import_render" title="muvid.footage.service.import_render"><code class="xref py py-obj docutils literal notranslate"><span class="pre">import_render</span></code></a>(fp, *, path, render_id[, ...])</p></td>
 <td><p>Bring a video finished ELSEWHERE into the project as a render (the importer's).</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.footage.service.frame_size" title="muvid.footage.service.frame_size"><code class="xref py py-obj docutils literal notranslate"><span class="pre">frame_size</span></code></a>(video)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#muvid.footage.service.frame_size" title="muvid.footage.service.frame_size"><code class="xref py py-obj docutils literal notranslate"><span class="pre">frame_size</span></code></a>(video)</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">[width,</span> <span class="pre">height]</span></code> of a video as DISPLAYED (a ±90° rotation swaps them).</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#muvid.footage.service.frame_rate" title="muvid.footage.service.frame_rate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">frame_rate</span></code></a>(video)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.footage.service.frame_rate" title="muvid.footage.service.frame_rate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">frame_rate</span></code></a>(video)</p></td>
 <td><p>A video's average frame rate (frames per second), or <code class="docutils literal notranslate"><span class="pre">None</span></code> if unreadable.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.footage.service.public_render" title="muvid.footage.service.public_render"><code class="xref py py-obj docutils literal notranslate"><span class="pre">public_render</span></code></a>(fp, meta)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#muvid.footage.service.public_render" title="muvid.footage.service.public_render"><code class="xref py py-obj docutils literal notranslate"><span class="pre">public_render</span></code></a>(fp, meta)</p></td>
 <td><p>A render record as a HOSTED surface may return it: <code class="docutils literal notranslate"><span class="pre">video</span></code> made relative to the project (<code class="docutils literal notranslate"><span class="pre">renders/&lt;id&gt;/final.mp4</span></code>) — never an absolute server path; play it by its <code class="docutils literal notranslate"><span class="pre">artifact_id</span></code>.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#muvid.footage.service.require_scorable" title="muvid.footage.service.require_scorable"><code class="xref py py-obj docutils literal notranslate"><span class="pre">require_scorable</span></code></a>(fp)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.footage.service.require_scorable" title="muvid.footage.service.require_scorable"><code class="xref py py-obj docutils literal notranslate"><span class="pre">require_scorable</span></code></a>(fp)</p></td>
 <td><p>The alignments a scoring run would use; refuses without a song or an alignment.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.footage.service.run_scoring" title="muvid.footage.service.run_scoring"><code class="xref py py-obj docutils literal notranslate"><span class="pre">run_scoring</span></code></a>(fp, *[, hop_s, metrics, ...])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#muvid.footage.service.run_scoring" title="muvid.footage.service.run_scoring"><code class="xref py py-obj docutils literal notranslate"><span class="pre">run_scoring</span></code></a>(fp, *[, hop_s, metrics, ...])</p></td>
 <td><p>Score every aligned clip and persist the tensor (the engine behind <a class="reference internal" href="#muvid.footage.service.score" title="muvid.footage.service.score"><code class="xref py py-func docutils literal notranslate"><span class="pre">score()</span></code></a>, with the job hooks a background runner passes).</p></td>
 </tr>
 </tbody>
@@ -829,6 +832,18 @@ clips are kept. An unknown <code class="docutils literal notranslate"><span clas
 </dl>
 </dd></dl>
 <dl class="py function">
+<dt class="sig sig-object py" id="muvid.footage.service.rename_edit">
+<span class="sig-prename descclassname"><span class="pre">muvid.footage.service.</span></span><span class="sig-name descname"><span class="pre">rename_edit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fp</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">edit_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/muvid/footage/service.html#rename_edit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#muvid.footage.service.rename_edit" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#muvid.footage.service.rename_edit'">¶</a></dt>
+<dd><p>Give an edit a new name — what the edit picker and the renders made from it show.</p>
+<p>Only the name changes; the cuts, the span and the edit’s id stay as they are, and
+the rename can be undone like any other change. Returns the edit.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#dict" rel="nofollow noopener" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code><svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
 <dt class="sig sig-object py" id="muvid.footage.service.render">
 <span class="sig-prename descclassname"><span class="pre">muvid.footage.service.</span></span><span class="sig-name descname"><span class="pre">render</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fp</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">edit_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">canvas</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">allow_unreliable</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">annotate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">should_cancel</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/muvid/footage/service.html#render"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#muvid.footage.service.render" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#muvid.footage.service.render'">¶</a></dt>
 <dd><p>Make the video: render a saved edit onto the canvas, over the clean song.</p>
@@ -1136,6 +1151,7 @@ is; <code class="docutils literal notranslate"><span class="pre">redo_edit</span
 <li><a :data-current="activeSection === '#muvid.footage.service.redo_edit'" class="reference internal" href="#muvid.footage.service.redo_edit"><code class="docutils literal notranslate"><span class="pre">redo_edit()</span></code></a></li>
 <li><a :data-current="activeSection === '#muvid.footage.service.refresh_cover'" class="reference internal" href="#muvid.footage.service.refresh_cover"><code class="docutils literal notranslate"><span class="pre">refresh_cover()</span></code></a></li>
 <li><a :data-current="activeSection === '#muvid.footage.service.remove_clip'" class="reference internal" href="#muvid.footage.service.remove_clip"><code class="docutils literal notranslate"><span class="pre">remove_clip()</span></code></a></li>
+<li><a :data-current="activeSection === '#muvid.footage.service.rename_edit'" class="reference internal" href="#muvid.footage.service.rename_edit"><code class="docutils literal notranslate"><span class="pre">rename_edit()</span></code></a></li>
 <li><a :data-current="activeSection === '#muvid.footage.service.render'" class="reference internal" href="#muvid.footage.service.render"><code class="docutils literal notranslate"><span class="pre">render()</span></code></a></li>
 <li><a :data-current="activeSection === '#muvid.footage.service.renders'" class="reference internal" href="#muvid.footage.service.renders"><code class="docutils literal notranslate"><span class="pre">renders()</span></code></a></li>
 <li><a :data-current="activeSection === '#muvid.footage.service.replace_edit'" class="reference internal" href="#muvid.footage.service.replace_edit"><code class="docutils literal notranslate"><span class="pre">replace_edit()</span></code></a></li>
@@ -1167,7 +1183,7 @@ is; <code class="docutils literal notranslate"><span class="pre">redo_edit</span
 </div>
 </footer>
 </div>
-<script src="../_static/documentation_options.js?v=8d9581ea"></script>
+<script src="../_static/documentation_options.js?v=ba6d0b80"></script>
 <script src="../_static/doctools.js?v=fd6eb6e6"></script>
 <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
 <script src="../_static/clipboard.min.js?v=a7894cd8"></script>

@@ -1,4 +1,4 @@
-> built 2026-09-27 16:10 UTC from dd8e851 (main) · muvid 0.0.71. Details: build_info.json
+> built 2026-09-27 16:30 UTC from e352579 (main) · muvid 0.0.72. Details: build_info.json
 
 # index.html.md
 
@@ -6093,6 +6093,7 @@ trust refusal belongs where the encode does, in [`render()`](_autosummary/muvid.
 | [`split_cut`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.split_cut)(fp, \*, edit_id, at_s)                 | Split the cut playing at song time `at_s` into two cuts of the same video.                                                                                                                                                   |
 | [`merge_cut`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.merge_cut)(fp, \*, edit_id, index[, into])        | Join cut `index` to its neighbour: the neighbour (`into` "previous" or "next") takes over its span, so the neighbour's video must cover it.                                                                                  |
 | [`set_span`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.set_span)(fp, \*, edit_id, start_s, end_s)        | Choose which part of the song the video covers — where it starts and ends.                                                                                                                                                   |
+| [`rename_edit`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.rename_edit)(fp, \*, edit_id, name)               | Give an edit a new name — what the edit picker and the renders made from it show.                                                                                                                                            |
 | [`looks`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.looks)([fp])                                      | The looks a cut can take — camera moves (punch in, slow push, slow pull, pans) and grades (vivid, black and white, posterize, cartoon) — each with its `params_schema`.                                                      |
 | [`undo_edit`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.undo_edit)(fp, \*, edit_id)                       | Undo the last change to a saved edit (a cut changed, split, joined, the span, a whole replacement — by a person or by the assistant).                                                                                        |
 | [`redo_edit`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.redo_edit)(fp, \*, edit_id)                       | Redo the change `undo_edit` last took back.                                                                                                                                                                                  |
@@ -6531,6 +6532,16 @@ untouched. Removal INVALIDATES every measured offset and every footage score, as
 changing the song does — the alignment describes the clip set it was measured on —
 so run `align` again before cutting. Offsets a person DECLARED for the remaining
 clips are kept. An unknown `clip_id` is refused, naming the project’s clips.
+
+* **Return type:**
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+
+### muvid.footage.service.rename_edit(fp, , edit_id, name)
+
+Give an edit a new name — what the edit picker and the renders made from it show.
+
+Only the name changes; the cuts, the span and the edit’s id stay as they are, and
+the rename can be undone like any other change. Returns the edit.
 
 * **Return type:**
   [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
@@ -9919,6 +9930,7 @@ alignment, exactly as `set_song` does.
 | [`footage_merge_cut`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.footage_merge_cut)(project_id, \*, edit_id, index)  | Join cut `index` to its neighbour: the neighbour (`into` "previous" or "next") takes over its span, so the neighbour's video must cover it.                                                                                  |
 | [`footage_peaks`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.footage_peaks)(project_id, \*[, n])                 | The song's waveform, to draw under the timeline: `n` equal slices of the song, each the loudest moment in it (mono), scaled so the loudest slice is 1.0.                                                                     |
 | [`footage_redo_edit`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.footage_redo_edit)(project_id, \*, edit_id)         | Redo the change `footage_undo_edit` last took back.                                                                                                                                                                          |
+| [`footage_rename_edit`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.footage_rename_edit)(project_id, \*, edit_id, name) | Give an edit a new name — what the edit picker and the renders made from it show.                                                                                                                                            |
 | [`footage_render`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.footage_render)(project_id, \*, edit_id[, ...])     | Render a SAVED edit (`propose_edit(save=true)` / `footage_save_edit`) into a music video.                                                                                                                                    |
 | [`footage_renders`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.footage_renders)(project_id)                        | The finished videos, newest first: each one's `render_id`, speakable `ref`, the `edit_id` it was made from, its `label`, canvas, `ok`, the number of `warnings`, and `artifact_id` to play it by when the project is hosted. |
 | [`footage_replace_edit`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.footage_replace_edit)(project_id, \*, edit_id, edl) | Replace a saved edit's whole cut list — the power tool for rewriting an edit at once.                                                                                                                                        |
@@ -10262,6 +10274,16 @@ discards what could be redone. Returns the edit as it now is.
 * **Return type:**
   [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
 
+### muvid.mcp.footage_tools.footage_rename_edit(project_id, , edit_id, name)
+
+Give an edit a new name — what the edit picker and the renders made from it show.
+
+Only the name changes; the cuts, the span and the edit’s id stay as they are, and
+the rename can be undone like any other change. Returns the edit.
+
+* **Return type:**
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+
 ### muvid.mcp.footage_tools.footage_render(project_id, , edit_id, canvas='', allow_unreliable=False)
 
 Render a SAVED edit (`propose_edit(save=true)` / `footage_save_edit`) into a
@@ -10530,15 +10552,15 @@ an unpriced call must force approval (muvid#47).
 | [`VisualizerWorkspace`](_autosummary/muvid.mcp.html.md#muvid.mcp.VisualizerWorkspace)(email, root)   | A single caller's private visualizer area, addressed by `email`.   |
 |-------------------------------------------------------------------------------------|--------------------------------------------------------------------|
 
-### muvid.mcp.FREE_TOOLS *= ['list_visuals', 'list_projects', 'project_status', 'render_visualizer', 'footage_status', 'set_song', 'add_footage', 'remove_footage', 'align_footage', 'footage_set_offset', 'footage_clear_offset', 'footage_timeline', 'beat_grid', 'footage_peaks', 'footage_filmstrips', 'footage_filmstrip', 'list_strategies', 'propose_edit', 'footage_save_edit', 'footage_edits', 'footage_get_edit', 'footage_replace_edit', 'footage_set_cut', 'footage_split_cut', 'footage_merge_cut', 'footage_set_span', 'footage_looks', 'footage_undo_edit', 'footage_redo_edit', 'footage_delete_edit', 'footage_render', 'footage_renders', 'footage_editor_document', 'add_footage_folder', 'assemble_music_video', 'list_music_video_projects', 'footage_edl_from_annotations', 'score_footage', 'footage_scores', 'footage_score_status', 'list_archetypes', 'analyze_song_lyrics', 'propose_lyric_treatments', 'validate_lyric_treatment', 'render_lyric_video', 'list_subgenres', 'render_subgenre']*
+### muvid.mcp.FREE_TOOLS *= ['list_visuals', 'list_projects', 'project_status', 'render_visualizer', 'footage_status', 'set_song', 'add_footage', 'remove_footage', 'align_footage', 'footage_set_offset', 'footage_clear_offset', 'footage_timeline', 'beat_grid', 'footage_peaks', 'footage_filmstrips', 'footage_filmstrip', 'list_strategies', 'propose_edit', 'footage_save_edit', 'footage_edits', 'footage_get_edit', 'footage_replace_edit', 'footage_set_cut', 'footage_split_cut', 'footage_merge_cut', 'footage_set_span', 'footage_rename_edit', 'footage_looks', 'footage_undo_edit', 'footage_redo_edit', 'footage_delete_edit', 'footage_render', 'footage_renders', 'footage_editor_document', 'add_footage_folder', 'assemble_music_video', 'list_music_video_projects', 'footage_edl_from_annotations', 'score_footage', 'footage_scores', 'footage_score_status', 'list_archetypes', 'analyze_song_lyrics', 'propose_lyric_treatments', 'validate_lyric_treatment', 'render_lyric_video', 'list_subgenres', 'render_subgenre']*
 
 Alias — muvid has no costed tools.
 
-### muvid.mcp.TOOL_NAMES *= ['list_visuals', 'list_projects', 'project_status', 'render_visualizer', 'footage_status', 'set_song', 'add_footage', 'remove_footage', 'align_footage', 'footage_set_offset', 'footage_clear_offset', 'footage_timeline', 'beat_grid', 'footage_peaks', 'footage_filmstrips', 'footage_filmstrip', 'list_strategies', 'propose_edit', 'footage_save_edit', 'footage_edits', 'footage_get_edit', 'footage_replace_edit', 'footage_set_cut', 'footage_split_cut', 'footage_merge_cut', 'footage_set_span', 'footage_looks', 'footage_undo_edit', 'footage_redo_edit', 'footage_delete_edit', 'footage_render', 'footage_renders', 'footage_editor_document', 'add_footage_folder', 'assemble_music_video', 'list_music_video_projects', 'footage_edl_from_annotations', 'score_footage', 'footage_scores', 'footage_score_status', 'list_archetypes', 'analyze_song_lyrics', 'propose_lyric_treatments', 'propose_lyric_treatments_ai', 'validate_lyric_treatment', 'render_lyric_video', 'list_subgenres', 'render_subgenre']*
+### muvid.mcp.TOOL_NAMES *= ['list_visuals', 'list_projects', 'project_status', 'render_visualizer', 'footage_status', 'set_song', 'add_footage', 'remove_footage', 'align_footage', 'footage_set_offset', 'footage_clear_offset', 'footage_timeline', 'beat_grid', 'footage_peaks', 'footage_filmstrips', 'footage_filmstrip', 'list_strategies', 'propose_edit', 'footage_save_edit', 'footage_edits', 'footage_get_edit', 'footage_replace_edit', 'footage_set_cut', 'footage_split_cut', 'footage_merge_cut', 'footage_set_span', 'footage_rename_edit', 'footage_looks', 'footage_undo_edit', 'footage_redo_edit', 'footage_delete_edit', 'footage_render', 'footage_renders', 'footage_editor_document', 'add_footage_folder', 'assemble_music_video', 'list_music_video_projects', 'footage_edl_from_annotations', 'score_footage', 'footage_scores', 'footage_score_status', 'list_archetypes', 'analyze_song_lyrics', 'propose_lyric_treatments', 'propose_lyric_treatments_ai', 'validate_lyric_treatment', 'render_lyric_video', 'list_subgenres', 'render_subgenre']*
 
 All tools this package exposes (all free). Bare names; a host may prefix them.
 
-### muvid.mcp.TOOL_REFS *= {'add_footage': 'muvid.mcp.footage_tools:add_footage', 'add_footage_folder': 'muvid.mcp.footage_tools:add_footage_folder', 'align_footage': 'muvid.mcp.footage_tools:align_footage', 'analyze_song_lyrics': 'muvid.mcp.lyricvid_tools:analyze_song_lyrics', 'assemble_music_video': 'muvid.mcp.footage_tools:assemble_music_video', 'beat_grid': 'muvid.mcp.footage_tools:beat_grid', 'footage_clear_offset': 'muvid.mcp.footage_tools:footage_clear_offset', 'footage_delete_edit': 'muvid.mcp.footage_tools:footage_delete_edit', 'footage_editor_document': 'muvid.mcp.footage_tools:footage_editor_document', 'footage_edits': 'muvid.mcp.footage_tools:footage_edits', 'footage_edl_from_annotations': 'muvid.mcp.footage_tools:footage_edl_from_annotations', 'footage_filmstrip': 'muvid.mcp.footage_tools:footage_filmstrip', 'footage_filmstrips': 'muvid.mcp.footage_tools:footage_filmstrips', 'footage_get_edit': 'muvid.mcp.footage_tools:footage_get_edit', 'footage_looks': 'muvid.mcp.footage_tools:footage_looks', 'footage_merge_cut': 'muvid.mcp.footage_tools:footage_merge_cut', 'footage_peaks': 'muvid.mcp.footage_tools:footage_peaks', 'footage_redo_edit': 'muvid.mcp.footage_tools:footage_redo_edit', 'footage_render': 'muvid.mcp.footage_tools:footage_render', 'footage_renders': 'muvid.mcp.footage_tools:footage_renders', 'footage_replace_edit': 'muvid.mcp.footage_tools:footage_replace_edit', 'footage_save_edit': 'muvid.mcp.footage_tools:footage_save_edit', 'footage_score_status': 'muvid.mcp.scoring_tools:footage_score_status', 'footage_scores': 'muvid.mcp.scoring_tools:footage_scores', 'footage_set_cut': 'muvid.mcp.footage_tools:footage_set_cut', 'footage_set_offset': 'muvid.mcp.footage_tools:footage_set_offset', 'footage_set_span': 'muvid.mcp.footage_tools:footage_set_span', 'footage_split_cut': 'muvid.mcp.footage_tools:footage_split_cut', 'footage_status': 'muvid.mcp.footage_tools:footage_status', 'footage_timeline': 'muvid.mcp.footage_tools:footage_timeline', 'footage_undo_edit': 'muvid.mcp.footage_tools:footage_undo_edit', 'list_archetypes': 'muvid.mcp.lyricvid_tools:list_archetypes', 'list_music_video_projects': 'muvid.mcp.footage_tools:list_music_video_projects', 'list_projects': 'muvid.mcp.tools:list_projects', 'list_strategies': 'muvid.mcp.footage_tools:list_strategies', 'list_subgenres': 'muvid.mcp.subgenre_tools:list_subgenres', 'list_visuals': 'muvid.mcp.tools:list_visuals', 'project_status': 'muvid.mcp.tools:project_status', 'propose_edit': 'muvid.mcp.footage_tools:propose_edit', 'propose_lyric_treatments': 'muvid.mcp.lyricvid_tools:propose_lyric_treatments', 'propose_lyric_treatments_ai': 'muvid.mcp.lyricvid_tools:propose_lyric_treatments_ai', 'remove_footage': 'muvid.mcp.footage_tools:remove_footage', 'render_lyric_video': 'muvid.mcp.lyricvid_tools:render_lyric_video', 'render_subgenre': 'muvid.mcp.subgenre_tools:render_subgenre', 'render_visualizer': 'muvid.mcp.tools:render_visualizer', 'score_footage': 'muvid.mcp.scoring_tools:score_footage', 'set_song': 'muvid.mcp.footage_tools:set_song', 'validate_lyric_treatment': 'muvid.mcp.lyricvid_tools:validate_lyric_treatment'}*
+### muvid.mcp.TOOL_REFS *= {'add_footage': 'muvid.mcp.footage_tools:add_footage', 'add_footage_folder': 'muvid.mcp.footage_tools:add_footage_folder', 'align_footage': 'muvid.mcp.footage_tools:align_footage', 'analyze_song_lyrics': 'muvid.mcp.lyricvid_tools:analyze_song_lyrics', 'assemble_music_video': 'muvid.mcp.footage_tools:assemble_music_video', 'beat_grid': 'muvid.mcp.footage_tools:beat_grid', 'footage_clear_offset': 'muvid.mcp.footage_tools:footage_clear_offset', 'footage_delete_edit': 'muvid.mcp.footage_tools:footage_delete_edit', 'footage_editor_document': 'muvid.mcp.footage_tools:footage_editor_document', 'footage_edits': 'muvid.mcp.footage_tools:footage_edits', 'footage_edl_from_annotations': 'muvid.mcp.footage_tools:footage_edl_from_annotations', 'footage_filmstrip': 'muvid.mcp.footage_tools:footage_filmstrip', 'footage_filmstrips': 'muvid.mcp.footage_tools:footage_filmstrips', 'footage_get_edit': 'muvid.mcp.footage_tools:footage_get_edit', 'footage_looks': 'muvid.mcp.footage_tools:footage_looks', 'footage_merge_cut': 'muvid.mcp.footage_tools:footage_merge_cut', 'footage_peaks': 'muvid.mcp.footage_tools:footage_peaks', 'footage_redo_edit': 'muvid.mcp.footage_tools:footage_redo_edit', 'footage_rename_edit': 'muvid.mcp.footage_tools:footage_rename_edit', 'footage_render': 'muvid.mcp.footage_tools:footage_render', 'footage_renders': 'muvid.mcp.footage_tools:footage_renders', 'footage_replace_edit': 'muvid.mcp.footage_tools:footage_replace_edit', 'footage_save_edit': 'muvid.mcp.footage_tools:footage_save_edit', 'footage_score_status': 'muvid.mcp.scoring_tools:footage_score_status', 'footage_scores': 'muvid.mcp.scoring_tools:footage_scores', 'footage_set_cut': 'muvid.mcp.footage_tools:footage_set_cut', 'footage_set_offset': 'muvid.mcp.footage_tools:footage_set_offset', 'footage_set_span': 'muvid.mcp.footage_tools:footage_set_span', 'footage_split_cut': 'muvid.mcp.footage_tools:footage_split_cut', 'footage_status': 'muvid.mcp.footage_tools:footage_status', 'footage_timeline': 'muvid.mcp.footage_tools:footage_timeline', 'footage_undo_edit': 'muvid.mcp.footage_tools:footage_undo_edit', 'list_archetypes': 'muvid.mcp.lyricvid_tools:list_archetypes', 'list_music_video_projects': 'muvid.mcp.footage_tools:list_music_video_projects', 'list_projects': 'muvid.mcp.tools:list_projects', 'list_strategies': 'muvid.mcp.footage_tools:list_strategies', 'list_subgenres': 'muvid.mcp.subgenre_tools:list_subgenres', 'list_visuals': 'muvid.mcp.tools:list_visuals', 'project_status': 'muvid.mcp.tools:project_status', 'propose_edit': 'muvid.mcp.footage_tools:propose_edit', 'propose_lyric_treatments': 'muvid.mcp.lyricvid_tools:propose_lyric_treatments', 'propose_lyric_treatments_ai': 'muvid.mcp.lyricvid_tools:propose_lyric_treatments_ai', 'remove_footage': 'muvid.mcp.footage_tools:remove_footage', 'render_lyric_video': 'muvid.mcp.lyricvid_tools:render_lyric_video', 'render_subgenre': 'muvid.mcp.subgenre_tools:render_subgenre', 'render_visualizer': 'muvid.mcp.tools:render_visualizer', 'score_footage': 'muvid.mcp.scoring_tools:score_footage', 'set_song': 'muvid.mcp.footage_tools:set_song', 'validate_lyric_treatment': 'muvid.mcp.lyricvid_tools:validate_lyric_treatment'}*
 
 Bare tool name → its `module:function` reference (tools live in three modules).
 
@@ -15078,7 +15100,7 @@ Rendered white; colour comes from the accent `tint`. `options={"mode":
 
 # About this build
 
-This documentation was built on **2026-09-27 16:10 UTC** from commit <a href="https://github.com/thorwhalen/muvid/commit/dd8e8519e994feee29fd3e960158c1895f771da7"><code>dd8e851</code></a> on branch <code>main</code>, for **muvid 0.0.71** (from <code>pyproject.toml</code>).
+This documentation was built on **2026-09-27 16:30 UTC** from commit <a href="https://github.com/thorwhalen/muvid/commit/e35257936a0069d355fb1e5daa7ca2c2ffca564a"><code>e352579</code></a> on branch <code>main</code>, for **muvid 0.0.72** (from <code>pyproject.toml</code>).
 
 #### NOTE
 Nothing suggests a mismatch: the tree was clean at the commit above, and the documented version is the one on PyPI.
@@ -15087,9 +15109,9 @@ Nothing suggests a mismatch: the tree was clean at the commit above, and the doc
 
 |                     |                                                                                                                                                         |
 |---------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Commit              | <a href="https://github.com/thorwhalen/muvid/commit/dd8e8519e994feee29fd3e960158c1895f771da7"><code>dd8e8519e994feee29fd3e960158c1895f771da7</code></a> |
+| Commit              | <a href="https://github.com/thorwhalen/muvid/commit/e35257936a0069d355fb1e5daa7ca2c2ffca564a"><code>e35257936a0069d355fb1e5daa7ca2c2ffca564a</code></a> |
 | Branch              | <code>main</code>                                                                                                                                       |
-| Tags at this commit | <code>0.0.71</code>                                                                                                                                     |
+| Tags at this commit | <code>0.0.72</code>                                                                                                                                     |
 | Working tree        | clean                                                                                                                                                   |
 | Remote              | <code>https://github.com/thorwhalen/muvid</code>                                                                                                        |
 
@@ -15098,9 +15120,9 @@ Nothing suggests a mismatch: the tree was clean at the commit above, and the doc
 |              |                                                                                            |
 |--------------|--------------------------------------------------------------------------------------------|
 | Repository   | <code>thorwhalen/muvid</code>                                                              |
-| Run          | <a href="https://github.com/thorwhalen/muvid/actions/runs/36331845427">36331845427</a>     |
+| Run          | <a href="https://github.com/thorwhalen/muvid/actions/runs/36333022598">36333022598</a>     |
 | Ref          | <code>refs/heads/main</code>                                                               |
-| Event commit | <code>2b8e77ed3b204abcfa41561ef022056474368440</code> (in the history of the built commit) |
+| Event commit | <code>dfc5de982304dca66a96a4c2d69e25c6cd969253</code> (in the history of the built commit) |
 
 ## Tools
 
@@ -15125,13 +15147,13 @@ Nothing suggests a mismatch: the tree was clean at the commit above, and the doc
 
 ## Package on PyPI
 
-Latest release: <a href="https://pypi.org/project/muvid/0.0.71/">0.0.71</a>, the same as the documented version.
+Latest release: <a href="https://pypi.org/project/muvid/0.0.72/">0.0.72</a>, the same as the documented version.
 
 ## Reproduce
 
 ```bash
 git clone https://github.com/thorwhalen/muvid && cd muvid
-git checkout dd8e8519e994feee29fd3e960158c1895f771da7
+git checkout e35257936a0069d355fb1e5daa7ca2c2ffca564a
 pip install "epythet==0.2.12"
 epythet quickstart . --ignore tests/ scrap/ examples/
 ```

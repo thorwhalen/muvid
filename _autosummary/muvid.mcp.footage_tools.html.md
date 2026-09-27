@@ -46,6 +46,7 @@ alignment, exactly as `set_song` does.
 | [`footage_merge_cut`](#muvid.mcp.footage_tools.footage_merge_cut)(project_id, \*, edit_id, index)  | Join cut `index` to its neighbour: the neighbour (`into` "previous" or "next") takes over its span, so the neighbour's video must cover it.                                                                                  |
 | [`footage_peaks`](#muvid.mcp.footage_tools.footage_peaks)(project_id, \*[, n])                 | The song's waveform, to draw under the timeline: `n` equal slices of the song, each the loudest moment in it (mono), scaled so the loudest slice is 1.0.                                                                     |
 | [`footage_redo_edit`](#muvid.mcp.footage_tools.footage_redo_edit)(project_id, \*, edit_id)         | Redo the change `footage_undo_edit` last took back.                                                                                                                                                                          |
+| [`footage_rename_edit`](#muvid.mcp.footage_tools.footage_rename_edit)(project_id, \*, edit_id, name) | Give an edit a new name — what the edit picker and the renders made from it show.                                                                                                                                            |
 | [`footage_render`](#muvid.mcp.footage_tools.footage_render)(project_id, \*, edit_id[, ...])     | Render a SAVED edit (`propose_edit(save=true)` / `footage_save_edit`) into a music video.                                                                                                                                    |
 | [`footage_renders`](#muvid.mcp.footage_tools.footage_renders)(project_id)                        | The finished videos, newest first: each one's `render_id`, speakable `ref`, the `edit_id` it was made from, its `label`, canvas, `ok`, the number of `warnings`, and `artifact_id` to play it by when the project is hosted. |
 | [`footage_replace_edit`](#muvid.mcp.footage_tools.footage_replace_edit)(project_id, \*, edit_id, edl) | Replace a saved edit's whole cut list — the power tool for rewriting an edit at once.                                                                                                                                        |
@@ -385,6 +386,16 @@ Returns `{duration_s, n, peaks: [0..1, ...]}`; slice `i` covers song time
 
 Redo the change `footage_undo_edit` last took back. A new change after an undo
 discards what could be redone. Returns the edit as it now is.
+
+* **Return type:**
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+
+### muvid.mcp.footage_tools.footage_rename_edit(project_id, , edit_id, name)
+
+Give an edit a new name — what the edit picker and the renders made from it show.
+
+Only the name changes; the cuts, the span and the edit’s id stay as they are, and
+the rename can be undone like any other change. Returns the edit.
 
 * **Return type:**
   [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
