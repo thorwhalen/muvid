@@ -58,6 +58,9 @@ trust refusal belongs where the encode does, in [`render()`](#muvid.footage.serv
 | [`clear_offset`](#muvid.footage.service.clear_offset)(fp, \*, clip_id)                    | Forget where I placed this video: remove a hand-declared offset, so the next `align` measures the clip by its audio instead.                                                                                                 |
 | [`timeline`](#muvid.footage.service.timeline)(fp)                                     | Which videos cover which spans of the song (overlaps shown), from the saved alignment — the map for choosing what to cut to.                                                                                                 |
 | [`beat_grid`](#muvid.footage.service.beat_grid)(fp)                                    | The song's beat grid — tempo and beat instants on the song timeline — without looking at the footage.                                                                                                                        |
+| [`peaks`](#muvid.footage.service.peaks)(fp, \*[, n])                               | The song's waveform, to draw under the timeline: `n` equal slices of the song, each the loudest moment in it (mono), scaled so the loudest slice is 1.0.                                                                     |
+| [`filmstrips`](#muvid.footage.service.filmstrips)(fp)                                   | Every video's filmstrip — thumbnails to draw each camera's lane.                                                                                                                                                             |
+| [`filmstrip`](#muvid.footage.service.filmstrip)(fp, \*, clip_id)                       | One video's filmstrip (the same record `filmstrips` gives per clip, with its `clip_id` and `fps`).                                                                                                                           |
 | [`score`](#muvid.footage.service.score)(fp, \*[, hop_s, metrics, should_cancel])   | Look at the footage: score every placed video, on the song's own timeline — picture quality and how its movement sits on the beat — and save the curves.                                                                     |
 | [`scores`](#muvid.footage.service.scores)(fp, \*[, clip_id, metrics, max_points])   | The saved footage curves — for the lanes under each video, and for inspection.                                                                                                                                               |
 | [`strategies`](#muvid.footage.service.strategies)([fp])                                 | The ways to cut on offer — the selection strategies `propose_edit` accepts (`weighted` reads the footage scores; the rest use only the alignment).                                                                           |
@@ -71,6 +74,8 @@ trust refusal belongs where the encode does, in [`render()`](#muvid.footage.serv
 | [`merge_cut`](#muvid.footage.service.merge_cut)(fp, \*, edit_id, index[, into])        | Join cut `index` to its neighbour: the neighbour (`into` "previous" or "next") takes over its span, so the neighbour's video must cover it.                                                                                  |
 | [`set_span`](#muvid.footage.service.set_span)(fp, \*, edit_id, start_s, end_s)        | Choose which part of the song the video covers — where it starts and ends.                                                                                                                                                   |
 | [`looks`](#muvid.footage.service.looks)([fp])                                      | The looks a cut can take — camera moves (punch in, slow push, slow pull, pans) and grades (vivid, black and white, posterize, cartoon) — each with its `params_schema`.                                                      |
+| [`undo_edit`](#muvid.footage.service.undo_edit)(fp, \*, edit_id)                       | Undo the last change to a saved edit (a cut changed, split, joined, the span, a whole replacement — by a person or by the assistant).                                                                                        |
+| [`redo_edit`](#muvid.footage.service.redo_edit)(fp, \*, edit_id)                       | Redo the change `undo_edit` last took back.                                                                                                                                                                                  |
 | [`delete_edit`](#muvid.footage.service.delete_edit)(fp, \*, edit_id)                     | Delete a saved edit.                                                                                                                                                                                                         |
 | [`render`](#muvid.footage.service.render)(fp, \*, edit_id[, canvas, ...])           | Make the video: render a saved edit onto the canvas, over the clean song.                                                                                                                                                    |
 | [`renders`](#muvid.footage.service.renders)(fp)                                      | The finished videos, newest first: each one's `render_id`, speakable `ref`, the `edit_id` it was made from, its `label`, canvas, `ok`, the number of `warnings`, and `artifact_id` to play it by when the project is hosted. |
@@ -244,8 +249,12 @@ Needs the `scoring` extra (librosa); without it the refusal names the install.
 Needs a song; no alignment is required.
 
 Returns `tempo_bpm`, `beats` (seconds, ascending), `n_beats`,
-`song_duration` and `source`. `downbeats` is present only when the estimator
-measured any — an empty list would read as “no downbeats”, a measurement nobody made.
+`song_duration` and `source`, and for numbering bars: `downbeats` (the beats
+that start a bar), `downbeats_source` — `measured` (the estimator found them),
+`derived` (the beat phase carrying the most onset energy, `beats_per_bar` beats
+to a bar — muvid.montage’s rule) or `first_beat` (no onset energy to vote with, so
+bars start on the first beat) — `beats_per_bar` and `bar_of_beat` (each beat’s
+bar number, 1 for the first bar, 0 for a pickup before it).
 
 * **Return type:**
   [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
@@ -350,6 +359,31 @@ One `warnings` line per span the auto path set aside (muvid#88).
 * **Return type:**
   [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
 
+### muvid.footage.service.filmstrip(fp, , clip_id)
+
+One video’s filmstrip (the same record `filmstrips` gives per clip, with its
+`clip_id` and `fps`).
+
+* **Return type:**
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+
+### muvid.footage.service.filmstrips(fp)
+
+Every video’s filmstrip — thumbnails to draw each camera’s lane.
+
+Per clip: sprite sheets of `frame_w` x `frame_h` frames (`cols` x `rows` to
+a sheet, left to right then down), sampled at `fps` frames per second of the
+CLIP’s own time — frame `i` is the clip at `i / fps` s, which sits at song time
+`offset + i / fps`. Each sheet is an `artifact_id` (when the project is hosted),
+with its `first_frame` and `n_frames`. Made once per clip and kept; a clip that
+has none yet takes a few seconds the first time.
+
+Returns `{fps, clips: {clip_id: {duration_s, n_frames, frame_w, frame_h, sheets:
+[{artifact_id, cols, rows, first_frame, n_frames}]}}}`.
+
+* **Return type:**
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+
 ### muvid.footage.service.frame_rate(video)
 
 A video’s average frame rate (frames per second), or `None` if unreadable.
@@ -411,6 +445,17 @@ cut keeps the neighbour’s video, framing and look. Returns the changed edit.
 * **Return type:**
   [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
 
+### muvid.footage.service.peaks(fp, , n=2000)
+
+The song’s waveform, to draw under the timeline: `n` equal slices of the song,
+each the loudest moment in it (mono), scaled so the loudest slice is 1.0.
+
+Returns `{duration_s, n, peaks: [0..1, ...]}`; slice `i` covers song time
+`i * duration_s / n` to `(i + 1) * duration_s / n`. Kept per song and `n`.
+
+* **Return type:**
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+
 ### muvid.footage.service.propose_edit(fp, , strategy='', preset='', weights=None, config=None, save=True, name='', span=None)
 
 Cut it for me: build an edit of the whole song — or of `span` (`[start_s,
@@ -437,6 +482,14 @@ change it (`set_cut` …) and render it (`render`).
 A render record as a HOSTED surface may return it: `video` made relative to the
 project (`renders/<id>/final.mp4`) — never an absolute server path; play it by its
 `artifact_id`.
+
+* **Return type:**
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+
+### muvid.footage.service.redo_edit(fp, , edit_id)
+
+Redo the change `undo_edit` last took back. A new change after an undo
+discards what could be redone. Returns the edit as it now is.
 
 * **Return type:**
   [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
@@ -671,6 +724,15 @@ The ways to cut on offer — the selection strategies `propose_edit` accepts
 
 Which videos cover which spans of the song (overlaps shown), from the saved
 alignment — the map for choosing what to cut to. Run `align` first.
+
+* **Return type:**
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+
+### muvid.footage.service.undo_edit(fp, , edit_id)
+
+Undo the last change to a saved edit (a cut changed, split, joined, the span, a
+whole replacement — by a person or by the assistant). Returns the edit as it now
+is; `redo_edit` puts the change back. Up to 100 changes are kept per edit.
 
 * **Return type:**
   [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)

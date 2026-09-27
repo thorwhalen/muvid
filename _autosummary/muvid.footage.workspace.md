@@ -126,7 +126,7 @@ nothing; the first write persists them.
 
 #### delete_edit(edit_id)
 
-Remove one edit record; whether it existed.
+Remove one edit record (and its undo history); whether it existed.
 
 * **Return type:**
   [`bool`](https://docs.python.org/3/builtins/functions.html#bool)
@@ -203,6 +203,13 @@ The ordinal the next render will carry (1-based, never reused).
 #### read_edit(edit_id)
 
 One edit record; `KeyError` if there is no such edit.
+
+* **Return type:**
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+
+#### read_edit_history(edit_id)
+
+`{"undo": [...], "redo": [...]}` — earlier/later versions of one edit.
 
 * **Return type:**
   [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
@@ -293,6 +300,13 @@ The song’s display facts (`None` before one is set).
 #### write_edit(edit_id, record)
 
 Persist one named edit record (replacing it atomically).
+
+* **Return type:**
+  [`None`](https://docs.python.org/3/builtins/constants.html#None)
+
+#### write_edit_history(edit_id, history)
+
+Persist one edit’s undo/redo stacks (atomically; callers hold the lock).
 
 * **Return type:**
   [`None`](https://docs.python.org/3/builtins/constants.html#None)
