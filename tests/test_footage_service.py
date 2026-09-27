@@ -1044,6 +1044,7 @@ def test_mcp_speaks_tool_names(fp):
     assert service.status(fp)["next_step"]["op"] == "render"
 
 
+@needs_ffmpeg  # compiling a named look probes the ffmpeg binary (the `looks` package)
 def test_named_looks(fp):
     from muvid.footage.named_looks import MAX_ZOOM
 
