@@ -7,6 +7,9 @@ Two independent halves:
   environments, write a shot script, render and compose. The verbs below are
   also the CLI. Project model: :class:`MusicVideoProject` and the schema
   dataclasses.
+- **Hosted productions** (:class:`muvid.Project`, needs ``nw``): a music video or a
+  lyric video a host (the reelee studio) places and serves — an ``nw.Project`` whose
+  footage operations are :mod:`muvid.footage.service`.
 - **Visualizer** (:mod:`muvid.visualize`, needs only ``ffmpeg`` + ``mixing``):
   turn a song and a cover into a still / Ken Burns / audio-reactive music video,
   plus a thumbnail. Deterministic, no AI, no network.
@@ -53,6 +56,10 @@ _LAZY = {
     "SongInfo": "muvid.schema",
     # visualizer entry point (the rest of the surface is under muvid.visualize)
     "render_audio_video": "muvid.visualize",
+    # a production a host places and serves (an nw.Project; needs the `mcp` extra's nw).
+    # Resolved by reelee.genres.project_class_for as getattr(muvid, "Project").
+    "Project": "muvid.production",
+    "create_project_at": "muvid.production",
 }
 
 __all__ = [*_LAZY, "visualize"]

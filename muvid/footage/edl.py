@@ -445,6 +445,12 @@ class UnreliableAlignmentError(ValueError):
         )
 
 
+#: ``FootageAlignment.source`` values: the aligner found the offset, or a person set it.
+MEASURED = "measured"
+DECLARED = "declared"
+ALIGNMENT_SOURCES = (MEASURED, DECLARED)
+
+
 @dataclass(frozen=True)
 class FootageAlignment:
     """Where one uploaded clip sits on the song timeline (muvid's per-clip record).
@@ -507,6 +513,13 @@ class FootageAlignment:
     #: actually missing, since its near-ties (0.993/0.989/0.987) are invisible to any
     #: fraction that does not look at the runner-up.
     margin: float | None = None
+    #: How the offset is KNOWN: :data:`MEASURED` (the aligner found it by audio) or
+    #: :data:`DECLARED` (a person set it — ``muvid.footage.service.set_offset``). A
+    #: declared record carries ``reliable=True`` because a person vouched for it, and
+    #: ``confidence=1.0`` / ``support=None`` because no measurement was made; read
+    #: ``source`` before reading either as evidence. Records on disk that predate the
+    #: field were all written by the aligner, so it defaults to measured.
+    source: str = "measured"
 
     def to_dict(self) -> dict:
         return {
@@ -521,6 +534,7 @@ class FootageAlignment:
             "window_s": self.window_s,
             "hop_s": self.hop_s,
             "margin": self.margin,
+            "source": self.source,
         }
 
     @classmethod
@@ -574,6 +588,9 @@ class FootageAlignment:
             window_s=window_s,
             hop_s=hop_s,
             margin=margin,
+            # Absent means the aligner wrote it: every record before `source` existed
+            # came from `align_footage`, and nothing else wrote alignments.json.
+            source=str(d.get("source") or MEASURED),
         )
 
 

@@ -1,0 +1,727 @@
+"""Tests for the footage operations (:mod:`muvid.footage.service`) and what hangs off them.
+
+The service is the single source of truth for the ``music_video`` operations: these tests
+pin the new ones (declared offsets, named edits and their cut-level changes, rendering a
+saved edit), the catalogue's consistency with nw's registry and with the MCP tool lists,
+the host-placed ``muvid.Project`` (placement, catalog registration, cover) and the
+importer.
+
+The edit tests need no ffmpeg: a song and clips are stored with their durations given,
+and offsets are DECLARED, which is exactly the path that needs no measurement. Tests that
+decode or encode media are marked ``needs_ffmpeg``. One opt-in real-data smoke test runs
+only when ``~/.local/share/muvid/fixtures/que_calor_excerpt/`` exists.
+"""
+
+from __future__ import annotations
+
+import inspect
+import json
+import os
+import shutil
+import subprocess
+from pathlib import Path
+
+import pytest
+
+nw = pytest.importorskip("nw")
+
+from muvid.footage import service  # noqa: E402
+from muvid.footage.errors import FootageError  # noqa: E402
+from muvid.footage.workspace import FootageWorkspace  # noqa: E402
+
+HAS_FFMPEG = shutil.which("ffmpeg") is not None and shutil.which("ffprobe") is not None
+needs_ffmpeg = pytest.mark.skipif(not HAS_FFMPEG, reason="needs ffmpeg + ffprobe")
+SONG_S = 30.0
+
+
+# -- fixtures -----------------------------------------------------------------------
+
+
+def _bytes_file(path: Path, payload: bytes) -> Path:
+    path.write_bytes(payload)
+    return path
+
+
+@pytest.fixture
+def fp(tmp_path, monkeypatch):
+    """A workspace footage project: a 30 s song, clips A (0-20 s) and B (10-30 s),
+    both placed by DECLARED offsets — no ffmpeg anywhere."""
+    monkeypatch.setenv("MUVID_DATA_HOME", str(tmp_path / "data"))
+    proj = FootageWorkspace.for_email("u@x.com").create_project("p")
+    song = _bytes_file(tmp_path / "song.wav", b"RIFF-song")
+    service.set_song(proj, path=str(song), duration_s=SONG_S)
+    for cid, payload in (("A", b"clip-a"), ("B", b"clip-b")):
+        clip = _bytes_file(tmp_path / f"{cid}.mp4", payload)
+        service.add_clip(proj, path=str(clip), clip_id=cid, duration_s=20.0)
+    service.set_offset(proj, clip_id="A", offset_s=0.0)
+    service.set_offset(proj, clip_id="B", offset_s=10.0)
+    return proj
+
+
+def _edl_ab():
+    return [
+        {"song_start": 0.0, "song_end": 12.0, "clip_id": "A"},
+        {"song_start": 12.0, "song_end": 30.0, "clip_id": "B"},
+    ]
+
+
+# -- declared offsets ---------------------------------------------------------------
+
+
+def test_set_offset_is_declared_trusted_and_covers_by_duration(fp):
+    by = {a.clip_id: a for a in fp.load_alignments()}
+    assert by["B"].source == "declared" and by["B"].reliable is True
+    assert by["B"].coverage == (10.0, 30.0) and by["B"].support is None
+    record = json.loads((fp.root / "alignments.json").read_text())
+    assert {r["source"] for r in record} == {"declared"}
+
+
+def test_alignment_source_defaults_to_measured_for_old_records():
+    from muvid.footage.edl import FootageAlignment
+
+    old = {
+        "clip_id": "A",
+        "offset_s": 1.0,
+        "confidence": 0.9,
+        "duration_s": 5.0,
+        "coverage": [1.0, 6.0],
+    }
+    assert FootageAlignment.from_dict(old).source == "measured"
+
+
+def test_set_offset_refuses_unknown_clips(fp):
+    with pytest.raises(FootageError, match="unknown clip_id 'Z'.*A, B"):
+        service.set_offset(fp, clip_id="Z", offset_s=0.0)
+
+
+def test_align_keeps_declared_offsets_and_measures_the_rest(fp, tmp_path, monkeypatch):
+    import muvid.footage.align as A
+    from muvid.footage.edl import FootageAlignment
+
+    measured_ids = []
+
+    def fake_align(song, clips, *, song_duration):
+        measured_ids.extend(cid for cid, _ in clips)
+        return [
+            FootageAlignment(cid, 3.0, 0.9, 20.0, (3.0, 23.0), support=0.9, margin=0.5)
+            for cid, _ in clips
+        ]
+
+    monkeypatch.setattr(A, "align_footage", fake_align)
+    service.add_clip(
+        fp,
+        path=str(_bytes_file(tmp_path / "C.mp4", b"clip-c")),
+        clip_id="C",
+        duration_s=20.0,
+    )
+    out = service.align(fp)
+    assert measured_ids == ["C"] and out["kept_declared"] == ["A", "B"]
+    sources = {a["clip_id"]: a["source"] for a in out["alignments"]}
+    assert sources == {"A": "declared", "B": "declared", "C": "measured"}
+    service.align(fp, keep_declared=False)
+    assert sorted(measured_ids) == ["A", "B", "C", "C"]
+
+
+def test_removing_a_clip_keeps_the_other_clips_declared_offsets(fp):
+    out = service.remove_clip(fp, clip_id="A")
+    assert out["alignment_invalidated"] is True
+    assert [a.clip_id for a in fp.load_alignments()] == ["B"]
+
+
+# -- named edits --------------------------------------------------------------------
+
+
+def test_save_get_list_and_delete_an_edit(fp):
+    saved = service.save_edit(fp, edl=_edl_ab(), name="Mine", edit_id="e1")
+    assert saved["edit_id"] == "e1" and saved["problem"] is None
+    assert saved["n_cuts"] == 2 and saved["how_made"] == "by hand"
+    assert (fp.root / "edits" / "e1.json").exists()
+    assert [e["edit_id"] for e in service.edits(fp)["edits"]] == ["e1"]
+    got = service.get_edit(fp, edit_id="e1")
+    assert got["edl"][1] == {"song_start": 12.0, "song_end": 30.0, "clip_id": "B"}
+    assert got["coverage"]["uncovered"] == []
+    with pytest.raises(FootageError, match="already exists"):
+        service.save_edit(fp, edl=_edl_ab(), edit_id="e1")
+    service.delete_edit(fp, edit_id="e1")
+    assert service.edits(fp)["edits"] == []
+    with pytest.raises(FootageError, match="unknown edit 'e1'"):
+        service.get_edit(fp, edit_id="e1")
+
+
+def test_an_edit_that_does_not_validate_is_refused_and_not_saved(fp):
+    bad = [{"song_start": 0.0, "song_end": 25.0, "clip_id": "A"}]  # A ends at 20 s
+    with pytest.raises(FootageError, match="not a valid edit"):
+        service.save_edit(fp, edl=bad, edit_id="bad")
+    assert not fp.has_edit("bad")
+
+
+def test_holes_become_explicit_gaps(fp):
+    saved = service.save_edit(
+        fp, edl=[{"song_start": 2.0, "song_end": 12.0, "clip_id": "A"}], edit_id="g"
+    )
+    assert [e["clip_id"] for e in saved["edl"]] == [None, "A", None]
+    assert saved["edl"][-1]["song_end"] == SONG_S
+
+
+def test_set_cut_moves_the_neighbour_boundary_and_changes_the_clip(fp):
+    service.save_edit(fp, edl=_edl_ab(), edit_id="e")
+    out = service.set_cut(fp, edit_id="e", index=1, song_start=15.0)
+    assert [(e["song_start"], e["song_end"]) for e in out["edl"]] == [
+        (0.0, 15.0),
+        (15.0, 30.0),
+    ]
+    out = service.set_cut(fp, edit_id="e", index=0, clip_id="")
+    assert out["edl"][0]["clip_id"] is None and out["changed"] == 0
+    out = service.set_cut(fp, edit_id="e", index=0, clip_id="A", look="eq=gamma=1.1")
+    assert out["edl"][0]["look"] == "eq=gamma=1.1"
+    out = service.set_cut(fp, edit_id="e", index=0, look="")
+    assert "look" not in out["edl"][0]
+
+
+def test_set_cut_refusals_leave_the_edit_as_it_was(fp):
+    service.save_edit(fp, edl=_edl_ab(), edit_id="e")
+    before = service.get_edit(fp, edit_id="e")["edl"]
+    with pytest.raises(FootageError, match="merge_cut"):
+        service.set_cut(fp, edit_id="e", index=1, song_start=0.0)
+    with pytest.raises(FootageError, match="not a valid edit"):
+        service.set_cut(fp, edit_id="e", index=1, clip_id="A")  # A does not reach 30 s
+    with pytest.raises(FootageError, match="out of range"):
+        service.set_cut(fp, edit_id="e", index=7, clip_id="A")
+    assert service.get_edit(fp, edit_id="e")["edl"] == before
+
+
+def test_split_and_merge_cuts(fp):
+    edl = _edl_ab()
+    edl[0]["crop"] = {"x": 0.0, "y": 0.0, "w": 0.5, "h": 0.5}
+    edl[0]["crop_end"] = {"x": 0.5, "y": 0.0, "w": 0.5, "h": 0.5}
+    service.save_edit(fp, edl=edl, edit_id="e")
+    out = service.split_cut(fp, edit_id="e", at_s=6.0)
+    first, second = out["edl"][0], out["edl"][1]
+    assert (first["song_end"], second["song_start"]) == (6.0, 6.0)
+    # the pan is divided where it was at 6 s — half way across 0..12
+    assert first["crop_end"]["x"] == pytest.approx(0.25)
+    assert second["crop"]["x"] == pytest.approx(0.25)
+    assert second["crop_end"]["x"] == pytest.approx(0.5)
+    with pytest.raises(FootageError, match="boundary"):
+        service.split_cut(fp, edit_id="e", at_s=6.0)
+    out = service.merge_cut(fp, edit_id="e", index=1, into="previous")
+    assert len(out["edl"]) == 2 and out["edl"][0]["song_end"] == 12.0
+    with pytest.raises(FootageError, match="no previous"):
+        service.merge_cut(fp, edit_id="e", index=0, into="previous")
+    # merging B's span into A is refused: A does not cover 12..30
+    with pytest.raises(FootageError, match="not a valid edit"):
+        service.merge_cut(fp, edit_id="e", index=1, into="previous")
+
+
+def test_replace_edit_validates(fp):
+    service.save_edit(fp, edl=_edl_ab(), edit_id="e")
+    out = service.replace_edit(
+        fp, edit_id="e", edl=[{"song_start": 0.0, "song_end": 20.0, "clip_id": "A"}]
+    )
+    assert [e["clip_id"] for e in out["edl"]] == ["A", None]
+    with pytest.raises(FootageError):
+        service.replace_edit(
+            fp, edit_id="e", edl=[{"song_start": 0, "song_end": 29, "clip_id": "A"}]
+        )
+
+
+def test_propose_edit_saves_a_named_edit(fp):
+    out = service.propose_edit(fp)
+    assert out["strategy"] == "best_confidence" and out["edit_id"]
+    rec = service.get_edit(fp, edit_id=out["edit_id"])
+    assert rec["name"] == "Edit 1" and rec["how_made"].startswith("cut automatically")
+    assert rec["edl"] == out["edl"]
+    unsaved = service.propose_edit(fp, save=False)
+    assert "edit_id" not in unsaved and len(service.edits(fp)["edits"]) == 1
+
+
+def test_status_names_the_next_step(fp):
+    st = service.status(fp)
+    assert st["next_step"]["op"] == "propose_edit"
+    assert {a["clip_id"]: a["source"] for a in st["alignments"]} == {
+        "A": "declared",
+        "B": "declared",
+    }
+    service.save_edit(fp, edl=_edl_ab(), edit_id="e")
+    assert service.status(fp)["next_step"]["op"] == "render"
+
+
+def test_render_refuses_an_unknown_edit(fp):
+    with pytest.raises(FootageError, match="unknown edit"):
+        service.render(fp, edit_id="nope")
+
+
+def test_render_renders_the_saved_edit_and_records_it(fp, monkeypatch):
+    import muvid.footage.assemble as A
+    import muvid.visualize as V
+
+    seen = {}
+
+    def fake_assemble(cuts, song, out, canvas, on_note=None):
+        seen["cuts"] = [(c.clip_id, c.song_start, c.song_end) for c in cuts]
+        Path(out).write_bytes(b"video")
+        return Path(out)
+
+    monkeypatch.setattr(A, "assemble_music_video", fake_assemble)
+    monkeypatch.setattr(V, "verify_video", lambda *a, **k: [])
+    monkeypatch.setattr(V, "failures", lambda c: [])
+    monkeypatch.setattr(V, "report", lambda c: "ok")
+    service.save_edit(fp, edl=_edl_ab(), edit_id="e", name="Take one")
+    meta = service.render(fp, edit_id="e")
+    assert meta["edit_id"] == "e" and meta["label"] == "Take one" and meta["ok"]
+    assert seen["cuts"] == [("A", 0.0, 12.0), ("B", 12.0, 30.0)]
+    rows = service.renders(fp)["renders"]
+    assert rows[0]["edit_id"] == "e" and rows[0]["render_id"] == meta["render_id"]
+
+
+# -- the catalogue: service ↔ nw registry ↔ MCP tools ----------------------------------
+
+
+def test_catalogue_rows_match_the_registered_nw_ops():
+    import muvid.genre_music_video as g
+
+    specs = service.FOOTAGE_OP_SPECS
+    ops = nw.genre_ops("music_video")
+    assert [o.name for o in ops] == [s.name for s in specs]
+    assert ops == g.FOOTAGE_OPS
+    for spec, op in zip(specs, ops):
+        assert (op.title, op.effect, op.runs) == (spec.title, spec.effect, spec.runs)
+        assert op.description == inspect.getdoc(getattr(service, spec.name))
+        schema = op.params_schema
+        assert schema["additionalProperties"] is False
+        assert not set(spec.hide) & set(schema.get("properties", {}))
+    catalogue = nw.genre_ops_catalogue("music_video")
+    assert json.loads(json.dumps(catalogue)) == catalogue
+    assert {
+        r["runs"] for r in catalogue if r["name"] in {"align", "score", "render"}
+    } == {"job"}
+    assert all("free" not in r["title"].lower() for r in catalogue)
+
+
+def test_mcp_footage_tools_are_derived_from_the_catalogue():
+    pytest.importorskip("fastmcp")
+    import muvid.mcp as mcp
+    import muvid.mcp.footage_tools as ft
+    import muvid.mcp.scoring_tools as st
+    from muvid.mcp._footage_ops import (
+        FOOTAGE_TRANSPORT_TOOLS,
+        SCORING_OPS,
+        SCORING_TRANSPORT_TOOLS,
+        op_tool_name,
+    )
+
+    op_names = [s.name for s in service.FOOTAGE_OP_SPECS]
+    expected_footage = [op_tool_name(n) for n in op_names if n not in SCORING_OPS]
+    expected_scoring = [op_tool_name(n) for n in op_names if n in SCORING_OPS]
+    assert mcp.FOOTAGE_TOOLS == expected_footage + FOOTAGE_TRANSPORT_TOOLS
+    assert mcp.SCORING_TOOLS == expected_scoring + SCORING_TRANSPORT_TOOLS
+    for name in mcp.FOOTAGE_TOOLS:
+        assert callable(getattr(ft, name)), name
+    for name in mcp.SCORING_TOOLS:
+        assert callable(getattr(st, name)), name
+    # a generated tool carries its operation's signature, minus the project
+    params = inspect.signature(ft.footage_set_cut).parameters
+    assert list(params)[:3] == ["project_id", "edit_id", "index"]
+
+
+def test_a_generated_mcp_tool_runs_the_operation(tmp_path, monkeypatch, fp):
+    pytest.importorskip("fastmcp")
+    import muvid.mcp.footage_tools as ft
+    from fastmcp.exceptions import ToolError
+    from muvid.mcp.identity import use_email
+
+    with use_email("u@x.com"):
+        out = ft.footage_save_edit("p", edl=_edl_ab(), edit_id="e")
+        assert out["project_id"] == "p" and out["edit_id"] == "e"
+        assert ft.footage_edits("p")["edits"][0]["edit_id"] == "e"
+        with pytest.raises(ToolError, match="unknown edit"):
+            ft.footage_get_edit("p", edit_id="zz")
+
+
+def test_the_mcp_server_builds_with_every_tool():
+    fastmcp = pytest.importorskip("fastmcp")
+    pytest.importorskip("py2mcp")
+    import asyncio
+
+    import muvid.mcp as mcp
+
+    server = fastmcp.FastMCP("t")
+    registered = mcp.register_tools(server, prefix="muvid_")
+    assert set(registered) == {f"muvid_{n}" for n in mcp.TOOL_NAMES}
+    schema = asyncio.run(server.get_tool("muvid_footage_set_cut")).parameters
+    assert {"project_id", "edit_id", "index"} <= set(schema["properties"])
+
+
+# -- the host-placed project ----------------------------------------------------------
+
+
+def test_placement_is_offered_for_both_genres_and_honoured(tmp_path):
+    import muvid
+    import muvid.genre  # noqa: F401
+
+    assert nw.can_place_genre_project("music_video")
+    assert nw.can_place_genre_project("lyric-video")
+    info = nw.create_genre_project(
+        "music_video", "u@x.com", "mv", template="portrait", projects_dir=tmp_path
+    )
+    assert info["canvas"] == "portrait"
+    project = muvid.Project(tmp_path / "mv")
+    assert isinstance(project, nw.Project) and project.genre == "music_video"
+    assert project.footage.canvas() == (1080, 1920)
+    assert project.footage.root == project.root / "footage"
+    nw.create_genre_project("lyric-video", "u@x.com", "lv", projects_dir=tmp_path)
+    assert muvid.Project(tmp_path / "lv").genre == "lyric-video"
+
+
+def test_unplaced_create_still_uses_the_caller_workspace(tmp_path, monkeypatch):
+    import muvid.genre  # noqa: F401
+
+    monkeypatch.setenv("MUVID_DATA_HOME", str(tmp_path))
+    nw.create_genre_project("music_video", "u@x.com", "p1")
+    assert FootageWorkspace.for_email("u@x.com").open_project("p1")
+
+
+def test_muvid_project_resolves_the_way_reelee_looks_it_up():
+    import importlib
+
+    cls = getattr(importlib.import_module("muvid"), "Project")
+    assert isinstance(cls, type) and issubclass(cls, nw.Project)
+
+
+def test_hosted_media_lands_in_the_host_catalog(tmp_path):
+    import muvid
+    import muvid.genre  # noqa: F401
+    from muvid.catalog import hash_file
+
+    nw.create_genre_project("music_video", "u", "mv", projects_dir=tmp_path)
+    project = muvid.Project(tmp_path / "mv")
+    fp = project.footage
+    song = _bytes_file(tmp_path / "s.wav", b"RIFF-hosted-song")
+    out = service.set_song(fp, path=str(song), filename="My Song.wav", duration_s=10.0)
+    aid = out["song"]["artifact_id"]
+    assert aid == hash_file(song) == fp.song_hash()
+    assert out["song"]["name"] == "My Song.wav"
+    catalog = project.media_catalog
+    assert catalog.has(aid)
+    row = json.loads((catalog.rows_dir / f"{aid}.json").read_text())
+    assert row["url"] == f"/api/artifacts/{aid}/bytes" and row["kind"] == "audio"
+    # the blob is a hardlink of the project's own copy, not a second copy
+    assert os.path.samefile(catalog.blobs_dir / aid, fp.song_path())
+
+
+def test_genre_op_runs_on_the_hosted_project(tmp_path):
+    import muvid
+    import muvid.genre  # noqa: F401
+
+    nw.create_genre_project("music_video", "u", "mv", projects_dir=tmp_path)
+    project = muvid.Project(tmp_path / "mv")
+    status = nw.genre_op("music_video", "status")
+    assert status(project)["next_step"]["op"] == "set_song"
+    with pytest.raises(ValueError):  # schema: set_cut needs an integer index
+        nw.genre_op("music_video", "set_cut").validate_params(
+            {"edit_id": "e", "index": "seven"}
+        )
+    lyric = nw.genre_op("lyric-video", "status")
+    assert lyric(project)["editable"] is False
+
+
+# -- the EDL converter ----------------------------------------------------------------
+
+
+def test_framing_edl_converts_to_crop_fractions():
+    from muvid.importing._edl import edl_from_document, is_framing_edl
+
+    doc = {
+        "edl": [
+            {
+                "song_start": 0.162,
+                "song_end": 7.7,
+                "clip_id": "c03",
+                "clip_in": 8.6,
+                "framing": {"w": 1024, "h": 576, "x0": 0, "y0": 0, "x1": 0, "y1": 0},
+            },
+            {
+                "song_start": 7.7,
+                "song_end": 9.0,
+                "clip_id": "c02",
+                "framing": {
+                    "w": 660,
+                    "h": 370,
+                    "x0": 136.3,
+                    "y0": 48.6,
+                    "x1": 51.7,
+                    "y1": 48.6,
+                },
+            },
+            {
+                "song_start": 9.0,
+                "song_end": 10.0,
+                "clip_id": "c01",
+                "framing": {
+                    "w": 478,
+                    "h": 269,
+                    "x0": 0,
+                    "y0": 100,
+                    "x1": 0,
+                    "y1": 100.2,
+                },
+            },
+        ]
+    }
+    assert is_framing_edl(doc) and not is_framing_edl([{"song_start": 0}])
+    sizes = {"c01": (478, 850), "c02": (848, 478), "c03": (1024, 576)}
+    edl = edl_from_document(doc, source_sizes=sizes)
+    assert edl[0] == {"song_start": 0.162, "song_end": 7.7, "clip_id": "c03"}
+    assert edl[1]["crop"]["x"] == pytest.approx(136.3 / 848)
+    assert edl[1]["crop_end"]["x"] == pytest.approx(51.7 / 848)
+    assert edl[2]["crop"]["y"] == pytest.approx(100 / 850) and "crop_end" not in edl[2]
+    with pytest.raises(ValueError, match="no frame size"):
+        edl_from_document(doc, source_sizes={})
+    muvid_shaped = [{"song_start": 0, "song_end": 1, "clip_id": "a", "look": "hflip"}]
+    assert edl_from_document(muvid_shaped, source_sizes={})[0]["look"] == "hflip"
+
+
+# -- media: importer, cover, catalog (ffmpeg) -----------------------------------------
+
+
+def _tone(path: Path, *, seconds: float) -> Path:
+    subprocess.run(
+        [
+            "ffmpeg",
+            "-y",
+            "-loglevel",
+            "error",
+            "-f",
+            "lavfi",
+            "-i",
+            f"sine=frequency=440:duration={seconds}",
+            str(path),
+        ],
+        check=True,
+    )
+    return path
+
+
+def _video(path: Path, *, seconds: float, size: str = "320x240") -> Path:
+    subprocess.run(
+        [
+            "ffmpeg",
+            "-y",
+            "-loglevel",
+            "error",
+            "-f",
+            "lavfi",
+            "-i",
+            f"testsrc=size={size}:rate=25:duration={seconds}",
+            "-f",
+            "lavfi",
+            "-i",
+            f"sine=frequency=330:duration={seconds}",
+            "-shortest",
+            "-pix_fmt",
+            "yuv420p",
+            str(path),
+        ],
+        check=True,
+    )
+    return path
+
+
+@needs_ffmpeg
+def test_importer_is_idempotent_and_fills_every_part(tmp_path):
+    import muvid
+    from muvid.importing import import_production
+
+    src = tmp_path / "src"
+    src.mkdir()
+    _tone(src / "song.wav", seconds=6.0)
+    _video(src / "a.mp4", seconds=6.0)
+    _video(src / "b.mp4", seconds=4.0, size="240x320")
+    _video(src / "final.mp4", seconds=6.0)
+    (src / "edl.json").write_text(
+        json.dumps(
+            {
+                "edl": [
+                    {
+                        "song_start": 0.0,
+                        "song_end": 3.0,
+                        "clip_id": "a",
+                        "framing": {
+                            "w": 160,
+                            "h": 120,
+                            "x0": 0,
+                            "y0": 0,
+                            "x1": 160,
+                            "y1": 0,
+                        },
+                    },
+                    {
+                        "song_start": 3.0,
+                        "song_end": 5.0,
+                        "clip_id": "b",
+                        "framing": {
+                            "w": 240,
+                            "h": 320,
+                            "x0": 0,
+                            "y0": 0,
+                            "x1": 0,
+                            "y1": 0,
+                        },
+                    },
+                ]
+            }
+        )
+    )
+    manifest = {
+        "kind": "footage",
+        "id": "demo",
+        "title": "Demo",
+        "canvas": "landscape",
+        "song": {"path": "song.wav"},
+        "clips": [
+            {"id": "a", "path": "a.mp4", "name": "Cam A", "offset_s": 0.0},
+            {"id": "b", "path": "b.mp4", "offset_s": 1.5},
+        ],
+        "edits": [
+            {
+                "id": "v1",
+                "name": "V1",
+                "edl_path": "edl.json",
+                "how_made": "planned by hand",
+            }
+        ],
+        "renders": [
+            {"id": "final", "path": "final.mp4", "edit_id": "v1", "label": "Final"}
+        ],
+    }
+    projects = tmp_path / "projects"
+    dry = import_production(manifest, projects, base_dir=src, dry_run=True)
+    assert dry["edits"] == {"v1": "2 entries"} and not projects.exists()
+    first = import_production(manifest, projects, base_dir=src)
+    assert first["created"] and first["song"] == "set"
+    assert first["clips"] == {"a": "added", "b": "added"}
+    assert first["offsets"] == {"a": "declared", "b": "declared"}
+    assert first["edits"] == {"v1": "saved"} and first["cover_artifact_id"]
+    again = import_production(manifest, projects, base_dir=src)
+    assert again["song"] == "unchanged" and set(again["clips"].values()) == {
+        "unchanged"
+    }
+    assert set(again["offsets"].values()) == {"unchanged"}
+    assert again["edits"] == {"v1": "unchanged"} and not again["created"]
+
+    project = muvid.Project(projects / "demo")
+    fp = project.footage
+    edit = service.get_edit(fp, edit_id="v1")
+    assert edit["problem"] is None and edit["edl"][0]["crop_end"]["x"] == 0.5
+    render = service.renders(fp)["renders"][0]
+    assert render["edit_id"] == "v1" and render["label"] == "Final"
+    catalog = project.media_catalog
+    status = service.status(fp)
+    ids = [
+        status["song"]["artifact_id"],
+        render["artifact_id"],
+        status["cover_artifact_id"],
+        *(c["artifact_id"] for c in status["clips"]),
+    ]
+    assert all(catalog.has(i) for i in ids)
+    assert project.cover_artifact_id() == status["cover_artifact_id"]
+    assert len(fp.list_renders()) == 1  # re-import did not add a second render
+
+
+@needs_ffmpeg
+def test_importer_lyric_video(tmp_path):
+    import muvid
+    from muvid.importing import import_production
+
+    src = tmp_path / "src"
+    src.mkdir()
+    _tone(src / "song.wav", seconds=3.0)
+    _video(src / "published.mp4", seconds=3.0)
+    (src / "lyrics.md").write_text("il pleut\n")
+    (src / "treatment.json").write_text('{"archetype": "calligram"}')
+    manifest = {
+        "kind": "lyric-video",
+        "id": "lv",
+        "title": "Rain",
+        "template": "calligram",
+        "song": {"path": "song.wav"},
+        "sources": [
+            {"role": "lyrics", "path": "lyrics.md"},
+            {"role": "treatment", "path": "treatment.json"},
+        ],
+        "renders": [{"id": "v3", "path": "published.mp4", "label": "Readable"}],
+    }
+    import_production(manifest, tmp_path / "projects", base_dir=src)
+    import_production(manifest, tmp_path / "projects", base_dir=src)
+    project = muvid.Project(tmp_path / "projects" / "lv")
+    assert project.genre == "lyric-video"
+    assert (project.resolved_genre() or {}).get("template") == "calligram"
+    status = nw.genre_op("lyric-video", "status")(project)
+    assert [r["render_id"] for r in status["renders"]] == ["v3"]
+    lyrics = next(s for s in status["sources"] if s["role"] == "lyrics")
+    assert lyrics["text"] == "il pleut\n"
+    assert project.media_catalog.has(status["renders"][0]["artifact_id"])
+    assert project.cover_artifact_id()
+
+
+def test_importer_refuses_missing_files(tmp_path):
+    from muvid.importing import ImportRefused, import_production
+
+    manifest = {"kind": "footage", "id": "x", "song": {"path": "nope.wav"}}
+    with pytest.raises(ImportRefused, match="missing files"):
+        import_production(manifest, tmp_path, base_dir=tmp_path)
+
+
+def test_importer_cli_dry_run(tmp_path, capsys):
+    from muvid.importing.__main__ import main
+
+    (tmp_path / "m.json").write_text(json.dumps({"kind": "lyric-video", "id": "z"}))
+    assert main([str(tmp_path / "m.json"), str(tmp_path / "p"), "--dry-run"]) == 0
+    assert json.loads(capsys.readouterr().out)["dry_run"] is True
+
+
+# -- the opt-in real-data smoke test ---------------------------------------------------
+
+_EXCERPT = Path.home() / ".local" / "share" / "muvid" / "fixtures" / "que_calor_excerpt"
+
+
+@pytest.mark.skipif(
+    not (_EXCERPT / "expected.json").exists(),
+    reason=f"opt-in: needs the private excerpt at {_EXCERPT}",
+)
+def test_que_calor_excerpt_end_to_end(tmp_path):
+    """The v1 acceptance path, on 30 s of a real song and its three phone clips."""
+    import muvid
+    import muvid.genre  # noqa: F401
+
+    expected = json.loads((_EXCERPT / "expected.json").read_text())
+    expected_offsets = expected["offsets_s"]
+    nw.create_genre_project("music_video", "u", "qc", projects_dir=tmp_path)
+    fp = muvid.Project(tmp_path / "qc").footage
+    service.set_song(fp, path=str(_EXCERPT / "song.m4a"), filename="song.m4a")
+    for cid in ("c01", "c02", "c03"):
+        service.add_clip(fp, path=str(_EXCERPT / f"{cid}.mp4"), clip_id=cid)
+    aligned = {a["clip_id"]: a for a in service.align(fp)["alignments"]}
+    for cid, want in expected_offsets.items():
+        assert aligned[cid]["offset_s"] == pytest.approx(want, abs=0.1), cid
+    edit = service.propose_edit(fp, name="smoke")
+    footage_cuts = [i for i, e in enumerate(edit["edl"]) if e["clip_id"]]
+    i = footage_cuts[0]
+    cut = edit["edl"][i]
+    others = [
+        cid
+        for cid, a in aligned.items()
+        if cid != cut["clip_id"]
+        and a["coverage"][0] <= cut["song_start"]
+        and cut["song_end"] <= a["coverage"][1]
+    ]
+    if others:
+        changed = service.set_cut(
+            fp, edit_id=edit["edit_id"], index=i, clip_id=others[0]
+        )
+        assert changed["edl"][i]["clip_id"] == others[0]
+    meta = service.render(fp, edit_id=edit["edit_id"])
+    from muvid.visualize.ffmpeg import media_duration
+
+    assert meta["ok"] and meta["artifact_id"]
+    assert media_duration(meta["video"]) == pytest.approx(fp.song_duration(), abs=0.5)

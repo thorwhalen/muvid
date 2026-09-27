@@ -26,7 +26,14 @@ ships, so it does not get to change later.
 
 from __future__ import annotations
 
-from nw import Genre, Template, register_genre, register_genre_project_factory
+from nw import (
+    Genre,
+    GenreOp,
+    Template,
+    register_genre,
+    register_genre_ops,
+    register_genre_project_factory,
+)
 
 from muvid.lyricvid.manifest import LYRIC_VIDEO as _MANIFEST
 from muvid.lyricvid.spec import ARCHETYPES
@@ -92,18 +99,30 @@ LYRIC_VIDEO: Genre = register_genre(
 )
 
 
-def _lyric_video_project_factory(caller, project_id, *, title, template, params):
-    """Create a ``lyric-video`` output bucket in the CALLER's own muvid workspace.
+def _lyric_video_project_factory(
+    caller, project_id, *, title, template, params, projects_dir=None
+):
+    """Create a ``lyric-video`` project where the CALLER asks, else a per-user bucket.
 
-    Like the visualizer, a lyric video is stateless — a "project" is a per-user
-    bucket its renders land in — so this creates the same lightweight
-    :class:`~muvid.mcp.workspace.VisualizerProject` rather than a full nw
-    project. ``VisualizerWorkspace`` is imported **lazily** so
-    ``import muvid.genre_lyric_video`` stays fastmcp-free.
+    - ``projects_dir`` given — a :class:`muvid.Project` at ``projects_dir/<project_id>``
+      (nw#84 placement: the host that serves it decides where), holding the song, the
+      sources and the renders at ``<project>/lyric``.
+    - ``None`` — like the visualizer, a lyric video is stateless on the connector: a
+      "project" is a per-user bucket its renders land in, the lightweight
+      :class:`~muvid.mcp.workspace.VisualizerProject`.
+
+    Both imports are **lazy** so ``import muvid.genre_lyric_video`` stays fastmcp-free.
     """
-    from muvid.mcp.workspace import VisualizerWorkspace
+    if projects_dir is not None:
+        from muvid.production import create_project_at
 
-    proj = VisualizerWorkspace.for_email(caller).create_project(project_id, title=title)
+        proj = create_project_at(projects_dir, project_id, title=title)
+    else:
+        from muvid.mcp.workspace import VisualizerWorkspace
+
+        proj = VisualizerWorkspace.for_email(caller).create_project(
+            project_id, title=title
+        )
     return {
         "project": proj,
         "project_id": project_id,
@@ -114,3 +133,26 @@ def _lyric_video_project_factory(caller, project_id, *, title, template, params)
 
 
 register_genre_project_factory(LYRIC_VIDEO_SLUG, _lyric_video_project_factory)
+
+
+def _lyric_status(project) -> dict:
+    """What a lyric video is made of: its song, its sources (lyrics, treatment, word
+    timings, the poem — small text files inline as ``text``) and its finished videos,
+    each with the ``artifact_id`` to play it by. View-only for now
+    (``editable: false``): changing a treatment and rendering again is not offered on
+    this surface yet."""
+    return project.lyric.status()
+
+
+#: The operations a host serves on a hosted lyric video — view-only in v1.
+LYRIC_VIDEO_OPS: tuple[GenreOp, ...] = register_genre_ops(
+    LYRIC_VIDEO_SLUG,
+    [
+        GenreOp(
+            name="status",
+            fn=_lyric_status,
+            title="Show what the lyric video is made of",
+            effect="read",
+        )
+    ],
+)

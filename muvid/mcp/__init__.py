@@ -49,39 +49,12 @@ VISUALIZER_TOOLS = [
     "render_visualizer",
 ]
 
-#: The footage-aligned ``music_video`` genre tools (muvid.mcp.footage_tools).
-FOOTAGE_TOOLS = [
-    "set_song",
-    "add_footage",
-    "add_footage_folder",
-    "align_footage",
-    "propose_edit",
-    "footage_timeline",
-    "assemble_music_video",
-    "footage_status",
-    "list_strategies",
-    # The lacing-native editor bridge (muvid#31): the read half (project → the
-    # three body schemas a multitrack editor renders) and the write half (an
-    # edited DECISION lane → an ``edl=`` argument). Both free and read-only.
-    "footage_editor_document",
-    "footage_edl_from_annotations",
-    # The song's beat grid on its own (muvid#18 item 5): the grid used to be reachable
-    # only as a side effect of the cv2-heavy score_footage job. Free, cached per song.
-    "beat_grid",
-    # Clip lifecycle (muvid#22): the way back to a lost project_id, and the way a
-    # mistaken upload stops being permanent. Both free; remove_footage invalidates
-    # the alignment the same way set_song does.
-    "list_music_video_projects",
-    "remove_footage",
-]
-
-#: The footage SCORING tools (muvid.mcp.scoring_tools) — the background scoring job + the
-#: editor's score-track reads (thorwhalen/muvid#13). Also free.
-SCORING_TOOLS = [
-    "score_footage",
-    "footage_score_status",
-    "footage_scores",
-]
+#: The footage-aligned ``music_video`` genre tools (muvid.mcp.footage_tools) and the
+#: footage SCORING tools (muvid.mcp.scoring_tools — the background scoring job + the
+#: editor's score-track reads, thorwhalen/muvid#13). Both lists are DERIVED from the
+#: operations catalogue (``muvid.footage.service.FOOTAGE_OP_SPECS``) plus the named
+#: transport-only tools — see :mod:`muvid.mcp._footage_ops`; never list them by hand.
+from muvid.mcp._footage_ops import FOOTAGE_TOOLS, SCORING_TOOLS  # noqa: E402
 
 #: All tools this package exposes (all free). Bare names; a host may prefix them.
 TOOL_NAMES = (
