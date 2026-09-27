@@ -360,8 +360,19 @@ def align_footage(project_id: str, *, keep_declared: bool = True) -> dict:
       the first place to look — and muvid#91 is where that trade-off is being decided.
 
     Run this after adding/removing clips and before assembling.
+
+    A clip placed by hand (``footage_set_offset``) is left as placed and named in
+    ``kept_declared``; ``keep_declared=false`` forgets those first
+    (``footage_clear_offset``) and measures every clip.
     """
-    return _call(project_id, service.align, keep_declared=keep_declared)
+    proj = _open(project_id)
+    with _refusals():
+        if not keep_declared:  # the connector's opt-in: forget them, then measure
+            for a in proj.load_alignments():
+                if a.source == "declared":
+                    service.clear_offset(proj, clip_id=a.clip_id)
+        out = service.align(proj)
+    return {"project_id": project_id, **out}
 
 
 def footage_timeline(project_id: str) -> dict:

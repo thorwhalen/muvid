@@ -33,7 +33,7 @@ from __future__ import annotations
 
 import os
 import re
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 from typing import NamedTuple, Sequence
 
 #: Spans shorter than this (seconds) are treated as coincident / zero — guards float noise.
@@ -746,6 +746,13 @@ class EdlEntry:
     #: plan, and :func:`~muvid.footage.look.punch_in_cuts` sets this field FROM
     #: the fragment rather than hardcoding it.
     look_time_varying: bool = False
+    #: WHICH named look produced :attr:`look` — ``{"name": "slow_push", "zoom": 1.08}``
+    #: (:mod:`muvid.footage.named_looks`) — so a screen can show and re-edit the choice
+    #: rather than a filter string. Descriptive only: ``look`` is what renders, and the
+    #: two are set together by ``service.set_cut``. ``None`` (the default, and always
+    #: for a hand-written filter) emits nothing — additive in both directions. Excluded
+    #: from the hash because a dict is not hashable; equality still compares it.
+    look_spec: "dict | None" = field(default=None, hash=False)
 
     @property
     def is_gap(self) -> bool:
@@ -879,7 +886,21 @@ def _as_entry(e) -> EdlEntry:
         crop_end=_as_crop(e.get("crop_end"), "crop_end"),
         look=_as_look(e.get("look")),
         look_time_varying=_as_look_time_varying(e.get("look_time_varying")),
+        look_spec=_as_look_spec(e.get("look_spec")),
     )
+
+
+def _as_look_spec(raw) -> "dict | None":
+    """A named look's spec: ``None``, or a JSON object with a string ``name``. Raises
+    on anything else, like the other request-side reads."""
+    if raw is None:
+        return None
+    if not isinstance(raw, dict) or not isinstance(raw.get("name"), str):
+        raise ValueError(
+            f"EDL entry look_spec is malformed ({raw!r}): it must be an object with a "
+            "string 'name' (a named look) and its parameters."
+        )
+    return dict(raw)
 
 
 def fill_gaps(
@@ -1048,6 +1069,11 @@ def validate_edl(
             _validate_crop(i, e)
         if e.look is not None:
             _validate_look(i, e, canvas)
+        elif e.look_spec is not None:
+            raise ValueError(
+                f"EDL entry {i} names a look ({e.look_spec.get('name')!r}) but carries "
+                "no look to render — the spec describes a look, it is not one."
+            )
         elif e.look_time_varying:
             raise ValueError(
                 f"EDL entry {i} sets look_time_varying but carries no look. The "

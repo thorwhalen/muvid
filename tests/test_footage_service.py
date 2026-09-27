@@ -118,8 +118,23 @@ def test_align_keeps_declared_offsets_and_measures_the_rest(fp, tmp_path, monkey
     assert measured_ids == ["C"] and out["kept_declared"] == ["A", "B"]
     sources = {a["clip_id"]: a["source"] for a in out["alignments"]}
     assert sources == {"A": "declared", "B": "declared", "C": "measured"}
-    service.align(fp, keep_declared=False)
-    assert sorted(measured_ids) == ["A", "B", "C", "C"]
+    # a declared offset is measured again only once it is forgotten, by name
+    with pytest.raises(FootageError, match="nothing to forget"):
+        service.clear_offset(fp, clip_id="C")
+    cleared = service.clear_offset(fp, clip_id="A")
+    assert cleared["cleared"] == "A" and cleared["offset_s"] == 0.0
+    out = service.align(fp)
+    assert measured_ids == ["C", "A", "C"] and out["kept_declared"] == ["B"]
+
+
+def test_align_op_cannot_overwrite_declared_offsets():
+    import muvid.genre  # noqa: F401
+
+    align = nw.genre_op("music_video", "align")
+    assert align.params_schema.get("properties", {}) == {}
+    clear = nw.genre_op("music_video", "clear_offset")
+    assert clear.effect == "destroy"
+    assert clear.title == "Forget where I placed this video"
 
 
 def test_removing_a_clip_keeps_the_other_clips_declared_offsets(fp):
@@ -285,10 +300,11 @@ def test_an_edit_can_cover_part_of_the_song(fp):
         span=[2.0, 14.0],
     )
     assert saved["span"] == [2.0, 14.0]
+    # the edit is stored whole; the span is only the window that renders
     assert [(e["song_start"], e["song_end"], e["clip_id"]) for e in saved["edl"]] == [
-        (2.0, 4.0, None),
+        (0.0, 4.0, None),
         (4.0, 12.0, "A"),
-        (12.0, 14.0, None),
+        (12.0, SONG_S, None),
     ]
     assert saved["coverage"]["uncovered"] == [
         {"song_start": 2.0, "song_end": 4.0},
@@ -300,36 +316,33 @@ def test_an_edit_can_cover_part_of_the_song(fp):
     assert "span" not in json.loads((fp.root / "edits" / "whole.json").read_text())
 
 
-def test_a_cut_outside_the_span_is_refused(fp):
-    with pytest.raises(FootageError, match="outside the span"):
-        service.save_edit(fp, edl=_edl_ab(), edit_id="x", span=[1.0, 20.0])
+def test_cuts_outside_the_span_are_kept(fp):
+    saved = service.save_edit(fp, edl=_edl_ab(), edit_id="x", span=[1.0, 20.0])
+    assert [e["clip_id"] for e in saved["edl"]] == ["A", "B"]
     with pytest.raises(FootageError, match="not a stretch of the song"):
-        service.save_edit(fp, edl=_edl_ab(), edit_id="x", span=[5.0, 99.0])
+        service.save_edit(fp, edl=_edl_ab(), edit_id="y", span=[5.0, 99.0])
 
 
-def test_set_span_trims_and_widens(fp):
+def test_set_span_is_a_window_that_loses_nothing(fp):
+    """The studio's "Start at the player" at 3:00 once wiped every earlier cut, and
+    "Whole song" could not bring them back. A span now only limits what renders."""
     edl = _edl_ab()
     edl[1]["crop"] = {"x": 0.0, "y": 0.0, "w": 0.5, "h": 0.5}
     edl[1]["crop_end"] = {"x": 0.5, "y": 0.0, "w": 0.5, "h": 0.5}
-    service.save_edit(fp, edl=edl, edit_id="e")
-    out = service.set_span(fp, edit_id="e", start_s=0.0, end_s=21.0)
-    assert out["span"] == [0.0, 21.0]
-    last = out["edl"][-1]
-    assert (last["song_start"], last["song_end"], last["clip_id"]) == (12.0, 21.0, "B")
-    # the pan is re-derived where it was at 21 s: half way across 12..30
-    assert last["crop_end"]["x"] == pytest.approx(0.25)
+    original = service.save_edit(fp, edl=edl, edit_id="e")["edl"]
     out = service.set_span(fp, edit_id="e", start_s=13.0, end_s=21.0)
-    assert [e["clip_id"] for e in out["edl"]] == ["B"]
+    assert out["span"] == [13.0, 21.0] and out["edl"] == original
+    assert out["coverage"]["uncovered"] == []
     out = service.set_span(fp, edit_id="e", start_s=0.0, end_s=SONG_S)
-    assert out["span"] == [0.0, SONG_S]
-    assert [e["clip_id"] for e in out["edl"]] == [None, "B", None]
+    assert out["span"] == [0.0, SONG_S] and out["edl"] == original
     assert "span" not in json.loads((fp.root / "edits" / "e.json").read_text())
 
 
 def test_propose_edit_within_a_span(fp):
     out = service.propose_edit(fp, span=[5.0, 25.0])
     assert out["span"] == [5.0, 25.0]
-    assert out["edl"][0]["song_start"] == 5.0 and out["edl"][-1]["song_end"] == 25.0
+    assert out["edl"][0]["song_start"] == 0.0 and out["edl"][-1]["song_end"] == SONG_S
+    assert out["coverage"]["span"] == [5.0, 25.0]
     assert service.get_edit(fp, edit_id=out["edit_id"])["span"] == [5.0, 25.0]
 
 
@@ -352,13 +365,19 @@ def test_render_of_a_trimmed_edit_renders_only_its_span(fp, monkeypatch):
     monkeypatch.setattr(V, "verify_video", fake_verify)
     monkeypatch.setattr(V, "failures", lambda c: [])
     monkeypatch.setattr(V, "report", lambda c: "ok")
-    service.save_edit(fp, edl=_edl_ab(), edit_id="e")
-    service.set_span(fp, edit_id="e", start_s=3.0, end_s=20.0)
+    edl = _edl_ab()
+    edl[1]["crop"] = {"x": 0.0, "y": 0.0, "w": 0.5, "h": 0.5}
+    edl[1]["crop_end"] = {"x": 0.5, "y": 0.0, "w": 0.5, "h": 0.5}
+    service.save_edit(fp, edl=edl, edit_id="e")
+    service.set_span(fp, edit_id="e", start_s=3.0, end_s=21.0)
     meta = service.render(fp, edit_id="e")
-    assert seen["span"] == (3.0, 20.0) and meta["rendered_span"] == [3.0, 20.0]
+    assert seen["span"] == (3.0, 21.0) and meta["rendered_span"] == [3.0, 21.0]
+    # the straddling cut is trimmed in what renders only (its pan re-derived at 21 s)
+    assert meta["edl"][-1]["crop_end"]["x"] == pytest.approx(0.25)
+    assert service.get_edit(fp, edit_id="e")["edl"][-1]["song_end"] == SONG_S
     assert seen["fade_out_s"] == service.TAIL_FADE_S
-    assert seen["verify"]["expected_duration"] == pytest.approx(17.0)
-    assert meta["coverage"]["span"] == [3.0, 20.0]
+    assert seen["verify"]["expected_duration"] == pytest.approx(18.0)
+    assert meta["coverage"]["span"] == [3.0, 21.0]
 
 
 # -- the catalogue: service ↔ nw registry ↔ MCP tools ----------------------------------
@@ -701,7 +720,7 @@ def test_importer_is_idempotent_and_fills_every_part(tmp_path):
     fp = project.footage
     edit = service.get_edit(fp, edit_id="v1")
     assert edit["problem"] is None and edit["edl"][0]["crop_end"]["x"] == 0.5
-    assert edit["span"] == [0.0, 5.0] and edit["edl"][-1]["song_end"] == 5.0
+    assert edit["span"] == [0.0, 5.0] and edit["coverage"]["span"] == [0.0, 5.0]
     render = service.renders(fp)["renders"][0]
     assert render["edit_id"] == "v1" and render["label"] == "Final"
     assert render["rendered_span"] == [0.0, 5.0]
@@ -1061,6 +1080,9 @@ def test_named_looks(fp):
         out["edl"][0]["look"].startswith("zoompan")
         and out["edl"][0]["look_time_varying"]
     )
+    spec = {"name": "slow_push", "zoom": 1.08, "anchor_x": 0.5, "anchor_y": 0.5}
+    assert out["edl"][0]["look_spec"] == spec
+    assert service.get_edit(fp, edit_id="e")["edl"][0]["look_spec"] == spec
     out = service.set_cut(fp, edit_id="e", index=1, look={"name": "black_and_white"})
     assert "look_time_varying" not in out["edl"][1]
     with pytest.raises(FootageError, match="between"):
@@ -1070,7 +1092,7 @@ def test_named_looks(fp):
     with pytest.raises(FootageError, match="unknown look"):
         service.set_cut(fp, edit_id="e", index=0, look={"name": "sepia"})
     out = service.set_cut(fp, edit_id="e", index=0, look="eq=gamma=1.1")
-    assert out["edl"][0]["look"] == "eq=gamma=1.1"
+    assert out["edl"][0]["look"] == "eq=gamma=1.1" and "look_spec" not in out["edl"][0]
 
 
 def test_folder_import_keeps_what_it_added_when_one_member_is_refused(
