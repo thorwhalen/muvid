@@ -49,7 +49,7 @@ import time
 import uuid
 from dataclasses import dataclass, replace
 from pathlib import Path
-from typing import Literal, Optional
+from typing import Literal, Optional, Union
 
 from muvid.footage.edl import (
     DECLARED,
@@ -59,7 +59,7 @@ from muvid.footage.edl import (
     MIN_SUPPORT,
     FootageAlignment,
 )
-from muvid.footage.errors import FootageError
+from muvid.footage.errors import FootageCancelled, FootageError
 
 # -- resource caps (env-tunable) ----------------------------------------------
 #: Most clips one project may hold (env ``MUVID_FOOTAGE_MAX_CLIPS``).
@@ -120,8 +120,9 @@ def set_song(
     """Set the project's song — the clean master every video is aligned to and whose
     audio the finished video uses. Replaces any previous song.
 
-    ``path`` is a local audio (or video) file; it is copied into the project. Give
-    ``filename`` (the original file name) so the song keeps its name and extension.
+    The file arrives from the host (an upload): ``path`` is where the host put it and
+    ``filename`` its original name, so the song keeps its name and extension; it is
+    copied into the project, so the host may delete its copy afterwards.
     Replacing the song THROWS AWAY every clip's offset and every footage score, because
     they were measured against the old song — re-run ``align`` afterwards. Size- and
     duration-capped.
@@ -163,9 +164,9 @@ def add_clip(
 ) -> dict:
     """Add one footage video — a recording of the song — to the project.
 
-    ``path`` is a local video file; it is copied into the project. ``name`` is what the
-    video is called on screen (default: the original ``filename`` without its
-    extension). ``clip_id`` fixes the id (default: a fresh one); an id already in the
+    The file arrives from the host (an upload): ``path`` is where the host put it and
+    ``filename`` its original name; it is copied into the project. ``name`` is what the
+    video is called on screen (default: the original file name without its extension). ``clip_id`` fixes the id (default: a fresh one); an id already in the
     project is refused. Size-, duration- and count-capped.
 
     Run ``align`` afterwards: a new clip has no place on the song until then. Returns
@@ -174,6 +175,7 @@ def add_clip(
     known = {c["clip_id"] for c in fp.list_clips()}
     if len(known) >= MAX_CLIPS:
         raise FootageError(f"clip limit reached ({MAX_CLIPS}); this is a bounded v1")
+    clip_id = _normalised_id(clip_id, label="clip_id") if clip_id else ""
     if clip_id and clip_id in known:
         raise FootageError(
             f"clip {clip_id!r} is already in the project — remove it first, or add this "
@@ -219,6 +221,16 @@ def remove_clip(fp, *, clip_id: str) -> dict:
     }
 
 
+def _normalised_id(value: str, *, label: str) -> str:
+    """A caller's id, stripped and checked (letters, digits, ``_``, ``-``; ≤64)."""
+    from muvid.footage.workspace import normalise_id
+
+    try:
+        return normalise_id(value, label=label)
+    except ValueError as e:
+        raise FootageError(str(e)) from e
+
+
 def _unknown_clip_message(clip_id: str, known: list[dict]) -> str:
     if not known:
         return f"unknown clip_id {clip_id!r} — this project has no clips (add_footage first)"
@@ -244,12 +256,13 @@ def status(fp) -> dict:
 
     ``aligned`` lists the clips that have an offset; ``alignments`` says for each one
     whether the offset was ``measured`` (by ``align``) or ``declared`` (``set_offset``)
-    and whether it is trusted for rendering (``reliable``). ``renders`` is newest first.
+    and whether it is trusted for rendering (``reliable``). ``renders`` is newest first
+    (the same rows ``renders`` gives — no server paths).
     ``next_step`` names the operation that moves the project forward and why.
     """
     m = fp.manifest()
     aligns = fp.load_alignments()
-    render_rows = fp.list_renders()
+    render_rows = renders(fp)["renders"]
     edit_rows = [_edit_summary(fp, rec) for rec in fp.list_edit_records()]
     out = {
         "title": m.get("title", fp.project_id),
@@ -357,9 +370,7 @@ def align(fp, *, keep_declared: bool = True) -> dict:
         raise FootageError("no song set — call set_song first")
     clips = list(fp.clip_paths().items())
     if not clips:
-        raise FootageError(
-            "no footage added — add a clip first (add_footage / add_clip)"
-        )
+        raise FootageError("no footage added — call add_footage first")
     previous = fp.load_alignments()
     declared = (
         {a.clip_id: a for a in previous if a.source == DECLARED}
@@ -741,7 +752,11 @@ def run_scoring(
 
 
 def score(
-    fp, *, hop_s: float = DEFAULT_SCORE_HOP_S, metrics: Optional[list[str]] = None
+    fp,
+    *,
+    hop_s: float = DEFAULT_SCORE_HOP_S,
+    metrics: Optional[list[str]] = None,
+    should_cancel=None,
 ) -> dict:
     """Look at the footage: score every placed video, on the song's own timeline —
     picture quality and how its movement sits on the beat — and save the curves.
@@ -752,7 +767,10 @@ def score(
     it. Returns what was scored and what was skipped (and why).
     """
     require_scorable(fp)
-    return run_scoring(fp, hop_s=hop_s, metrics=metrics)
+    out = run_scoring(fp, hop_s=hop_s, metrics=metrics, should_cancel=should_cancel)
+    if out.get("status") == "cancelled":  # score_project polls between clips/stages
+        raise FootageCancelled(f"scoring stopped at {out.get('stage')}")
+    return out
 
 
 def scores(
@@ -1212,7 +1230,12 @@ def propose_edit(
             fp, out["edl"], name=name or _default_edit_name(fp), how_made=how, span=span
         )
         record["selection"] = selection
-        fp.write_edit(record["edit_id"], record)
+        lock = getattr(fp, "edits_lock", None)
+        if lock is None:
+            fp.write_edit(record["edit_id"], record)
+        else:
+            with lock():
+                fp.write_edit(record["edit_id"], record)
         out["edit_id"] = record["edit_id"]
         out["name"] = record["name"]
     return out
@@ -1221,6 +1244,23 @@ def propose_edit(
 # -- named edits -------------------------------------------------------------
 
 
+def _edits_locked(fn):
+    """Run an edit mutation under the project's edits lock (read-modify-write of
+    ``edits/<id>.json`` is serialised; each write is atomic besides)."""
+    import functools
+
+    @functools.wraps(fn)
+    def locked(fp, **params):
+        lock = getattr(fp, "edits_lock", None)
+        if lock is None:
+            return fn(fp, **params)
+        with lock():
+            return fn(fp, **params)
+
+    return locked
+
+
+@_edits_locked
 def save_edit(
     fp,
     *,
@@ -1243,6 +1283,7 @@ def save_edit(
     """
     span = _check_span(fp, span)
     entries = _validated_entries(fp, edl, span=span)
+    edit_id = _normalised_id(edit_id, label="edit_id") if edit_id else ""
     if edit_id and fp.has_edit(edit_id):
         raise FootageError(
             f"edit {edit_id!r} already exists — use replace_edit to change it"
@@ -1274,6 +1315,7 @@ def get_edit(fp, *, edit_id: str) -> dict:
     return _edit_reply(fp, _read_edit(fp, edit_id))
 
 
+@_edits_locked
 def replace_edit(fp, *, edit_id: str, edl: list[dict]) -> dict:
     """Replace a saved edit's whole cut list — the power tool for rewriting an edit at
     once. The new list is checked exactly as ``save_edit`` checks one; on refusal the
@@ -1283,6 +1325,7 @@ def replace_edit(fp, *, edit_id: str, edl: list[dict]) -> dict:
     return _store_changed(fp, record, entries)
 
 
+@_edits_locked
 def set_cut(
     fp,
     *,
@@ -1291,7 +1334,7 @@ def set_cut(
     clip_id: Optional[str] = None,
     song_start: Optional[float] = None,
     song_end: Optional[float] = None,
-    look: Optional[str] = None,
+    look: Optional[Union[str, dict]] = None,
     look_time_varying: Optional[bool] = None,
 ) -> dict:
     """Change one cut of a saved edit (``index`` is its position in ``get_edit``'s edl).
@@ -1302,9 +1345,10 @@ def set_cut(
     - ``song_start`` / ``song_end``: move the cut's boundaries. The neighbouring cut's
       boundary moves with it, so the edit stays one continuous timeline; a move that
       would swallow a neighbour whole is refused (join them with ``merge_cut``).
-    - ``look``: one ffmpeg filter chain for this cut (a grade, a punch-in — compile one
-      with ``muvid.footage.look``); ``""`` removes it. Set ``look_time_varying`` for a
-      look that moves over time (a punch-in or pan).
+    - ``look``: a NAMED look from ``looks`` — ``{"name": "slow_push", "zoom": 1.08}``,
+      compiled for this cut's length and the project's canvas — or, for power users,
+      one raw ffmpeg filter chain (allowlisted; set ``look_time_varying`` for one that
+      moves). ``""`` removes it.
 
     Parameters left out are unchanged. The changed edit is checked and saved; returns it.
     """
@@ -1318,7 +1362,11 @@ def set_cut(
         changes.update(clip_id=clip_id or "", crop=None, crop_end=None)
         if not clip_id:  # a gap carries no picture, so no look either
             changes.update(look=None, look_time_varying=False, transition=None)
-    if look is not None:
+    if isinstance(look, dict):
+        fragment = _named_look(fp, look, duration_s=e.song_end - e.song_start)
+        changes["look"] = str(fragment)
+        changes["look_time_varying"] = bool(fragment.time_varying)
+    elif look is not None:
         changes["look"] = look or None
         if not look:
             changes["look_time_varying"] = False
@@ -1348,6 +1396,29 @@ def set_cut(
     return _store_changed(fp, record, entries, changed=i)
 
 
+def _named_look(fp, spec: dict, *, duration_s: float):
+    from muvid.footage.assemble import DEFAULT_FPS
+    from muvid.footage.look import LookError
+    from muvid.footage.named_looks import NamedLookError, compile_named_look
+
+    try:
+        return compile_named_look(
+            spec, canvas=fp.canvas(), fps=DEFAULT_FPS, duration_s=duration_s
+        )
+    except (NamedLookError, LookError) as e:
+        raise FootageError(str(e)) from e
+
+
+def looks(fp=None) -> dict:
+    """The looks a cut can take — camera moves (punch in, slow push, slow pull, pans)
+    and grades (vivid, black and white, posterize, cartoon) — each with its
+    ``params_schema``. Give one to ``set_cut`` as ``look={"name": ..., **params}``."""
+    from muvid.footage.named_looks import named_look_catalogue
+
+    return {"looks": named_look_catalogue()}
+
+
+@_edits_locked
 def split_cut(fp, *, edit_id: str, at_s: float) -> dict:
     """Split the cut playing at song time ``at_s`` into two cuts of the same video.
 
@@ -1385,6 +1456,7 @@ def split_cut(fp, *, edit_id: str, at_s: float) -> dict:
     return reply
 
 
+@_edits_locked
 def merge_cut(
     fp,
     *,
@@ -1420,6 +1492,7 @@ def merge_cut(
     return _store_changed(fp, record, entries, changed=changed)
 
 
+@_edits_locked
 def delete_edit(fp, *, edit_id: str) -> dict:
     """Delete a saved edit. Videos already rendered from it are kept (they still name
     the edit they came from). An unknown ``edit_id`` is refused, naming the edits."""
@@ -1428,6 +1501,7 @@ def delete_edit(fp, *, edit_id: str) -> dict:
     return {"deleted": edit_id, "edits": [r["edit_id"] for r in fp.list_edit_records()]}
 
 
+@_edits_locked
 def set_span(fp, *, edit_id: str, start_s: float, end_s: float) -> dict:
     """Choose which part of the song a saved edit covers — trim its start and end.
 
@@ -1461,10 +1535,8 @@ def _new_edit_record(
     edit_id: str = "",
     span: Optional[tuple[float, float]] = None,
 ) -> dict:
-    from muvid.paths import safe_component
-
     now = time.time()
-    eid = safe_component(edit_id, label="edit_id") if edit_id else _fresh_edit_id(fp)
+    eid = _normalised_id(edit_id, label="edit_id") if edit_id else _fresh_edit_id(fp)
     record = {
         "edit_id": eid,
         "name": name,
@@ -1670,6 +1742,7 @@ def assemble(
     label: str = "",
     annotate=None,
     span: Optional[tuple[float, float]] = None,
+    should_cancel=None,
 ) -> dict:
     """Assemble and render a music video — auto (a ``strategy``) or an explicit ``edl``.
 
@@ -1707,6 +1780,7 @@ def assemble(
                     "selection config (preset/weights/config) can't accompany an "
                     "explicit edl"
                 )
+            span = _check_span(fp, span)
             start, end = span if span is not None else (0.0, song_dur)
             entries = validate_edl(
                 fill_gaps(edl, end, start=start),
@@ -1761,6 +1835,9 @@ def assemble(
     rendered = entries[-1].song_end - entries[0].song_start
     partial = rendered < song_dur - _EPS
     tail = {"fade_out_s": TAIL_FADE_S} if entries[-1].song_end < song_dur - _EPS else {}
+    if should_cancel is not None:
+        # polled between cuts by the assembler, which raises FootageCancelled
+        tail["should_cancel"] = should_cancel
     try:
         out = _assemble(
             cuts,
@@ -1818,6 +1895,9 @@ def assemble(
         meta["edit_id"] = edit_id
     if label:
         meta["label"] = label
+    if span is not None:
+        # With the edl, what re-renders this exact video: `assemble(edl=, span=)`.
+        meta["span"] = [span[0], span[1]]
     artifact_id = _register_media(fp, out, kind="video", duration_s=song_dur)
     if artifact_id:
         meta["artifact_id"] = artifact_id
@@ -1834,6 +1914,7 @@ def render(
     canvas: str = "",
     allow_unreliable: bool = False,
     annotate=None,
+    should_cancel=None,
 ) -> dict:
     """Make the video: render a saved edit onto the canvas, over the clean song.
 
@@ -1852,7 +1933,7 @@ def render(
     and ``artifact_id`` to play it by when the project is hosted.
     """
     record = _read_edit(fp, edit_id)
-    return assemble(
+    meta = assemble(
         fp,
         edl=record.get("edl") or [],
         canvas=canvas,
@@ -1861,7 +1942,23 @@ def render(
         label=record.get("name") or "",
         annotate=annotate,
         span=_span_of(record),
+        should_cancel=should_cancel,
     )
+    return public_render(fp, meta)
+
+
+def public_render(fp, meta: dict) -> dict:
+    """A render record as a HOSTED surface may return it: ``video`` made relative to the
+    project (``renders/<id>/final.mp4``) — never an absolute server path; play it by its
+    ``artifact_id``."""
+    out = dict(meta)
+    video = out.get("video")
+    if video:
+        try:
+            out["video"] = Path(video).relative_to(fp.root).as_posix()
+        except ValueError:
+            out.pop("video")
+    return out
 
 
 def renders(fp) -> dict:
@@ -1897,15 +1994,14 @@ def import_render(
     ``checks`` — muvid did not make it and does not claim to have verified it.
     Idempotent: the same bytes under the same id change nothing.
     """
-    import shutil
-
     from muvid.catalog import hash_file
+    from muvid.footage.workspace import replace_file
 
     src = _existing_file(path, what="render")
     render_dir = fp.new_render_dir(render_id)
     dest = render_dir / "final.mp4"
     if not (dest.exists() and hash_file(dest) == hash_file(src)):
-        shutil.copyfile(src, dest)
+        replace_file(src, dest)  # a new inode: the old bytes' catalog blob stays intact
     meta_path = render_dir / "meta.json"
     previous = json.loads(meta_path.read_text()) if meta_path.exists() else {}
     ref_n = previous.get("ref_n") or fp.next_render_ref()
@@ -1936,7 +2032,26 @@ def import_render(
     if artifact_id:
         meta["artifact_id"] = artifact_id
     fp.write_render_meta(render_id, meta)
-    return meta
+    return public_render(fp, meta)
+
+
+def frame_rate(video) -> Optional[float]:
+    """A video's average frame rate (frames per second), or ``None`` if unreadable."""
+    from muvid.visualize.ffmpeg import FfmpegError, probe
+
+    try:
+        info = probe(Path(video))
+    except FfmpegError:
+        return None
+    for stream in info.get("streams", []):
+        if stream.get("codec_type") == "video":
+            num, _, den = str(stream.get("avg_frame_rate") or "0/0").partition("/")
+            try:
+                rate = float(num) / float(den or 1)
+            except (ValueError, ZeroDivisionError):
+                return None
+            return rate or None
+    return None
 
 
 def frame_size(video) -> Optional[list]:
@@ -2101,13 +2216,13 @@ def refresh_cover(fp) -> Optional[str]:
     source = _cover_source(fp)
     if source is None:
         return None
+    from muvid.footage.workspace import fresh_output
+
     path, taken_from = source
-    frame = fp.root / ".cover.tmp.jpg"
-    grab_cover_frame(path, frame)
-    try:
-        return fp.set_cover(frame, taken_from=taken_from)
-    finally:
-        frame.unlink(missing_ok=True)
+    with fresh_output(fp.root / ".cover.frame.jpg") as tmp:
+        grab_cover_frame(path, tmp)
+        # set_cover puts it at cover.jpg as a NEW file (the old cover's blob stays)
+        return fp.set_cover(tmp, taken_from=taken_from)
 
 
 def _ensure_cover(fp) -> None:
@@ -2172,18 +2287,43 @@ class OpSpec:
     effect: str
     runs: str = "now"
     hide: tuple[str, ...] = ()
+    #: Parameters only the HOST supplies (``nw.GenreOp.host_params``): an upload's
+    #: server-side ``path`` and original ``filename``. Never in a client's schema.
+    host_params: tuple[str, ...] = ()
+    #: The op's own ceiling for a host-streamed upload (``nw.GenreOp.max_upload_bytes``).
+    max_upload_bytes: Optional[int] = None
 
 
 FOOTAGE_OP_SPECS: tuple[OpSpec, ...] = (
     OpSpec("status", "Show where the video stands", "read"),
-    OpSpec("set_song", "Set the song", "destroy", hide=("duration_s",)),
-    OpSpec("add_clip", "Add a video", "write", hide=("duration_s",)),
+    OpSpec(
+        "set_song",
+        "Set the song",
+        "destroy",
+        hide=("duration_s", "ext"),
+        host_params=("path", "filename"),
+        max_upload_bytes=SONG_MAX_BYTES,
+    ),
+    OpSpec(
+        "add_clip",
+        "Add a video",
+        "write",
+        hide=("duration_s", "ext"),
+        host_params=("path", "filename"),
+        max_upload_bytes=CLIP_MAX_BYTES,
+    ),
     OpSpec("remove_clip", "Remove a video", "destroy"),
     OpSpec("align", "Find where each video fits", "write", runs="job"),
     OpSpec("set_offset", "Place a video on the song by hand", "write"),
     OpSpec("timeline", "Show which videos cover which parts of the song", "read"),
     OpSpec("beat_grid", "Find the beat", "read"),
-    OpSpec("score", "Look at the footage", "write", runs="job"),
+    OpSpec(
+        "score",
+        "Look at the footage",
+        "write",
+        runs="job",
+        host_params=("should_cancel",),
+    ),
     OpSpec("scores", "Show how each video scores over the song", "read"),
     OpSpec("strategies", "List the ways to cut", "read"),
     OpSpec("propose_edit", "Cut it for me", "write"),
@@ -2195,8 +2335,16 @@ FOOTAGE_OP_SPECS: tuple[OpSpec, ...] = (
     OpSpec("split_cut", "Split a cut here", "write"),
     OpSpec("merge_cut", "Join a cut to its neighbour", "write"),
     OpSpec("set_span", "Choose which part of the song the video covers", "write"),
+    OpSpec("looks", "List the looks", "read"),
     OpSpec("delete_edit", "Delete an edit", "destroy"),
-    OpSpec("render", "Make the video", "render", runs="job", hide=("annotate",)),
+    OpSpec(
+        "render",
+        "Make the video",
+        "render",
+        runs="job",
+        hide=("annotate",),
+        host_params=("should_cancel",),
+    ),
     OpSpec("renders", "List the finished videos", "read"),
     OpSpec("editor_document", "Open the project in the timeline editor", "read"),
 )
@@ -2206,6 +2354,7 @@ __all__ = [spec.name for spec in FOOTAGE_OP_SPECS] + [
     "FOOTAGE_OP_SPECS",
     "OpSpec",
     "FootageError",
+    "FootageCancelled",
     "assemble",
     "declared_alignment",
     "edl_from_annotations",
@@ -2218,6 +2367,8 @@ __all__ = [spec.name for spec in FOOTAGE_OP_SPECS] + [
     "grab_cover_frame",
     "import_render",
     "frame_size",
+    "frame_rate",
+    "public_render",
     "require_scorable",
     "run_scoring",
     "EDL_OPTIONAL_FIELDS",

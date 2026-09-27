@@ -503,13 +503,13 @@ def test_genre_op_runs_on_the_hosted_project(tmp_path):
     nw.create_genre_project("music_video", "u", "mv", projects_dir=tmp_path)
     project = muvid.Project(tmp_path / "mv")
     status = nw.genre_op("music_video", "status")
-    assert status(project)["next_step"]["op"] == "set_song"
+    assert status.run(project)["next_step"]["op"] == "set_song"
     with pytest.raises(ValueError):  # schema: set_cut needs an integer index
         nw.genre_op("music_video", "set_cut").validate_params(
             {"edit_id": "e", "index": "seven"}
         )
     lyric = nw.genre_op("lyric-video", "status")
-    assert lyric(project)["editable"] is False
+    assert lyric.run(project)["editable"] is False
 
 
 # -- the EDL converter ----------------------------------------------------------------
@@ -710,7 +710,7 @@ def test_importer_is_idempotent_and_fills_every_part(tmp_path):
     from muvid.visualize.ffmpeg import media_duration
 
     assert meta["ok"], meta["checks"]
-    assert media_duration(meta["video"]) == pytest.approx(5.0, abs=0.15)
+    assert media_duration(fp.root / meta["video"]) == pytest.approx(5.0, abs=0.15)
     catalog = project.media_catalog
     status = service.status(fp)
     ids = [
@@ -752,7 +752,7 @@ def test_importer_lyric_video(tmp_path):
     project = muvid.Project(tmp_path / "projects" / "lv")
     assert project.genre == "lyric-video"
     assert (project.resolved_genre() or {}).get("template") == "calligram"
-    status = nw.genre_op("lyric-video", "status")(project)
+    status = nw.genre_op("lyric-video", "status").run(project)
     assert [r["render_id"] for r in status["renders"]] == ["v3"]
     lyrics = next(s for s in status["sources"] if s["role"] == "lyrics")
     assert lyrics["text"] == "il pleut\n"
@@ -820,4 +820,353 @@ def test_que_calor_excerpt_end_to_end(tmp_path):
     from muvid.visualize.ffmpeg import media_duration
 
     assert meta["ok"] and meta["artifact_id"]
-    assert media_duration(meta["video"]) == pytest.approx(fp.song_duration(), abs=0.5)
+    assert media_duration(fp.root / meta["video"]) == pytest.approx(
+        fp.song_duration(), abs=0.5
+    )
+
+
+# -- review fixes: blobs, ids, host params, tool names, spans, lazy footage -------------
+
+
+def _blobs_intact(catalog) -> list:
+    """The blobs whose bytes no longer hash to their name (should be empty)."""
+    from muvid.catalog import hash_file
+
+    return [p.name for p in catalog.blobs_dir.iterdir() if hash_file(p) != p.name]
+
+
+@needs_ffmpeg
+def test_catalog_blobs_keep_their_bytes_through_reimport_and_cover_refresh(tmp_path):
+    """Every write of a project media file is a NEW inode, so a hardlinked blob never
+    changes under its id — across import, re-import with changed bytes, and a cover
+    refresh (the review reproduced 3 of 7 blobs corrupted before this)."""
+    import muvid
+    from muvid.importing import import_production
+
+    src = tmp_path / "src"
+    src.mkdir()
+    _tone(src / "song.wav", seconds=4.0)
+    _video(src / "a.mp4", seconds=4.0)
+    _video(src / "final.mp4", seconds=4.0)
+    (src / "poem.txt").write_text("one")
+    (src / "t.json").write_text('{"v": 1}')
+    footage = {
+        "kind": "footage",
+        "id": "mv",
+        "title": "MV",
+        "song": {"path": "song.wav"},
+        "clips": [{"id": "a", "path": "a.mp4", "offset_s": 0.0}],
+        "renders": [{"id": "final", "path": "final.mp4"}],
+    }
+    lyric = {
+        "kind": "lyric-video",
+        "id": "lv",
+        "title": "LV",
+        "song": {"path": "song.wav"},
+        "sources": [
+            {"role": "poem", "path": "poem.txt"},
+            {"role": "timings", "path": "t.json"},
+        ],
+        "renders": [{"id": "final", "path": "final.mp4"}],
+    }
+    projects = tmp_path / "projects"
+    for m in (footage, lyric):
+        import_production(m, projects, base_dir=src)
+    # change the bytes behind every id and import again
+    _video(src / "final.mp4", seconds=3.0, size="160x120")
+    _video(src / "a.mp4", seconds=3.0, size="160x120")
+    (src / "t.json").write_text('{"v": 2}')
+    for m in (footage, lyric):
+        import_production(m, projects, base_dir=src)
+    mv, lv = muvid.Project(projects / "mv"), muvid.Project(projects / "lv")
+    service.refresh_cover(mv.footage)
+    lv.lyric.refresh_cover()
+    for project in (mv, lv):
+        catalog = project.media_catalog
+        assert len(list(catalog.blobs_dir.iterdir())) >= 4
+        assert _blobs_intact(catalog) == []
+
+
+@pytest.mark.parametrize("bad", ["*", "a/b", "..", "a.x", " ", "x" * 65])
+def test_clip_ids_are_names_not_patterns(fp, tmp_path, bad):
+    with pytest.raises(FootageError, match="invalid clip_id"):
+        service.add_clip(
+            fp,
+            path=str(_bytes_file(tmp_path / "z.mp4", b"z")),
+            clip_id=bad,
+            duration_s=5.0,
+        )
+    assert {c["clip_id"] for c in fp.list_clips()} == {"A", "B"}
+    assert all(Path(p).exists() for p in fp.clip_paths().values())
+
+
+def test_clip_ids_are_unique_after_normalising(fp, tmp_path):
+    with pytest.raises(FootageError, match="already in the project"):
+        service.add_clip(
+            fp,
+            path=str(_bytes_file(tmp_path / "z.mp4", b"z")),
+            clip_id=" A ",
+            duration_s=5.0,
+        )
+    assert (fp.root / "clips" / "A.mp4").read_bytes() == b"clip-a"
+
+
+def test_removing_a_clip_touches_only_its_own_file(fp):
+    stray = fp.root / "clips" / "A.x.mp4"
+    stray.write_bytes(b"not A's")
+    service.remove_clip(fp, clip_id="A")
+    assert stray.exists() and not (fp.root / "clips" / "A.mp4").exists()
+
+
+def test_upload_ops_take_the_file_from_the_host_only(tmp_path):
+    import muvid
+    import muvid.genre  # noqa: F401
+    from pydantic import ValidationError
+
+    for name in ("set_song", "add_clip"):
+        op = nw.genre_op("music_video", name)
+        assert op.host_params == ("path", "filename")
+        assert not {"path", "filename", "duration_s", "ext"} & set(
+            op.params_schema["properties"]
+        )
+        assert op.to_dict()["host_params"] == ["path", "filename"]
+    muvid.create_project_at(tmp_path, "mv")
+    project = muvid.Project(tmp_path / "mv")
+    set_song = nw.genre_op("music_video", "set_song")
+    with pytest.raises(ValidationError):  # a client may not name a server file
+        set_song.run(project, {"path": "/etc/hosts"})
+    song = _bytes_file(tmp_path / "up.tmp", b"RIFF-up")
+    import muvid.footage.service as S
+
+    original = S._probe_duration
+    S._probe_duration = lambda p: 12.0
+    try:
+        out = set_song.run(
+            project, {}, host={"path": str(song), "filename": "Tune.wav"}
+        )
+    finally:
+        S._probe_duration = original
+    assert out["song"]["name"] == "Tune.wav" and out["song_duration"] == 12.0
+
+
+def test_create_project_at_records_the_genre_the_way_reelee_reads_it(tmp_path):
+    import muvid
+
+    reelee_project = pytest.importorskip("reelee.project")
+    muvid.create_project_at(tmp_path, "mv", title="MV", template="portrait")
+    muvid.create_project_at(tmp_path, "lv", genre="lyric-video")
+    mv = reelee_project.open_project(tmp_path / "mv")
+    lv = reelee_project.open_project(tmp_path / "lv")
+    assert type(mv) is muvid.Project and type(lv) is muvid.Project
+    assert mv.resolved_genre()["genre"] == "music_video"
+    assert mv.resolved_genre()["params"]["canvas"] == "portrait"
+    assert lv.resolved_genre()["genre"] == "lyric-video"
+    assert mv.footage.canvas() == (1080, 1920)
+
+
+def test_reading_a_hosted_project_creates_nothing(tmp_path):
+    import muvid
+
+    muvid.create_project_at(tmp_path, "lv", genre="lyric-video")
+    project = muvid.Project(tmp_path / "lv")
+    before = sorted(p.name for p in project.root.iterdir())
+    service.status(project.footage)
+    project.lyric.status()
+    assert sorted(p.name for p in project.root.iterdir()) == before
+
+
+def test_hosted_replies_carry_no_absolute_paths(fp, monkeypatch):
+    import muvid.footage.assemble as A
+    import muvid.visualize as V
+
+    monkeypatch.setattr(
+        A,
+        "assemble_music_video",
+        lambda cuts, song, out, canvas, on_note=None, **kw: (
+            Path(out).write_bytes(b"v"),
+            Path(out),
+        )[1],
+    )
+    monkeypatch.setattr(V, "verify_video", lambda *a, **k: [])
+    monkeypatch.setattr(V, "failures", lambda c: [])
+    monkeypatch.setattr(V, "report", lambda c: "ok")
+    service.save_edit(fp, edl=_edl_ab(), edit_id="e")
+    meta = service.render(fp, edit_id="e")
+    assert meta["video"] == f"renders/{meta['render_id']}/final.mp4"
+    text = json.dumps([service.status(fp), service.renders(fp)])
+    assert str(fp.root) not in text
+
+
+def test_a_trimmed_render_round_trips_its_span(fp, monkeypatch):
+    import muvid.footage.assemble as A
+    import muvid.visualize as V
+
+    monkeypatch.setattr(
+        A,
+        "assemble_music_video",
+        lambda cuts, song, out, canvas, on_note=None, **kw: (
+            Path(out).write_bytes(b"v"),
+            Path(out),
+        )[1],
+    )
+    monkeypatch.setattr(V, "verify_video", lambda *a, **k: [])
+    monkeypatch.setattr(V, "failures", lambda c: [])
+    monkeypatch.setattr(V, "report", lambda c: "ok")
+    edl = [dict(e) for e in _edl_ab()]
+    edl[1]["song_end"] = 20.0
+    service.save_edit(fp, edl=edl, edit_id="e", span=[0.0, 20.0])
+    meta = service.render(fp, edit_id="e")
+    assert meta["span"] == [0.0, 20.0]
+    again = service.assemble(fp, edl=meta["edl"], span=meta["span"])
+    assert again["edl"] == meta["edl"] and again["rendered_span"] == [0.0, 20.0]
+
+
+def test_mcp_speaks_tool_names(fp):
+    """The service names OPERATIONS; a connector caller can only call TOOLS, so the
+    MCP transport translates — in docstrings, refusals and ``next_step``."""
+    pytest.importorskip("fastmcp")
+    import inspect
+
+    import muvid.mcp.footage_tools as ft
+    from fastmcp.exceptions import ToolError
+    from muvid.mcp.identity import use_email
+
+    assert "footage_merge_cut" in ft.footage_set_cut.__doc__
+    assert "merge_cut" in service.set_cut.__doc__  # the studio keeps op names
+    with use_email("u@x.com"):
+        assert ft.footage_status("p")["next_step"]["op"] == "propose_edit"
+        ft.footage_save_edit("p", edl=_edl_ab(), edit_id="e")
+        assert ft.footage_status("p")["next_step"]["op"] == "footage_render"
+        with pytest.raises(ToolError, match="footage_merge_cut"):
+            ft.footage_set_cut("p", edit_id="e", index=1, song_start=0.0)
+    assert "keep_declared" in inspect.signature(ft.align_footage).parameters
+    assert "span" in inspect.signature(ft.assemble_music_video).parameters
+    assert service.status(fp)["next_step"]["op"] == "render"
+
+
+def test_named_looks(fp):
+    from muvid.footage.named_looks import MAX_ZOOM
+
+    menu = service.looks()["looks"]
+    names = {row["name"] for row in menu}
+    assert {"punch_in", "slow_push", "pan_left", "pan_right", "cartoon"} <= names
+    for row in menu:
+        for p in row["params_schema"]["properties"].values():
+            if "zoom" in p["title"].lower() or p["title"].startswith("How far in"):
+                assert p["maximum"] <= MAX_ZOOM
+    service.save_edit(fp, edl=_edl_ab(), edit_id="e")
+    out = service.set_cut(fp, edit_id="e", index=0, look={"name": "slow_push"})
+    assert (
+        out["edl"][0]["look"].startswith("zoompan")
+        and out["edl"][0]["look_time_varying"]
+    )
+    out = service.set_cut(fp, edit_id="e", index=1, look={"name": "black_and_white"})
+    assert "look_time_varying" not in out["edl"][1]
+    with pytest.raises(FootageError, match="between"):
+        service.set_cut(
+            fp, edit_id="e", index=0, look={"name": "punch_in", "zoom": 1.5}
+        )
+    with pytest.raises(FootageError, match="unknown look"):
+        service.set_cut(fp, edit_id="e", index=0, look={"name": "sepia"})
+    out = service.set_cut(fp, edit_id="e", index=0, look="eq=gamma=1.1")
+    assert out["edl"][0]["look"] == "eq=gamma=1.1"
+
+
+def test_folder_import_keeps_what_it_added_when_one_member_is_refused(
+    tmp_path, monkeypatch, fp
+):
+    pytest.importorskip("fastmcp")
+    import muvid.mcp._fetch as F
+    import muvid.mcp.footage_tools as ft
+    from muvid.mcp.identity import use_email
+
+    members = []
+    for name in ("one.mp4", "two.mp4"):
+        members.append(_bytes_file(tmp_path / name, b"x" + name.encode()))
+    monkeypatch.setattr(F, "resolve_share_link", lambda url: (url, "archive"))
+    monkeypatch.setattr(
+        F,
+        "fetch_to_file_streaming",
+        lambda url, dest, *, max_bytes, expect_kind="": Path(dest).write_bytes(b"z"),
+    )
+    monkeypatch.setattr(F, "extract_media_members", lambda *a, **k: (members, []))
+    monkeypatch.setattr(ft, "_duration", lambda p: 5.0)
+    real = service.add_clip
+    calls = []
+
+    def flaky(fp_, **kw):
+        calls.append(kw["name"])
+        if kw["name"] == "two":
+            raise FootageError("refused for the test")
+        return real(fp_, **kw)
+
+    monkeypatch.setattr(service, "add_clip", flaky)
+    with use_email("u@x.com"):
+        out = ft.add_footage_folder("p", url="https://example.com/folder")
+    assert [a["name"] for a in out["added"]] == ["one"]
+    assert out["skipped"] == [{"name": "two.mp4", "reason": "refused for the test"}]
+
+
+def test_clip_in_drift_is_reported():
+    from muvid.importing._edl import clip_in_drift
+
+    doc = {
+        "edl": [
+            {"song_start": 1.0, "song_end": 2.0, "clip_id": "a", "clip_in": 1.0},
+            {"song_start": 2.0, "song_end": 3.0, "clip_id": "a", "clip_in": 2.02},
+            {"song_start": 3.0, "song_end": 4.0, "clip_id": "a", "clip_in": 3.1},
+        ]
+    }
+    rows = clip_in_drift(doc, offsets={"a": 0.0}, fps={"a": 30.0})
+    assert [r["index"] for r in rows] == [2] and rows[0]["drift_s"] == pytest.approx(
+        0.1
+    )
+
+
+def test_the_host_contract_types_and_ceilings():
+    import muvid.genre  # noqa: F401
+    from muvid.footage.errors import FootageCancelled
+
+    assert issubclass(FootageError, nw.GenreOpRefused)
+    assert issubclass(FootageError, ValueError)
+    assert issubclass(FootageCancelled, nw.GenreOpCancelled)
+    rows = {r["name"]: r for r in nw.genre_ops_catalogue("music_video")}
+    assert rows["set_song"]["max_upload_bytes"] == service.SONG_MAX_BYTES
+    assert rows["add_clip"]["max_upload_bytes"] == service.CLIP_MAX_BYTES
+    assert rows["render"]["host_params"] == ["should_cancel"]
+    assert rows["score"]["host_params"] == ["should_cancel"]
+    assert "should_cancel" not in rows["render"]["params_schema"]["properties"]
+
+
+@needs_ffmpeg
+def test_a_cancelled_render_stops_between_cuts_and_leaves_nothing(tmp_path):
+    import muvid
+    from muvid.footage.errors import FootageCancelled
+
+    muvid.create_project_at(tmp_path, "mv")
+    project = muvid.Project(tmp_path / "mv")
+    fp = project.footage
+    service.set_song(fp, path=str(_tone(tmp_path / "s.wav", seconds=4.0)))
+    service.add_clip(fp, path=str(_video(tmp_path / "a.mp4", seconds=4.0)), clip_id="a")
+    service.set_offset(fp, clip_id="a", offset_s=0.0)
+    service.save_edit(
+        fp,
+        edl=[
+            {"song_start": 0.0, "song_end": 2.0, "clip_id": "a"},
+            {"song_start": 2.0, "song_end": 4.0, "clip_id": "a"},
+        ],
+        edit_id="e",
+    )
+    polls = []
+
+    def after_first_cut():
+        polls.append(1)
+        return len(polls) > 1
+
+    render = nw.genre_op("music_video", "render")
+    with pytest.raises(nw.GenreOpCancelled):
+        render.run(project, {"edit_id": "e"}, host={"should_cancel": after_first_cut})
+    assert len(polls) == 2
+    assert not list((fp.root / "renders").glob("*/final.mp4"))
+    with pytest.raises(FootageCancelled):
+        service.render(fp, edit_id="e", should_cancel=lambda: True)

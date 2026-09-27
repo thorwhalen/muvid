@@ -105,7 +105,13 @@ def _music_video_project_factory(
     if projects_dir is not None:
         from muvid.production import create_project_at
 
-        proj = create_project_at(projects_dir, project_id, title=title, canvas=canvas)
+        proj = create_project_at(
+            projects_dir,
+            project_id,
+            genre=MUSIC_VIDEO_SLUG,
+            title=title,
+            template=template,
+        )
     else:
         from muvid.footage.workspace import FootageWorkspace
 
@@ -154,7 +160,14 @@ def _as_genre_op(spec) -> GenreOp:
     fn.__doc__ = op.__doc__
     fn.__signature__ = sig.replace(parameters=params)
     return GenreOp(
-        name=spec.name, fn=fn, title=spec.title, effect=spec.effect, runs=spec.runs
+        name=spec.name,
+        fn=fn,
+        title=spec.title,
+        effect=spec.effect,
+        runs=spec.runs,
+        # an upload's server path and original name: the host's, never a client's
+        host_params=spec.host_params,
+        max_upload_bytes=spec.max_upload_bytes,
     )
 
 

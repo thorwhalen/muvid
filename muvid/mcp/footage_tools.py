@@ -37,6 +37,8 @@ from muvid.footage import service
 from muvid.footage.errors import FootageError
 from muvid.footage.service import EDL_OPTIONAL_FIELDS as _EDL_OPTIONAL_FIELDS  # noqa: F401
 from muvid.footage.service import edl_json as _edl_json  # noqa: F401
+import re
+
 from muvid.mcp._footage_ops import GENERATED_OPS, op_tool_name
 from muvid.mcp.identity import current_email
 
@@ -65,15 +67,45 @@ def _tool_error(msg: str):
     return ToolError(msg)
 
 
+def _renamings() -> list:
+    """``(pattern, tool)`` pairs rewriting an operation's name to the tool serving it.
+
+    The service speaks in OPERATION names (``set_cut``, ``align``) because the studio
+    does; a connector caller only has TOOLS (``footage_set_cut``, ``align_footage``). A
+    name in double backticks is always an op reference; a bare one is rewritten only when
+    it contains ``_`` (``set_offset``), since bare ``render`` or ``align`` is plain English.
+    """
+    rows = []
+    for spec in service.FOOTAGE_OP_SPECS:
+        tool = op_tool_name(spec.name)
+        if tool == spec.name:
+            continue
+        rows.append((re.compile(rf"``{spec.name}``"), f"``{tool}``"))
+        if "_" in spec.name:
+            rows.append((re.compile(rf"(?<![\w]){spec.name}(?![\w])"), tool))
+    return rows
+
+
+_RENAMINGS = _renamings()
+
+
+def _as_tool_names(text: str) -> str:
+    """``text`` with operation names replaced by the tool names a caller can call."""
+    for pattern, tool in _RENAMINGS:
+        text = pattern.sub(tool, text)
+    return text
+
+
 @contextmanager
 def _refusals():
-    """A service refusal becomes a clean ``ToolError`` carrying the original cause."""
+    """A service refusal becomes a clean ``ToolError`` carrying the original cause —
+    phrased in TOOL names, the only names a connector caller can act on."""
     try:
         yield
     except FootageError as e:
         # The ROOT cause rides along (an ImportError naming the missing extra, the
         # validator's error), so the translation adds a type and loses nothing.
-        raise _tool_error(str(e)) from (e.__cause__ or e)
+        raise _tool_error(_as_tool_names(str(e))) from (e.__cause__ or e)
 
 
 def _workspace():
@@ -277,7 +309,7 @@ def add_footage_folder(project_id: str, *, url: str, name_prefix: str = "") -> d
                 )
                 continue
             label = f"{name_prefix}{member.stem}" if name_prefix else member.stem
-            with _refusals():
+            try:
                 out = service.add_clip(
                     proj,
                     path=str(member),
@@ -285,6 +317,10 @@ def add_footage_folder(project_id: str, *, url: str, name_prefix: str = "") -> d
                     name=label,
                     duration_s=dur,
                 )
+            except FootageError as e:
+                # One refused member must not lose the ones already added: named, and on.
+                skipped.append({"name": member.name, "reason": _as_tool_names(str(e))})
+                continue
             added.append(
                 {"clip_id": out["clip_id"], "name": label, "duration": round(dur, 2)}
             )
@@ -296,7 +332,7 @@ def add_footage_folder(project_id: str, *, url: str, name_prefix: str = "") -> d
     }
 
 
-def align_footage(project_id: str) -> dict:
+def align_footage(project_id: str, *, keep_declared: bool = True) -> dict:
     """Align every uploaded clip to the song by audio, and persist the result. Free.
 
     Returns each clip's offset, a confidence in [0,1], its ``support`` (the fraction of
@@ -325,7 +361,7 @@ def align_footage(project_id: str) -> dict:
 
     Run this after adding/removing clips and before assembling.
     """
-    return _call(project_id, service.align)
+    return _call(project_id, service.align, keep_declared=keep_declared)
 
 
 def footage_timeline(project_id: str) -> dict:
@@ -412,6 +448,7 @@ def assemble_music_video(
     config: dict | None = None,
     canvas: str = "",
     allow_unreliable: bool = False,
+    span: list | None = None,
 ) -> dict:
     """Assemble the music video — auto (a selection ``strategy``) or an explicit ``edl``. Free.
 
@@ -467,6 +504,11 @@ def assemble_music_video(
       ``list_strategies``; default ``best_confidence``) builds the edit from the alignments.
     - ``canvas``: render-time override ("landscape"/"portrait"/"square") — the same edit
       re-rendered in another shape, no new project needed. Default: the project's canvas.
+    - ``span``: ``[start_s, end_s]`` — render only that stretch of the song (a trimmed
+      edit): the ``edl`` is gap-filled within it, the video is that long, and the song is
+      cut to it and faded out at the end when it stops before the song does. A render
+      of a trimmed edit records its ``span``; pass it back with its ``edl`` to reproduce
+      it. Default: the whole song.
     - **A clip the aligner will not vouch for costs its own spans, not the whole edit**
       (muvid#88). On the auto path the strategy prefers a vouched clip wherever one
       covers the span, so an untrustworthy clip is simply not chosen while any other
@@ -512,6 +554,7 @@ def assemble_music_video(
             canvas=canvas,
             allow_unreliable=allow_unreliable,
             annotate=_render_claims(project_id),
+            span=span,
         )
 
 
@@ -544,7 +587,15 @@ def footage_status(project_id: str) -> dict:
     Also: each clip's offset and whether it was measured or declared (``alignments``),
     the saved ``edits``, and ``next_step`` — the operation that moves the project on.
     """
-    return _call(project_id, service.status)
+    out = _call(project_id, service.status)
+    step = out.get("next_step")
+    if step:
+        out["next_step"] = {
+            **step,
+            "op": op_tool_name(step["op"]),
+            "why": _as_tool_names(step["why"]),
+        }
+    return out
 
 
 def beat_grid(project_id: str) -> dict:
@@ -704,7 +755,7 @@ def _op_tool(op_name: str):
 
     tool.__name__ = tool.__qualname__ = op_tool_name(op_name)
     tool.__module__ = __name__
-    tool.__doc__ = op.__doc__
+    tool.__doc__ = _as_tool_names(op.__doc__ or "")
     tool.__signature__ = sig.replace(
         parameters=[project_param, *params], return_annotation=dict
     )

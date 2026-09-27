@@ -111,4 +111,50 @@ def _crop_windows(framing: Mapping, *, width: int, height: int):
     return window(x0, y0), (window(x1, y1) if moves else None)
 
 
-__all__ = ["edl_from_document", "is_framing_edl", "PAN_THRESHOLD_PX"]
+def clip_in_drift(
+    doc, *, offsets: Mapping[str, float], fps: Mapping[str, float]
+) -> list[dict]:
+    """The cuts whose PLANNED in-point is more than one frame from the one muvid derives.
+
+    A planner document records each cut's ``clip_in`` (where in the clip the cut
+    starts); muvid does not carry it — ``derive_cuts`` derives it as
+    ``song_start - offset`` from the clip's offset, the ONE place that sign convention
+    lives. Where the two disagree by more than a frame at the clip's rate, rendering the
+    imported edit shows different frames than the original did. Returns one row per such
+    cut (``index``, ``clip_id``, ``planned``, ``derived``, ``drift_s``); a cut with no
+    ``clip_in``, or a clip without an offset or a rate, is not judged.
+
+    >>> doc = {"edl": [{"song_start": 10.0, "song_end": 12.0, "clip_id": "a",
+    ...                 "clip_in": 8.0}]}
+    >>> clip_in_drift(doc, offsets={"a": 2.0}, fps={"a": 25.0})
+    []
+    >>> clip_in_drift(doc, offsets={"a": 1.9}, fps={"a": 25.0})[0]["drift_s"]
+    -0.1
+    """
+    entries = doc.get("edl") if isinstance(doc, Mapping) else doc
+    rows = []
+    for i, e in enumerate(entries or []):
+        cid = e.get("clip_id") if isinstance(e, Mapping) else None
+        if (
+            not cid
+            or e.get("clip_in") is None
+            or cid not in offsets
+            or not fps.get(cid)
+        ):
+            continue
+        derived = float(e["song_start"]) - float(offsets[cid])
+        drift = float(e["clip_in"]) - derived
+        if abs(drift) > 1.0 / float(fps[cid]):
+            rows.append(
+                {
+                    "index": i,
+                    "clip_id": cid,
+                    "planned": float(e["clip_in"]),
+                    "derived": round(derived, 6),
+                    "drift_s": round(drift, 6),
+                }
+            )
+    return rows
+
+
+__all__ = ["edl_from_document", "is_framing_edl", "clip_in_drift", "PAN_THRESHOLD_PX"]

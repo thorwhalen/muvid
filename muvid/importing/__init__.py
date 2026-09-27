@@ -46,7 +46,7 @@ import tempfile
 from pathlib import Path
 from typing import Mapping, Optional
 
-from muvid.importing._edl import edl_from_document, is_framing_edl
+from muvid.importing._edl import clip_in_drift, edl_from_document, is_framing_edl
 
 #: The manifest kinds and the genre each is created as.
 KIND_GENRES = {"footage": "music_video", "lyric-video": "lyric-video"}
@@ -170,6 +170,26 @@ def _import_footage(fp, manifest: Mapping, resolve) -> dict:
         e["id"]: _import_edit(fp, e, _edit_edl(e, manifest, resolve, fp=fp))
         for e in manifest.get("edits", [])
     }
+    drift = {}
+    for e in manifest.get("edits", []):
+        rows = _edit_drift(e, manifest, resolve, fp=fp)
+        if rows:
+            drift[e["id"]] = rows
+    report["clip_in_drift"] = {
+        eid: {
+            "cuts_over_one_frame": len(rows),
+            "max_drift_s": max(abs(r["drift_s"]) for r in rows),
+            "cuts": rows,
+        }
+        for eid, rows in drift.items()
+    }
+    report["warnings"] = [
+        f"edit {eid!r}: {len(rows)} cut(s) start more than one frame from where the "
+        f"planner cut them (up to {max(abs(r['drift_s']) for r in rows):.3f} s) — muvid "
+        "derives each in-point from the clip's offset, so those cuts show different "
+        "frames than the original render"
+        for eid, rows in drift.items()
+    ]
     report["renders"] = {
         r["id"]: service.import_render(
             fp,
@@ -289,6 +309,32 @@ def _edit_edl(edit: Mapping, manifest: Mapping, resolve, *, fp=None) -> list[dic
         doc = json.loads(resolve(edit["edl_path"]).read_text())
     sizes = _source_sizes(manifest, resolve, fp=fp) if is_framing_edl(doc) else {}
     return edl_from_document(doc, source_sizes=sizes)
+
+
+def _edit_drift(edit: Mapping, manifest: Mapping, resolve, *, fp) -> list[dict]:
+    """The planner in-points (``clip_in``) that disagree with muvid's by over a frame."""
+    if "edl_path" not in edit and not isinstance(edit.get("edl"), (list, dict)):
+        return []
+    doc = edit.get("edl")
+    if doc is None:
+        doc = json.loads(resolve(edit["edl_path"]).read_text())
+    offsets = {
+        c["id"]: float(c["offset_s"])
+        for c in manifest.get("clips", [])
+        if c.get("offset_s") is not None
+    }
+    return clip_in_drift(doc, offsets=offsets, fps=_clip_rates(fp))
+
+
+def _clip_rates(fp) -> dict:
+    from muvid.footage.service import frame_rate
+
+    rates = {}
+    for cid, path in fp.clip_paths().items():
+        rate = frame_rate(path)
+        if rate:
+            rates[cid] = rate
+    return rates
 
 
 def _source_sizes(manifest: Mapping, resolve, *, fp=None) -> dict:

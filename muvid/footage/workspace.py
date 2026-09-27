@@ -53,8 +53,11 @@ from __future__ import annotations
 
 import json
 import os
+import re
+import shutil
 import tempfile
 import time
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -91,6 +94,110 @@ def data_root() -> Path:
     return data_home()
 
 
+#: What a caller-chosen id (a clip's, an edit's) may be — after surrounding whitespace is
+#: dropped. Letters, digits, ``_`` and ``-`` only: an id names a FILE (``clips/<id>.mp4``,
+#: ``edits/<id>.json``), and a looser rule let ``*`` through to a glob that deleted every
+#: clip, and ``" c1"`` replace ``c1``'s bytes under a different manifest key.
+ID_PATTERN = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
+
+
+def normalise_id(value: str, *, label: str) -> str:
+    """``value`` stripped, and refused (``ValueError``) unless it matches
+    :data:`ID_PATTERN`.
+
+    >>> normalise_id(" c01 ", label="clip_id")
+    'c01'
+    >>> normalise_id("*", label="clip_id")
+    Traceback (most recent call last):
+        ...
+    ValueError: invalid clip_id '*': use 1-64 letters, digits, '_' or '-'
+    """
+    v = (value or "").strip() if isinstance(value, str) else ""
+    if not ID_PATTERN.fullmatch(v):
+        raise ValueError(
+            f"invalid {label} {value!r}: use 1-64 letters, digits, '_' or '-'"
+        )
+    return v
+
+
+def _files_with_stem(directory: Path, stem: str) -> list[Path]:
+    """The files in ``directory`` whose name is exactly ``<stem>.<one extension>`` — an
+    exact match, never a glob, so ``A`` does not reach ``A.x.mp4``."""
+    if not directory.is_dir():
+        return []
+    return [
+        p
+        for p in directory.iterdir()
+        if p.is_file() and p.suffix and p.name[: -len(p.suffix)] == stem
+    ]
+
+
+def replace_file(src, dest) -> Path:
+    """Put a copy of ``src`` at ``dest`` as a NEW file (temp sibling + ``os.replace``).
+
+    Never writes into an existing ``dest``: a project's media is hardlinked into the
+    host's content-addressed catalog (``blobs/<sha256>``), so an in-place overwrite would
+    silently change the bytes behind an id that names the old ones. A rename gives
+    ``dest`` a new inode and leaves the blob exactly as it was.
+    """
+    dest = Path(dest)
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp = tempfile.mkstemp(
+        dir=str(dest.parent), prefix=f".{dest.name}.", suffix=".tmp"
+    )
+    os.close(fd)
+    try:
+        shutil.copyfile(src, tmp)
+        os.replace(tmp, dest)
+    except BaseException:
+        Path(tmp).unlink(missing_ok=True)
+        raise
+    return dest
+
+
+@contextmanager
+def fresh_output(dest):
+    """A temp path beside ``dest`` for a writer that cannot be told to be careful
+    (ffmpeg); on success it is renamed onto ``dest`` — a new inode, as in
+    :func:`replace_file` — and on failure removed."""
+    dest = Path(dest)
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    tmp = dest.with_name(f".{dest.stem}.{os.getpid()}.tmp{dest.suffix}")
+    try:
+        yield tmp
+        os.replace(tmp, dest)
+    finally:
+        tmp.unlink(missing_ok=True)
+
+
+@contextmanager
+def file_lock(path):
+    """An exclusive advisory lock on ``path`` for a read-modify-write (POSIX ``flock``;
+    ``msvcrt.locking`` on Windows). Serialises concurrent edits of one project's files;
+    each write is also atomic, so a reader never needs the lock."""
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(path, "a+b") as f:
+        try:
+            import fcntl
+
+            fcntl.flock(f.fileno(), fcntl.LOCK_EX)
+            try:
+                yield
+            finally:
+                fcntl.flock(f.fileno(), fcntl.LOCK_UN)
+        except ImportError:  # Windows
+            import msvcrt
+
+            f.seek(0)
+            msvcrt.locking(f.fileno(), msvcrt.LK_LOCK, 1)
+            try:
+                yield
+            finally:
+                f.seek(0)
+                msvcrt.locking(f.fileno(), msvcrt.LK_UNLCK, 1)
+
+
 @dataclass(frozen=True)
 class MusicVideoFootageProject:
     """One caller's stateful music-video project (song + clips + alignments + renders)."""
@@ -102,6 +209,10 @@ class MusicVideoFootageProject:
     #: :class:`muvid.catalog.HostArtifactCatalog` (anything with its ``register``), or
     #: ``None`` for the MCP workspace, which registers nothing.
     media_catalog: object = field(default=None, compare=False, repr=False)
+    #: What :meth:`manifest` reads before anything is written — a hosted project's
+    #: title and canvas come from its genre envelope, so READING its footage creates
+    #: nothing; the first write persists them.
+    defaults: dict = field(default_factory=dict, compare=False, repr=False)
 
     # -- the host catalog ------------------------------------------------------
     def _register(self, path, *, kind: str, **meta) -> "str | None":
@@ -118,9 +229,15 @@ class MusicVideoFootageProject:
         try:
             return json.loads(self._manifest_path().read_text())
         except (OSError, ValueError):
-            return {"title": self.project_id, "canvas": DEFAULT_CANVAS_NAME}
+            return {
+                "title": self.project_id,
+                "canvas": DEFAULT_CANVAS_NAME,
+                **self.defaults,
+            }
 
     def _write_manifest(self, m: dict) -> None:
+        self.root.mkdir(parents=True, exist_ok=True)
+        m.setdefault("created", time.time())
         atomic_write_text(self._manifest_path(), json.dumps(m, indent=2))
 
     def canvas(self) -> tuple[int, int]:
@@ -168,6 +285,7 @@ class MusicVideoFootageProject:
         dest = song_dir / f"song{suffix}"
         # Phase 1: stage beside the song dir (same filesystem, so the final move is a
         # rename) and measure. Nothing the project owns has been touched yet.
+        self.root.mkdir(parents=True, exist_ok=True)
         fd, staged_name = tempfile.mkstemp(
             dir=str(self.root), prefix=".song.", suffix=suffix
         )
@@ -242,15 +360,14 @@ class MusicVideoFootageProject:
         """Store a footage clip from a local file; returns its ``clip_id``."""
         import shutil
 
-        cid = safe_component(clip_id, label="clip_id")
+        cid = normalise_id(clip_id, label="clip_id")
         clips_dir = self.root / "clips"
         clips_dir.mkdir(parents=True, exist_ok=True)
         # Remove any prior file for this clip_id (a re-add with a different extension would
         # otherwise orphan the old one) before writing the new one.
-        for old in clips_dir.glob(f"{cid}.*"):
+        for old in _files_with_stem(clips_dir, cid):
             old.unlink()
-        dest = clips_dir / f"{cid}{_safe_ext(ext)}"
-        shutil.copyfile(src_path, dest)
+        dest = replace_file(src_path, clips_dir / f"{cid}{_safe_ext(ext)}")
         artifact_id = self._register(dest, kind="video")
         m = self.manifest()
         clips = m.setdefault("clips", [])
@@ -282,7 +399,7 @@ class MusicVideoFootageProject:
         scores_invalidated}``. Raises ``KeyError`` for a ``clip_id`` the manifest does
         not hold; the MCP tool turns that into a refusal naming the known ids.
         """
-        cid = safe_component(clip_id, label="clip_id")
+        cid = normalise_id(clip_id, label="clip_id")
         m = self.manifest()
         clips = list(m.get("clips", []))
         entry = next((c for c in clips if c.get("clip_id") == cid), None)
@@ -306,7 +423,7 @@ class MusicVideoFootageProject:
         self._write_manifest(m)
         removed_files = []
         # The same sweep add_clip uses: any extension this id was ever stored under.
-        for old in (self.root / "clips").glob(f"{cid}.*"):
+        for old in _files_with_stem(self.root / "clips", cid):
             old.unlink()
             removed_files.append(old.name)
         return {
@@ -351,7 +468,11 @@ class MusicVideoFootageProject:
         return self.root / "edits"
 
     def _edit_path(self, edit_id: str) -> Path:
-        return self.edits_dir / f"{safe_component(edit_id, label='edit_id')}.json"
+        return self.edits_dir / f"{normalise_id(edit_id, label='edit_id')}.json"
+
+    def edits_lock(self):
+        """Serialise a read-modify-write of this project's edits (see :func:`file_lock`)."""
+        return file_lock(self.edits_dir / ".lock")
 
     def has_edit(self, edit_id: str) -> bool:
         return self._edit_path(edit_id).exists()
@@ -404,7 +525,7 @@ class MusicVideoFootageProject:
 
         dest = self.root / "cover.jpg"
         if Path(image_path) != dest:
-            shutil.copyfile(image_path, dest)
+            replace_file(image_path, dest)
         artifact_id = self._register(dest, kind="image")
         m = self.manifest()
         cover = {"file": dest.name, "taken_from": taken_from}
@@ -415,6 +536,7 @@ class MusicVideoFootageProject:
 
     # -- alignments ----------------------------------------------------------
     def save_alignments(self, aligns: list[FootageAlignment]) -> None:
+        self.root.mkdir(parents=True, exist_ok=True)
         atomic_write_text(
             self.root / "alignments.json",
             json.dumps([a.to_dict() for a in aligns], indent=2),

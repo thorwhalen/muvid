@@ -118,10 +118,11 @@ mcp = [
     # right failure: the previous arrangement had muvid returning its OWN
     # dataclass to a host typed `-> Path`, so every download 500'd while both
     # sides' tests stayed green (thorwhalen/reelee#296).
-    # 0.0.60 is where `nw.GenreOp` / `nw.register_genre_ops` exist (thorwhalen/nw#91):
-    # `muvid.genre_music_video` registers its operations with them at import, so an
-    # older nw fails at `import muvid.genre` — loudly, which is the right failure.
-    "nw>=0.0.60",
+    # 0.0.61 is where `nw.GenreOp` has `host_params` + `run` (thorwhalen/nw#93; the
+    # registry itself is 0.0.60, nw#91): `muvid.genre_music_video` registers its
+    # operations at import with the upload ops' `path`/`filename` as HOST parameters, so
+    # an older nw fails at `import muvid.genre` — loudly, which is the right failure.
+    "nw>=0.0.61",
 ]
 # The footage SCORING layer's TORCH-FREE core tier (thorwhalen/muvid#13): quality gates +
 # motion-to-beat + the Viterbi selector + editor score-tracks. This is what the prod

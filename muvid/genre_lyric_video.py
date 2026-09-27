@@ -116,7 +116,13 @@ def _lyric_video_project_factory(
     if projects_dir is not None:
         from muvid.production import create_project_at
 
-        proj = create_project_at(projects_dir, project_id, title=title)
+        proj = create_project_at(
+            projects_dir,
+            project_id,
+            genre=LYRIC_VIDEO_SLUG,
+            title=title,
+            template=template,
+        )
     else:
         from muvid.mcp.workspace import VisualizerWorkspace
 

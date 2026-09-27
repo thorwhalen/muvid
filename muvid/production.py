@@ -40,7 +40,8 @@ from muvid.footage.workspace import (
     DEFAULT_CANVAS_NAME,
     MusicVideoFootageProject,
     atomic_write_text,
-    init_footage_project,
+    fresh_output,
+    replace_file,
 )
 from muvid.paths import safe_component
 
@@ -74,15 +75,22 @@ class Project(nw.Project):
 
     @cached_property
     def footage(self) -> MusicVideoFootageProject:
-        """The footage production at ``<root>/footage`` (created on first use, with the
-        canvas this project was created with)."""
+        """The footage production at ``<root>/footage``.
+
+        Reading it creates nothing: until the first write, its title and canvas are the
+        ones this project was created with (the genre envelope), and the first write
+        persists them. So a lyric-video project never sprouts a ``footage/`` folder.
+        """
         params = (self.resolved_genre() or {}).get("params") or {}
-        return init_footage_project(
+        return MusicVideoFootageProject(
+            "",
+            self.root.name,
             self.root / FOOTAGE_DIRNAME,
-            project_id=self.root.name,
-            title=self.title,
-            canvas=params.get("canvas") or DEFAULT_CANVAS_NAME,
             media_catalog=self.media_catalog,
+            defaults={
+                "title": self.title,
+                "canvas": params.get("canvas") or DEFAULT_CANVAS_NAME,
+            },
         )
 
     @cached_property
@@ -113,8 +121,9 @@ def create_project_at(
     projects_dir,
     project_id: str,
     *,
+    genre: str = "music_video",
     title: str = "",
-    canvas: Optional[str] = None,
+    template: Optional[str] = None,
     force: bool = False,
 ) -> Project:
     """Create a muvid production at ``projects_dir/<project_id>`` — the host-placed create.
@@ -122,21 +131,27 @@ def create_project_at(
     The counterpart to ``FootageWorkspace.create_project`` (muvid's own per-caller
     workspace): a host that will SERVE the project puts it where its own resolver and
     lister look (nw#84). ``project_id`` is a single traversal-safe component, so the
-    result is always a direct child of ``projects_dir``. ``canvas`` (a music video's)
-    creates the footage production right away with that canvas; ``None`` leaves it to
-    first use, which reads the canvas from the genre envelope.
+    result is always a direct child of ``projects_dir``.
+
+    The project RECORDS its genre (``genre``, ``music_video`` or ``lyric-video``, with
+    ``template`` — a music video's canvas, a lyric video's archetype) as the nw genre
+    envelope, exactly as ``nw.create_genre_project`` does, because that envelope is how
+    a host knows what a project is: reelee lists a project under its genre and opens it
+    as ``muvid.Project`` by reading it (``project.resolved_genre()``). Created any other
+    way, the project would list with no genre and appear in no section.
     """
+    import nw
+
+    import muvid.genre  # noqa: F401 — the genres must be registered to be recorded
+
     root = Path(projects_dir) / safe_component(project_id, label="project_id")
     root.parent.mkdir(parents=True, exist_ok=True)
     project = Project.init(root, title=title or project_id, force=force)
-    if canvas is not None:
-        init_footage_project(
-            project.root / FOOTAGE_DIRNAME,
-            project_id=project.root.name,
-            title=title or project_id,
-            canvas=canvas,
-            media_catalog=project.media_catalog,
-        )
+    try:
+        nw.initialize_genre(genre, project, template=template)
+    except Exception:
+        shutil.rmtree(root, ignore_errors=True)
+        raise
     return project
 
 
@@ -179,10 +194,10 @@ class LyricVideoProduction:
         dest = self.root / "song" / f"song{src.suffix.lower()}"
         digest = hash_file(src)
         m = self.manifest()
-        if (m.get("song") or {}).get("hash") != digest:
-            shutil.rmtree(self.root / "song", ignore_errors=True)
-            dest.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copyfile(src, dest)
+        if (m.get("song") or {}).get("hash") != digest or not dest.exists():
+            for old in (self.root / "song").glob("song.*"):
+                old.unlink()
+            replace_file(src, dest)
         record = {
             "file": dest.name,
             "name": name or src.name,
@@ -207,9 +222,8 @@ class LyricVideoProduction:
         src = Path(src)
         fname = safe_component(name or src.name, label="source name")
         dest = self.root / "sources" / fname
-        dest.parent.mkdir(parents=True, exist_ok=True)
         if not (dest.exists() and hash_file(dest) == hash_file(src)):
-            shutil.copyfile(src, dest)
+            replace_file(src, dest)
         record = {"file": fname, "role": role, "hash": hash_file(dest)}
         if dest.suffix.lower() == ".json":
             _set_or_drop(record, "artifact_id", self._register(dest, kind="json"))
@@ -226,8 +240,7 @@ class LyricVideoProduction:
         dest = self.root / "renders" / rid / "final.mp4"
         digest = hash_file(src)
         if not (dest.exists() and hash_file(dest) == digest):
-            dest.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copyfile(src, dest)
+            replace_file(src, dest)
         record = {
             "render_id": rid,
             "label": label or rid,
@@ -265,7 +278,8 @@ class LyricVideoProduction:
         if not renders or self.media_catalog is None:
             return None
         frame = self.root / "cover.jpg"
-        grab_cover_frame(self.root / renders[0]["file"], frame)
+        with fresh_output(frame) as tmp:
+            grab_cover_frame(self.root / renders[0]["file"], tmp)
         artifact_id = self._register(frame, kind="image")
         m = self.manifest()
         cover = {"file": frame.name, "taken_from": f"render:{renders[0]['render_id']}"}
