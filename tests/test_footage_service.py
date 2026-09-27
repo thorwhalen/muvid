@@ -1288,6 +1288,19 @@ def test_undo_and_redo_edits(fp):
     assert spanned["span"] == [2.0, 20.0]
 
 
+def test_rename_edit_changes_only_the_name_and_undoes(fp):
+    service.save_edit(fp, edl=_edl_ab(), edit_id="e", name="V3 — punch-ins (101 cuts)")
+    before = service.get_edit(fp, edit_id="e")
+    renamed = service.rename_edit(fp, edit_id="e", name="  V3 — punch-ins  ")
+    assert renamed["name"] == "V3 — punch-ins"
+    assert renamed["edl"] == before["edl"] and renamed["edit_id"] == "e"
+    assert service.undo_edit(fp, edit_id="e")["name"] == "V3 — punch-ins (101 cuts)"
+    with pytest.raises(FootageError, match="cannot be empty"):
+        service.rename_edit(fp, edit_id="e", name="   ")
+    with pytest.raises(FootageError, match="at most"):
+        service.rename_edit(fp, edit_id="e", name="x" * 500)
+
+
 def test_history_is_bounded(fp, monkeypatch):
     monkeypatch.setattr(service, "EDIT_HISTORY_LIMIT", 3)
     service.save_edit(fp, edl=_edl_ab(), edit_id="e")
