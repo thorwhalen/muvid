@@ -289,32 +289,54 @@ def novelty_signal(path) -> dict:
 
     from muvid.visualize.ffmpeg import decode_pcm
 
-    y = np.frombuffer(decode_pcm(path, sample_rate=_NOVELTY_SAMPLE_RATE, channels=1), dtype=np.float32)
+    y = np.frombuffer(
+        decode_pcm(path, sample_rate=_NOVELTY_SAMPLE_RATE, channels=1), dtype=np.float32
+    )
     if y.size == 0:
         raise ValueError("no audio could be decoded")
     hop = int(round(_NOVELTY_SAMPLE_RATE * NOVELTY_HOP_S))
-    mfcc = librosa.feature.mfcc(y=y, sr=_NOVELTY_SAMPLE_RATE, n_mfcc=NOVELTY_MFCC, hop_length=hop)
+    mfcc = librosa.feature.mfcc(
+        y=y, sr=_NOVELTY_SAMPLE_RATE, n_mfcc=NOVELTY_MFCC, hop_length=hop
+    )
     chroma = librosa.feature.chroma_stft(y=y, sr=_NOVELTY_SAMPLE_RATE, hop_length=hop)
-    return {"signals": {NOVELTY: signal_record(checkerboard_novelty(np.vstack([_standardised(mfcc), _standardised(chroma)])), t0=0.0, hop_s=hop / _NOVELTY_SAMPLE_RATE, name=NOVELTY, domain="audio")}}
+    return {
+        "signals": {
+            NOVELTY: signal_record(
+                checkerboard_novelty(
+                    np.vstack([_standardised(mfcc), _standardised(chroma)])
+                ),
+                t0=0.0,
+                hop_s=hop / _NOVELTY_SAMPLE_RATE,
+                name=NOVELTY,
+                domain="audio",
+            )
+        }
+    }
 
 
 def _standardised(x: np.ndarray) -> np.ndarray:
     return (x - x.mean(axis=1, keepdims=True)) / (x.std(axis=1, keepdims=True) + 1e-9)
 
 
-def checkerboard_novelty(features: np.ndarray, *, half: "int | None" = None) -> np.ndarray:
+def checkerboard_novelty(
+    features: np.ndarray, *, half: "int | None" = None
+) -> np.ndarray:
     """Novelty along a feature sequence ``[dims, frames]``: the correlation of a
     Gaussian-tapered checkerboard kernel (``half`` frames each side) with the cosine
     self-similarity matrix around each frame. Frames without a full kernel are NaN."""
     f = np.asarray(features, dtype=np.float64)
     n = f.shape[1]
-    half = int(half if half is not None else round(NOVELTY_KERNEL_S / NOVELTY_HOP_S / 2))
+    half = int(
+        half if half is not None else round(NOVELTY_KERNEL_S / NOVELTY_HOP_S / 2)
+    )
     out = np.full(n, np.nan)
     if n < 2 * half + 1 or half < 1:
         return out
     unit = f / (np.linalg.norm(f, axis=0, keepdims=True) + 1e-9)
     r = np.arange(-half, half + 1)
-    sign = np.sign(r)[:, None] * np.sign(r)[None, :]  # + on the two diagonal blocks, - off
+    sign = (
+        np.sign(r)[:, None] * np.sign(r)[None, :]
+    )  # + on the two diagonal blocks, - off
     taper = np.exp(-0.5 * (r / (half / 2.0)) ** 2)
     kernel = sign * taper[:, None] * taper[None, :]
     # Only the band around the diagonal is ever read, so each window's block is
@@ -370,7 +392,9 @@ def deceleration_flux(hists: np.ndarray) -> np.ndarray:
 REGION_GRID = (8, 6)
 
 
-def region_speeds(fx: np.ndarray, fy: np.ndarray, *, grid: tuple = REGION_GRID) -> np.ndarray:
+def region_speeds(
+    fx: np.ndarray, fy: np.ndarray, *, grid: tuple = REGION_GRID
+) -> np.ndarray:
     """Mean flow speed in each cell of a ``cols x rows`` grid, row-major. Edge pixels
     that do not fill a whole cell are left out."""
     cols, rows = grid
@@ -379,7 +403,12 @@ def region_speeds(fx: np.ndarray, fy: np.ndarray, *, grid: tuple = REGION_GRID) 
     ch, cw = h // rows, w // cols
     if ch == 0 or cw == 0:
         return np.full(cols * rows, float(mag.mean()) if mag.size else 0.0)
-    return mag[: ch * rows, : cw * cols].reshape(rows, ch, cols, cw).mean(axis=(1, 3)).ravel()
+    return (
+        mag[: ch * rows, : cw * cols]
+        .reshape(rows, ch, cols, cw)
+        .mean(axis=(1, 3))
+        .ravel()
+    )
 
 
 def visual_signals(
@@ -496,10 +525,14 @@ def binned_visual_signals(mids, motion, hists, hop: float, *, cells=None) -> dic
     idx = np.floor(mids / hop).astype(int)
     n = int(idx.max()) + 1
     counts = np.bincount(idx, minlength=n).astype(float)
+
     def bin_means(cols):
         with np.errstate(invalid="ignore", divide="ignore"):
             return np.stack(
-                [np.bincount(idx, weights=cols[:, b], minlength=n) / counts for b in range(cols.shape[1])],
+                [
+                    np.bincount(idx, weights=cols[:, b], minlength=n) / counts
+                    for b in range(cols.shape[1])
+                ],
                 axis=1,
             )
 
@@ -509,7 +542,11 @@ def binned_visual_signals(mids, motion, hists, hop: float, *, cells=None) -> dic
     extra = {}
     if cells is not None and cells.size:
         extra[REGION_IMPACT] = signal_record(
-            deceleration_flux(bin_means(cells)), t0=0.0, hop_s=hop, name=REGION_IMPACT, domain="visual"
+            deceleration_flux(bin_means(cells)),
+            t0=0.0,
+            hop_s=hop,
+            name=REGION_IMPACT,
+            domain="visual",
         )
     return {
         "signals": {

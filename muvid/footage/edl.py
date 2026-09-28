@@ -884,7 +884,9 @@ def _as_slip(raw) -> float:
     if raw is None:
         return 0.0
     if isinstance(raw, bool) or not isinstance(raw, (int, float)):
-        raise ValueError(f"EDL entry slip_s is malformed ({raw!r}): it must be a number of seconds.")
+        raise ValueError(
+            f"EDL entry slip_s is malformed ({raw!r}): it must be a number of seconds."
+        )
     v = float(raw)
     if not abs(v) <= SLIP_MAX_S + _EPS:
         raise ValueError(
@@ -1095,7 +1097,9 @@ def validate_edl(
                     "gap entry (clip_id null) — fill_gaps() inserts them."
                 )
         if e.is_gap and e.slip_s:
-            raise ValueError(f"EDL entry {i}: a gap has no footage to slip (slip_s={e.slip_s:g}).")
+            raise ValueError(
+                f"EDL entry {i}: a gap has no footage to slip (slip_s={e.slip_s:g})."
+            )
         if not e.is_gap:
             a = by_id[e.clip_id]
             if not _clip_contains(a, e.song_start, e.song_end, e.slip_s):
@@ -1282,7 +1286,9 @@ def exclude_unvouched(
     return _coalesce_absorbed(kept), excluded
 
 
-def _clip_contains(a: FootageAlignment, start: float, end: float, slip: float = 0.0) -> bool:
+def _clip_contains(
+    a: FootageAlignment, start: float, end: float, slip: float = 0.0
+) -> bool:
     """Does clip ``a`` actually hold the song span ``[start, end]`` (read ``slip`` s
     later, for a slipped cut)?
 
@@ -1301,7 +1307,9 @@ def _absorbable(e: "EdlEntry | None", by_id: dict) -> bool:
         return False
     # A slipped cut is not "plain": stretching it over a neighbour's span would carry
     # its slip into footage timing somebody set for the neighbour.
-    return e.transition is None and e.crop_end is None and e.look is None and not e.slip_s
+    return (
+        e.transition is None and e.crop_end is None and e.look is None and not e.slip_s
+    )
 
 
 def _absorb_neighbour(e, kept: list, entries: list, i: int, by_id: dict) -> bool:
@@ -1346,7 +1354,13 @@ def _coalesce_absorbed(entries: list) -> list:
             and prev.clip_id == e.clip_id
             and abs(prev.song_end - e.song_start) <= _EPS
             and e.transition is None
-            and (prev.crop, prev.crop_end, prev.look, prev.look_time_varying, prev.slip_s)
+            and (
+                prev.crop,
+                prev.crop_end,
+                prev.look,
+                prev.look_time_varying,
+                prev.slip_s,
+            )
             == (e.crop, e.crop_end, e.look, e.look_time_varying, e.slip_s)
         ):
             out[-1] = replace(prev, song_end=e.song_end)

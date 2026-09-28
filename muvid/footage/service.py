@@ -1685,7 +1685,9 @@ def beat_signals(
         # request: if they cannot be measured, the beat still is — the signal is
         # simply absent (a screen says "not measured"), never a refusal of the song.
         try:
-            signals.update(measured("structure", lambda: bs.novelty_signal(path))["signals"])
+            signals.update(
+                measured("structure", lambda: bs.novelty_signal(path))["signals"]
+            )
         except FootageError:
             pass
     if kind == "video":

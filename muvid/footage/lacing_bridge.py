@@ -301,7 +301,12 @@ def edl_from_annotations(
         from muvid.footage.edl import SLIP_MAX_S
 
         raw = a.body.get("slip_s")
-        if isinstance(raw, (int, float)) and not isinstance(raw, bool) and raw and abs(raw) <= SLIP_MAX_S:
+        if (
+            isinstance(raw, (int, float))
+            and not isinstance(raw, bool)
+            and raw
+            and abs(raw) <= SLIP_MAX_S
+        ):
             entry["slip_s"] = float(raw)
         out.append(entry)
     return sorted(out, key=lambda e: e["song_start"])
