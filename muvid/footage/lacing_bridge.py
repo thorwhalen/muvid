@@ -184,6 +184,9 @@ def _edl_body(e) -> dict:
     # field's absent value, so no DECISION body written before it changes.
     if getattr(e, "slip_s", 0.0):
         body["slip_s"] = float(e.slip_s)
+    # Omit-at-1, the same rule: speed 1 is the field's absent value.
+    if getattr(e, "rate", 1.0) != 1.0:
+        body["rate"] = float(e.rate)
     return body
 
 
@@ -308,6 +311,18 @@ def edl_from_annotations(
             and abs(raw) <= SLIP_MAX_S
         ):
             entry["slip_s"] = float(raw)
+        # Same skip-shaped read for a cut's speed: a number within the bound is
+        # forwarded, anything else reads as speed 1.
+        from muvid.footage.edl import RATE_MAX_DEV
+
+        raw = a.body.get("rate")
+        if (
+            isinstance(raw, (int, float))
+            and not isinstance(raw, bool)
+            and raw != 1.0
+            and abs(raw - 1.0) <= RATE_MAX_DEV
+        ):
+            entry["rate"] = float(raw)
         out.append(entry)
     return sorted(out, key=lambda e: e["song_start"])
 

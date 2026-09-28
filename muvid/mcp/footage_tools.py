@@ -510,8 +510,11 @@ def assemble_music_video(
       ``muvid.footage.edl.SLIP_MAX_S``): the cut shows its video that much LATER
       (negative: earlier) without moving on the song — a local correction on top
       of the clip's alignment, to put a dancer on the beat. The clip must still
-      hold the slipped span. Every optional field survives verbatim in the
-      returned ``edl``.
+      hold the slipped span.
+    - an entry may carry ``rate`` (within ``1 +- muvid.footage.edl.RATE_MAX_DEV``):
+      the cut plays its video that much faster (``1.03``) or slower, consuming
+      ``span * rate`` seconds of it; the song is untouched. Every optional field
+      survives verbatim in the returned ``edl``.
     - ``strategy='weighted'`` (score-driven): the beat-snapped Viterbi selector reads the
       persisted score tracks (run ``score_footage`` first) and the selection config —
       ``preset`` ("energetic"/"contemplative") and/or ``weights`` (per-metric) and/or
