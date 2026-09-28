@@ -1330,3 +1330,61 @@ def test_each_filmstrip_sheet_holds_its_own_frames(tmp_path):
         for s in index["sheets"]
     ]
     assert len(digests) == 3 and len(set(digests)) == 3
+
+
+# -- slip: a cut shows a slightly different moment of its video ------------------------
+
+
+def test_slip_moves_where_a_cut_reads_its_video_and_is_kept(fp):
+    from muvid.footage.edl import derive_cuts
+
+    service.save_edit(fp, edl=_edl_ab(), edit_id="e")
+    out = service.set_cut(fp, edit_id="e", index=0, slip_s=0.25)
+    assert out["edl"][0]["slip_s"] == 0.25
+    assert "slip_s" not in out["edl"][1]  # absent when 0: every older edit stays byte-identical
+    assert service.get_edit(fp, edit_id="e")["edl"][0]["slip_s"] == 0.25
+    # The renderer's in-point: song_start - offset + slip (A sits at 0).
+    entries = service._edit_entries(fp, "e")[1]
+    cuts = derive_cuts(entries, fp.load_alignments(), fp.clip_paths())
+    assert cuts[0].clip_in == pytest.approx(0.25)
+    assert cuts[1].clip_in == pytest.approx(2.0)  # B sits at +10, cut starts at 12
+    out = service.set_cut(fp, edit_id="e", index=0, slip_s=0)
+    assert "slip_s" not in out["edl"][0]
+
+
+def test_slip_is_refused_outside_its_bound_or_its_footage(fp):
+    service.save_edit(fp, edl=_edl_ab(), edit_id="e")
+    before = service.get_edit(fp, edit_id="e")["edl"]
+    with pytest.raises(FootageError, match="set_offset"):
+        service.set_cut(fp, edit_id="e", index=0, slip_s=0.8)  # over a beat: an alignment, not a slip
+    with pytest.raises(FootageError, match="does not contain"):
+        service.set_cut(fp, edit_id="e", index=0, slip_s=-0.2)  # before A's first frame
+    with pytest.raises(FootageError, match="does not contain"):
+        service.set_cut(fp, edit_id="e", index=1, slip_s=0.2)  # past B's last frame
+    assert service.get_edit(fp, edit_id="e")["edl"] == before
+
+
+def test_a_new_video_starts_unslipped(fp):
+    service.save_edit(fp, edl=_edl_ab(), edit_id="e")
+    service.set_cut(fp, edit_id="e", index=1, slip_s=-0.2)
+    out = service.set_cut(fp, edit_id="e", index=1, song_start=12.0, clip_id="B")
+    assert out["edl"][1]["slip_s"] == -0.2  # same video: kept
+    service.set_cut(fp, edit_id="e", index=0, slip_s=0.1)
+    out = service.set_cut(fp, edit_id="e", index=0, clip_id="")
+    assert "slip_s" not in out["edl"][0]  # a gap has nothing to slip
+
+
+def test_slip_survives_the_editor_round_trip():
+    from muvid.footage.edl import EdlEntry
+    from muvid.footage.lacing_bridge import _edl_body
+
+    assert _edl_body(EdlEntry(0.0, 4.0, "A", slip_s=-0.12))["slip_s"] == -0.12
+    assert "slip_s" not in _edl_body(EdlEntry(0.0, 4.0, "A"))
+
+
+def test_a_slipped_cut_is_not_stretched_over_its_neighbour():
+    from muvid.footage.edl import EdlEntry, _absorbable
+
+    by_id = {"A": type("A", (), {"reliable": True})()}
+    assert _absorbable(EdlEntry(0.0, 4.0, "A"), by_id)
+    assert not _absorbable(EdlEntry(0.0, 4.0, "A", slip_s=0.1), by_id)

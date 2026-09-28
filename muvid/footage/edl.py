@@ -753,6 +753,15 @@ class EdlEntry:
     #: for a hand-written filter) emits nothing — additive in both directions. Excluded
     #: from the hash because a dict is not hashable; equality still compares it.
     look_spec: "dict | None" = field(default=None, hash=False)
+    #: **Slip**: shift WHICH moment of the video this cut shows, by ``slip_s``
+    #: seconds, without moving the cut on the song. The clip's alignment offset is
+    #: the coarse sync (measured from its own soundtrack); a slip is the local
+    #: correction on top of it, per cut — a dancer who is a little late on this
+    #: stretch, shown a little earlier (``slip_s > 0`` reads LATER footage). A jump
+    #: in footage time at a cut boundary is invisible, which is why this is a cut
+    #: property and needs no speed change. Bounded by :data:`SLIP_MAX_S`; ``0.0``
+    #: (the default) emits nothing — additive in both directions, like the rest.
+    slip_s: float = 0.0
 
     @property
     def is_gap(self) -> bool:
@@ -856,6 +865,35 @@ def _as_look_time_varying(raw) -> bool:
     return raw
 
 
+#: The largest slip a cut may carry, either way (s): about one beat at 128 BPM. A
+#: slip is a local correction on top of the clip's measured alignment; a shift
+#: larger than a beat is a different alignment, which is ``set_offset``'s job.
+SLIP_MAX_S = 0.5
+
+
+def clip_in_of(e: "EdlEntry", a: "FootageAlignment") -> float:
+    """Where cut ``e`` starts in its clip ``a``'s own time — THE sign convention:
+    ``song_start - offset + slip``. UNCLAMPED (a caller checking containment must see
+    a negative in-point); :func:`derive_cuts` clamps for the renderer."""
+    return e.song_start - a.offset_s + getattr(e, "slip_s", 0.0)
+
+
+def _as_slip(raw) -> float:
+    """A slip in seconds: absent/None is 0.0; a number within +-:data:`SLIP_MAX_S`.
+    Raises on anything else, like the other request-side reads."""
+    if raw is None:
+        return 0.0
+    if isinstance(raw, bool) or not isinstance(raw, (int, float)):
+        raise ValueError(f"EDL entry slip_s is malformed ({raw!r}): it must be a number of seconds.")
+    v = float(raw)
+    if not abs(v) <= SLIP_MAX_S + _EPS:
+        raise ValueError(
+            f"EDL entry slip_s={v:.3f} is outside +-{SLIP_MAX_S:g} s: a slip is a local "
+            "correction on top of the clip's alignment — move the clip with set_offset instead."
+        )
+    return v
+
+
 def _as_entry(e) -> EdlEntry:
     if isinstance(e, EdlEntry):
         return e
@@ -887,6 +925,7 @@ def _as_entry(e) -> EdlEntry:
         look=_as_look(e.get("look")),
         look_time_varying=_as_look_time_varying(e.get("look_time_varying")),
         look_spec=_as_look_spec(e.get("look_spec")),
+        slip_s=_as_slip(e.get("slip_s")),
     )
 
 
@@ -1055,9 +1094,11 @@ def validate_edl(
                     "is covered by no entry. A span with no footage must be an explicit "
                     "gap entry (clip_id null) — fill_gaps() inserts them."
                 )
+        if e.is_gap and e.slip_s:
+            raise ValueError(f"EDL entry {i}: a gap has no footage to slip (slip_s={e.slip_s:g}).")
         if not e.is_gap:
             a = by_id[e.clip_id]
-            if not _clip_contains(a, e.song_start, e.song_end):
+            if not _clip_contains(a, e.song_start, e.song_end, e.slip_s):
                 raise ValueError(
                     f"EDL entry {i}: clip {e.clip_id!r} does not contain song span "
                     f"[{e.song_start:.3f}, {e.song_end:.3f}] (its coverage is "
@@ -1234,13 +1275,14 @@ def exclude_unvouched(
     return _coalesce_absorbed(kept), excluded
 
 
-def _clip_contains(a: FootageAlignment, start: float, end: float) -> bool:
-    """Does clip ``a`` actually hold the song span ``[start, end]``?
+def _clip_contains(a: FootageAlignment, start: float, end: float, slip: float = 0.0) -> bool:
+    """Does clip ``a`` actually hold the song span ``[start, end]`` (read ``slip`` s
+    later, for a slipped cut)?
 
     The containment arithmetic :func:`validate_edl` enforces, in one place so a caller
     that reshapes an edit (:func:`exclude_unvouched`) tests exactly what the gate will.
     """
-    clip_in = start - a.offset_s
+    clip_in = start - a.offset_s + slip
     return clip_in >= -_EPS and clip_in + (end - start) <= a.duration_s + _EPS
 
 
@@ -1250,7 +1292,9 @@ def _absorbable(e: "EdlEntry | None", by_id: dict) -> bool:
         return False
     if not by_id[e.clip_id].reliable:
         return False
-    return e.transition is None and e.crop_end is None and e.look is None
+    # A slipped cut is not "plain": stretching it over a neighbour's span would carry
+    # its slip into footage timing somebody set for the neighbour.
+    return e.transition is None and e.crop_end is None and e.look is None and not e.slip_s
 
 
 def _absorb_neighbour(e, kept: list, entries: list, i: int, by_id: dict) -> bool:
@@ -2399,7 +2443,7 @@ def _validate_transition(i, e, prev, by_id) -> None:
         # UNCLAMPED, deliberately: `derive_cuts` clamps `clip_in` at 0 for the
         # renderer, and reading a clamped value here would let a short clip pass
         # by silently pretending it starts earlier than it does.
-        end_in_clip = (prev.song_start - a.offset_s) + _span(prev)
+        end_in_clip = clip_in_of(prev, a) + _span(prev)
         if end_in_clip + trail > a.duration_s + _EPS:
             raise ValueError(
                 f"EDL entry {i}: the transition needs {trail:.3f}s of clip "
@@ -2408,7 +2452,7 @@ def _validate_transition(i, e, prev, by_id) -> None:
             )
     if not e.is_gap:
         a = by_id[e.clip_id]
-        start_in_clip = e.song_start - a.offset_s
+        start_in_clip = clip_in_of(e, a)
         if start_in_clip - lead < -_EPS:
             raise ValueError(
                 f"EDL entry {i}: the transition needs {lead:.3f}s of clip "
@@ -2425,7 +2469,8 @@ def derive_cuts(
     """Turn a *validated* EDL into render-ready cuts — the ONE place ``clip_in`` is derived.
 
     Strategies emit only ``{song_start, song_end, clip_id}``; the sign convention
-    ``clip_in = song_start - offset`` lives here (SSOT), so no strategy can desync the cut.
+    ``clip_in = song_start - offset + slip`` lives in :func:`clip_in_of` (SSOT), so no
+    strategy can desync the cut.
     """
     by_id = {a.clip_id: a for a in alignments}
     cuts = []
@@ -2455,7 +2500,7 @@ def derive_cuts(
                 song_start=e.song_start,
                 song_end=e.song_end,
                 clip_id=e.clip_id,
-                clip_in=max(0.0, e.song_start - a.offset_s),
+                clip_in=max(0.0, clip_in_of(e, a)),
                 clip_path=str(clip_paths[e.clip_id]),
                 transition=e.transition,
                 crop=e.crop,

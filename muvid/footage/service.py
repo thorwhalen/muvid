@@ -644,8 +644,12 @@ def beat_grid(fp) -> dict:
     song_hash = fp.song_hash()
     source, record = _beat_grid_record(fp, song_hash=song_hash)
     beats = list(record.get("beat_times") or [])
+    from muvid.footage.beats import fitted_tempo
+
     reply = {
-        "tempo_bpm": record.get("tempo_bpm"),
+        # Fitted to the beats, not the estimator's own figure (which can be biased by
+        # a couple of percent — see `fitted_tempo`); the estimator's when too few.
+        "tempo_bpm": fitted_tempo(beats) or record.get("tempo_bpm"),
         "beats": beats,
         "n_beats": len(beats),
         "song_duration": fp.song_duration(),
@@ -997,6 +1001,7 @@ EDL_OPTIONAL_FIELDS = (
     ("look", str, None),
     ("look_time_varying", bool, False),
     ("look_spec", dict, None),
+    ("slip_s", float, 0.0),
 )
 
 
@@ -1428,6 +1433,7 @@ def set_cut(
     song_end: Optional[float] = None,
     look: Optional[Union[str, dict]] = None,
     look_time_varying: Optional[bool] = None,
+    slip_s: Optional[float] = None,
 ) -> dict:
     """Change one cut of a saved edit (``index`` is its position in ``get_edit``'s edl).
 
@@ -1443,6 +1449,11 @@ def set_cut(
       or, for power users,
       one raw ffmpeg filter chain (allowlisted; set ``look_time_varying`` for one that
       moves). ``""`` removes it.
+    - ``slip_s``: show a slightly different moment of the same video over the same
+      span — ``0.1`` reads the footage 0.1 s later — to put a dancer's moves on the
+      beat where the clip's alignment is right overall but a little off here. At
+      most one beat either way (``SLIP_MAX_S``); ``0`` removes it. A new video
+      (``clip_id``) starts unslipped.
 
     Parameters left out are unchanged. The changed edit is checked and saved; returns it.
     """
@@ -1453,7 +1464,7 @@ def set_cut(
     e: EdlEntry = entries[i]
     changes: dict = {}
     if clip_id is not None and (clip_id or "") != e.clip_id:
-        changes.update(clip_id=clip_id or "", crop=None, crop_end=None)
+        changes.update(clip_id=clip_id or "", crop=None, crop_end=None, slip_s=0.0)
         if not clip_id:  # a gap carries no picture, so no look either
             changes.update(
                 look=None, look_time_varying=False, look_spec=None, transition=None
@@ -1470,6 +1481,13 @@ def set_cut(
             changes["look_time_varying"] = False
     if look_time_varying is not None:
         changes["look_time_varying"] = bool(look_time_varying)
+    if slip_s is not None:
+        from muvid.footage.edl import _as_slip
+
+        try:
+            changes["slip_s"] = _as_slip(slip_s)
+        except ValueError as err:
+            raise FootageError(str(err)) from err
     if song_start is not None:
         changes["song_start"] = float(song_start)
         if i > 0:
@@ -1662,6 +1680,8 @@ def beat_signals(
         else {"signals": {}, "beats": [], "tempo_bpm": None}
     )
     signals = dict(sound["signals"])
+    if kind == "audio":
+        signals.update(measured("structure", lambda: bs.novelty_signal(path))["signals"])
     if kind == "video":
         signals.update(measured("video", lambda: bs.visual_signals(path))["signals"])
     return {

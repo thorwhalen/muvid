@@ -4,25 +4,51 @@
 hits up with the music wants more than instants: a **continuous** signal it can look at,
 threshold anywhere between its minimum and maximum, and bend towards binary. That is what
 this module measures, per piece of media and in that media's OWN time (a clip reaches song
-time through its offset, exactly as filmstrips do):
+time through its offset, exactly as filmstrips do).
+
+Sound, for the song and for every clip with a soundtrack:
 
 - ``audio_onset`` — the onset-strength envelope ``mixing.audio.beat_grid`` estimates beats
-  from (the same estimator ``beat_grid`` uses, so the two never disagree about the song),
-  for the song and for every clip that has a soundtrack. The estimator's beat instants and
-  tempo come along.
-- ``motion`` — subject-motion energy: the mean camera-compensated optical-flow magnitude
-  (the scoring layer's ``flow_residual_and_global`` kernel), in frame-heights per second so
-  its scale depends little on resolution or sampling rate (not at all is not claimed: the
-  flow's window and noise floor are in downscaled pixels).
-- ``visual_impact`` — the visual BEAT envelope: how much motion, direction by direction,
-  STOPS from one sample to the next — the half-wave-rectified decrease of a
-  magnitude-weighted **directogram** (a histogram of flow directions), after Davis &
-  Agrawala, *Visual Rhythm and Beat* (SIGGRAPH 2018), whose visual beats are sudden
-  decelerations. A hit stopping dead and a change of direction (motion leaving one
-  direction bin) both register; motion energy alone misses the turn, which is most of
-  what a dance beat looks like. Measured on phone footage of dancers, this deceleration
-  flux locked to the song's beat about twice as strongly as the increase or the total
-  change did.
+  from (librosa's spectral flux on a log-mel spectrogram — the standard envelope, adequate
+  for percussive pop; SuperFlux's vibrato suppression matters for voice and strings). The
+  estimator's beat instants come along, with a tempo FITTED to them (see ``fitted_tempo``).
+- ``novelty`` (the song only) — how much the music changes character around each moment:
+  Foote's checkerboard novelty over a self-similarity matrix of timbre and harmony. Its
+  peaks are section boundaries (verse, chorus, drop) — the other place an editor cuts.
+
+Picture, for every clip:
+
+- ``motion`` — subject-motion energy: the mean camera-compensated optical-flow magnitude,
+  in frame-heights per second.
+- ``visual_impact`` — the visual beat: how much motion, direction by direction, STOPS
+  between samples — the half-wave-rectified decrease of a magnitude-weighted directogram.
+  This is the "impact envelope" of Davis & Agrawala, *Visual Rhythm and Beat* (SIGGRAPH
+  2018, §4.2; their printed Eq. 13 has the sign of an increase, their prose and released
+  code the decrease used here). It is a deceleration measure, which is where the
+  conducting literature puts the beat: ensembles synchronise with the **maximal
+  deceleration** of the conductor's hand (Luck & Toiviainen 2006), and with absolute
+  acceleration along the trajectory (Luck & Sloboda 2009) — the *ictus*, not the moment a
+  movement starts (Takehana et al. 2019: movement initiation never coincided with beats).
+- ``region_impact`` — the same deceleration without the directogram: the decrease of
+  camera-compensated SPEED in each cell of an 8 x 6 grid, summed over cells. Per-region
+  rather than per-direction, so several dancers braking in different places add up
+  instead of cancelling.
+
+**What the evidence on real footage says** (three phone videos of a crowd dancing to one
+song, 2 minutes each; beat locking measured as the phase concentration of each signal on
+the song's beat, against a null that shifts each 4 s block independently — a whole-signal
+circular shift cannot detect locking at all, since it only rotates the phase):
+
+- each clip's own soundtrack locks strongly (z = 7 to 15) — the positive control, and the
+  confirmation that the clips' offsets are right;
+- ``visual_impact`` and ``region_impact`` lock on one clip (z = 2.8 and 2.5, at the same
+  -25 ms lag as that clip's soundtrack) and on neither of the others; whole-frame speed,
+  pose-based limb deceleration (a person found in only 38-75 % of frames of a crowd) and
+  AIST++-style velocity minima (half a beat off) did no better;
+- a 1.25 Hz high-pass (Davis & Agrawala's post-filter) helped no clip consistently.
+
+So these envelopes SHOW where movement lands; on a crowd they are weak evidence of the
+beat, and nothing here decides a warp by itself.
 
 Every signal is **unnormalised** and carries its own grid (``t0``, ``hop_s``) and its
 ``min``, ``max`` and ``p99`` (a robust top a display can scale by), because thresholding is a
@@ -61,19 +87,23 @@ _DECIMALS = 5
 
 #: The record FORMAT's version, part of the cache key: bump it when the same parameters
 #: start producing different signals, so an old cache is not served as the new one.
-BEAT_SIGNALS_FORMAT = 2
+BEAT_SIGNALS_FORMAT = 3
 _DIRNAME = "beats"
 _HASH_PREFIX = 16
 
 AUDIO_ONSET = "audio_onset"
+NOVELTY = "novelty"
 MOTION = "motion"
 VISUAL_IMPACT = "visual_impact"
+REGION_IMPACT = "region_impact"
 
 #: What each signal is, in the words a screen can use.
 SIGNAL_LABELS = {
     AUDIO_ONSET: "Sound hits",
+    NOVELTY: "Section changes",
     MOTION: "Movement",
     VISUAL_IMPACT: "Moves that land",
+    REGION_IMPACT: "Moves that land, by region",
 }
 
 
@@ -171,8 +201,82 @@ def audio_signals(path) -> dict:
             )
         },
         "beats": [round(float(t), 4) for t in grid.beat_times],
-        "tempo_bpm": round(tempo, 3) if math.isfinite(tempo) and tempo > 0 else None,
+        "tempo_bpm": fitted_tempo(grid.beat_times)
+        or (round(tempo, 3) if math.isfinite(tempo) and tempo > 0 else None),
     }
+
+
+def fitted_tempo(beats, *, min_beats: int = 8) -> "float | None":
+    """The tempo (BPM) of a steady beat train, fitted to ALL its beats.
+
+    A beat tracker's own tempo can be biased: librosa's is the median inter-beat
+    interval, and on a song whose tracked beats run slightly fast with an occasional
+    skip it reported 129.2 BPM where the beats themselves fit 126.9 (a 1.8 % error
+    that puts a straight grid a full beat off within a minute). So: count each
+    interval as a whole number of median intervals (a skipped or doubled beat is 2 or
+    0.5 of one, rounded), and fit time against that beat count by least squares.
+    ``None`` for fewer than ``min_beats`` beats — not enough to fit."""
+    b = np.asarray(beats, dtype=np.float64)
+    if b.size < min_beats:
+        return None
+    d = np.diff(b)
+    p0 = float(np.median(d))
+    if not p0 > 0:
+        return None
+    steps = np.maximum(1, np.rint(d / p0))
+    k = np.concatenate([[0.0], np.cumsum(steps)])
+    period = float(np.polyfit(k, b, 1)[0])
+    return round(60.0 / period, 3) if period > 0 else None
+
+
+#: Novelty: the analysis grid (s) and the checkerboard kernel's full width (s) — a
+#: section boundary is a change that holds for several bars, not a fill.
+NOVELTY_HOP_S = 0.1
+NOVELTY_KERNEL_S = 8.0
+_NOVELTY_SAMPLE_RATE = 22050
+
+
+def novelty_signal(path) -> dict:
+    """``{signals: {novelty}}`` — Foote's checkerboard novelty of a song: a Gaussian-
+    tapered checkerboard kernel slid along the diagonal of the cosine self-similarity
+    of per-frame timbre (20 MFCCs) and harmony (12 chroma), each standardised. Peaks
+    are where the music changes character — section boundaries."""
+    import librosa  # lazy: the 'scoring' extra
+
+    from muvid.visualize.ffmpeg import decode_pcm
+
+    y = np.frombuffer(decode_pcm(path, sample_rate=_NOVELTY_SAMPLE_RATE, channels=1), dtype=np.float32)
+    if y.size == 0:
+        raise ValueError("no audio could be decoded")
+    hop = int(round(_NOVELTY_SAMPLE_RATE * NOVELTY_HOP_S))
+    mfcc = librosa.feature.mfcc(y=y, sr=_NOVELTY_SAMPLE_RATE, n_mfcc=20, hop_length=hop)
+    chroma = librosa.feature.chroma_stft(y=y, sr=_NOVELTY_SAMPLE_RATE, hop_length=hop)
+    return {"signals": {NOVELTY: signal_record(checkerboard_novelty(np.vstack([_standardised(mfcc), _standardised(chroma)])), t0=0.0, hop_s=hop / _NOVELTY_SAMPLE_RATE, name=NOVELTY, domain="audio")}}
+
+
+def _standardised(x: np.ndarray) -> np.ndarray:
+    return (x - x.mean(axis=1, keepdims=True)) / (x.std(axis=1, keepdims=True) + 1e-9)
+
+
+def checkerboard_novelty(features: np.ndarray, *, half: "int | None" = None) -> np.ndarray:
+    """Novelty along a feature sequence ``[dims, frames]``: the correlation of a
+    Gaussian-tapered checkerboard kernel (``half`` frames each side) with the cosine
+    self-similarity matrix around each frame. Frames without a full kernel are NaN."""
+    f = np.asarray(features, dtype=np.float64)
+    n = f.shape[1]
+    half = int(half if half is not None else round(NOVELTY_KERNEL_S / NOVELTY_HOP_S / 2))
+    out = np.full(n, np.nan)
+    if n < 2 * half + 1 or half < 1:
+        return out
+    unit = f / (np.linalg.norm(f, axis=0, keepdims=True) + 1e-9)
+    ssm = unit.T @ unit
+    r = np.arange(-half, half + 1)
+    sign = np.sign(r)[:, None] * np.sign(r)[None, :]  # + on the two diagonal blocks, - off
+    taper = np.exp(-0.5 * (r / (half / 2.0)) ** 2)
+    kernel = sign * taper[:, None] * taper[None, :]
+    for i in range(half, n - half):
+        out[i] = float((kernel * ssm[i - half : i + half + 1, i - half : i + half + 1]).sum())
+    return out
 
 
 def has_audio(path) -> bool:
@@ -202,16 +306,33 @@ def directogram(
     return hist / max(1, mag.size)
 
 
-def impact_from_directograms(hists: np.ndarray) -> np.ndarray:
-    """The visual-beat envelope: per sample, the motion that stopped since the previous
-    one, summed over directions (``sum(max(0, h[t-1] - h[t]))``). ``hists`` is
-    ``[k, bins]`` with NaN rows where nothing was measured; the first sample, and any
-    sample next to a NaN row, is NaN."""
+def deceleration_flux(hists: np.ndarray) -> np.ndarray:
+    """Per sample, the motion that stopped since the previous one, summed over the
+    columns of ``hists`` (``sum(max(0, h[t-1] - h[t]))``) — directions of a directogram
+    (``visual_impact``) or cells of a grid (``region_impact``). ``hists`` is ``[k, n]``
+    with NaN rows where nothing was measured; the first sample, and any sample next to
+    a NaN row, is NaN."""
     hists = np.asarray(hists, dtype=np.float64)
     out = np.full(hists.shape[0], np.nan)
     if hists.shape[0] > 1:
         out[1:] = np.clip(-np.diff(hists, axis=0), 0.0, None).sum(axis=1)
     return out
+
+
+#: The grid ``region_impact`` measures speed in: columns x rows of the frame.
+REGION_GRID = (8, 6)
+
+
+def region_speeds(fx: np.ndarray, fy: np.ndarray, *, grid: tuple = REGION_GRID) -> np.ndarray:
+    """Mean flow speed in each cell of a ``cols x rows`` grid, row-major. Edge pixels
+    that do not fill a whole cell are left out."""
+    cols, rows = grid
+    mag = np.hypot(fx, fy)
+    h, w = mag.shape
+    ch, cw = h // rows, w // cols
+    if ch == 0 or cw == 0:
+        return np.full(cols * rows, float(mag.mean()) if mag.size else 0.0)
+    return mag[: ch * rows, : cw * cols].reshape(rows, ch, cols, cw).mean(axis=(1, 3)).ravel()
 
 
 def visual_signals(
@@ -244,7 +365,7 @@ def visual_signals(
         raise ValueError(f"cannot open video: {path}")
     hop = 1.0 / max(0.1, float(sample_fps))
     min_gap = 1.0 / _MAX_PAIR_RATE
-    mids, motion, hists = [], [], []
+    mids, motion, hists, cells = [], [], [], []
     prev_small, prev_t = None, None
     try:
         while cap.grab():
@@ -265,13 +386,19 @@ def visual_signals(
                 mids.append((t + prev_t) / 2.0)
                 motion.append(float(np.mean(np.hypot(fx, fy))) * per_s)
                 hists.append(directogram(fx, fy, bins=bins) * per_s)
+                cells.append(region_speeds(fx, fy) * per_s)
             prev_small, prev_t = small, t
             if should_cancel is not None and should_cancel():
                 break
     finally:
         cap.release()
+    n_cells = REGION_GRID[0] * REGION_GRID[1]
     return binned_visual_signals(
-        np.asarray(mids), np.asarray(motion), np.asarray(hists).reshape(-1, bins), hop
+        np.asarray(mids),
+        np.asarray(motion),
+        np.asarray(hists).reshape(-1, bins),
+        hop,
+        cells=np.asarray(cells).reshape(-1, n_cells),
     )
 
 
@@ -296,7 +423,7 @@ def _compensated_flow(prev_gray, gray):
     return fx - float(np.median(fx)), fy - float(np.median(fy))
 
 
-def binned_visual_signals(mids, motion, hists, hop: float) -> dict:
+def binned_visual_signals(mids, motion, hists, hop: float, *, cells=None) -> dict:
     """Per-pair rates (at pair midpoints ``mids``) averaged into ``hop``-second bins.
 
     ``motion`` is each bin's mean, reported at the bin's CENTRE (``t0 = hop / 2``).
@@ -322,22 +449,29 @@ def binned_visual_signals(mids, motion, hists, hop: float) -> dict:
     idx = np.floor(mids / hop).astype(int)
     n = int(idx.max()) + 1
     counts = np.bincount(idx, minlength=n).astype(float)
+    def bin_means(cols):
+        with np.errstate(invalid="ignore", divide="ignore"):
+            return np.stack(
+                [np.bincount(idx, weights=cols[:, b], minlength=n) / counts for b in range(cols.shape[1])],
+                axis=1,
+            )
+
     with np.errstate(invalid="ignore", divide="ignore"):
         mean_motion = np.bincount(idx, weights=motion, minlength=n) / counts
-        mean_hists = np.stack(
-            [
-                np.bincount(idx, weights=hists[:, b], minlength=n) / counts
-                for b in range(hists.shape[1])
-            ],
-            axis=1,
+    mean_hists = bin_means(hists)
+    extra = {}
+    if cells is not None and cells.size:
+        extra[REGION_IMPACT] = signal_record(
+            deceleration_flux(bin_means(cells)), t0=0.0, hop_s=hop, name=REGION_IMPACT, domain="visual"
         )
     return {
         "signals": {
+            **extra,
             MOTION: signal_record(
                 mean_motion, t0=hop / 2.0, hop_s=hop, name=MOTION, domain="visual"
             ),
             VISUAL_IMPACT: signal_record(
-                impact_from_directograms(mean_hists),
+                deceleration_flux(mean_hists),
                 t0=0.0,
                 hop_s=hop,
                 name=VISUAL_IMPACT,
@@ -369,10 +503,15 @@ def cache_key(kind: str) -> str:
             f"a{BEAT_SIGNALS_FORMAT}-mix{_package_version('mixing')}"
             f"-lr{_package_version('librosa')}"
         )
+    if kind == "structure":
+        return (
+            f"s{BEAT_SIGNALS_FORMAT}-lr{_package_version('librosa')}"
+            f"-h{NOVELTY_HOP_S:g}-k{NOVELTY_KERNEL_S:g}"
+        )
     return (
         f"v{BEAT_SIGNALS_FORMAT}-{VISUAL_SAMPLE_FPS:g}fps-d{FLOW_DOWNSCALE}"
         f"-b{DIRECTOGRAM_BINS}-m{VISUAL_MAX_SECONDS:g}s-p{_MAX_PAIR_RATE:g}"
-        f"-n{_FLOW_NOISE_PX:g}"
+        f"-n{_FLOW_NOISE_PX:g}-g{REGION_GRID[0]}x{REGION_GRID[1]}"
     )
 
 
@@ -419,8 +558,14 @@ __all__ = [
     "audio_signals",
     "visual_signals",
     "has_audio",
+    "fitted_tempo",
+    "novelty_signal",
+    "checkerboard_novelty",
+    "NOVELTY",
+    "REGION_IMPACT",
     "directogram",
-    "impact_from_directograms",
+    "deceleration_flux",
+    "region_speeds",
     "signal_record",
     "decimated",
     "cached_signals",
