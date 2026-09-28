@@ -127,8 +127,17 @@ def test_the_op_fits_the_confident_cut_and_leaves_the_rest_with_reasons(fp, monk
     assert out["edl"][1]["rate"] == rows[1]["rate"]
     assert rows[2]["reason"].startswith("shorter than three beats")
     assert not rows[3]["applied"] and "clearly enough" in rows[3]["reason"]
-    assert rows[4]["reason"].startswith("a gap")
-    assert out["fit"]["fitted"] == 1 and out["fit"]["kept"] == 4
+    assert 4 not in rows  # a gap is not one of the video's cuts
+    assert out["fit"]["fitted"] == 1 and out["fit"]["kept"] == 3  # cuts 0, 2, 3
+    asked = service.fit_to_beat(fp, edit_id="e", indices=[4], apply=False)
+    assert asked["fit"]["cuts"][0]["reason"].startswith("a gap")
+
+
+def test_by_default_only_the_cuts_inside_the_span_are_looked_at(fp, monkeypatch):
+    monkeypatch.setattr("muvid.footage.beat_fit.FIT_NULL_DRAWS", 20)
+    service.set_span(fp, edit_id="e", start_s=11.0, end_s=16.5)
+    out = service.fit_to_beat(fp, edit_id="e", apply=False)
+    assert [r["index"] for r in out["fit"]["cuts"]] == [1, 2]
 
 
 def test_the_fit_is_one_undo_step_and_a_dry_run_changes_nothing(fp, monkeypatch):

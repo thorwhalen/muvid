@@ -1792,9 +1792,10 @@ def fit_to_beat(
     min_z: float = FIT_MIN_Z,
     apply: bool = True,
 ) -> dict:
-    """Fit the moves to the beat: for each cut (or those at ``indices``), find the slip
-    and speed that put its video's movement accents on the song's beat, and apply it
-    where the evidence is strong.
+    """Fit the moves to the beat: for each cut that shows a video in the part of the song
+    the edit covers (its span) — or the cuts at ``indices`` — find the slip and speed
+    that put its video's movement accents on the song's beat, and apply it where the
+    evidence is strong.
 
     Per cut, every slip within +-0.25 s (a frame at 60 fps apart) and every speed from
     x0.92 to x1.08 (1 % apart) is tried; the best is scored against a null of the same
@@ -1829,8 +1830,17 @@ def fit_to_beat(
             "the song has no steady beat to fit to (too few beats found, or the tempo "
             "changes) — set the cuts' timing by hand with set_cut's slip_s and rate"
         )
+    span = _span_of(record)
     wanted = (
-        range(len(entries))
+        [
+            i
+            for i, e in enumerate(entries)
+            if not e.is_gap
+            and (
+                span is None
+                or (e.song_end > span[0] + _EPS and e.song_start < span[1] - _EPS)
+            )
+        ]
         if indices is None
         else sorted({_check_index(entries, int(i)) for i in indices})
     )
