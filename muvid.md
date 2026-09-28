@@ -1,4 +1,4 @@
-> built 2026-09-28 11:57 UTC from 661e165 (main) · muvid 0.0.74. Details: build_info.json
+> built 2026-09-28 17:10 UTC from 53025d3 (main) · muvid 0.0.75. Details: build_info.json
 
 # index.html.md
 
@@ -2772,6 +2772,96 @@ Returns `out_path`.
   [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)
 
 
+# _autosummary/muvid.footage.beat_fit.html.md
+
+# muvid.footage.beat_fit
+
+Fitting a cut’s timing to the beat — the pure numerics behind `service.fit_to_beat`.
+
+A cut shows its clip through an affine map of song time (`edl.clip_time_at`):
+`clip_in + rate * (t - song_start)` with `clip_in = song_start - offset + slip`. So
+a movement accent recorded at clip time `tau` lands at song time
+`song_start + (tau - clip_in) / rate`. Fitting a cut means choosing `(slip, rate)`
+so the clip’s accents (`beats.MOTION_STOPS`) land on the song’s beat grid.
+
+**The score** of a candidate is the accents’ weighted mean alignment with the grid,
+`sum(w * cos(2 pi (t - phase) / period)) / sum(w)`: +1 when every accent is on a beat,
+-1 when every one is half a beat off, 0 when they ignore the beat. Weights are the
+accent strengths above their median, so the steady floor of a moving crowd does not
+vote.
+
+**The confidence** of the best fit is a z-score against a null that keeps what the
+signal is made of and destroys only its relation to the beat: the samples are cut into
+blocks of about two beats and each block is rotated by its own random amount, and the
+SAME search is run on every such null signal. The search’s own freedom (it will always
+find some slip that looks good) is therefore in the null too. A whole-signal rotation
+would not do: it only turns every phase by the same angle, which the slip search undoes.
+
+**The window** is wider than a short cut: a 1.5 s cut holds three beats, too few to judge
+by. The fit is judged over at least `window_s` of the clip around the cut, read
+through the same map — the same dancer, a few seconds either side.
+
+Pure numpy; nothing here reads a file.
+
+### Module Attributes
+
+| [`FIT_WINDOW_S`](_autosummary/muvid.footage.beat_fit.html.md#muvid.footage.beat_fit.FIT_WINDOW_S)   | Seconds of clip the fit is judged over, at least (centred on the cut).   |
+|-----------------------------------------------------------------|--------------------------------------------------------------------------|
+| [`FIT_MIN_BEATS`](_autosummary/muvid.footage.beat_fit.html.md#muvid.footage.beat_fit.FIT_MIN_BEATS)  | A cut shorter than this many beats is not fitted.                        |
+
+### Functions
+
+| [`fit_cut`](_autosummary/muvid.footage.beat_fit.html.md#muvid.footage.beat_fit.fit_cut)(tau, values, \*, song_start, ...[, ...])   | The best timing for a cut over song time `[song_start, song_end]` of a clip at `offset`, from the clip's accent signal `values` sampled at clip times `tau`.   |
+|-----------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------|
+
+### Classes
+
+| [`BeatGrid`](_autosummary/muvid.footage.beat_fit.html.md#muvid.footage.beat_fit.BeatGrid)(period, phase)                         | A steady beat: beat `k` falls at `phase + k * period` seconds of the song.                                                 |
+|--------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------|
+| [`Fit`](_autosummary/muvid.footage.beat_fit.html.md#muvid.footage.beat_fit.Fit)(slip_s, rate, score, current_score, z, ...) | The best `(slip, rate)` for one cut, its score, the current setting's score, and the z of the best score against the null. |
+
+### *class* muvid.footage.beat_fit.BeatGrid(period, phase)
+
+Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+
+A steady beat: beat `k` falls at `phase + k * period` seconds of the song.
+
+#### *classmethod* fitted(beats, , min_beats=8)
+
+The least-squares grid through tracked beat instants (each beat numbered by
+`beats._beat_numbers`, so a skipped or spurious beat does not bend it), or
+`None` when the beats are too few or not steady (`beats.fitted_tempo`).
+
+* **Return type:**
+  [`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`BeatGrid`](_autosummary/muvid.footage.beat_fit.html.md#muvid.footage.beat_fit.BeatGrid)]
+
+### muvid.footage.beat_fit.FIT_MIN_BEATS *= 3.0*
+
+A cut shorter than this many beats is not fitted.
+
+### muvid.footage.beat_fit.FIT_WINDOW_S *= 8.0*
+
+Seconds of clip the fit is judged over, at least (centred on the cut).
+
+### *class* muvid.footage.beat_fit.Fit(slip_s, rate, score, current_score, z, n_accents)
+
+Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+
+The best `(slip, rate)` for one cut, its score, the current setting’s score,
+and the z of the best score against the null.
+
+### muvid.footage.beat_fit.fit_cut(tau, values, , song_start, song_end, offset, current_slip=0.0, current_rate=1.0, grid, feasible=None, window_s=8.0, slips=None, rates=None, null_draws=200, seed=0)
+
+The best timing for a cut over song time `[song_start, song_end]` of a clip at
+`offset`, from the clip’s accent signal `values` sampled at clip times `tau`.
+
+`feasible(slip, rate) -> bool` rules out settings the clip cannot hold. `None`
+when no accent lands in the window under any setting.
+
+* **Return type:**
+  [`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`Fit`](_autosummary/muvid.footage.beat_fit.html.md#muvid.footage.beat_fit.Fit)]
+
+
 # _autosummary/muvid.footage.beats.html.md
 
 # muvid.footage.beats
@@ -2798,17 +2888,18 @@ Picture, for every clip:
 
 - `motion` — subject-motion energy: the mean camera-compensated optical-flow magnitude,
   in frame-heights per second.
-- `visual_impact` — the visual beat: how much motion, direction by direction, STOPS
-  between samples — the half-wave-rectified decrease of a magnitude-weighted directogram.
-  This is the “impact envelope” of Davis & Agrawala, *Visual Rhythm and Beat* (SIGGRAPH
-  2018, §4.2; their printed Eq. 13 has the sign of an increase, their prose and released
-  code the decrease used here). It is a deceleration measure, which is where the
-  conducting literature puts the beat: ensembles synchronise with the \*\*maximal
-  deceleration\*\* of the conductor’s hand (Luck & Toiviainen 2006), and with absolute
-  acceleration along the trajectory (Luck & Sloboda 2009) — the *ictus*, not the moment a
-  movement starts (Takehana et al. 2019: movement initiation never coincided with beats).
-- `region_impact` — the same deceleration without the directogram: the decrease of
-  camera-compensated SPEED in each cell of an 8 x 6 grid, summed over cells. Per-region
+- `motion_stops` — movement accents: how much motion, direction by direction, STOPS
+  between samples — the half-wave-rectified decrease of a magnitude-weighted flow
+  direction histogram (the histogram of oriented optical flow, HOOF, of Chaudhry et al.
+  2009). Measuring motion that stops follows Davis & Agrawala (SIGGRAPH 2018, §4.2),
+  using the decrease their prose and released code describe. It is a deceleration
+  measure, which is where the conducting literature puts the beat: ensembles synchronise
+  with the **maximal deceleration** of the conductor’s hand (Luck & Toiviainen 2006), and
+  with absolute acceleration along the trajectory (Luck & Sloboda 2009) — the *ictus*,
+  not the moment a movement starts (Takehana et al. 2019: movement initiation never
+  coincided with beats).
+- `motion_stops_local` — the same stopping without directions: the decrease of
+  camera-compensated SPEED in each cell of an 8 x 6 grid, summed over cells. Per-place
   rather than per-direction, so several dancers braking in different places add up
   instead of cancelling.
 
@@ -2819,14 +2910,15 @@ circular shift cannot detect locking at all, since it only rotates the phase):
 
 - each clip’s own soundtrack locks strongly (z = 7 to 15) — the positive control, and the
   confirmation that the clips’ offsets are right;
-- `visual_impact` and `region_impact` lock on one clip (z = 2.8 and 2.5, at the same
+- `motion_stops` and `motion_stops_local` lock on one clip (z = 2.8 and 2.5, at the same
   -25 ms lag as that clip’s soundtrack) and on neither of the others; whole-frame speed,
   pose-based limb deceleration (a person found in only 38-75 % of frames of a crowd) and
   AIST++-style velocity minima (half a beat off) did no better;
 - a 1.25 Hz high-pass (Davis & Agrawala’s post-filter) helped no clip consistently.
 
 So these envelopes SHOW where movement lands; on a crowd they are weak evidence of the
-beat, and nothing here decides a warp by itself.
+beat. `service.fit_to_beat` uses them to propose per-cut timing, and applies a fit only
+where it beats the same null — so on footage like this it will usually leave cuts alone.
 
 Every signal is **unnormalised** and carries its own grid (`t0`, `hop_s`) and its
 `min`, `max` and `p99` (a robust top a display can scale by), because thresholding is a
@@ -2844,13 +2936,13 @@ beside `peaks/` — derived from media the project holds, expensive to make, che
 
 | [`audio_signals`](_autosummary/muvid.footage.beats.html.md#muvid.footage.beats.audio_signals)(path)                                | `{signals: {audio_onset}, beats, tempo_bpm}` for a media file's soundtrack, from `mixing.audio.beat_grid`.                                                                                                                                                                   |
 |-----------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| [`visual_signals`](_autosummary/muvid.footage.beats.html.md#muvid.footage.beats.visual_signals)(path, \*[, sample_fps, ...])        | `{signals: {motion, visual_impact}}` for a video, in one decode pass.                                                                                                                                                                                                        |
+| [`visual_signals`](_autosummary/muvid.footage.beats.html.md#muvid.footage.beats.visual_signals)(path, \*[, sample_fps, ...])        | `{signals: {motion, motion_stops, motion_stops_local}}` for a video, in one decode pass.                                                                                                                                                                                     |
 | [`has_audio`](_autosummary/muvid.footage.beats.html.md#muvid.footage.beats.has_audio)(path)                                    | Whether a media file carries an audio stream (an unprobeable file: no).                                                                                                                                                                                                      |
 | [`fitted_tempo`](_autosummary/muvid.footage.beats.html.md#muvid.footage.beats.fitted_tempo)(beats, \*[, min_beats])               | The tempo (BPM) of a steady beat train, fitted to ALL its beats — or `None` when the beats are too few or not steady enough to have one tempo.                                                                                                                               |
 | [`novelty_signal`](_autosummary/muvid.footage.beats.html.md#muvid.footage.beats.novelty_signal)(path)                               | `{signals: {novelty}}` — Foote's checkerboard novelty of a song: a Gaussian- tapered checkerboard kernel slid along the diagonal of the cosine self-similarity of per-frame timbre (20 MFCCs) and harmony (12 chroma), each standardised.                                    |
 | [`checkerboard_novelty`](_autosummary/muvid.footage.beats.html.md#muvid.footage.beats.checkerboard_novelty)(features, \*[, half])         | Novelty along a feature sequence `[dims, frames]`: the correlation of a Gaussian-tapered checkerboard kernel (`half` frames each side) with the cosine self-similarity matrix around each frame.                                                                             |
-| [`directogram`](_autosummary/muvid.footage.beats.html.md#muvid.footage.beats.directogram)(fx, fy, \*[, bins])                    | Flow magnitude summed per direction bin, divided by the pixel count: how much of the picture moves which way.                                                                                                                                                                |
-| [`deceleration_flux`](_autosummary/muvid.footage.beats.html.md#muvid.footage.beats.deceleration_flux)(hists)                           | Per sample, the motion that stopped since the previous one, summed over the columns of `hists` (`sum(max(0, h[t-1] - h[t]))`) — directions of a directogram (`visual_impact`) or cells of a grid (`region_impact`).                                                          |
+| [`direction_histogram`](_autosummary/muvid.footage.beats.html.md#muvid.footage.beats.direction_histogram)(fx, fy, \*[, bins])            | Flow magnitude summed per direction bin, divided by the pixel count: how much of the picture moves which way.                                                                                                                                                                |
+| [`stop_strength`](_autosummary/muvid.footage.beats.html.md#muvid.footage.beats.stop_strength)(hists)                               | Per sample, the motion that stopped since the previous one, summed over the columns of `hists` (`sum(max(0, h[t-1] - h[t]))`) — directions of a flow direction histogram (`motion_stops`) or cells of a grid (`motion_stops_local`).                                         |
 | [`region_speeds`](_autosummary/muvid.footage.beats.html.md#muvid.footage.beats.region_speeds)(fx, fy, \*[, grid])                  | Mean flow speed in each cell of a `cols x rows` grid, row-major.                                                                                                                                                                                                             |
 | [`signal_record`](_autosummary/muvid.footage.beats.html.md#muvid.footage.beats.signal_record)(values, \*, t0, hop_s, name, domain) | One signal on a regular grid: sample `i` is at `t0 + i * hop_s` seconds of the media's own time.                                                                                                                                                                             |
 | [`decimated`](_autosummary/muvid.footage.beats.html.md#muvid.footage.beats.decimated)(record, max_points)                      | A signal with at most `max_points` samples: each kept sample is the MAX of the `k` it stands for (a beat is a peak; averaging would erase it), on a grid whose hop grows by `k` and whose `t0` moves to the centre of the first block — so a pooled peak stays where it was. |
@@ -2859,7 +2951,7 @@ beside `peaks/` — derived from media the project holds, expensive to make, che
 | [`has_signal`](_autosummary/muvid.footage.beats.html.md#muvid.footage.beats.has_signal)(record)                                 | Whether a measured record carries at least one sample of anything.                                                                                                                                                                                                           |
 | [`binned_visual_signals`](_autosummary/muvid.footage.beats.html.md#muvid.footage.beats.binned_visual_signals)(mids, motion, hists, ...)    | Per-pair rates (at pair midpoints `mids`) averaged into `hop`-second bins.                                                                                                                                                                                                   |
 
-### muvid.footage.beats.SIGNAL_LABELS *= {'audio_onset': 'Sound hits', 'motion': 'Movement', 'novelty': 'Section changes', 'region_impact': 'Moves that land, by region', 'visual_impact': 'Moves that land'}*
+### muvid.footage.beats.SIGNAL_LABELS *= {'audio_onset': 'Sound hits', 'motion': 'Movement', 'motion_stops': 'Moves that stop or turn', 'motion_stops_local': 'Moves that stop, place by place', 'novelty': 'Section changes'}*
 
 What each signal is, in the words a screen can use.
 
@@ -2877,8 +2969,8 @@ the install).
 Per-pair rates (at pair midpoints `mids`) averaged into `hop`-second bins.
 
 `motion` is each bin’s mean, reported at the bin’s CENTRE (`t0 = hop / 2`).
-`visual_impact` is the deceleration flux between consecutive bin-mean
-directograms, so it belongs to the BOUNDARY between two bins and is reported there
+`motion_stops` is the stop strength between consecutive bin-mean direction
+histograms, so it belongs to the BOUNDARY between two bins and is reported there
 (`t0 = 0`: sample `i` at `i * hop`, sample 0 unmeasured) — half a hop earlier
 than a centre would put it, which matters once it drives a time-warp. Pairs before
 the clip’s first frame (a negative container timestamp) are dropped. Pure numpy —
@@ -2921,17 +3013,6 @@ self-similarity matrix around each frame. Frames without a full kernel are NaN.
 * **Return type:**
   `ndarray`
 
-### muvid.footage.beats.deceleration_flux(hists)
-
-Per sample, the motion that stopped since the previous one, summed over the
-columns of `hists` (`sum(max(0, h[t-1] - h[t]))`) — directions of a directogram
-(`visual_impact`) or cells of a grid (`region_impact`). `hists` is `[k, n]`
-with NaN rows where nothing was measured; the first sample, and any sample next to
-a NaN row, is NaN.
-
-* **Return type:**
-  `ndarray`
-
 ### muvid.footage.beats.decimated(record, max_points)
 
 A signal with at most `max_points` samples: each kept sample is the MAX of the
@@ -2944,7 +3025,7 @@ scaled by the full-resolution p99 would saturate).
 * **Return type:**
   [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
 
-### muvid.footage.beats.directogram(fx, fy, , bins=8)
+### muvid.footage.beats.direction_histogram(fx, fy, , bins=8)
 
 Flow magnitude summed per direction bin, divided by the pixel count: how much of
 the picture moves which way. Flow under the noise floor votes for no direction.
@@ -3013,9 +3094,20 @@ media’s own time. Non-finite samples become `None` (not measured, never zero).
 * **Return type:**
   [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
 
+### muvid.footage.beats.stop_strength(hists)
+
+Per sample, the motion that stopped since the previous one, summed over the
+columns of `hists` (`sum(max(0, h[t-1] - h[t]))`) — directions of a flow direction
+histogram (`motion_stops`) or cells of a grid (`motion_stops_local`). `hists` is `[k, n]`
+with NaN rows where nothing was measured; the first sample, and any sample next to
+a NaN row, is NaN.
+
+* **Return type:**
+  `ndarray`
+
 ### muvid.footage.beats.visual_signals(path, , sample_fps=15.0, max_seconds=900.0, downscale=4, bins=8, should_cancel=None)
 
-`{signals: {motion, visual_impact}}` for a video, in one decode pass.
+`{signals: {motion, motion_stops, motion_stops_local}}` for a video, in one decode pass.
 
 Flow is measured between CONSECUTIVE frames (at most `_MAX_PAIR_RATE` pairs a
 second) and each pair’s rate is averaged into bins of `1 / sample_fps` s. That
@@ -3082,6 +3174,7 @@ implicitly, so spans stay one-per-song-span and nothing about reading an EDL cha
 | [`MIN_MARGIN`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.MIN_MARGIN)          | Margin must EXCEED this for an offset to be vouched for (env `MUVID_FOOTAGE_MIN_MARGIN`).                                                                                                                                                                       |
 | [`MEASURED`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.MEASURED)            | the aligner found the offset, or a person set it.                                                                                                                                                                                                               |
 | [`SLIP_MAX_S`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.SLIP_MAX_S)          | about one beat at 128 BPM.                                                                                                                                                                                                                                      |
+| [`RATE_MAX_DEV`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.RATE_MAX_DEV)        | 8 %, a nudge that keeps a dancer looking like themselves.                                                                                                                                                                                                       |
 | [`NO_VOUCHED_COVERAGE`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.NO_VOUCHED_COVERAGE) | nothing the aligner vouches for covers it at all.                                                                                                                                                                                                               |
 | [`UNVOUCHED_SELECTION`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.UNVOUCHED_SELECTION) | A vouched clip DOES cover the span and the strategy cut to an unvouched one anyway — so the loss is the SELECTOR's, not the footage's.                                                                                                                          |
 | [`EXCLUSION_REASONS`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.EXCLUSION_REASONS)   | Every reason [`exclude_unvouched()`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.exclude_unvouched) can give, for a caller matching on the value.                                                                                                                                 |
@@ -3089,13 +3182,15 @@ implicitly, so spans stay one-per-song-span and nothing about reading an EDL cha
 
 ### Functions
 
-| [`clip_in_of`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.clip_in_of)(e, a)                                 | Where cut `e` starts in its clip `a`'s own time — THE sign convention: `song_start - offset + slip`.   |
-|---------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------|
-| [`derive_cuts`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.derive_cuts)(edl, alignments, clip_paths)         | Turn a *validated* EDL into render-ready cuts — the ONE place `clip_in` is derived.                    |
-| [`exclude_unvouched`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.exclude_unvouched)(edl, alignments)               | Set aside the spans of an AUTO edit whose only footage is unvouched (muvid#88).                        |
-| [`fill_gaps`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.fill_gaps)(entries, song_duration, \*[, start])   | Make an edit span the WHOLE song by inserting explicit gap entries.                                    |
-| [`validate_edl`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.validate_edl)(edl, alignments, song_duration, \*) | Validate an EDL (from a strategy OR a caller) — the ONE gate before any cutting.                       |
-| [`vouches_for`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.vouches_for)(\*, confidence, support[, ...])      | Does the aligner vouch for this offset? The ONE place that verdict is reached.                         |
+| [`clip_in_of`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.clip_in_of)(e, a)                                 | Where cut `e` starts in its clip `a`'s own time — THE sign convention: `song_start - offset + slip`.                                                             |
+|---------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [`clip_time_at`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.clip_time_at)(e, a, t)                            | The moment of clip `a` cut `e` shows at song time `t` — the cut's affine map, `clip_in_of(e) + rate * (t - song_start)`.                                         |
+| [`derive_cuts`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.derive_cuts)(edl, alignments, clip_paths)         | Turn a *validated* EDL into render-ready cuts — the ONE place `clip_in` is derived.                                                                              |
+| [`exclude_unvouched`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.exclude_unvouched)(edl, alignments)               | Set aside the spans of an AUTO edit whose only footage is unvouched (muvid#88).                                                                                  |
+| [`fill_gaps`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.fill_gaps)(entries, song_duration, \*[, start])   | Make an edit span the WHOLE song by inserting explicit gap entries.                                                                                              |
+| [`validate_edl`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.validate_edl)(edl, alignments, song_duration, \*) | Validate an EDL (from a strategy OR a caller) — the ONE gate before any cutting.                                                                                 |
+| [`vouches_for`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.vouches_for)(\*, confidence, support[, ...])      | Does the aligner vouch for this offset? The ONE place that verdict is reached.                                                                                   |
+| [`with_start`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.with_start)(e, start, \*[, bounded])              | `e` starting at song time `start` and showing, at every moment it still covers, exactly the footage it showed before — its map from song time to clip time kept. |
 
 ### Classes
 
@@ -3112,7 +3207,7 @@ implicitly, so spans stay one-per-song-span and nothing about reading an EDL cha
 | [`UnreliableAlignmentError`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.UnreliableAlignmentError)(unvouched)   | An edit cuts to a clip whose OFFSET the aligner could not vouch for (muvid#59).   |
 |----------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------|
 
-### *class* muvid.footage.edl.AssemblyCut(song_start, song_end, clip_id, clip_in, clip_path, transition=None, crop=None, crop_end=None, look=None, look_time_varying=False)
+### *class* muvid.footage.edl.AssemblyCut(song_start, song_end, clip_id, clip_in, clip_path, transition=None, crop=None, crop_end=None, look=None, look_time_varying=False, rate=1.0)
 
 Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
@@ -3140,6 +3235,18 @@ where a moving look’s ramp restarts (muvid#73). See
 
 * **Type:**
   Carried through unchanged, and the assembler is its ONE consumer
+
+#### rate *: [float](https://docs.python.org/3/builtins/functions.html#float)* *= 1.0*
+
+the assembler reads `duration * rate`
+seconds of source and retimes it (`setpts`, before `fps`) onto the span.
+
+* **Type:**
+  Carried through from the EDL entry
+
+#### *property* source_duration *: [float](https://docs.python.org/3/builtins/functions.html#float)*
+
+Seconds of the clip this cut consumes — its span at its rate.
 
 #### transition *: [Transition](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.Transition) | [None](https://docs.python.org/3/builtins/constants.html#None)* *= None*
 
@@ -3197,7 +3304,7 @@ it for free.
 
 Every reason [`exclude_unvouched()`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.exclude_unvouched) can give, for a caller matching on the value.
 
-### *class* muvid.footage.edl.EdlEntry(song_start, song_end, clip_id, transition=None, crop=None, crop_end=None, look=None, look_time_varying=False, look_spec=None, slip_s=0.0)
+### *class* muvid.footage.edl.EdlEntry(song_start, song_end, clip_id, transition=None, crop=None, crop_end=None, look=None, look_time_varying=False, look_spec=None, slip_s=0.0, rate=1.0)
 
 Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
@@ -3298,6 +3405,18 @@ earlier. muvid’s own compilers declare it for you —
 [`stylize()`](_autosummary/muvid.footage.look.html.md#muvid.footage.look.stylize) one that answers from the compiled
 plan, and [`punch_in_cuts()`](_autosummary/muvid.footage.look.html.md#muvid.footage.look.punch_in_cuts) sets this field FROM
 the fragment rather than hardcoding it.
+
+#### rate *: [float](https://docs.python.org/3/builtins/functions.html#float)* *= 1.0*
+
+how fast this cut plays its video — `1.03` shows 3 % more footage
+over the same span of song, so the dancers move 3 % faster; the song is never
+touched. With [`slip_s`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.EdlEntry.slip_s) it makes the cut’s footage time an AFFINE map of
+song time, `clip_in_of(e) + rate * (t - song_start)` ([`clip_time_at()`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.clip_time_at));
+short cuts, each with its own, make a piecewise-linear time-warp. Bounded to
+`1 +- RATE_MAX_DEV`; `1.0` (the default) emits nothing.
+
+* **Type:**
+  **Speed**
 
 #### slip_s *: [float](https://docs.python.org/3/builtins/functions.html#float)* *= 0.0*
 
@@ -3663,6 +3782,15 @@ honest answer is a gap, and the remedy is to re-align or re-shoot.
 * **Type:**
   The span had no alternative
 
+### muvid.footage.edl.RATE_MAX_DEV *= 0.08*
+
+8 %, a nudge that keeps a
+dancer looking like themselves. A larger change is a slow-motion or fast-forward
+effect, a different tool.
+
+* **Type:**
+  How far a cut’s speed may move from 1, either way
+
 ### muvid.footage.edl.SLIP_MAX_S *= 0.5*
 
 about one beat at 128 BPM. A
@@ -3770,6 +3898,14 @@ The offending clips, in EDL order — so a caller can re-align exactly these.
 Where cut `e` starts in its clip `a`’s own time — THE sign convention:
 `song_start - offset + slip`. UNCLAMPED (a caller checking containment must see
 a negative in-point); [`derive_cuts()`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.derive_cuts) clamps for the renderer.
+
+* **Return type:**
+  [`float`](https://docs.python.org/3/builtins/functions.html#float)
+
+### muvid.footage.edl.clip_time_at(e, a, t)
+
+The moment of clip `a` cut `e` shows at song time `t` — the cut’s affine
+map, `clip_in_of(e) + rate * (t - song_start)`.
 
 * **Return type:**
   [`float`](https://docs.python.org/3/builtins/functions.html#float)
@@ -4001,6 +4137,18 @@ of a shoot that it started as.
 * **Returns:**
   True when the offset may be cut to without the caller opting in.
 
+### muvid.footage.edl.with_start(e, start, , bounded=True)
+
+`e` starting at song time `start` and showing, at every moment it still
+covers, exactly the footage it showed before — its map from song time to clip
+time kept. At speed 1 that is only the new start (the slip carries over); at any
+other speed the slip absorbs `(rate - 1) * (start - song_start)`. Raises when
+that would take the slip past [`SLIP_MAX_S`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.SLIP_MAX_S) — unless `bounded=False`, for a
+render-time window that is never stored.
+
+* **Return type:**
+  [`EdlEntry`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.EdlEntry)
+
 
 # _autosummary/muvid.footage.errors.html.md
 
@@ -4123,7 +4271,7 @@ editorial — on a real 478x850 clip of dancers a whole body does not fit in a
 full-width 16:9 window at all (315-380px of subject into 269px), so “heads or
 feet” is a decision per cut, not a default.
 
-### *class* muvid.footage.EdlEntry(song_start, song_end, clip_id, transition=None, crop=None, crop_end=None, look=None, look_time_varying=False, look_spec=None, slip_s=0.0)
+### *class* muvid.footage.EdlEntry(song_start, song_end, clip_id, transition=None, crop=None, crop_end=None, look=None, look_time_varying=False, look_spec=None, slip_s=0.0, rate=1.0)
 
 Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
@@ -4224,6 +4372,18 @@ earlier. muvid’s own compilers declare it for you —
 [`stylize()`](_autosummary/muvid.footage.look.html.md#muvid.footage.look.stylize) one that answers from the compiled
 plan, and [`punch_in_cuts()`](_autosummary/muvid.footage.look.html.md#muvid.footage.look.punch_in_cuts) sets this field FROM
 the fragment rather than hardcoding it.
+
+#### rate *: [float](https://docs.python.org/3/builtins/functions.html#float)* *= 1.0*
+
+how fast this cut plays its video — `1.03` shows 3 % more footage
+over the same span of song, so the dancers move 3 % faster; the song is never
+touched. With [`slip_s`](_autosummary/muvid.footage.html.md#muvid.footage.EdlEntry.slip_s) it makes the cut’s footage time an AFFINE map of
+song time, `clip_in_of(e) + rate * (t - song_start)` (`clip_time_at()`);
+short cuts, each with its own, make a piecewise-linear time-warp. Bounded to
+`1 +- RATE_MAX_DEV`; `1.0` (the default) emits nothing.
+
+* **Type:**
+  **Speed**
 
 #### slip_s *: [float](https://docs.python.org/3/builtins/functions.html#float)* *= 0.0*
 
@@ -4818,6 +4978,7 @@ Returns the normalized list of [`EdlEntry`](_autosummary/muvid.footage.html.md#m
 | [`align`](_autosummary/muvid.footage.align.html.md#module-muvid.footage.align)                 | Align a set of footage clips to the song — a thin wrapper over `mixing.audio`.                                                                                      |
 |---------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | [`assemble`](_autosummary/muvid.footage.assemble.html.md#module-muvid.footage.assemble)           | Assemble validated cuts into a music video, in BOUNDED memory.                                                                                                      |
+| [`beat_fit`](_autosummary/muvid.footage.beat_fit.html.md#module-muvid.footage.beat_fit)           | Fitting a cut's timing to the beat — the pure numerics behind `service.fit_to_beat`.                                                                                |
 | [`beats`](_autosummary/muvid.footage.beats.html.md#module-muvid.footage.beats)                 | Beat signals — continuous envelopes of where the beat is, in the song and in each video.                                                                            |
 | [`edl`](_autosummary/muvid.footage.edl.html.md#module-muvid.footage.edl)                     | EDL data types + the `validate_edl` single-source-of-truth gate.                                                                                                    |
 | [`errors`](_autosummary/muvid.footage.errors.html.md#module-muvid.footage.errors)               | The refusal and cancellation types of the footage operations ([`muvid.footage.service`](_autosummary/muvid.footage.service.html.md#module-muvid.footage.service)). |
@@ -6382,56 +6543,57 @@ trust refusal belongs where the encode does, in [`render()`](_autosummary/muvid.
 
 ### Functions
 
-| [`status`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.status)(fp)                                       | Where the music video stands: the song, the videos and where each sits on the song, the saved edits, the finished videos, and the next useful step.                                                                          |
-|---------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| [`set_song`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.set_song)(fp, \*, path[, ext, filename, ...])     | Set the project's song — the clean master every video is aligned to and whose audio the finished video uses.                                                                                                                 |
-| [`add_clip`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.add_clip)(fp, \*, path[, name, filename, ...])    | Add one footage video — a recording of the song — to the project.                                                                                                                                                            |
-| [`remove_clip`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.remove_clip)(fp, \*, clip_id)                     | Remove one footage video from the project — its stored file and its entry.                                                                                                                                                   |
-| [`align`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.align)(fp)                                        | Find where each video sits on the song by listening to its own audio, and save it.                                                                                                                                           |
-| [`set_offset`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.set_offset)(fp, \*, clip_id, offset_s)            | Place one video on the song BY HAND: the song time at which the video's own first frame plays (negative = the video starts before the song does).                                                                            |
-| [`clear_offset`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.clear_offset)(fp, \*, clip_id)                    | Forget where I placed this video: remove a hand-declared offset, so the next `align` measures the clip by its audio instead.                                                                                                 |
-| [`timeline`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.timeline)(fp)                                     | Which videos cover which spans of the song (overlaps shown), from the saved alignment — the map for choosing what to cut to.                                                                                                 |
-| [`beat_grid`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.beat_grid)(fp)                                    | The song's beat grid — tempo and beat instants on the song timeline — without looking at the footage.                                                                                                                        |
-| [`peaks`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.peaks)(fp, \*[, n])                               | The song's waveform, to draw under the timeline: `n` equal slices of the song, each the loudest moment in it (mono), scaled so the loudest slice is 1.0.                                                                     |
-| [`beat_signals`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.beat_signals)(fp, \*[, source, max_points])       | Where the beat is in the song or in one video — CONTINUOUS signals, to look at, threshold and bend, not only beat instants.                                                                                                  |
-| [`filmstrips`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.filmstrips)(fp)                                   | Every video's filmstrip — thumbnails to draw each camera's lane.                                                                                                                                                             |
-| [`filmstrip`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.filmstrip)(fp, \*, clip_id)                       | One video's filmstrip (the same record `filmstrips` gives per clip, with its `clip_id` and `fps`).                                                                                                                           |
-| [`score`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.score)(fp, \*[, hop_s, metrics, should_cancel])   | Look at the footage: score every placed video, on the song's own timeline — picture quality and how its movement sits on the beat — and save the curves.                                                                     |
-| [`scores`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.scores)(fp, \*[, clip_id, metrics, max_points])   | The saved footage curves — for the lanes under each video, and for inspection.                                                                                                                                               |
-| [`strategies`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.strategies)([fp])                                 | The ways to cut on offer — the selection strategies `propose_edit` accepts (`weighted` reads the footage scores; the rest use only the alignment).                                                                           |
-| [`propose_edit`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.propose_edit)(fp, \*[, strategy, preset, ...])    | Cut it for me: build an edit of the whole song — or of `span` (`[start_s, end_s]`, the part of the song the video covers) — from the placed videos, and (by default) save it as a named edit, without rendering anything.    |
-| [`save_edit`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.save_edit)(fp, \*, edl[, name, how_made, ...])    | Save a cut list as a new named edit.                                                                                                                                                                                         |
-| [`edits`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.edits)(fp)                                        | The saved edits, oldest first: each one's `edit_id`, `name`, how it was made, how many cuts it has, and `problem` — why it would not validate against the current alignment (`null` when it does).                           |
-| [`get_edit`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.get_edit)(fp, \*, edit_id)                        | One saved edit: its cut list (`edl`, every span of the song, gaps as `clip_id: null`), its name and history, and a `coverage` report.                                                                                        |
-| [`replace_edit`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.replace_edit)(fp, \*, edit_id, edl)               | Replace a saved edit's whole cut list — the power tool for rewriting an edit at once.                                                                                                                                        |
-| [`set_cut`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.set_cut)(fp, \*, edit_id, index[, clip_id, ...])  | Change one cut of a saved edit (`index` is its position in `get_edit`'s edl).                                                                                                                                                |
-| [`split_cut`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.split_cut)(fp, \*, edit_id, at_s)                 | Split the cut playing at song time `at_s` into two cuts of the same video.                                                                                                                                                   |
-| [`merge_cut`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.merge_cut)(fp, \*, edit_id, index[, into])        | Join cut `index` to its neighbour: the neighbour (`into` "previous" or "next") takes over its span, so the neighbour's video must cover it.                                                                                  |
-| [`set_span`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.set_span)(fp, \*, edit_id, start_s, end_s)        | Choose which part of the song the video covers — where it starts and ends.                                                                                                                                                   |
-| [`rename_edit`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.rename_edit)(fp, \*, edit_id, name)               | Give an edit a new name — what the edit picker and the renders made from it show.                                                                                                                                            |
-| [`looks`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.looks)([fp])                                      | The looks a cut can take — camera moves (punch in, slow push, slow pull, pans) and grades (vivid, black and white, posterize, cartoon) — each with its `params_schema`.                                                      |
-| [`undo_edit`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.undo_edit)(fp, \*, edit_id)                       | Undo the last change to a saved edit (a cut changed, split, joined, the span, a whole replacement — by a person or by the assistant).                                                                                        |
-| [`redo_edit`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.redo_edit)(fp, \*, edit_id)                       | Redo the change `undo_edit` last took back.                                                                                                                                                                                  |
-| [`delete_edit`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.delete_edit)(fp, \*, edit_id)                     | Delete a saved edit.                                                                                                                                                                                                         |
-| [`render`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.render)(fp, \*, edit_id[, canvas, ...])           | Make the video: render a saved edit onto the canvas, over the clean song.                                                                                                                                                    |
-| [`renders`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.renders)(fp)                                      | The finished videos, newest first: each one's `render_id`, speakable `ref`, the `edit_id` it was made from, its `label`, canvas, `ok`, the number of `warnings`, and `artifact_id` to play it by when the project is hosted. |
-| [`editor_document`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.editor_document)(fp)                              | The project as lacing-native standoff annotations, for a multitrack editor.                                                                                                                                                  |
-| [`assemble`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.assemble)(fp, \*[, strategy, edl, preset, ...])   | Assemble and render a music video — auto (a `strategy`) or an explicit `edl`.                                                                                                                                                |
-| [`declared_alignment`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.declared_alignment)(clip_id, offset_s, \*, ...)   | The alignment record of a DECLARED offset — coverage computed, nothing measured.                                                                                                                                             |
-| [`edl_from_annotations`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.edl_from_annotations)(fp, \*, annotations)        | The editor's DECISION-tier annotations turned back into a cut list (`edl`), ready for `save_edit` / `replace_edit` — a faithful read, not a re-selection.                                                                    |
-| [`edl_json`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.edl_json)(e)                                      | One EDL entry as JSON — full precision (it must feed back verbatim), gaps as null.                                                                                                                                           |
-| [`coverage_report`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.coverage_report)(entries, aligns, song_dur, \*)   | What the song's timeline looks like under `entries` — covered, weak, MISSING.                                                                                                                                                |
-| [`exclusion_note`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.exclusion_note)(x)                                | One `warnings` line per span the auto path set aside (muvid#88).                                                                                                                                                             |
-| [`assemble_refusal`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.assemble_refusal)(entries, aligns, song_dur, ...) | `None` if rendering this edit would go ahead; the refusal if it would not — put to the GATE rather than re-implemented here.                                                                                                 |
-| [`resolve_canvas`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.resolve_canvas)(fp, canvas)                       | The render canvas: an explicit per-render override, else the project's.                                                                                                                                                      |
-| [`refresh_cover`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.refresh_cover)(fp)                                | Take the project's cover frame again — from the newest render, else from the first clip — and register it.                                                                                                                   |
-| [`grab_cover_frame`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.grab_cover_frame)(video, dest)                    | Write one JPEG frame of `video` to `dest` — `COVER_AT_FRACTION` of the way in, `COVER_WIDTH` wide.                                                                                                                           |
-| [`import_render`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.import_render)(fp, \*, path, render_id[, ...])    | Bring a video finished ELSEWHERE into the project as a render (the importer's).                                                                                                                                              |
-| [`frame_size`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.frame_size)(video)                                | `[width, height]` of a video as DISPLAYED (a ±90° rotation swaps them).                                                                                                                                                      |
-| [`frame_rate`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.frame_rate)(video)                                | A video's average frame rate (frames per second), or `None` if unreadable.                                                                                                                                                   |
-| [`public_render`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.public_render)(fp, meta)                          | A render record as a HOSTED surface may return it: `video` made relative to the project (`renders/<id>/final.mp4`) — never an absolute server path; play it by its `artifact_id`.                                            |
-| [`require_scorable`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.require_scorable)(fp)                             | The alignments a scoring run would use; refuses without a song or an alignment.                                                                                                                                              |
-| [`run_scoring`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.run_scoring)(fp, \*[, hop_s, metrics, ...])       | Score every aligned clip and persist the tensor (the engine behind [`score()`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.score), with the job hooks a background runner passes).                                                 |
+| [`status`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.status)(fp)                                       | Where the music video stands: the song, the videos and where each sits on the song, the saved edits, the finished videos, and the next useful step.                                                                                                                     |
+|---------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [`set_song`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.set_song)(fp, \*, path[, ext, filename, ...])     | Set the project's song — the clean master every video is aligned to and whose audio the finished video uses.                                                                                                                                                            |
+| [`add_clip`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.add_clip)(fp, \*, path[, name, filename, ...])    | Add one footage video — a recording of the song — to the project.                                                                                                                                                                                                       |
+| [`remove_clip`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.remove_clip)(fp, \*, clip_id)                     | Remove one footage video from the project — its stored file and its entry.                                                                                                                                                                                              |
+| [`align`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.align)(fp)                                        | Find where each video sits on the song by listening to its own audio, and save it.                                                                                                                                                                                      |
+| [`set_offset`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.set_offset)(fp, \*, clip_id, offset_s)            | Place one video on the song BY HAND: the song time at which the video's own first frame plays (negative = the video starts before the song does).                                                                                                                       |
+| [`clear_offset`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.clear_offset)(fp, \*, clip_id)                    | Forget where I placed this video: remove a hand-declared offset, so the next `align` measures the clip by its audio instead.                                                                                                                                            |
+| [`timeline`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.timeline)(fp)                                     | Which videos cover which spans of the song (overlaps shown), from the saved alignment — the map for choosing what to cut to.                                                                                                                                            |
+| [`beat_grid`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.beat_grid)(fp)                                    | The song's beat grid — tempo and beat instants on the song timeline — without looking at the footage.                                                                                                                                                                   |
+| [`peaks`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.peaks)(fp, \*[, n])                               | The song's waveform, to draw under the timeline: `n` equal slices of the song, each the loudest moment in it (mono), scaled so the loudest slice is 1.0.                                                                                                                |
+| [`beat_signals`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.beat_signals)(fp, \*[, source, max_points])       | Where the beat is in the song or in one video — CONTINUOUS signals, to look at, threshold and bend, not only beat instants.                                                                                                                                             |
+| [`filmstrips`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.filmstrips)(fp)                                   | Every video's filmstrip — thumbnails to draw each camera's lane.                                                                                                                                                                                                        |
+| [`filmstrip`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.filmstrip)(fp, \*, clip_id)                       | One video's filmstrip (the same record `filmstrips` gives per clip, with its `clip_id` and `fps`).                                                                                                                                                                      |
+| [`score`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.score)(fp, \*[, hop_s, metrics, should_cancel])   | Look at the footage: score every placed video, on the song's own timeline — picture quality and how its movement sits on the beat — and save the curves.                                                                                                                |
+| [`scores`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.scores)(fp, \*[, clip_id, metrics, max_points])   | The saved footage curves — for the lanes under each video, and for inspection.                                                                                                                                                                                          |
+| [`strategies`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.strategies)([fp])                                 | The ways to cut on offer — the selection strategies `propose_edit` accepts (`weighted` reads the footage scores; the rest use only the alignment).                                                                                                                      |
+| [`propose_edit`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.propose_edit)(fp, \*[, strategy, preset, ...])    | Cut it for me: build an edit of the whole song — or of `span` (`[start_s, end_s]`, the part of the song the video covers) — from the placed videos, and (by default) save it as a named edit, without rendering anything.                                               |
+| [`save_edit`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.save_edit)(fp, \*, edl[, name, how_made, ...])    | Save a cut list as a new named edit.                                                                                                                                                                                                                                    |
+| [`edits`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.edits)(fp)                                        | The saved edits, oldest first: each one's `edit_id`, `name`, how it was made, how many cuts it has, and `problem` — why it would not validate against the current alignment (`null` when it does).                                                                      |
+| [`get_edit`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.get_edit)(fp, \*, edit_id)                        | One saved edit: its cut list (`edl`, every span of the song, gaps as `clip_id: null`), its name and history, and a `coverage` report.                                                                                                                                   |
+| [`replace_edit`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.replace_edit)(fp, \*, edit_id, edl)               | Replace a saved edit's whole cut list — the power tool for rewriting an edit at once.                                                                                                                                                                                   |
+| [`set_cut`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.set_cut)(fp, \*, edit_id, index[, clip_id, ...])  | Change one cut of a saved edit (`index` is its position in `get_edit`'s edl).                                                                                                                                                                                           |
+| [`split_cut`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.split_cut)(fp, \*, edit_id, at_s)                 | Split the cut playing at song time `at_s` into two cuts of the same video.                                                                                                                                                                                              |
+| [`merge_cut`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.merge_cut)(fp, \*, edit_id, index[, into])        | Join cut `index` to its neighbour: the neighbour (`into` "previous" or "next") takes over its span, so the neighbour's video must cover it.                                                                                                                             |
+| [`fit_to_beat`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.fit_to_beat)(fp, \*, edit_id[, indices, ...])     | Fit the moves to the beat: for each cut that shows a video in the part of the song the edit covers (its span) — or the cuts at `indices` — find the slip and speed that put its video's movement accents on the song's beat, and apply it where the evidence is strong. |
+| [`set_span`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.set_span)(fp, \*, edit_id, start_s, end_s)        | Choose which part of the song the video covers — where it starts and ends.                                                                                                                                                                                              |
+| [`rename_edit`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.rename_edit)(fp, \*, edit_id, name)               | Give an edit a new name — what the edit picker and the renders made from it show.                                                                                                                                                                                       |
+| [`looks`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.looks)([fp])                                      | The looks a cut can take — camera moves (punch in, slow push, slow pull, pans) and grades (vivid, black and white, posterize, cartoon) — each with its `params_schema`.                                                                                                 |
+| [`undo_edit`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.undo_edit)(fp, \*, edit_id)                       | Undo the last change to a saved edit (a cut changed, split, joined, the span, a whole replacement — by a person or by the assistant).                                                                                                                                   |
+| [`redo_edit`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.redo_edit)(fp, \*, edit_id)                       | Redo the change `undo_edit` last took back.                                                                                                                                                                                                                             |
+| [`delete_edit`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.delete_edit)(fp, \*, edit_id)                     | Delete a saved edit.                                                                                                                                                                                                                                                    |
+| [`render`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.render)(fp, \*, edit_id[, canvas, ...])           | Make the video: render a saved edit onto the canvas, over the clean song.                                                                                                                                                                                               |
+| [`renders`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.renders)(fp)                                      | The finished videos, newest first: each one's `render_id`, speakable `ref`, the `edit_id` it was made from, its `label`, canvas, `ok`, the number of `warnings`, and `artifact_id` to play it by when the project is hosted.                                            |
+| [`editor_document`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.editor_document)(fp)                              | The project as lacing-native standoff annotations, for a multitrack editor.                                                                                                                                                                                             |
+| [`assemble`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.assemble)(fp, \*[, strategy, edl, preset, ...])   | Assemble and render a music video — auto (a `strategy`) or an explicit `edl`.                                                                                                                                                                                           |
+| [`declared_alignment`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.declared_alignment)(clip_id, offset_s, \*, ...)   | The alignment record of a DECLARED offset — coverage computed, nothing measured.                                                                                                                                                                                        |
+| [`edl_from_annotations`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.edl_from_annotations)(fp, \*, annotations)        | The editor's DECISION-tier annotations turned back into a cut list (`edl`), ready for `save_edit` / `replace_edit` — a faithful read, not a re-selection.                                                                                                               |
+| [`edl_json`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.edl_json)(e)                                      | One EDL entry as JSON — full precision (it must feed back verbatim), gaps as null.                                                                                                                                                                                      |
+| [`coverage_report`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.coverage_report)(entries, aligns, song_dur, \*)   | What the song's timeline looks like under `entries` — covered, weak, MISSING.                                                                                                                                                                                           |
+| [`exclusion_note`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.exclusion_note)(x)                                | One `warnings` line per span the auto path set aside (muvid#88).                                                                                                                                                                                                        |
+| [`assemble_refusal`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.assemble_refusal)(entries, aligns, song_dur, ...) | `None` if rendering this edit would go ahead; the refusal if it would not — put to the GATE rather than re-implemented here.                                                                                                                                            |
+| [`resolve_canvas`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.resolve_canvas)(fp, canvas)                       | The render canvas: an explicit per-render override, else the project's.                                                                                                                                                                                                 |
+| [`refresh_cover`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.refresh_cover)(fp)                                | Take the project's cover frame again — from the newest render, else from the first clip — and register it.                                                                                                                                                              |
+| [`grab_cover_frame`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.grab_cover_frame)(video, dest)                    | Write one JPEG frame of `video` to `dest` — `COVER_AT_FRACTION` of the way in, `COVER_WIDTH` wide.                                                                                                                                                                      |
+| [`import_render`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.import_render)(fp, \*, path, render_id[, ...])    | Bring a video finished ELSEWHERE into the project as a render (the importer's).                                                                                                                                                                                         |
+| [`frame_size`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.frame_size)(video)                                | `[width, height]` of a video as DISPLAYED (a ±90° rotation swaps them).                                                                                                                                                                                                 |
+| [`frame_rate`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.frame_rate)(video)                                | A video's average frame rate (frames per second), or `None` if unreadable.                                                                                                                                                                                              |
+| [`public_render`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.public_render)(fp, meta)                          | A render record as a HOSTED surface may return it: `video` made relative to the project (`renders/<id>/final.mp4`) — never an absolute server path; play it by its `artifact_id`.                                                                                       |
+| [`require_scorable`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.require_scorable)(fp)                             | The alignments a scoring run would use; refuses without a song or an alignment.                                                                                                                                                                                         |
+| [`run_scoring`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.run_scoring)(fp, \*[, hop_s, metrics, ...])       | Score every aligned clip and persist the tensor (the engine behind [`score()`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.score), with the job hooks a background runner passes).                                                                                            |
 
 ### Classes
 
@@ -6444,7 +6606,7 @@ trust refusal belongs where the encode does, in [`render()`](_autosummary/muvid.
 |-------------------------------------------------------------------|--------------------------------------------------------------------|
 | [`FootageCancelled`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.FootageCancelled) | An operation stopped between steps because its host asked it to.   |
 
-### muvid.footage.service.EDL_OPTIONAL_FIELDS *= (('transition', <function <lambda>>, None), ('crop', <function <lambda>>, None), ('crop_end', <function <lambda>>, None), ('look', <class 'str'>, None), ('look_time_varying', <class 'bool'>, False), ('look_spec', <class 'dict'>, None), ('slip_s', <class 'float'>, 0.0))*
+### muvid.footage.service.EDL_OPTIONAL_FIELDS *= (('transition', <function <lambda>>, None), ('crop', <function <lambda>>, None), ('crop_end', <function <lambda>>, None), ('look', <class 'str'>, None), ('look_time_varying', <class 'bool'>, False), ('look_spec', <class 'dict'>, None), ('slip_s', <class 'float'>, 0.0), ('rate', <class 'float'>, 1.0))*
 
 Every optional [`EdlEntry`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.EdlEntry) field [`edl_json()`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.edl_json) carries,
 and how to render it. **The list is the round trip.** `_as_entry` reads all of
@@ -6602,9 +6764,10 @@ threshold and bend, not only beat instants.
 
 `source` is `"song"` or a clip id. The song gets its sound (`audio_onset`: the
 onset envelope the beat grid is estimated from). A video gets its own soundtrack’s
-`audio_onset` when it has one, and two visual signals: `motion` (how much the
-people in the picture move, the camera’s own move taken out) and `visual_impact`
-(moves stopping dead and turning — the visual beat).
+`audio_onset` when it has one, and three visual signals: `motion` (how much the
+people in the picture move, the camera’s own move taken out), `motion_stops` (moves
+stopping dead and turning — the movement accents) and `motion_stops_local` (the same,
+place by place).
 
 Each signal is in the media’s OWN time: sample `i` is at `t0 + i * hop_s` s of the
 song, or of the clip (song time `offset + t`). Values are unnormalised, with
@@ -6744,6 +6907,36 @@ has none yet takes a few seconds the first time.
 
 Returns `{fps, clips: {clip_id: {duration_s, n_frames, frame_w, frame_h, sheets:
 [{artifact_id, cols, rows, first_frame, n_frames}]}}}`.
+
+* **Return type:**
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+
+### muvid.footage.service.fit_to_beat(fp, , edit_id, indices=None, min_z=2.5, apply=True)
+
+Fit the moves to the beat: for each cut that shows a video in the part of the song
+the edit covers (its span) — or the cuts at `indices` — find the slip and speed
+that put its video’s movement accents on the song’s beat, and apply it where the
+evidence is strong.
+
+Per cut, every slip within +-0.25 s (a frame at 60 fps apart) and every speed from
+x0.92 to x1.08 (1 % apart) is tried; the best is scored against a null of the same
+search on the video’s accents with their relation to the beat destroyed
+(`muvid.footage.beat_fit`), giving a `z`. A cut changes only when `z >= min_z`
+AND the fit is better than its current timing — and the video still holds the
+footage it then reads. Cuts shorter than three beats, gaps and videos with nothing
+measurable are left alone, each with its reason. `apply=False` reports without
+changing anything. All the changes are ONE step of the edit’s history, so one
+`undo_edit` takes them all back.
+
+**How much to expect.** On three phone videos of a crowd dancing, the accents locked
+to the beat on one of them only; each video’s own SOUND locked on all three. So on
+footage like that most cuts will be left as they are, which is the right answer when
+the picture does not show the beat. It works best on a clearly visible dancer.
+
+Needs the `scoring` extra: the first call measures each video’s movement (tens of
+seconds a video; kept for next time). Returns the edit (`get_edit`’s shape) plus
+`fit`: `cuts` (`{index, slip_s, rate, z, applied, reason}` per cut looked at),
+`fitted`, `kept` and `min_z`.
 
 * **Return type:**
   [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
@@ -6991,7 +7184,7 @@ The saved footage curves — for the lanes under each video, and for inspection.
 * **Return type:**
   [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
 
-### muvid.footage.service.set_cut(fp, , edit_id, index, clip_id=None, song_start=None, song_end=None, look=None, look_time_varying=None, slip_s=None)
+### muvid.footage.service.set_cut(fp, , edit_id, index, clip_id=None, song_start=None, song_end=None, look=None, look_time_varying=None, slip_s=None, rate=None)
 
 Change one cut of a saved edit (`index` is its position in `get_edit`’s edl).
 
@@ -7012,6 +7205,10 @@ Change one cut of a saved edit (`index` is its position in `get_edit`’s edl).
   beat where the clip’s alignment is right overall but a little off here. At
   most one beat either way (`SLIP_MAX_S`); `0` removes it. A new video
   (`clip_id`) starts unslipped.
+- `rate`: play this cut’s video a little faster or slower — `1.03` shows 3 %
+  more footage over the same span, so the moves run 3 % faster (the song is never
+  touched). Within `1 +- RATE_MAX_DEV`; `1` removes it. The video must hold the
+  footage the cut then reads. A new video starts at speed 1.
 
 Parameters left out are unchanged. The changed edit is checked and saved; returns it.
 
@@ -10260,42 +10457,43 @@ alignment, exactly as `set_song` does.
 
 ### Functions
 
-| [`add_footage`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.add_footage)(project_id, \*, url[, name])           | Add a footage video clip from an http(s) URL (a recording of the song).                                                                                                                                                      |
-|-----------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| [`add_footage_folder`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.add_footage_folder)(project_id, \*, url[, ...])     | Add EVERY clip in a shared folder (Drive / Dropbox / OneDrive) in one call.                                                                                                                                                  |
-| [`align_footage`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.align_footage)(project_id, \*[, keep_declared])     | Align every uploaded clip to the song by audio, and persist the result.                                                                                                                                                      |
-| [`assemble_music_video`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.assemble_music_video)(project_id, \*[, ...])        | Assemble the music video — auto (a selection `strategy`) or an explicit `edl`.                                                                                                                                               |
-| [`beat_grid`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.beat_grid)(project_id)                              | The song's beat grid — tempo and beat instants on the song timeline — WITHOUT running the scoring job.                                                                                                                       |
-| [`footage_beat_signals`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.footage_beat_signals)(project_id, \*[, ...])        | Where the beat is in the song or in one video — CONTINUOUS signals, to look at, threshold and bend, not only beat instants.                                                                                                  |
-| [`footage_clear_offset`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.footage_clear_offset)(project_id, \*, clip_id)      | Forget where I placed this video: remove a hand-declared offset, so the next `align_footage` measures the clip by its audio instead.                                                                                         |
-| [`footage_delete_edit`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.footage_delete_edit)(project_id, \*, edit_id)       | Delete a saved edit.                                                                                                                                                                                                         |
-| [`footage_editor_document`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.footage_editor_document)(project_id)                | The project as lacing-native standoff annotations, for a multitrack editor.                                                                                                                                                  |
-| [`footage_edits`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.footage_edits)(project_id)                          | The saved edits, oldest first: each one's `edit_id`, `name`, how it was made, how many cuts it has, and `problem` — why it would not validate against the current alignment (`null` when it does).                           |
-| [`footage_edl_from_annotations`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.footage_edl_from_annotations)(project_id, \*, ...)  | The DECISION tier's annotations, turned back into an `edl=` argument.                                                                                                                                                        |
-| [`footage_filmstrip`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.footage_filmstrip)(project_id, \*, clip_id)         | One video's filmstrip (the same record `footage_filmstrips` gives per clip, with its `clip_id` and `fps`).                                                                                                                   |
-| [`footage_filmstrips`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.footage_filmstrips)(project_id)                     | Every video's filmstrip — thumbnails to draw each camera's lane.                                                                                                                                                             |
-| [`footage_get_edit`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.footage_get_edit)(project_id, \*, edit_id)          | One saved edit: its cut list (`edl`, every span of the song, gaps as `clip_id: null`), its name and history, and a `coverage` report.                                                                                        |
-| [`footage_looks`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.footage_looks)(project_id)                          | The looks a cut can take — camera moves (punch in, slow push, slow pull, pans) and grades (vivid, black and white, posterize, cartoon) — each with its `params_schema`.                                                      |
-| [`footage_merge_cut`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.footage_merge_cut)(project_id, \*, edit_id, index)  | Join cut `index` to its neighbour: the neighbour (`into` "previous" or "next") takes over its span, so the neighbour's video must cover it.                                                                                  |
-| [`footage_peaks`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.footage_peaks)(project_id, \*[, n])                 | The song's waveform, to draw under the timeline: `n` equal slices of the song, each the loudest moment in it (mono), scaled so the loudest slice is 1.0.                                                                     |
-| [`footage_redo_edit`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.footage_redo_edit)(project_id, \*, edit_id)         | Redo the change `footage_undo_edit` last took back.                                                                                                                                                                          |
-| [`footage_rename_edit`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.footage_rename_edit)(project_id, \*, edit_id, name) | Give an edit a new name — what the edit picker and the renders made from it show.                                                                                                                                            |
-| [`footage_render`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.footage_render)(project_id, \*, edit_id[, ...])     | Render a SAVED edit (`propose_edit(save=true)` / `footage_save_edit`) into a music video.                                                                                                                                    |
-| [`footage_renders`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.footage_renders)(project_id)                        | The finished videos, newest first: each one's `render_id`, speakable `ref`, the `edit_id` it was made from, its `label`, canvas, `ok`, the number of `warnings`, and `artifact_id` to play it by when the project is hosted. |
-| [`footage_replace_edit`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.footage_replace_edit)(project_id, \*, edit_id, edl) | Replace a saved edit's whole cut list — the power tool for rewriting an edit at once.                                                                                                                                        |
-| [`footage_save_edit`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.footage_save_edit)(project_id, \*, edl[, ...])      | Save a cut list as a new named edit.                                                                                                                                                                                         |
-| [`footage_set_cut`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.footage_set_cut)(project_id, \*, edit_id, index)    | Change one cut of a saved edit (`index` is its position in `footage_get_edit`'s edl).                                                                                                                                        |
-| [`footage_set_offset`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.footage_set_offset)(project_id, \*, clip_id, ...)   | Place one video on the song BY HAND: the song time at which the video's own first frame plays (negative = the video starts before the song does).                                                                            |
-| [`footage_set_span`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.footage_set_span)(project_id, \*, edit_id, ...)     | Choose which part of the song the video covers — where it starts and ends.                                                                                                                                                   |
-| [`footage_split_cut`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.footage_split_cut)(project_id, \*, edit_id, at_s)   | Split the cut playing at song time `at_s` into two cuts of the same video.                                                                                                                                                   |
-| [`footage_status`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.footage_status)(project_id)                         | Your project's song, clips, alignment summary, and renders.                                                                                                                                                                  |
-| [`footage_timeline`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.footage_timeline)(project_id)                       | The coverage map: which clips cover which spans of the song (overlaps shown).                                                                                                                                                |
-| [`footage_undo_edit`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.footage_undo_edit)(project_id, \*, edit_id)         | Undo the last change to a saved edit (a cut changed, split, joined, the span, a whole replacement — by a person or by the assistant).                                                                                        |
-| [`list_music_video_projects`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.list_music_video_projects)()                        | List YOUR music_video (footage) projects, newest-modified first.                                                                                                                                                             |
-| [`list_strategies`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.list_strategies)()                                  | The selection strategies available for full-auto assembly.                                                                                                                                                                   |
-| [`propose_edit`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.propose_edit)(project_id, \*[, strategy, ...])      | Propose an EDL **without rendering it** — the cheap half of assembly.                                                                                                                                                        |
-| [`remove_footage`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.remove_footage)(project_id, \*, clip_id)            | Remove one footage clip from the project — its stored file and its entry.                                                                                                                                                    |
-| [`set_song`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.set_song)(project_id, \*, url)                      | Set the project's fixed clean song from an http(s) URL.                                                                                                                                                                      |
+| [`add_footage`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.add_footage)(project_id, \*, url[, name])           | Add a footage video clip from an http(s) URL (a recording of the song).                                                                                                                                                                                                 |
+|-----------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [`add_footage_folder`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.add_footage_folder)(project_id, \*, url[, ...])     | Add EVERY clip in a shared folder (Drive / Dropbox / OneDrive) in one call.                                                                                                                                                                                             |
+| [`align_footage`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.align_footage)(project_id, \*[, keep_declared])     | Align every uploaded clip to the song by audio, and persist the result.                                                                                                                                                                                                 |
+| [`assemble_music_video`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.assemble_music_video)(project_id, \*[, ...])        | Assemble the music video — auto (a selection `strategy`) or an explicit `edl`.                                                                                                                                                                                          |
+| [`beat_grid`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.beat_grid)(project_id)                              | The song's beat grid — tempo and beat instants on the song timeline — WITHOUT running the scoring job.                                                                                                                                                                  |
+| [`footage_beat_signals`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.footage_beat_signals)(project_id, \*[, ...])        | Where the beat is in the song or in one video — CONTINUOUS signals, to look at, threshold and bend, not only beat instants.                                                                                                                                             |
+| [`footage_clear_offset`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.footage_clear_offset)(project_id, \*, clip_id)      | Forget where I placed this video: remove a hand-declared offset, so the next `align_footage` measures the clip by its audio instead.                                                                                                                                    |
+| [`footage_delete_edit`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.footage_delete_edit)(project_id, \*, edit_id)       | Delete a saved edit.                                                                                                                                                                                                                                                    |
+| [`footage_editor_document`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.footage_editor_document)(project_id)                | The project as lacing-native standoff annotations, for a multitrack editor.                                                                                                                                                                                             |
+| [`footage_edits`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.footage_edits)(project_id)                          | The saved edits, oldest first: each one's `edit_id`, `name`, how it was made, how many cuts it has, and `problem` — why it would not validate against the current alignment (`null` when it does).                                                                      |
+| [`footage_edl_from_annotations`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.footage_edl_from_annotations)(project_id, \*, ...)  | The DECISION tier's annotations, turned back into an `edl=` argument.                                                                                                                                                                                                   |
+| [`footage_filmstrip`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.footage_filmstrip)(project_id, \*, clip_id)         | One video's filmstrip (the same record `footage_filmstrips` gives per clip, with its `clip_id` and `fps`).                                                                                                                                                              |
+| [`footage_filmstrips`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.footage_filmstrips)(project_id)                     | Every video's filmstrip — thumbnails to draw each camera's lane.                                                                                                                                                                                                        |
+| [`footage_fit_to_beat`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.footage_fit_to_beat)(project_id, \*, edit_id)       | Fit the moves to the beat: for each cut that shows a video in the part of the song the edit covers (its span) — or the cuts at `indices` — find the slip and speed that put its video's movement accents on the song's beat, and apply it where the evidence is strong. |
+| [`footage_get_edit`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.footage_get_edit)(project_id, \*, edit_id)          | One saved edit: its cut list (`edl`, every span of the song, gaps as `clip_id: null`), its name and history, and a `coverage` report.                                                                                                                                   |
+| [`footage_looks`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.footage_looks)(project_id)                          | The looks a cut can take — camera moves (punch in, slow push, slow pull, pans) and grades (vivid, black and white, posterize, cartoon) — each with its `params_schema`.                                                                                                 |
+| [`footage_merge_cut`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.footage_merge_cut)(project_id, \*, edit_id, index)  | Join cut `index` to its neighbour: the neighbour (`into` "previous" or "next") takes over its span, so the neighbour's video must cover it.                                                                                                                             |
+| [`footage_peaks`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.footage_peaks)(project_id, \*[, n])                 | The song's waveform, to draw under the timeline: `n` equal slices of the song, each the loudest moment in it (mono), scaled so the loudest slice is 1.0.                                                                                                                |
+| [`footage_redo_edit`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.footage_redo_edit)(project_id, \*, edit_id)         | Redo the change `footage_undo_edit` last took back.                                                                                                                                                                                                                     |
+| [`footage_rename_edit`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.footage_rename_edit)(project_id, \*, edit_id, name) | Give an edit a new name — what the edit picker and the renders made from it show.                                                                                                                                                                                       |
+| [`footage_render`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.footage_render)(project_id, \*, edit_id[, ...])     | Render a SAVED edit (`propose_edit(save=true)` / `footage_save_edit`) into a music video.                                                                                                                                                                               |
+| [`footage_renders`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.footage_renders)(project_id)                        | The finished videos, newest first: each one's `render_id`, speakable `ref`, the `edit_id` it was made from, its `label`, canvas, `ok`, the number of `warnings`, and `artifact_id` to play it by when the project is hosted.                                            |
+| [`footage_replace_edit`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.footage_replace_edit)(project_id, \*, edit_id, edl) | Replace a saved edit's whole cut list — the power tool for rewriting an edit at once.                                                                                                                                                                                   |
+| [`footage_save_edit`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.footage_save_edit)(project_id, \*, edl[, ...])      | Save a cut list as a new named edit.                                                                                                                                                                                                                                    |
+| [`footage_set_cut`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.footage_set_cut)(project_id, \*, edit_id, index)    | Change one cut of a saved edit (`index` is its position in `footage_get_edit`'s edl).                                                                                                                                                                                   |
+| [`footage_set_offset`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.footage_set_offset)(project_id, \*, clip_id, ...)   | Place one video on the song BY HAND: the song time at which the video's own first frame plays (negative = the video starts before the song does).                                                                                                                       |
+| [`footage_set_span`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.footage_set_span)(project_id, \*, edit_id, ...)     | Choose which part of the song the video covers — where it starts and ends.                                                                                                                                                                                              |
+| [`footage_split_cut`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.footage_split_cut)(project_id, \*, edit_id, at_s)   | Split the cut playing at song time `at_s` into two cuts of the same video.                                                                                                                                                                                              |
+| [`footage_status`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.footage_status)(project_id)                         | Your project's song, clips, alignment summary, and renders.                                                                                                                                                                                                             |
+| [`footage_timeline`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.footage_timeline)(project_id)                       | The coverage map: which clips cover which spans of the song (overlaps shown).                                                                                                                                                                                           |
+| [`footage_undo_edit`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.footage_undo_edit)(project_id, \*, edit_id)         | Undo the last change to a saved edit (a cut changed, split, joined, the span, a whole replacement — by a person or by the assistant).                                                                                                                                   |
+| [`list_music_video_projects`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.list_music_video_projects)()                        | List YOUR music_video (footage) projects, newest-modified first.                                                                                                                                                                                                        |
+| [`list_strategies`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.list_strategies)()                                  | The selection strategies available for full-auto assembly.                                                                                                                                                                                                              |
+| [`propose_edit`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.propose_edit)(project_id, \*[, strategy, ...])      | Propose an EDL **without rendering it** — the cheap half of assembly.                                                                                                                                                                                                   |
+| [`remove_footage`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.remove_footage)(project_id, \*, clip_id)            | Remove one footage clip from the project — its stored file and its entry.                                                                                                                                                                                               |
+| [`set_song`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.set_song)(project_id, \*, url)                      | Set the project's fixed clean song from an http(s) URL.                                                                                                                                                                                                                 |
 
 ### muvid.mcp.footage_tools.add_footage(project_id, , url, name='')
 
@@ -10416,8 +10614,11 @@ Assemble the music video — auto (a selection `strategy`) or an explicit `edl`.
   `muvid.footage.edl.SLIP_MAX_S`): the cut shows its video that much LATER
   (negative: earlier) without moving on the song — a local correction on top
   of the clip’s alignment, to put a dancer on the beat. The clip must still
-  hold the slipped span. Every optional field survives verbatim in the
-  returned `edl`.
+  hold the slipped span.
+- an entry may carry `rate` (within `1 +- muvid.footage.edl.RATE_MAX_DEV`):
+  the cut plays its video that much faster (`1.03`) or slower, consuming
+  `span * rate` seconds of it; the song is untouched. Every optional field
+  survives verbatim in the returned `edl`.
 - `strategy='weighted'` (score-driven): the beat-snapped Viterbi selector reads the
   persisted score tracks (run `score_footage` first) and the selection config —
   `preset` (“energetic”/”contemplative”) and/or `weights` (per-metric) and/or
@@ -10504,9 +10705,10 @@ threshold and bend, not only beat instants.
 
 `source` is `"song"` or a clip id. The song gets its sound (`audio_onset`: the
 onset envelope the beat grid is estimated from). A video gets its own soundtrack’s
-`audio_onset` when it has one, and two visual signals: `motion` (how much the
-people in the picture move, the camera’s own move taken out) and `visual_impact`
-(moves stopping dead and turning — the visual beat).
+`audio_onset` when it has one, and three visual signals: `motion` (how much the
+people in the picture move, the camera’s own move taken out), `motion_stops` (moves
+stopping dead and turning — the movement accents) and `motion_stops_local` (the same,
+place by place).
 
 Each signal is in the media’s OWN time: sample `i` is at `t0 + i * hop_s` s of the
 song, or of the clip (song time `offset + t`). Values are unnormalised, with
@@ -10607,6 +10809,36 @@ has none yet takes a few seconds the first time.
 
 Returns `{fps, clips: {clip_id: {duration_s, n_frames, frame_w, frame_h, sheets:
 [{artifact_id, cols, rows, first_frame, n_frames}]}}}`.
+
+* **Return type:**
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+
+### muvid.mcp.footage_tools.footage_fit_to_beat(project_id, , edit_id, indices=None, min_z=2.5, apply=True)
+
+Fit the moves to the beat: for each cut that shows a video in the part of the song
+the edit covers (its span) — or the cuts at `indices` — find the slip and speed
+that put its video’s movement accents on the song’s beat, and apply it where the
+evidence is strong.
+
+Per cut, every slip within +-0.25 s (a frame at 60 fps apart) and every speed from
+x0.92 to x1.08 (1 % apart) is tried; the best is scored against a null of the same
+search on the video’s accents with their relation to the beat destroyed
+(`muvid.footage.beat_fit`), giving a `z`. A cut changes only when `z >= min_z`
+AND the fit is better than its current timing — and the video still holds the
+footage it then reads. Cuts shorter than three beats, gaps and videos with nothing
+measurable are left alone, each with its reason. `apply=False` reports without
+changing anything. All the changes are ONE step of the edit’s history, so one
+`footage_undo_edit` takes them all back.
+
+**How much to expect.** On three phone videos of a crowd dancing, the accents locked
+to the beat on one of them only; each video’s own SOUND locked on all three. So on
+footage like that most cuts will be left as they are, which is the right answer when
+the picture does not show the beat. It works best on a clearly visible dancer.
+
+Needs the `scoring` extra: the first call measures each video’s movement (tens of
+seconds a video; kept for next time). Returns the edit (`footage_get_edit`’s shape) plus
+`fit`: `cuts` (`{index, slip_s, rate, z, applied, reason}` per cut looked at),
+`fitted`, `kept` and `min_z`.
 
 * **Return type:**
   [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
@@ -10715,7 +10947,7 @@ cut to it; default the whole song. Returns the saved edit.
 * **Return type:**
   [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
 
-### muvid.mcp.footage_tools.footage_set_cut(project_id, , edit_id, index, clip_id=None, song_start=None, song_end=None, look=None, look_time_varying=None, slip_s=None)
+### muvid.mcp.footage_tools.footage_set_cut(project_id, , edit_id, index, clip_id=None, song_start=None, song_end=None, look=None, look_time_varying=None, slip_s=None, rate=None)
 
 Change one cut of a saved edit (`index` is its position in `footage_get_edit`’s edl).
 
@@ -10736,6 +10968,10 @@ Change one cut of a saved edit (`index` is its position in `footage_get_edit`’
   beat where the clip’s alignment is right overall but a little off here. At
   most one beat either way (`SLIP_MAX_S`); `0` removes it. A new video
   (`clip_id`) starts unslipped.
+- `rate`: play this cut’s video a little faster or slower — `1.03` shows 3 %
+  more footage over the same span, so the moves run 3 % faster (the song is never
+  touched). Within `1 +- RATE_MAX_DEV`; `1` removes it. The video must hold the
+  footage the cut then reads. A new video starts at speed 1.
 
 Parameters left out are unchanged. The changed edit is checked and saved; returns it.
 
@@ -10940,15 +11176,15 @@ an unpriced call must force approval (muvid#47).
 | [`VisualizerWorkspace`](_autosummary/muvid.mcp.html.md#muvid.mcp.VisualizerWorkspace)(email, root)   | A single caller's private visualizer area, addressed by `email`.   |
 |-------------------------------------------------------------------------------------|--------------------------------------------------------------------|
 
-### muvid.mcp.FREE_TOOLS *= ['list_visuals', 'list_projects', 'project_status', 'render_visualizer', 'footage_status', 'set_song', 'add_footage', 'remove_footage', 'align_footage', 'footage_set_offset', 'footage_clear_offset', 'footage_timeline', 'beat_grid', 'footage_peaks', 'footage_beat_signals', 'footage_filmstrips', 'footage_filmstrip', 'list_strategies', 'propose_edit', 'footage_save_edit', 'footage_edits', 'footage_get_edit', 'footage_replace_edit', 'footage_set_cut', 'footage_split_cut', 'footage_merge_cut', 'footage_set_span', 'footage_rename_edit', 'footage_looks', 'footage_undo_edit', 'footage_redo_edit', 'footage_delete_edit', 'footage_render', 'footage_renders', 'footage_editor_document', 'add_footage_folder', 'assemble_music_video', 'list_music_video_projects', 'footage_edl_from_annotations', 'score_footage', 'footage_scores', 'footage_score_status', 'list_archetypes', 'analyze_song_lyrics', 'propose_lyric_treatments', 'validate_lyric_treatment', 'render_lyric_video', 'list_subgenres', 'render_subgenre']*
+### muvid.mcp.FREE_TOOLS *= ['list_visuals', 'list_projects', 'project_status', 'render_visualizer', 'footage_status', 'set_song', 'add_footage', 'remove_footage', 'align_footage', 'footage_set_offset', 'footage_clear_offset', 'footage_timeline', 'beat_grid', 'footage_peaks', 'footage_beat_signals', 'footage_filmstrips', 'footage_filmstrip', 'list_strategies', 'propose_edit', 'footage_save_edit', 'footage_edits', 'footage_get_edit', 'footage_replace_edit', 'footage_set_cut', 'footage_split_cut', 'footage_merge_cut', 'footage_fit_to_beat', 'footage_set_span', 'footage_rename_edit', 'footage_looks', 'footage_undo_edit', 'footage_redo_edit', 'footage_delete_edit', 'footage_render', 'footage_renders', 'footage_editor_document', 'add_footage_folder', 'assemble_music_video', 'list_music_video_projects', 'footage_edl_from_annotations', 'score_footage', 'footage_scores', 'footage_score_status', 'list_archetypes', 'analyze_song_lyrics', 'propose_lyric_treatments', 'validate_lyric_treatment', 'render_lyric_video', 'list_subgenres', 'render_subgenre']*
 
 Alias — muvid has no costed tools.
 
-### muvid.mcp.TOOL_NAMES *= ['list_visuals', 'list_projects', 'project_status', 'render_visualizer', 'footage_status', 'set_song', 'add_footage', 'remove_footage', 'align_footage', 'footage_set_offset', 'footage_clear_offset', 'footage_timeline', 'beat_grid', 'footage_peaks', 'footage_beat_signals', 'footage_filmstrips', 'footage_filmstrip', 'list_strategies', 'propose_edit', 'footage_save_edit', 'footage_edits', 'footage_get_edit', 'footage_replace_edit', 'footage_set_cut', 'footage_split_cut', 'footage_merge_cut', 'footage_set_span', 'footage_rename_edit', 'footage_looks', 'footage_undo_edit', 'footage_redo_edit', 'footage_delete_edit', 'footage_render', 'footage_renders', 'footage_editor_document', 'add_footage_folder', 'assemble_music_video', 'list_music_video_projects', 'footage_edl_from_annotations', 'score_footage', 'footage_scores', 'footage_score_status', 'list_archetypes', 'analyze_song_lyrics', 'propose_lyric_treatments', 'propose_lyric_treatments_ai', 'validate_lyric_treatment', 'render_lyric_video', 'list_subgenres', 'render_subgenre']*
+### muvid.mcp.TOOL_NAMES *= ['list_visuals', 'list_projects', 'project_status', 'render_visualizer', 'footage_status', 'set_song', 'add_footage', 'remove_footage', 'align_footage', 'footage_set_offset', 'footage_clear_offset', 'footage_timeline', 'beat_grid', 'footage_peaks', 'footage_beat_signals', 'footage_filmstrips', 'footage_filmstrip', 'list_strategies', 'propose_edit', 'footage_save_edit', 'footage_edits', 'footage_get_edit', 'footage_replace_edit', 'footage_set_cut', 'footage_split_cut', 'footage_merge_cut', 'footage_fit_to_beat', 'footage_set_span', 'footage_rename_edit', 'footage_looks', 'footage_undo_edit', 'footage_redo_edit', 'footage_delete_edit', 'footage_render', 'footage_renders', 'footage_editor_document', 'add_footage_folder', 'assemble_music_video', 'list_music_video_projects', 'footage_edl_from_annotations', 'score_footage', 'footage_scores', 'footage_score_status', 'list_archetypes', 'analyze_song_lyrics', 'propose_lyric_treatments', 'propose_lyric_treatments_ai', 'validate_lyric_treatment', 'render_lyric_video', 'list_subgenres', 'render_subgenre']*
 
 All tools this package exposes (all free). Bare names; a host may prefix them.
 
-### muvid.mcp.TOOL_REFS *= {'add_footage': 'muvid.mcp.footage_tools:add_footage', 'add_footage_folder': 'muvid.mcp.footage_tools:add_footage_folder', 'align_footage': 'muvid.mcp.footage_tools:align_footage', 'analyze_song_lyrics': 'muvid.mcp.lyricvid_tools:analyze_song_lyrics', 'assemble_music_video': 'muvid.mcp.footage_tools:assemble_music_video', 'beat_grid': 'muvid.mcp.footage_tools:beat_grid', 'footage_beat_signals': 'muvid.mcp.footage_tools:footage_beat_signals', 'footage_clear_offset': 'muvid.mcp.footage_tools:footage_clear_offset', 'footage_delete_edit': 'muvid.mcp.footage_tools:footage_delete_edit', 'footage_editor_document': 'muvid.mcp.footage_tools:footage_editor_document', 'footage_edits': 'muvid.mcp.footage_tools:footage_edits', 'footage_edl_from_annotations': 'muvid.mcp.footage_tools:footage_edl_from_annotations', 'footage_filmstrip': 'muvid.mcp.footage_tools:footage_filmstrip', 'footage_filmstrips': 'muvid.mcp.footage_tools:footage_filmstrips', 'footage_get_edit': 'muvid.mcp.footage_tools:footage_get_edit', 'footage_looks': 'muvid.mcp.footage_tools:footage_looks', 'footage_merge_cut': 'muvid.mcp.footage_tools:footage_merge_cut', 'footage_peaks': 'muvid.mcp.footage_tools:footage_peaks', 'footage_redo_edit': 'muvid.mcp.footage_tools:footage_redo_edit', 'footage_rename_edit': 'muvid.mcp.footage_tools:footage_rename_edit', 'footage_render': 'muvid.mcp.footage_tools:footage_render', 'footage_renders': 'muvid.mcp.footage_tools:footage_renders', 'footage_replace_edit': 'muvid.mcp.footage_tools:footage_replace_edit', 'footage_save_edit': 'muvid.mcp.footage_tools:footage_save_edit', 'footage_score_status': 'muvid.mcp.scoring_tools:footage_score_status', 'footage_scores': 'muvid.mcp.scoring_tools:footage_scores', 'footage_set_cut': 'muvid.mcp.footage_tools:footage_set_cut', 'footage_set_offset': 'muvid.mcp.footage_tools:footage_set_offset', 'footage_set_span': 'muvid.mcp.footage_tools:footage_set_span', 'footage_split_cut': 'muvid.mcp.footage_tools:footage_split_cut', 'footage_status': 'muvid.mcp.footage_tools:footage_status', 'footage_timeline': 'muvid.mcp.footage_tools:footage_timeline', 'footage_undo_edit': 'muvid.mcp.footage_tools:footage_undo_edit', 'list_archetypes': 'muvid.mcp.lyricvid_tools:list_archetypes', 'list_music_video_projects': 'muvid.mcp.footage_tools:list_music_video_projects', 'list_projects': 'muvid.mcp.tools:list_projects', 'list_strategies': 'muvid.mcp.footage_tools:list_strategies', 'list_subgenres': 'muvid.mcp.subgenre_tools:list_subgenres', 'list_visuals': 'muvid.mcp.tools:list_visuals', 'project_status': 'muvid.mcp.tools:project_status', 'propose_edit': 'muvid.mcp.footage_tools:propose_edit', 'propose_lyric_treatments': 'muvid.mcp.lyricvid_tools:propose_lyric_treatments', 'propose_lyric_treatments_ai': 'muvid.mcp.lyricvid_tools:propose_lyric_treatments_ai', 'remove_footage': 'muvid.mcp.footage_tools:remove_footage', 'render_lyric_video': 'muvid.mcp.lyricvid_tools:render_lyric_video', 'render_subgenre': 'muvid.mcp.subgenre_tools:render_subgenre', 'render_visualizer': 'muvid.mcp.tools:render_visualizer', 'score_footage': 'muvid.mcp.scoring_tools:score_footage', 'set_song': 'muvid.mcp.footage_tools:set_song', 'validate_lyric_treatment': 'muvid.mcp.lyricvid_tools:validate_lyric_treatment'}*
+### muvid.mcp.TOOL_REFS *= {'add_footage': 'muvid.mcp.footage_tools:add_footage', 'add_footage_folder': 'muvid.mcp.footage_tools:add_footage_folder', 'align_footage': 'muvid.mcp.footage_tools:align_footage', 'analyze_song_lyrics': 'muvid.mcp.lyricvid_tools:analyze_song_lyrics', 'assemble_music_video': 'muvid.mcp.footage_tools:assemble_music_video', 'beat_grid': 'muvid.mcp.footage_tools:beat_grid', 'footage_beat_signals': 'muvid.mcp.footage_tools:footage_beat_signals', 'footage_clear_offset': 'muvid.mcp.footage_tools:footage_clear_offset', 'footage_delete_edit': 'muvid.mcp.footage_tools:footage_delete_edit', 'footage_editor_document': 'muvid.mcp.footage_tools:footage_editor_document', 'footage_edits': 'muvid.mcp.footage_tools:footage_edits', 'footage_edl_from_annotations': 'muvid.mcp.footage_tools:footage_edl_from_annotations', 'footage_filmstrip': 'muvid.mcp.footage_tools:footage_filmstrip', 'footage_filmstrips': 'muvid.mcp.footage_tools:footage_filmstrips', 'footage_fit_to_beat': 'muvid.mcp.footage_tools:footage_fit_to_beat', 'footage_get_edit': 'muvid.mcp.footage_tools:footage_get_edit', 'footage_looks': 'muvid.mcp.footage_tools:footage_looks', 'footage_merge_cut': 'muvid.mcp.footage_tools:footage_merge_cut', 'footage_peaks': 'muvid.mcp.footage_tools:footage_peaks', 'footage_redo_edit': 'muvid.mcp.footage_tools:footage_redo_edit', 'footage_rename_edit': 'muvid.mcp.footage_tools:footage_rename_edit', 'footage_render': 'muvid.mcp.footage_tools:footage_render', 'footage_renders': 'muvid.mcp.footage_tools:footage_renders', 'footage_replace_edit': 'muvid.mcp.footage_tools:footage_replace_edit', 'footage_save_edit': 'muvid.mcp.footage_tools:footage_save_edit', 'footage_score_status': 'muvid.mcp.scoring_tools:footage_score_status', 'footage_scores': 'muvid.mcp.scoring_tools:footage_scores', 'footage_set_cut': 'muvid.mcp.footage_tools:footage_set_cut', 'footage_set_offset': 'muvid.mcp.footage_tools:footage_set_offset', 'footage_set_span': 'muvid.mcp.footage_tools:footage_set_span', 'footage_split_cut': 'muvid.mcp.footage_tools:footage_split_cut', 'footage_status': 'muvid.mcp.footage_tools:footage_status', 'footage_timeline': 'muvid.mcp.footage_tools:footage_timeline', 'footage_undo_edit': 'muvid.mcp.footage_tools:footage_undo_edit', 'list_archetypes': 'muvid.mcp.lyricvid_tools:list_archetypes', 'list_music_video_projects': 'muvid.mcp.footage_tools:list_music_video_projects', 'list_projects': 'muvid.mcp.tools:list_projects', 'list_strategies': 'muvid.mcp.footage_tools:list_strategies', 'list_subgenres': 'muvid.mcp.subgenre_tools:list_subgenres', 'list_visuals': 'muvid.mcp.tools:list_visuals', 'project_status': 'muvid.mcp.tools:project_status', 'propose_edit': 'muvid.mcp.footage_tools:propose_edit', 'propose_lyric_treatments': 'muvid.mcp.lyricvid_tools:propose_lyric_treatments', 'propose_lyric_treatments_ai': 'muvid.mcp.lyricvid_tools:propose_lyric_treatments_ai', 'remove_footage': 'muvid.mcp.footage_tools:remove_footage', 'render_lyric_video': 'muvid.mcp.lyricvid_tools:render_lyric_video', 'render_subgenre': 'muvid.mcp.subgenre_tools:render_subgenre', 'render_visualizer': 'muvid.mcp.tools:render_visualizer', 'score_footage': 'muvid.mcp.scoring_tools:score_footage', 'set_song': 'muvid.mcp.footage_tools:set_song', 'validate_lyric_treatment': 'muvid.mcp.lyricvid_tools:validate_lyric_treatment'}*
 
 Bare tool name → its `module:function` reference (tools live in three modules).
 
@@ -15488,20 +15724,18 @@ Rendered white; colour comes from the accent `tint`. `options={"mode":
 
 # About this build
 
-This documentation was built on **2026-09-28 11:57 UTC** from commit <a href="https://github.com/thorwhalen/muvid/commit/661e1651935530e2745766a3abe154922ffe4235"><code>661e165</code></a> on branch <code>main</code>, for **muvid 0.0.74** (from <code>pyproject.toml</code>).
+This documentation was built on **2026-09-28 17:10 UTC** from commit <a href="https://github.com/thorwhalen/muvid/commit/53025d35477504171b7021dda24eca6022fb588c"><code>53025d3</code></a> on branch <code>main</code>, for **muvid 0.0.75** (from <code>pyproject.toml</code>).
 
-#### WARNING
-The documentation and the package may be misaligned:
-
-- The documented version (0.0.74) is ahead of the latest release on PyPI (0.0.73): these docs describe unreleased code.
+#### NOTE
+Nothing suggests a mismatch: the tree was clean at the commit above, and the documented version is the one on PyPI.
 
 ## Source
 
 |                     |                                                                                                                                                         |
 |---------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Commit              | <a href="https://github.com/thorwhalen/muvid/commit/661e1651935530e2745766a3abe154922ffe4235"><code>661e1651935530e2745766a3abe154922ffe4235</code></a> |
+| Commit              | <a href="https://github.com/thorwhalen/muvid/commit/53025d35477504171b7021dda24eca6022fb588c"><code>53025d35477504171b7021dda24eca6022fb588c</code></a> |
 | Branch              | <code>main</code>                                                                                                                                       |
-| Tags at this commit | <code>0.0.74</code>                                                                                                                                     |
+| Tags at this commit | <code>0.0.75</code>                                                                                                                                     |
 | Working tree        | clean                                                                                                                                                   |
 | Remote              | <code>https://github.com/thorwhalen/muvid</code>                                                                                                        |
 
@@ -15510,9 +15744,9 @@ The documentation and the package may be misaligned:
 |              |                                                                                            |
 |--------------|--------------------------------------------------------------------------------------------|
 | Repository   | <code>thorwhalen/muvid</code>                                                              |
-| Run          | <a href="https://github.com/thorwhalen/muvid/actions/runs/36418007491">36418007491</a>     |
+| Run          | <a href="https://github.com/thorwhalen/muvid/actions/runs/36455317269">36455317269</a>     |
 | Ref          | <code>refs/heads/main</code>                                                               |
-| Event commit | <code>0a2e518f29d2a0aa22a2ebd51d60ee2e95fa0862</code> (in the history of the built commit) |
+| Event commit | <code>9cb70fdb3382839a198d9998e02b73c513c605e8</code> (in the history of the built commit) |
 
 ## Tools
 
@@ -15537,13 +15771,13 @@ The documentation and the package may be misaligned:
 
 ## Package on PyPI
 
-Latest release: <a href="https://pypi.org/project/muvid/0.0.73/">0.0.73</a>, older than the documented version (0.0.74).
+Latest release: <a href="https://pypi.org/project/muvid/0.0.75/">0.0.75</a>, the same as the documented version.
 
 ## Reproduce
 
 ```bash
 git clone https://github.com/thorwhalen/muvid && cd muvid
-git checkout 661e1651935530e2745766a3abe154922ffe4235
+git checkout 53025d35477504171b7021dda24eca6022fb588c
 pip install "epythet==0.2.12"
 epythet quickstart . --ignore tests/ scrap/ examples/
 ```

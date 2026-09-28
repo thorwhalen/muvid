@@ -22,17 +22,18 @@ Picture, for every clip:
 
 - `motion` — subject-motion energy: the mean camera-compensated optical-flow magnitude,
   in frame-heights per second.
-- `visual_impact` — the visual beat: how much motion, direction by direction, STOPS
-  between samples — the half-wave-rectified decrease of a magnitude-weighted directogram.
-  This is the “impact envelope” of Davis & Agrawala, *Visual Rhythm and Beat* (SIGGRAPH
-  2018, §4.2; their printed Eq. 13 has the sign of an increase, their prose and released
-  code the decrease used here). It is a deceleration measure, which is where the
-  conducting literature puts the beat: ensembles synchronise with the \*\*maximal
-  deceleration\*\* of the conductor’s hand (Luck & Toiviainen 2006), and with absolute
-  acceleration along the trajectory (Luck & Sloboda 2009) — the *ictus*, not the moment a
-  movement starts (Takehana et al. 2019: movement initiation never coincided with beats).
-- `region_impact` — the same deceleration without the directogram: the decrease of
-  camera-compensated SPEED in each cell of an 8 x 6 grid, summed over cells. Per-region
+- `motion_stops` — movement accents: how much motion, direction by direction, STOPS
+  between samples — the half-wave-rectified decrease of a magnitude-weighted flow
+  direction histogram (the histogram of oriented optical flow, HOOF, of Chaudhry et al.
+  2009). Measuring motion that stops follows Davis & Agrawala (SIGGRAPH 2018, §4.2),
+  using the decrease their prose and released code describe. It is a deceleration
+  measure, which is where the conducting literature puts the beat: ensembles synchronise
+  with the **maximal deceleration** of the conductor’s hand (Luck & Toiviainen 2006), and
+  with absolute acceleration along the trajectory (Luck & Sloboda 2009) — the *ictus*,
+  not the moment a movement starts (Takehana et al. 2019: movement initiation never
+  coincided with beats).
+- `motion_stops_local` — the same stopping without directions: the decrease of
+  camera-compensated SPEED in each cell of an 8 x 6 grid, summed over cells. Per-place
   rather than per-direction, so several dancers braking in different places add up
   instead of cancelling.
 
@@ -43,14 +44,15 @@ circular shift cannot detect locking at all, since it only rotates the phase):
 
 - each clip’s own soundtrack locks strongly (z = 7 to 15) — the positive control, and the
   confirmation that the clips’ offsets are right;
-- `visual_impact` and `region_impact` lock on one clip (z = 2.8 and 2.5, at the same
+- `motion_stops` and `motion_stops_local` lock on one clip (z = 2.8 and 2.5, at the same
   -25 ms lag as that clip’s soundtrack) and on neither of the others; whole-frame speed,
   pose-based limb deceleration (a person found in only 38-75 % of frames of a crowd) and
   AIST++-style velocity minima (half a beat off) did no better;
 - a 1.25 Hz high-pass (Davis & Agrawala’s post-filter) helped no clip consistently.
 
 So these envelopes SHOW where movement lands; on a crowd they are weak evidence of the
-beat, and nothing here decides a warp by itself.
+beat. `service.fit_to_beat` uses them to propose per-cut timing, and applies a fit only
+where it beats the same null — so on footage like this it will usually leave cuts alone.
 
 Every signal is **unnormalised** and carries its own grid (`t0`, `hop_s`) and its
 `min`, `max` and `p99` (a robust top a display can scale by), because thresholding is a
@@ -68,13 +70,13 @@ beside `peaks/` — derived from media the project holds, expensive to make, che
 
 | [`audio_signals`](#muvid.footage.beats.audio_signals)(path)                                | `{signals: {audio_onset}, beats, tempo_bpm}` for a media file's soundtrack, from `mixing.audio.beat_grid`.                                                                                                                                                                   |
 |-----------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| [`visual_signals`](#muvid.footage.beats.visual_signals)(path, \*[, sample_fps, ...])        | `{signals: {motion, visual_impact}}` for a video, in one decode pass.                                                                                                                                                                                                        |
+| [`visual_signals`](#muvid.footage.beats.visual_signals)(path, \*[, sample_fps, ...])        | `{signals: {motion, motion_stops, motion_stops_local}}` for a video, in one decode pass.                                                                                                                                                                                     |
 | [`has_audio`](#muvid.footage.beats.has_audio)(path)                                    | Whether a media file carries an audio stream (an unprobeable file: no).                                                                                                                                                                                                      |
 | [`fitted_tempo`](#muvid.footage.beats.fitted_tempo)(beats, \*[, min_beats])               | The tempo (BPM) of a steady beat train, fitted to ALL its beats — or `None` when the beats are too few or not steady enough to have one tempo.                                                                                                                               |
 | [`novelty_signal`](#muvid.footage.beats.novelty_signal)(path)                               | `{signals: {novelty}}` — Foote's checkerboard novelty of a song: a Gaussian- tapered checkerboard kernel slid along the diagonal of the cosine self-similarity of per-frame timbre (20 MFCCs) and harmony (12 chroma), each standardised.                                    |
 | [`checkerboard_novelty`](#muvid.footage.beats.checkerboard_novelty)(features, \*[, half])         | Novelty along a feature sequence `[dims, frames]`: the correlation of a Gaussian-tapered checkerboard kernel (`half` frames each side) with the cosine self-similarity matrix around each frame.                                                                             |
-| [`directogram`](#muvid.footage.beats.directogram)(fx, fy, \*[, bins])                    | Flow magnitude summed per direction bin, divided by the pixel count: how much of the picture moves which way.                                                                                                                                                                |
-| [`deceleration_flux`](#muvid.footage.beats.deceleration_flux)(hists)                           | Per sample, the motion that stopped since the previous one, summed over the columns of `hists` (`sum(max(0, h[t-1] - h[t]))`) — directions of a directogram (`visual_impact`) or cells of a grid (`region_impact`).                                                          |
+| [`direction_histogram`](#muvid.footage.beats.direction_histogram)(fx, fy, \*[, bins])            | Flow magnitude summed per direction bin, divided by the pixel count: how much of the picture moves which way.                                                                                                                                                                |
+| [`stop_strength`](#muvid.footage.beats.stop_strength)(hists)                               | Per sample, the motion that stopped since the previous one, summed over the columns of `hists` (`sum(max(0, h[t-1] - h[t]))`) — directions of a flow direction histogram (`motion_stops`) or cells of a grid (`motion_stops_local`).                                         |
 | [`region_speeds`](#muvid.footage.beats.region_speeds)(fx, fy, \*[, grid])                  | Mean flow speed in each cell of a `cols x rows` grid, row-major.                                                                                                                                                                                                             |
 | [`signal_record`](#muvid.footage.beats.signal_record)(values, \*, t0, hop_s, name, domain) | One signal on a regular grid: sample `i` is at `t0 + i * hop_s` seconds of the media's own time.                                                                                                                                                                             |
 | [`decimated`](#muvid.footage.beats.decimated)(record, max_points)                      | A signal with at most `max_points` samples: each kept sample is the MAX of the `k` it stands for (a beat is a peak; averaging would erase it), on a grid whose hop grows by `k` and whose `t0` moves to the centre of the first block — so a pooled peak stays where it was. |
@@ -83,7 +85,7 @@ beside `peaks/` — derived from media the project holds, expensive to make, che
 | [`has_signal`](#muvid.footage.beats.has_signal)(record)                                 | Whether a measured record carries at least one sample of anything.                                                                                                                                                                                                           |
 | [`binned_visual_signals`](#muvid.footage.beats.binned_visual_signals)(mids, motion, hists, ...)    | Per-pair rates (at pair midpoints `mids`) averaged into `hop`-second bins.                                                                                                                                                                                                   |
 
-### muvid.footage.beats.SIGNAL_LABELS *= {'audio_onset': 'Sound hits', 'motion': 'Movement', 'novelty': 'Section changes', 'region_impact': 'Moves that land, by region', 'visual_impact': 'Moves that land'}*
+### muvid.footage.beats.SIGNAL_LABELS *= {'audio_onset': 'Sound hits', 'motion': 'Movement', 'motion_stops': 'Moves that stop or turn', 'motion_stops_local': 'Moves that stop, place by place', 'novelty': 'Section changes'}*
 
 What each signal is, in the words a screen can use.
 
@@ -101,8 +103,8 @@ the install).
 Per-pair rates (at pair midpoints `mids`) averaged into `hop`-second bins.
 
 `motion` is each bin’s mean, reported at the bin’s CENTRE (`t0 = hop / 2`).
-`visual_impact` is the deceleration flux between consecutive bin-mean
-directograms, so it belongs to the BOUNDARY between two bins and is reported there
+`motion_stops` is the stop strength between consecutive bin-mean direction
+histograms, so it belongs to the BOUNDARY between two bins and is reported there
 (`t0 = 0`: sample `i` at `i * hop`, sample 0 unmeasured) — half a hop earlier
 than a centre would put it, which matters once it drives a time-warp. Pairs before
 the clip’s first frame (a negative container timestamp) are dropped. Pure numpy —
@@ -145,17 +147,6 @@ self-similarity matrix around each frame. Frames without a full kernel are NaN.
 * **Return type:**
   `ndarray`
 
-### muvid.footage.beats.deceleration_flux(hists)
-
-Per sample, the motion that stopped since the previous one, summed over the
-columns of `hists` (`sum(max(0, h[t-1] - h[t]))`) — directions of a directogram
-(`visual_impact`) or cells of a grid (`region_impact`). `hists` is `[k, n]`
-with NaN rows where nothing was measured; the first sample, and any sample next to
-a NaN row, is NaN.
-
-* **Return type:**
-  `ndarray`
-
 ### muvid.footage.beats.decimated(record, max_points)
 
 A signal with at most `max_points` samples: each kept sample is the MAX of the
@@ -168,7 +159,7 @@ scaled by the full-resolution p99 would saturate).
 * **Return type:**
   [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
 
-### muvid.footage.beats.directogram(fx, fy, , bins=8)
+### muvid.footage.beats.direction_histogram(fx, fy, , bins=8)
 
 Flow magnitude summed per direction bin, divided by the pixel count: how much of
 the picture moves which way. Flow under the noise floor votes for no direction.
@@ -237,9 +228,20 @@ media’s own time. Non-finite samples become `None` (not measured, never zero).
 * **Return type:**
   [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
 
+### muvid.footage.beats.stop_strength(hists)
+
+Per sample, the motion that stopped since the previous one, summed over the
+columns of `hists` (`sum(max(0, h[t-1] - h[t]))`) — directions of a flow direction
+histogram (`motion_stops`) or cells of a grid (`motion_stops_local`). `hists` is `[k, n]`
+with NaN rows where nothing was measured; the first sample, and any sample next to
+a NaN row, is NaN.
+
+* **Return type:**
+  `ndarray`
+
 ### muvid.footage.beats.visual_signals(path, , sample_fps=15.0, max_seconds=900.0, downscale=4, bins=8, should_cancel=None)
 
-`{signals: {motion, visual_impact}}` for a video, in one decode pass.
+`{signals: {motion, motion_stops, motion_stops_local}}` for a video, in one decode pass.
 
 Flow is measured between CONSECUTIVE frames (at most `_MAX_PAIR_RATE` pairs a
 second) and each pair’s rate is averaged into bins of `1 / sample_fps` s. That

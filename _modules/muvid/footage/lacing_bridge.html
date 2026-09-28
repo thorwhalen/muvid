@@ -377,210 +377,225 @@
 </span><span id="line-184">    <span class="c1"># field's absent value, so no DECISION body written before it changes.</span>
 </span><span id="line-185">    <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="s2">"slip_s"</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">):</span>
 </span><span id="line-186">        <span class="n">body</span><span class="p">[</span><span class="s2">"slip_s"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">slip_s</span><span class="p">)</span>
-</span><span id="line-187">    <span class="k">return</span> <span class="n">body</span>
-</span><span id="line-188">
-</span><span id="line-189">
+</span><span id="line-187">    <span class="c1"># Omit-at-1, the same rule: speed 1 is the field's absent value.</span>
+</span><span id="line-188">    <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="s2">"rate"</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">!=</span> <span class="mf">1.0</span><span class="p">:</span>
+</span><span id="line-189">        <span class="n">body</span><span class="p">[</span><span class="s2">"rate"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">rate</span><span class="p">)</span>
+</span><span id="line-190">    <span class="k">return</span> <span class="n">body</span>
+</span><span id="line-191">
+</span><span id="line-192">
 <div class="viewcode-block" id="edl_annotations">
 <a class="viewcode-back" href="../../../_autosummary/muvid.footage.lacing_bridge.html#muvid.footage.lacing_bridge.edl_annotations">[docs]</a>
-</span><span id="line-190"><span class="k">def</span><span class="w"> </span><span class="nf">edl_annotations</span><span class="p">(</span><span class="n">entries</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">song_asset_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">attributed_to</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
-</span><span id="line-191"><span class="w">    </span><span class="sd">"""The DECISION lane: one ``music-video-edl/v1`` per EDL entry, gaps included."""</span>
-</span><span id="line-192">    <span class="k">return</span> <span class="p">[</span>
-</span><span id="line-193">        <span class="n">_annotation</span><span class="p">(</span>
-</span><span id="line-194">            <span class="n">tier</span><span class="o">=</span><span class="n">DECISION_TIER</span><span class="p">,</span>
-</span><span id="line-195">            <span class="n">song_asset_id</span><span class="o">=</span><span class="n">song_asset_id</span><span class="p">,</span>
-</span><span id="line-196">            <span class="n">start_s</span><span class="o">=</span><span class="n">e</span><span class="o">.</span><span class="n">song_start</span><span class="p">,</span>
-</span><span id="line-197">            <span class="n">end_s</span><span class="o">=</span><span class="n">e</span><span class="o">.</span><span class="n">song_end</span><span class="p">,</span>
-</span><span id="line-198">            <span class="n">body</span><span class="o">=</span><span class="n">_edl_body</span><span class="p">(</span><span class="n">e</span><span class="p">),</span>
-</span><span id="line-199">            <span class="n">schema</span><span class="o">=</span><span class="n">MUSIC_VIDEO_EDL_SCHEMA</span><span class="p">,</span>
-</span><span id="line-200">            <span class="n">attributed_to</span><span class="o">=</span><span class="n">attributed_to</span><span class="p">,</span>
-</span><span id="line-201">        <span class="p">)</span>
-</span><span id="line-202">        <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">entries</span>
-</span><span id="line-203">    <span class="p">]</span></div>
+</span><span id="line-193"><span class="k">def</span><span class="w"> </span><span class="nf">edl_annotations</span><span class="p">(</span><span class="n">entries</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">song_asset_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">attributed_to</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
+</span><span id="line-194"><span class="w">    </span><span class="sd">"""The DECISION lane: one ``music-video-edl/v1`` per EDL entry, gaps included."""</span>
+</span><span id="line-195">    <span class="k">return</span> <span class="p">[</span>
+</span><span id="line-196">        <span class="n">_annotation</span><span class="p">(</span>
+</span><span id="line-197">            <span class="n">tier</span><span class="o">=</span><span class="n">DECISION_TIER</span><span class="p">,</span>
+</span><span id="line-198">            <span class="n">song_asset_id</span><span class="o">=</span><span class="n">song_asset_id</span><span class="p">,</span>
+</span><span id="line-199">            <span class="n">start_s</span><span class="o">=</span><span class="n">e</span><span class="o">.</span><span class="n">song_start</span><span class="p">,</span>
+</span><span id="line-200">            <span class="n">end_s</span><span class="o">=</span><span class="n">e</span><span class="o">.</span><span class="n">song_end</span><span class="p">,</span>
+</span><span id="line-201">            <span class="n">body</span><span class="o">=</span><span class="n">_edl_body</span><span class="p">(</span><span class="n">e</span><span class="p">),</span>
+</span><span id="line-202">            <span class="n">schema</span><span class="o">=</span><span class="n">MUSIC_VIDEO_EDL_SCHEMA</span><span class="p">,</span>
+</span><span id="line-203">            <span class="n">attributed_to</span><span class="o">=</span><span class="n">attributed_to</span><span class="p">,</span>
+</span><span id="line-204">        <span class="p">)</span>
+</span><span id="line-205">        <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">entries</span>
+</span><span id="line-206">    <span class="p">]</span></div>
 
-</span><span id="line-204">
-</span><span id="line-205">
+</span><span id="line-207">
+</span><span id="line-208">
 <div class="viewcode-block" id="edl_from_annotations">
 <a class="viewcode-back" href="../../../_autosummary/muvid.footage.lacing_bridge.html#muvid.footage.lacing_bridge.edl_from_annotations">[docs]</a>
-</span><span id="line-206"><span class="k">def</span><span class="w"> </span><span class="nf">edl_from_annotations</span><span class="p">(</span>
-</span><span id="line-207">    <span class="n">annotations</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">expected_song_asset_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
-</span><span id="line-208"><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]:</span>
-</span><span id="line-209"><span class="w">    </span><span class="sd">"""DECISION-tier annotations → the ``edl=`` argument, verbatim.</span>
-</span><span id="line-210">
-</span><span id="line-211"><span class="sd">    The timeline-to-EDL half: whatever the editor did to the DECISION lane — moved,</span>
-</span><span id="line-212"><span class="sd">    split, retargeted, deleted — exports as plain ``{song_start, song_end, clip_id}``</span>
-</span><span id="line-213"><span class="sd">    dicts (plus ``transition``/``crop``/``crop_end``/``look``/``look_time_varying``</span>
-</span><span id="line-214"><span class="sd">    where the editor set one) ready for ``assemble_music_video``. Sorting and</span>
-</span><span id="line-215"><span class="sd">    validation stay the render path's business (``fill_gaps`` + ``validate_edl``);</span>
-</span><span id="line-216"><span class="sd">    this is a faithful read.</span>
-</span><span id="line-217">
-</span><span id="line-218"><span class="sd">    Annotations are untrusted editor input, so anything shaped wrong is SKIPPED rather</span>
-</span><span id="line-219"><span class="sd">    than crashing the export: wrong schema/tier, or (an editor could in principle attach</span>
-</span><span id="line-220"><span class="sd">    a ``music-video-edl/v1`` body to an ``AnnotationRef``, whose ``interval`` is</span>
-</span><span id="line-221"><span class="sd">    optional) a reference with no interval to read a span from.</span>
-</span><span id="line-222">
-</span><span id="line-223"><span class="sd">    ``expected_song_asset_id`` is the one thing that RAISES instead (muvid#35). A</span>
-</span><span id="line-224"><span class="sd">    DECISION record pointing at a different song is not another record to filter past —</span>
-</span><span id="line-225"><span class="sd">    it is the whole export being about the wrong project (a stale clipboard, the easy</span>
-</span><span id="line-226"><span class="sd">    mistake in a copy-paste editor UI). Skipping it silently yields an empty or</span>
-</span><span id="line-227"><span class="sd">    half-empty EDL whose eventual ``validate_edl`` complaint names a symptom, never the</span>
-</span><span id="line-228"><span class="sd">    cause. The check is opt-in and evidence-based: no expected id, or a reference kind</span>
-</span><span id="line-229"><span class="sd">    carrying no ``asset_id`` at all (only ``MediaRef`` has one), is nothing to</span>
-</span><span id="line-230"><span class="sd">    contradict — it reports a WRONG song, it does not demand proof of the right one.</span>
-</span><span id="line-231"><span class="sd">    """</span>
-</span><span id="line-232">    <span class="n">out</span> <span class="o">=</span> <span class="p">[]</span>
-</span><span id="line-233">    <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">annotations</span><span class="p">:</span>
-</span><span id="line-234">        <span class="k">if</span> <span class="n">a</span><span class="o">.</span><span class="n">body_schema_uri</span> <span class="o">!=</span> <span class="n">MUSIC_VIDEO_EDL_SCHEMA</span> <span class="ow">or</span> <span class="n">a</span><span class="o">.</span><span class="n">tier</span> <span class="o">!=</span> <span class="n">DECISION_TIER</span><span class="p">:</span>
-</span><span id="line-235">            <span class="k">continue</span>
-</span><span id="line-236">        <span class="c1"># getattr, not isinstance(MediaRef): this function stays lacing-free (it</span>
-</span><span id="line-237">        <span class="c1"># duck-types already-parsed annotations), so importing the model here would</span>
-</span><span id="line-238">        <span class="c1"># newly bind the export path to the 'editor' extra.</span>
-</span><span id="line-239">        <span class="n">asset_id</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">reference</span><span class="p">,</span> <span class="s2">"asset_id"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-</span><span id="line-240">        <span class="k">if</span> <span class="n">expected_song_asset_id</span> <span class="ow">and</span> <span class="n">asset_id</span> <span class="ow">and</span> <span class="n">asset_id</span> <span class="o">!=</span> <span class="n">expected_song_asset_id</span><span class="p">:</span>
-</span><span id="line-241">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-</span><span id="line-242">                <span class="sa">f</span><span class="s2">"DECISION annotation </span><span class="si">{</span><span class="n">a</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2"> is about a different song: its reference "</span>
-</span><span id="line-243">                <span class="sa">f</span><span class="s2">"asset_id is </span><span class="si">{</span><span class="n">asset_id</span><span class="si">!r}</span><span class="s2">, this project's song is "</span>
-</span><span id="line-244">                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">expected_song_asset_id</span><span class="si">!r}</span><span class="s2">. Exporting it would splice another "</span>
-</span><span id="line-245">                <span class="s2">"project's timeline into this one."</span>
-</span><span id="line-246">            <span class="p">)</span>
-</span><span id="line-247">        <span class="n">iv</span> <span class="o">=</span> <span class="n">a</span><span class="o">.</span><span class="n">reference</span><span class="o">.</span><span class="n">interval</span>
-</span><span id="line-248">        <span class="k">if</span> <span class="n">iv</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-249">            <span class="k">continue</span>
-</span><span id="line-250">        <span class="n">entry</span> <span class="o">=</span> <span class="p">{</span>
-</span><span id="line-251">            <span class="s2">"song_start"</span><span class="p">:</span> <span class="n">iv</span><span class="o">.</span><span class="n">start</span><span class="o">.</span><span class="n">to_seconds</span><span class="p">(),</span>
-</span><span id="line-252">            <span class="s2">"song_end"</span><span class="p">:</span> <span class="n">iv</span><span class="o">.</span><span class="n">end</span><span class="o">.</span><span class="n">to_seconds</span><span class="p">(),</span>
-</span><span id="line-253">            <span class="s2">"clip_id"</span><span class="p">:</span> <span class="n">a</span><span class="o">.</span><span class="n">body</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"clip_id"</span><span class="p">),</span>
-</span><span id="line-254">        <span class="p">}</span>
-</span><span id="line-255">        <span class="c1"># Skip-shaped, NOT raising — deliberately the opposite of `_as_entry`, which</span>
-</span><span id="line-256">        <span class="c1"># raises on the same malformed input. The difference is the author: that one</span>
-</span><span id="line-257">        <span class="c1"># reads a caller's request, where dropping a direction silently is the bug;</span>
-</span><span id="line-258">        <span class="c1"># this one reads a browser's output, where crashing the whole export over one</span>
-</span><span id="line-259">        <span class="c1"># bad record is. A transition that survives here is validated by</span>
-</span><span id="line-260">        <span class="c1"># `validate_edl` on the way back in, like everything else in this dict.</span>
-</span><span id="line-261">        <span class="n">raw</span> <span class="o">=</span> <span class="n">a</span><span class="o">.</span><span class="n">body</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"transition"</span><span class="p">)</span>
-</span><span id="line-262">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"duration_s"</span><span class="p">),</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">)):</span>
-</span><span id="line-263">            <span class="n">entry</span><span class="p">[</span><span class="s2">"transition"</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-</span><span id="line-264">                <span class="s2">"duration_s"</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">raw</span><span class="p">[</span><span class="s2">"duration_s"</span><span class="p">]),</span>
-</span><span id="line-265">                <span class="s2">"curve"</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"curve"</span><span class="p">,</span> <span class="s2">"fade"</span><span class="p">)),</span>
-</span><span id="line-266">            <span class="p">}</span>
-</span><span id="line-267">        <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"crop"</span><span class="p">,</span> <span class="s2">"crop_end"</span><span class="p">):</span>
-</span><span id="line-268">            <span class="n">raw</span> <span class="o">=</span> <span class="n">a</span><span class="o">.</span><span class="n">body</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">field</span><span class="p">)</span>
-</span><span id="line-269">            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">all</span><span class="p">(</span>
-</span><span id="line-270">                <span class="nb">isinstance</span><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">k</span><span class="p">),</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">))</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"x"</span><span class="p">,</span> <span class="s2">"y"</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">,</span> <span class="s2">"h"</span><span class="p">)</span>
-</span><span id="line-271">            <span class="p">):</span>
-</span><span id="line-272">                <span class="n">entry</span><span class="p">[</span><span class="n">field</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">raw</span><span class="p">[</span><span class="n">k</span><span class="p">])</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"x"</span><span class="p">,</span> <span class="s2">"y"</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">,</span> <span class="s2">"h"</span><span class="p">)}</span>
-</span><span id="line-273">        <span class="c1"># Same skip-shaped read: a look is a filter fragment, and whether THIS one</span>
-</span><span id="line-274">        <span class="c1"># is acceptable is `validate_edl`'s single-gate business on the way back in</span>
-</span><span id="line-275">        <span class="c1"># — never this function's, which only settles the type. A non-string is an</span>
-</span><span id="line-276">        <span class="c1"># editor bug, not an edit, so it is dropped rather than crashing the export.</span>
-</span><span id="line-277">        <span class="n">raw</span> <span class="o">=</span> <span class="n">a</span><span class="o">.</span><span class="n">body</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"look"</span><span class="p">)</span>
-</span><span id="line-278">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-</span><span id="line-279">            <span class="n">entry</span><span class="p">[</span><span class="s2">"look"</span><span class="p">]</span> <span class="o">=</span> <span class="n">raw</span>
-</span><span id="line-280">        <span class="c1"># Same skip-shaped read, and `isinstance(..., bool)` rather than a truth</span>
-</span><span id="line-281">        <span class="c1"># test on purpose: `_as_entry` RAISES on a non-bool (bool("false") is</span>
-</span><span id="line-282">        <span class="c1"># True, which would arm a warning the caller asked to be off), so</span>
-</span><span id="line-283">        <span class="c1"># forwarding a string from here would turn an editor's bug into an</span>
-</span><span id="line-284">        <span class="c1"># export the render path refuses. A missing or wrong-typed flag reads as</span>
-</span><span id="line-285">        <span class="c1"># the field's own default.</span>
-</span><span id="line-286">        <span class="n">raw</span> <span class="o">=</span> <span class="n">a</span><span class="o">.</span><span class="n">body</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"look_time_varying"</span><span class="p">)</span>
-</span><span id="line-287">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)</span> <span class="ow">and</span> <span class="n">raw</span><span class="p">:</span>
-</span><span id="line-288">            <span class="n">entry</span><span class="p">[</span><span class="s2">"look_time_varying"</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
-</span><span id="line-289">        <span class="c1"># Same skip-shaped read: a named look's spec is carried only when it has the</span>
-</span><span id="line-290">        <span class="c1"># shape `_as_entry` accepts, and only beside the look it describes.</span>
-</span><span id="line-291">        <span class="n">raw</span> <span class="o">=</span> <span class="n">a</span><span class="o">.</span><span class="n">body</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"look_spec"</span><span class="p">)</span>
-</span><span id="line-292">        <span class="k">if</span> <span class="p">(</span>
-</span><span id="line-293">            <span class="nb">isinstance</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span>
-</span><span id="line-294">            <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"name"</span><span class="p">),</span> <span class="nb">str</span><span class="p">)</span>
-</span><span id="line-295">            <span class="ow">and</span> <span class="s2">"look"</span> <span class="ow">in</span> <span class="n">entry</span>
-</span><span id="line-296">        <span class="p">):</span>
-</span><span id="line-297">            <span class="n">entry</span><span class="p">[</span><span class="s2">"look_spec"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span>
-</span><span id="line-298">        <span class="c1"># Same skip-shaped read: a number within the bound is forwarded; anything</span>
-</span><span id="line-299">        <span class="c1"># else — a non-number, or a slip no cut may carry — is an editor bug and</span>
-</span><span id="line-300">        <span class="c1"># reads as no slip, rather than refusing the WHOLE edit on the way back.</span>
-</span><span id="line-301">        <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.footage.edl</span><span class="w"> </span><span class="kn">import</span> <span class="n">SLIP_MAX_S</span>
-</span><span id="line-302">
-</span><span id="line-303">        <span class="n">raw</span> <span class="o">=</span> <span class="n">a</span><span class="o">.</span><span class="n">body</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"slip_s"</span><span class="p">)</span>
-</span><span id="line-304">        <span class="k">if</span> <span class="p">(</span>
-</span><span id="line-305">            <span class="nb">isinstance</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">))</span>
-</span><span id="line-306">            <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)</span>
-</span><span id="line-307">            <span class="ow">and</span> <span class="n">raw</span>
-</span><span id="line-308">            <span class="ow">and</span> <span class="nb">abs</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">SLIP_MAX_S</span>
-</span><span id="line-309">        <span class="p">):</span>
-</span><span id="line-310">            <span class="n">entry</span><span class="p">[</span><span class="s2">"slip_s"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span>
-</span><span id="line-311">        <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">entry</span><span class="p">)</span>
-</span><span id="line-312">    <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">e</span><span class="p">:</span> <span class="n">e</span><span class="p">[</span><span class="s2">"song_start"</span><span class="p">])</span></div>
+</span><span id="line-209"><span class="k">def</span><span class="w"> </span><span class="nf">edl_from_annotations</span><span class="p">(</span>
+</span><span id="line-210">    <span class="n">annotations</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">expected_song_asset_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+</span><span id="line-211"><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]:</span>
+</span><span id="line-212"><span class="w">    </span><span class="sd">"""DECISION-tier annotations → the ``edl=`` argument, verbatim.</span>
+</span><span id="line-213">
+</span><span id="line-214"><span class="sd">    The timeline-to-EDL half: whatever the editor did to the DECISION lane — moved,</span>
+</span><span id="line-215"><span class="sd">    split, retargeted, deleted — exports as plain ``{song_start, song_end, clip_id}``</span>
+</span><span id="line-216"><span class="sd">    dicts (plus ``transition``/``crop``/``crop_end``/``look``/``look_time_varying``</span>
+</span><span id="line-217"><span class="sd">    where the editor set one) ready for ``assemble_music_video``. Sorting and</span>
+</span><span id="line-218"><span class="sd">    validation stay the render path's business (``fill_gaps`` + ``validate_edl``);</span>
+</span><span id="line-219"><span class="sd">    this is a faithful read.</span>
+</span><span id="line-220">
+</span><span id="line-221"><span class="sd">    Annotations are untrusted editor input, so anything shaped wrong is SKIPPED rather</span>
+</span><span id="line-222"><span class="sd">    than crashing the export: wrong schema/tier, or (an editor could in principle attach</span>
+</span><span id="line-223"><span class="sd">    a ``music-video-edl/v1`` body to an ``AnnotationRef``, whose ``interval`` is</span>
+</span><span id="line-224"><span class="sd">    optional) a reference with no interval to read a span from.</span>
+</span><span id="line-225">
+</span><span id="line-226"><span class="sd">    ``expected_song_asset_id`` is the one thing that RAISES instead (muvid#35). A</span>
+</span><span id="line-227"><span class="sd">    DECISION record pointing at a different song is not another record to filter past —</span>
+</span><span id="line-228"><span class="sd">    it is the whole export being about the wrong project (a stale clipboard, the easy</span>
+</span><span id="line-229"><span class="sd">    mistake in a copy-paste editor UI). Skipping it silently yields an empty or</span>
+</span><span id="line-230"><span class="sd">    half-empty EDL whose eventual ``validate_edl`` complaint names a symptom, never the</span>
+</span><span id="line-231"><span class="sd">    cause. The check is opt-in and evidence-based: no expected id, or a reference kind</span>
+</span><span id="line-232"><span class="sd">    carrying no ``asset_id`` at all (only ``MediaRef`` has one), is nothing to</span>
+</span><span id="line-233"><span class="sd">    contradict — it reports a WRONG song, it does not demand proof of the right one.</span>
+</span><span id="line-234"><span class="sd">    """</span>
+</span><span id="line-235">    <span class="n">out</span> <span class="o">=</span> <span class="p">[]</span>
+</span><span id="line-236">    <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">annotations</span><span class="p">:</span>
+</span><span id="line-237">        <span class="k">if</span> <span class="n">a</span><span class="o">.</span><span class="n">body_schema_uri</span> <span class="o">!=</span> <span class="n">MUSIC_VIDEO_EDL_SCHEMA</span> <span class="ow">or</span> <span class="n">a</span><span class="o">.</span><span class="n">tier</span> <span class="o">!=</span> <span class="n">DECISION_TIER</span><span class="p">:</span>
+</span><span id="line-238">            <span class="k">continue</span>
+</span><span id="line-239">        <span class="c1"># getattr, not isinstance(MediaRef): this function stays lacing-free (it</span>
+</span><span id="line-240">        <span class="c1"># duck-types already-parsed annotations), so importing the model here would</span>
+</span><span id="line-241">        <span class="c1"># newly bind the export path to the 'editor' extra.</span>
+</span><span id="line-242">        <span class="n">asset_id</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">reference</span><span class="p">,</span> <span class="s2">"asset_id"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+</span><span id="line-243">        <span class="k">if</span> <span class="n">expected_song_asset_id</span> <span class="ow">and</span> <span class="n">asset_id</span> <span class="ow">and</span> <span class="n">asset_id</span> <span class="o">!=</span> <span class="n">expected_song_asset_id</span><span class="p">:</span>
+</span><span id="line-244">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+</span><span id="line-245">                <span class="sa">f</span><span class="s2">"DECISION annotation </span><span class="si">{</span><span class="n">a</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2"> is about a different song: its reference "</span>
+</span><span id="line-246">                <span class="sa">f</span><span class="s2">"asset_id is </span><span class="si">{</span><span class="n">asset_id</span><span class="si">!r}</span><span class="s2">, this project's song is "</span>
+</span><span id="line-247">                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">expected_song_asset_id</span><span class="si">!r}</span><span class="s2">. Exporting it would splice another "</span>
+</span><span id="line-248">                <span class="s2">"project's timeline into this one."</span>
+</span><span id="line-249">            <span class="p">)</span>
+</span><span id="line-250">        <span class="n">iv</span> <span class="o">=</span> <span class="n">a</span><span class="o">.</span><span class="n">reference</span><span class="o">.</span><span class="n">interval</span>
+</span><span id="line-251">        <span class="k">if</span> <span class="n">iv</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-252">            <span class="k">continue</span>
+</span><span id="line-253">        <span class="n">entry</span> <span class="o">=</span> <span class="p">{</span>
+</span><span id="line-254">            <span class="s2">"song_start"</span><span class="p">:</span> <span class="n">iv</span><span class="o">.</span><span class="n">start</span><span class="o">.</span><span class="n">to_seconds</span><span class="p">(),</span>
+</span><span id="line-255">            <span class="s2">"song_end"</span><span class="p">:</span> <span class="n">iv</span><span class="o">.</span><span class="n">end</span><span class="o">.</span><span class="n">to_seconds</span><span class="p">(),</span>
+</span><span id="line-256">            <span class="s2">"clip_id"</span><span class="p">:</span> <span class="n">a</span><span class="o">.</span><span class="n">body</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"clip_id"</span><span class="p">),</span>
+</span><span id="line-257">        <span class="p">}</span>
+</span><span id="line-258">        <span class="c1"># Skip-shaped, NOT raising — deliberately the opposite of `_as_entry`, which</span>
+</span><span id="line-259">        <span class="c1"># raises on the same malformed input. The difference is the author: that one</span>
+</span><span id="line-260">        <span class="c1"># reads a caller's request, where dropping a direction silently is the bug;</span>
+</span><span id="line-261">        <span class="c1"># this one reads a browser's output, where crashing the whole export over one</span>
+</span><span id="line-262">        <span class="c1"># bad record is. A transition that survives here is validated by</span>
+</span><span id="line-263">        <span class="c1"># `validate_edl` on the way back in, like everything else in this dict.</span>
+</span><span id="line-264">        <span class="n">raw</span> <span class="o">=</span> <span class="n">a</span><span class="o">.</span><span class="n">body</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"transition"</span><span class="p">)</span>
+</span><span id="line-265">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"duration_s"</span><span class="p">),</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">)):</span>
+</span><span id="line-266">            <span class="n">entry</span><span class="p">[</span><span class="s2">"transition"</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+</span><span id="line-267">                <span class="s2">"duration_s"</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">raw</span><span class="p">[</span><span class="s2">"duration_s"</span><span class="p">]),</span>
+</span><span id="line-268">                <span class="s2">"curve"</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"curve"</span><span class="p">,</span> <span class="s2">"fade"</span><span class="p">)),</span>
+</span><span id="line-269">            <span class="p">}</span>
+</span><span id="line-270">        <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"crop"</span><span class="p">,</span> <span class="s2">"crop_end"</span><span class="p">):</span>
+</span><span id="line-271">            <span class="n">raw</span> <span class="o">=</span> <span class="n">a</span><span class="o">.</span><span class="n">body</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">field</span><span class="p">)</span>
+</span><span id="line-272">            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">all</span><span class="p">(</span>
+</span><span id="line-273">                <span class="nb">isinstance</span><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">k</span><span class="p">),</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">))</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"x"</span><span class="p">,</span> <span class="s2">"y"</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">,</span> <span class="s2">"h"</span><span class="p">)</span>
+</span><span id="line-274">            <span class="p">):</span>
+</span><span id="line-275">                <span class="n">entry</span><span class="p">[</span><span class="n">field</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">raw</span><span class="p">[</span><span class="n">k</span><span class="p">])</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"x"</span><span class="p">,</span> <span class="s2">"y"</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">,</span> <span class="s2">"h"</span><span class="p">)}</span>
+</span><span id="line-276">        <span class="c1"># Same skip-shaped read: a look is a filter fragment, and whether THIS one</span>
+</span><span id="line-277">        <span class="c1"># is acceptable is `validate_edl`'s single-gate business on the way back in</span>
+</span><span id="line-278">        <span class="c1"># — never this function's, which only settles the type. A non-string is an</span>
+</span><span id="line-279">        <span class="c1"># editor bug, not an edit, so it is dropped rather than crashing the export.</span>
+</span><span id="line-280">        <span class="n">raw</span> <span class="o">=</span> <span class="n">a</span><span class="o">.</span><span class="n">body</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"look"</span><span class="p">)</span>
+</span><span id="line-281">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+</span><span id="line-282">            <span class="n">entry</span><span class="p">[</span><span class="s2">"look"</span><span class="p">]</span> <span class="o">=</span> <span class="n">raw</span>
+</span><span id="line-283">        <span class="c1"># Same skip-shaped read, and `isinstance(..., bool)` rather than a truth</span>
+</span><span id="line-284">        <span class="c1"># test on purpose: `_as_entry` RAISES on a non-bool (bool("false") is</span>
+</span><span id="line-285">        <span class="c1"># True, which would arm a warning the caller asked to be off), so</span>
+</span><span id="line-286">        <span class="c1"># forwarding a string from here would turn an editor's bug into an</span>
+</span><span id="line-287">        <span class="c1"># export the render path refuses. A missing or wrong-typed flag reads as</span>
+</span><span id="line-288">        <span class="c1"># the field's own default.</span>
+</span><span id="line-289">        <span class="n">raw</span> <span class="o">=</span> <span class="n">a</span><span class="o">.</span><span class="n">body</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"look_time_varying"</span><span class="p">)</span>
+</span><span id="line-290">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)</span> <span class="ow">and</span> <span class="n">raw</span><span class="p">:</span>
+</span><span id="line-291">            <span class="n">entry</span><span class="p">[</span><span class="s2">"look_time_varying"</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+</span><span id="line-292">        <span class="c1"># Same skip-shaped read: a named look's spec is carried only when it has the</span>
+</span><span id="line-293">        <span class="c1"># shape `_as_entry` accepts, and only beside the look it describes.</span>
+</span><span id="line-294">        <span class="n">raw</span> <span class="o">=</span> <span class="n">a</span><span class="o">.</span><span class="n">body</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"look_spec"</span><span class="p">)</span>
+</span><span id="line-295">        <span class="k">if</span> <span class="p">(</span>
+</span><span id="line-296">            <span class="nb">isinstance</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span>
+</span><span id="line-297">            <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"name"</span><span class="p">),</span> <span class="nb">str</span><span class="p">)</span>
+</span><span id="line-298">            <span class="ow">and</span> <span class="s2">"look"</span> <span class="ow">in</span> <span class="n">entry</span>
+</span><span id="line-299">        <span class="p">):</span>
+</span><span id="line-300">            <span class="n">entry</span><span class="p">[</span><span class="s2">"look_spec"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span>
+</span><span id="line-301">        <span class="c1"># Same skip-shaped read: a number within the bound is forwarded; anything</span>
+</span><span id="line-302">        <span class="c1"># else — a non-number, or a slip no cut may carry — is an editor bug and</span>
+</span><span id="line-303">        <span class="c1"># reads as no slip, rather than refusing the WHOLE edit on the way back.</span>
+</span><span id="line-304">        <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.footage.edl</span><span class="w"> </span><span class="kn">import</span> <span class="n">SLIP_MAX_S</span>
+</span><span id="line-305">
+</span><span id="line-306">        <span class="n">raw</span> <span class="o">=</span> <span class="n">a</span><span class="o">.</span><span class="n">body</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"slip_s"</span><span class="p">)</span>
+</span><span id="line-307">        <span class="k">if</span> <span class="p">(</span>
+</span><span id="line-308">            <span class="nb">isinstance</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">))</span>
+</span><span id="line-309">            <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)</span>
+</span><span id="line-310">            <span class="ow">and</span> <span class="n">raw</span>
+</span><span id="line-311">            <span class="ow">and</span> <span class="nb">abs</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">SLIP_MAX_S</span>
+</span><span id="line-312">        <span class="p">):</span>
+</span><span id="line-313">            <span class="n">entry</span><span class="p">[</span><span class="s2">"slip_s"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span>
+</span><span id="line-314">        <span class="c1"># Same skip-shaped read for a cut's speed: a number within the bound is</span>
+</span><span id="line-315">        <span class="c1"># forwarded, anything else reads as speed 1.</span>
+</span><span id="line-316">        <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.footage.edl</span><span class="w"> </span><span class="kn">import</span> <span class="n">RATE_MAX_DEV</span>
+</span><span id="line-317">
+</span><span id="line-318">        <span class="n">raw</span> <span class="o">=</span> <span class="n">a</span><span class="o">.</span><span class="n">body</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"rate"</span><span class="p">)</span>
+</span><span id="line-319">        <span class="k">if</span> <span class="p">(</span>
+</span><span id="line-320">            <span class="nb">isinstance</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">))</span>
+</span><span id="line-321">            <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)</span>
+</span><span id="line-322">            <span class="ow">and</span> <span class="n">raw</span> <span class="o">!=</span> <span class="mf">1.0</span>
+</span><span id="line-323">            <span class="ow">and</span> <span class="nb">abs</span><span class="p">(</span><span class="n">raw</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">RATE_MAX_DEV</span>
+</span><span id="line-324">        <span class="p">):</span>
+</span><span id="line-325">            <span class="n">entry</span><span class="p">[</span><span class="s2">"rate"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span>
+</span><span id="line-326">        <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">entry</span><span class="p">)</span>
+</span><span id="line-327">    <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">e</span><span class="p">:</span> <span class="n">e</span><span class="p">[</span><span class="s2">"song_start"</span><span class="p">])</span></div>
 
-</span><span id="line-313">
-</span><span id="line-314">
+</span><span id="line-328">
+</span><span id="line-329">
 <div class="viewcode-block" id="editor_document">
 <a class="viewcode-back" href="../../../_autosummary/muvid.footage.lacing_bridge.html#muvid.footage.lacing_bridge.editor_document">[docs]</a>
-</span><span id="line-315"><span class="k">def</span><span class="w"> </span><span class="nf">editor_document</span><span class="p">(</span><span class="n">proj</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">attributed_to</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-</span><span id="line-316"><span class="w">    </span><span class="sd">"""The whole project as one lacing-native document for a multitrack editor.</span>
-</span><span id="line-317">
-</span><span id="line-318"><span class="sd">    Tiers: one lane group per clip (alignment + its score sub-tracks) + the DECISION</span>
-</span><span id="line-319"><span class="sd">    lane. The EDL rendered into DECISION is the current default proposal; an editor</span>
-</span><span id="line-320"><span class="sd">    mutates that tier and exports it back through :func:`edl_from_annotations`.</span>
-</span><span id="line-321"><span class="sd">    """</span>
-</span><span id="line-322">    <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.footage.edl</span><span class="w"> </span><span class="kn">import</span> <span class="n">fill_gaps</span><span class="p">,</span> <span class="n">validate_edl</span>
-</span><span id="line-323">    <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.footage.scoring.grid</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_tensor</span>
-</span><span id="line-324">    <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.footage.strategy</span><span class="w"> </span><span class="kn">import</span> <span class="n">DEFAULT_STRATEGY</span><span class="p">,</span> <span class="n">select_edl</span>
-</span><span id="line-325">
-</span><span id="line-326">    <span class="k">if</span> <span class="ow">not</span> <span class="n">proj</span><span class="o">.</span><span class="n">has_song</span><span class="p">():</span>
-</span><span id="line-327">        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"no song set — call set_song first"</span><span class="p">)</span>
-</span><span id="line-328">    <span class="n">aligns</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">load_alignments</span><span class="p">()</span>
-</span><span id="line-329">    <span class="n">song_dur</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">song_duration</span><span class="p">()</span>
-</span><span id="line-330">    <span class="n">song_asset_id</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">song_hash</span><span class="p">()</span>
-</span><span id="line-331">    <span class="n">who</span> <span class="o">=</span> <span class="n">attributed_to</span> <span class="ow">or</span> <span class="sa">f</span><span class="s2">"user:</span><span class="si">{</span><span class="n">proj</span><span class="o">.</span><span class="n">email</span><span class="si">}</span><span class="s2">"</span>
+</span><span id="line-330"><span class="k">def</span><span class="w"> </span><span class="nf">editor_document</span><span class="p">(</span><span class="n">proj</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">attributed_to</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+</span><span id="line-331"><span class="w">    </span><span class="sd">"""The whole project as one lacing-native document for a multitrack editor.</span>
 </span><span id="line-332">
-</span><span id="line-333">    <span class="n">annotations</span> <span class="o">=</span> <span class="n">alignment_annotations</span><span class="p">(</span>
-</span><span id="line-334">        <span class="n">aligns</span><span class="p">,</span> <span class="n">song_asset_id</span><span class="o">=</span><span class="n">song_asset_id</span><span class="p">,</span> <span class="n">attributed_to</span><span class="o">=</span><span class="n">who</span>
-</span><span id="line-335">    <span class="p">)</span>
-</span><span id="line-336">    <span class="n">tensor</span> <span class="o">=</span> <span class="n">load_tensor</span><span class="p">(</span><span class="n">proj</span><span class="o">.</span><span class="n">root</span><span class="p">)</span>
-</span><span id="line-337">    <span class="k">if</span> <span class="n">tensor</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-338">        <span class="n">annotations</span> <span class="o">+=</span> <span class="n">score_track_annotations</span><span class="p">(</span>
-</span><span id="line-339">            <span class="n">tensor</span><span class="p">,</span> <span class="n">song_asset_id</span><span class="o">=</span><span class="n">song_asset_id</span><span class="p">,</span> <span class="n">attributed_to</span><span class="o">=</span><span class="n">who</span>
-</span><span id="line-340">        <span class="p">)</span>
-</span><span id="line-341">    <span class="n">overlapping</span> <span class="o">=</span> <span class="p">[</span><span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">aligns</span> <span class="k">if</span> <span class="n">a</span><span class="o">.</span><span class="n">overlaps</span><span class="p">]</span>
-</span><span id="line-342">    <span class="n">decision_error</span> <span class="o">=</span> <span class="kc">None</span>
-</span><span id="line-343">    <span class="k">if</span> <span class="n">overlapping</span><span class="p">:</span>
-</span><span id="line-344">        <span class="k">try</span><span class="p">:</span>
-</span><span id="line-345">            <span class="n">entries</span> <span class="o">=</span> <span class="n">validate_edl</span><span class="p">(</span>
-</span><span id="line-346">                <span class="n">fill_gaps</span><span class="p">(</span><span class="n">select_edl</span><span class="p">(</span><span class="n">DEFAULT_STRATEGY</span><span class="p">,</span> <span class="n">aligns</span><span class="p">,</span> <span class="n">song_dur</span><span class="p">),</span> <span class="n">song_dur</span><span class="p">),</span>
-</span><span id="line-347">                <span class="n">aligns</span><span class="p">,</span>
-</span><span id="line-348">                <span class="n">song_dur</span><span class="p">,</span>
-</span><span id="line-349">                <span class="n">canvas</span><span class="o">=</span><span class="n">proj</span><span class="o">.</span><span class="n">canvas</span><span class="p">(),</span>
-</span><span id="line-350">                <span class="c1"># This builds the DECISION tier an editor opens and edits; it renders</span>
-</span><span id="line-351">                <span class="c1"># nothing. An unvouched offset still has to be visible in the editor —</span>
-</span><span id="line-352">                <span class="c1"># seeing where a clip stops matching is how a human fixes it — and the</span>
-</span><span id="line-353">                <span class="c1"># refusal happens when that decision comes back to be rendered.</span>
-</span><span id="line-354">                <span class="n">allow_unreliable</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-</span><span id="line-355">            <span class="p">)</span>
-</span><span id="line-356">        <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">KeyError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-</span><span id="line-357">            <span class="c1"># The alignment + score-track annotations below are independently good —</span>
-</span><span id="line-358">            <span class="c1"># only the DEFAULT proposal failed to build (e.g. a self-inconsistent</span>
-</span><span id="line-359">            <span class="c1"># persisted alignment, or a legitimate selection past MAX_EDL_ENTRIES). An</span>
-</span><span id="line-360">            <span class="c1"># editor can still open the document and place its own DECISION entries;</span>
-</span><span id="line-361">            <span class="c1"># losing the whole export over an unrelated failure would not.</span>
-</span><span id="line-362">            <span class="n">decision_error</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
-</span><span id="line-363">        <span class="k">else</span><span class="p">:</span>
-</span><span id="line-364">            <span class="n">annotations</span> <span class="o">+=</span> <span class="n">edl_annotations</span><span class="p">(</span>
-</span><span id="line-365">                <span class="n">entries</span><span class="p">,</span> <span class="n">song_asset_id</span><span class="o">=</span><span class="n">song_asset_id</span><span class="p">,</span> <span class="n">attributed_to</span><span class="o">=</span><span class="n">who</span>
-</span><span id="line-366">            <span class="p">)</span>
-</span><span id="line-367">
-</span><span id="line-368">    <span class="n">tiers</span> <span class="o">=</span> <span class="p">[{</span><span class="s2">"name"</span><span class="p">:</span> <span class="n">DECISION_TIER</span><span class="p">,</span> <span class="s2">"stereotype"</span><span class="p">:</span> <span class="s2">"NONE"</span><span class="p">}]</span> <span class="o">+</span> <span class="p">[</span>
-</span><span id="line-369">        <span class="p">{</span><span class="s2">"name"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"clip:</span><span class="si">{</span><span class="n">a</span><span class="o">.</span><span class="n">clip_id</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="s2">"stereotype"</span><span class="p">:</span> <span class="s2">"NONE"</span><span class="p">}</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">aligns</span>
-</span><span id="line-370">    <span class="p">]</span>
-</span><span id="line-371">    <span class="k">return</span> <span class="p">{</span>
-</span><span id="line-372">        <span class="s2">"project_id"</span><span class="p">:</span> <span class="n">proj</span><span class="o">.</span><span class="n">project_id</span><span class="p">,</span>
-</span><span id="line-373">        <span class="s2">"song_asset_id"</span><span class="p">:</span> <span class="n">song_asset_id</span><span class="p">,</span>
-</span><span id="line-374">        <span class="s2">"song_duration"</span><span class="p">:</span> <span class="n">song_dur</span><span class="p">,</span>
-</span><span id="line-375">        <span class="s2">"time_rate"</span><span class="p">:</span> <span class="n">TIME_RATE</span><span class="p">,</span>
-</span><span id="line-376">        <span class="s2">"tiers"</span><span class="p">:</span> <span class="n">tiers</span><span class="p">,</span>
-</span><span id="line-377">        <span class="s2">"annotations"</span><span class="p">:</span> <span class="p">[</span><span class="n">a</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"json"</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">annotations</span><span class="p">],</span>
-</span><span id="line-378">        <span class="c1"># None on the healthy path. When set, the DECISION tier has no default proposal</span>
-</span><span id="line-379">        <span class="c1"># (everything else in the document is still good) — an editor should say so</span>
-</span><span id="line-380">        <span class="c1"># rather than silently show an empty lane.</span>
-</span><span id="line-381">        <span class="s2">"decision_error"</span><span class="p">:</span> <span class="n">decision_error</span><span class="p">,</span>
-</span><span id="line-382">    <span class="p">}</span></div>
+</span><span id="line-333"><span class="sd">    Tiers: one lane group per clip (alignment + its score sub-tracks) + the DECISION</span>
+</span><span id="line-334"><span class="sd">    lane. The EDL rendered into DECISION is the current default proposal; an editor</span>
+</span><span id="line-335"><span class="sd">    mutates that tier and exports it back through :func:`edl_from_annotations`.</span>
+</span><span id="line-336"><span class="sd">    """</span>
+</span><span id="line-337">    <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.footage.edl</span><span class="w"> </span><span class="kn">import</span> <span class="n">fill_gaps</span><span class="p">,</span> <span class="n">validate_edl</span>
+</span><span id="line-338">    <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.footage.scoring.grid</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_tensor</span>
+</span><span id="line-339">    <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.footage.strategy</span><span class="w"> </span><span class="kn">import</span> <span class="n">DEFAULT_STRATEGY</span><span class="p">,</span> <span class="n">select_edl</span>
+</span><span id="line-340">
+</span><span id="line-341">    <span class="k">if</span> <span class="ow">not</span> <span class="n">proj</span><span class="o">.</span><span class="n">has_song</span><span class="p">():</span>
+</span><span id="line-342">        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"no song set — call set_song first"</span><span class="p">)</span>
+</span><span id="line-343">    <span class="n">aligns</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">load_alignments</span><span class="p">()</span>
+</span><span id="line-344">    <span class="n">song_dur</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">song_duration</span><span class="p">()</span>
+</span><span id="line-345">    <span class="n">song_asset_id</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">song_hash</span><span class="p">()</span>
+</span><span id="line-346">    <span class="n">who</span> <span class="o">=</span> <span class="n">attributed_to</span> <span class="ow">or</span> <span class="sa">f</span><span class="s2">"user:</span><span class="si">{</span><span class="n">proj</span><span class="o">.</span><span class="n">email</span><span class="si">}</span><span class="s2">"</span>
+</span><span id="line-347">
+</span><span id="line-348">    <span class="n">annotations</span> <span class="o">=</span> <span class="n">alignment_annotations</span><span class="p">(</span>
+</span><span id="line-349">        <span class="n">aligns</span><span class="p">,</span> <span class="n">song_asset_id</span><span class="o">=</span><span class="n">song_asset_id</span><span class="p">,</span> <span class="n">attributed_to</span><span class="o">=</span><span class="n">who</span>
+</span><span id="line-350">    <span class="p">)</span>
+</span><span id="line-351">    <span class="n">tensor</span> <span class="o">=</span> <span class="n">load_tensor</span><span class="p">(</span><span class="n">proj</span><span class="o">.</span><span class="n">root</span><span class="p">)</span>
+</span><span id="line-352">    <span class="k">if</span> <span class="n">tensor</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-353">        <span class="n">annotations</span> <span class="o">+=</span> <span class="n">score_track_annotations</span><span class="p">(</span>
+</span><span id="line-354">            <span class="n">tensor</span><span class="p">,</span> <span class="n">song_asset_id</span><span class="o">=</span><span class="n">song_asset_id</span><span class="p">,</span> <span class="n">attributed_to</span><span class="o">=</span><span class="n">who</span>
+</span><span id="line-355">        <span class="p">)</span>
+</span><span id="line-356">    <span class="n">overlapping</span> <span class="o">=</span> <span class="p">[</span><span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">aligns</span> <span class="k">if</span> <span class="n">a</span><span class="o">.</span><span class="n">overlaps</span><span class="p">]</span>
+</span><span id="line-357">    <span class="n">decision_error</span> <span class="o">=</span> <span class="kc">None</span>
+</span><span id="line-358">    <span class="k">if</span> <span class="n">overlapping</span><span class="p">:</span>
+</span><span id="line-359">        <span class="k">try</span><span class="p">:</span>
+</span><span id="line-360">            <span class="n">entries</span> <span class="o">=</span> <span class="n">validate_edl</span><span class="p">(</span>
+</span><span id="line-361">                <span class="n">fill_gaps</span><span class="p">(</span><span class="n">select_edl</span><span class="p">(</span><span class="n">DEFAULT_STRATEGY</span><span class="p">,</span> <span class="n">aligns</span><span class="p">,</span> <span class="n">song_dur</span><span class="p">),</span> <span class="n">song_dur</span><span class="p">),</span>
+</span><span id="line-362">                <span class="n">aligns</span><span class="p">,</span>
+</span><span id="line-363">                <span class="n">song_dur</span><span class="p">,</span>
+</span><span id="line-364">                <span class="n">canvas</span><span class="o">=</span><span class="n">proj</span><span class="o">.</span><span class="n">canvas</span><span class="p">(),</span>
+</span><span id="line-365">                <span class="c1"># This builds the DECISION tier an editor opens and edits; it renders</span>
+</span><span id="line-366">                <span class="c1"># nothing. An unvouched offset still has to be visible in the editor —</span>
+</span><span id="line-367">                <span class="c1"># seeing where a clip stops matching is how a human fixes it — and the</span>
+</span><span id="line-368">                <span class="c1"># refusal happens when that decision comes back to be rendered.</span>
+</span><span id="line-369">                <span class="n">allow_unreliable</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+</span><span id="line-370">            <span class="p">)</span>
+</span><span id="line-371">        <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">KeyError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+</span><span id="line-372">            <span class="c1"># The alignment + score-track annotations below are independently good —</span>
+</span><span id="line-373">            <span class="c1"># only the DEFAULT proposal failed to build (e.g. a self-inconsistent</span>
+</span><span id="line-374">            <span class="c1"># persisted alignment, or a legitimate selection past MAX_EDL_ENTRIES). An</span>
+</span><span id="line-375">            <span class="c1"># editor can still open the document and place its own DECISION entries;</span>
+</span><span id="line-376">            <span class="c1"># losing the whole export over an unrelated failure would not.</span>
+</span><span id="line-377">            <span class="n">decision_error</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+</span><span id="line-378">        <span class="k">else</span><span class="p">:</span>
+</span><span id="line-379">            <span class="n">annotations</span> <span class="o">+=</span> <span class="n">edl_annotations</span><span class="p">(</span>
+</span><span id="line-380">                <span class="n">entries</span><span class="p">,</span> <span class="n">song_asset_id</span><span class="o">=</span><span class="n">song_asset_id</span><span class="p">,</span> <span class="n">attributed_to</span><span class="o">=</span><span class="n">who</span>
+</span><span id="line-381">            <span class="p">)</span>
+</span><span id="line-382">
+</span><span id="line-383">    <span class="n">tiers</span> <span class="o">=</span> <span class="p">[{</span><span class="s2">"name"</span><span class="p">:</span> <span class="n">DECISION_TIER</span><span class="p">,</span> <span class="s2">"stereotype"</span><span class="p">:</span> <span class="s2">"NONE"</span><span class="p">}]</span> <span class="o">+</span> <span class="p">[</span>
+</span><span id="line-384">        <span class="p">{</span><span class="s2">"name"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"clip:</span><span class="si">{</span><span class="n">a</span><span class="o">.</span><span class="n">clip_id</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="s2">"stereotype"</span><span class="p">:</span> <span class="s2">"NONE"</span><span class="p">}</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">aligns</span>
+</span><span id="line-385">    <span class="p">]</span>
+</span><span id="line-386">    <span class="k">return</span> <span class="p">{</span>
+</span><span id="line-387">        <span class="s2">"project_id"</span><span class="p">:</span> <span class="n">proj</span><span class="o">.</span><span class="n">project_id</span><span class="p">,</span>
+</span><span id="line-388">        <span class="s2">"song_asset_id"</span><span class="p">:</span> <span class="n">song_asset_id</span><span class="p">,</span>
+</span><span id="line-389">        <span class="s2">"song_duration"</span><span class="p">:</span> <span class="n">song_dur</span><span class="p">,</span>
+</span><span id="line-390">        <span class="s2">"time_rate"</span><span class="p">:</span> <span class="n">TIME_RATE</span><span class="p">,</span>
+</span><span id="line-391">        <span class="s2">"tiers"</span><span class="p">:</span> <span class="n">tiers</span><span class="p">,</span>
+</span><span id="line-392">        <span class="s2">"annotations"</span><span class="p">:</span> <span class="p">[</span><span class="n">a</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"json"</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">annotations</span><span class="p">],</span>
+</span><span id="line-393">        <span class="c1"># None on the healthy path. When set, the DECISION tier has no default proposal</span>
+</span><span id="line-394">        <span class="c1"># (everything else in the document is still good) — an editor should say so</span>
+</span><span id="line-395">        <span class="c1"># rather than silently show an empty lane.</span>
+</span><span id="line-396">        <span class="s2">"decision_error"</span><span class="p">:</span> <span class="n">decision_error</span><span class="p">,</span>
+</span><span id="line-397">    <span class="p">}</span></div>
 
 </span></code></pre></div>
     </div></div>
@@ -595,7 +610,7 @@
 </footer>
     </div>
     
-    <script src="../../../_static/documentation_options.js?v=d59c1f54"></script>
+    <script src="../../../_static/documentation_options.js?v=71e49b4d"></script>
     <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>

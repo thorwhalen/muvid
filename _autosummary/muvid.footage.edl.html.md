@@ -45,6 +45,7 @@ implicitly, so spans stay one-per-song-span and nothing about reading an EDL cha
 | [`MIN_MARGIN`](#muvid.footage.edl.MIN_MARGIN)          | Margin must EXCEED this for an offset to be vouched for (env `MUVID_FOOTAGE_MIN_MARGIN`).                                                                                                                                                                       |
 | [`MEASURED`](#muvid.footage.edl.MEASURED)            | the aligner found the offset, or a person set it.                                                                                                                                                                                                               |
 | [`SLIP_MAX_S`](#muvid.footage.edl.SLIP_MAX_S)          | about one beat at 128 BPM.                                                                                                                                                                                                                                      |
+| [`RATE_MAX_DEV`](#muvid.footage.edl.RATE_MAX_DEV)        | 8 %, a nudge that keeps a dancer looking like themselves.                                                                                                                                                                                                       |
 | [`NO_VOUCHED_COVERAGE`](#muvid.footage.edl.NO_VOUCHED_COVERAGE) | nothing the aligner vouches for covers it at all.                                                                                                                                                                                                               |
 | [`UNVOUCHED_SELECTION`](#muvid.footage.edl.UNVOUCHED_SELECTION) | A vouched clip DOES cover the span and the strategy cut to an unvouched one anyway — so the loss is the SELECTOR's, not the footage's.                                                                                                                          |
 | [`EXCLUSION_REASONS`](#muvid.footage.edl.EXCLUSION_REASONS)   | Every reason [`exclude_unvouched()`](#muvid.footage.edl.exclude_unvouched) can give, for a caller matching on the value.                                                                                                                                 |
@@ -52,13 +53,15 @@ implicitly, so spans stay one-per-song-span and nothing about reading an EDL cha
 
 ### Functions
 
-| [`clip_in_of`](#muvid.footage.edl.clip_in_of)(e, a)                                 | Where cut `e` starts in its clip `a`'s own time — THE sign convention: `song_start - offset + slip`.   |
-|---------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------|
-| [`derive_cuts`](#muvid.footage.edl.derive_cuts)(edl, alignments, clip_paths)         | Turn a *validated* EDL into render-ready cuts — the ONE place `clip_in` is derived.                    |
-| [`exclude_unvouched`](#muvid.footage.edl.exclude_unvouched)(edl, alignments)               | Set aside the spans of an AUTO edit whose only footage is unvouched (muvid#88).                        |
-| [`fill_gaps`](#muvid.footage.edl.fill_gaps)(entries, song_duration, \*[, start])   | Make an edit span the WHOLE song by inserting explicit gap entries.                                    |
-| [`validate_edl`](#muvid.footage.edl.validate_edl)(edl, alignments, song_duration, \*) | Validate an EDL (from a strategy OR a caller) — the ONE gate before any cutting.                       |
-| [`vouches_for`](#muvid.footage.edl.vouches_for)(\*, confidence, support[, ...])      | Does the aligner vouch for this offset? The ONE place that verdict is reached.                         |
+| [`clip_in_of`](#muvid.footage.edl.clip_in_of)(e, a)                                 | Where cut `e` starts in its clip `a`'s own time — THE sign convention: `song_start - offset + slip`.                                                             |
+|---------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [`clip_time_at`](#muvid.footage.edl.clip_time_at)(e, a, t)                            | The moment of clip `a` cut `e` shows at song time `t` — the cut's affine map, `clip_in_of(e) + rate * (t - song_start)`.                                         |
+| [`derive_cuts`](#muvid.footage.edl.derive_cuts)(edl, alignments, clip_paths)         | Turn a *validated* EDL into render-ready cuts — the ONE place `clip_in` is derived.                                                                              |
+| [`exclude_unvouched`](#muvid.footage.edl.exclude_unvouched)(edl, alignments)               | Set aside the spans of an AUTO edit whose only footage is unvouched (muvid#88).                                                                                  |
+| [`fill_gaps`](#muvid.footage.edl.fill_gaps)(entries, song_duration, \*[, start])   | Make an edit span the WHOLE song by inserting explicit gap entries.                                                                                              |
+| [`validate_edl`](#muvid.footage.edl.validate_edl)(edl, alignments, song_duration, \*) | Validate an EDL (from a strategy OR a caller) — the ONE gate before any cutting.                                                                                 |
+| [`vouches_for`](#muvid.footage.edl.vouches_for)(\*, confidence, support[, ...])      | Does the aligner vouch for this offset? The ONE place that verdict is reached.                                                                                   |
+| [`with_start`](#muvid.footage.edl.with_start)(e, start, \*[, bounded])              | `e` starting at song time `start` and showing, at every moment it still covers, exactly the footage it showed before — its map from song time to clip time kept. |
 
 ### Classes
 
@@ -75,7 +78,7 @@ implicitly, so spans stay one-per-song-span and nothing about reading an EDL cha
 | [`UnreliableAlignmentError`](#muvid.footage.edl.UnreliableAlignmentError)(unvouched)   | An edit cuts to a clip whose OFFSET the aligner could not vouch for (muvid#59).   |
 |----------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------|
 
-### *class* muvid.footage.edl.AssemblyCut(song_start, song_end, clip_id, clip_in, clip_path, transition=None, crop=None, crop_end=None, look=None, look_time_varying=False)
+### *class* muvid.footage.edl.AssemblyCut(song_start, song_end, clip_id, clip_in, clip_path, transition=None, crop=None, crop_end=None, look=None, look_time_varying=False, rate=1.0)
 
 Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
@@ -103,6 +106,18 @@ where a moving look’s ramp restarts (muvid#73). See
 
 * **Type:**
   Carried through unchanged, and the assembler is its ONE consumer
+
+#### rate *: [float](https://docs.python.org/3/builtins/functions.html#float)* *= 1.0*
+
+the assembler reads `duration * rate`
+seconds of source and retimes it (`setpts`, before `fps`) onto the span.
+
+* **Type:**
+  Carried through from the EDL entry
+
+#### *property* source_duration *: [float](https://docs.python.org/3/builtins/functions.html#float)*
+
+Seconds of the clip this cut consumes — its span at its rate.
 
 #### transition *: [Transition](#muvid.footage.edl.Transition) | [None](https://docs.python.org/3/builtins/constants.html#None)* *= None*
 
@@ -160,7 +175,7 @@ it for free.
 
 Every reason [`exclude_unvouched()`](#muvid.footage.edl.exclude_unvouched) can give, for a caller matching on the value.
 
-### *class* muvid.footage.edl.EdlEntry(song_start, song_end, clip_id, transition=None, crop=None, crop_end=None, look=None, look_time_varying=False, look_spec=None, slip_s=0.0)
+### *class* muvid.footage.edl.EdlEntry(song_start, song_end, clip_id, transition=None, crop=None, crop_end=None, look=None, look_time_varying=False, look_spec=None, slip_s=0.0, rate=1.0)
 
 Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
@@ -261,6 +276,18 @@ earlier. muvid’s own compilers declare it for you —
 [`stylize()`](muvid.footage.look.html.md#muvid.footage.look.stylize) one that answers from the compiled
 plan, and [`punch_in_cuts()`](muvid.footage.look.html.md#muvid.footage.look.punch_in_cuts) sets this field FROM
 the fragment rather than hardcoding it.
+
+#### rate *: [float](https://docs.python.org/3/builtins/functions.html#float)* *= 1.0*
+
+how fast this cut plays its video — `1.03` shows 3 % more footage
+over the same span of song, so the dancers move 3 % faster; the song is never
+touched. With [`slip_s`](#muvid.footage.edl.EdlEntry.slip_s) it makes the cut’s footage time an AFFINE map of
+song time, `clip_in_of(e) + rate * (t - song_start)` ([`clip_time_at()`](#muvid.footage.edl.clip_time_at));
+short cuts, each with its own, make a piecewise-linear time-warp. Bounded to
+`1 +- RATE_MAX_DEV`; `1.0` (the default) emits nothing.
+
+* **Type:**
+  **Speed**
 
 #### slip_s *: [float](https://docs.python.org/3/builtins/functions.html#float)* *= 0.0*
 
@@ -626,6 +653,15 @@ honest answer is a gap, and the remedy is to re-align or re-shoot.
 * **Type:**
   The span had no alternative
 
+### muvid.footage.edl.RATE_MAX_DEV *= 0.08*
+
+8 %, a nudge that keeps a
+dancer looking like themselves. A larger change is a slow-motion or fast-forward
+effect, a different tool.
+
+* **Type:**
+  How far a cut’s speed may move from 1, either way
+
 ### muvid.footage.edl.SLIP_MAX_S *= 0.5*
 
 about one beat at 128 BPM. A
@@ -733,6 +769,14 @@ The offending clips, in EDL order — so a caller can re-align exactly these.
 Where cut `e` starts in its clip `a`’s own time — THE sign convention:
 `song_start - offset + slip`. UNCLAMPED (a caller checking containment must see
 a negative in-point); [`derive_cuts()`](#muvid.footage.edl.derive_cuts) clamps for the renderer.
+
+* **Return type:**
+  [`float`](https://docs.python.org/3/builtins/functions.html#float)
+
+### muvid.footage.edl.clip_time_at(e, a, t)
+
+The moment of clip `a` cut `e` shows at song time `t` — the cut’s affine
+map, `clip_in_of(e) + rate * (t - song_start)`.
 
 * **Return type:**
   [`float`](https://docs.python.org/3/builtins/functions.html#float)
@@ -963,3 +1007,15 @@ of a shoot that it started as.
   [`bool`](https://docs.python.org/3/builtins/functions.html#bool)
 * **Returns:**
   True when the offset may be cut to without the caller opting in.
+
+### muvid.footage.edl.with_start(e, start, , bounded=True)
+
+`e` starting at song time `start` and showing, at every moment it still
+covers, exactly the footage it showed before — its map from song time to clip
+time kept. At speed 1 that is only the new start (the slip carries over); at any
+other speed the slip absorbs `(rate - 1) * (start - song_start)`. Raises when
+that would take the slip past [`SLIP_MAX_S`](#muvid.footage.edl.SLIP_MAX_S) — unless `bounded=False`, for a
+render-time window that is never stored.
+
+* **Return type:**
+  [`EdlEntry`](#muvid.footage.edl.EdlEntry)

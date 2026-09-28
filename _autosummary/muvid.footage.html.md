@@ -74,7 +74,7 @@ editorial — on a real 478x850 clip of dancers a whole body does not fit in a
 full-width 16:9 window at all (315-380px of subject into 269px), so “heads or
 feet” is a decision per cut, not a default.
 
-### *class* muvid.footage.EdlEntry(song_start, song_end, clip_id, transition=None, crop=None, crop_end=None, look=None, look_time_varying=False, look_spec=None, slip_s=0.0)
+### *class* muvid.footage.EdlEntry(song_start, song_end, clip_id, transition=None, crop=None, crop_end=None, look=None, look_time_varying=False, look_spec=None, slip_s=0.0, rate=1.0)
 
 Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
@@ -175,6 +175,18 @@ earlier. muvid’s own compilers declare it for you —
 [`stylize()`](muvid.footage.look.html.md#muvid.footage.look.stylize) one that answers from the compiled
 plan, and [`punch_in_cuts()`](muvid.footage.look.html.md#muvid.footage.look.punch_in_cuts) sets this field FROM
 the fragment rather than hardcoding it.
+
+#### rate *: [float](https://docs.python.org/3/builtins/functions.html#float)* *= 1.0*
+
+how fast this cut plays its video — `1.03` shows 3 % more footage
+over the same span of song, so the dancers move 3 % faster; the song is never
+touched. With [`slip_s`](#muvid.footage.EdlEntry.slip_s) it makes the cut’s footage time an AFFINE map of
+song time, `clip_in_of(e) + rate * (t - song_start)` (`clip_time_at()`);
+short cuts, each with its own, make a piecewise-linear time-warp. Bounded to
+`1 +- RATE_MAX_DEV`; `1.0` (the default) emits nothing.
+
+* **Type:**
+  **Speed**
 
 #### slip_s *: [float](https://docs.python.org/3/builtins/functions.html#float)* *= 0.0*
 
@@ -769,6 +781,7 @@ Returns the normalized list of [`EdlEntry`](#muvid.footage.EdlEntry).
 | [`align`](muvid.footage.align.html.md#module-muvid.footage.align)                 | Align a set of footage clips to the song — a thin wrapper over `mixing.audio`.                                                                                      |
 |---------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | [`assemble`](muvid.footage.assemble.html.md#module-muvid.footage.assemble)           | Assemble validated cuts into a music video, in BOUNDED memory.                                                                                                      |
+| [`beat_fit`](muvid.footage.beat_fit.html.md#module-muvid.footage.beat_fit)           | Fitting a cut's timing to the beat — the pure numerics behind `service.fit_to_beat`.                                                                                |
 | [`beats`](muvid.footage.beats.html.md#module-muvid.footage.beats)                 | Beat signals — continuous envelopes of where the beat is, in the song and in each video.                                                                            |
 | [`edl`](muvid.footage.edl.html.md#module-muvid.footage.edl)                     | EDL data types + the `validate_edl` single-source-of-truth gate.                                                                                                    |
 | [`errors`](muvid.footage.errors.html.md#module-muvid.footage.errors)               | The refusal and cancellation types of the footage operations ([`muvid.footage.service`](muvid.footage.service.html.md#module-muvid.footage.service)). |
