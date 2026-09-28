@@ -1,4 +1,4 @@
-> built 2026-09-28 05:21 UTC from 50d6173 (main) · muvid 0.0.73. Details: build_info.json
+> built 2026-09-28 11:57 UTC from 661e165 (main) · muvid 0.0.74. Details: build_info.json
 
 # index.html.md
 
@@ -2782,25 +2782,51 @@ Beat signals — continuous envelopes of where the beat is, in the song and in e
 hits up with the music wants more than instants: a **continuous** signal it can look at,
 threshold anywhere between its minimum and maximum, and bend towards binary. That is what
 this module measures, per piece of media and in that media’s OWN time (a clip reaches song
-time through its offset, exactly as filmstrips do):
+time through its offset, exactly as filmstrips do).
+
+Sound, for the song and for every clip with a soundtrack:
 
 - `audio_onset` — the onset-strength envelope `mixing.audio.beat_grid` estimates beats
-  from (the same estimator `beat_grid` uses, so the two never disagree about the song),
-  for the song and for every clip that has a soundtrack. The estimator’s beat instants and
-  tempo come along.
-- `motion` — subject-motion energy: the mean camera-compensated optical-flow magnitude
-  (the scoring layer’s `flow_residual_and_global` kernel), in frame-heights per second so
-  its scale depends little on resolution or sampling rate (not at all is not claimed: the
-  flow’s window and noise floor are in downscaled pixels).
-- `visual_impact` — the visual BEAT envelope: how much motion, direction by direction,
-  STOPS from one sample to the next — the half-wave-rectified decrease of a
-  magnitude-weighted **directogram** (a histogram of flow directions), after Davis &
-  Agrawala, *Visual Rhythm and Beat* (SIGGRAPH 2018), whose visual beats are sudden
-  decelerations. A hit stopping dead and a change of direction (motion leaving one
-  direction bin) both register; motion energy alone misses the turn, which is most of
-  what a dance beat looks like. Measured on phone footage of dancers, this deceleration
-  flux locked to the song’s beat about twice as strongly as the increase or the total
-  change did.
+  from (librosa’s spectral flux on a log-mel spectrogram — the standard envelope, adequate
+  for percussive pop; SuperFlux’s vibrato suppression matters for voice and strings). The
+  estimator’s beat instants come along, with a tempo FITTED to them (see `fitted_tempo`).
+- `novelty` (the song only) — how much the music changes character around each moment:
+  Foote’s checkerboard novelty over a self-similarity matrix of timbre and harmony. Its
+  peaks are section boundaries (verse, chorus, drop) — the other place an editor cuts.
+
+Picture, for every clip:
+
+- `motion` — subject-motion energy: the mean camera-compensated optical-flow magnitude,
+  in frame-heights per second.
+- `visual_impact` — the visual beat: how much motion, direction by direction, STOPS
+  between samples — the half-wave-rectified decrease of a magnitude-weighted directogram.
+  This is the “impact envelope” of Davis & Agrawala, *Visual Rhythm and Beat* (SIGGRAPH
+  2018, §4.2; their printed Eq. 13 has the sign of an increase, their prose and released
+  code the decrease used here). It is a deceleration measure, which is where the
+  conducting literature puts the beat: ensembles synchronise with the \*\*maximal
+  deceleration\*\* of the conductor’s hand (Luck & Toiviainen 2006), and with absolute
+  acceleration along the trajectory (Luck & Sloboda 2009) — the *ictus*, not the moment a
+  movement starts (Takehana et al. 2019: movement initiation never coincided with beats).
+- `region_impact` — the same deceleration without the directogram: the decrease of
+  camera-compensated SPEED in each cell of an 8 x 6 grid, summed over cells. Per-region
+  rather than per-direction, so several dancers braking in different places add up
+  instead of cancelling.
+
+**What the evidence on real footage says** (three phone videos of a crowd dancing to one
+song, 2 minutes each; beat locking measured as the phase concentration of each signal on
+the song’s beat, against a null that shifts each 4 s block independently — a whole-signal
+circular shift cannot detect locking at all, since it only rotates the phase):
+
+- each clip’s own soundtrack locks strongly (z = 7 to 15) — the positive control, and the
+  confirmation that the clips’ offsets are right;
+- `visual_impact` and `region_impact` lock on one clip (z = 2.8 and 2.5, at the same
+  -25 ms lag as that clip’s soundtrack) and on neither of the others; whole-frame speed,
+  pose-based limb deceleration (a person found in only 38-75 % of frames of a crowd) and
+  AIST++-style velocity minima (half a beat off) did no better;
+- a 1.25 Hz high-pass (Davis & Agrawala’s post-filter) helped no clip consistently.
+
+So these envelopes SHOW where movement lands; on a crowd they are weak evidence of the
+beat, and nothing here decides a warp by itself.
 
 Every signal is **unnormalised** and carries its own grid (`t0`, `hop_s`) and its
 `min`, `max` and `p99` (a robust top a display can scale by), because thresholding is a
@@ -2820,16 +2846,20 @@ beside `peaks/` — derived from media the project holds, expensive to make, che
 |-----------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | [`visual_signals`](_autosummary/muvid.footage.beats.html.md#muvid.footage.beats.visual_signals)(path, \*[, sample_fps, ...])        | `{signals: {motion, visual_impact}}` for a video, in one decode pass.                                                                                                                                                                                                        |
 | [`has_audio`](_autosummary/muvid.footage.beats.html.md#muvid.footage.beats.has_audio)(path)                                    | Whether a media file carries an audio stream (an unprobeable file: no).                                                                                                                                                                                                      |
+| [`fitted_tempo`](_autosummary/muvid.footage.beats.html.md#muvid.footage.beats.fitted_tempo)(beats, \*[, min_beats])               | The tempo (BPM) of a steady beat train, fitted to ALL its beats — or `None` when the beats are too few or not steady enough to have one tempo.                                                                                                                               |
+| [`novelty_signal`](_autosummary/muvid.footage.beats.html.md#muvid.footage.beats.novelty_signal)(path)                               | `{signals: {novelty}}` — Foote's checkerboard novelty of a song: a Gaussian- tapered checkerboard kernel slid along the diagonal of the cosine self-similarity of per-frame timbre (20 MFCCs) and harmony (12 chroma), each standardised.                                    |
+| [`checkerboard_novelty`](_autosummary/muvid.footage.beats.html.md#muvid.footage.beats.checkerboard_novelty)(features, \*[, half])         | Novelty along a feature sequence `[dims, frames]`: the correlation of a Gaussian-tapered checkerboard kernel (`half` frames each side) with the cosine self-similarity matrix around each frame.                                                                             |
 | [`directogram`](_autosummary/muvid.footage.beats.html.md#muvid.footage.beats.directogram)(fx, fy, \*[, bins])                    | Flow magnitude summed per direction bin, divided by the pixel count: how much of the picture moves which way.                                                                                                                                                                |
-| [`impact_from_directograms`](_autosummary/muvid.footage.beats.html.md#muvid.footage.beats.impact_from_directograms)(hists)                    | The visual-beat envelope: per sample, the motion that stopped since the previous one, summed over directions (`sum(max(0, h[t-1] - h[t]))`).                                                                                                                                 |
+| [`deceleration_flux`](_autosummary/muvid.footage.beats.html.md#muvid.footage.beats.deceleration_flux)(hists)                           | Per sample, the motion that stopped since the previous one, summed over the columns of `hists` (`sum(max(0, h[t-1] - h[t]))`) — directions of a directogram (`visual_impact`) or cells of a grid (`region_impact`).                                                          |
+| [`region_speeds`](_autosummary/muvid.footage.beats.html.md#muvid.footage.beats.region_speeds)(fx, fy, \*[, grid])                  | Mean flow speed in each cell of a `cols x rows` grid, row-major.                                                                                                                                                                                                             |
 | [`signal_record`](_autosummary/muvid.footage.beats.html.md#muvid.footage.beats.signal_record)(values, \*, t0, hop_s, name, domain) | One signal on a regular grid: sample `i` is at `t0 + i * hop_s` seconds of the media's own time.                                                                                                                                                                             |
 | [`decimated`](_autosummary/muvid.footage.beats.html.md#muvid.footage.beats.decimated)(record, max_points)                      | A signal with at most `max_points` samples: each kept sample is the MAX of the `k` it stands for (a beat is a peak; averaging would erase it), on a grid whose hop grows by `k` and whose `t0` moves to the centre of the first block — so a pooled peak stays where it was. |
 | [`cached_signals`](_autosummary/muvid.footage.beats.html.md#muvid.footage.beats.cached_signals)(root, media_hash, kind, compute)    | The record for `(media, kind)`: a file read when it was made before, else `compute()` written atomically under `<root>/beats/`.                                                                                                                                              |
 | [`cache_key`](_autosummary/muvid.footage.beats.html.md#muvid.footage.beats.cache_key)(kind)                                    | Every parameter that changes the bytes, so a new setting is a new file: the record format, the audio estimator's versions (`mixing` and `librosa` — a record must never disagree with a fresh `beat_grid`), and every constant of the visual pass.                           |
 | [`has_signal`](_autosummary/muvid.footage.beats.html.md#muvid.footage.beats.has_signal)(record)                                 | Whether a measured record carries at least one sample of anything.                                                                                                                                                                                                           |
-| [`binned_visual_signals`](_autosummary/muvid.footage.beats.html.md#muvid.footage.beats.binned_visual_signals)(mids, motion, hists, hop)    | Per-pair rates (at pair midpoints `mids`) averaged into `hop`-second bins.                                                                                                                                                                                                   |
+| [`binned_visual_signals`](_autosummary/muvid.footage.beats.html.md#muvid.footage.beats.binned_visual_signals)(mids, motion, hists, ...)    | Per-pair rates (at pair midpoints `mids`) averaged into `hop`-second bins.                                                                                                                                                                                                   |
 
-### muvid.footage.beats.SIGNAL_LABELS *= {'audio_onset': 'Sound hits', 'motion': 'Movement', 'visual_impact': 'Moves that land'}*
+### muvid.footage.beats.SIGNAL_LABELS *= {'audio_onset': 'Sound hits', 'motion': 'Movement', 'novelty': 'Section changes', 'region_impact': 'Moves that land, by region', 'visual_impact': 'Moves that land'}*
 
 What each signal is, in the words a screen can use.
 
@@ -2842,7 +2872,7 @@ the install).
 * **Return type:**
   [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
 
-### muvid.footage.beats.binned_visual_signals(mids, motion, hists, hop)
+### muvid.footage.beats.binned_visual_signals(mids, motion, hists, hop, , cells=None)
 
 Per-pair rates (at pair midpoints `mids`) averaged into `hop`-second bins.
 
@@ -2882,6 +2912,26 @@ remembered as silence — and `compute` should refuse rather than return one.
 * **Return type:**
   [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
 
+### muvid.footage.beats.checkerboard_novelty(features, , half=None)
+
+Novelty along a feature sequence `[dims, frames]`: the correlation of a
+Gaussian-tapered checkerboard kernel (`half` frames each side) with the cosine
+self-similarity matrix around each frame. Frames without a full kernel are NaN.
+
+* **Return type:**
+  `ndarray`
+
+### muvid.footage.beats.deceleration_flux(hists)
+
+Per sample, the motion that stopped since the previous one, summed over the
+columns of `hists` (`sum(max(0, h[t-1] - h[t]))`) — directions of a directogram
+(`visual_impact`) or cells of a grid (`region_impact`). `hists` is `[k, n]`
+with NaN rows where nothing was measured; the first sample, and any sample next to
+a NaN row, is NaN.
+
+* **Return type:**
+  `ndarray`
+
 ### muvid.footage.beats.decimated(record, max_points)
 
 A signal with at most `max_points` samples: each kept sample is the MAX of the
@@ -2902,6 +2952,27 @@ the picture moves which way. Flow under the noise floor votes for no direction.
 * **Return type:**
   `ndarray`
 
+### muvid.footage.beats.fitted_tempo(beats, , min_beats=8)
+
+The tempo (BPM) of a steady beat train, fitted to ALL its beats — or `None`
+when the beats are too few or not steady enough to have one tempo.
+
+A beat tracker’s own tempo can be biased: librosa’s is the median inter-beat
+interval, and on a song whose tracked beats run slightly fast with an occasional
+skip it reported 129.2 BPM where the beats themselves fit 126.9 (a 1.8 % error
+that puts a straight grid a full beat off within a minute).
+
+So each beat is given its beat NUMBER by walking the intervals: an interval of
+about one period is one step, a skipped beat two, and a spurious extra beat
+(half a period) no step at all — it shares its neighbour’s number, so it neither
+adds nor removes a beat. Time is fitted against those numbers by least squares,
+twice, re-numbering with the refined period. A train whose residual exceeds
+`_TEMPO_FIT_MAX_RMS` of a period (a tempo change, a rubato, heavy tracking
+errors) has no single tempo: `None`, and the caller keeps the estimator’s.
+
+* **Return type:**
+  [`float`](https://docs.python.org/3/builtins/functions.html#float) | [`None`](https://docs.python.org/3/builtins/constants.html#None)
+
 ### muvid.footage.beats.has_audio(path)
 
 Whether a media file carries an audio stream (an unprobeable file: no).
@@ -2916,12 +2987,20 @@ Whether a measured record carries at least one sample of anything.
 * **Return type:**
   [`bool`](https://docs.python.org/3/builtins/functions.html#bool)
 
-### muvid.footage.beats.impact_from_directograms(hists)
+### muvid.footage.beats.novelty_signal(path)
 
-The visual-beat envelope: per sample, the motion that stopped since the previous
-one, summed over directions (`sum(max(0, h[t-1] - h[t]))`). `hists` is
-`[k, bins]` with NaN rows where nothing was measured; the first sample, and any
-sample next to a NaN row, is NaN.
+`{signals: {novelty}}` — Foote’s checkerboard novelty of a song: a Gaussian-
+tapered checkerboard kernel slid along the diagonal of the cosine self-similarity
+of per-frame timbre (20 MFCCs) and harmony (12 chroma), each standardised. Peaks
+are where the music changes character — section boundaries.
+
+* **Return type:**
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+
+### muvid.footage.beats.region_speeds(fx, fy, , grid=(8, 6))
+
+Mean flow speed in each cell of a `cols x rows` grid, row-major. Edge pixels
+that do not fill a whole cell are left out.
 
 * **Return type:**
   `ndarray`
@@ -3002,6 +3081,7 @@ implicitly, so spans stay one-per-song-span and nothing about reading an EDL cha
 | [`MIN_SUPPORT`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.MIN_SUPPORT)         | Support must EXCEED this for an offset to be vouched for (env `MUVID_FOOTAGE_MIN_SUPPORT`).                                                                                                                                                                     |
 | [`MIN_MARGIN`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.MIN_MARGIN)          | Margin must EXCEED this for an offset to be vouched for (env `MUVID_FOOTAGE_MIN_MARGIN`).                                                                                                                                                                       |
 | [`MEASURED`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.MEASURED)            | the aligner found the offset, or a person set it.                                                                                                                                                                                                               |
+| [`SLIP_MAX_S`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.SLIP_MAX_S)          | about one beat at 128 BPM.                                                                                                                                                                                                                                      |
 | [`NO_VOUCHED_COVERAGE`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.NO_VOUCHED_COVERAGE) | nothing the aligner vouches for covers it at all.                                                                                                                                                                                                               |
 | [`UNVOUCHED_SELECTION`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.UNVOUCHED_SELECTION) | A vouched clip DOES cover the span and the strategy cut to an unvouched one anyway — so the loss is the SELECTOR's, not the footage's.                                                                                                                          |
 | [`EXCLUSION_REASONS`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.EXCLUSION_REASONS)   | Every reason [`exclude_unvouched()`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.exclude_unvouched) can give, for a caller matching on the value.                                                                                                                                 |
@@ -3009,12 +3089,13 @@ implicitly, so spans stay one-per-song-span and nothing about reading an EDL cha
 
 ### Functions
 
-| [`derive_cuts`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.derive_cuts)(edl, alignments, clip_paths)         | Turn a *validated* EDL into render-ready cuts — the ONE place `clip_in` is derived.   |
-|---------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------|
-| [`exclude_unvouched`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.exclude_unvouched)(edl, alignments)               | Set aside the spans of an AUTO edit whose only footage is unvouched (muvid#88).       |
-| [`fill_gaps`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.fill_gaps)(entries, song_duration, \*[, start])   | Make an edit span the WHOLE song by inserting explicit gap entries.                   |
-| [`validate_edl`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.validate_edl)(edl, alignments, song_duration, \*) | Validate an EDL (from a strategy OR a caller) — the ONE gate before any cutting.      |
-| [`vouches_for`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.vouches_for)(\*, confidence, support[, ...])      | Does the aligner vouch for this offset? The ONE place that verdict is reached.        |
+| [`clip_in_of`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.clip_in_of)(e, a)                                 | Where cut `e` starts in its clip `a`'s own time — THE sign convention: `song_start - offset + slip`.   |
+|---------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------|
+| [`derive_cuts`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.derive_cuts)(edl, alignments, clip_paths)         | Turn a *validated* EDL into render-ready cuts — the ONE place `clip_in` is derived.                    |
+| [`exclude_unvouched`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.exclude_unvouched)(edl, alignments)               | Set aside the spans of an AUTO edit whose only footage is unvouched (muvid#88).                        |
+| [`fill_gaps`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.fill_gaps)(entries, song_duration, \*[, start])   | Make an edit span the WHOLE song by inserting explicit gap entries.                                    |
+| [`validate_edl`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.validate_edl)(edl, alignments, song_duration, \*) | Validate an EDL (from a strategy OR a caller) — the ONE gate before any cutting.                       |
+| [`vouches_for`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.vouches_for)(\*, confidence, support[, ...])      | Does the aligner vouch for this offset? The ONE place that verdict is reached.                         |
 
 ### Classes
 
@@ -3116,7 +3197,7 @@ it for free.
 
 Every reason [`exclude_unvouched()`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.exclude_unvouched) can give, for a caller matching on the value.
 
-### *class* muvid.footage.edl.EdlEntry(song_start, song_end, clip_id, transition=None, crop=None, crop_end=None, look=None, look_time_varying=False, look_spec=None)
+### *class* muvid.footage.edl.EdlEntry(song_start, song_end, clip_id, transition=None, crop=None, crop_end=None, look=None, look_time_varying=False, look_spec=None, slip_s=0.0)
 
 Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
@@ -3217,6 +3298,20 @@ earlier. muvid’s own compilers declare it for you —
 [`stylize()`](_autosummary/muvid.footage.look.html.md#muvid.footage.look.stylize) one that answers from the compiled
 plan, and [`punch_in_cuts()`](_autosummary/muvid.footage.look.html.md#muvid.footage.look.punch_in_cuts) sets this field FROM
 the fragment rather than hardcoding it.
+
+#### slip_s *: [float](https://docs.python.org/3/builtins/functions.html#float)* *= 0.0*
+
+shift WHICH moment of the video this cut shows, by `slip_s`
+seconds, without moving the cut on the song. The clip’s alignment offset is
+the coarse sync (measured from its own soundtrack); a slip is the local
+correction on top of it, per cut — a dancer who is a little late on this
+stretch, shown a little earlier (`slip_s > 0` reads LATER footage). A jump
+in footage time at a cut boundary is invisible, which is why this is a cut
+property and needs no speed change. Bounded by [`SLIP_MAX_S`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.SLIP_MAX_S); `0.0`
+(the default) emits nothing — additive in both directions, like the rest.
+
+* **Type:**
+  **Slip**
 
 #### transition *: [Transition](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.Transition) | [None](https://docs.python.org/3/builtins/constants.html#None)* *= None*
 
@@ -3568,6 +3663,15 @@ honest answer is a gap, and the remedy is to re-align or re-shoot.
 * **Type:**
   The span had no alternative
 
+### muvid.footage.edl.SLIP_MAX_S *= 0.5*
+
+about one beat at 128 BPM. A
+slip is a local correction on top of the clip’s measured alignment; a shift
+larger than a beat is a different alignment, which is `set_offset`’s job.
+
+* **Type:**
+  The largest slip a cut may carry, either way (s)
+
 ### muvid.footage.edl.TRANSITION_CURVES *= frozenset({'circleclose', 'circleopen', 'dissolve', 'fade', 'fadeblack', 'fadewhite', 'slidedown', 'slideleft', 'slideright', 'slideup', 'smoothleft', 'smoothright', 'wipedown', 'wipeleft', 'wiperight', 'wipeup'})*
 
 The transition curves muvid offers. A curated subset of ffmpeg’s 58 `xfade`
@@ -3661,12 +3765,22 @@ right to be cut to without the caller saying so.
 
 The offending clips, in EDL order — so a caller can re-align exactly these.
 
+### muvid.footage.edl.clip_in_of(e, a)
+
+Where cut `e` starts in its clip `a`’s own time — THE sign convention:
+`song_start - offset + slip`. UNCLAMPED (a caller checking containment must see
+a negative in-point); [`derive_cuts()`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.derive_cuts) clamps for the renderer.
+
+* **Return type:**
+  [`float`](https://docs.python.org/3/builtins/functions.html#float)
+
 ### muvid.footage.edl.derive_cuts(edl, alignments, clip_paths)
 
 Turn a *validated* EDL into render-ready cuts — the ONE place `clip_in` is derived.
 
 Strategies emit only `{song_start, song_end, clip_id}`; the sign convention
-`clip_in = song_start - offset` lives here (SSOT), so no strategy can desync the cut.
+`clip_in = song_start - offset + slip` lives in [`clip_in_of()`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.clip_in_of) (SSOT), so no
+strategy can desync the cut.
 
 * **Return type:**
   [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`AssemblyCut`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.AssemblyCut)]
@@ -4009,7 +4123,7 @@ editorial — on a real 478x850 clip of dancers a whole body does not fit in a
 full-width 16:9 window at all (315-380px of subject into 269px), so “heads or
 feet” is a decision per cut, not a default.
 
-### *class* muvid.footage.EdlEntry(song_start, song_end, clip_id, transition=None, crop=None, crop_end=None, look=None, look_time_varying=False, look_spec=None)
+### *class* muvid.footage.EdlEntry(song_start, song_end, clip_id, transition=None, crop=None, crop_end=None, look=None, look_time_varying=False, look_spec=None, slip_s=0.0)
 
 Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
@@ -4110,6 +4224,20 @@ earlier. muvid’s own compilers declare it for you —
 [`stylize()`](_autosummary/muvid.footage.look.html.md#muvid.footage.look.stylize) one that answers from the compiled
 plan, and [`punch_in_cuts()`](_autosummary/muvid.footage.look.html.md#muvid.footage.look.punch_in_cuts) sets this field FROM
 the fragment rather than hardcoding it.
+
+#### slip_s *: [float](https://docs.python.org/3/builtins/functions.html#float)* *= 0.0*
+
+shift WHICH moment of the video this cut shows, by `slip_s`
+seconds, without moving the cut on the song. The clip’s alignment offset is
+the coarse sync (measured from its own soundtrack); a slip is the local
+correction on top of it, per cut — a dancer who is a little late on this
+stretch, shown a little earlier (`slip_s > 0` reads LATER footage). A jump
+in footage time at a cut boundary is invisible, which is why this is a cut
+property and needs no speed change. Bounded by `SLIP_MAX_S`; `0.0`
+(the default) emits nothing — additive in both directions, like the rest.
+
+* **Type:**
+  **Slip**
 
 #### transition *: [Transition](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.Transition) | [None](https://docs.python.org/3/builtins/constants.html#None)* *= None*
 
@@ -4345,7 +4473,8 @@ False
 Turn a *validated* EDL into render-ready cuts — the ONE place `clip_in` is derived.
 
 Strategies emit only `{song_start, song_end, clip_id}`; the sign convention
-`clip_in = song_start - offset` lives here (SSOT), so no strategy can desync the cut.
+`clip_in = song_start - offset + slip` lives in `clip_in_of()` (SSOT), so no
+strategy can desync the cut.
 
 * **Return type:**
   [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`AssemblyCut`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.AssemblyCut)]
@@ -6315,7 +6444,7 @@ trust refusal belongs where the encode does, in [`render()`](_autosummary/muvid.
 |-------------------------------------------------------------------|--------------------------------------------------------------------|
 | [`FootageCancelled`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.FootageCancelled) | An operation stopped between steps because its host asked it to.   |
 
-### muvid.footage.service.EDL_OPTIONAL_FIELDS *= (('transition', <function <lambda>>, None), ('crop', <function <lambda>>, None), ('crop_end', <function <lambda>>, None), ('look', <class 'str'>, None), ('look_time_varying', <class 'bool'>, False), ('look_spec', <class 'dict'>, None))*
+### muvid.footage.service.EDL_OPTIONAL_FIELDS *= (('transition', <function <lambda>>, None), ('crop', <function <lambda>>, None), ('crop_end', <function <lambda>>, None), ('look', <class 'str'>, None), ('look_time_varying', <class 'bool'>, False), ('look_spec', <class 'dict'>, None), ('slip_s', <class 'float'>, 0.0))*
 
 Every optional [`EdlEntry`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.EdlEntry) field [`edl_json()`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.edl_json) carries,
 and how to render it. **The list is the round trip.** `_as_entry` reads all of
@@ -6862,7 +6991,7 @@ The saved footage curves — for the lanes under each video, and for inspection.
 * **Return type:**
   [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
 
-### muvid.footage.service.set_cut(fp, , edit_id, index, clip_id=None, song_start=None, song_end=None, look=None, look_time_varying=None)
+### muvid.footage.service.set_cut(fp, , edit_id, index, clip_id=None, song_start=None, song_end=None, look=None, look_time_varying=None, slip_s=None)
 
 Change one cut of a saved edit (`index` is its position in `get_edit`’s edl).
 
@@ -6878,6 +7007,11 @@ Change one cut of a saved edit (`index` is its position in `get_edit`’s edl).
   or, for power users,
   one raw ffmpeg filter chain (allowlisted; set `look_time_varying` for one that
   moves). `""` removes it.
+- `slip_s`: show a slightly different moment of the same video over the same
+  span — `0.1` reads the footage 0.1 s later — to put a dancer’s moves on the
+  beat where the clip’s alignment is right overall but a little off here. At
+  most one beat either way (`SLIP_MAX_S`); `0` removes it. A new video
+  (`clip_id`) starts unslipped.
 
 Parameters left out are unchanged. The changed edit is checked and saved; returns it.
 
@@ -10277,7 +10411,13 @@ Assemble the music video — auto (a selection `strategy`) or an explicit `edl`.
   reply’s `warnings` when a blended boundary restarts the move’s ramp,
   which it does because the blend is a separate seek (muvid#73). Leave it
   off — the default — for a grade, a LUT or a posterise, which never read the
-  clock. All five fields survive verbatim in the returned `edl`.
+  clock.
+- an entry may carry `slip_s` (seconds, at most one beat either way,
+  `muvid.footage.edl.SLIP_MAX_S`): the cut shows its video that much LATER
+  (negative: earlier) without moving on the song — a local correction on top
+  of the clip’s alignment, to put a dancer on the beat. The clip must still
+  hold the slipped span. Every optional field survives verbatim in the
+  returned `edl`.
 - `strategy='weighted'` (score-driven): the beat-snapped Viterbi selector reads the
   persisted score tracks (run `score_footage` first) and the selection config —
   `preset` (“energetic”/”contemplative”) and/or `weights` (per-metric) and/or
@@ -10575,7 +10715,7 @@ cut to it; default the whole song. Returns the saved edit.
 * **Return type:**
   [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
 
-### muvid.mcp.footage_tools.footage_set_cut(project_id, , edit_id, index, clip_id=None, song_start=None, song_end=None, look=None, look_time_varying=None)
+### muvid.mcp.footage_tools.footage_set_cut(project_id, , edit_id, index, clip_id=None, song_start=None, song_end=None, look=None, look_time_varying=None, slip_s=None)
 
 Change one cut of a saved edit (`index` is its position in `footage_get_edit`’s edl).
 
@@ -10591,6 +10731,11 @@ Change one cut of a saved edit (`index` is its position in `footage_get_edit`’
   or, for power users,
   one raw ffmpeg filter chain (allowlisted; set `look_time_varying` for one that
   moves). `""` removes it.
+- `slip_s`: show a slightly different moment of the same video over the same
+  span — `0.1` reads the footage 0.1 s later — to put a dancer’s moves on the
+  beat where the clip’s alignment is right overall but a little off here. At
+  most one beat either way (`SLIP_MAX_S`); `0` removes it. A new video
+  (`clip_id`) starts unslipped.
 
 Parameters left out are unchanged. The changed edit is checked and saved; returns it.
 
@@ -15343,18 +15488,20 @@ Rendered white; colour comes from the accent `tint`. `options={"mode":
 
 # About this build
 
-This documentation was built on **2026-09-28 05:21 UTC** from commit <a href="https://github.com/thorwhalen/muvid/commit/50d6173f6ee058da7496f3cc437a59dbcaded505"><code>50d6173</code></a> on branch <code>main</code>, for **muvid 0.0.73** (from <code>pyproject.toml</code>).
+This documentation was built on **2026-09-28 11:57 UTC** from commit <a href="https://github.com/thorwhalen/muvid/commit/661e1651935530e2745766a3abe154922ffe4235"><code>661e165</code></a> on branch <code>main</code>, for **muvid 0.0.74** (from <code>pyproject.toml</code>).
 
-#### NOTE
-Nothing suggests a mismatch: the tree was clean at the commit above, and the documented version is the one on PyPI.
+#### WARNING
+The documentation and the package may be misaligned:
+
+- The documented version (0.0.74) is ahead of the latest release on PyPI (0.0.73): these docs describe unreleased code.
 
 ## Source
 
 |                     |                                                                                                                                                         |
 |---------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Commit              | <a href="https://github.com/thorwhalen/muvid/commit/50d6173f6ee058da7496f3cc437a59dbcaded505"><code>50d6173f6ee058da7496f3cc437a59dbcaded505</code></a> |
+| Commit              | <a href="https://github.com/thorwhalen/muvid/commit/661e1651935530e2745766a3abe154922ffe4235"><code>661e1651935530e2745766a3abe154922ffe4235</code></a> |
 | Branch              | <code>main</code>                                                                                                                                       |
-| Tags at this commit | <code>0.0.73</code>                                                                                                                                     |
+| Tags at this commit | <code>0.0.74</code>                                                                                                                                     |
 | Working tree        | clean                                                                                                                                                   |
 | Remote              | <code>https://github.com/thorwhalen/muvid</code>                                                                                                        |
 
@@ -15363,9 +15510,9 @@ Nothing suggests a mismatch: the tree was clean at the commit above, and the doc
 |              |                                                                                            |
 |--------------|--------------------------------------------------------------------------------------------|
 | Repository   | <code>thorwhalen/muvid</code>                                                              |
-| Run          | <a href="https://github.com/thorwhalen/muvid/actions/runs/36381054061">36381054061</a>     |
+| Run          | <a href="https://github.com/thorwhalen/muvid/actions/runs/36418007491">36418007491</a>     |
 | Ref          | <code>refs/heads/main</code>                                                               |
-| Event commit | <code>d2d71c43c524fece4240702634c69513ab882b86</code> (in the history of the built commit) |
+| Event commit | <code>0a2e518f29d2a0aa22a2ebd51d60ee2e95fa0862</code> (in the history of the built commit) |
 
 ## Tools
 
@@ -15390,13 +15537,13 @@ Nothing suggests a mismatch: the tree was clean at the commit above, and the doc
 
 ## Package on PyPI
 
-Latest release: <a href="https://pypi.org/project/muvid/0.0.73/">0.0.73</a>, the same as the documented version.
+Latest release: <a href="https://pypi.org/project/muvid/0.0.73/">0.0.73</a>, older than the documented version (0.0.74).
 
 ## Reproduce
 
 ```bash
 git clone https://github.com/thorwhalen/muvid && cd muvid
-git checkout 50d6173f6ee058da7496f3cc437a59dbcaded505
+git checkout 661e1651935530e2745766a3abe154922ffe4235
 pip install "epythet==0.2.12"
 epythet quickstart . --ignore tests/ scrap/ examples/
 ```

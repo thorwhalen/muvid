@@ -179,7 +179,13 @@ Assemble the music video — auto (a selection `strategy`) or an explicit `edl`.
   reply’s `warnings` when a blended boundary restarts the move’s ramp,
   which it does because the blend is a separate seek (muvid#73). Leave it
   off — the default — for a grade, a LUT or a posterise, which never read the
-  clock. All five fields survive verbatim in the returned `edl`.
+  clock.
+- an entry may carry `slip_s` (seconds, at most one beat either way,
+  `muvid.footage.edl.SLIP_MAX_S`): the cut shows its video that much LATER
+  (negative: earlier) without moving on the song — a local correction on top
+  of the clip’s alignment, to put a dancer on the beat. The clip must still
+  hold the slipped span. Every optional field survives verbatim in the
+  returned `edl`.
 - `strategy='weighted'` (score-driven): the beat-snapped Viterbi selector reads the
   persisted score tracks (run `score_footage` first) and the selection config —
   `preset` (“energetic”/”contemplative”) and/or `weights` (per-metric) and/or
@@ -477,7 +483,7 @@ cut to it; default the whole song. Returns the saved edit.
 * **Return type:**
   [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
 
-### muvid.mcp.footage_tools.footage_set_cut(project_id, , edit_id, index, clip_id=None, song_start=None, song_end=None, look=None, look_time_varying=None)
+### muvid.mcp.footage_tools.footage_set_cut(project_id, , edit_id, index, clip_id=None, song_start=None, song_end=None, look=None, look_time_varying=None, slip_s=None)
 
 Change one cut of a saved edit (`index` is its position in `footage_get_edit`’s edl).
 
@@ -493,6 +499,11 @@ Change one cut of a saved edit (`index` is its position in `footage_get_edit`’
   or, for power users,
   one raw ffmpeg filter chain (allowlisted; set `look_time_varying` for one that
   moves). `""` removes it.
+- `slip_s`: show a slightly different moment of the same video over the same
+  span — `0.1` reads the footage 0.1 s later — to put a dancer’s moves on the
+  beat where the clip’s alignment is right overall but a little off here. At
+  most one beat either way (`SLIP_MAX_S`); `0` removes it. A new video
+  (`clip_id`) starts unslipped.
 
 Parameters left out are unchanged. The changed edit is checked and saved; returns it.
 

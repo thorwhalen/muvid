@@ -388,7 +388,13 @@ while declaring no size a bound can read (590 MB and 941 MB measured on a
 reply’s <code class="docutils literal notranslate"><span class="pre">warnings</span></code> when a blended boundary restarts the move’s ramp,
 which it does because the blend is a separate seek (muvid#73). Leave it
 off — the default — for a grade, a LUT or a posterise, which never read the
-clock. All five fields survive verbatim in the returned <code class="docutils literal notranslate"><span class="pre">edl</span></code>.</p></li>
+clock.</p></li>
+<li><p>an entry may carry <code class="docutils literal notranslate"><span class="pre">slip_s</span></code> (seconds, at most one beat either way,
+<code class="docutils literal notranslate"><span class="pre">muvid.footage.edl.SLIP_MAX_S</span></code>): the cut shows its video that much LATER
+(negative: earlier) without moving on the song — a local correction on top
+of the clip’s alignment, to put a dancer on the beat. The clip must still
+hold the slipped span. Every optional field survives verbatim in the
+returned <code class="docutils literal notranslate"><span class="pre">edl</span></code>.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">strategy='weighted'</span></code> (score-driven): the beat-snapped Viterbi selector reads the
 persisted score tracks (run <code class="docutils literal notranslate"><span class="pre">score_footage</span></code> first) and the selection config —
 <code class="docutils literal notranslate"><span class="pre">preset</span></code> (“energetic”/”contemplative”) and/or <code class="docutils literal notranslate"><span class="pre">weights</span></code> (per-metric) and/or
@@ -729,7 +735,7 @@ cut to it; default the whole song. Returns the saved edit.</p>
 </dd></dl>
 <dl class="py function">
 <dt class="sig sig-object py" id="muvid.mcp.footage_tools.footage_set_cut">
-<span class="sig-prename descclassname"><span class="pre">muvid.mcp.footage_tools.</span></span><span class="sig-name descname"><span class="pre">footage_set_cut</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">project_id</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">edit_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clip_id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">song_start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">song_end</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">look</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">look_time_varying</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#muvid.mcp.footage_tools.footage_set_cut" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#muvid.mcp.footage_tools.footage_set_cut'">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">muvid.mcp.footage_tools.</span></span><span class="sig-name descname"><span class="pre">footage_set_cut</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">project_id</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">edit_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clip_id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">song_start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">song_end</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">look</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">look_time_varying</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">slip_s</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#muvid.mcp.footage_tools.footage_set_cut" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#muvid.mcp.footage_tools.footage_set_cut'">¶</a></dt>
 <dd><p>Change one cut of a saved edit (<code class="docutils literal notranslate"><span class="pre">index</span></code> is its position in <code class="docutils literal notranslate"><span class="pre">footage_get_edit</span></code>’s edl).</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">clip_id</span></code>: show another video over this span (<code class="docutils literal notranslate"><span class="pre">""</span></code> makes it a gap). The new
@@ -744,6 +750,11 @@ compiled for this cut’s length and the project’s canvas and kept on the cut 
 or, for power users,
 one raw ffmpeg filter chain (allowlisted; set <code class="docutils literal notranslate"><span class="pre">look_time_varying</span></code> for one that
 moves). <code class="docutils literal notranslate"><span class="pre">""</span></code> removes it.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">slip_s</span></code>: show a slightly different moment of the same video over the same
+span — <code class="docutils literal notranslate"><span class="pre">0.1</span></code> reads the footage 0.1 s later — to put a dancer’s moves on the
+beat where the clip’s alignment is right overall but a little off here. At
+most one beat either way (<code class="docutils literal notranslate"><span class="pre">SLIP_MAX_S</span></code>); <code class="docutils literal notranslate"><span class="pre">0</span></code> removes it. A new video
+(<code class="docutils literal notranslate"><span class="pre">clip_id</span></code>) starts unslipped.</p></li>
 </ul>
 <p>Parameters left out are unchanged. The changed edit is checked and saved; returns it.</p>
 <dl class="field-list simple">
@@ -979,7 +990,7 @@ video uses. Replaces any previous song. Duration/size-capped.</p>
 </div>
 </footer>
 </div>
-<script src="../_static/documentation_options.js?v=1e158f99"></script>
+<script src="../_static/documentation_options.js?v=d59c1f54"></script>
 <script src="../_static/doctools.js?v=fd6eb6e6"></script>
 <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
 <script src="../_static/clipboard.min.js?v=a7894cd8"></script>

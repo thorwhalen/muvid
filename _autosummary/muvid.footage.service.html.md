@@ -110,7 +110,7 @@ trust refusal belongs where the encode does, in [`render()`](#muvid.footage.serv
 |-------------------------------------------------------------------|--------------------------------------------------------------------|
 | [`FootageCancelled`](#muvid.footage.service.FootageCancelled) | An operation stopped between steps because its host asked it to.   |
 
-### muvid.footage.service.EDL_OPTIONAL_FIELDS *= (('transition', <function <lambda>>, None), ('crop', <function <lambda>>, None), ('crop_end', <function <lambda>>, None), ('look', <class 'str'>, None), ('look_time_varying', <class 'bool'>, False), ('look_spec', <class 'dict'>, None))*
+### muvid.footage.service.EDL_OPTIONAL_FIELDS *= (('transition', <function <lambda>>, None), ('crop', <function <lambda>>, None), ('crop_end', <function <lambda>>, None), ('look', <class 'str'>, None), ('look_time_varying', <class 'bool'>, False), ('look_spec', <class 'dict'>, None), ('slip_s', <class 'float'>, 0.0))*
 
 Every optional [`EdlEntry`](muvid.footage.edl.html.md#muvid.footage.edl.EdlEntry) field [`edl_json()`](#muvid.footage.service.edl_json) carries,
 and how to render it. **The list is the round trip.** `_as_entry` reads all of
@@ -657,7 +657,7 @@ The saved footage curves — for the lanes under each video, and for inspection.
 * **Return type:**
   [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
 
-### muvid.footage.service.set_cut(fp, , edit_id, index, clip_id=None, song_start=None, song_end=None, look=None, look_time_varying=None)
+### muvid.footage.service.set_cut(fp, , edit_id, index, clip_id=None, song_start=None, song_end=None, look=None, look_time_varying=None, slip_s=None)
 
 Change one cut of a saved edit (`index` is its position in `get_edit`’s edl).
 
@@ -673,6 +673,11 @@ Change one cut of a saved edit (`index` is its position in `get_edit`’s edl).
   or, for power users,
   one raw ffmpeg filter chain (allowlisted; set `look_time_varying` for one that
   moves). `""` removes it.
+- `slip_s`: show a slightly different moment of the same video over the same
+  span — `0.1` reads the footage 0.1 s later — to put a dancer’s moves on the
+  beat where the clip’s alignment is right overall but a little off here. At
+  most one beat either way (`SLIP_MAX_S`); `0` removes it. A new video
+  (`clip_id`) starts unslipped.
 
 Parameters left out are unchanged. The changed edit is checked and saved; returns it.
 

@@ -2,18 +2,20 @@
 
 # About this build
 
-This documentation was built on **2026-09-28 05:21 UTC** from commit <a href="https://github.com/thorwhalen/muvid/commit/50d6173f6ee058da7496f3cc437a59dbcaded505"><code>50d6173</code></a> on branch <code>main</code>, for **muvid 0.0.73** (from <code>pyproject.toml</code>).
+This documentation was built on **2026-09-28 11:57 UTC** from commit <a href="https://github.com/thorwhalen/muvid/commit/661e1651935530e2745766a3abe154922ffe4235"><code>661e165</code></a> on branch <code>main</code>, for **muvid 0.0.74** (from <code>pyproject.toml</code>).
 
-#### NOTE
-Nothing suggests a mismatch: the tree was clean at the commit above, and the documented version is the one on PyPI.
+#### WARNING
+The documentation and the package may be misaligned:
+
+- The documented version (0.0.74) is ahead of the latest release on PyPI (0.0.73): these docs describe unreleased code.
 
 ## Source
 
 |                     |                                                                                                                                                         |
 |---------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Commit              | <a href="https://github.com/thorwhalen/muvid/commit/50d6173f6ee058da7496f3cc437a59dbcaded505"><code>50d6173f6ee058da7496f3cc437a59dbcaded505</code></a> |
+| Commit              | <a href="https://github.com/thorwhalen/muvid/commit/661e1651935530e2745766a3abe154922ffe4235"><code>661e1651935530e2745766a3abe154922ffe4235</code></a> |
 | Branch              | <code>main</code>                                                                                                                                       |
-| Tags at this commit | <code>0.0.73</code>                                                                                                                                     |
+| Tags at this commit | <code>0.0.74</code>                                                                                                                                     |
 | Working tree        | clean                                                                                                                                                   |
 | Remote              | <code>https://github.com/thorwhalen/muvid</code>                                                                                                        |
 
@@ -22,9 +24,9 @@ Nothing suggests a mismatch: the tree was clean at the commit above, and the doc
 |              |                                                                                            |
 |--------------|--------------------------------------------------------------------------------------------|
 | Repository   | <code>thorwhalen/muvid</code>                                                              |
-| Run          | <a href="https://github.com/thorwhalen/muvid/actions/runs/36381054061">36381054061</a>     |
+| Run          | <a href="https://github.com/thorwhalen/muvid/actions/runs/36418007491">36418007491</a>     |
 | Ref          | <code>refs/heads/main</code>                                                               |
-| Event commit | <code>d2d71c43c524fece4240702634c69513ab882b86</code> (in the history of the built commit) |
+| Event commit | <code>0a2e518f29d2a0aa22a2ebd51d60ee2e95fa0862</code> (in the history of the built commit) |
 
 ## Tools
 
@@ -49,13 +51,13 @@ Nothing suggests a mismatch: the tree was clean at the commit above, and the doc
 
 ## Package on PyPI
 
-Latest release: <a href="https://pypi.org/project/muvid/0.0.73/">0.0.73</a>, the same as the documented version.
+Latest release: <a href="https://pypi.org/project/muvid/0.0.73/">0.0.73</a>, older than the documented version (0.0.74).
 
 ## Reproduce
 
 ```bash
 git clone https://github.com/thorwhalen/muvid && cd muvid
-git checkout 50d6173f6ee058da7496f3cc437a59dbcaded505
+git checkout 661e1651935530e2745766a3abe154922ffe4235
 pip install "epythet==0.2.12"
 epythet quickstart . --ignore tests/ scrap/ examples/
 ```

@@ -74,7 +74,7 @@ editorial — on a real 478x850 clip of dancers a whole body does not fit in a
 full-width 16:9 window at all (315-380px of subject into 269px), so “heads or
 feet” is a decision per cut, not a default.
 
-### *class* muvid.footage.EdlEntry(song_start, song_end, clip_id, transition=None, crop=None, crop_end=None, look=None, look_time_varying=False, look_spec=None)
+### *class* muvid.footage.EdlEntry(song_start, song_end, clip_id, transition=None, crop=None, crop_end=None, look=None, look_time_varying=False, look_spec=None, slip_s=0.0)
 
 Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
@@ -175,6 +175,20 @@ earlier. muvid’s own compilers declare it for you —
 [`stylize()`](muvid.footage.look.html.md#muvid.footage.look.stylize) one that answers from the compiled
 plan, and [`punch_in_cuts()`](muvid.footage.look.html.md#muvid.footage.look.punch_in_cuts) sets this field FROM
 the fragment rather than hardcoding it.
+
+#### slip_s *: [float](https://docs.python.org/3/builtins/functions.html#float)* *= 0.0*
+
+shift WHICH moment of the video this cut shows, by `slip_s`
+seconds, without moving the cut on the song. The clip’s alignment offset is
+the coarse sync (measured from its own soundtrack); a slip is the local
+correction on top of it, per cut — a dancer who is a little late on this
+stretch, shown a little earlier (`slip_s > 0` reads LATER footage). A jump
+in footage time at a cut boundary is invisible, which is why this is a cut
+property and needs no speed change. Bounded by `SLIP_MAX_S`; `0.0`
+(the default) emits nothing — additive in both directions, like the rest.
+
+* **Type:**
+  **Slip**
 
 #### transition *: [Transition](muvid.footage.edl.html.md#muvid.footage.edl.Transition) | [None](https://docs.python.org/3/builtins/constants.html#None)* *= None*
 
@@ -410,7 +424,8 @@ False
 Turn a *validated* EDL into render-ready cuts — the ONE place `clip_in` is derived.
 
 Strategies emit only `{song_start, song_end, clip_id}`; the sign convention
-`clip_in = song_start - offset` lives here (SSOT), so no strategy can desync the cut.
+`clip_in = song_start - offset + slip` lives in `clip_in_of()` (SSOT), so no
+strategy can desync the cut.
 
 * **Return type:**
   [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`AssemblyCut`](muvid.footage.edl.html.md#muvid.footage.edl.AssemblyCut)]

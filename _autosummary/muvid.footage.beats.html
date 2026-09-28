@@ -145,26 +145,50 @@
 hits up with the music wants more than instants: a <strong>continuous</strong> signal it can look at,
 threshold anywhere between its minimum and maximum, and bend towards binary. That is what
 this module measures, per piece of media and in that media’s OWN time (a clip reaches song
-time through its offset, exactly as filmstrips do):</p>
+time through its offset, exactly as filmstrips do).</p>
+<p>Sound, for the song and for every clip with a soundtrack:</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">audio_onset</span></code> — the onset-strength envelope <code class="docutils literal notranslate"><span class="pre">mixing.audio.beat_grid</span></code> estimates beats
-from (the same estimator <code class="docutils literal notranslate"><span class="pre">beat_grid</span></code> uses, so the two never disagree about the song),
-for the song and for every clip that has a soundtrack. The estimator’s beat instants and
-tempo come along.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">motion</span></code> — subject-motion energy: the mean camera-compensated optical-flow magnitude
-(the scoring layer’s <code class="docutils literal notranslate"><span class="pre">flow_residual_and_global</span></code> kernel), in frame-heights per second so
-its scale depends little on resolution or sampling rate (not at all is not claimed: the
-flow’s window and noise floor are in downscaled pixels).</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">visual_impact</span></code> — the visual BEAT envelope: how much motion, direction by direction,
-STOPS from one sample to the next — the half-wave-rectified decrease of a
-magnitude-weighted <strong>directogram</strong> (a histogram of flow directions), after Davis &amp;
-Agrawala, <em>Visual Rhythm and Beat</em> (SIGGRAPH 2018), whose visual beats are sudden
-decelerations. A hit stopping dead and a change of direction (motion leaving one
-direction bin) both register; motion energy alone misses the turn, which is most of
-what a dance beat looks like. Measured on phone footage of dancers, this deceleration
-flux locked to the song’s beat about twice as strongly as the increase or the total
-change did.</p></li>
+from (librosa’s spectral flux on a log-mel spectrogram — the standard envelope, adequate
+for percussive pop; SuperFlux’s vibrato suppression matters for voice and strings). The
+estimator’s beat instants come along, with a tempo FITTED to them (see <code class="docutils literal notranslate"><span class="pre">fitted_tempo</span></code>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">novelty</span></code> (the song only) — how much the music changes character around each moment:
+Foote’s checkerboard novelty over a self-similarity matrix of timbre and harmony. Its
+peaks are section boundaries (verse, chorus, drop) — the other place an editor cuts.</p></li>
 </ul>
+<p>Picture, for every clip:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">motion</span></code> — subject-motion energy: the mean camera-compensated optical-flow magnitude,
+in frame-heights per second.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">visual_impact</span></code> — the visual beat: how much motion, direction by direction, STOPS
+between samples — the half-wave-rectified decrease of a magnitude-weighted directogram.
+This is the “impact envelope” of Davis &amp; Agrawala, <em>Visual Rhythm and Beat</em> (SIGGRAPH
+2018, §4.2; their printed Eq. 13 has the sign of an increase, their prose and released
+code the decrease used here). It is a deceleration measure, which is where the
+conducting literature puts the beat: ensembles synchronise with the **maximal
+deceleration** of the conductor’s hand (Luck &amp; Toiviainen 2006), and with absolute
+acceleration along the trajectory (Luck &amp; Sloboda 2009) — the <em>ictus</em>, not the moment a
+movement starts (Takehana et al. 2019: movement initiation never coincided with beats).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">region_impact</span></code> — the same deceleration without the directogram: the decrease of
+camera-compensated SPEED in each cell of an 8 x 6 grid, summed over cells. Per-region
+rather than per-direction, so several dancers braking in different places add up
+instead of cancelling.</p></li>
+</ul>
+<p><strong>What the evidence on real footage says</strong> (three phone videos of a crowd dancing to one
+song, 2 minutes each; beat locking measured as the phase concentration of each signal on
+the song’s beat, against a null that shifts each 4 s block independently — a whole-signal
+circular shift cannot detect locking at all, since it only rotates the phase):</p>
+<ul class="simple">
+<li><p>each clip’s own soundtrack locks strongly (z = 7 to 15) — the positive control, and the
+confirmation that the clips’ offsets are right;</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">visual_impact</span></code> and <code class="docutils literal notranslate"><span class="pre">region_impact</span></code> lock on one clip (z = 2.8 and 2.5, at the same
+-25 ms lag as that clip’s soundtrack) and on neither of the others; whole-frame speed,
+pose-based limb deceleration (a person found in only 38-75 % of frames of a crowd) and
+AIST++-style velocity minima (half a beat off) did no better;</p></li>
+<li><p>a 1.25 Hz high-pass (Davis &amp; Agrawala’s post-filter) helped no clip consistently.</p></li>
+</ul>
+<p>So these envelopes SHOW where movement lands; on a crowd they are weak evidence of the
+beat, and nothing here decides a warp by itself.</p>
 <p>Every signal is <strong>unnormalised</strong> and carries its own grid (<code class="docutils literal notranslate"><span class="pre">t0</span></code>, <code class="docutils literal notranslate"><span class="pre">hop_s</span></code>) and its
 <code class="docutils literal notranslate"><span class="pre">min</span></code>, <code class="docutils literal notranslate"><span class="pre">max</span></code> and <code class="docutils literal notranslate"><span class="pre">p99</span></code> (a robust top a display can scale by), because thresholding is a
 view the caller chooses, not something the data should have decided.</p>
@@ -190,11 +214,23 @@ beside <code class="docutils literal notranslate"><span class="pre">peaks/</span
 <tr class="row-odd"><td><p><a class="reference internal" href="#muvid.footage.beats.has_audio" title="muvid.footage.beats.has_audio"><code class="xref py py-obj docutils literal notranslate"><span class="pre">has_audio</span></code></a>(path)</p></td>
 <td><p>Whether a media file carries an audio stream (an unprobeable file: no).</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#muvid.footage.beats.directogram" title="muvid.footage.beats.directogram"><code class="xref py py-obj docutils literal notranslate"><span class="pre">directogram</span></code></a>(fx, fy, *[, bins])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#muvid.footage.beats.fitted_tempo" title="muvid.footage.beats.fitted_tempo"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fitted_tempo</span></code></a>(beats, *[, min_beats])</p></td>
+<td><p>The tempo (BPM) of a steady beat train, fitted to ALL its beats — or <code class="docutils literal notranslate"><span class="pre">None</span></code> when the beats are too few or not steady enough to have one tempo.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.footage.beats.novelty_signal" title="muvid.footage.beats.novelty_signal"><code class="xref py py-obj docutils literal notranslate"><span class="pre">novelty_signal</span></code></a>(path)</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">{signals:</span> <span class="pre">{novelty}}</span></code> — Foote's checkerboard novelty of a song: a Gaussian- tapered checkerboard kernel slid along the diagonal of the cosine self-similarity of per-frame timbre (20 MFCCs) and harmony (12 chroma), each standardised.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#muvid.footage.beats.checkerboard_novelty" title="muvid.footage.beats.checkerboard_novelty"><code class="xref py py-obj docutils literal notranslate"><span class="pre">checkerboard_novelty</span></code></a>(features, *[, half])</p></td>
+<td><p>Novelty along a feature sequence <code class="docutils literal notranslate"><span class="pre">[dims,</span> <span class="pre">frames]</span></code>: the correlation of a Gaussian-tapered checkerboard kernel (<code class="docutils literal notranslate"><span class="pre">half</span></code> frames each side) with the cosine self-similarity matrix around each frame.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.footage.beats.directogram" title="muvid.footage.beats.directogram"><code class="xref py py-obj docutils literal notranslate"><span class="pre">directogram</span></code></a>(fx, fy, *[, bins])</p></td>
 <td><p>Flow magnitude summed per direction bin, divided by the pixel count: how much of the picture moves which way.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.footage.beats.impact_from_directograms" title="muvid.footage.beats.impact_from_directograms"><code class="xref py py-obj docutils literal notranslate"><span class="pre">impact_from_directograms</span></code></a>(hists)</p></td>
-<td><p>The visual-beat envelope: per sample, the motion that stopped since the previous one, summed over directions (<code class="docutils literal notranslate"><span class="pre">sum(max(0,</span> <span class="pre">h[t-1]</span> <span class="pre">-</span> <span class="pre">h[t]))</span></code>).</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#muvid.footage.beats.deceleration_flux" title="muvid.footage.beats.deceleration_flux"><code class="xref py py-obj docutils literal notranslate"><span class="pre">deceleration_flux</span></code></a>(hists)</p></td>
+<td><p>Per sample, the motion that stopped since the previous one, summed over the columns of <code class="docutils literal notranslate"><span class="pre">hists</span></code> (<code class="docutils literal notranslate"><span class="pre">sum(max(0,</span> <span class="pre">h[t-1]</span> <span class="pre">-</span> <span class="pre">h[t]))</span></code>) — directions of a directogram (<code class="docutils literal notranslate"><span class="pre">visual_impact</span></code>) or cells of a grid (<code class="docutils literal notranslate"><span class="pre">region_impact</span></code>).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.footage.beats.region_speeds" title="muvid.footage.beats.region_speeds"><code class="xref py py-obj docutils literal notranslate"><span class="pre">region_speeds</span></code></a>(fx, fy, *[, grid])</p></td>
+<td><p>Mean flow speed in each cell of a <code class="docutils literal notranslate"><span class="pre">cols</span> <span class="pre">x</span> <span class="pre">rows</span></code> grid, row-major.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#muvid.footage.beats.signal_record" title="muvid.footage.beats.signal_record"><code class="xref py py-obj docutils literal notranslate"><span class="pre">signal_record</span></code></a>(values, *, t0, hop_s, name, domain)</p></td>
 <td><p>One signal on a regular grid: sample <code class="docutils literal notranslate"><span class="pre">i</span></code> is at <code class="docutils literal notranslate"><span class="pre">t0</span> <span class="pre">+</span> <span class="pre">i</span> <span class="pre">*</span> <span class="pre">hop_s</span></code> seconds of the media's own time.</p></td>
@@ -211,14 +247,14 @@ beside <code class="docutils literal notranslate"><span class="pre">peaks/</span
 <tr class="row-even"><td><p><a class="reference internal" href="#muvid.footage.beats.has_signal" title="muvid.footage.beats.has_signal"><code class="xref py py-obj docutils literal notranslate"><span class="pre">has_signal</span></code></a>(record)</p></td>
 <td><p>Whether a measured record carries at least one sample of anything.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.footage.beats.binned_visual_signals" title="muvid.footage.beats.binned_visual_signals"><code class="xref py py-obj docutils literal notranslate"><span class="pre">binned_visual_signals</span></code></a>(mids, motion, hists, hop)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.footage.beats.binned_visual_signals" title="muvid.footage.beats.binned_visual_signals"><code class="xref py py-obj docutils literal notranslate"><span class="pre">binned_visual_signals</span></code></a>(mids, motion, hists, ...)</p></td>
 <td><p>Per-pair rates (at pair midpoints <code class="docutils literal notranslate"><span class="pre">mids</span></code>) averaged into <code class="docutils literal notranslate"><span class="pre">hop</span></code>-second bins.</p></td>
 </tr>
 </tbody>
 </table>
 <dl class="py data">
 <dt class="sig sig-object py" id="muvid.footage.beats.SIGNAL_LABELS">
-<span class="sig-prename descclassname"><span class="pre">muvid.footage.beats.</span></span><span class="sig-name descname"><span class="pre">SIGNAL_LABELS</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'audio_onset':</span> <span class="pre">'Sound</span> <span class="pre">hits',</span> <span class="pre">'motion':</span> <span class="pre">'Movement',</span> <span class="pre">'visual_impact':</span> <span class="pre">'Moves</span> <span class="pre">that</span> <span class="pre">land'}</span></span><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#muvid.footage.beats.SIGNAL_LABELS" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#muvid.footage.beats.SIGNAL_LABELS'">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">muvid.footage.beats.</span></span><span class="sig-name descname"><span class="pre">SIGNAL_LABELS</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'audio_onset':</span> <span class="pre">'Sound</span> <span class="pre">hits',</span> <span class="pre">'motion':</span> <span class="pre">'Movement',</span> <span class="pre">'novelty':</span> <span class="pre">'Section</span> <span class="pre">changes',</span> <span class="pre">'region_impact':</span> <span class="pre">'Moves</span> <span class="pre">that</span> <span class="pre">land,</span> <span class="pre">by</span> <span class="pre">region',</span> <span class="pre">'visual_impact':</span> <span class="pre">'Moves</span> <span class="pre">that</span> <span class="pre">land'}</span></span><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#muvid.footage.beats.SIGNAL_LABELS" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#muvid.footage.beats.SIGNAL_LABELS'">¶</a></dt>
 <dd><p>What each signal is, in the words a screen can use.</p>
 </dd></dl>
 <dl class="py function">
@@ -235,7 +271,7 @@ the install).</p>
 </dd></dl>
 <dl class="py function">
 <dt class="sig sig-object py" id="muvid.footage.beats.binned_visual_signals">
-<span class="sig-prename descclassname"><span class="pre">muvid.footage.beats.</span></span><span class="sig-name descname"><span class="pre">binned_visual_signals</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mids</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">motion</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hists</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hop</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/muvid/footage/beats.html#binned_visual_signals"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#muvid.footage.beats.binned_visual_signals" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#muvid.footage.beats.binned_visual_signals'">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">muvid.footage.beats.</span></span><span class="sig-name descname"><span class="pre">binned_visual_signals</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mids</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">motion</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hists</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hop</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">cells</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/muvid/footage/beats.html#binned_visual_signals"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#muvid.footage.beats.binned_visual_signals" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#muvid.footage.beats.binned_visual_signals'">¶</a></dt>
 <dd><p>Per-pair rates (at pair midpoints <code class="docutils literal notranslate"><span class="pre">mids</span></code>) averaged into <code class="docutils literal notranslate"><span class="pre">hop</span></code>-second bins.</p>
 <p><code class="docutils literal notranslate"><span class="pre">motion</span></code> is each bin’s mean, reported at the bin’s CENTRE (<code class="docutils literal notranslate"><span class="pre">t0</span> <span class="pre">=</span> <span class="pre">hop</span> <span class="pre">/</span> <span class="pre">2</span></code>).
 <code class="docutils literal notranslate"><span class="pre">visual_impact</span></code> is the deceleration flux between consecutive bin-mean
@@ -281,6 +317,32 @@ remembered as silence — and <code class="docutils literal notranslate"><span c
 </dl>
 </dd></dl>
 <dl class="py function">
+<dt class="sig sig-object py" id="muvid.footage.beats.checkerboard_novelty">
+<span class="sig-prename descclassname"><span class="pre">muvid.footage.beats.</span></span><span class="sig-name descname"><span class="pre">checkerboard_novelty</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">features</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">half</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/muvid/footage/beats.html#checkerboard_novelty"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#muvid.footage.beats.checkerboard_novelty" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#muvid.footage.beats.checkerboard_novelty'">¶</a></dt>
+<dd><p>Novelty along a feature sequence <code class="docutils literal notranslate"><span class="pre">[dims,</span> <span class="pre">frames]</span></code>: the correlation of a
+Gaussian-tapered checkerboard kernel (<code class="docutils literal notranslate"><span class="pre">half</span></code> frames each side) with the cosine
+self-similarity matrix around each frame. Frames without a full kernel are NaN.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.footage.beats.deceleration_flux">
+<span class="sig-prename descclassname"><span class="pre">muvid.footage.beats.</span></span><span class="sig-name descname"><span class="pre">deceleration_flux</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hists</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/muvid/footage/beats.html#deceleration_flux"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#muvid.footage.beats.deceleration_flux" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#muvid.footage.beats.deceleration_flux'">¶</a></dt>
+<dd><p>Per sample, the motion that stopped since the previous one, summed over the
+columns of <code class="docutils literal notranslate"><span class="pre">hists</span></code> (<code class="docutils literal notranslate"><span class="pre">sum(max(0,</span> <span class="pre">h[t-1]</span> <span class="pre">-</span> <span class="pre">h[t]))</span></code>) — directions of a directogram
+(<code class="docutils literal notranslate"><span class="pre">visual_impact</span></code>) or cells of a grid (<code class="docutils literal notranslate"><span class="pre">region_impact</span></code>). <code class="docutils literal notranslate"><span class="pre">hists</span></code> is <code class="docutils literal notranslate"><span class="pre">[k,</span> <span class="pre">n]</span></code>
+with NaN rows where nothing was measured; the first sample, and any sample next to
+a NaN row, is NaN.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
 <dt class="sig sig-object py" id="muvid.footage.beats.decimated">
 <span class="sig-prename descclassname"><span class="pre">muvid.footage.beats.</span></span><span class="sig-name descname"><span class="pre">decimated</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">record</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_points</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/muvid/footage/beats.html#decimated"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#muvid.footage.beats.decimated" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#muvid.footage.beats.decimated'">¶</a></dt>
 <dd><p>A signal with at most <code class="docutils literal notranslate"><span class="pre">max_points</span></code> samples: each kept sample is the MAX of the
@@ -307,6 +369,28 @@ the picture moves which way. Flow under the noise floor votes for no direction.<
 </dl>
 </dd></dl>
 <dl class="py function">
+<dt class="sig sig-object py" id="muvid.footage.beats.fitted_tempo">
+<span class="sig-prename descclassname"><span class="pre">muvid.footage.beats.</span></span><span class="sig-name descname"><span class="pre">fitted_tempo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">beats</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_beats</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">8</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/muvid/footage/beats.html#fitted_tempo"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#muvid.footage.beats.fitted_tempo" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#muvid.footage.beats.fitted_tempo'">¶</a></dt>
+<dd><p>The tempo (BPM) of a steady beat train, fitted to ALL its beats — or <code class="docutils literal notranslate"><span class="pre">None</span></code>
+when the beats are too few or not steady enough to have one tempo.</p>
+<p>A beat tracker’s own tempo can be biased: librosa’s is the median inter-beat
+interval, and on a song whose tracked beats run slightly fast with an occasional
+skip it reported 129.2 BPM where the beats themselves fit 126.9 (a 1.8 % error
+that puts a straight grid a full beat off within a minute).</p>
+<p>So each beat is given its beat NUMBER by walking the intervals: an interval of
+about one period is one step, a skipped beat two, and a spurious extra beat
+(half a period) no step at all — it shares its neighbour’s number, so it neither
+adds nor removes a beat. Time is fitted against those numbers by least squares,
+twice, re-numbering with the refined period. A train whose residual exceeds
+<code class="docutils literal notranslate"><span class="pre">_TEMPO_FIT_MAX_RMS</span></code> of a period (a tempo change, a rubato, heavy tracking
+errors) has no single tempo: <code class="docutils literal notranslate"><span class="pre">None</span></code>, and the caller keeps the estimator’s.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" rel="nofollow noopener" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code><svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a> | <a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" rel="nofollow noopener" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code><svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
 <dt class="sig sig-object py" id="muvid.footage.beats.has_audio">
 <span class="sig-prename descclassname"><span class="pre">muvid.footage.beats.</span></span><span class="sig-name descname"><span class="pre">has_audio</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/muvid/footage/beats.html#has_audio"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#muvid.footage.beats.has_audio" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#muvid.footage.beats.has_audio'">¶</a></dt>
 <dd><p>Whether a media file carries an audio stream (an unprobeable file: no).</p>
@@ -327,12 +411,23 @@ the picture moves which way. Flow under the noise floor votes for no direction.<
 </dl>
 </dd></dl>
 <dl class="py function">
-<dt class="sig sig-object py" id="muvid.footage.beats.impact_from_directograms">
-<span class="sig-prename descclassname"><span class="pre">muvid.footage.beats.</span></span><span class="sig-name descname"><span class="pre">impact_from_directograms</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hists</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/muvid/footage/beats.html#impact_from_directograms"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#muvid.footage.beats.impact_from_directograms" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#muvid.footage.beats.impact_from_directograms'">¶</a></dt>
-<dd><p>The visual-beat envelope: per sample, the motion that stopped since the previous
-one, summed over directions (<code class="docutils literal notranslate"><span class="pre">sum(max(0,</span> <span class="pre">h[t-1]</span> <span class="pre">-</span> <span class="pre">h[t]))</span></code>). <code class="docutils literal notranslate"><span class="pre">hists</span></code> is
-<code class="docutils literal notranslate"><span class="pre">[k,</span> <span class="pre">bins]</span></code> with NaN rows where nothing was measured; the first sample, and any
-sample next to a NaN row, is NaN.</p>
+<dt class="sig sig-object py" id="muvid.footage.beats.novelty_signal">
+<span class="sig-prename descclassname"><span class="pre">muvid.footage.beats.</span></span><span class="sig-name descname"><span class="pre">novelty_signal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/muvid/footage/beats.html#novelty_signal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#muvid.footage.beats.novelty_signal" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#muvid.footage.beats.novelty_signal'">¶</a></dt>
+<dd><p><code class="docutils literal notranslate"><span class="pre">{signals:</span> <span class="pre">{novelty}}</span></code> — Foote’s checkerboard novelty of a song: a Gaussian-
+tapered checkerboard kernel slid along the diagonal of the cosine self-similarity
+of per-frame timbre (20 MFCCs) and harmony (12 chroma), each standardised. Peaks
+are where the music changes character — section boundaries.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#dict" rel="nofollow noopener" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code><svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="muvid.footage.beats.region_speeds">
+<span class="sig-prename descclassname"><span class="pre">muvid.footage.beats.</span></span><span class="sig-name descname"><span class="pre">region_speeds</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fy</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(8,</span> <span class="pre">6)</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/muvid/footage/beats.html#region_speeds"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#muvid.footage.beats.region_speeds" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#muvid.footage.beats.region_speeds'">¶</a></dt>
+<dd><p>Mean flow speed in each cell of a <code class="docutils literal notranslate"><span class="pre">cols</span> <span class="pre">x</span> <span class="pre">rows</span></code> grid, row-major. Edge pixels
+that do not fill a whole cell are left out.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code></span></p>
@@ -379,11 +474,15 @@ no pair fell in is <code class="docutils literal notranslate"><span class="pre">
 <li><a :data-current="activeSection === '#muvid.footage.beats.binned_visual_signals'" class="reference internal" href="#muvid.footage.beats.binned_visual_signals"><code class="docutils literal notranslate"><span class="pre">binned_visual_signals()</span></code></a></li>
 <li><a :data-current="activeSection === '#muvid.footage.beats.cache_key'" class="reference internal" href="#muvid.footage.beats.cache_key"><code class="docutils literal notranslate"><span class="pre">cache_key()</span></code></a></li>
 <li><a :data-current="activeSection === '#muvid.footage.beats.cached_signals'" class="reference internal" href="#muvid.footage.beats.cached_signals"><code class="docutils literal notranslate"><span class="pre">cached_signals()</span></code></a></li>
+<li><a :data-current="activeSection === '#muvid.footage.beats.checkerboard_novelty'" class="reference internal" href="#muvid.footage.beats.checkerboard_novelty"><code class="docutils literal notranslate"><span class="pre">checkerboard_novelty()</span></code></a></li>
+<li><a :data-current="activeSection === '#muvid.footage.beats.deceleration_flux'" class="reference internal" href="#muvid.footage.beats.deceleration_flux"><code class="docutils literal notranslate"><span class="pre">deceleration_flux()</span></code></a></li>
 <li><a :data-current="activeSection === '#muvid.footage.beats.decimated'" class="reference internal" href="#muvid.footage.beats.decimated"><code class="docutils literal notranslate"><span class="pre">decimated()</span></code></a></li>
 <li><a :data-current="activeSection === '#muvid.footage.beats.directogram'" class="reference internal" href="#muvid.footage.beats.directogram"><code class="docutils literal notranslate"><span class="pre">directogram()</span></code></a></li>
+<li><a :data-current="activeSection === '#muvid.footage.beats.fitted_tempo'" class="reference internal" href="#muvid.footage.beats.fitted_tempo"><code class="docutils literal notranslate"><span class="pre">fitted_tempo()</span></code></a></li>
 <li><a :data-current="activeSection === '#muvid.footage.beats.has_audio'" class="reference internal" href="#muvid.footage.beats.has_audio"><code class="docutils literal notranslate"><span class="pre">has_audio()</span></code></a></li>
 <li><a :data-current="activeSection === '#muvid.footage.beats.has_signal'" class="reference internal" href="#muvid.footage.beats.has_signal"><code class="docutils literal notranslate"><span class="pre">has_signal()</span></code></a></li>
-<li><a :data-current="activeSection === '#muvid.footage.beats.impact_from_directograms'" class="reference internal" href="#muvid.footage.beats.impact_from_directograms"><code class="docutils literal notranslate"><span class="pre">impact_from_directograms()</span></code></a></li>
+<li><a :data-current="activeSection === '#muvid.footage.beats.novelty_signal'" class="reference internal" href="#muvid.footage.beats.novelty_signal"><code class="docutils literal notranslate"><span class="pre">novelty_signal()</span></code></a></li>
+<li><a :data-current="activeSection === '#muvid.footage.beats.region_speeds'" class="reference internal" href="#muvid.footage.beats.region_speeds"><code class="docutils literal notranslate"><span class="pre">region_speeds()</span></code></a></li>
 <li><a :data-current="activeSection === '#muvid.footage.beats.signal_record'" class="reference internal" href="#muvid.footage.beats.signal_record"><code class="docutils literal notranslate"><span class="pre">signal_record()</span></code></a></li>
 <li><a :data-current="activeSection === '#muvid.footage.beats.visual_signals'" class="reference internal" href="#muvid.footage.beats.visual_signals"><code class="docutils literal notranslate"><span class="pre">visual_signals()</span></code></a></li>
 </ul>
@@ -399,7 +498,7 @@ no pair fell in is <code class="docutils literal notranslate"><span class="pre">
 </div>
 </footer>
 </div>
-<script src="../_static/documentation_options.js?v=1e158f99"></script>
+<script src="../_static/documentation_options.js?v=d59c1f54"></script>
 <script src="../_static/doctools.js?v=fd6eb6e6"></script>
 <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
 <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
