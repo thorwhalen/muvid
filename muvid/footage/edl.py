@@ -762,6 +762,13 @@ class EdlEntry:
     #: property and needs no speed change. Bounded by :data:`SLIP_MAX_S`; ``0.0``
     #: (the default) emits nothing — additive in both directions, like the rest.
     slip_s: float = 0.0
+    #: **Speed**: how fast this cut plays its video — ``1.03`` shows 3 % more footage
+    #: over the same span of song, so the dancers move 3 % faster; the song is never
+    #: touched. With :attr:`slip_s` it makes the cut's footage time an AFFINE map of
+    #: song time, ``clip_in_of(e) + rate * (t - song_start)`` (:func:`clip_time_at`);
+    #: short cuts, each with its own, make a piecewise-linear time-warp. Bounded to
+    #: ``1 +- RATE_MAX_DEV``; ``1.0`` (the default) emits nothing.
+    rate: float = 1.0
 
     @property
     def is_gap(self) -> bool:
@@ -798,10 +805,18 @@ class AssemblyCut:
     #: where a moving look's ramp restarts (muvid#73). See
     #: :attr:`EdlEntry.look_time_varying` for the measurement.
     look_time_varying: bool = False
+    #: Carried through from the EDL entry: the assembler reads ``duration * rate``
+    #: seconds of source and retimes it (``setpts``, before ``fps``) onto the span.
+    rate: float = 1.0
 
     @property
     def duration(self) -> float:
         return self.song_end - self.song_start
+
+    @property
+    def source_duration(self) -> float:
+        """Seconds of the clip this cut consumes — its span at its rate."""
+        return self.duration * self.rate
 
 
 def _as_crop(raw, field: str) -> "CropWindow | None":
@@ -871,11 +886,58 @@ def _as_look_time_varying(raw) -> bool:
 SLIP_MAX_S = 0.5
 
 
+#: How far a cut's speed may move from 1, either way: 8 %, a nudge that keeps a
+#: dancer looking like themselves. A larger change is a slow-motion or fast-forward
+#: effect, a different tool.
+RATE_MAX_DEV = 0.08
+
+
 def clip_in_of(e: "EdlEntry", a: "FootageAlignment") -> float:
     """Where cut ``e`` starts in its clip ``a``'s own time — THE sign convention:
     ``song_start - offset + slip``. UNCLAMPED (a caller checking containment must see
     a negative in-point); :func:`derive_cuts` clamps for the renderer."""
     return e.song_start - a.offset_s + getattr(e, "slip_s", 0.0)
+
+
+def clip_time_at(e: "EdlEntry", a: "FootageAlignment", t: float) -> float:
+    """The moment of clip ``a`` cut ``e`` shows at song time ``t`` — the cut's affine
+    map, ``clip_in_of(e) + rate * (t - song_start)``."""
+    return clip_in_of(e, a) + getattr(e, "rate", 1.0) * (t - e.song_start)
+
+
+def with_start(e: "EdlEntry", start: float, *, bounded: bool = True) -> "EdlEntry":
+    """``e`` starting at song time ``start`` and showing, at every moment it still
+    covers, exactly the footage it showed before — its map from song time to clip
+    time kept. At speed 1 that is only the new start (the slip carries over); at any
+    other speed the slip absorbs ``(rate - 1) * (start - song_start)``. Raises when
+    that would take the slip past :data:`SLIP_MAX_S` — unless ``bounded=False``, for a
+    render-time window that is never stored."""
+    rate = getattr(e, "rate", 1.0)
+    slip = e.slip_s + (rate - 1.0) * (float(start) - e.song_start)
+    if bounded and abs(slip) > SLIP_MAX_S + _EPS:
+        raise ValueError(
+            f"moving this cut's start to {start:.3f}s at speed x{rate:.2f} would need a "
+            f"slip of {slip:+.3f}s, past +-{SLIP_MAX_S:g}s — set its speed back to x1 first."
+        )
+    return replace(e, song_start=float(start), slip_s=0.0 if abs(slip) < 1e-9 else slip)
+
+
+def _as_rate(raw) -> float:
+    """A cut's speed: absent/None is 1.0; a number within ``1 +- RATE_MAX_DEV``.
+    Raises on anything else, like the other request-side reads."""
+    if raw is None:
+        return 1.0
+    if isinstance(raw, bool) or not isinstance(raw, (int, float)):
+        raise ValueError(
+            f"EDL entry rate is malformed ({raw!r}): it must be a number (1.0 = as filmed)."
+        )
+    v = float(raw)
+    if not abs(v - 1.0) <= RATE_MAX_DEV + _EPS:
+        raise ValueError(
+            f"EDL entry rate={v:.3f} is outside {1 - RATE_MAX_DEV:g}..{1 + RATE_MAX_DEV:g}: "
+            "a cut's speed is a nudge to put moves on the beat, not a slow-motion effect."
+        )
+    return v
 
 
 def _as_slip(raw) -> float:
@@ -928,6 +990,7 @@ def _as_entry(e) -> EdlEntry:
         look_time_varying=_as_look_time_varying(e.get("look_time_varying")),
         look_spec=_as_look_spec(e.get("look_spec")),
         slip_s=_as_slip(e.get("slip_s")),
+        rate=_as_rate(e.get("rate")),
     )
 
 
@@ -1100,14 +1163,19 @@ def validate_edl(
             raise ValueError(
                 f"EDL entry {i}: a gap has no footage to slip (slip_s={e.slip_s:g})."
             )
+        if e.is_gap and e.rate != 1.0:
+            raise ValueError(
+                f"EDL entry {i}: a gap has no footage to speed up (rate={e.rate:g})."
+            )
         if not e.is_gap:
             a = by_id[e.clip_id]
-            if not _clip_contains(a, e.song_start, e.song_end, e.slip_s):
+            if not _clip_contains(a, e.song_start, e.song_end, e.slip_s, e.rate):
                 slipped = (
-                    f" once slipped by {e.slip_s:+.3f} s (a slipped cut needs the clip to "
-                    f"cover [{e.song_start + e.slip_s:.3f}, {e.song_end + e.slip_s:.3f}] "
-                    "in song time — reduce the slip or the span)"
-                    if e.slip_s
+                    f" once slipped by {e.slip_s:+.3f} s at speed x{e.rate:.2f} (the cut "
+                    f"reads clip time [{clip_in_of(e, a):.3f}, "
+                    f"{clip_in_of(e, a) + _span(e) * e.rate:.3f}] — reduce the slip, "
+                    "the speed or the span)"
+                    if e.slip_s or e.rate != 1.0
                     else ""
                 )
                 raise ValueError(
@@ -1287,16 +1355,23 @@ def exclude_unvouched(
 
 
 def _clip_contains(
-    a: FootageAlignment, start: float, end: float, slip: float = 0.0
+    a: FootageAlignment,
+    start: float,
+    end: float,
+    slip: float = 0.0,
+    rate: float = 1.0,
 ) -> bool:
     """Does clip ``a`` actually hold the song span ``[start, end]`` (read ``slip`` s
-    later, for a slipped cut)?
+    later, for a slipped cut, and at speed ``rate``)?
 
     The containment arithmetic :func:`validate_edl` enforces, in one place so a caller
     that reshapes an edit (:func:`exclude_unvouched`) tests exactly what the gate will.
+    A cut at speed ``rate`` consumes ``span * rate`` seconds of its clip — the rule a
+    rate-blind check gets wrong in the direction that validates clean and renders
+    past the end of the clip.
     """
     clip_in = start - a.offset_s + slip
-    return clip_in >= -_EPS and clip_in + (end - start) <= a.duration_s + _EPS
+    return clip_in >= -_EPS and clip_in + (end - start) * rate <= a.duration_s + _EPS
 
 
 def _absorbable(e: "EdlEntry | None", by_id: dict) -> bool:
@@ -1305,10 +1380,14 @@ def _absorbable(e: "EdlEntry | None", by_id: dict) -> bool:
         return False
     if not by_id[e.clip_id].reliable:
         return False
-    # A slipped cut is not "plain": stretching it over a neighbour's span would carry
-    # its slip into footage timing somebody set for the neighbour.
+    # A slipped or sped-up cut is not "plain": stretching it over a neighbour's span
+    # would carry its timing into footage somebody set for the neighbour.
     return (
-        e.transition is None and e.crop_end is None and e.look is None and not e.slip_s
+        e.transition is None
+        and e.crop_end is None
+        and e.look is None
+        and not e.slip_s
+        and e.rate == 1.0
     )
 
 
@@ -1354,19 +1433,25 @@ def _coalesce_absorbed(entries: list) -> list:
             and prev.clip_id == e.clip_id
             and abs(prev.song_end - e.song_start) <= _EPS
             and e.transition is None
-            and (
-                prev.crop,
-                prev.crop_end,
-                prev.look,
-                prev.look_time_varying,
-                prev.slip_s,
-            )
-            == (e.crop, e.crop_end, e.look, e.look_time_varying, e.slip_s)
+            and (prev.crop, prev.crop_end, prev.look, prev.look_time_varying, prev.rate)
+            == (e.crop, e.crop_end, e.look, e.look_time_varying, e.rate)
+            # The second cut's footage must CONTINUE the first's, or joining them
+            # would jump: at speed 1 that is an equal slip; at any other speed the
+            # slip the first cut would have at the second's start.
+            and _continues(prev, e)
         ):
             out[-1] = replace(prev, song_end=e.song_end)
         else:
             out.append(e)
     return out
+
+
+def _continues(prev: "EdlEntry", e: "EdlEntry") -> bool:
+    """Does ``e`` show exactly the footage ``prev`` would, were ``prev`` longer?"""
+    try:
+        return abs(with_start(prev, e.song_start).slip_s - e.slip_s) <= _EPS
+    except ValueError:
+        return False
 
 
 def _exclusion_reason(e, alignments: Sequence[FootageAlignment]) -> str:
@@ -2464,8 +2549,8 @@ def _validate_transition(i, e, prev, by_id) -> None:
         # UNCLAMPED, deliberately: `derive_cuts` clamps `clip_in` at 0 for the
         # renderer, and reading a clamped value here would let a short clip pass
         # by silently pretending it starts earlier than it does.
-        end_in_clip = clip_in_of(prev, a) + _span(prev)
-        if end_in_clip + trail > a.duration_s + _EPS:
+        end_in_clip = clip_in_of(prev, a) + _span(prev) * prev.rate
+        if end_in_clip + trail * prev.rate > a.duration_s + _EPS:
             raise ValueError(
                 f"EDL entry {i}: the transition needs {trail:.3f}s of clip "
                 f"{prev.clip_id!r} PAST the end of entry {i - 1}'s span, but the clip "
@@ -2474,7 +2559,7 @@ def _validate_transition(i, e, prev, by_id) -> None:
     if not e.is_gap:
         a = by_id[e.clip_id]
         start_in_clip = clip_in_of(e, a)
-        if start_in_clip - lead < -_EPS:
+        if start_in_clip - lead * e.rate < -_EPS:
             raise ValueError(
                 f"EDL entry {i}: the transition needs {lead:.3f}s of clip "
                 f"{e.clip_id!r} BEFORE its span starts, but the span begins only "
@@ -2528,6 +2613,7 @@ def derive_cuts(
                 crop_end=e.crop_end,
                 look=e.look,
                 look_time_varying=e.look_time_varying,
+                rate=e.rate,
             )
         )
     return cuts

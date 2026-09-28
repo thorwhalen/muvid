@@ -1002,6 +1002,7 @@ EDL_OPTIONAL_FIELDS = (
     ("look_time_varying", bool, False),
     ("look_spec", dict, None),
     ("slip_s", float, 0.0),
+    ("rate", float, 1.0),
 )
 
 
@@ -1173,6 +1174,8 @@ def _trim_to_span(entries, span) -> list:
     """Entries clipped to ``span``: whole entries outside it dropped, straddling ones
     cut at its boundaries (a pan re-derived where it was at the cut), and the blend of an
     entry that now opens the span dropped — nothing precedes it to blend from."""
+    from muvid.footage.edl import with_start
+
     if span is None:
         return list(entries)
     start, end = span
@@ -1181,12 +1184,14 @@ def _trim_to_span(entries, span) -> list:
         if e.song_end <= start + _EPS or e.song_start >= end - _EPS:
             continue
         lo, hi = max(e.song_start, start), min(e.song_end, end)
-        changes = {"song_start": lo, "song_end": hi}
+        changes = {"song_end": hi}
         if e.crop_end is not None:
             changes.update(crop=_crop_at(e, lo), crop_end=_crop_at(e, hi))
         if lo <= start + _EPS:
             changes["transition"] = None
-        out.append(replace(e, **changes))
+        # A window, never stored: the trimmed head keeps the cut's footage map even
+        # where that needs a slip no stored cut may carry.
+        out.append(replace(with_start(e, lo, bounded=False), **changes))
     return out
 
 
@@ -1434,6 +1439,7 @@ def set_cut(
     look: Optional[Union[str, dict]] = None,
     look_time_varying: Optional[bool] = None,
     slip_s: Optional[float] = None,
+    rate: Optional[float] = None,
 ) -> dict:
     """Change one cut of a saved edit (``index`` is its position in ``get_edit``'s edl).
 
@@ -1454,6 +1460,10 @@ def set_cut(
       beat where the clip's alignment is right overall but a little off here. At
       most one beat either way (``SLIP_MAX_S``); ``0`` removes it. A new video
       (``clip_id``) starts unslipped.
+    - ``rate``: play this cut's video a little faster or slower — ``1.03`` shows 3 %
+      more footage over the same span, so the moves run 3 % faster (the song is never
+      touched). Within ``1 +- RATE_MAX_DEV``; ``1`` removes it. The video must hold the
+      footage the cut then reads. A new video starts at speed 1.
 
     Parameters left out are unchanged. The changed edit is checked and saved; returns it.
     """
@@ -1464,7 +1474,9 @@ def set_cut(
     e: EdlEntry = entries[i]
     changes: dict = {}
     if clip_id is not None and (clip_id or "") != e.clip_id:
-        changes.update(clip_id=clip_id or "", crop=None, crop_end=None, slip_s=0.0)
+        changes.update(
+            clip_id=clip_id or "", crop=None, crop_end=None, slip_s=0.0, rate=1.0
+        )
         if not clip_id:  # a gap carries no picture, so no look either
             changes.update(
                 look=None, look_time_varying=False, look_spec=None, transition=None
@@ -1488,8 +1500,14 @@ def set_cut(
             changes["slip_s"] = _as_slip(slip_s)
         except ValueError as err:
             raise FootageError(str(err)) from err
+    if rate is not None:
+        from muvid.footage.edl import _as_rate
+
+        try:
+            changes["rate"] = _as_rate(rate)
+        except ValueError as err:
+            raise FootageError(str(err)) from err
     if song_start is not None:
-        changes["song_start"] = float(song_start)
         if i > 0:
             prev = entries[i - 1]
             if float(song_start) <= prev.song_start + _EPS:
@@ -1507,9 +1525,25 @@ def set_cut(
                     f"moving cut {i}'s end to {song_end:.3f}s would swallow cut "
                     f"{i + 1} entirely — join them with merge_cut instead"
                 )
-            entries[i + 1] = replace(nxt, song_start=float(song_end))
-    entries[i] = replace(e, **changes)
+            entries[i + 1] = _moved_start(nxt, float(song_end))
+    e = replace(e, **changes)
+    if song_start is not None:
+        # The cut keeps showing the footage it showed where it still plays: at a speed
+        # other than 1, moving its start moves its slip too.
+        e = _moved_start(e, float(song_start))
+    entries[i] = e
     return _store_changed(fp, record, entries, changed=i)
+
+
+def _moved_start(e, start: float):
+    """``e`` starting at ``start``, its footage map kept (``edl.with_start``) — the
+    one way this module moves a cut's start."""
+    from muvid.footage.edl import with_start
+
+    try:
+        return with_start(e, start)
+    except ValueError as err:
+        raise FootageError(str(err)) from err
 
 
 def _named_look(fp, spec: dict, *, duration_s: float):
@@ -1614,9 +1648,10 @@ def beat_signals(
 
     ``source`` is ``"song"`` or a clip id. The song gets its sound (``audio_onset``: the
     onset envelope the beat grid is estimated from). A video gets its own soundtrack's
-    ``audio_onset`` when it has one, and two visual signals: ``motion`` (how much the
-    people in the picture move, the camera's own move taken out) and ``visual_impact``
-    (moves stopping dead and turning — the visual beat).
+    ``audio_onset`` when it has one, and three visual signals: ``motion`` (how much the
+    people in the picture move, the camera's own move taken out), ``motion_stops`` (moves
+    stopping dead and turning — the movement accents) and ``motion_stops_local`` (the same,
+    place by place).
 
     Each signal is in the media's OWN time: sample ``i`` is at ``t0 + i * hop_s`` s of the
     song, or of the clip (song time ``offset + t``). Values are unnormalised, with
@@ -1741,6 +1776,159 @@ def looks(fp=None) -> dict:
     return {"looks": named_look_catalogue()}
 
 
+#: The confidence a fitted cut must reach to be applied (a z against the null of
+#: ``beat_fit``): 2.5 is about 1 in 160 by chance, per cut.
+FIT_MIN_Z = 2.5
+#: How much better than the cut's current timing a fit must score to replace it.
+FIT_MIN_GAIN = 0.02
+
+
+@_edits_locked
+def fit_to_beat(
+    fp,
+    *,
+    edit_id: str,
+    indices: Optional[list[int]] = None,
+    min_z: float = FIT_MIN_Z,
+    apply: bool = True,
+) -> dict:
+    """Fit the moves to the beat: for each cut that shows a video in the part of the song
+    the edit covers (its span) — or the cuts at ``indices`` — find the slip and speed
+    that put its video's movement accents on the song's beat, and apply it where the
+    evidence is strong.
+
+    Per cut, every slip within +-0.25 s (a frame at 60 fps apart) and every speed from
+    x0.92 to x1.08 (1 % apart) is tried; the best is scored against a null of the same
+    search on the video's accents with their relation to the beat destroyed
+    (``muvid.footage.beat_fit``), giving a ``z``. A cut changes only when ``z >= min_z``
+    AND the fit is better than its current timing — and the video still holds the
+    footage it then reads. Cuts shorter than three beats, gaps and videos with nothing
+    measurable are left alone, each with its reason. ``apply=False`` reports without
+    changing anything. All the changes are ONE step of the edit's history, so one
+    ``undo_edit`` takes them all back.
+
+    **How much to expect.** On three phone videos of a crowd dancing, the accents locked
+    to the beat on one of them only; each video's own SOUND locked on all three. So on
+    footage like that most cuts will be left as they are, which is the right answer when
+    the picture does not show the beat. It works best on a clearly visible dancer.
+
+    Needs the ``scoring`` extra: the first call measures each video's movement (tens of
+    seconds a video; kept for next time). Returns the edit (``get_edit``'s shape) plus
+    ``fit``: ``cuts`` (``{index, slip_s, rate, z, applied, reason}`` per cut looked at),
+    ``fitted``, ``kept`` and ``min_z``.
+    """
+    import numpy as np
+
+    from muvid.footage import beats as bs
+    from muvid.footage.beat_fit import FIT_MIN_BEATS, BeatGrid, fit_cut
+    from muvid.footage.edl import _clip_contains
+
+    record, entries = _edit_entries(fp, edit_id)
+    grid = BeatGrid.fitted(beat_grid(fp)["beats"])
+    if grid is None:
+        raise FootageError(
+            "the song has no steady beat to fit to (too few beats found, or the tempo "
+            "changes) — set the cuts' timing by hand with set_cut's slip_s and rate"
+        )
+    span = _span_of(record)
+    wanted = (
+        [
+            i
+            for i, e in enumerate(entries)
+            if not e.is_gap
+            and (
+                span is None
+                or (e.song_end > span[0] + _EPS and e.song_start < span[1] - _EPS)
+            )
+        ]
+        if indices is None
+        else sorted({_check_index(entries, int(i)) for i in indices})
+    )
+    aligns = {a.clip_id: a for a in fp.load_alignments()}
+    accents: dict = {}
+
+    def accents_of(clip_id: str):
+        if clip_id not in accents:
+            try:
+                sig = beat_signals(fp, source=clip_id, max_points=0)["signals"]
+                rec = sig.get(bs.MOTION_STOPS)
+            except FootageError:
+                rec = None
+            if not rec or not rec.get("n"):
+                accents[clip_id] = None
+            else:
+                v = np.array(
+                    [np.nan if x is None else x for x in rec["values"]], dtype=float
+                )
+                accents[clip_id] = (rec["t0"] + rec["hop_s"] * np.arange(v.size), v)
+        return accents[clip_id]
+
+    report, changed = [], {}
+    for i in wanted:
+        e = entries[i]
+        row = {"index": i, "slip_s": e.slip_s, "rate": e.rate, "z": None, "applied": False}
+        if e.is_gap:
+            report.append(row | {"reason": "a gap — no video to fit"})
+            continue
+        if e.song_end - e.song_start < FIT_MIN_BEATS * grid.period - _EPS:
+            report.append(
+                row | {"reason": "shorter than three beats — too short to judge by"}
+            )
+            continue
+        a = aligns.get(e.clip_id)
+        sig = accents_of(e.clip_id)
+        if a is None or sig is None:
+            report.append(row | {"reason": "this video's movement could not be measured"})
+            continue
+        fit = fit_cut(
+            sig[0],
+            sig[1],
+            song_start=e.song_start,
+            song_end=e.song_end,
+            offset=a.offset_s,
+            current_slip=e.slip_s,
+            current_rate=e.rate,
+            grid=grid,
+            feasible=lambda slip, rate, a=a, e=e: _clip_contains(
+                a, e.song_start, e.song_end, slip, rate
+            ),
+        )
+        if fit is None:
+            report.append(row | {"reason": "no movement to go by in this stretch"})
+            continue
+        row["z"] = round(fit.z, 2)
+        better = not np.isfinite(fit.current_score) or (
+            fit.score > fit.current_score + FIT_MIN_GAIN
+        )
+        same = abs(fit.slip_s - e.slip_s) < 1e-6 and abs(fit.rate - e.rate) < 1e-6
+        if fit.z < min_z:
+            report.append(
+                row | {"reason": "the movement does not follow the beat clearly enough here"}
+            )
+        elif same or not better:
+            report.append(row | {"reason": "already on the beat"})
+        else:
+            row.update(slip_s=round(fit.slip_s, 4), rate=round(fit.rate, 3))
+            row.update(applied=bool(apply), reason="fitted" if apply else "would fit")
+            report.append(row)
+            if apply:
+                changed[i] = replace(e, slip_s=row["slip_s"], rate=row["rate"])
+    if changed:
+        for i, e in changed.items():
+            entries[i] = e
+        reply = _store_changed(fp, record, entries)
+    else:
+        reply = _edit_reply(fp, record)
+    fitted = sum(1 for r in report if r["applied"])
+    reply["fit"] = {
+        "cuts": report,
+        "fitted": fitted,
+        "kept": len(report) - fitted,
+        "min_z": float(min_z),
+    }
+    return reply
+
+
 @_edits_locked
 def split_cut(fp, *, edit_id: str, at_s: float) -> dict:
     """Split the cut playing at song time ``at_s`` into two cuts of the same video.
@@ -1768,7 +1956,7 @@ def split_cut(fp, *, edit_id: str, at_s: float) -> dict:
     mid = _crop_at(e, at)
     first = replace(e, song_end=at, crop_end=mid if e.crop_end else None)
     second = replace(
-        e, song_start=at, transition=None, crop=mid if e.crop_end else e.crop
+        _moved_start(e, at), transition=None, crop=mid if e.crop_end else e.crop
     )
     entries[i : i + 1] = [first, second]
     reply = _store_changed(fp, record, entries, changed=i + 1)
@@ -1807,7 +1995,7 @@ def merge_cut(
         nxt = entries[i + 1]
         # The joined cut's entrance is now this cut's entrance, so its blend comes too.
         entries[i : i + 2] = [
-            replace(nxt, song_start=e.song_start, transition=e.transition)
+            replace(_moved_start(nxt, e.song_start), transition=e.transition)
         ]
         changed = i
     else:
@@ -2777,6 +2965,7 @@ FOOTAGE_OP_SPECS: tuple[OpSpec, ...] = (
     OpSpec("set_cut", "Change a cut", "write"),
     OpSpec("split_cut", "Split a cut here", "write"),
     OpSpec("merge_cut", "Join a cut to its neighbour", "write"),
+    OpSpec("fit_to_beat", "Fit the moves to the beat", "write"),
     OpSpec("set_span", "Choose which part of the song the video covers", "write"),
     OpSpec("rename_edit", "Rename an edit", "write"),
     OpSpec("looks", "List the looks", "read"),

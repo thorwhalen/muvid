@@ -2,7 +2,7 @@
 thorwhalen/muvid#124).
 
 What is pinned: a signal is continuous and unnormalised with its stats beside it, and
-an unmeasured sample is ``None`` (never zero). Pooling keeps peaks. The visual beat is
+an unmeasured sample is ``None`` (never zero). Pooling keeps peaks. The movement accent is
 DECELERATION (motion leaving a direction), so a back-and-forth move peaks at its
 turnarounds and not while it glides. Per-pair rates are averaged into bins rather than
 sampled, so a fast wobble cannot alias into a slow rhythm. The op measures each piece of
@@ -57,27 +57,27 @@ def test_decimated_pools_by_max_so_a_beat_survives():
     assert bs.decimated(rec, 0) is rec and bs.decimated(rec, 500) is rec
 
 
-# -- the visual beat -----------------------------------------------------------------
+# -- movement accents -----------------------------------------------------------------
 
 
-def test_directogram_puts_motion_in_its_direction_bin():
+def test_direction_histogram_puts_motion_in_its_direction_bin():
     fx = np.full((10, 10), 2.0)  # everything moves right
     fy = np.zeros((10, 10))
-    h = bs.directogram(fx, fy, bins=8)
+    h = bs.direction_histogram(fx, fy, bins=8)
     assert h.argmax() == 4  # angle 0 sits in the bin right of -pi..pi's middle
     assert h.sum() == pytest.approx(2.0)
-    still = bs.directogram(np.full((4, 4), 0.01), np.zeros((4, 4)))
+    still = bs.direction_histogram(np.full((4, 4), 0.01), np.zeros((4, 4)))
     assert still.sum() == 0.0  # under the noise floor: no direction
 
 
-def test_impact_is_deceleration_not_acceleration():
+def test_stops_are_deceleration_not_acceleration():
     right, left, none = np.eye(4)[0], np.eye(4)[2], np.zeros(4)
     hists = np.stack([none, right, right, left, none, none])
-    impact = bs.deceleration_flux(hists)
-    assert np.isnan(impact[0])
+    stops = bs.stop_strength(hists)
+    assert np.isnan(stops[0])
     # starting to move (none -> right) is not a hit; gliding is not; turning (right ->
     # left) and stopping (left -> none) are.
-    assert list(impact[1:]) == [0.0, 0.0, 1.0, 1.0, 0.0]
+    assert list(stops[1:]) == [0.0, 0.0, 1.0, 1.0, 0.0]
 
 
 def test_binning_averages_pairs_so_a_fast_wobble_does_not_alias():
@@ -91,8 +91,8 @@ def test_binning_averages_pairs_so_a_fast_wobble_does_not_alias():
     m = out["signals"][bs.MOTION]
     assert m["t0"] == pytest.approx(1 / 30, abs=1e-6) and m["n"] == 45
     assert set(m["values"]) == {1.0}
-    # the impact lives on bin BOUNDARIES: sample i at i * hop
-    assert out["signals"][bs.VISUAL_IMPACT]["t0"] == 0.0
+    # the stops live on bin BOUNDARIES: sample i at i * hop
+    assert out["signals"][bs.MOTION_STOPS]["t0"] == 0.0
 
 
 def test_binning_drops_pairs_before_the_first_frame():
@@ -120,11 +120,11 @@ def test_visual_pass_on_a_real_video_peaks_at_the_turnarounds(tmp_path):
     writer.release()
 
     out = bs.visual_signals(path, sample_fps=10)
-    impact = out["signals"][bs.VISUAL_IMPACT]
+    stops = out["signals"][bs.MOTION_STOPS]
     motion = out["signals"][bs.MOTION]
-    assert motion["n"] == impact["n"] >= 35 and motion["max"] > 0
-    t = impact["t0"] + impact["hop_s"] * np.arange(impact["n"])
-    v = np.array([np.nan if x is None else x for x in impact["values"]])
+    assert motion["n"] == stops["n"] >= 35 and motion["max"] > 0
+    t = stops["t0"] + stops["hop_s"] * np.arange(stops["n"])
+    v = np.array([np.nan if x is None else x for x in stops["values"]])
     near_turn = np.abs(t / 0.5 - np.round(t / 0.5)) * 0.5 < 0.12  # within 0.12 s
     assert np.nanmean(v[near_turn]) > 3 * np.nanmean(v[~near_turn])
 
@@ -193,7 +193,7 @@ def test_song_beat_signals_are_measured_once_and_cached(fp, calls):
 
 def test_a_video_gets_visual_signals_and_no_sound_when_it_has_none(fp, calls):
     out = service.beat_signals(fp, source="A")
-    assert out["kind"] == "video" and set(out["signals"]) == {bs.MOTION, bs.VISUAL_IMPACT}
+    assert out["kind"] == "video" and set(out["signals"]) == {bs.MOTION, bs.MOTION_STOPS}
     assert out["beats"] == [] and out["tempo_bpm"] is None
     assert out["signals"][bs.MOTION]["values"] == [1.0, 2.0, 3.0]
     assert calls.audio == []  # an unprobeable file has no soundtrack to measure
@@ -204,7 +204,7 @@ def test_a_video_gets_visual_signals_and_no_sound_when_it_has_none(fp, calls):
 def test_a_video_with_a_soundtrack_gets_its_own_audio_onset(fp, calls, monkeypatch):
     monkeypatch.setattr(bs, "has_audio", lambda path: True)
     out = service.beat_signals(fp, source="A")
-    assert set(out["signals"]) == {bs.AUDIO_ONSET, bs.MOTION, bs.VISUAL_IMPACT}
+    assert set(out["signals"]) == {bs.AUDIO_ONSET, bs.MOTION, bs.MOTION_STOPS}
     assert out["beats"] == [0.5, 1.0, 1.5]
     assert calls.audio == [str(fp.clip_paths()["A"])]
 
@@ -297,7 +297,7 @@ def test_checkerboard_novelty_peaks_at_a_section_change():
     assert np.isnan(nov[:10]).all() and np.isnan(nov[-10:]).all()  # no full kernel at the ends
 
 
-def test_region_speeds_and_region_impact_brake_per_cell():
+def test_region_speeds_and_local_stops_brake_per_cell():
     fx = np.zeros((12, 16))
     fx[:6, :8] = 2.0  # only the top-left quarter moves
     speeds = bs.region_speeds(fx, np.zeros_like(fx), grid=(2, 2))
@@ -305,10 +305,10 @@ def test_region_speeds_and_region_impact_brake_per_cell():
     # Two dancers braking in DIFFERENT places both count (a whole-frame mean would
     # let one's braking cancel the other's starting).
     cells = np.array([[1.0, 0.0], [0.0, 1.0]])
-    assert list(bs.deceleration_flux(cells)[1:]) == [1.0]
+    assert list(bs.stop_strength(cells)[1:]) == [1.0]
 
 
-def test_the_visual_pass_reports_region_impact(tmp_path):
+def test_the_visual_pass_reports_local_stops(tmp_path):
     cv2 = pytest.importorskip("cv2")
     path = tmp_path / "still.avi"
     writer = cv2.VideoWriter(str(path), cv2.VideoWriter_fourcc(*"MJPG"), 30.0, (160, 120))
@@ -318,8 +318,8 @@ def test_the_visual_pass_reports_region_impact(tmp_path):
         writer.write(frame)
     writer.release()
     out = bs.visual_signals(path, sample_fps=10)
-    assert set(out["signals"]) == {bs.MOTION, bs.VISUAL_IMPACT, bs.REGION_IMPACT}
-    assert out["signals"][bs.REGION_IMPACT]["t0"] == 0.0
+    assert set(out["signals"]) == {bs.MOTION, bs.MOTION_STOPS, bs.MOTION_STOPS_LOCAL}
+    assert out["signals"][bs.MOTION_STOPS_LOCAL]["t0"] == 0.0
 
 
 def test_fitted_tempo_ignores_spurious_half_beats_and_refuses_a_tempo_change():

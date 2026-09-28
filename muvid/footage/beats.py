@@ -20,17 +20,18 @@ Picture, for every clip:
 
 - ``motion`` — subject-motion energy: the mean camera-compensated optical-flow magnitude,
   in frame-heights per second.
-- ``visual_impact`` — the visual beat: how much motion, direction by direction, STOPS
-  between samples — the half-wave-rectified decrease of a magnitude-weighted directogram.
-  This is the "impact envelope" of Davis & Agrawala, *Visual Rhythm and Beat* (SIGGRAPH
-  2018, §4.2; their printed Eq. 13 has the sign of an increase, their prose and released
-  code the decrease used here). It is a deceleration measure, which is where the
-  conducting literature puts the beat: ensembles synchronise with the **maximal
-  deceleration** of the conductor's hand (Luck & Toiviainen 2006), and with absolute
-  acceleration along the trajectory (Luck & Sloboda 2009) — the *ictus*, not the moment a
-  movement starts (Takehana et al. 2019: movement initiation never coincided with beats).
-- ``region_impact`` — the same deceleration without the directogram: the decrease of
-  camera-compensated SPEED in each cell of an 8 x 6 grid, summed over cells. Per-region
+- ``motion_stops`` — movement accents: how much motion, direction by direction, STOPS
+  between samples — the half-wave-rectified decrease of a magnitude-weighted flow
+  direction histogram (the histogram of oriented optical flow, HOOF, of Chaudhry et al.
+  2009). Measuring motion that stops follows Davis & Agrawala (SIGGRAPH 2018, §4.2),
+  using the decrease their prose and released code describe. It is a deceleration
+  measure, which is where the conducting literature puts the beat: ensembles synchronise
+  with the **maximal deceleration** of the conductor's hand (Luck & Toiviainen 2006), and
+  with absolute acceleration along the trajectory (Luck & Sloboda 2009) — the *ictus*,
+  not the moment a movement starts (Takehana et al. 2019: movement initiation never
+  coincided with beats).
+- ``motion_stops_local`` — the same stopping without directions: the decrease of
+  camera-compensated SPEED in each cell of an 8 x 6 grid, summed over cells. Per-place
   rather than per-direction, so several dancers braking in different places add up
   instead of cancelling.
 
@@ -41,14 +42,15 @@ circular shift cannot detect locking at all, since it only rotates the phase):
 
 - each clip's own soundtrack locks strongly (z = 7 to 15) — the positive control, and the
   confirmation that the clips' offsets are right;
-- ``visual_impact`` and ``region_impact`` lock on one clip (z = 2.8 and 2.5, at the same
+- ``motion_stops`` and ``motion_stops_local`` lock on one clip (z = 2.8 and 2.5, at the same
   -25 ms lag as that clip's soundtrack) and on neither of the others; whole-frame speed,
   pose-based limb deceleration (a person found in only 38-75 % of frames of a crowd) and
   AIST++-style velocity minima (half a beat off) did no better;
 - a 1.25 Hz high-pass (Davis & Agrawala's post-filter) helped no clip consistently.
 
 So these envelopes SHOW where movement lands; on a crowd they are weak evidence of the
-beat, and nothing here decides a warp by itself.
+beat. ``service.fit_to_beat`` uses them to propose per-cut timing, and applies a fit only
+where it beats the same null — so on footage like this it will usually leave cuts alone.
 
 Every signal is **unnormalised** and carries its own grid (``t0``, ``hop_s``) and its
 ``min``, ``max`` and ``p99`` (a robust top a display can scale by), because thresholding is a
@@ -76,8 +78,8 @@ VISUAL_MAX_SECONDS = float(os.environ.get("MUVID_BEAT_VISUAL_MAX_SECONDS", "900"
 _MAX_PAIR_RATE = 32.0
 #: Downscale factor before the Farneback flow — the same cost bound the scorer uses.
 FLOW_DOWNSCALE = 4
-#: Direction bins of the directogram (45 degrees each).
-DIRECTOGRAM_BINS = 8
+#: Direction bins of the flow direction histogram (45 degrees each).
+DIRECTION_BINS = 8
 #: Flow below this many pixels (downscaled) is sensor noise, not a direction.
 _FLOW_NOISE_PX = 0.05
 #: The robust top reported beside min/max.
@@ -87,23 +89,23 @@ _DECIMALS = 5
 
 #: The record FORMAT's version, part of the cache key: bump it when the same parameters
 #: start producing different signals, so an old cache is not served as the new one.
-BEAT_SIGNALS_FORMAT = 3
+BEAT_SIGNALS_FORMAT = 4
 _DIRNAME = "beats"
 _HASH_PREFIX = 16
 
 AUDIO_ONSET = "audio_onset"
 NOVELTY = "novelty"
 MOTION = "motion"
-VISUAL_IMPACT = "visual_impact"
-REGION_IMPACT = "region_impact"
+MOTION_STOPS = "motion_stops"
+MOTION_STOPS_LOCAL = "motion_stops_local"
 
 #: What each signal is, in the words a screen can use.
 SIGNAL_LABELS = {
     AUDIO_ONSET: "Sound hits",
     NOVELTY: "Section changes",
     MOTION: "Movement",
-    VISUAL_IMPACT: "Moves that land",
-    REGION_IMPACT: "Moves that land, by region",
+    MOTION_STOPS: "Moves that stop or turn",
+    MOTION_STOPS_LOCAL: "Moves that stop, place by place",
 }
 
 
@@ -362,8 +364,8 @@ def has_audio(path) -> bool:
 # -- visual -------------------------------------------------------------------------
 
 
-def directogram(
-    fx: np.ndarray, fy: np.ndarray, *, bins: int = DIRECTOGRAM_BINS
+def direction_histogram(
+    fx: np.ndarray, fy: np.ndarray, *, bins: int = DIRECTION_BINS
 ) -> np.ndarray:
     """Flow magnitude summed per direction bin, divided by the pixel count: how much of
     the picture moves which way. Flow under the noise floor votes for no direction."""
@@ -375,10 +377,10 @@ def directogram(
     return hist / max(1, mag.size)
 
 
-def deceleration_flux(hists: np.ndarray) -> np.ndarray:
+def stop_strength(hists: np.ndarray) -> np.ndarray:
     """Per sample, the motion that stopped since the previous one, summed over the
-    columns of ``hists`` (``sum(max(0, h[t-1] - h[t]))``) — directions of a directogram
-    (``visual_impact``) or cells of a grid (``region_impact``). ``hists`` is ``[k, n]``
+    columns of ``hists`` (``sum(max(0, h[t-1] - h[t]))``) — directions of a flow direction
+    histogram (``motion_stops``) or cells of a grid (``motion_stops_local``). ``hists`` is ``[k, n]``
     with NaN rows where nothing was measured; the first sample, and any sample next to
     a NaN row, is NaN."""
     hists = np.asarray(hists, dtype=np.float64)
@@ -388,7 +390,7 @@ def deceleration_flux(hists: np.ndarray) -> np.ndarray:
     return out
 
 
-#: The grid ``region_impact`` measures speed in: columns x rows of the frame.
+#: The grid ``motion_stops_local`` measures speed in: columns x rows of the frame.
 REGION_GRID = (8, 6)
 
 
@@ -417,10 +419,10 @@ def visual_signals(
     sample_fps: float = VISUAL_SAMPLE_FPS,
     max_seconds: float = VISUAL_MAX_SECONDS,
     downscale: int = FLOW_DOWNSCALE,
-    bins: int = DIRECTOGRAM_BINS,
+    bins: int = DIRECTION_BINS,
     should_cancel: Optional[Callable[[], bool]] = None,
 ) -> dict:
-    """``{signals: {motion, visual_impact}}`` for a video, in one decode pass.
+    """``{signals: {motion, motion_stops, motion_stops_local}}`` for a video, in one decode pass.
 
     Flow is measured between CONSECUTIVE frames (at most ``_MAX_PAIR_RATE`` pairs a
     second) and each pair's rate is averaged into bins of ``1 / sample_fps`` s. That
@@ -461,7 +463,7 @@ def visual_signals(
                 )  # frame-heights per second
                 mids.append((t + prev_t) / 2.0)
                 motion.append(float(np.mean(np.hypot(fx, fy))) * per_s)
-                hists.append(directogram(fx, fy, bins=bins) * per_s)
+                hists.append(direction_histogram(fx, fy, bins=bins) * per_s)
                 cells.append(region_speeds(fx, fy) * per_s)
             prev_small, prev_t = small, t
             if should_cancel is not None and should_cancel():
@@ -503,8 +505,8 @@ def binned_visual_signals(mids, motion, hists, hop: float, *, cells=None) -> dic
     """Per-pair rates (at pair midpoints ``mids``) averaged into ``hop``-second bins.
 
     ``motion`` is each bin's mean, reported at the bin's CENTRE (``t0 = hop / 2``).
-    ``visual_impact`` is the deceleration flux between consecutive bin-mean
-    directograms, so it belongs to the BOUNDARY between two bins and is reported there
+    ``motion_stops`` is the stop strength between consecutive bin-mean direction
+    histograms, so it belongs to the BOUNDARY between two bins and is reported there
     (``t0 = 0``: sample ``i`` at ``i * hop``, sample 0 unmeasured) — half a hop earlier
     than a centre would put it, which matters once it drives a time-warp. Pairs before
     the clip's first frame (a negative container timestamp) are dropped. Pure numpy —
@@ -517,8 +519,8 @@ def binned_visual_signals(mids, motion, hists, hop: float, *, cells=None) -> dic
                 MOTION: signal_record(
                     [], t0=hop / 2.0, hop_s=hop, name=MOTION, domain="visual"
                 ),
-                VISUAL_IMPACT: signal_record(
-                    [], t0=0.0, hop_s=hop, name=VISUAL_IMPACT, domain="visual"
+                MOTION_STOPS: signal_record(
+                    [], t0=0.0, hop_s=hop, name=MOTION_STOPS, domain="visual"
                 ),
             }
         }
@@ -541,11 +543,11 @@ def binned_visual_signals(mids, motion, hists, hop: float, *, cells=None) -> dic
     mean_hists = bin_means(hists)
     extra = {}
     if cells is not None and cells.size:
-        extra[REGION_IMPACT] = signal_record(
-            deceleration_flux(bin_means(cells)),
+        extra[MOTION_STOPS_LOCAL] = signal_record(
+            stop_strength(bin_means(cells)),
             t0=0.0,
             hop_s=hop,
-            name=REGION_IMPACT,
+            name=MOTION_STOPS_LOCAL,
             domain="visual",
         )
     return {
@@ -554,11 +556,11 @@ def binned_visual_signals(mids, motion, hists, hop: float, *, cells=None) -> dic
             MOTION: signal_record(
                 mean_motion, t0=hop / 2.0, hop_s=hop, name=MOTION, domain="visual"
             ),
-            VISUAL_IMPACT: signal_record(
-                deceleration_flux(mean_hists),
+            MOTION_STOPS: signal_record(
+                stop_strength(mean_hists),
                 t0=0.0,
                 hop_s=hop,
-                name=VISUAL_IMPACT,
+                name=MOTION_STOPS,
                 domain="visual",
             ),
         }
@@ -595,7 +597,7 @@ def cache_key(kind: str) -> str:
         )
     return (
         f"v{BEAT_SIGNALS_FORMAT}-{VISUAL_SAMPLE_FPS:g}fps-d{FLOW_DOWNSCALE}"
-        f"-b{DIRECTOGRAM_BINS}-m{VISUAL_MAX_SECONDS:g}s-p{_MAX_PAIR_RATE:g}"
+        f"-b{DIRECTION_BINS}-m{VISUAL_MAX_SECONDS:g}s-p{_MAX_PAIR_RATE:g}"
         f"-n{_FLOW_NOISE_PX:g}-g{REGION_GRID[0]}x{REGION_GRID[1]}"
     )
 
@@ -638,7 +640,7 @@ def cached_signals(
 __all__ = [
     "AUDIO_ONSET",
     "MOTION",
-    "VISUAL_IMPACT",
+    "MOTION_STOPS",
     "SIGNAL_LABELS",
     "audio_signals",
     "visual_signals",
@@ -647,9 +649,9 @@ __all__ = [
     "novelty_signal",
     "checkerboard_novelty",
     "NOVELTY",
-    "REGION_IMPACT",
-    "directogram",
-    "deceleration_flux",
+    "MOTION_STOPS_LOCAL",
+    "direction_histogram",
+    "stop_strength",
     "region_speeds",
     "signal_record",
     "decimated",

@@ -83,8 +83,9 @@ Splits into three sub-problems, two solved and one the real work:
    offset.
 2. **Video "motion rhythm"** — a 1-D envelope from optical-flow magnitude / frame-diff
    energy (OpenCV, RAFT), or **pose-keypoint** velocity/acceleration (MediaPipe) when a
-   person is tracked. Abe Davis's **"Visual Rhythm and Beat"** [10] formalizes a
-   *directogram*, *visual impacts*, and *visual beats* (ref impl `visbeat`).
+   person is tracked. Davis & Agrawala's **"Visual Rhythm and Beat"** [10] measures
+   motion that stops, direction by direction, from optical flow (its released code is
+   under a non-commercial licence: read, do not vendor).
 3. **The alignment score** — the canonical number is the **Beat Alignment Score (BAS)**
    from AIST++ dance-generation eval [11]: mean over motion beats of the nearest audio
    beat's proximity. A content-agnostic partner is **cross-correlation** of the motion

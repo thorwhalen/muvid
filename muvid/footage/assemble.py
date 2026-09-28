@@ -322,15 +322,17 @@ def _part_plan(cuts: Sequence[AssemblyCut], fps: int, note=None) -> list[_Part]:
                     kind="xfade",
                     cut=cut,
                     n_frames=d,
-                    # Seek the INCOMING clip `pre` frames BEFORE its span starts...
-                    clip_in=cut.clip_in - pre / fps,
+                    # Seek the INCOMING clip `pre` frames BEFORE its span starts
+                    # (frames of OUTPUT: at speed `rate` each is `rate / fps` s of
+                    # source)...
+                    clip_in=cut.clip_in - pre / fps * cut.rate,
                     prev=prev,
                     # ...and the OUTGOING clip to the same instant, which is `pre`
                     # frames before ITS span ends. Both inputs therefore start at
                     # the window's first frame, which is why the filter's
                     # `offset=0` is right and no arithmetic is duplicated between
                     # the seek and the filter.
-                    prev_in=prev.clip_in + prev.duration - pre / fps,
+                    prev_in=prev.clip_in + (prev.duration - pre / fps) * prev.rate,
                     curve=cut.transition.curve,
                 )
             )
@@ -350,7 +352,7 @@ def _part_plan(cuts: Sequence[AssemblyCut], fps: int, note=None) -> list[_Part]:
                     # Advanced past the frames the incoming transition already
                     # showed. Without this the solo REPLAYS them and then runs
                     # post/fps behind the song for the rest of the cut.
-                    clip_in=cut.clip_in + post / fps,
+                    clip_in=cut.clip_in + post / fps * cut.rate,
                 )
             )
     return parts
@@ -422,7 +424,16 @@ def _part_filter(
 
     The order is the contract:
 
-    ``[crop,] scale, pad, setsar, fps, tpad [, look] [, tail]``
+    ``[retime,] [crop,] scale, pad, setsar, fps, tpad [, look] [, tail]``
+
+    ``retime`` is a cut's speed (``setpts=(PTS-STARTPTS)/rate``) and it comes BEFORE
+    ``fps``, so ``fps`` picks frames on the retimed clock. (Measured on ffmpeg 9.0: the
+    other order happens to be rescued by the mp4 muxer's constant-rate frame dropping
+    — this order does not depend on that.) What does break silently is reading only
+    ``duration`` seconds of source: ``tpad`` clones the last frame to fill the count,
+    so the part has exactly the right number of frames and freezes. That is why the
+    guard test (``test_footage_rate.py``) reads the SOURCE MOMENT of the last frame,
+    not the frame count.
 
     The look is spliced **after** the normalisation and **before** ``tail``, and
     both halves of that are load-bearing:
@@ -446,7 +457,10 @@ def _part_filter(
     property ``tests/test_edl_look.py`` pins.
     """
     crop = _crop_filter(cut)
+    rate = getattr(cut, "rate", 1.0)
+    retime = f"setpts=(PTS-STARTPTS)/{rate:.6f}," if rate != 1.0 else ""
     return (
+        f"{retime}"
         f"{crop + ',' if crop else ''}"
         f"scale={w}:{h}:force_original_aspect_ratio=decrease,"
         f"pad={w}:{h}:(ow-iw)/2:(oh-ih)/2,setsar=1,fps={fps},"
@@ -496,8 +510,9 @@ def _render_part(
             "-ss",
             f"{cut.clip_in:.6f}",
             # One spare frame of input beyond the target; -frames:v is the exact cap.
+            # At speed `rate` the span consumes `duration * rate` s of source.
             "-t",
-            f"{cut.duration + 1.0 / fps:.6f}",
+            f"{(cut.duration + 1.0 / fps) * getattr(cut, 'rate', 1.0):.6f}",
             "-i",
             str(cut.clip_path),
             "-vf",
@@ -536,7 +551,7 @@ def _xfade_input(cut: AssemblyCut, clip_in: float, n_frames: int, *, w, h, fps):
             "-ss",
             f"{clip_in:.6f}",
             "-t",
-            f"{(n_frames + 1) / fps:.6f}",
+            f"{(n_frames + 1) / fps * getattr(cut, 'rate', 1.0):.6f}",
             "-i",
             str(cut.clip_path),
         ]
