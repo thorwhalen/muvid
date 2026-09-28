@@ -73,7 +73,7 @@ def test_directogram_puts_motion_in_its_direction_bin():
 def test_impact_is_deceleration_not_acceleration():
     right, left, none = np.eye(4)[0], np.eye(4)[2], np.zeros(4)
     hists = np.stack([none, right, right, left, none, none])
-    impact = bs.impact_from_directograms(hists)
+    impact = bs.deceleration_flux(hists)
     assert np.isnan(impact[0])
     # starting to move (none -> right) is not a hit; gliding is not; turning (right ->
     # left) and stopping (left -> none) are.
@@ -167,8 +167,13 @@ def fp(tmp_path, monkeypatch, calls):
             np.array([0.1, 0.6, 1.1]), np.array([1.0, 2.0, 3.0]), np.ones((3, 8)), 0.5
         )
 
+    def fake_novelty(path):
+        calls.audio.append(f"novelty:{path}")
+        return {"signals": {bs.NOVELTY: bs.signal_record([0.0, 1.0, 0.0], t0=0, hop_s=0.1, name=bs.NOVELTY, domain="audio")}}
+
     monkeypatch.setattr("mixing.audio.beat_grid", fake_audio)
     monkeypatch.setattr(bs, "visual_signals", fake_visual)
+    monkeypatch.setattr(bs, "novelty_signal", fake_novelty)
     return proj
 
 
@@ -179,8 +184,9 @@ def test_song_beat_signals_are_measured_once_and_cached(fp, calls):
     onset = out["signals"][bs.AUDIO_ONSET]
     assert onset["values"] == [0.0, 3.0, 1.0, 5.0] and onset["hop_s"] == 0.5
     assert out["duration_s"] == 30.0
+    assert set(out["signals"]) == {bs.AUDIO_ONSET, bs.NOVELTY}  # the song gets its structure too
     assert service.beat_signals(fp) == out
-    assert len(calls.audio) == 1  # the second call was a file read
+    assert len(calls.audio) == 2  # onset + novelty once each; the second call was a file read
     cached = list((fp.root / "beats").glob("*-audio-*.json"))
     assert len(cached) == 1 and cached[0].name.startswith(fp.song_hash()[:16])
 
@@ -206,6 +212,7 @@ def test_a_video_with_a_soundtrack_gets_its_own_audio_onset(fp, calls, monkeypat
 def test_max_points_pools_every_signal(fp):
     out = service.beat_signals(fp, max_points=2)
     assert out["signals"][bs.AUDIO_ONSET]["values"] == [3.0, 5.0]
+    assert out["signals"][bs.NOVELTY]["values"] == [1.0, 0.0]
 
 
 def test_refusals(fp, monkeypatch):
@@ -258,3 +265,89 @@ def test_the_cache_key_names_the_estimator_versions():
 def test_beat_signals_is_a_read_op_in_the_catalogue():
     spec = next(s for s in service.FOOTAGE_OP_SPECS if s.name == "beat_signals")
     assert (spec.effect, spec.runs) == ("read", "now")
+
+
+# -- the research follow-up: tempo, structure, region deceleration --------------------
+
+
+def test_fitted_tempo_is_the_beats_own_not_the_median_interval():
+    # Beats that run a touch fast (0.464 s) and skip one now and then, over a true
+    # 0.473 s period — librosa's median-interval tempo reads 129.3; the beats fit 126.9.
+    true_p = 0.4729
+    rng = np.random.default_rng(0)
+    beats, t = [], 0.3
+    for i in range(300):
+        beats.append(t + rng.normal(0, 0.01))
+        t += true_p
+    beats = np.array(beats)
+    assert bs.fitted_tempo(beats) == pytest.approx(60 / true_p, abs=0.1)
+    skipped = np.delete(beats, [50, 120, 121, 200])  # dropped beats must not bias it
+    assert bs.fitted_tempo(skipped) == pytest.approx(60 / true_p, abs=0.1)
+    assert bs.fitted_tempo([0.5, 1.0]) is None
+
+
+def test_checkerboard_novelty_peaks_at_a_section_change():
+    # Two "sections": features constant in each, different between them.
+    a = np.tile(np.array([[1.0], [0.0], [0.5]]), (1, 60))
+    b = np.tile(np.array([[0.0], [1.0], [0.5]]), (1, 60))
+    rng = np.random.default_rng(1)
+    feats = np.hstack([a, b]) + rng.normal(0, 0.05, (3, 120))
+    nov = bs.checkerboard_novelty(feats, half=10)
+    assert np.nanargmax(nov) == pytest.approx(60, abs=2)
+    assert np.isnan(nov[:10]).all() and np.isnan(nov[-10:]).all()  # no full kernel at the ends
+
+
+def test_region_speeds_and_region_impact_brake_per_cell():
+    fx = np.zeros((12, 16))
+    fx[:6, :8] = 2.0  # only the top-left quarter moves
+    speeds = bs.region_speeds(fx, np.zeros_like(fx), grid=(2, 2))
+    assert list(speeds) == [2.0, 0.0, 0.0, 0.0]
+    # Two dancers braking in DIFFERENT places both count (a whole-frame mean would
+    # let one's braking cancel the other's starting).
+    cells = np.array([[1.0, 0.0], [0.0, 1.0]])
+    assert list(bs.deceleration_flux(cells)[1:]) == [1.0]
+
+
+def test_the_visual_pass_reports_region_impact(tmp_path):
+    cv2 = pytest.importorskip("cv2")
+    path = tmp_path / "still.avi"
+    writer = cv2.VideoWriter(str(path), cv2.VideoWriter_fourcc(*"MJPG"), 30.0, (160, 120))
+    for i in range(45):
+        frame = np.zeros((120, 160, 3), np.uint8)
+        frame[40:80, 10 + 2 * i : 40 + 2 * i] = 255
+        writer.write(frame)
+    writer.release()
+    out = bs.visual_signals(path, sample_fps=10)
+    assert set(out["signals"]) == {bs.MOTION, bs.VISUAL_IMPACT, bs.REGION_IMPACT}
+    assert out["signals"][bs.REGION_IMPACT]["t0"] == 0.0
+
+
+def test_fitted_tempo_ignores_spurious_half_beats_and_refuses_a_tempo_change():
+    p = 60 / 128
+    rng = np.random.default_rng(3)
+    base = np.cumsum(np.full(400, p)) + rng.normal(0, 0.008, 400)
+    extras = np.sort(np.concatenate([base, base[rng.choice(np.arange(5, 390), 10, replace=False)] + p / 2]))
+    assert bs.fitted_tempo(extras) == pytest.approx(128, abs=0.1)  # was 135.4 before this fix
+    change = np.concatenate([np.cumsum(np.full(200, p)), np.cumsum(np.full(200, 60 / 100)) + 200 * p])
+    assert bs.fitted_tempo(change) is None  # no single tempo: the caller keeps the estimator's
+
+
+def test_the_song_is_answered_even_when_its_sections_cannot_be_measured(fp, monkeypatch):
+    def broken(path):
+        raise ValueError("no audio could be decoded")
+
+    monkeypatch.setattr(bs, "novelty_signal", broken)
+    out = service.beat_signals(fp)
+    assert set(out["signals"]) == {bs.AUDIO_ONSET}  # the beat is still there; novelty is absent
+
+
+def test_novelty_needs_no_whole_song_matrix():
+    # A 10-minute song at 0.1 s: memory stays per-window (the full matrix is ~290 MB).
+    import tracemalloc
+
+    f = np.random.default_rng(0).normal(size=(32, 6000))
+    tracemalloc.start()
+    bs.checkerboard_novelty(f)
+    _, peak = tracemalloc.get_traced_memory()
+    tracemalloc.stop()
+    assert peak < 20e6

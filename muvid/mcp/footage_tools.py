@@ -505,7 +505,13 @@ def assemble_music_video(
       reply's ``warnings`` when a blended boundary restarts the move's ramp,
       which it does because the blend is a separate seek (muvid#73). Leave it
       off — the default — for a grade, a LUT or a posterise, which never read the
-      clock. All five fields survive verbatim in the returned ``edl``.
+      clock.
+    - an entry may carry ``slip_s`` (seconds, at most one beat either way,
+      ``muvid.footage.edl.SLIP_MAX_S``): the cut shows its video that much LATER
+      (negative: earlier) without moving on the song — a local correction on top
+      of the clip's alignment, to put a dancer on the beat. The clip must still
+      hold the slipped span. Every optional field survives verbatim in the
+      returned ``edl``.
     - ``strategy='weighted'`` (score-driven): the beat-snapped Viterbi selector reads the
       persisted score tracks (run ``score_footage`` first) and the selection config —
       ``preset`` ("energetic"/"contemplative") and/or ``weights`` (per-metric) and/or
