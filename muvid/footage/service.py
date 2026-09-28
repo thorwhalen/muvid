@@ -1866,7 +1866,13 @@ def fit_to_beat(
     report, changed = [], {}
     for i in wanted:
         e = entries[i]
-        row = {"index": i, "slip_s": e.slip_s, "rate": e.rate, "z": None, "applied": False}
+        row = {
+            "index": i,
+            "slip_s": e.slip_s,
+            "rate": e.rate,
+            "z": None,
+            "applied": False,
+        }
         if e.is_gap:
             report.append(row | {"reason": "a gap — no video to fit"})
             continue
@@ -1878,7 +1884,9 @@ def fit_to_beat(
         a = aligns.get(e.clip_id)
         sig = accents_of(e.clip_id)
         if a is None or sig is None:
-            report.append(row | {"reason": "this video's movement could not be measured"})
+            report.append(
+                row | {"reason": "this video's movement could not be measured"}
+            )
             continue
         fit = fit_cut(
             sig[0],
@@ -1903,7 +1911,10 @@ def fit_to_beat(
         same = abs(fit.slip_s - e.slip_s) < 1e-6 and abs(fit.rate - e.rate) < 1e-6
         if fit.z < min_z:
             report.append(
-                row | {"reason": "the movement does not follow the beat clearly enough here"}
+                row
+                | {
+                    "reason": "the movement does not follow the beat clearly enough here"
+                }
             )
         elif same or not better:
             report.append(row | {"reason": "already on the beat"})

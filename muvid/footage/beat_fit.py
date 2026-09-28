@@ -57,7 +57,9 @@ class BeatGrid:
     phase: float
 
     @classmethod
-    def fitted(cls, beats: Sequence[float], *, min_beats: int = 8) -> "Optional[BeatGrid]":
+    def fitted(
+        cls, beats: Sequence[float], *, min_beats: int = 8
+    ) -> "Optional[BeatGrid]":
         """The least-squares grid through tracked beat instants (each beat numbered by
         ``beats._beat_numbers``, so a skipped or spurious beat does not bend it), or
         ``None`` when the beats are too few or not steady (``beats.fitted_tempo``)."""
@@ -146,7 +148,9 @@ def fit_cut(
     slips = np.asarray(
         slips
         if slips is not None
-        else np.round(np.arange(-FIT_SLIP_MAX_S, FIT_SLIP_MAX_S + 1e-9, FIT_SLIP_STEP_S), 6)
+        else np.round(
+            np.arange(-FIT_SLIP_MAX_S, FIT_SLIP_MAX_S + 1e-9, FIT_SLIP_STEP_S), 6
+        )
     )
     rates = np.asarray(
         rates
@@ -167,7 +171,9 @@ def fit_cut(
     kw = dict(song_start=song_start, offset=offset, grid=grid, window=window)
     mask = np.ones((slips.size, rates.size), dtype=bool)
     if feasible is not None:
-        mask = np.array([[bool(feasible(float(s), float(r))) for r in rates] for s in slips])
+        mask = np.array(
+            [[bool(feasible(float(s), float(r))) for r in rates] for s in slips]
+        )
     if not mask.any():
         return None
 
