@@ -12,7 +12,8 @@ time through its offset, exactly as filmstrips do):
   tempo come along.
 - ``motion`` — subject-motion energy: the mean camera-compensated optical-flow magnitude
   (the scoring layer's ``flow_residual_and_global`` kernel), in frame-heights per second so
-  it does not depend on resolution or sampling rate.
+  its scale depends little on resolution or sampling rate (not at all is not claimed: the
+  flow's window and noise floor are in downscaled pixels).
 - ``visual_impact`` — the visual BEAT envelope: how much motion, direction by direction,
   STOPS from one sample to the next — the half-wave-rectified decrease of a
   magnitude-weighted **directogram** (a histogram of flow directions), after Davis &
@@ -108,8 +109,11 @@ def signal_record(
 
 def decimated(record: dict, max_points: Optional[int]) -> dict:
     """A signal with at most ``max_points`` samples: each kept sample is the MAX of the
-    ones it stands for (a beat is a peak; averaging would erase it), on a grid whose hop
-    grows by the same factor. Stats are the full-resolution ones."""
+    ``k`` it stands for (a beat is a peak; averaging would erase it), on a grid whose
+    hop grows by ``k`` and whose ``t0`` moves to the centre of the first block — so a
+    pooled peak stays where it was. ``min`` / ``max`` are the full-resolution ones;
+    ``p99`` is the POOLED one (max-pooling raises the typical value, and a display
+    scaled by the full-resolution p99 would saturate)."""
     n = record["n"]
     if not max_points or n <= max_points:
         return record
@@ -125,10 +129,18 @@ def decimated(record: dict, max_points: Optional[int]) -> dict:
         pooled = np.where(
             np.all(np.isnan(blocks), axis=1), np.nan, np.nanmax(blocks, axis=1)
         )
+    finite = pooled[np.isfinite(pooled)]
+    hop = record["hop_s"]
     return {
         **record,
-        "hop_s": round(record["hop_s"] * k, 6),
+        "t0": round(record["t0"] + (k - 1) * hop / 2.0, 6),
+        "hop_s": round(hop * k, 6),
         "n": int(pooled.size),
+        "p99": (
+            round(float(np.percentile(finite, _TOP_PERCENTILE)), _DECIMALS)
+            if finite.size
+            else None
+        ),
         "values": [round(float(v), _DECIMALS) if math.isfinite(v) else None for v in pooled],
     }
 
@@ -213,9 +225,9 @@ def visual_signals(
 
     Pairs are timed by the frames' TIMESTAMPS, not by index over the container's frame
     rate — a phone file can declare 120 fps and carry 24. Both signals are per SECOND
-    and per frame HEIGHT, so neither the resolution nor the frame rate changes their
-    scale. Bin ``i`` covers ``[i, i + 1) / sample_fps`` s and is reported at its centre;
-    a bin no pair fell in is ``None``.
+    and per frame HEIGHT, so the frame rate does not change their scale and the
+    resolution changes it little. Bin ``i`` covers ``[i, i + 1) / sample_fps`` s; a bin
+    no pair fell in is ``None``.
     """
     import cv2  # lazy: the 'scoring' extra
 
@@ -275,15 +287,22 @@ def _compensated_flow(prev_gray, gray):
 
 
 def binned_visual_signals(mids, motion, hists, hop: float) -> dict:
-    """Per-pair rates (at pair midpoints ``mids``) averaged into ``hop``-second bins:
-    ``motion`` is the bin's mean, ``visual_impact`` the deceleration flux of the bin-mean
-    directograms. Pure numpy — the part of the visual pass a test can reach."""
-    common = dict(t0=hop / 2.0, hop_s=hop, domain="visual")
+    """Per-pair rates (at pair midpoints ``mids``) averaged into ``hop``-second bins.
+
+    ``motion`` is each bin's mean, reported at the bin's CENTRE (``t0 = hop / 2``).
+    ``visual_impact`` is the deceleration flux between consecutive bin-mean
+    directograms, so it belongs to the BOUNDARY between two bins and is reported there
+    (``t0 = 0``: sample ``i`` at ``i * hop``, sample 0 unmeasured) — half a hop earlier
+    than a centre would put it, which matters once it drives a time-warp. Pairs before
+    the clip's first frame (a negative container timestamp) are dropped. Pure numpy —
+    the part of the visual pass a test can reach."""
+    keep = mids >= 0
+    mids, motion, hists = mids[keep], motion[keep], hists[keep]
     if mids.size == 0:
         return {
             "signals": {
-                MOTION: signal_record([], name=MOTION, **common),
-                VISUAL_IMPACT: signal_record([], name=VISUAL_IMPACT, **common),
+                MOTION: signal_record([], t0=hop / 2.0, hop_s=hop, name=MOTION, domain="visual"),
+                VISUAL_IMPACT: signal_record([], t0=0.0, hop_s=hop, name=VISUAL_IMPACT, domain="visual"),
             }
         }
     idx = np.floor(mids / hop).astype(int)
@@ -300,9 +319,15 @@ def binned_visual_signals(mids, motion, hists, hop: float) -> dict:
         )
     return {
         "signals": {
-            MOTION: signal_record(mean_motion, name=MOTION, **common),
+            MOTION: signal_record(
+                mean_motion, t0=hop / 2.0, hop_s=hop, name=MOTION, domain="visual"
+            ),
             VISUAL_IMPACT: signal_record(
-                impact_from_directograms(mean_hists), name=VISUAL_IMPACT, **common
+                impact_from_directograms(mean_hists),
+                t0=0.0,
+                hop_s=hop,
+                name=VISUAL_IMPACT,
+                domain="visual",
             ),
         }
     }
@@ -311,27 +336,62 @@ def binned_visual_signals(mids, motion, hists, hop: float) -> dict:
 # -- cached, per piece of media -----------------------------------------------------
 
 
-def _key(kind: str) -> str:
-    """Every parameter that changes the bytes, so a new setting is a new file."""
+def _package_version(name: str) -> str:
+    from importlib.metadata import PackageNotFoundError, version
+
+    try:
+        return version(name)
+    except PackageNotFoundError:
+        return "0"
+
+
+def cache_key(kind: str) -> str:
+    """Every parameter that changes the bytes, so a new setting is a new file: the
+    record format, the audio estimator's versions (``mixing`` and ``librosa`` — a
+    record must never disagree with a fresh ``beat_grid``), and every constant of the
+    visual pass."""
     if kind == "audio":
-        return f"a{BEAT_SIGNALS_FORMAT}"
+        return (
+            f"a{BEAT_SIGNALS_FORMAT}-mix{_package_version('mixing')}"
+            f"-lr{_package_version('librosa')}"
+        )
     return (
         f"v{BEAT_SIGNALS_FORMAT}-{VISUAL_SAMPLE_FPS:g}fps-d{FLOW_DOWNSCALE}"
-        f"-b{DIRECTOGRAM_BINS}-m{VISUAL_MAX_SECONDS:g}s"
+        f"-b{DIRECTOGRAM_BINS}-m{VISUAL_MAX_SECONDS:g}s-p{_MAX_PAIR_RATE:g}"
+        f"-n{_FLOW_NOISE_PX:g}"
     )
+
+
+def has_signal(record: dict) -> bool:
+    """Whether a measured record carries at least one sample of anything."""
+    return any(sig.get("n") for sig in (record.get("signals") or {}).values())
 
 
 def cached_signals(root: Path, media_hash: str, kind: str, compute: Callable[[], dict]) -> dict:
     """The record for ``(media, kind)``: a file read when it was made before, else
-    ``compute()`` written atomically under ``<root>/beats/``."""
-    from muvid.footage.media_views import read_json, write_json
+    ``compute()`` written atomically under ``<root>/beats/``.
 
-    path = Path(root) / _DIRNAME / f"{media_hash[:_HASH_PREFIX]}-{kind}-{_key(kind)}.json"
+    One computation per record at a time: a second request for the same record waits
+    on a lock and then reads what the first wrote, instead of starting a second
+    minutes-long pass (an editor opening every video's channel at once, twice, would
+    otherwise run each pass twice). A record with nothing in it is NOT kept — a
+    truncated file or an unreadable stream must be measured again next time, not be
+    remembered as silence — and ``compute`` should refuse rather than return one."""
+    from muvid.footage.media_views import read_json, write_json
+    from muvid.footage.workspace import file_lock
+
+    name = f"{media_hash[:_HASH_PREFIX]}-{kind}-{cache_key(kind)}"
+    path = Path(root) / _DIRNAME / f"{name}.json"
     cached = read_json(path)
     if cached is not None:
         return cached
-    record = {"media_hash": media_hash, "kind": kind, **compute()}
-    write_json(path, record)
+    with file_lock(path.with_name(f".{name}.lock")):
+        cached = read_json(path)
+        if cached is not None:
+            return cached
+        record = {"media_hash": media_hash, "kind": kind, **compute()}
+        if has_signal(record):
+            write_json(path, record)
     return record
 
 
@@ -345,8 +405,10 @@ __all__ = [
     "has_audio",
     "directogram",
     "impact_from_directograms",
-    "binned_visual_signals",
     "signal_record",
     "decimated",
     "cached_signals",
+    "cache_key",
+    "has_signal",
+    "binned_visual_signals",
 ]

@@ -49,7 +49,11 @@ def test_decimated_pools_by_max_so_a_beat_survives():
     small = bs.decimated(rec, 10)
     assert small["n"] == 10 and small["hop_s"] == pytest.approx(0.1)
     assert small["values"][3] == 9.0 and max(small["values"]) == 9.0
-    assert (small["min"], small["max"]) == (rec["min"], rec["max"])  # full-res stats
+    # the pooled sample sits at the CENTRE of its block, so the hit stays near 0.37 s
+    t_hit = small["t0"] + 3 * small["hop_s"]
+    assert small["t0"] == pytest.approx(0.045) and abs(t_hit - 0.37) <= 0.05
+    assert (small["min"], small["max"]) == (rec["min"], rec["max"])  # full-res range
+    assert small["p99"] > rec["p99"]  # pooled p99: max-pooling raises typical values
     assert bs.decimated(rec, 0) is rec and bs.decimated(rec, 500) is rec
 
 
@@ -87,6 +91,15 @@ def test_binning_averages_pairs_so_a_fast_wobble_does_not_alias():
     m = out["signals"][bs.MOTION]
     assert m["t0"] == pytest.approx(1 / 30, abs=1e-6) and m["n"] == 45
     assert set(m["values"]) == {1.0}
+    # the impact lives on bin BOUNDARIES: sample i at i * hop
+    assert out["signals"][bs.VISUAL_IMPACT]["t0"] == 0.0
+
+
+def test_binning_drops_pairs_before_the_first_frame():
+    out = bs.binned_visual_signals(
+        np.array([-0.2, 0.1, 0.6]), np.array([9.0, 1.0, 2.0]), np.zeros((3, 8)), 0.5
+    )
+    assert out["signals"][bs.MOTION]["values"] == [1.0, 2.0]
 
 
 @pytest.mark.filterwarnings("ignore::DeprecationWarning")
@@ -207,6 +220,39 @@ def test_refusals(fp, monkeypatch):
     monkeypatch.setattr("mixing.audio.beat_grid", missing)
     with pytest.raises(FootageError, match=r"muvid\[scoring\]"):
         service.beat_signals(fp)
+
+
+def test_a_video_nothing_could_be_read_from_is_refused_and_not_remembered(fp, calls, monkeypatch):
+    def empty(path, **kw):
+        calls.visual.append(str(path))
+        return bs.binned_visual_signals(np.array([]), np.array([]), np.zeros((0, 8)), 0.5)
+
+    monkeypatch.setattr(bs, "visual_signals", empty)
+    for _ in range(2):
+        with pytest.raises(FootageError, match="nothing in it could be read"):
+            service.beat_signals(fp, source="A")
+    assert len(calls.visual) == 2  # measured again, not remembered as silence
+    assert not list((fp.root / "beats").glob("*-video-*.json"))
+
+
+def test_an_unreadable_video_is_a_refusal_naming_it(fp, monkeypatch):
+    def corrupt(path, **kw):
+        raise ValueError("cannot open video")
+
+    monkeypatch.setattr(bs, "visual_signals", corrupt)
+    with pytest.raises(FootageError, match="could not read video 'A'"):
+        service.beat_signals(fp, source="A")
+
+
+def test_reading_a_videos_beat_never_writes_the_manifest(fp):
+    before = fp.manifest()
+    service.beat_signals(fp, source="A")
+    assert fp.manifest() == before  # a read op; add_clip may be writing it right now
+
+
+def test_the_cache_key_names_the_estimator_versions():
+    assert "mix" in bs.cache_key("audio") and "lr" in bs.cache_key("audio")
+    assert bs.cache_key("audio") != bs.cache_key("video")
 
 
 def test_beat_signals_is_a_read_op_in_the_catalogue():

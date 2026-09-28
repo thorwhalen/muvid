@@ -84,7 +84,7 @@ def clip_filmstrip(
     """
     path = Path(fp.clip_paths()[clip_id])
     key = filmstrip_key(
-        clip_hash(fp, clip_id, path), fps=fps, height=height, cols=cols, rows=rows
+        _clip_hash(fp, clip_id, path), fps=fps, height=height, cols=cols, rows=rows
     )
     folder = fp.root / _FILMSTRIPS_DIRNAME / key
     index = read_json(folder / _INDEX_NAME)
@@ -211,7 +211,7 @@ def _tile(frames: Path, first: int, n: int, cols: int, rows: int, out: Path) -> 
     )
 
 
-def clip_hash(fp, clip_id: str, path: Path) -> str:
+def _clip_hash(fp, clip_id: str, path: Path) -> str:
     """The clip's content hash, recorded in the manifest the first time it is needed."""
     from muvid.catalog import hash_file
 
@@ -294,7 +294,6 @@ __all__ = [
     "FILMSTRIP_HEIGHT",
     "FILMSTRIP_COLS",
     "FILMSTRIP_ROWS",
-    "clip_hash",
     "read_json",
     "write_json",
 ]

@@ -1583,7 +1583,14 @@ def peaks(fp, *, n: int = 2000) -> dict:
 SONG_SOURCE = "song"
 
 
-def beat_signals(fp, *, source: str = SONG_SOURCE, max_points: int = 0) -> dict:
+#: ``beat_signals``' default pooling: enough to see a beat across a whole song, small
+#: enough for a caller that reads the numbers (the co-director). The editor asks for 0.
+BEAT_SIGNALS_DEFAULT_POINTS = 1000
+
+
+def beat_signals(
+    fp, *, source: str = SONG_SOURCE, max_points: int = BEAT_SIGNALS_DEFAULT_POINTS
+) -> dict:
     """Where the beat is in the song or in one video — CONTINUOUS signals, to look at,
     threshold and bend, not only beat instants.
 
@@ -1596,18 +1603,18 @@ def beat_signals(fp, *, source: str = SONG_SOURCE, max_points: int = 0) -> dict:
     Each signal is in the media's OWN time: sample ``i`` is at ``t0 + i * hop_s`` s of the
     song, or of the clip (song time ``offset + t``). Values are unnormalised, with
     ``min``, ``max`` and ``p99`` beside them; ``None`` is a sample that was not measured.
-    ``max_points`` (0 = all) pools each signal to at most that many samples by their
-    maximum, so a peak survives.
+    ``max_points`` pools each signal to at most that many samples by their maximum, so
+    a peak survives (0 = every sample; an editor drawing it wants that).
 
     Measured once per media and kept (a video's first call reads every frame and takes
-    tens of seconds). Needs the ``scoring`` extra.
+    tens of seconds; a second call for the same video waits for the first rather than
+    measuring again). Needs the ``scoring`` extra.
 
     Returns ``{source, kind: audio|video, duration_s, tempo_bpm, beats, signals:
     {name: {name, label, domain, t0, hop_s, n, min, max, p99, values}}}`` — ``beats``
     and ``tempo_bpm`` are the soundtrack's (``[]`` / ``None`` without one).
     """
     from muvid.footage import beats as bs
-    from muvid.footage.media_views import clip_hash
 
     if max_points and int(max_points) < 2:
         raise FootageError(f"max_points must be 0 (all) or at least 2, got {max_points}")
@@ -1615,35 +1622,44 @@ def beat_signals(fp, *, source: str = SONG_SOURCE, max_points: int = 0) -> dict:
         if not fp.has_song():
             raise FootageError("no song set — call set_song first")
         path, media_hash, kind = fp.song_path(), fp.song_hash(), "audio"
-        duration = fp.song_duration()
+        duration, what = fp.song_duration(), "the song"
     else:
         known = fp.list_clips()
         if source not in {c["clip_id"] for c in known}:
             raise FootageError(_unknown_clip_message(source, known))
         path = Path(fp.clip_paths()[source])
-        media_hash, kind = clip_hash(fp, source, path), "video"
-        duration = _clip_duration(fp, source)
+        media_hash, kind = _recorded_clip_hash(fp, source, path), "video"
+        duration, what = _clip_duration(fp, source), f"video {source!r}"
 
     def measured(which: str, compute) -> dict:
+        def checked() -> dict:
+            record = compute()
+            if not bs.has_signal(record):
+                raise FootageError(f"could not measure the beat of {what}: nothing in it could be read")
+            return record
+
         try:
-            return bs.cached_signals(fp.root, media_hash, which, compute)
+            return bs.cached_signals(fp.root, media_hash, which, checked)
+        except FootageError:
+            raise  # already a refusal (and a ValueError — keep it off the clause below)
         except ImportError as e:
             raise FootageError(
                 "measuring the beat needs librosa and opencv, which the 'scoring' extra "
                 f"provides — pip install 'muvid[scoring]' ({e})"
             ) from e
+        except (ValueError, OSError, EOFError) as e:
+            # An unreadable or truncated file (a decoder's ValueError / EOFError, an
+            # OSError from the file itself) is the media's fault, said as a refusal.
+            raise FootageError(f"could not read {what} to measure its beat: {e}") from e
 
     sound = (
-        measured("audio", lambda: bs.audio_signals(path))
+        measured("audio", lambda: _audio_signals_of(bs, path))
         if kind == "audio" or bs.has_audio(path)
         else {"signals": {}, "beats": [], "tempo_bpm": None}
     )
     signals = dict(sound["signals"])
     if kind == "video":
-        try:
-            signals.update(measured("video", lambda: bs.visual_signals(path))["signals"])
-        except ValueError as e:
-            raise FootageError(f"could not read video {source!r}: {e}") from e
+        signals.update(measured("video", lambda: bs.visual_signals(path))["signals"])
     return {
         "source": source,
         "kind": kind,
@@ -1654,6 +1670,33 @@ def beat_signals(fp, *, source: str = SONG_SOURCE, max_points: int = 0) -> dict:
             name: bs.decimated(rec, int(max_points or 0)) for name, rec in signals.items()
         },
     }
+
+
+def _audio_signals_of(bs, path) -> dict:
+    """``beats.audio_signals``, with a decoder's own "cannot decode" said as a
+    ``ValueError`` (pydub's ``CouldntDecodeError`` is not one)."""
+    try:
+        from pydub.exceptions import CouldntDecodeError
+    except ImportError:  # pragma: no cover — pydub comes with mixing
+        CouldntDecodeError = ()  # noqa: N806
+    try:
+        return bs.audio_signals(path)
+    except CouldntDecodeError as e:  # type: ignore[misc]
+        raise ValueError(str(e)) from e
+
+
+def _recorded_clip_hash(fp, clip_id: str, path: Path) -> str:
+    """A clip's content hash WITHOUT writing the manifest: the recorded one when it is
+    for this file, else hashed now. A read op must not read-modify-write the manifest —
+    several of these run at once (one per video) beside ``add_clip`` / ``remove_clip``,
+    and an unlocked write-back of a stale copy would drop a clip or revive a removed
+    one."""
+    from muvid.catalog import hash_file
+
+    for c in fp.manifest().get("clips", []):
+        if c.get("clip_id") == clip_id and c.get("hash") and c.get("file") == path.name:
+            return c["hash"]
+    return hash_file(path)
 
 
 def looks(fp=None) -> dict:
