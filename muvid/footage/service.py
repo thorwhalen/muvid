@@ -1617,7 +1617,9 @@ def beat_signals(
     from muvid.footage import beats as bs
 
     if max_points and int(max_points) < 2:
-        raise FootageError(f"max_points must be 0 (all) or at least 2, got {max_points}")
+        raise FootageError(
+            f"max_points must be 0 (all) or at least 2, got {max_points}"
+        )
     if source == SONG_SOURCE:
         if not fp.has_song():
             raise FootageError("no song set — call set_song first")
@@ -1635,7 +1637,9 @@ def beat_signals(
         def checked() -> dict:
             record = compute()
             if not bs.has_signal(record):
-                raise FootageError(f"could not measure the beat of {what}: nothing in it could be read")
+                raise FootageError(
+                    f"could not measure the beat of {what}: nothing in it could be read"
+                )
             return record
 
         try:
@@ -1667,7 +1671,8 @@ def beat_signals(
         "tempo_bpm": sound.get("tempo_bpm"),
         "beats": sound.get("beats") or [],
         "signals": {
-            name: bs.decimated(rec, int(max_points or 0)) for name, rec in signals.items()
+            name: bs.decimated(rec, int(max_points or 0))
+            for name, rec in signals.items()
         },
     }
 

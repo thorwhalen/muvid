@@ -80,15 +80,17 @@ SIGNAL_LABELS = {
 # -- the record ---------------------------------------------------------------------
 
 
-def signal_record(
-    values, *, t0: float, hop_s: float, name: str, domain: str
-) -> dict:
+def signal_record(values, *, t0: float, hop_s: float, name: str, domain: str) -> dict:
     """One signal on a regular grid: sample ``i`` is at ``t0 + i * hop_s`` seconds of the
     media's own time. Non-finite samples become ``None`` (not measured, never zero)."""
     arr = np.asarray(values, dtype=np.float64)
     finite = arr[np.isfinite(arr)]
     stats = (
-        (float(finite.min()), float(finite.max()), float(np.percentile(finite, _TOP_PERCENTILE)))
+        (
+            float(finite.min()),
+            float(finite.max()),
+            float(np.percentile(finite, _TOP_PERCENTILE)),
+        )
         if finite.size
         else (None, None, None)
     )
@@ -103,7 +105,9 @@ def signal_record(
         "min": lo,
         "max": hi,
         "p99": top,
-        "values": [round(float(v), _DECIMALS) if math.isfinite(v) else None for v in arr],
+        "values": [
+            round(float(v), _DECIMALS) if math.isfinite(v) else None for v in arr
+        ],
     }
 
 
@@ -141,7 +145,9 @@ def decimated(record: dict, max_points: Optional[int]) -> dict:
             if finite.size
             else None
         ),
-        "values": [round(float(v), _DECIMALS) if math.isfinite(v) else None for v in pooled],
+        "values": [
+            round(float(v), _DECIMALS) if math.isfinite(v) else None for v in pooled
+        ],
     }
 
 
@@ -183,7 +189,9 @@ def has_audio(path) -> bool:
 # -- visual -------------------------------------------------------------------------
 
 
-def directogram(fx: np.ndarray, fy: np.ndarray, *, bins: int = DIRECTOGRAM_BINS) -> np.ndarray:
+def directogram(
+    fx: np.ndarray, fy: np.ndarray, *, bins: int = DIRECTOGRAM_BINS
+) -> np.ndarray:
     """Flow magnitude summed per direction bin, divided by the pixel count: how much of
     the picture moves which way. Flow under the noise floor votes for no direction."""
     mag = np.hypot(fx, fy).ravel()
@@ -251,7 +259,9 @@ def visual_signals(
             small = _small_gray(frame, downscale=downscale)
             if prev_small is not None and t > prev_t:
                 fx, fy = _compensated_flow(prev_small, small)
-                per_s = 1.0 / ((t - prev_t) * small.shape[0])  # frame-heights per second
+                per_s = 1.0 / (
+                    (t - prev_t) * small.shape[0]
+                )  # frame-heights per second
                 mids.append((t + prev_t) / 2.0)
                 motion.append(float(np.mean(np.hypot(fx, fy))) * per_s)
                 hists.append(directogram(fx, fy, bins=bins) * per_s)
@@ -301,8 +311,12 @@ def binned_visual_signals(mids, motion, hists, hop: float) -> dict:
     if mids.size == 0:
         return {
             "signals": {
-                MOTION: signal_record([], t0=hop / 2.0, hop_s=hop, name=MOTION, domain="visual"),
-                VISUAL_IMPACT: signal_record([], t0=0.0, hop_s=hop, name=VISUAL_IMPACT, domain="visual"),
+                MOTION: signal_record(
+                    [], t0=hop / 2.0, hop_s=hop, name=MOTION, domain="visual"
+                ),
+                VISUAL_IMPACT: signal_record(
+                    [], t0=0.0, hop_s=hop, name=VISUAL_IMPACT, domain="visual"
+                ),
             }
         }
     idx = np.floor(mids / hop).astype(int)
@@ -367,7 +381,9 @@ def has_signal(record: dict) -> bool:
     return any(sig.get("n") for sig in (record.get("signals") or {}).values())
 
 
-def cached_signals(root: Path, media_hash: str, kind: str, compute: Callable[[], dict]) -> dict:
+def cached_signals(
+    root: Path, media_hash: str, kind: str, compute: Callable[[], dict]
+) -> dict:
     """The record for ``(media, kind)``: a file read when it was made before, else
     ``compute()`` written atomically under ``<root>/beats/``.
 
