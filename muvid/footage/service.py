@@ -1788,7 +1788,7 @@ def fit_to_beat(
     fp,
     *,
     edit_id: str,
-    indices: Optional[list] = None,
+    indices: Optional[list[int]] = None,
     min_z: float = FIT_MIN_Z,
     apply: bool = True,
 ) -> dict:
