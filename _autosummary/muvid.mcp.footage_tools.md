@@ -34,6 +34,7 @@ alignment, exactly as `set_song` does.
 | [`align_footage`](#muvid.mcp.footage_tools.align_footage)(project_id, \*[, keep_declared])     | Align every uploaded clip to the song by audio, and persist the result.                                                                                                                                                      |
 | [`assemble_music_video`](#muvid.mcp.footage_tools.assemble_music_video)(project_id, \*[, ...])        | Assemble the music video — auto (a selection `strategy`) or an explicit `edl`.                                                                                                                                               |
 | [`beat_grid`](#muvid.mcp.footage_tools.beat_grid)(project_id)                              | The song's beat grid — tempo and beat instants on the song timeline — WITHOUT running the scoring job.                                                                                                                       |
+| [`footage_beat_signals`](#muvid.mcp.footage_tools.footage_beat_signals)(project_id, \*[, ...])        | Where the beat is in the song or in one video — CONTINUOUS signals, to look at, threshold and bend, not only beat instants.                                                                                                  |
 | [`footage_clear_offset`](#muvid.mcp.footage_tools.footage_clear_offset)(project_id, \*, clip_id)      | Forget where I placed this video: remove a hand-declared offset, so the next `align_footage` measures the clip by its audio instead.                                                                                         |
 | [`footage_delete_edit`](#muvid.mcp.footage_tools.footage_delete_edit)(project_id, \*, edit_id)       | Delete a saved edit.                                                                                                                                                                                                         |
 | [`footage_editor_document`](#muvid.mcp.footage_tools.footage_editor_document)(project_id)                | The project as lacing-native standoff annotations, for a multitrack editor.                                                                                                                                                  |
@@ -254,6 +255,34 @@ Returns `tempo_bpm`, `beats` (seconds, ascending), `n_beats`,
 `downbeats` is present only when the estimator measured any — the librosa
 backend has no downbeat tracker, and an empty list would read as “this song has
 no downbeats”, a measurement nobody made (gate, don’t zero).
+
+* **Return type:**
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+
+### muvid.mcp.footage_tools.footage_beat_signals(project_id, , source='song', max_points=1000)
+
+Where the beat is in the song or in one video — CONTINUOUS signals, to look at,
+threshold and bend, not only beat instants.
+
+`source` is `"song"` or a clip id. The song gets its sound (`audio_onset`: the
+onset envelope the beat grid is estimated from). A video gets its own soundtrack’s
+`audio_onset` when it has one, and two visual signals: `motion` (how much the
+people in the picture move, the camera’s own move taken out) and `visual_impact`
+(moves stopping dead and turning — the visual beat).
+
+Each signal is in the media’s OWN time: sample `i` is at `t0 + i * hop_s` s of the
+song, or of the clip (song time `offset + t`). Values are unnormalised, with
+`min`, `max` and `p99` beside them; `None` is a sample that was not measured.
+`max_points` pools each signal to at most that many samples by their maximum, so
+a peak survives (0 = every sample; an editor drawing it wants that).
+
+Measured once per media and kept (a video’s first call reads every frame and takes
+tens of seconds; a second call for the same video waits for the first rather than
+measuring again). Needs the `scoring` extra.
+
+Returns `{source, kind: audio|video, duration_s, tempo_bpm, beats, signals:
+{name: {name, label, domain, t0, hop_s, n, min, max, p99, values}}}` — `beats`
+and `tempo_bpm` are the soundtrack’s (`[]` / `None` without one).
 
 * **Return type:**
   [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)

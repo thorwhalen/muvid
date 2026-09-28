@@ -1,4 +1,4 @@
-> built 2026-09-27 16:30 UTC from e352579 (main) · muvid 0.0.72. Details: build_info.json
+> built 2026-09-28 05:21 UTC from 50d6173 (main) · muvid 0.0.73. Details: build_info.json
 
 # index.html.md
 
@@ -2772,6 +2772,188 @@ Returns `out_path`.
   [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)
 
 
+# _autosummary/muvid.footage.beats.html.md
+
+# muvid.footage.beats
+
+Beat signals — continuous envelopes of where the beat is, in the song and in each video.
+
+`beat_grid` answers *when* the song’s beats fall (instants). An editor lining a dancer’s
+hits up with the music wants more than instants: a **continuous** signal it can look at,
+threshold anywhere between its minimum and maximum, and bend towards binary. That is what
+this module measures, per piece of media and in that media’s OWN time (a clip reaches song
+time through its offset, exactly as filmstrips do):
+
+- `audio_onset` — the onset-strength envelope `mixing.audio.beat_grid` estimates beats
+  from (the same estimator `beat_grid` uses, so the two never disagree about the song),
+  for the song and for every clip that has a soundtrack. The estimator’s beat instants and
+  tempo come along.
+- `motion` — subject-motion energy: the mean camera-compensated optical-flow magnitude
+  (the scoring layer’s `flow_residual_and_global` kernel), in frame-heights per second so
+  its scale depends little on resolution or sampling rate (not at all is not claimed: the
+  flow’s window and noise floor are in downscaled pixels).
+- `visual_impact` — the visual BEAT envelope: how much motion, direction by direction,
+  STOPS from one sample to the next — the half-wave-rectified decrease of a
+  magnitude-weighted **directogram** (a histogram of flow directions), after Davis &
+  Agrawala, *Visual Rhythm and Beat* (SIGGRAPH 2018), whose visual beats are sudden
+  decelerations. A hit stopping dead and a change of direction (motion leaving one
+  direction bin) both register; motion energy alone misses the turn, which is most of
+  what a dance beat looks like. Measured on phone footage of dancers, this deceleration
+  flux locked to the song’s beat about twice as strongly as the increase or the total
+  change did.
+
+Every signal is **unnormalised** and carries its own grid (`t0`, `hop_s`) and its
+`min`, `max` and `p99` (a robust top a display can scale by), because thresholding is a
+view the caller chooses, not something the data should have decided.
+
+Cached per media content hash and parameters at `footage/beats/<hash>-<kind>-<key>.json`,
+beside `peaks/` — derived from media the project holds, expensive to make, cheap to keep.
+
+### Module Attributes
+
+| [`SIGNAL_LABELS`](_autosummary/muvid.footage.beats.html.md#muvid.footage.beats.SIGNAL_LABELS)   | What each signal is, in the words a screen can use.   |
+|------------------------------------------------------------------|-------------------------------------------------------|
+
+### Functions
+
+| [`audio_signals`](_autosummary/muvid.footage.beats.html.md#muvid.footage.beats.audio_signals)(path)                                | `{signals: {audio_onset}, beats, tempo_bpm}` for a media file's soundtrack, from `mixing.audio.beat_grid`.                                                                                                                                                                   |
+|-----------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [`visual_signals`](_autosummary/muvid.footage.beats.html.md#muvid.footage.beats.visual_signals)(path, \*[, sample_fps, ...])        | `{signals: {motion, visual_impact}}` for a video, in one decode pass.                                                                                                                                                                                                        |
+| [`has_audio`](_autosummary/muvid.footage.beats.html.md#muvid.footage.beats.has_audio)(path)                                    | Whether a media file carries an audio stream (an unprobeable file: no).                                                                                                                                                                                                      |
+| [`directogram`](_autosummary/muvid.footage.beats.html.md#muvid.footage.beats.directogram)(fx, fy, \*[, bins])                    | Flow magnitude summed per direction bin, divided by the pixel count: how much of the picture moves which way.                                                                                                                                                                |
+| [`impact_from_directograms`](_autosummary/muvid.footage.beats.html.md#muvid.footage.beats.impact_from_directograms)(hists)                    | The visual-beat envelope: per sample, the motion that stopped since the previous one, summed over directions (`sum(max(0, h[t-1] - h[t]))`).                                                                                                                                 |
+| [`signal_record`](_autosummary/muvid.footage.beats.html.md#muvid.footage.beats.signal_record)(values, \*, t0, hop_s, name, domain) | One signal on a regular grid: sample `i` is at `t0 + i * hop_s` seconds of the media's own time.                                                                                                                                                                             |
+| [`decimated`](_autosummary/muvid.footage.beats.html.md#muvid.footage.beats.decimated)(record, max_points)                      | A signal with at most `max_points` samples: each kept sample is the MAX of the `k` it stands for (a beat is a peak; averaging would erase it), on a grid whose hop grows by `k` and whose `t0` moves to the centre of the first block — so a pooled peak stays where it was. |
+| [`cached_signals`](_autosummary/muvid.footage.beats.html.md#muvid.footage.beats.cached_signals)(root, media_hash, kind, compute)    | The record for `(media, kind)`: a file read when it was made before, else `compute()` written atomically under `<root>/beats/`.                                                                                                                                              |
+| [`cache_key`](_autosummary/muvid.footage.beats.html.md#muvid.footage.beats.cache_key)(kind)                                    | Every parameter that changes the bytes, so a new setting is a new file: the record format, the audio estimator's versions (`mixing` and `librosa` — a record must never disagree with a fresh `beat_grid`), and every constant of the visual pass.                           |
+| [`has_signal`](_autosummary/muvid.footage.beats.html.md#muvid.footage.beats.has_signal)(record)                                 | Whether a measured record carries at least one sample of anything.                                                                                                                                                                                                           |
+| [`binned_visual_signals`](_autosummary/muvid.footage.beats.html.md#muvid.footage.beats.binned_visual_signals)(mids, motion, hists, hop)    | Per-pair rates (at pair midpoints `mids`) averaged into `hop`-second bins.                                                                                                                                                                                                   |
+
+### muvid.footage.beats.SIGNAL_LABELS *= {'audio_onset': 'Sound hits', 'motion': 'Movement', 'visual_impact': 'Moves that land'}*
+
+What each signal is, in the words a screen can use.
+
+### muvid.footage.beats.audio_signals(path)
+
+`{signals: {audio_onset}, beats, tempo_bpm}` for a media file’s soundtrack, from
+`mixing.audio.beat_grid`. Raises `ImportError` without librosa (the caller names
+the install).
+
+* **Return type:**
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+
+### muvid.footage.beats.binned_visual_signals(mids, motion, hists, hop)
+
+Per-pair rates (at pair midpoints `mids`) averaged into `hop`-second bins.
+
+`motion` is each bin’s mean, reported at the bin’s CENTRE (`t0 = hop / 2`).
+`visual_impact` is the deceleration flux between consecutive bin-mean
+directograms, so it belongs to the BOUNDARY between two bins and is reported there
+(`t0 = 0`: sample `i` at `i * hop`, sample 0 unmeasured) — half a hop earlier
+than a centre would put it, which matters once it drives a time-warp. Pairs before
+the clip’s first frame (a negative container timestamp) are dropped. Pure numpy —
+the part of the visual pass a test can reach.
+
+* **Return type:**
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+
+### muvid.footage.beats.cache_key(kind)
+
+Every parameter that changes the bytes, so a new setting is a new file: the
+record format, the audio estimator’s versions (`mixing` and `librosa` — a
+record must never disagree with a fresh `beat_grid`), and every constant of the
+visual pass.
+
+* **Return type:**
+  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+
+### muvid.footage.beats.cached_signals(root, media_hash, kind, compute)
+
+The record for `(media, kind)`: a file read when it was made before, else
+`compute()` written atomically under `<root>/beats/`.
+
+One computation per record at a time: a second request for the same record waits
+on a lock and then reads what the first wrote, instead of starting a second
+minutes-long pass (an editor opening every video’s channel at once, twice, would
+otherwise run each pass twice). A record with nothing in it is NOT kept — a
+truncated file or an unreadable stream must be measured again next time, not be
+remembered as silence — and `compute` should refuse rather than return one.
+
+* **Return type:**
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+
+### muvid.footage.beats.decimated(record, max_points)
+
+A signal with at most `max_points` samples: each kept sample is the MAX of the
+`k` it stands for (a beat is a peak; averaging would erase it), on a grid whose
+hop grows by `k` and whose `t0` moves to the centre of the first block — so a
+pooled peak stays where it was. `min` / `max` are the full-resolution ones;
+`p99` is the POOLED one (max-pooling raises the typical value, and a display
+scaled by the full-resolution p99 would saturate).
+
+* **Return type:**
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+
+### muvid.footage.beats.directogram(fx, fy, , bins=8)
+
+Flow magnitude summed per direction bin, divided by the pixel count: how much of
+the picture moves which way. Flow under the noise floor votes for no direction.
+
+* **Return type:**
+  `ndarray`
+
+### muvid.footage.beats.has_audio(path)
+
+Whether a media file carries an audio stream (an unprobeable file: no).
+
+* **Return type:**
+  [`bool`](https://docs.python.org/3/builtins/functions.html#bool)
+
+### muvid.footage.beats.has_signal(record)
+
+Whether a measured record carries at least one sample of anything.
+
+* **Return type:**
+  [`bool`](https://docs.python.org/3/builtins/functions.html#bool)
+
+### muvid.footage.beats.impact_from_directograms(hists)
+
+The visual-beat envelope: per sample, the motion that stopped since the previous
+one, summed over directions (`sum(max(0, h[t-1] - h[t]))`). `hists` is
+`[k, bins]` with NaN rows where nothing was measured; the first sample, and any
+sample next to a NaN row, is NaN.
+
+* **Return type:**
+  `ndarray`
+
+### muvid.footage.beats.signal_record(values, , t0, hop_s, name, domain)
+
+One signal on a regular grid: sample `i` is at `t0 + i * hop_s` seconds of the
+media’s own time. Non-finite samples become `None` (not measured, never zero).
+
+* **Return type:**
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+
+### muvid.footage.beats.visual_signals(path, , sample_fps=15.0, max_seconds=900.0, downscale=4, bins=8, should_cancel=None)
+
+`{signals: {motion, visual_impact}}` for a video, in one decode pass.
+
+Flow is measured between CONSECUTIVE frames (at most `_MAX_PAIR_RATE` pairs a
+second) and each pair’s rate is averaged into bins of `1 / sample_fps` s. That
+average is the low-pass a decimation needs: measuring on every other frame instead
+aliases whatever moves faster than half the sampling rate into a fake slow rhythm
+(on 30 fps phone footage, a steady 3 Hz pulse that is not in the picture).
+
+Pairs are timed by the frames’ TIMESTAMPS, not by index over the container’s frame
+rate — a phone file can declare 120 fps and carry 24. Both signals are per SECOND
+and per frame HEIGHT, so the frame rate does not change their scale and the
+resolution changes it little. Bin `i` covers `[i, i + 1) / sample_fps` s; a bin
+no pair fell in is `None`.
+
+* **Return type:**
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+
+
 # _autosummary/muvid.footage.edl.html.md
 
 # muvid.footage.edl
@@ -4507,6 +4689,7 @@ Returns the normalized list of [`EdlEntry`](_autosummary/muvid.footage.html.md#m
 | [`align`](_autosummary/muvid.footage.align.html.md#module-muvid.footage.align)                 | Align a set of footage clips to the song — a thin wrapper over `mixing.audio`.                                                                                      |
 |---------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | [`assemble`](_autosummary/muvid.footage.assemble.html.md#module-muvid.footage.assemble)           | Assemble validated cuts into a music video, in BOUNDED memory.                                                                                                      |
+| [`beats`](_autosummary/muvid.footage.beats.html.md#module-muvid.footage.beats)                 | Beat signals — continuous envelopes of where the beat is, in the song and in each video.                                                                            |
 | [`edl`](_autosummary/muvid.footage.edl.html.md#module-muvid.footage.edl)                     | EDL data types + the `validate_edl` single-source-of-truth gate.                                                                                                    |
 | [`errors`](_autosummary/muvid.footage.errors.html.md#module-muvid.footage.errors)               | The refusal and cancellation types of the footage operations ([`muvid.footage.service`](_autosummary/muvid.footage.service.html.md#module-muvid.footage.service)). |
 | [`lacing_bridge`](_autosummary/muvid.footage.lacing_bridge.html.md#module-muvid.footage.lacing_bridge) | muvid project → lacing standoff records, and the DECISION tier back to an EDL.                                                                                      |
@@ -5129,6 +5312,8 @@ Every file is written as a NEW file (temp + rename) — the catalog hardlinks th
 |-------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | [`song_peaks`](_autosummary/muvid.footage.media_views.html.md#muvid.footage.media_views.song_peaks)(fp, \*, n)                          | `{duration_s, n, peaks}` — `n` buckets of the song's peak <br/><br/>```<br/>|amplitude|<br/>```<br/><br/>, mono, normalised so the loudest bucket is 1.0 (all zeros for a silent song). |
 | [`filmstrip_key`](_autosummary/muvid.footage.media_views.html.md#muvid.footage.media_views.filmstrip_key)(clip_hash, \*, fps, height, ...) | The cache directory name: the clip's content and every parameter.                                                                                                                       |
+| `read_json`(path)                                                                               |                                                                                                                                                                                         |
+| `write_json`(path, record)                                                                      |                                                                                                                                                                                         |
 
 ### muvid.footage.media_views.FILMSTRIP_FPS *= 2.0*
 
@@ -6079,6 +6264,7 @@ trust refusal belongs where the encode does, in [`render()`](_autosummary/muvid.
 | [`timeline`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.timeline)(fp)                                     | Which videos cover which spans of the song (overlaps shown), from the saved alignment — the map for choosing what to cut to.                                                                                                 |
 | [`beat_grid`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.beat_grid)(fp)                                    | The song's beat grid — tempo and beat instants on the song timeline — without looking at the footage.                                                                                                                        |
 | [`peaks`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.peaks)(fp, \*[, n])                               | The song's waveform, to draw under the timeline: `n` equal slices of the song, each the loudest moment in it (mono), scaled so the loudest slice is 1.0.                                                                     |
+| [`beat_signals`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.beat_signals)(fp, \*[, source, max_points])       | Where the beat is in the song or in one video — CONTINUOUS signals, to look at, threshold and bend, not only beat instants.                                                                                                  |
 | [`filmstrips`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.filmstrips)(fp)                                   | Every video's filmstrip — thumbnails to draw each camera's lane.                                                                                                                                                             |
 | [`filmstrip`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.filmstrip)(fp, \*, clip_id)                       | One video's filmstrip (the same record `filmstrips` gives per clip, with its `clip_id` and `fps`).                                                                                                                           |
 | [`score`](_autosummary/muvid.footage.service.html.md#muvid.footage.service.score)(fp, \*[, hop_s, metrics, should_cancel])   | Look at the footage: score every placed video, on the song's own timeline — picture quality and how its movement sits on the beat — and save the curves.                                                                     |
@@ -6276,6 +6462,34 @@ that start a bar), `downbeats_source` — `measured` (the estimator found them),
 to a bar — muvid.montage’s rule) or `first_beat` (no onset energy to vote with, so
 bars start on the first beat) — `beats_per_bar` and `bar_of_beat` (each beat’s
 bar number, 1 for the first bar, 0 for a pickup before it).
+
+* **Return type:**
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+
+### muvid.footage.service.beat_signals(fp, , source='song', max_points=1000)
+
+Where the beat is in the song or in one video — CONTINUOUS signals, to look at,
+threshold and bend, not only beat instants.
+
+`source` is `"song"` or a clip id. The song gets its sound (`audio_onset`: the
+onset envelope the beat grid is estimated from). A video gets its own soundtrack’s
+`audio_onset` when it has one, and two visual signals: `motion` (how much the
+people in the picture move, the camera’s own move taken out) and `visual_impact`
+(moves stopping dead and turning — the visual beat).
+
+Each signal is in the media’s OWN time: sample `i` is at `t0 + i * hop_s` s of the
+song, or of the clip (song time `offset + t`). Values are unnormalised, with
+`min`, `max` and `p99` beside them; `None` is a sample that was not measured.
+`max_points` pools each signal to at most that many samples by their maximum, so
+a peak survives (0 = every sample; an editor drawing it wants that).
+
+Measured once per media and kept (a video’s first call reads every frame and takes
+tens of seconds; a second call for the same video waits for the first rather than
+measuring again). Needs the `scoring` extra.
+
+Returns `{source, kind: audio|video, duration_s, tempo_bpm, beats, signals:
+{name: {name, label, domain, t0, hop_s, n, min, max, p99, values}}}` — `beats`
+and `tempo_bpm` are the soundtrack’s (`[]` / `None` without one).
 
 * **Return type:**
   [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
@@ -9918,6 +10132,7 @@ alignment, exactly as `set_song` does.
 | [`align_footage`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.align_footage)(project_id, \*[, keep_declared])     | Align every uploaded clip to the song by audio, and persist the result.                                                                                                                                                      |
 | [`assemble_music_video`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.assemble_music_video)(project_id, \*[, ...])        | Assemble the music video — auto (a selection `strategy`) or an explicit `edl`.                                                                                                                                               |
 | [`beat_grid`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.beat_grid)(project_id)                              | The song's beat grid — tempo and beat instants on the song timeline — WITHOUT running the scoring job.                                                                                                                       |
+| [`footage_beat_signals`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.footage_beat_signals)(project_id, \*[, ...])        | Where the beat is in the song or in one video — CONTINUOUS signals, to look at, threshold and bend, not only beat instants.                                                                                                  |
 | [`footage_clear_offset`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.footage_clear_offset)(project_id, \*, clip_id)      | Forget where I placed this video: remove a hand-declared offset, so the next `align_footage` measures the clip by its audio instead.                                                                                         |
 | [`footage_delete_edit`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.footage_delete_edit)(project_id, \*, edit_id)       | Delete a saved edit.                                                                                                                                                                                                         |
 | [`footage_editor_document`](_autosummary/muvid.mcp.footage_tools.html.md#muvid.mcp.footage_tools.footage_editor_document)(project_id)                | The project as lacing-native standoff annotations, for a multitrack editor.                                                                                                                                                  |
@@ -10138,6 +10353,34 @@ Returns `tempo_bpm`, `beats` (seconds, ascending), `n_beats`,
 `downbeats` is present only when the estimator measured any — the librosa
 backend has no downbeat tracker, and an empty list would read as “this song has
 no downbeats”, a measurement nobody made (gate, don’t zero).
+
+* **Return type:**
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+
+### muvid.mcp.footage_tools.footage_beat_signals(project_id, , source='song', max_points=1000)
+
+Where the beat is in the song or in one video — CONTINUOUS signals, to look at,
+threshold and bend, not only beat instants.
+
+`source` is `"song"` or a clip id. The song gets its sound (`audio_onset`: the
+onset envelope the beat grid is estimated from). A video gets its own soundtrack’s
+`audio_onset` when it has one, and two visual signals: `motion` (how much the
+people in the picture move, the camera’s own move taken out) and `visual_impact`
+(moves stopping dead and turning — the visual beat).
+
+Each signal is in the media’s OWN time: sample `i` is at `t0 + i * hop_s` s of the
+song, or of the clip (song time `offset + t`). Values are unnormalised, with
+`min`, `max` and `p99` beside them; `None` is a sample that was not measured.
+`max_points` pools each signal to at most that many samples by their maximum, so
+a peak survives (0 = every sample; an editor drawing it wants that).
+
+Measured once per media and kept (a video’s first call reads every frame and takes
+tens of seconds; a second call for the same video waits for the first rather than
+measuring again). Needs the `scoring` extra.
+
+Returns `{source, kind: audio|video, duration_s, tempo_bpm, beats, signals:
+{name: {name, label, domain, t0, hop_s, n, min, max, p99, values}}}` — `beats`
+and `tempo_bpm` are the soundtrack’s (`[]` / `None` without one).
 
 * **Return type:**
   [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
@@ -10552,15 +10795,15 @@ an unpriced call must force approval (muvid#47).
 | [`VisualizerWorkspace`](_autosummary/muvid.mcp.html.md#muvid.mcp.VisualizerWorkspace)(email, root)   | A single caller's private visualizer area, addressed by `email`.   |
 |-------------------------------------------------------------------------------------|--------------------------------------------------------------------|
 
-### muvid.mcp.FREE_TOOLS *= ['list_visuals', 'list_projects', 'project_status', 'render_visualizer', 'footage_status', 'set_song', 'add_footage', 'remove_footage', 'align_footage', 'footage_set_offset', 'footage_clear_offset', 'footage_timeline', 'beat_grid', 'footage_peaks', 'footage_filmstrips', 'footage_filmstrip', 'list_strategies', 'propose_edit', 'footage_save_edit', 'footage_edits', 'footage_get_edit', 'footage_replace_edit', 'footage_set_cut', 'footage_split_cut', 'footage_merge_cut', 'footage_set_span', 'footage_rename_edit', 'footage_looks', 'footage_undo_edit', 'footage_redo_edit', 'footage_delete_edit', 'footage_render', 'footage_renders', 'footage_editor_document', 'add_footage_folder', 'assemble_music_video', 'list_music_video_projects', 'footage_edl_from_annotations', 'score_footage', 'footage_scores', 'footage_score_status', 'list_archetypes', 'analyze_song_lyrics', 'propose_lyric_treatments', 'validate_lyric_treatment', 'render_lyric_video', 'list_subgenres', 'render_subgenre']*
+### muvid.mcp.FREE_TOOLS *= ['list_visuals', 'list_projects', 'project_status', 'render_visualizer', 'footage_status', 'set_song', 'add_footage', 'remove_footage', 'align_footage', 'footage_set_offset', 'footage_clear_offset', 'footage_timeline', 'beat_grid', 'footage_peaks', 'footage_beat_signals', 'footage_filmstrips', 'footage_filmstrip', 'list_strategies', 'propose_edit', 'footage_save_edit', 'footage_edits', 'footage_get_edit', 'footage_replace_edit', 'footage_set_cut', 'footage_split_cut', 'footage_merge_cut', 'footage_set_span', 'footage_rename_edit', 'footage_looks', 'footage_undo_edit', 'footage_redo_edit', 'footage_delete_edit', 'footage_render', 'footage_renders', 'footage_editor_document', 'add_footage_folder', 'assemble_music_video', 'list_music_video_projects', 'footage_edl_from_annotations', 'score_footage', 'footage_scores', 'footage_score_status', 'list_archetypes', 'analyze_song_lyrics', 'propose_lyric_treatments', 'validate_lyric_treatment', 'render_lyric_video', 'list_subgenres', 'render_subgenre']*
 
 Alias — muvid has no costed tools.
 
-### muvid.mcp.TOOL_NAMES *= ['list_visuals', 'list_projects', 'project_status', 'render_visualizer', 'footage_status', 'set_song', 'add_footage', 'remove_footage', 'align_footage', 'footage_set_offset', 'footage_clear_offset', 'footage_timeline', 'beat_grid', 'footage_peaks', 'footage_filmstrips', 'footage_filmstrip', 'list_strategies', 'propose_edit', 'footage_save_edit', 'footage_edits', 'footage_get_edit', 'footage_replace_edit', 'footage_set_cut', 'footage_split_cut', 'footage_merge_cut', 'footage_set_span', 'footage_rename_edit', 'footage_looks', 'footage_undo_edit', 'footage_redo_edit', 'footage_delete_edit', 'footage_render', 'footage_renders', 'footage_editor_document', 'add_footage_folder', 'assemble_music_video', 'list_music_video_projects', 'footage_edl_from_annotations', 'score_footage', 'footage_scores', 'footage_score_status', 'list_archetypes', 'analyze_song_lyrics', 'propose_lyric_treatments', 'propose_lyric_treatments_ai', 'validate_lyric_treatment', 'render_lyric_video', 'list_subgenres', 'render_subgenre']*
+### muvid.mcp.TOOL_NAMES *= ['list_visuals', 'list_projects', 'project_status', 'render_visualizer', 'footage_status', 'set_song', 'add_footage', 'remove_footage', 'align_footage', 'footage_set_offset', 'footage_clear_offset', 'footage_timeline', 'beat_grid', 'footage_peaks', 'footage_beat_signals', 'footage_filmstrips', 'footage_filmstrip', 'list_strategies', 'propose_edit', 'footage_save_edit', 'footage_edits', 'footage_get_edit', 'footage_replace_edit', 'footage_set_cut', 'footage_split_cut', 'footage_merge_cut', 'footage_set_span', 'footage_rename_edit', 'footage_looks', 'footage_undo_edit', 'footage_redo_edit', 'footage_delete_edit', 'footage_render', 'footage_renders', 'footage_editor_document', 'add_footage_folder', 'assemble_music_video', 'list_music_video_projects', 'footage_edl_from_annotations', 'score_footage', 'footage_scores', 'footage_score_status', 'list_archetypes', 'analyze_song_lyrics', 'propose_lyric_treatments', 'propose_lyric_treatments_ai', 'validate_lyric_treatment', 'render_lyric_video', 'list_subgenres', 'render_subgenre']*
 
 All tools this package exposes (all free). Bare names; a host may prefix them.
 
-### muvid.mcp.TOOL_REFS *= {'add_footage': 'muvid.mcp.footage_tools:add_footage', 'add_footage_folder': 'muvid.mcp.footage_tools:add_footage_folder', 'align_footage': 'muvid.mcp.footage_tools:align_footage', 'analyze_song_lyrics': 'muvid.mcp.lyricvid_tools:analyze_song_lyrics', 'assemble_music_video': 'muvid.mcp.footage_tools:assemble_music_video', 'beat_grid': 'muvid.mcp.footage_tools:beat_grid', 'footage_clear_offset': 'muvid.mcp.footage_tools:footage_clear_offset', 'footage_delete_edit': 'muvid.mcp.footage_tools:footage_delete_edit', 'footage_editor_document': 'muvid.mcp.footage_tools:footage_editor_document', 'footage_edits': 'muvid.mcp.footage_tools:footage_edits', 'footage_edl_from_annotations': 'muvid.mcp.footage_tools:footage_edl_from_annotations', 'footage_filmstrip': 'muvid.mcp.footage_tools:footage_filmstrip', 'footage_filmstrips': 'muvid.mcp.footage_tools:footage_filmstrips', 'footage_get_edit': 'muvid.mcp.footage_tools:footage_get_edit', 'footage_looks': 'muvid.mcp.footage_tools:footage_looks', 'footage_merge_cut': 'muvid.mcp.footage_tools:footage_merge_cut', 'footage_peaks': 'muvid.mcp.footage_tools:footage_peaks', 'footage_redo_edit': 'muvid.mcp.footage_tools:footage_redo_edit', 'footage_rename_edit': 'muvid.mcp.footage_tools:footage_rename_edit', 'footage_render': 'muvid.mcp.footage_tools:footage_render', 'footage_renders': 'muvid.mcp.footage_tools:footage_renders', 'footage_replace_edit': 'muvid.mcp.footage_tools:footage_replace_edit', 'footage_save_edit': 'muvid.mcp.footage_tools:footage_save_edit', 'footage_score_status': 'muvid.mcp.scoring_tools:footage_score_status', 'footage_scores': 'muvid.mcp.scoring_tools:footage_scores', 'footage_set_cut': 'muvid.mcp.footage_tools:footage_set_cut', 'footage_set_offset': 'muvid.mcp.footage_tools:footage_set_offset', 'footage_set_span': 'muvid.mcp.footage_tools:footage_set_span', 'footage_split_cut': 'muvid.mcp.footage_tools:footage_split_cut', 'footage_status': 'muvid.mcp.footage_tools:footage_status', 'footage_timeline': 'muvid.mcp.footage_tools:footage_timeline', 'footage_undo_edit': 'muvid.mcp.footage_tools:footage_undo_edit', 'list_archetypes': 'muvid.mcp.lyricvid_tools:list_archetypes', 'list_music_video_projects': 'muvid.mcp.footage_tools:list_music_video_projects', 'list_projects': 'muvid.mcp.tools:list_projects', 'list_strategies': 'muvid.mcp.footage_tools:list_strategies', 'list_subgenres': 'muvid.mcp.subgenre_tools:list_subgenres', 'list_visuals': 'muvid.mcp.tools:list_visuals', 'project_status': 'muvid.mcp.tools:project_status', 'propose_edit': 'muvid.mcp.footage_tools:propose_edit', 'propose_lyric_treatments': 'muvid.mcp.lyricvid_tools:propose_lyric_treatments', 'propose_lyric_treatments_ai': 'muvid.mcp.lyricvid_tools:propose_lyric_treatments_ai', 'remove_footage': 'muvid.mcp.footage_tools:remove_footage', 'render_lyric_video': 'muvid.mcp.lyricvid_tools:render_lyric_video', 'render_subgenre': 'muvid.mcp.subgenre_tools:render_subgenre', 'render_visualizer': 'muvid.mcp.tools:render_visualizer', 'score_footage': 'muvid.mcp.scoring_tools:score_footage', 'set_song': 'muvid.mcp.footage_tools:set_song', 'validate_lyric_treatment': 'muvid.mcp.lyricvid_tools:validate_lyric_treatment'}*
+### muvid.mcp.TOOL_REFS *= {'add_footage': 'muvid.mcp.footage_tools:add_footage', 'add_footage_folder': 'muvid.mcp.footage_tools:add_footage_folder', 'align_footage': 'muvid.mcp.footage_tools:align_footage', 'analyze_song_lyrics': 'muvid.mcp.lyricvid_tools:analyze_song_lyrics', 'assemble_music_video': 'muvid.mcp.footage_tools:assemble_music_video', 'beat_grid': 'muvid.mcp.footage_tools:beat_grid', 'footage_beat_signals': 'muvid.mcp.footage_tools:footage_beat_signals', 'footage_clear_offset': 'muvid.mcp.footage_tools:footage_clear_offset', 'footage_delete_edit': 'muvid.mcp.footage_tools:footage_delete_edit', 'footage_editor_document': 'muvid.mcp.footage_tools:footage_editor_document', 'footage_edits': 'muvid.mcp.footage_tools:footage_edits', 'footage_edl_from_annotations': 'muvid.mcp.footage_tools:footage_edl_from_annotations', 'footage_filmstrip': 'muvid.mcp.footage_tools:footage_filmstrip', 'footage_filmstrips': 'muvid.mcp.footage_tools:footage_filmstrips', 'footage_get_edit': 'muvid.mcp.footage_tools:footage_get_edit', 'footage_looks': 'muvid.mcp.footage_tools:footage_looks', 'footage_merge_cut': 'muvid.mcp.footage_tools:footage_merge_cut', 'footage_peaks': 'muvid.mcp.footage_tools:footage_peaks', 'footage_redo_edit': 'muvid.mcp.footage_tools:footage_redo_edit', 'footage_rename_edit': 'muvid.mcp.footage_tools:footage_rename_edit', 'footage_render': 'muvid.mcp.footage_tools:footage_render', 'footage_renders': 'muvid.mcp.footage_tools:footage_renders', 'footage_replace_edit': 'muvid.mcp.footage_tools:footage_replace_edit', 'footage_save_edit': 'muvid.mcp.footage_tools:footage_save_edit', 'footage_score_status': 'muvid.mcp.scoring_tools:footage_score_status', 'footage_scores': 'muvid.mcp.scoring_tools:footage_scores', 'footage_set_cut': 'muvid.mcp.footage_tools:footage_set_cut', 'footage_set_offset': 'muvid.mcp.footage_tools:footage_set_offset', 'footage_set_span': 'muvid.mcp.footage_tools:footage_set_span', 'footage_split_cut': 'muvid.mcp.footage_tools:footage_split_cut', 'footage_status': 'muvid.mcp.footage_tools:footage_status', 'footage_timeline': 'muvid.mcp.footage_tools:footage_timeline', 'footage_undo_edit': 'muvid.mcp.footage_tools:footage_undo_edit', 'list_archetypes': 'muvid.mcp.lyricvid_tools:list_archetypes', 'list_music_video_projects': 'muvid.mcp.footage_tools:list_music_video_projects', 'list_projects': 'muvid.mcp.tools:list_projects', 'list_strategies': 'muvid.mcp.footage_tools:list_strategies', 'list_subgenres': 'muvid.mcp.subgenre_tools:list_subgenres', 'list_visuals': 'muvid.mcp.tools:list_visuals', 'project_status': 'muvid.mcp.tools:project_status', 'propose_edit': 'muvid.mcp.footage_tools:propose_edit', 'propose_lyric_treatments': 'muvid.mcp.lyricvid_tools:propose_lyric_treatments', 'propose_lyric_treatments_ai': 'muvid.mcp.lyricvid_tools:propose_lyric_treatments_ai', 'remove_footage': 'muvid.mcp.footage_tools:remove_footage', 'render_lyric_video': 'muvid.mcp.lyricvid_tools:render_lyric_video', 'render_subgenre': 'muvid.mcp.subgenre_tools:render_subgenre', 'render_visualizer': 'muvid.mcp.tools:render_visualizer', 'score_footage': 'muvid.mcp.scoring_tools:score_footage', 'set_song': 'muvid.mcp.footage_tools:set_song', 'validate_lyric_treatment': 'muvid.mcp.lyricvid_tools:validate_lyric_treatment'}*
 
 Bare tool name → its `module:function` reference (tools live in three modules).
 
@@ -15100,7 +15343,7 @@ Rendered white; colour comes from the accent `tint`. `options={"mode":
 
 # About this build
 
-This documentation was built on **2026-09-27 16:30 UTC** from commit <a href="https://github.com/thorwhalen/muvid/commit/e35257936a0069d355fb1e5daa7ca2c2ffca564a"><code>e352579</code></a> on branch <code>main</code>, for **muvid 0.0.72** (from <code>pyproject.toml</code>).
+This documentation was built on **2026-09-28 05:21 UTC** from commit <a href="https://github.com/thorwhalen/muvid/commit/50d6173f6ee058da7496f3cc437a59dbcaded505"><code>50d6173</code></a> on branch <code>main</code>, for **muvid 0.0.73** (from <code>pyproject.toml</code>).
 
 #### NOTE
 Nothing suggests a mismatch: the tree was clean at the commit above, and the documented version is the one on PyPI.
@@ -15109,9 +15352,9 @@ Nothing suggests a mismatch: the tree was clean at the commit above, and the doc
 
 |                     |                                                                                                                                                         |
 |---------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Commit              | <a href="https://github.com/thorwhalen/muvid/commit/e35257936a0069d355fb1e5daa7ca2c2ffca564a"><code>e35257936a0069d355fb1e5daa7ca2c2ffca564a</code></a> |
+| Commit              | <a href="https://github.com/thorwhalen/muvid/commit/50d6173f6ee058da7496f3cc437a59dbcaded505"><code>50d6173f6ee058da7496f3cc437a59dbcaded505</code></a> |
 | Branch              | <code>main</code>                                                                                                                                       |
-| Tags at this commit | <code>0.0.72</code>                                                                                                                                     |
+| Tags at this commit | <code>0.0.73</code>                                                                                                                                     |
 | Working tree        | clean                                                                                                                                                   |
 | Remote              | <code>https://github.com/thorwhalen/muvid</code>                                                                                                        |
 
@@ -15120,9 +15363,9 @@ Nothing suggests a mismatch: the tree was clean at the commit above, and the doc
 |              |                                                                                            |
 |--------------|--------------------------------------------------------------------------------------------|
 | Repository   | <code>thorwhalen/muvid</code>                                                              |
-| Run          | <a href="https://github.com/thorwhalen/muvid/actions/runs/36333022598">36333022598</a>     |
+| Run          | <a href="https://github.com/thorwhalen/muvid/actions/runs/36381054061">36381054061</a>     |
 | Ref          | <code>refs/heads/main</code>                                                               |
-| Event commit | <code>dfc5de982304dca66a96a4c2d69e25c6cd969253</code> (in the history of the built commit) |
+| Event commit | <code>d2d71c43c524fece4240702634c69513ab882b86</code> (in the history of the built commit) |
 
 ## Tools
 
@@ -15147,13 +15390,13 @@ Nothing suggests a mismatch: the tree was clean at the commit above, and the doc
 
 ## Package on PyPI
 
-Latest release: <a href="https://pypi.org/project/muvid/0.0.72/">0.0.72</a>, the same as the documented version.
+Latest release: <a href="https://pypi.org/project/muvid/0.0.73/">0.0.73</a>, the same as the documented version.
 
 ## Reproduce
 
 ```bash
 git clone https://github.com/thorwhalen/muvid && cd muvid
-git checkout e35257936a0069d355fb1e5daa7ca2c2ffca564a
+git checkout 50d6173f6ee058da7496f3cc437a59dbcaded505
 pip install "epythet==0.2.12"
 epythet quickstart . --ignore tests/ scrap/ examples/
 ```

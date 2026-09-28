@@ -59,6 +59,7 @@ trust refusal belongs where the encode does, in [`render()`](#muvid.footage.serv
 | [`timeline`](#muvid.footage.service.timeline)(fp)                                     | Which videos cover which spans of the song (overlaps shown), from the saved alignment — the map for choosing what to cut to.                                                                                                 |
 | [`beat_grid`](#muvid.footage.service.beat_grid)(fp)                                    | The song's beat grid — tempo and beat instants on the song timeline — without looking at the footage.                                                                                                                        |
 | [`peaks`](#muvid.footage.service.peaks)(fp, \*[, n])                               | The song's waveform, to draw under the timeline: `n` equal slices of the song, each the loudest moment in it (mono), scaled so the loudest slice is 1.0.                                                                     |
+| [`beat_signals`](#muvid.footage.service.beat_signals)(fp, \*[, source, max_points])       | Where the beat is in the song or in one video — CONTINUOUS signals, to look at, threshold and bend, not only beat instants.                                                                                                  |
 | [`filmstrips`](#muvid.footage.service.filmstrips)(fp)                                   | Every video's filmstrip — thumbnails to draw each camera's lane.                                                                                                                                                             |
 | [`filmstrip`](#muvid.footage.service.filmstrip)(fp, \*, clip_id)                       | One video's filmstrip (the same record `filmstrips` gives per clip, with its `clip_id` and `fps`).                                                                                                                           |
 | [`score`](#muvid.footage.service.score)(fp, \*[, hop_s, metrics, should_cancel])   | Look at the footage: score every placed video, on the song's own timeline — picture quality and how its movement sits on the beat — and save the curves.                                                                     |
@@ -256,6 +257,34 @@ that start a bar), `downbeats_source` — `measured` (the estimator found them),
 to a bar — muvid.montage’s rule) or `first_beat` (no onset energy to vote with, so
 bars start on the first beat) — `beats_per_bar` and `bar_of_beat` (each beat’s
 bar number, 1 for the first bar, 0 for a pickup before it).
+
+* **Return type:**
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+
+### muvid.footage.service.beat_signals(fp, , source='song', max_points=1000)
+
+Where the beat is in the song or in one video — CONTINUOUS signals, to look at,
+threshold and bend, not only beat instants.
+
+`source` is `"song"` or a clip id. The song gets its sound (`audio_onset`: the
+onset envelope the beat grid is estimated from). A video gets its own soundtrack’s
+`audio_onset` when it has one, and two visual signals: `motion` (how much the
+people in the picture move, the camera’s own move taken out) and `visual_impact`
+(moves stopping dead and turning — the visual beat).
+
+Each signal is in the media’s OWN time: sample `i` is at `t0 + i * hop_s` s of the
+song, or of the clip (song time `offset + t`). Values are unnormalised, with
+`min`, `max` and `p99` beside them; `None` is a sample that was not measured.
+`max_points` pools each signal to at most that many samples by their maximum, so
+a peak survives (0 = every sample; an editor drawing it wants that).
+
+Measured once per media and kept (a video’s first call reads every frame and takes
+tens of seconds; a second call for the same video waits for the first rather than
+measuring again). Needs the `scoring` extra.
+
+Returns `{source, kind: audio|video, duration_s, tempo_bpm, beats, signals:
+{name: {name, label, domain, t0, hop_s, n, min, max, p99, values}}}` — `beats`
+and `tempo_bpm` are the soundtrack’s (`[]` / `None` without one).
 
 * **Return type:**
   [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)

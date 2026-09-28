@@ -31,6 +31,8 @@ Every file is written as a NEW file (temp + rename) — the catalog hardlinks th
 |-------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | [`song_peaks`](#muvid.footage.media_views.song_peaks)(fp, \*, n)                          | `{duration_s, n, peaks}` — `n` buckets of the song's peak <br/><br/>```<br/>|amplitude|<br/>```<br/><br/>, mono, normalised so the loudest bucket is 1.0 (all zeros for a silent song). |
 | [`filmstrip_key`](#muvid.footage.media_views.filmstrip_key)(clip_hash, \*, fps, height, ...) | The cache directory name: the clip's content and every parameter.                                                                                                                       |
+| `read_json`(path)                                                                               |                                                                                                                                                                                         |
+| `write_json`(path, record)                                                                      |                                                                                                                                                                                         |
 
 ### muvid.footage.media_views.FILMSTRIP_FPS *= 2.0*
 
