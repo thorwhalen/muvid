@@ -1388,3 +1388,31 @@ def test_a_slipped_cut_is_not_stretched_over_its_neighbour():
     by_id = {"A": type("A", (), {"reliable": True})()}
     assert _absorbable(EdlEntry(0.0, 4.0, "A"), by_id)
     assert not _absorbable(EdlEntry(0.0, 4.0, "A", slip_s=0.1), by_id)
+
+
+def test_a_refused_slip_says_it_is_the_slip(fp):
+    service.save_edit(fp, edl=_edl_ab(), edit_id="e")
+    with pytest.raises(FootageError, match=r"once slipped by \+0\.200"):
+        service.set_cut(fp, edit_id="e", index=1, slip_s=0.2)
+
+
+def test_the_editor_round_trip_keeps_a_slip_and_drops_one_no_cut_may_carry():
+    from muvid.footage.edl import EdlEntry
+    from muvid.footage.lacing_bridge import edl_annotations, edl_from_annotations
+
+    anns = edl_annotations(
+        [EdlEntry(0.0, 4.0, "A", slip_s=0.12), EdlEntry(4.0, 8.0, "A", slip_s=0.2)],
+        song_asset_id="song",
+        attributed_to="test",
+    )
+    anns[1].body["slip_s"] = 3.0  # an editor wrote a slip no cut may carry
+    out = edl_from_annotations(anns)
+    assert out[0]["slip_s"] == 0.12
+    assert "slip_s" not in out[1]  # dropped, not a refusal of the whole edit
+
+
+def test_coalescing_never_merges_two_differently_slipped_cuts():
+    from muvid.footage.edl import EdlEntry, _coalesce_absorbed
+
+    merged = _coalesce_absorbed([EdlEntry(0.0, 5.0, "A"), EdlEntry(5.0, 8.0, "A", slip_s=0.3)])
+    assert [e.slip_s for e in merged] == [0.0, 0.3]

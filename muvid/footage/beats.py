@@ -206,33 +206,77 @@ def audio_signals(path) -> dict:
     }
 
 
+#: A fit whose beats stray from their line by more than this share of a period
+#: (rms) is not a steady beat train, and no single tempo describes it.
+_TEMPO_FIT_MAX_RMS = 0.15
+
+
 def fitted_tempo(beats, *, min_beats: int = 8) -> "float | None":
-    """The tempo (BPM) of a steady beat train, fitted to ALL its beats.
+    """The tempo (BPM) of a steady beat train, fitted to ALL its beats — or ``None``
+    when the beats are too few or not steady enough to have one tempo.
 
     A beat tracker's own tempo can be biased: librosa's is the median inter-beat
     interval, and on a song whose tracked beats run slightly fast with an occasional
     skip it reported 129.2 BPM where the beats themselves fit 126.9 (a 1.8 % error
-    that puts a straight grid a full beat off within a minute). So: count each
-    interval as a whole number of median intervals (a skipped or doubled beat is 2 or
-    0.5 of one, rounded), and fit time against that beat count by least squares.
-    ``None`` for fewer than ``min_beats`` beats — not enough to fit."""
+    that puts a straight grid a full beat off within a minute).
+
+    So each beat is given its beat NUMBER by walking the intervals: an interval of
+    about one period is one step, a skipped beat two, and a spurious extra beat
+    (half a period) no step at all — it shares its neighbour's number, so it neither
+    adds nor removes a beat. Time is fitted against those numbers by least squares,
+    twice, re-numbering with the refined period. A train whose residual exceeds
+    ``_TEMPO_FIT_MAX_RMS`` of a period (a tempo change, a rubato, heavy tracking
+    errors) has no single tempo: ``None``, and the caller keeps the estimator's.
+    """
     b = np.asarray(beats, dtype=np.float64)
     if b.size < min_beats:
         return None
     d = np.diff(b)
-    p0 = float(np.median(d))
-    if not p0 > 0:
+    period = float(np.median(d))
+    if not period > 0:
         return None
-    steps = np.maximum(1, np.rint(d / p0))
-    k = np.concatenate([[0.0], np.cumsum(steps)])
-    period = float(np.polyfit(k, b, 1)[0])
-    return round(60.0 / period, 3) if period > 0 else None
+    for _ in range(2):
+        k, own = _beat_numbers(b, period)
+        if k[own][-1] < min_beats:
+            return None
+        slope, icept = np.polyfit(k[own], b[own], 1)
+        if not slope > 0:
+            return None
+        period = float(slope)
+    k, own = _beat_numbers(b, period)
+    # Residual only over the beats that own their number: a spurious extra beat
+    # sits half a period off its line by construction.
+    resid = b[own] - (k[own] * period + icept)
+    if float(np.sqrt(np.mean(resid**2))) > _TEMPO_FIT_MAX_RMS * period:
+        return None
+    return round(60.0 / period, 3)
+
+
+def _beat_numbers(b: np.ndarray, period: float) -> tuple:
+    """``(numbers, owns)``: each beat's beat number, counted from the last beat that
+    OWNED a number (so a spurious extra beat — under 3/4 of a period after it —
+    takes that beat's number and does not own it, and the next real beat is still
+    one step on), and which beats own theirs."""
+    k = np.zeros(b.size)
+    owns = np.ones(b.size, dtype=bool)
+    last_t, last_k = b[0], 0.0
+    for i in range(1, b.size):
+        gap = (b[i] - last_t) / period
+        if gap < 0.75:
+            k[i], owns[i] = last_k, False
+            continue
+        last_k += max(1.0, float(np.rint(gap)))
+        last_t = b[i]
+        k[i] = last_k
+    return k, owns
 
 
 #: Novelty: the analysis grid (s) and the checkerboard kernel's full width (s) — a
 #: section boundary is a change that holds for several bars, not a fill.
 NOVELTY_HOP_S = 0.1
 NOVELTY_KERNEL_S = 8.0
+#: Timbre coefficients per frame (chroma is always 12).
+NOVELTY_MFCC = 20
 _NOVELTY_SAMPLE_RATE = 22050
 
 
@@ -249,7 +293,7 @@ def novelty_signal(path) -> dict:
     if y.size == 0:
         raise ValueError("no audio could be decoded")
     hop = int(round(_NOVELTY_SAMPLE_RATE * NOVELTY_HOP_S))
-    mfcc = librosa.feature.mfcc(y=y, sr=_NOVELTY_SAMPLE_RATE, n_mfcc=20, hop_length=hop)
+    mfcc = librosa.feature.mfcc(y=y, sr=_NOVELTY_SAMPLE_RATE, n_mfcc=NOVELTY_MFCC, hop_length=hop)
     chroma = librosa.feature.chroma_stft(y=y, sr=_NOVELTY_SAMPLE_RATE, hop_length=hop)
     return {"signals": {NOVELTY: signal_record(checkerboard_novelty(np.vstack([_standardised(mfcc), _standardised(chroma)])), t0=0.0, hop_s=hop / _NOVELTY_SAMPLE_RATE, name=NOVELTY, domain="audio")}}
 
@@ -269,13 +313,16 @@ def checkerboard_novelty(features: np.ndarray, *, half: "int | None" = None) -> 
     if n < 2 * half + 1 or half < 1:
         return out
     unit = f / (np.linalg.norm(f, axis=0, keepdims=True) + 1e-9)
-    ssm = unit.T @ unit
     r = np.arange(-half, half + 1)
     sign = np.sign(r)[:, None] * np.sign(r)[None, :]  # + on the two diagonal blocks, - off
     taper = np.exp(-0.5 * (r / (half / 2.0)) ** 2)
     kernel = sign * taper[:, None] * taper[None, :]
+    # Only the band around the diagonal is ever read, so each window's block is
+    # computed on its own: memory stays O(kernel²), never O(frames²) (a whole
+    # 10-minute song's matrix would be ~290 MB).
     for i in range(half, n - half):
-        out[i] = float((kernel * ssm[i - half : i + half + 1, i - half : i + half + 1]).sum())
+        w = unit[:, i - half : i + half + 1]
+        out[i] = float((kernel * (w.T @ w)).sum())
     return out
 
 
@@ -507,6 +554,7 @@ def cache_key(kind: str) -> str:
         return (
             f"s{BEAT_SIGNALS_FORMAT}-lr{_package_version('librosa')}"
             f"-h{NOVELTY_HOP_S:g}-k{NOVELTY_KERNEL_S:g}"
+            f"-r{_NOVELTY_SAMPLE_RATE}-m{NOVELTY_MFCC}"
         )
     return (
         f"v{BEAT_SIGNALS_FORMAT}-{VISUAL_SAMPLE_FPS:g}fps-d{FLOW_DOWNSCALE}"

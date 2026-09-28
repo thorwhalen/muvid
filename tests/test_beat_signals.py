@@ -320,3 +320,34 @@ def test_the_visual_pass_reports_region_impact(tmp_path):
     out = bs.visual_signals(path, sample_fps=10)
     assert set(out["signals"]) == {bs.MOTION, bs.VISUAL_IMPACT, bs.REGION_IMPACT}
     assert out["signals"][bs.REGION_IMPACT]["t0"] == 0.0
+
+
+def test_fitted_tempo_ignores_spurious_half_beats_and_refuses_a_tempo_change():
+    p = 60 / 128
+    rng = np.random.default_rng(3)
+    base = np.cumsum(np.full(400, p)) + rng.normal(0, 0.008, 400)
+    extras = np.sort(np.concatenate([base, base[rng.choice(np.arange(5, 390), 10, replace=False)] + p / 2]))
+    assert bs.fitted_tempo(extras) == pytest.approx(128, abs=0.1)  # was 135.4 before this fix
+    change = np.concatenate([np.cumsum(np.full(200, p)), np.cumsum(np.full(200, 60 / 100)) + 200 * p])
+    assert bs.fitted_tempo(change) is None  # no single tempo: the caller keeps the estimator's
+
+
+def test_the_song_is_answered_even_when_its_sections_cannot_be_measured(fp, monkeypatch):
+    def broken(path):
+        raise ValueError("no audio could be decoded")
+
+    monkeypatch.setattr(bs, "novelty_signal", broken)
+    out = service.beat_signals(fp)
+    assert set(out["signals"]) == {bs.AUDIO_ONSET}  # the beat is still there; novelty is absent
+
+
+def test_novelty_needs_no_whole_song_matrix():
+    # A 10-minute song at 0.1 s: memory stays per-window (the full matrix is ~290 MB).
+    import tracemalloc
+
+    f = np.random.default_rng(0).normal(size=(32, 6000))
+    tracemalloc.start()
+    bs.checkerboard_novelty(f)
+    _, peak = tracemalloc.get_traced_memory()
+    tracemalloc.stop()
+    assert peak < 20e6

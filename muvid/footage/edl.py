@@ -1099,10 +1099,17 @@ def validate_edl(
         if not e.is_gap:
             a = by_id[e.clip_id]
             if not _clip_contains(a, e.song_start, e.song_end, e.slip_s):
+                slipped = (
+                    f" once slipped by {e.slip_s:+.3f} s (a slipped cut needs the clip to "
+                    f"cover [{e.song_start + e.slip_s:.3f}, {e.song_end + e.slip_s:.3f}] "
+                    "in song time — reduce the slip or the span)"
+                    if e.slip_s
+                    else ""
+                )
                 raise ValueError(
                     f"EDL entry {i}: clip {e.clip_id!r} does not contain song span "
                     f"[{e.song_start:.3f}, {e.song_end:.3f}] (its coverage is "
-                    f"[{a.coverage[0]:.3f}, {a.coverage[1]:.3f}])."
+                    f"[{a.coverage[0]:.3f}, {a.coverage[1]:.3f}]){slipped}."
                 )
         if e.transition is not None:
             _validate_transition(i, e, prev, by_id)
@@ -1339,8 +1346,8 @@ def _coalesce_absorbed(entries: list) -> list:
             and prev.clip_id == e.clip_id
             and abs(prev.song_end - e.song_start) <= _EPS
             and e.transition is None
-            and (prev.crop, prev.crop_end, prev.look, prev.look_time_varying)
-            == (e.crop, e.crop_end, e.look, e.look_time_varying)
+            and (prev.crop, prev.crop_end, prev.look, prev.look_time_varying, prev.slip_s)
+            == (e.crop, e.crop_end, e.look, e.look_time_varying, e.slip_s)
         ):
             out[-1] = replace(prev, song_end=e.song_end)
         else:

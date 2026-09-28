@@ -1681,7 +1681,13 @@ def beat_signals(
     )
     signals = dict(sound["signals"])
     if kind == "audio":
-        signals.update(measured("structure", lambda: bs.novelty_signal(path))["signals"])
+        # Section changes are a second opinion on the song, not the answer to this
+        # request: if they cannot be measured, the beat still is — the signal is
+        # simply absent (a screen says "not measured"), never a refusal of the song.
+        try:
+            signals.update(measured("structure", lambda: bs.novelty_signal(path))["signals"])
+        except FootageError:
+            pass
     if kind == "video":
         signals.update(measured("video", lambda: bs.visual_signals(path))["signals"])
     return {

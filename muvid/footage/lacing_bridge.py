@@ -295,10 +295,13 @@ def edl_from_annotations(
             and "look" in entry
         ):
             entry["look_spec"] = dict(raw)
-        # Same skip-shaped read: a number is forwarded (`validate_edl` bounds it on
-        # the way back in); anything else is an editor bug and reads as no slip.
+        # Same skip-shaped read: a number within the bound is forwarded; anything
+        # else — a non-number, or a slip no cut may carry — is an editor bug and
+        # reads as no slip, rather than refusing the WHOLE edit on the way back.
+        from muvid.footage.edl import SLIP_MAX_S
+
         raw = a.body.get("slip_s")
-        if isinstance(raw, (int, float)) and not isinstance(raw, bool) and raw:
+        if isinstance(raw, (int, float)) and not isinstance(raw, bool) and raw and abs(raw) <= SLIP_MAX_S:
             entry["slip_s"] = float(raw)
         out.append(entry)
     return sorted(out, key=lambda e: e["song_start"])
