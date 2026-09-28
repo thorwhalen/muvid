@@ -87,7 +87,7 @@ def clip_filmstrip(
         _clip_hash(fp, clip_id, path), fps=fps, height=height, cols=cols, rows=rows
     )
     folder = fp.root / _FILMSTRIPS_DIRNAME / key
-    index = _read_json(folder / _INDEX_NAME)
+    index = read_json(folder / _INDEX_NAME)
     if index is None:
         index = _make_filmstrip(
             path, folder, fps=fps, height=height, cols=cols, rows=rows
@@ -176,7 +176,7 @@ def _make_filmstrip(
         "frame_h": frame_h,
         "sheets": sheets,
     }
-    _write_json(folder / _INDEX_NAME, index)
+    write_json(folder / _INDEX_NAME, index)
     return index
 
 
@@ -234,7 +234,7 @@ def song_peaks(fp, *, n: int) -> dict:
     normalised so the loudest bucket is 1.0 (all zeros for a silent song)."""
     song_hash = fp.song_hash()
     path = fp.root / _PEAKS_DIRNAME / f"{song_hash[:_HASH_PREFIX]}-{n}.json"
-    cached = _read_json(path)
+    cached = read_json(path)
     if cached is not None:
         return cached
     record = {
@@ -242,7 +242,7 @@ def song_peaks(fp, *, n: int) -> dict:
         "n": n,
         "peaks": _bucket_peaks(fp.song_path(), n=n),
     }
-    _write_json(path, record)
+    write_json(path, record)
     return record
 
 
@@ -270,7 +270,7 @@ def _bucket_peaks(song: Path, *, n: int) -> list:
 # -- files --------------------------------------------------------------------------
 
 
-def _read_json(path: Path) -> Optional[dict]:
+def read_json(path: Path) -> Optional[dict]:
     try:
         data = json.loads(Path(path).read_text())
     except (OSError, ValueError):
@@ -278,7 +278,7 @@ def _read_json(path: Path) -> Optional[dict]:
     return data if isinstance(data, dict) else None
 
 
-def _write_json(path: Path, record: dict) -> None:
+def write_json(path: Path, record: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     fd, tmp = tempfile.mkstemp(dir=str(path.parent), prefix=f".{path.name}.")
     with os.fdopen(fd, "w") as f:
@@ -294,4 +294,6 @@ __all__ = [
     "FILMSTRIP_HEIGHT",
     "FILMSTRIP_COLS",
     "FILMSTRIP_ROWS",
+    "read_json",
+    "write_json",
 ]
