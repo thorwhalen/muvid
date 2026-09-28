@@ -1579,6 +1579,83 @@ def peaks(fp, *, n: int = 2000) -> dict:
         raise FootageError(f"could not read the song for its waveform: {e}") from e
 
 
+#: The ``source`` that names the song in :func:`beat_signals` (anything else is a clip id).
+SONG_SOURCE = "song"
+
+
+def beat_signals(fp, *, source: str = SONG_SOURCE, max_points: int = 0) -> dict:
+    """Where the beat is in the song or in one video — CONTINUOUS signals, to look at,
+    threshold and bend, not only beat instants.
+
+    ``source`` is ``"song"`` or a clip id. The song gets its sound (``audio_onset``: the
+    onset envelope the beat grid is estimated from). A video gets its own soundtrack's
+    ``audio_onset`` when it has one, and two visual signals: ``motion`` (how much the
+    people in the picture move, the camera's own move taken out) and ``visual_impact``
+    (moves stopping dead and turning — the visual beat).
+
+    Each signal is in the media's OWN time: sample ``i`` is at ``t0 + i * hop_s`` s of the
+    song, or of the clip (song time ``offset + t``). Values are unnormalised, with
+    ``min``, ``max`` and ``p99`` beside them; ``None`` is a sample that was not measured.
+    ``max_points`` (0 = all) pools each signal to at most that many samples by their
+    maximum, so a peak survives.
+
+    Measured once per media and kept (a video's first call reads every frame and takes
+    tens of seconds). Needs the ``scoring`` extra.
+
+    Returns ``{source, kind: audio|video, duration_s, tempo_bpm, beats, signals:
+    {name: {name, label, domain, t0, hop_s, n, min, max, p99, values}}}`` — ``beats``
+    and ``tempo_bpm`` are the soundtrack's (``[]`` / ``None`` without one).
+    """
+    from muvid.footage import beats as bs
+    from muvid.footage.media_views import clip_hash
+
+    if max_points and int(max_points) < 2:
+        raise FootageError(f"max_points must be 0 (all) or at least 2, got {max_points}")
+    if source == SONG_SOURCE:
+        if not fp.has_song():
+            raise FootageError("no song set — call set_song first")
+        path, media_hash, kind = fp.song_path(), fp.song_hash(), "audio"
+        duration = fp.song_duration()
+    else:
+        known = fp.list_clips()
+        if source not in {c["clip_id"] for c in known}:
+            raise FootageError(_unknown_clip_message(source, known))
+        path = Path(fp.clip_paths()[source])
+        media_hash, kind = clip_hash(fp, source, path), "video"
+        duration = _clip_duration(fp, source)
+
+    def measured(which: str, compute) -> dict:
+        try:
+            return bs.cached_signals(fp.root, media_hash, which, compute)
+        except ImportError as e:
+            raise FootageError(
+                "measuring the beat needs librosa and opencv, which the 'scoring' extra "
+                f"provides — pip install 'muvid[scoring]' ({e})"
+            ) from e
+
+    sound = (
+        measured("audio", lambda: bs.audio_signals(path))
+        if kind == "audio" or bs.has_audio(path)
+        else {"signals": {}, "beats": [], "tempo_bpm": None}
+    )
+    signals = dict(sound["signals"])
+    if kind == "video":
+        try:
+            signals.update(measured("video", lambda: bs.visual_signals(path))["signals"])
+        except ValueError as e:
+            raise FootageError(f"could not read video {source!r}: {e}") from e
+    return {
+        "source": source,
+        "kind": kind,
+        "duration_s": round(float(duration), 3),
+        "tempo_bpm": sound.get("tempo_bpm"),
+        "beats": sound.get("beats") or [],
+        "signals": {
+            name: bs.decimated(rec, int(max_points or 0)) for name, rec in signals.items()
+        },
+    }
+
+
 def looks(fp=None) -> dict:
     """The looks a cut can take — camera moves (punch in, slow push, slow pull, pans)
     and grades (vivid, black and white, posterize, cartoon) — each with its
@@ -2604,6 +2681,7 @@ FOOTAGE_OP_SPECS: tuple[OpSpec, ...] = (
     OpSpec("timeline", "Show which videos cover which parts of the song", "read"),
     OpSpec("beat_grid", "Find the beat", "read"),
     OpSpec("peaks", "Show the song's waveform", "read"),
+    OpSpec("beat_signals", "Show where the beat is in the song or a video", "read"),
     OpSpec("filmstrips", "Show the videos' filmstrips", "read"),
     OpSpec("filmstrip", "Show one video's filmstrip", "read"),
     OpSpec(
