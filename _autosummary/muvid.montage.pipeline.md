@@ -44,7 +44,7 @@ A supplied `treatment` is coerced and repaired; otherwise a one-scene
 treatment is built from `archetype` (default `beat_cut`).
 
 * **Return type:**
-  [`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`TreatmentSpec`](muvid.montage.spec.md#muvid.montage.spec.TreatmentSpec), [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)], [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]
+  `tuple`[[`TreatmentSpec`](muvid.montage.spec.md#muvid.montage.spec.TreatmentSpec), `list`[`str`], `str`]
 
 ```pycon
 >>> t, notes, source = build_treatment({'archetype': 'grid'})
@@ -59,7 +59,7 @@ treatment is built from `archetype` (default `beat_cut`).
 Refuse a render that would exceed the resource bounds. Refuse, not clamp.
 
 * **Return type:**
-  [`None`](https://docs.python.org/3/builtins/constants.html#None)
+  `None`
 
 ```pycon
 >>> check_render_bounds(Canvas(width=1920, height=1080, fps=30), 200.0, n_photos=12)

@@ -67,43 +67,43 @@ slightly-wrong model output still renders.
 | [`TreatmentSpec`](#muvid.lyricvid.spec.TreatmentSpec)(\*[, spec_version, title, ...])     | A complete, renderable treatment.                          |
 | [`Typography`](#muvid.lyricvid.spec.Typography)(\*[, family, weight, case, ...])       | Type choices.                                              |
 
-### muvid.lyricvid.spec.ARCHETYPES *: [dict](https://docs.python.org/3/builtins/stdtypes.html#dict)[[str](https://docs.python.org/3/builtins/stdtypes.html#str), [str](https://docs.python.org/3/builtins/stdtypes.html#str)]* *= {'calligram': "Each line becomes a slanting streak of UPRIGHT letters, one letter per slot, the streaks fanning open as they descend — the Apollinaire 'Il pleut' construction. Use for a calligram or concrete poem whose shape is made by the run of the text itself rather than by an outline; prefer 'shape_fill' when the shape is a picture the words pour into, and 'concrete_page' when the layout is simply lines on a page.", 'concrete_page': "The whole lyric is typeset as a fixed page — one CENTRED HORIZONTAL ROW per line — and each word ignites in reading order as it is sung. The page never reflows. Use when the poem is lines on a page. It cannot slant, indent or shape anything: for a calligram or a concrete poem whose picture is made by the run of the text, use 'calligram'; for words poured into an outline, use 'shape_fill'.", 'karaoke_wipe': 'Two lines at the bottom, the current one wiped syllable by syllable as it is sung. The classic karaoke treatment; the most legible option.', 'one_word_centred': 'One word at a time, large, centred. The default lyric-video look: unmissable, works at any aspect ratio, reads on a phone.', 'scatter': 'Words appear away from centre and drift, density rising with energy. Use for chaos, crowds, or an instrumental-heavy chorus.', 'shape_fill': 'Words packed into the outline of a shape, filling it as the song proceeds. Use when the song has one strong concrete image.', 'stacked_lines': 'Lines accumulate down the frame and hold, so the viewer can read back what has already been sung. Good for narrative or dense lyrics.', 'text_on_path': 'Words follow a curve across the frame. Cheap, distinctive, and good for a single repeated hook.'}*
+### muvid.lyricvid.spec.ARCHETYPES *: dict[str, str]* *= {'calligram': "Each line becomes a slanting streak of UPRIGHT letters, one letter per slot, the streaks fanning open as they descend — the Apollinaire 'Il pleut' construction. Use for a calligram or concrete poem whose shape is made by the run of the text itself rather than by an outline; prefer 'shape_fill' when the shape is a picture the words pour into, and 'concrete_page' when the layout is simply lines on a page.", 'concrete_page': "The whole lyric is typeset as a fixed page — one CENTRED HORIZONTAL ROW per line — and each word ignites in reading order as it is sung. The page never reflows. Use when the poem is lines on a page. It cannot slant, indent or shape anything: for a calligram or a concrete poem whose picture is made by the run of the text, use 'calligram'; for words poured into an outline, use 'shape_fill'.", 'karaoke_wipe': 'Two lines at the bottom, the current one wiped syllable by syllable as it is sung. The classic karaoke treatment; the most legible option.', 'one_word_centred': 'One word at a time, large, centred. The default lyric-video look: unmissable, works at any aspect ratio, reads on a phone.', 'scatter': 'Words appear away from centre and drift, density rising with energy. Use for chaos, crowds, or an instrumental-heavy chorus.', 'shape_fill': 'Words packed into the outline of a shape, filling it as the song proceeds. Use when the song has one strong concrete image.', 'stacked_lines': 'Lines accumulate down the frame and hold, so the viewer can read back what has already been sung. Good for narrative or dense lyrics.', 'text_on_path': 'Words follow a curve across the frame. Cheap, distinctive, and good for a single repeated hook.'}*
 
 How words are placed on screen. The renderer owns the geometry; the spec
 only names the family and its knobs.
 
 ### *class* muvid.lyricvid.spec.Direction(\*, mood='', palette=<factory>, typography=<factory>, motion_vocabulary=('fade', ), rationale='')
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 The song-level creative decision. The half a model is actually good at.
 
-### muvid.lyricvid.spec.INLINE_SHAPE_KINDS *: [frozenset](https://docs.python.org/3/builtins/stdtypes.html#frozenset)[[str](https://docs.python.org/3/builtins/stdtypes.html#str)]* *= frozenset({'named', 'svg_path'})*
+### muvid.lyricvid.spec.INLINE_SHAPE_KINDS *: frozenset[str]* *= frozenset({'named', 'svg_path'})*
 
 The shape kinds that carry no reference to anything outside the spec. A
 surface serving untrusted callers (the MCP tools) admits ONLY these unless it
 has itself fetched and scoped the image.
 
-### muvid.lyricvid.spec.MOTIONS *: [dict](https://docs.python.org/3/builtins/stdtypes.html#dict)[[str](https://docs.python.org/3/builtins/stdtypes.html#str), [str](https://docs.python.org/3/builtins/stdtypes.html#str)]* *= {'cut': 'Appears instantly. Hardest, most rhythmic.', 'fade': 'Fades up over a fraction of a beat.', 'pop': 'Fades up with a slight overshoot in scale, then settles.', 'rise': 'Fades up while moving a short distance upward.', 'typewriter': "Letters appear one at a time across the word's duration.", 'wipe': 'Revealed left-to-right, like a karaoke wipe.'}*
+### muvid.lyricvid.spec.MOTIONS *: dict[str, str]* *= {'cut': 'Appears instantly. Hardest, most rhythmic.', 'fade': 'Fades up over a fraction of a beat.', 'pop': 'Fades up with a slight overshoot in scale, then settles.', 'rise': 'Fades up while moving a short distance upward.', 'typewriter': "Letters appear one at a time across the word's duration.", 'wipe': 'Revealed left-to-right, like a karaoke wipe.'}*
 
 How a single word arrives. Composable with the archetype rather than part of it.
 
-### muvid.lyricvid.spec.PERSISTENCE *: [dict](https://docs.python.org/3/builtins/stdtypes.html#dict)[[str](https://docs.python.org/3/builtins/stdtypes.html#str), [str](https://docs.python.org/3/builtins/stdtypes.html#str)]* *= {'clear_on_line': 'Cleared when its line ends.', 'clear_on_section': 'Cleared when its section ends.', 'dim': 'Stays but recedes, so the current word leads. Keeps context readable.', 'hold': 'Stays exactly as it arrived, forever. The page fills up.'}*
+### muvid.lyricvid.spec.PERSISTENCE *: dict[str, str]* *= {'clear_on_line': 'Cleared when its line ends.', 'clear_on_section': 'Cleared when its section ends.', 'dim': 'Stays but recedes, so the current word leads. Keeps context readable.', 'hold': 'Stays exactly as it arrived, forever. The page fills up.'}*
 
 What a word does when it is no longer current.
 
 ### *class* muvid.lyricvid.spec.Palette(, bg='#101014', fg='#f4f4f0', accent='#e0533d', dim='#4a4a52')
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 Colours, as `#rrggbb`. `dim` is the un-sung state where one exists.
 
-### muvid.lyricvid.spec.QUANTIZE *: [dict](https://docs.python.org/3/builtins/stdtypes.html#dict)[[str](https://docs.python.org/3/builtins/stdtypes.html#str), [str](https://docs.python.org/3/builtins/stdtypes.html#str)]* *= {'beat': 'Snapped to the nearest beat. Rhythmic, forgiving of alignment error.', 'downbeat': 'Snapped to the nearest bar start. Slow, deliberate.', 'line': "The whole line arrives together, at the line's start.", 'syllable': 'Sub-word timing, where the aligner provides it.', 'word': 'Each word ignites at its own measured onset. Tightest sync.'}*
+### muvid.lyricvid.spec.QUANTIZE *: dict[str, str]* *= {'beat': 'Snapped to the nearest beat. Rhythmic, forgiving of alignment error.', 'downbeat': 'Snapped to the nearest bar start. Slow, deliberate.', 'line': "The whole line arrives together, at the line's start.", 'syllable': 'Sub-word timing, where the aligner provides it.', 'word': 'Each word ignites at its own measured onset. Tightest sync.'}*
 
 What the animation clock is quantised to. The MODEL picks one of these; the
 numbers behind them always come from measurement, never from the model.
 
-### muvid.lyricvid.spec.SHAPE_KINDS *: [dict](https://docs.python.org/3/builtins/stdtypes.html#dict)[[str](https://docs.python.org/3/builtins/stdtypes.html#str), [str](https://docs.python.org/3/builtins/stdtypes.html#str)]* *= {'mask_image': 'An image whose dark ink (or alpha) is the outline. Trusted callers only: the value names a file.', 'named': 'A built-in outline: circle, heart, star, apple, square.', 'svg_path': 'An SVG path string (M/L/H/V/C/S/Q/T/Z) supplied inline.'}*
+### muvid.lyricvid.spec.SHAPE_KINDS *: dict[str, str]* *= {'mask_image': 'An image whose dark ink (or alpha) is the outline. Trusted callers only: the value names a file.', 'named': 'A built-in outline: circle, heart, star, apple, square.', 'svg_path': 'An SVG path string (M/L/H/V/C/S/Q/T/Z) supplied inline.'}*
 
 Where a shape outline may come from. A closed set for the same reason the
 others are — and additionally because `value` is INTERPRETED by the
@@ -115,7 +115,7 @@ decision (see `MASK_IMAGE_TRUSTED`).
 
 ### *class* muvid.lyricvid.spec.Scene(\*, applies_to=('\*', ), archetype='one_word_centred', motion='fade', persistence='clear_on_line', timing=<factory>, shape=None, params=<factory>)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 One treatment, applied to part of the song.
 
@@ -126,7 +126,7 @@ and complete.
 
 ### *class* muvid.lyricvid.spec.ShapeRef(, kind='named', value='circle')
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 Where a `shape_fill` / `concrete_page` outline comes from.
 
@@ -136,21 +136,21 @@ model may name a shape, but it never draws one.
 
 ### *class* muvid.lyricvid.spec.Timing(, quantize_to='word', cut_style='hard', attack_s=0.12, lead_s=0.0)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 The quantisation POLICY. Never actual times.
 
-#### attack_s *: [float](https://docs.python.org/3/builtins/functions.html#float)*
+#### attack_s *: float*
 
 Seconds a word takes to arrive. Small, or it stops reading as on-the-beat.
 
-#### lead_s *: [float](https://docs.python.org/3/builtins/functions.html#float)*
+#### lead_s *: float*
 
 Seconds before a word’s onset to start it. Compensates for perceived lag.
 
 ### *class* muvid.lyricvid.spec.TreatmentSpec(\*, spec_version='1.0', title='', direction=<factory>, scenes=<factory>)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 A complete, renderable treatment.
 
@@ -197,11 +197,11 @@ A JSON-native dict: tuples become lists, so what this emits is
 exactly what [`json_schema()`](#muvid.lyricvid.spec.json_schema) validates and what a file round-trips.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]
+  `dict`[`str`, `Any`]
 
 ### *class* muvid.lyricvid.spec.Typography(, family='DejaVu Sans', weight=700, case='as_written', tracking=0.0, max_line_chars=28)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 Type choices. `family` is resolved against installed/bundled fonts, and
 an unavailable family falls back rather than failing the render.
@@ -214,14 +214,14 @@ Accepts a [`TreatmentSpec`](#muvid.lyricvid.spec.TreatmentSpec), a mapping, or a
 it. This is the one entry point production code should use.
 
 * **Return type:**
-  [`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`TreatmentSpec`](#muvid.lyricvid.spec.TreatmentSpec), [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]]
+  `tuple`[[`TreatmentSpec`](#muvid.lyricvid.spec.TreatmentSpec), `list`[`str`]]
 
 ### muvid.lyricvid.spec.json_schema()
 
 The JSON Schema for a [`TreatmentSpec`](#muvid.lyricvid.spec.TreatmentSpec).
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]
+  `dict`[`str`, `Any`]
 
 ```pycon
 >>> s = json_schema()
@@ -239,7 +239,7 @@ now, where a retry costs a round trip and may fail the same way. Every
 substitution is reported so the caller can show or log it.
 
 * **Return type:**
-  [`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`TreatmentSpec`](#muvid.lyricvid.spec.TreatmentSpec), [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]]
+  `tuple`[[`TreatmentSpec`](#muvid.lyricvid.spec.TreatmentSpec), `list`[`str`]]
 
 ```pycon
 >>> fixed, notes = repair(TreatmentSpec(scenes=(Scene(archetype='swirl'),)))
@@ -254,7 +254,7 @@ substitution is reported so the caller can show or log it.
 Return a list of human-readable problems. Empty means renderable.
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]
+  `list`[`str`]
 
 ```pycon
 >>> validate(TreatmentSpec(scenes=(Scene(archetype='nope'),)))
@@ -266,4 +266,4 @@ Return a list of human-readable problems. Empty means renderable.
 Every closed vocabulary, for prompts and UI. One copy, several readers.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]]
+  `dict`[`str`, `dict`[`str`, `str`]]

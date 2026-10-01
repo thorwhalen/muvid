@@ -78,7 +78,7 @@ For a whole shoot in one folder, use [`add_footage_folder()`](#muvid.mcp.footage
 many files and is refused here by name.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.mcp.footage_tools.add_footage_folder(project_id, , url, name_prefix='')
 
@@ -95,7 +95,7 @@ coverage decision made on quietly-shortened input is worse than one made on a sh
 Returns the added clips and the skipped members. Run `align_footage` afterwards.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.mcp.footage_tools.align_footage(project_id, , keep_declared=True)
 
@@ -132,7 +132,7 @@ A clip placed by hand (`footage_set_offset`) is left as placed and named in
 (`footage_clear_offset`) and measures every clip.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.mcp.footage_tools.assemble_music_video(project_id, , strategy='', edl=None, preset='', weights=None, config=None, canvas='', allow_unreliable=False, span=None)
 
@@ -238,7 +238,7 @@ these findings used to be Python warnings on the server’s stderr, which a
 remote caller has no access to.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.mcp.footage_tools.beat_grid(project_id)
 
@@ -267,7 +267,7 @@ backend has no downbeat tracker, and an empty list would read as “this song ha
 no downbeats”, a measurement nobody made (gate, don’t zero).
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.mcp.footage_tools.footage_beat_signals(project_id, , source='song', max_points=1000)
 
@@ -296,7 +296,7 @@ Returns `{source, kind: audio|video, duration_s, tempo_bpm, beats, signals:
 and `tempo_bpm` are the soundtrack’s (`[]` / `None` without one).
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.mcp.footage_tools.footage_clear_offset(project_id, , clip_id)
 
@@ -309,7 +309,7 @@ runs again the clip has no place on the song, and footage scores made with the o
 offset are dropped.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.mcp.footage_tools.footage_delete_edit(project_id, , edit_id)
 
@@ -317,7 +317,7 @@ Delete a saved edit. Videos already rendered from it are kept (they still name
 the edit they came from). An unknown `edit_id` is refused, naming the edits.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.mcp.footage_tools.footage_editor_document(project_id)
 
@@ -333,7 +333,7 @@ After a human edits the DECISION tier, feed its annotations back to
 `assemble_music_video` via `footage_edl_from_annotations`.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.mcp.footage_tools.footage_edits(project_id)
 
@@ -343,7 +343,7 @@ current alignment (`null` when it does). `unreliable` names clips it cuts to
 whose offsets rendering would refuse.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.mcp.footage_tools.footage_edl_from_annotations(project_id, , annotations)
 
@@ -357,7 +357,7 @@ song other than this project’s are refused, not read (muvid#35), so a clipboar
 another project fails saying so instead of splicing in the wrong spans.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.mcp.footage_tools.footage_filmstrip(project_id, , clip_id)
 
@@ -365,7 +365,7 @@ One video’s filmstrip (the same record `footage_filmstrips` gives per clip, wi
 `clip_id` and `fps`).
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.mcp.footage_tools.footage_filmstrips(project_id)
 
@@ -382,7 +382,7 @@ Returns `{fps, clips: {clip_id: {duration_s, n_frames, frame_w, frame_h, sheets:
 [{artifact_id, cols, rows, first_frame, n_frames}]}}}`.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.mcp.footage_tools.footage_fit_to_beat(project_id, , edit_id, indices=None, min_z=2.5, apply=True)
 
@@ -412,7 +412,7 @@ seconds a video; kept for next time). Returns the edit (`footage_get_edit`’s s
 `fitted`, `kept` and `min_z`.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.mcp.footage_tools.footage_get_edit(project_id, , edit_id)
 
@@ -421,7 +421,7 @@ One saved edit: its cut list (`edl`, every span of the song, gaps as
 `footage_set_cut`/`footage_merge_cut` refer to positions in this `edl`.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.mcp.footage_tools.footage_looks(project_id)
 
@@ -430,7 +430,7 @@ and grades (vivid, black and white, posterize, cartoon) — each with its
 `params_schema`. Give one to `footage_set_cut` as `look={"name": ..., **params}`.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.mcp.footage_tools.footage_merge_cut(project_id, , edit_id, index, into='previous')
 
@@ -439,7 +439,7 @@ Join cut `index` to its neighbour: the neighbour (`into` “previous” or
 cut keeps the neighbour’s video, framing and look. Returns the changed edit.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.mcp.footage_tools.footage_peaks(project_id, , n=2000)
 
@@ -450,7 +450,7 @@ Returns `{duration_s, n, peaks: [0..1, ...]}`; slice `i` covers song time
 `i * duration_s / n` to `(i + 1) * duration_s / n`. Kept per song and `n`.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.mcp.footage_tools.footage_redo_edit(project_id, , edit_id)
 
@@ -458,7 +458,7 @@ Redo the change `footage_undo_edit` last took back. A new change after an undo
 discards what could be redone. Returns the edit as it now is.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.mcp.footage_tools.footage_rename_edit(project_id, , edit_id, name)
 
@@ -468,7 +468,7 @@ Only the name changes; the cuts, the span and the edit’s id stay as they are, 
 the rename can be undone like any other change. Returns the edit.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.mcp.footage_tools.footage_render(project_id, , edit_id, canvas='', allow_unreliable=False)
 
@@ -482,7 +482,7 @@ the edit cuts to a clip whose offset the aligner will not vouch for, unless
 `allow_unreliable` (see `assemble_music_video`). Read the returned `warnings`.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.mcp.footage_tools.footage_renders(project_id)
 
@@ -491,7 +491,7 @@ the `edit_id` it was made from, its `label`, canvas, `ok`, the number of
 `warnings`, and `artifact_id` to play it by when the project is hosted.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.mcp.footage_tools.footage_replace_edit(project_id, , edit_id, edl)
 
@@ -500,7 +500,7 @@ once. The new list is checked exactly as `footage_save_edit` checks one; on refu
 edit is left as it was. The previous list is not kept.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.mcp.footage_tools.footage_save_edit(project_id, , edl, name='', how_made='by hand', edit_id='', span=None)
 
@@ -516,7 +516,7 @@ makes the edit cover only that part of the song — its render is that long, the
 cut to it; default the whole song. Returns the saved edit.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.mcp.footage_tools.footage_set_cut(project_id, , edit_id, index, clip_id=None, song_start=None, song_end=None, look=None, look_time_varying=None, slip_s=None, rate=None)
 
@@ -547,7 +547,7 @@ Change one cut of a saved edit (`index` is its position in `footage_get_edit`’
 Parameters left out are unchanged. The changed edit is checked and saved; returns it.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.mcp.footage_tools.footage_set_offset(project_id, , clip_id, offset_s)
 
@@ -562,7 +562,7 @@ it); how much of the song the clip covers is computed from the two durations.
 scores stale, so they are dropped.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.mcp.footage_tools.footage_set_span(project_id, , edit_id, start_s, end_s)
 
@@ -576,7 +576,7 @@ cuts across an edge are shortened in the render only). Widening the span again �
 exactly what was there. Returns the edit, with its `span`.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.mcp.footage_tools.footage_split_cut(project_id, , edit_id, at_s)
 
@@ -587,7 +587,7 @@ divided where it was at `at_s`. Refused on a boundary (nothing to split). Return
 the changed edit; `changed` is the index of the second half.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.mcp.footage_tools.footage_status(project_id)
 
@@ -597,7 +597,7 @@ Also: each clip’s offset and whether it was measured or declared (`alignments`
 the saved `edits`, and `next_step` — the operation that moves the project on.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.mcp.footage_tools.footage_timeline(project_id)
 
@@ -607,7 +607,7 @@ The surface for choosing which parts to use before `assemble_music_video`. Built
 the persisted alignment (run `align_footage` first).
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.mcp.footage_tools.footage_undo_edit(project_id, , edit_id)
 
@@ -616,7 +616,7 @@ whole replacement — by a person or by the assistant). Returns the edit as it n
 is; `footage_redo_edit` puts the change back. Up to 100 changes are kept per edit.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.mcp.footage_tools.list_music_video_projects()
 
@@ -638,14 +638,14 @@ reads off the listing without a `footage_status` per project:
 shows up in `list_projects` instead.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.mcp.footage_tools.list_strategies()
 
 The selection strategies available for full-auto assembly. Free.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.mcp.footage_tools.propose_edit(project_id, , strategy='', preset='', weights=None, config=None, save=False, name='')
 
@@ -669,7 +669,7 @@ its `edit_id` — change it cut by cut with `footage_set_cut` /
 `footage_split_cut` / `footage_merge_cut` and render it with `footage_render`.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.mcp.footage_tools.remove_footage(project_id, , clip_id)
 
@@ -688,7 +688,7 @@ refusal changes nothing on disk. Returns what was removed, the clips that remain
 and whether an alignment / score tracks were actually dropped.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.mcp.footage_tools.set_song(project_id, , url)
 
@@ -702,4 +702,4 @@ This is the reference every uploaded clip is aligned to and whose audio the fina
 video uses. Replaces any previous song. Duration/size-capped.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`

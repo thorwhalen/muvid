@@ -26,7 +26,7 @@ tests), else the verified OAuth token — so tools work under any host middlewar
 an unauthenticated call is failed closed.
 
 * **Return type:**
-  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+  `str`
 
 ### muvid.mcp.identity.token_email()
 
@@ -36,7 +36,7 @@ Lowercased, or `None` when there is no request/token context — deliberately no
 fallback, so a caller is failed closed rather than handed a shared identity.
 
 * **Return type:**
-  [`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]
+  `Optional`[`str`]
 
 ### muvid.mcp.identity.use_email(email)
 

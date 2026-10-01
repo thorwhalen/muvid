@@ -143,13 +143,13 @@ is why it is a named constant a caller overrides rather than a hidden literal.
 
 ### *exception* muvid.footage.look.LookError
 
-Bases: [`ValueError`](https://docs.python.org/3/builtins/exceptions.html#ValueError)
+Bases: `ValueError`
 
 A look could not be compiled. Carries what to do about it.
 
 ### *class* muvid.footage.look.LookFragment(fragment, , time_varying)
 
-Bases: [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+Bases: `str`
 
 A compiled filter chain that remembers whether it READS THE CLOCK.
 
@@ -232,7 +232,7 @@ A plain `str` component contributes `False`, matching
 half of a chain quietly downgrades only that half’s claim, never the other’s.
 
 * **Return type:**
-  [`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`LookFragment`](#muvid.footage.look.LookFragment)]
+  `Optional`[[`LookFragment`](#muvid.footage.look.LookFragment)]
 
 ```pycon
 >>> chain("hue=s=0", None, "", "unsharp=5:5:1")
@@ -253,7 +253,7 @@ The one place that default lives, so a caller reading a fragment and the EDL
 field’s own default cannot drift apart.
 
 * **Return type:**
-  [`bool`](https://docs.python.org/3/builtins/functions.html#bool)
+  `bool`
 
 ```pycon
 >>> is_time_varying(LookFragment("zoompan=d=1", time_varying=True))
@@ -267,13 +267,13 @@ True
 A camera path over the cut, as a filter fragment. `looks` picks the filter.
 
 * **Parameters:**
-  * **keyframes** ([`Sequence`](https://docs.python.org/3/library/typing.html#typing.Sequence)) – `(t_seconds, window)` pairs, or `looks.Keyframe`s.
+  * **keyframes** (`Sequence`) – `(t_seconds, window)` pairs, or `looks.Keyframe`s.
     The window is anything with ``x``/`y`/`w`/`h` as fractions —
     [`muvid.footage.edl.CropWindow`](muvid.footage.edl.html.md#muvid.footage.edl.CropWindow) satisfies that structurally,
     with no adapter, because both packages use `burns.Rect`’s
     convention on purpose.
   * **canvas** – `(width, height)` — the assembler’s delivery canvas.
-  * **fps** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – the assembler’s delivery frame rate.
+  * **fps** (`float`) – the assembler’s delivery frame rate.
 * **Return type:**
   [`LookFragment`](#muvid.footage.look.LookFragment)
 * **Returns:**
@@ -320,13 +320,13 @@ six lines of geometry and no ffmpeg.
 
 * **Parameters:**
   * **canvas** – `(width, height)` — the assembler’s delivery canvas.
-  * **fps** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – the assembler’s delivery frame rate.
-  * **duration_s** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – the cut’s length in seconds. The move ends here by default.
-  * **zoom** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – final magnification. `1.12` shows ~89% of the frame.
-  * **anchor** ([`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`float`](https://docs.python.org/3/builtins/functions.html#float), [`float`](https://docs.python.org/3/builtins/functions.html#float)]) – what stays put, as a fraction of the canvas. `(0.5, 0.5)`
+  * **fps** (`float`) – the assembler’s delivery frame rate.
+  * **duration_s** (`float`) – the cut’s length in seconds. The move ends here by default.
+  * **zoom** (`float`) – final magnification. `1.12` shows ~89% of the frame.
+  * **anchor** (`tuple`[`float`, `float`]) – what stays put, as a fraction of the canvas. `(0.5, 0.5)`
     centres it; `(0.5, 0.35)` pushes toward a face in the upper third.
-  * **start_s** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – hold the full frame until here, then move.
-  * **end_s** ([`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`float`](https://docs.python.org/3/builtins/functions.html#float)]) – reach the final framing here and hold. Defaults to `duration_s`.
+  * **start_s** (`float`) – hold the full frame until here, then move.
+  * **end_s** (`Optional`[`float`]) – reach the final framing here and hold. Defaults to `duration_s`.
 * **Return type:**
   [`LookFragment`](#muvid.footage.look.LookFragment)
 * **Returns:**
@@ -369,15 +369,15 @@ selector, so a stride lands the moves on musical time for free, where a
 seconds-based interval would drift off it.
 
 * **Parameters:**
-  * **entries** ([`Sequence`](https://docs.python.org/3/library/typing.html#typing.Sequence)) – validated [`EdlEntry`](muvid.footage.edl.html.md#muvid.footage.edl.EdlEntry) objects.
+  * **entries** (`Sequence`) – validated [`EdlEntry`](muvid.footage.edl.html.md#muvid.footage.edl.EdlEntry) objects.
   * **canvas** – `(width, height)` — the delivery canvas.
-  * **fps** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – the delivery frame rate.
-  * **every** ([`int`](https://docs.python.org/3/builtins/functions.html#int)) – stride. `2` punches every other footage cut; `1` punches all.
-  * **zoom** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – passed to [`punch_in()`](#muvid.footage.look.punch_in).
-  * **anchor** ([`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`float`](https://docs.python.org/3/builtins/functions.html#float), [`float`](https://docs.python.org/3/builtins/functions.html#float)]) – passed to [`punch_in()`](#muvid.footage.look.punch_in).
-  * **offset** ([`int`](https://docs.python.org/3/builtins/functions.html#int)) – which footage cut in each stride gets the move.
+  * **fps** (`float`) – the delivery frame rate.
+  * **every** (`int`) – stride. `2` punches every other footage cut; `1` punches all.
+  * **zoom** (`float`) – passed to [`punch_in()`](#muvid.footage.look.punch_in).
+  * **anchor** (`tuple`[`float`, `float`]) – passed to [`punch_in()`](#muvid.footage.look.punch_in).
+  * **offset** (`int`) – which footage cut in each stride gets the move.
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]
+  `list`[`Any`]
 * **Returns:**
   A NEW list of entries. Gaps are skipped (they have no footage to punch
   into, and `validate_edl` refuses a look on one), and an entry that
@@ -400,9 +400,9 @@ A `looks.Look` compiled against the binary muvid will run.
 * **Parameters:**
   * **look** – a `looks.Look` — an ordered stack of named effects.
   * **canvas** – `(width, height)` — the assembler’s delivery canvas.
-  * **fps** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – the assembler’s delivery frame rate.
-  * **duration_s** ([`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`float`](https://docs.python.org/3/builtins/functions.html#float)]) – the cut’s length, when a step needs to know it.
-  * **ffmpeg** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str)) – which binary to probe. Defaults to the bare name muvid runs.
+  * **fps** (`float`) – the assembler’s delivery frame rate.
+  * **duration_s** (`Optional`[`float`]) – the cut’s length, when a step needs to know it.
+  * **ffmpeg** (`str`) – which binary to probe. Defaults to the bare name muvid runs.
   * **env** – a `looks.FfmpegEnv` to compile against, instead of probing.
   * **policy** – a `looks.Policy` — the licence ceiling. `looks`’ default
     applies when omitted.

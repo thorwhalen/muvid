@@ -28,12 +28,12 @@ keeps working.
 
 ### *exception* muvid.footage.errors.FootageCancelled
 
-Bases: [`Exception`](https://docs.python.org/3/builtins/exceptions.html#Exception)
+Bases: `Exception`
 
 An operation stopped between steps because its host asked it to.
 
 ### *exception* muvid.footage.errors.FootageError
 
-Bases: [`ValueError`](https://docs.python.org/3/builtins/exceptions.html#ValueError)
+Bases: `ValueError`
 
 An operation refused — the message says why and what to do next.

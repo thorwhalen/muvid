@@ -21,4 +21,4 @@ Set to False to keep each shot’s own audio (useful when most shots
 are lipsync renders that already carry their slice).
 
 * **Return type:**
-  [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)
+  `Path`

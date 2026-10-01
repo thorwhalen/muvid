@@ -82,17 +82,17 @@ Heavy deps (mixing.audio → numpy/scipy/pydub) are imported lazily here so impo
 genre stays light.
 
 * **Parameters:**
-  * **song_path** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str)) – The clean master every clip is aligned to.
-  * **clips** ([`Sequence`](https://docs.python.org/3/library/typing.html#typing.Sequence)[[`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)]) – `(clip_id, clip_path)` pairs; a video path works directly.
-  * **song_duration** ([`float`](https://docs.python.org/3/builtins/functions.html#float) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – The song timeline length; probed from `song_path` when omitted.
-  * **sample_rate** ([`int`](https://docs.python.org/3/builtins/functions.html#int)) – Analysis sample rate (mono).
+  * **song_path** (`str`) – The clean master every clip is aligned to.
+  * **clips** (`Sequence`[`tuple`]) – `(clip_id, clip_path)` pairs; a video path works directly.
+  * **song_duration** (`float` | `None`) – The song timeline length; probed from `song_path` when omitted.
+  * **sample_rate** (`int`) – Analysis sample rate (mono).
   * **\*\*estimator_kwargs** – 
 
     Passed straight to `mixing.audio.align_clips_to_reference`
     — the seam for the windowed-consensus estimator’s parameters (muvid#59).
     Forwarding rather than enumerating keeps muvid out of the business of
     tracking `mixing`’s estimator vocabulary, and an argument the installed
-    `mixing` does not accept raises [`TypeError`](https://docs.python.org/3/builtins/exceptions.html#TypeError) from `mixing` naming
+    `mixing` does not accept raises `TypeError` from `mixing` naming
     it. That failure is the point: a window parameter silently ignored is a
     caller believing they tuned an estimator that never saw the value.
 
@@ -101,7 +101,7 @@ genre stays light.
     the gate that reads it, and muvid refuses them at this entry point regardless
     of whether `mixing` itself would also refuse or silently answer.
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`FootageAlignment`](muvid.footage.edl.md#muvid.footage.edl.FootageAlignment)]
+  `list`[[`FootageAlignment`](muvid.footage.edl.md#muvid.footage.edl.FootageAlignment)]
 
 ### muvid.footage.align.vouches_for(, confidence, support, margin=None, window_s=None)
 
@@ -174,19 +174,19 @@ short to be usable music-video footage, rather than the open question about a th
 of a shoot that it started as.
 
 * **Parameters:**
-  * **confidence** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – The estimator’s correlation coefficient at the chosen lag.
-  * **support** ([`float`](https://docs.python.org/3/builtins/functions.html#float) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – Graded fraction of window evidence reaching the offset, or `None`
+  * **confidence** (`float`) – The estimator’s correlation coefficient at the chosen lag.
+  * **support** (`float` | `None`) – Graded fraction of window evidence reaching the offset, or `None`
     when no vote could be held.
-  * **margin** ([`float`](https://docs.python.org/3/builtins/functions.html#float) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – That tally minus the tally at the best offset outside the tolerance.
+  * **margin** (`float` | `None`) – That tally minus the tally at the best offset outside the tolerance.
     `None` on exactly the same quorum as `support`. Required to vouch when a
     vote WAS held: an aligner reporting support without it has not answered the
     separating question, and unknown does not vouch. The `mixing>=0.0.51` floor
     guarantees both, and `tests/test_ci_extras_canary.py` asserts the
     capability so a mis-resolved floor fails loudly rather than quietly refusing
     every clip.
-  * **window_s** ([`float`](https://docs.python.org/3/builtins/functions.html#float) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – The window support was measured at. Recorded and reported as a
+  * **window_s** (`float` | `None`) – The window support was measured at. Recorded and reported as a
     diagnostic; it does **not** enter the verdict, for the reason above.
 * **Return type:**
-  [`bool`](https://docs.python.org/3/builtins/functions.html#bool)
+  `bool`
 * **Returns:**
   True when the offset may be cut to without the caller opting in.

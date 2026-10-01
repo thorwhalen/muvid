@@ -31,7 +31,7 @@ backend by name never falls back – it fails loudly.
 | [`build_timed_text`](#muvid.lyricvid.pipeline.build_timed_text)(\*, audio[, lyrics, ...]) | Get measured word times from whichever input the caller actually has. |
 | [`render`](#muvid.lyricvid.pipeline.render)(request)                            | Render one lyric video.                                               |
 
-### muvid.lyricvid.pipeline.RENDERERS *: [dict](https://docs.python.org/3/builtins/stdtypes.html#dict)[[str](https://docs.python.org/3/builtins/stdtypes.html#str), [str](https://docs.python.org/3/builtins/stdtypes.html#str)]* *= {'ass': 'muvid.lyricvid.render_ass:render', 'web': 'muvid.lyricvid.render_web:render'}*
+### muvid.lyricvid.pipeline.RENDERERS *: dict[str, str]* *= {'ass': 'muvid.lyricvid.render_ass:render', 'web': 'muvid.lyricvid.render_web:render'}*
 
 function”, resolved lazily so listing costs no import.
 
@@ -57,7 +57,7 @@ The house lazy-registry idiom (cf. `muvid.footage.strategy`): the target
 is a string so adding a backend costs the import path nothing.
 
 * **Return type:**
-  [`None`](https://docs.python.org/3/builtins/constants.html#None)
+  `None`
 
 ```pycon
 >>> register_renderer('doctest-demo', 'muvid.lyricvid.render_ass:render')
@@ -83,7 +83,7 @@ treatment spec as a mapping, or omitted to have one proposed), `renderer`,
 Import and return a renderer backend. Accepts a callable unchanged.
 
 * **Return type:**
-  [`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)
+  `Callable`
 
 ### muvid.lyricvid.pipeline.select_renderer(name='auto')
 
@@ -101,7 +101,7 @@ has been bitten by before. `auto` is the caller opting in to “whichever
 works”, and the choice it made is recorded in the result’s `meta`.
 
 * **Return type:**
-  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+  `str`
 
 ```pycon
 >>> select_renderer('web')

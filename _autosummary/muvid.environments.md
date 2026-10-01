@@ -14,14 +14,14 @@ Environment cards + canonical establishing image generation.
 Create or update an environment card.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]
+  `dict`[`str`, `Any`]
 
 ### muvid.environments.get_environment_anchor_image(project, name)
 
 Return the canonical environment image, or None if not yet rendered.
 
 * **Return type:**
-  [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path) | [`None`](https://docs.python.org/3/builtins/constants.html#None)
+  `Path` | `None`
 
 ### muvid.environments.render_environment(project, name, , quality='high')
 
@@ -31,4 +31,4 @@ Saves to `environments/<name>/establishing.png` and stores the
 relative path on the card as `reference_image_path`.
 
 * **Return type:**
-  [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)
+  `Path`

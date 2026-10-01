@@ -44,7 +44,7 @@ assembles for audio-reactive visuals.
 
 ### *class* muvid.visualize.canvas.CoverLayout(background='blur', blur_sigma=30.0, dim=0.65, saturation=0.8, cover_fraction=0.92, cover_alpha=1.0, background_color='black')
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 How a cover image is placed on the canvas.
 
@@ -88,7 +88,7 @@ the blurred background — show through it.
 
 Fill colour when `background="color"`.
 
-#### dim *: [float](https://docs.python.org/3/builtins/functions.html#float)* *= 0.65*
+#### dim *: float* *= 0.65*
 
 the multiplicative dim that lands the plate’s mean
 DISPLAY luma where the additive `0.25` left it, pooled over four
@@ -113,7 +113,7 @@ YouTube rejects thumbnails over 2 MiB, and wants at least 1280x720.
 
 ### *class* muvid.visualize.canvas.TitleStyle(size_fraction=0.045, color='white', font=None, margin_fraction=0.06, box=True, box_color='black@0.45')
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 How a burnt-in title is drawn (ffmpeg `drawtext`).
 
@@ -152,7 +152,7 @@ to scale, not subtract, or the plate’s shadows are deleted rather than
 darkened. See [`dim_saturation_lut()`](#muvid.visualize.canvas.dim_saturation_lut).
 
 * **Return type:**
-  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+  `str`
 
 ### muvid.visualize.canvas.brightness_saturation_lut(, brightness=0.0, saturation=1.0)
 
@@ -170,11 +170,11 @@ the other emits one `sendcmd` command per component — and a second copy of
 this arithmetic is exactly how the two would drift apart.
 
 * **Parameters:**
-  * **brightness** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – Additive luma offset, -1 to 1, in `eq`’s units (a fraction
+  * **brightness** (`float`) – Additive luma offset, -1 to 1, in `eq`’s units (a fraction
     of full scale). `0` is a no-op.
-  * **saturation** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – Chroma scaling about neutral. `1` is a no-op.
+  * **saturation** (`float`) – Chroma scaling about neutral. `1` is a no-op.
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]
+  `dict`[`str`, `str`]
 
 ### Examples
 
@@ -197,14 +197,14 @@ frame — is what makes a still-image music video cheap to render, and it
 gives the thumbnail and the video’s first frame a single source of truth.
 
 * **Parameters:**
-  * **image** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)) – The cover art.
-  * **saveas** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – Output PNG path (default: `<image-stem>.canvas.png`).
-  * **size** ([`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`int`](https://docs.python.org/3/builtins/functions.html#int), [`int`](https://docs.python.org/3/builtins/functions.html#int)]) – Canvas size.
-  * **layout** ([`CoverLayout`](#muvid.visualize.canvas.CoverLayout) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – Placement/treatment of the cover (a default one when omitted).
-  * **title** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – Burn this title into the canvas (omit for no title).
-  * **title_style** ([`TitleStyle`](#muvid.visualize.canvas.TitleStyle) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – How to draw that title.
+  * **image** (`str` | `Path`) – The cover art.
+  * **saveas** (`str` | `Path` | `None`) – Output PNG path (default: `<image-stem>.canvas.png`).
+  * **size** (`tuple`[`int`, `int`]) – Canvas size.
+  * **layout** ([`CoverLayout`](#muvid.visualize.canvas.CoverLayout) | `None`) – Placement/treatment of the cover (a default one when omitted).
+  * **title** (`str` | `None`) – Burn this title into the canvas (omit for no title).
+  * **title_style** ([`TitleStyle`](#muvid.visualize.canvas.TitleStyle) | `None`) – How to draw that title.
 * **Return type:**
-  [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)
+  `Path`
 * **Returns:**
   Path to the rendered PNG.
 
@@ -216,7 +216,7 @@ The whole cover-on-canvas filtergraph: background, centred cover, title.
 both the blurred background and the sharp foreground.
 
 * **Return type:**
-  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+  `str`
 
 ### muvid.visualize.canvas.cover_box(size, layout)
 
@@ -227,7 +227,7 @@ Scales with *both* frame dimensions, so a cover fitted into it with
 comes first — filling the frame up to `cover_fraction`, minus padding.
 
 * **Return type:**
-  [`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`int`](https://docs.python.org/3/builtins/functions.html#int), [`int`](https://docs.python.org/3/builtins/functions.html#int)]
+  `tuple`[`int`, `int`]
 
 ### muvid.visualize.canvas.cover_chain(size, layout, , src, out)
 
@@ -239,14 +239,14 @@ an alpha channel), so a following [`overlay_chain()`](#muvid.visualize.canvas.ov
 show through it.
 
 * **Return type:**
-  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+  `str`
 
 ### muvid.visualize.canvas.default_font()
 
 Path to a usable TrueType font, or `None` if none was found.
 
 * **Return type:**
-  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`None`](https://docs.python.org/3/builtins/constants.html#None)
+  `str` | `None`
 
 ### muvid.visualize.canvas.dim_saturation_lut(, dim=0.0, saturation=1.0)
 
@@ -270,10 +270,10 @@ and the constants that ship were re-measured rather than converted: see
 [`CoverLayout`](#muvid.visualize.canvas.CoverLayout) and [`muvid.visualize.visuals`](muvid.visualize.visuals.html.md#module-muvid.visualize.visuals).
 
 * **Parameters:**
-  * **dim** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – How much to darken, 0 (unchanged) to 1 (black).
-  * **saturation** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – Chroma scaling about neutral. `1` is a no-op.
+  * **dim** (`float`) – How much to darken, 0 (unchanged) to 1 (black).
+  * **saturation** (`float`) – Chroma scaling about neutral. `1` is a no-op.
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]
+  `dict`[`str`, `str`]
 
 ### Examples
 
@@ -313,7 +313,7 @@ applies to that one filter’s `text` option only, and is out of scope for a
 general-purpose filtergraph escaper.
 
 * **Return type:**
-  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+  `str`
 
 ### muvid.visualize.canvas.lut_filter(exprs, , label='')
 
@@ -324,10 +324,10 @@ filter”, so every one goes through [`escape_filter_value()`](#muvid.visualize.
 escaper, and the same reason, as a `sendcmd` script path.
 
 * **Parameters:**
-  * **exprs** ([`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]) – `{component: expression}`.
-  * **label** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str)) – Optional `@label` so `sendcmd` can address this filter.
+  * **exprs** (`dict`[`str`, `str`]) – `{component: expression}`.
+  * **label** (`str`) – Optional `@label` so `sendcmd` can address this filter.
 * **Return type:**
-  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+  `str`
 
 ### Examples
 
@@ -341,14 +341,14 @@ escaper, and the same reason, as a `sendcmd` script path.
 Filter chain centring the `cover` stream over the `background` stream.
 
 * **Parameters:**
-  * **background** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str)) – Label of the background video stream.
-  * **cover** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str)) – Label of the (already scaled) cover stream.
-  * **out** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str)) – Label to emit.
-  * **shortest** ([`bool`](https://docs.python.org/3/builtins/functions.html#bool)) – End the overlay when the shortest input ends — required when a
+  * **background** (`str`) – Label of the background video stream.
+  * **cover** (`str`) – Label of the (already scaled) cover stream.
+  * **out** (`str`) – Label to emit.
+  * **shortest** (`bool`) – End the overlay when the shortest input ends — required when a
     finite, audio-driven background is overlaid with an endlessly
     looping still cover, or the render would never terminate.
 * **Return type:**
-  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+  `str`
 
 ### muvid.visualize.canvas.thumbnail_image(image, , saveas=None, size=(1280, 720), layout=None, title=None, title_style=None, max_bytes=2097152)
 
@@ -359,15 +359,15 @@ viewer sees when they press play. JPEG quality is stepped down until the
 file fits `max_bytes` (YouTube’s hard limit).
 
 * **Parameters:**
-  * **image** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)) – The cover art.
-  * **saveas** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – Output JPEG path (default: `<image-stem>.thumb.jpg`).
-  * **size** ([`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`int`](https://docs.python.org/3/builtins/functions.html#int), [`int`](https://docs.python.org/3/builtins/functions.html#int)]) – Thumbnail size (YouTube wants >= 1280x720, 16:9).
-  * **layout** ([`CoverLayout`](#muvid.visualize.canvas.CoverLayout) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – Placement/treatment of the cover.
-  * **title** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – Burn this title into the thumbnail (omit for none).
-  * **title_style** ([`TitleStyle`](#muvid.visualize.canvas.TitleStyle) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – How to draw that title.
-  * **max_bytes** ([`int`](https://docs.python.org/3/builtins/functions.html#int)) – Hard size ceiling.
+  * **image** (`str` | `Path`) – The cover art.
+  * **saveas** (`str` | `Path` | `None`) – Output JPEG path (default: `<image-stem>.thumb.jpg`).
+  * **size** (`tuple`[`int`, `int`]) – Thumbnail size (YouTube wants >= 1280x720, 16:9).
+  * **layout** ([`CoverLayout`](#muvid.visualize.canvas.CoverLayout) | `None`) – Placement/treatment of the cover.
+  * **title** (`str` | `None`) – Burn this title into the thumbnail (omit for none).
+  * **title_style** ([`TitleStyle`](#muvid.visualize.canvas.TitleStyle) | `None`) – How to draw that title.
+  * **max_bytes** (`int`) – Hard size ceiling.
 * **Return type:**
-  [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)
+  `Path`
 * **Returns:**
   Path to the rendered JPEG.
 
@@ -378,4 +378,4 @@ Filter chain burning `title` into the bottom of stream `src`.
 * **Raises:**
   [**FfmpegError**](muvid.visualize.html.md#muvid.visualize.FfmpegError) – This ffmpeg has no `drawtext`, or no font was found.
 * **Return type:**
-  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+  `str`

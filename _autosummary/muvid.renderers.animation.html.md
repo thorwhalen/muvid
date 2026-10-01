@@ -61,7 +61,7 @@ enforced at the only place that can see which `an` is actually there.
 |-------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------|
 | [`render_animation`](#muvid.renderers.animation.render_animation)(ctx, \*[, quality])           | Synthesize a tiny `an` scene for this shot and orchestrate it.        |
 
-### muvid.renderers.animation.AN_CAMERA_MOVE_PHRASES *: [tuple](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[tuple](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[str](https://docs.python.org/3/builtins/stdtypes.html#str), [str](https://docs.python.org/3/builtins/stdtypes.html#str)], ...]* *= (('push in', 'push_in'), ('push into', 'push_in'), ('dolly in', 'push_in'), ('zoom in', 'zoom_in'), ('pull out', 'pull_out'), ('pull back', 'pull_out'), ('dolly out', 'pull_out'), ('zoom out', 'zoom_out'), ('pan left', 'pan_left'), ('pan right', 'pan_right'), ('tilt up', 'tilt_up'), ('tilt down', 'tilt_down'), ('crane up', 'tilt_up'), ('crane down', 'tilt_down'), ('static', 'hold'), ('hold', 'hold'), ('locked', 'hold'), ('locked off', 'hold'), ('lock off', 'hold'), ('no movement', 'hold'))*
+### muvid.renderers.animation.AN_CAMERA_MOVE_PHRASES *: tuple[tuple[str, str], ...]* *= (('push in', 'push_in'), ('push into', 'push_in'), ('dolly in', 'push_in'), ('zoom in', 'zoom_in'), ('pull out', 'pull_out'), ('pull back', 'pull_out'), ('dolly out', 'pull_out'), ('zoom out', 'zoom_out'), ('pan left', 'pan_left'), ('pan right', 'pan_right'), ('tilt up', 'tilt_up'), ('tilt down', 'tilt_down'), ('crane up', 'tilt_up'), ('crane down', 'tilt_down'), ('static', 'hold'), ('hold', 'hold'), ('locked', 'hold'), ('locked off', 'hold'), ('lock off', 'hold'), ('no movement', 'hold'))*
 
 muvid prose -> `an` move name — the WHOLE recognised vocabulary, including
 the several ways a director spells “don’t move”. A direction that matches
@@ -149,7 +149,7 @@ True
 ```
 
 * **Return type:**
-  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+  `str`
 
 ### muvid.renderers.animation.render_animation(ctx, , quality='balanced')
 
@@ -163,4 +163,4 @@ installed and refuses the scene, because that is a bug in what muvid
 synthesized and a still image is a wrong answer, not a lesser one (muvid#46).
 
 * **Return type:**
-  [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)
+  `Path`

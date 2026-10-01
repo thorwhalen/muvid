@@ -58,7 +58,7 @@ microseconds.
 One `clip-alignment/v1` per clip, spanning the clip’s coverage of the song.
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)
+  `list`
 
 ### muvid.footage.lacing_bridge.editor_document(proj, , attributed_to='')
 
@@ -69,14 +69,14 @@ lane. The EDL rendered into DECISION is the current default proposal; an editor
 mutates that tier and exports it back through [`edl_from_annotations()`](#muvid.footage.lacing_bridge.edl_from_annotations).
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.lacing_bridge.edl_annotations(entries, , song_asset_id, attributed_to)
 
 The DECISION lane: one `music-video-edl/v1` per EDL entry, gaps included.
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)
+  `list`
 
 ### muvid.footage.lacing_bridge.edl_from_annotations(annotations, , expected_song_asset_id=None)
 
@@ -104,7 +104,7 @@ carrying no `asset_id` at all (only `MediaRef` has one), is nothing to
 contradict — it reports a WRONG song, it does not demand proof of the right one.
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)]
+  `list`[`dict`]
 
 ### muvid.footage.lacing_bridge.score_track_annotations(tensor, , song_asset_id, attributed_to)
 
@@ -114,4 +114,4 @@ Dense JAMS-style arrays on the shared grid — values normalized to [0,1], `mask
 saying where the clip actually covers the song (blank, never flat-zero, in the UI).
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)
+  `list`

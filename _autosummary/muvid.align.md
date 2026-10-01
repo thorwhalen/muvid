@@ -65,28 +65,28 @@ plus any name added later via [`register_aligner()`](#muvid.align.register_align
 
 ### *class* muvid.align.AlignerSpec(, name, description, fn, requires=())
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 One row in the aligner registry.
 
 ### *class* muvid.align.AlignmentResult(, sections)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 #### lines_in(start_s, end_s)
 
 Lines that fall (at least partially) inside `[start_s, end_s]`.
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`LineAlignment`](#muvid.align.LineAlignment)]
+  `list`[[`LineAlignment`](#muvid.align.LineAlignment)]
 
 ### *class* muvid.align.LineAlignment(, line_index, section_label, text, start_s, end_s, word_alignments)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 ### *class* muvid.align.SectionAlignment(, label, title, start_s, end_s, lines)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 ### muvid.align.WHISPERX_LITE_MODEL_SIZE *= 'small'*
 
@@ -98,7 +98,7 @@ accurate size; override per call or via this env var.
 
 ### *class* muvid.align.WordAlignment(, line_index, token_index, text, start_s, end_s, confidence=1.0)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 One alignment between a lyric token and a transcript word.
 
@@ -108,15 +108,15 @@ Align a `LyricsDoc` to a transcript.
 
 * **Parameters:**
   * **lyrics** ([`LyricsDoc`](muvid.lyrics.md#muvid.lyrics.LyricsDoc)) – User-edited lyrics document (the ground-truth text).
-  * **transcript** ([`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)) – Aligner-specific input. For `"scribe-greedy"`
+  * **transcript** (`dict`) – Aligner-specific input. For `"scribe-greedy"`
     this is a Scribe / faster-whisper response with
     `words: [...]`. For `"user"` this can be empty if you
     pass `user_line_timings=...`. For `"whisperx-lite"` the
     transcript is ignored — the aligner runs on the audio
     directly (path passed via `audio_path=`).
-  * **duration_s** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – Used to extrapolate end times for lines with no
+  * **duration_s** (`float`) – Used to extrapolate end times for lines with no
     matched words and no later anchor.
-  * **aligner** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str)) – Name of a registered aligner. See [`list_aligners()`](#muvid.align.list_aligners).
+  * **aligner** (`str`) – Name of a registered aligner. See [`list_aligners()`](#muvid.align.list_aligners).
   * **\*\*aligner_kwargs** – Forwarded to the aligner.
 * **Return type:**
   [`AlignmentResult`](#muvid.align.AlignmentResult)
@@ -185,7 +185,7 @@ faster-whisper’s own `"tiny"` default — see muvid#101.
 Return all registered aligner names, sorted.
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]
+  `list`[`str`]
 
 ### muvid.align.register_aligner(name, fn, , description, requires=())
 
@@ -196,7 +196,7 @@ The function should accept `(lyrics, transcript, *, duration_s,
 [`align_lyrics()`](#muvid.align.align_lyrics) are passed through.
 
 * **Return type:**
-  [`None`](https://docs.python.org/3/builtins/constants.html#None)
+  `None`
 
 ### muvid.align.write_alignment_store(alignment, , path, asset_id='song:audio', rate=1000)
 
@@ -206,4 +206,4 @@ Uses `lacing.tracks.subtitle.SubtitleBuilder` for the
 standard `(sections, lines, words)` tier set.
 
 * **Return type:**
-  [`None`](https://docs.python.org/3/builtins/constants.html#None)
+  `None`

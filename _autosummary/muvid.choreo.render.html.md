@@ -39,7 +39,7 @@ should collapse onto it.
 
 ### *class* muvid.choreo.render.Painter(scene)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 Paints frames of one scene. Holds the grids and backdrops between frames.
 
@@ -48,7 +48,7 @@ Paints frames of one scene. Holds the grids and backdrops between frames.
 Objects alive at `t`. Frames must be asked for in increasing `t`.
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`Obj`](muvid.choreo.scene.html.md#muvid.choreo.scene.Obj)]
+  `list`[[`Obj`](muvid.choreo.scene.html.md#muvid.choreo.scene.Obj)]
 
 #### frame(k)
 
@@ -59,7 +59,7 @@ Frame `k` (at `k / fps` seconds) as a fresh `uint8` HxWx3 array.
 
 ### *class* muvid.choreo.render.RenderedVideo(, output, duration_s, n_frames, render_s)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 What [`render_scene()`](#muvid.choreo.render.render_scene) produced, and how long it took.
 
@@ -68,7 +68,7 @@ What [`render_scene()`](#muvid.choreo.render.render_scene) produced, and how lon
 Every frame of `scene`, in order.
 
 * **Return type:**
-  [`Iterator`](https://docs.python.org/3/library/typing.html#typing.Iterator)[`ndarray`]
+  `Iterator`[`ndarray`]
 
 ### muvid.choreo.render.render_scene(scene, , audio, output, workdir, crf=18, preset='medium')
 
@@ -77,6 +77,6 @@ Paint every frame of `scene`, pipe them into ffmpeg, mux `audio`.
 * **Raises:**
   * [**FfmpegError**](muvid.visualize.html.md#muvid.visualize.FfmpegError) – ffmpeg exited non-zero, died mid-stream, or overran
         `$MUVID_FFMPEG_TIMEOUT_S`; the message carries the log’s tail.
-  * [**ValueError**](https://docs.python.org/3/builtins/exceptions.html#ValueError) – the canvas has an odd dimension (yuv420p cannot encode one).
+  * **ValueError** – the canvas has an odd dimension (yuv420p cannot encode one).
 * **Return type:**
   [`RenderedVideo`](#muvid.choreo.render.RenderedVideo)

@@ -57,13 +57,13 @@ on top of the caller’s own input-duration cap.
 
 ### *exception* muvid.visualize.ffmpeg.FfmpegError
 
-Bases: [`RuntimeError`](https://docs.python.org/3/builtins/exceptions.html#RuntimeError)
+Bases: `RuntimeError`
 
 An ffmpeg/ffprobe invocation failed, or a needed tool/filter is absent.
 
 ### *class* muvid.visualize.ffmpeg.Loudness(integrated=-14.0, true_peak=-1.0, lra=11.0, measured=None)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 An EBU R128 loudness target, plus the measurement of a specific track.
 
@@ -77,7 +77,7 @@ to the (less accurate) single-pass form when it does not.
 The `loudnorm` filter string for this target.
 
 * **Return type:**
-  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+  `str`
 
 ### muvid.visualize.ffmpeg.PCM_SAMPLE_FORMAT *= 'f32le'*
 
@@ -97,12 +97,12 @@ container. This is the single place muvid turns a media file into raw PCM,
 so `$MUVID_FFMPEG_TIMEOUT_S` bounds that decode like every other one.
 
 * **Parameters:**
-  * **audio** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)) – The media file to decode.
-  * **sample_rate** ([`int`](https://docs.python.org/3/builtins/functions.html#int)) – Resample to this rate. Analysis rarely needs full quality,
+  * **audio** (`str` | `Path`) – The media file to decode.
+  * **sample_rate** (`int`) – Resample to this rate. Analysis rarely needs full quality,
     and a low rate keeps a long track’s decode cheap.
-  * **channels** ([`int`](https://docs.python.org/3/builtins/functions.html#int)) – Downmix to this many channels (1 = mono).
+  * **channels** (`int`) – Downmix to this many channels (1 = mono).
 * **Return type:**
-  [`bytes`](https://docs.python.org/3/builtins/stdtypes.html#bytes)
+  `bytes`
 * **Returns:**
   The raw PCM bytes — empty when ffmpeg could not decode `audio`.
   Returning empty rather than raising lets a caller treat “no usable
@@ -113,7 +113,7 @@ so `$MUVID_FFMPEG_TIMEOUT_S` bounds that decode like every other one.
 Whether this ffmpeg build has the `name` filter compiled in.
 
 * **Return type:**
-  [`bool`](https://docs.python.org/3/builtins/functions.html#bool)
+  `bool`
 
 ### muvid.visualize.ffmpeg.measure_loudness(audio, target=None)
 
@@ -125,8 +125,8 @@ that measurement. Single-pass loudnorm is a dynamic normalizer and will
 both miss the target and squash the dynamics of music.
 
 * **Parameters:**
-  * **audio** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)) – The audio (or video) file to measure.
-  * **target** ([`Loudness`](#muvid.visualize.ffmpeg.Loudness) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – The loudness target; a default one is used when omitted.
+  * **audio** (`str` | `Path`) – The audio (or video) file to measure.
+  * **target** ([`Loudness`](#muvid.visualize.ffmpeg.Loudness) | `None`) – The loudness target; a default one is used when omitted.
 * **Return type:**
   [`Loudness`](#muvid.visualize.ffmpeg.Loudness)
 * **Returns:**
@@ -141,25 +141,25 @@ Falls back to the longest stream duration when the container has none.
 * **Raises:**
   [**FfmpegError**](#muvid.visualize.ffmpeg.FfmpegError) – The duration could not be determined.
 * **Return type:**
-  [`float`](https://docs.python.org/3/builtins/functions.html#float)
+  `float`
 
 ### muvid.visualize.ffmpeg.probe(media)
 
 Return `ffprobe`’s `format` + `streams` JSON for `media`.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.visualize.ffmpeg.require_ffmpeg(\*tools)
 
 Raise a helpful [`FfmpegError`](#muvid.visualize.ffmpeg.FfmpegError) if any of `tools` is not on PATH.
 
 * **Parameters:**
-  **\*tools** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str)) – Binaries to require (defaults to `ffmpeg` and `ffprobe`).
+  **\*tools** (`str`) – Binaries to require (defaults to `ffmpeg` and `ffprobe`).
 * **Raises:**
   [**FfmpegError**](#muvid.visualize.ffmpeg.FfmpegError) – With per-platform install instructions.
 * **Return type:**
-  [`None`](https://docs.python.org/3/builtins/constants.html#None)
+  `None`
 
 ### muvid.visualize.ffmpeg.require_filter(name, , needed_for)
 
@@ -172,17 +172,17 @@ specific filter has to be there.
 * **Raises:**
   [**FfmpegError**](#muvid.visualize.ffmpeg.FfmpegError) – Naming the filter, the feature that needs it, and the fix.
 * **Return type:**
-  [`None`](https://docs.python.org/3/builtins/constants.html#None)
+  `None`
 
 ### muvid.visualize.ffmpeg.run_ffmpeg(args, , overwrite=True)
 
 Run `ffmpeg` with `args`, raising a readable error on failure.
 
 * **Parameters:**
-  * **args** ([`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]) – Arguments after the global flags (inputs, filters, output).
-  * **overwrite** ([`bool`](https://docs.python.org/3/builtins/functions.html#bool)) – Pass `-y` (overwrite the output without prompting).
+  * **args** (`list`[`str`]) – Arguments after the global flags (inputs, filters, output).
+  * **overwrite** (`bool`) – Pass `-y` (overwrite the output without prompting).
 * **Return type:**
-  [`CompletedProcess`](https://docs.python.org/3/library/subprocess.html#subprocess.CompletedProcess)
+  `CompletedProcess`
 * **Returns:**
   The completed process.
 * **Raises:**

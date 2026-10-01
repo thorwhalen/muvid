@@ -61,7 +61,7 @@ Pass `gop_seconds=0.5` for strict compliance.
 
 ### *class* muvid.visualize.video.RenderResult(path, duration, size, fps, visual, loudness=None, canvas=None, extras=<factory>)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 A rendered video and what is worth knowing about it.
 
@@ -106,28 +106,28 @@ EBU R128 loudness with a two-pass `loudnorm`, which is what makes a batch
 of songs play back at a consistent level.
 
 * **Parameters:**
-  * **audio** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)) – The song (`.wav` is preferred when you have it — YouTube
+  * **audio** (`str` | `Path`) – The song (`.wav` is preferred when you have it — YouTube
     re-encodes regardless, so give it the cleanest input).
-  * **image** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – Cover art. Used for the picture, and composed onto a 16:9 canvas.
-  * **visual** (`Union`[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[[`VisualContext`](muvid.visualize.visuals.md#muvid.visualize.visuals.VisualContext)], [`VisualPlan`](muvid.visualize.visuals.md#muvid.visualize.visuals.VisualPlan) | [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path) | [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]]) – A registered strategy name (`"still"`, `"ken_burns"`,
+  * **image** (`str` | `Path` | `None`) – Cover art. Used for the picture, and composed onto a 16:9 canvas.
+  * **visual** (`Union`[`str`, `Callable`[[[`VisualContext`](muvid.visualize.visuals.md#muvid.visualize.visuals.VisualContext)], [`VisualPlan`](muvid.visualize.visuals.md#muvid.visualize.visuals.VisualPlan) | `Path` | `str`]]) – A registered strategy name (`"still"`, `"ken_burns"`,
     `"cqt"`, `"bars"`, `"spectrum"`, `"waves"`, `"scope"`),
     `"auto"`, or any callable (see [`muvid.visualize.visuals`](muvid.visualize.visuals.md#module-muvid.visualize.visuals)).
-  * **saveas** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – Output path (default: `<audio-stem>.mp4`).
-  * **size** ([`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`int`](https://docs.python.org/3/builtins/functions.html#int), [`int`](https://docs.python.org/3/builtins/functions.html#int)]) – Canvas size; the default is 1080p.
-  * **fps** ([`int`](https://docs.python.org/3/builtins/functions.html#int)) – Frame rate.
-  * **title** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – Burn this title into the frame.
-  * **layout** ([`CoverLayout`](muvid.visualize.canvas.md#muvid.visualize.canvas.CoverLayout) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – How the cover sits on the canvas.
-  * **title_style** ([`TitleStyle`](muvid.visualize.canvas.md#muvid.visualize.canvas.TitleStyle) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – How the title is drawn.
-  * **normalize** ([`bool`](https://docs.python.org/3/builtins/functions.html#bool)) – Loudness-normalize the audio (two-pass EBU R128).
-  * **loudness** ([`Loudness`](muvid.visualize.ffmpeg.md#muvid.visualize.ffmpeg.Loudness) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – The loudness target; a YouTube-appropriate default is used
+  * **saveas** (`str` | `Path` | `None`) – Output path (default: `<audio-stem>.mp4`).
+  * **size** (`tuple`[`int`, `int`]) – Canvas size; the default is 1080p.
+  * **fps** (`int`) – Frame rate.
+  * **title** (`str` | `None`) – Burn this title into the frame.
+  * **layout** ([`CoverLayout`](muvid.visualize.canvas.md#muvid.visualize.canvas.CoverLayout) | `None`) – How the cover sits on the canvas.
+  * **title_style** ([`TitleStyle`](muvid.visualize.canvas.md#muvid.visualize.canvas.TitleStyle) | `None`) – How the title is drawn.
+  * **normalize** (`bool`) – Loudness-normalize the audio (two-pass EBU R128).
+  * **loudness** ([`Loudness`](muvid.visualize.ffmpeg.md#muvid.visualize.ffmpeg.Loudness) | `None`) – The loudness target; a YouTube-appropriate default is used
     when omitted.
-  * **gop_seconds** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – Encoder knobs.
-  * **options** ([`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – Strategy-specific options, passed to the visual.
-  * **workdir** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – Where intermediates go (a temporary directory by default).
+  * **gop_seconds** (`float`) – Encoder knobs.
+  * **options** (`dict` | `None`) – Strategy-specific options, passed to the visual.
+  * **workdir** (`str` | `Path` | `None`) – Where intermediates go (a temporary directory by default).
 * **Return type:**
   [`RenderResult`](#muvid.visualize.video.RenderResult)
 * **Returns:**
   A [`RenderResult`](#muvid.visualize.video.RenderResult).
 * **Raises:**
-  [**ValueError**](https://docs.python.org/3/builtins/exceptions.html#ValueError) – `size` has an odd dimension — H.264 at yuv420p (the only
+  **ValueError** – `size` has an odd dimension — H.264 at yuv420p (the only
       pixel format every player decodes) cannot encode one.

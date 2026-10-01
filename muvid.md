@@ -1,4 +1,4 @@
-> built 2026-09-28 17:10 UTC from 53025d3 (main) · muvid 0.0.75. Details: build_info.json
+> built 2026-10-01 09:19 UTC from 9f14075 (main) · muvid 0.0.76. Details: build_info.json
 
 # index.html.md
 
@@ -582,28 +582,28 @@ plus any name added later via [`register_aligner()`](_autosummary/muvid.align.ht
 
 ### *class* muvid.align.AlignerSpec(, name, description, fn, requires=())
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 One row in the aligner registry.
 
 ### *class* muvid.align.AlignmentResult(, sections)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 #### lines_in(start_s, end_s)
 
 Lines that fall (at least partially) inside `[start_s, end_s]`.
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`LineAlignment`](_autosummary/muvid.align.html.md#muvid.align.LineAlignment)]
+  `list`[[`LineAlignment`](_autosummary/muvid.align.html.md#muvid.align.LineAlignment)]
 
 ### *class* muvid.align.LineAlignment(, line_index, section_label, text, start_s, end_s, word_alignments)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 ### *class* muvid.align.SectionAlignment(, label, title, start_s, end_s, lines)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 ### muvid.align.WHISPERX_LITE_MODEL_SIZE *= 'small'*
 
@@ -615,7 +615,7 @@ accurate size; override per call or via this env var.
 
 ### *class* muvid.align.WordAlignment(, line_index, token_index, text, start_s, end_s, confidence=1.0)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 One alignment between a lyric token and a transcript word.
 
@@ -625,15 +625,15 @@ Align a `LyricsDoc` to a transcript.
 
 * **Parameters:**
   * **lyrics** ([`LyricsDoc`](_autosummary/muvid.lyrics.html.md#muvid.lyrics.LyricsDoc)) – User-edited lyrics document (the ground-truth text).
-  * **transcript** ([`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)) – Aligner-specific input. For `"scribe-greedy"`
+  * **transcript** (`dict`) – Aligner-specific input. For `"scribe-greedy"`
     this is a Scribe / faster-whisper response with
     `words: [...]`. For `"user"` this can be empty if you
     pass `user_line_timings=...`. For `"whisperx-lite"` the
     transcript is ignored — the aligner runs on the audio
     directly (path passed via `audio_path=`).
-  * **duration_s** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – Used to extrapolate end times for lines with no
+  * **duration_s** (`float`) – Used to extrapolate end times for lines with no
     matched words and no later anchor.
-  * **aligner** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str)) – Name of a registered aligner. See [`list_aligners()`](_autosummary/muvid.align.html.md#muvid.align.list_aligners).
+  * **aligner** (`str`) – Name of a registered aligner. See [`list_aligners()`](_autosummary/muvid.align.html.md#muvid.align.list_aligners).
   * **\*\*aligner_kwargs** – Forwarded to the aligner.
 * **Return type:**
   [`AlignmentResult`](_autosummary/muvid.align.html.md#muvid.align.AlignmentResult)
@@ -702,7 +702,7 @@ faster-whisper’s own `"tiny"` default — see muvid#101.
 Return all registered aligner names, sorted.
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]
+  `list`[`str`]
 
 ### muvid.align.register_aligner(name, fn, , description, requires=())
 
@@ -713,7 +713,7 @@ The function should accept `(lyrics, transcript, *, duration_s,
 [`align_lyrics()`](_autosummary/muvid.align.html.md#muvid.align.align_lyrics) are passed through.
 
 * **Return type:**
-  [`None`](https://docs.python.org/3/builtins/constants.html#None)
+  `None`
 
 ### muvid.align.write_alignment_store(alignment, , path, asset_id='song:audio', rate=1000)
 
@@ -723,175 +723,7 @@ Uses `lacing.tracks.subtitle.SubtitleBuilder` for the
 standard `(sections, lines, words)` tier set.
 
 * **Return type:**
-  [`None`](https://docs.python.org/3/builtins/constants.html#None)
-
-
-# _autosummary/muvid.catalog.html.md
-
-# muvid.catalog
-
-Make a hosted production’s media *retrievable* — the host’s artifact catalog.
-
-A song, a clip or a render that lands in a host-placed `muvid.Project` is a file
-on disk; the studio plays media through the host’s `GET /api/artifacts/{id}/bytes`,
-which answers only for ids registered in the project’s catalog. So every such file is
-also registered there: [`HostArtifactCatalog`](_autosummary/muvid.catalog.html.md#muvid.catalog.HostArtifactCatalog) is the writer, and
-[`muvid.footage.workspace.MusicVideoFootageProject`](_autosummary/muvid.footage.workspace.html.md#muvid.footage.workspace.MusicVideoFootageProject)’s `media_catalog` seam is
-where it plugs in (`None` — the MCP connector’s per-caller workspace — registers
-nothing).
-
-The layout and the row shape are the HOST’s (reelee’s `reelee/artifacts.py`):
-`<project>/.reelee/artifacts/blobs/<sha256>` and
-`<project>/.reelee/artifacts/catalog/<sha256>.json`. Four rules, each the point:
-
-- **The id IS the content hash** (SHA-256 of the bytes, 64 lowercase hex), the same
-  digest muvid already records as `song_hash`.
-- **Blob first, row second**: the host reads the row first, so a row with no bytes
-  behind it would be a 500 mid-stream rather than a 404.
-- **Hardlinked, never copied**: the media is already inside the project, and a shared
-  inode is safe because the name is the digest. A filesystem that cannot link is
-  REFUSED ([`CrossDeviceCatalog`](_autosummary/muvid.catalog.html.md#muvid.catalog.CrossDeviceCatalog)) rather than silently doubling the bytes.
-- \*\*Never a `file://` url\*\* — the row’s `url` is the host’s bytes route.
-
-**Duplication, knowingly.** This is a second copy of `braidio.importing._catalog`
-(same layout, same row, same refusals). The host’s catalog is a host concern two guest
-genres now write to, so the writer belongs one layer down, in `nw`, and both
-packages should call it from there; until that lands, the two copies must agree, and
-the row’s field list is the thing to diff.
-
-### Module Attributes
-
-| [`DELIVERY_CATALOG_SUBPATH`](_autosummary/muvid.catalog.html.md#muvid.catalog.DELIVERY_CATALOG_SUBPATH)   | Where the host keeps a project's catalog, relative to the project root.            |
-|-----------------------------------------------------------------------------|------------------------------------------------------------------------------------|
-| [`CATALOG_KINDS`](_autosummary/muvid.catalog.html.md#muvid.catalog.CATALOG_KINDS)              | The kinds the host's catalog holds; anything else is not registered (and said so). |
-| [`BYTES_ROUTE`](_autosummary/muvid.catalog.html.md#muvid.catalog.BYTES_ROUTE)                | The host's bytes route — what a row's `url` is, never a filesystem path.           |
-
-### Functions
-
-| [`catalog_row`](_autosummary/muvid.catalog.html.md#muvid.catalog.catalog_row)(artifact_id, \*, kind, generated_at)   | The host's artifact record as JSON — the same minimal field set braidio emits.   |
-|-----------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------|
-| [`hash_file`](_autosummary/muvid.catalog.html.md#muvid.catalog.hash_file)(path, \*[, chunk_size])                  | SHA-256 of a file's bytes, read in chunks — the catalog id of that file.         |
-| [`assert_local_backend`](_autosummary/muvid.catalog.html.md#muvid.catalog.assert_local_backend)([env])                        | Refuse to register into a filesystem the host will not read.                     |
-
-### Classes
-
-| [`HostArtifactCatalog`](_autosummary/muvid.catalog.html.md#muvid.catalog.HostArtifactCatalog)(project_root)   | The artifact catalog of the project at `project_root` (the host's layout).   |
-|--------------------------------------------------------------------------------------|------------------------------------------------------------------------------|
-
-### Exceptions
-
-| [`CrossDeviceCatalog`](_autosummary/muvid.catalog.html.md#muvid.catalog.CrossDeviceCatalog)     | The project's blob store is not on the media's filesystem (cannot hardlink).   |
-|-------------------------------------------------------------------------|--------------------------------------------------------------------------------|
-| [`CatalogBackendMismatch`](_autosummary/muvid.catalog.html.md#muvid.catalog.CatalogBackendMismatch) | The host reads its artifacts from somewhere other than the project's blobs.    |
-
-### muvid.catalog.BYTES_ROUTE *= '/api/artifacts/{artifact_id}/bytes'*
-
-The host’s bytes route — what a row’s `url` is, never a filesystem path.
-
-### muvid.catalog.CATALOG_KINDS *: [frozenset](https://docs.python.org/3/builtins/stdtypes.html#frozenset)[[str](https://docs.python.org/3/builtins/stdtypes.html#str)]* *= frozenset({'audio', 'image', 'json', 'video'})*
-
-The kinds the host’s catalog holds; anything else is not registered (and said so).
-
-### *exception* muvid.catalog.CatalogBackendMismatch
-
-Bases: [`RuntimeError`](https://docs.python.org/3/builtins/exceptions.html#RuntimeError)
-
-The host reads its artifacts from somewhere other than the project’s blobs.
-
-### *exception* muvid.catalog.CrossDeviceCatalog
-
-Bases: [`OSError`](https://docs.python.org/3/builtins/exceptions.html#OSError)
-
-The project’s blob store is not on the media’s filesystem (cannot hardlink).
-
-### muvid.catalog.DELIVERY_CATALOG_SUBPATH *: [tuple](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[str](https://docs.python.org/3/builtins/stdtypes.html#str), ...]* *= ('.reelee', 'artifacts')*
-
-Where the host keeps a project’s catalog, relative to the project root.
-
-### *class* muvid.catalog.HostArtifactCatalog(project_root)
-
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
-
-The artifact catalog of the project at `project_root` (the host’s layout).
-
-```pycon
->>> import tempfile, pathlib
->>> with tempfile.TemporaryDirectory() as d:
-...     media = pathlib.Path(d, "song.wav"); _ = media.write_bytes(b"RIFF")
-...     cat = HostArtifactCatalog(d)
-...     aid = cat.register(media, kind="audio")
-...     (cat.blobs_dir / aid).exists(), (cat.rows_dir / f"{aid}.json").exists()
-(True, True)
-```
-
-#### has(artifact_id)
-
-Whether `artifact_id` resolves: its row AND its blob are both there.
-
-* **Return type:**
-  [`bool`](https://docs.python.org/3/builtins/functions.html#bool)
-
-#### register(path, , kind, artifact_id=None, duration_s=None, width=None, height=None, note='')
-
-Register `path` (a file inside the project); return its id, or `None`.
-
-`None` only for a `kind` the catalog cannot hold — the caller records the
-file without an id rather than inventing one. `artifact_id` may be passed
-when the caller already hashed the file (a 300 MB clip is not worth reading
-twice); its shape is checked, its value is trusted.
-
-* **Return type:**
-  [`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]
-
-### muvid.catalog.assert_local_backend(env=None)
-
-Refuse to register into a filesystem the host will not read.
-
-Rows written beside a project whose host resolves artifacts from an object store
-would make every id 404 while the write reported success — the failure this module
-exists to remove.
-
-* **Return type:**
-  [`None`](https://docs.python.org/3/builtins/constants.html#None)
-
-```pycon
->>> assert_local_backend({})
->>> assert_local_backend({"REELEE_ARTIFACT_BACKEND": "aws"})
-Traceback (most recent call last):
-    ...
-muvid.catalog.CatalogBackendMismatch: ...
-```
-
-### muvid.catalog.catalog_row(artifact_id, , kind, generated_at, width=None, height=None, duration_s=None, note='')
-
-The host’s artifact record as JSON — the same minimal field set braidio emits.
-
-An unknown key fails the host’s validation for its WHOLE catalog, so only fields
-long present in the host’s model are emitted.
-
-* **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
-
-```pycon
->>> row = catalog_row("ab" * 32, kind="video", generated_at="2026-09-27T00:00:00Z")
->>> row["id"] == row["content_hash"], row["url"].startswith("/api/artifacts/")
-(True, True)
-```
-
-### muvid.catalog.hash_file(path, , chunk_size=1048576)
-
-SHA-256 of a file’s bytes, read in chunks — the catalog id of that file.
-
-* **Return type:**
-  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
-
-```pycon
->>> import tempfile, pathlib
->>> with tempfile.TemporaryDirectory() as d:
-...     p = pathlib.Path(d, "x"); _ = p.write_bytes(b"abc")
-...     hash_file(p)
-'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad'
-```
+  `None`
 
 
 # _autosummary/muvid.characters.html.md
@@ -928,14 +760,14 @@ Reference images go through three states:
 Create or update a character card. Idempotent.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]
+  `dict`[`str`, `Any`]
 
 ### muvid.characters.add_reference_images(project, name, images, , copy=True)
 
 Drop user-provided images into `characters/<name>/refs/`.
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)]
+  `list`[`Path`]
 
 ### muvid.characters.curate_references(project, name, , k=8, recipe='person_mock')
 
@@ -945,7 +777,7 @@ Default recipe is `person_mock` so this works without the heavy ML
 dependencies; pass `recipe="person"` once those are installed.
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)]
+  `list`[`Path`]
 
 ### muvid.characters.curate_references_interactive(project, name, , on_decision, k=8, recipe='person_mock', present=6, max_rounds=20)
 
@@ -956,7 +788,7 @@ decision callable) drives keep/reject decisions per round.
 `on_decision` is forwarded directly; see lookbook for the API.
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)]
+  `list`[`Path`]
 
 ### muvid.characters.generate_reference_images(project, name, , n=6, style_variants=(), quality='balanced')
 
@@ -967,7 +799,7 @@ The character’s `description` is used as the prompt; each variant
 Output goes to `characters/<name>/refs/`.
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)]
+  `list`[`Path`]
 
 ### muvid.characters.get_character_anchor_image(project, name)
 
@@ -977,7 +809,7 @@ Resolves in order: `card.reference_image_path` (curated),
 first file in `selected/`, first file in `refs/`.
 
 * **Return type:**
-  [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)
+  `Path`
 
 
 # _autosummary/muvid.choreo.analysis.html.md
@@ -1034,7 +866,7 @@ manifest side of the package free of it.
 
 ### *class* muvid.choreo.analysis.Analysis(\*, duration, tempo, events, sections, bands=<factory>, meta=<factory>)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 Everything an archetype needs, and the JSON artifact a render leaves behind.
 
@@ -1051,31 +883,31 @@ True
 Events with `start <= t < end` (optionally one band).
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`Event`](_autosummary/muvid.choreo.analysis.html.md#muvid.choreo.analysis.Event)]
+  `list`[[`Event`](_autosummary/muvid.choreo.analysis.html.md#muvid.choreo.analysis.Event)]
 
-### muvid.choreo.analysis.BANDS *: [dict](https://docs.python.org/3/builtins/stdtypes.html#dict)[[str](https://docs.python.org/3/builtins/stdtypes.html#str), [tuple](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[float](https://docs.python.org/3/builtins/functions.html#float), [float](https://docs.python.org/3/builtins/functions.html#float)]]* *= {'high': (2000.0, 11025.0), 'low': (20.0, 200.0), 'mid': (200.0, 2000.0)}*
+### muvid.choreo.analysis.BANDS *: dict[str, tuple[float, float]]* *= {'high': (2000.0, 11025.0), 'low': (20.0, 200.0), 'mid': (200.0, 2000.0)}*
 
 The three registers, as (low_hz, high_hz]. `high` runs to Nyquist.
 
 ### *class* muvid.choreo.analysis.Event(, t, band, strength)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 One onset: when, in which band, how hard (0..1, band-relative).
 
 ### *class* muvid.choreo.analysis.Section(, index, label, start, end, energy_db)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 A contiguous stretch of similar loudness. `label` is its tier.
 
 ### *class* muvid.choreo.analysis.Tempo(, bpm, beats, source)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 The beat grid, and where it came from (`"mixing"` or `"numpy"`).
 
-#### *property* period *: [float](https://docs.python.org/3/builtins/functions.html#float)*
+#### *property* period *: float*
 
 Seconds per beat.
 
@@ -1120,7 +952,7 @@ the section is already `min_bars` long. Sections tile `[0, duration]`
 exactly and there is always at least one.
 
 * **Return type:**
-  [`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`Section`](_autosummary/muvid.choreo.analysis.html.md#muvid.choreo.analysis.Section), [`...`](https://docs.python.org/3/builtins/constants.html#Ellipsis)]
+  `tuple`[[`Section`](_autosummary/muvid.choreo.analysis.html.md#muvid.choreo.analysis.Section), `...`]
 
 ```pycon
 >>> import numpy as np
@@ -1151,7 +983,7 @@ the peak’s height over the 95th percentile of all peak heights, clipped
 to 1, so the loudest hits read as 1 and a click reads as small.
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`float`](https://docs.python.org/3/builtins/functions.html#float), [`float`](https://docs.python.org/3/builtins/functions.html#float)]]
+  `list`[`tuple`[`float`, `float`]]
 
 ```pycon
 >>> import numpy as np
@@ -1206,7 +1038,7 @@ pulls nothing heavy, and each attribute is resolved on first use.
 
 ### *class* muvid.choreo.Analysis(\*, duration, tempo, events, sections, bands=<factory>, meta=<factory>)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 Everything an archetype needs, and the JSON artifact a render leaves behind.
 
@@ -1223,23 +1055,23 @@ True
 Events with `start <= t < end` (optionally one band).
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`Event`](_autosummary/muvid.choreo.analysis.html.md#muvid.choreo.analysis.Event)]
+  `list`[[`Event`](_autosummary/muvid.choreo.analysis.html.md#muvid.choreo.analysis.Event)]
 
 ### *class* muvid.choreo.Canvas(, width=1920, height=1080, fps=30)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 Output geometry.
 
 ### *class* muvid.choreo.ChoreoScene(\*, canvas, duration, backdrops, objects, meta=<factory>)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 Everything the renderer needs, and nothing it has to interpret.
 
 ### *class* muvid.choreo.TreatmentSpec(\*, spec_version='1.0', title='', direction=<factory>, scenes=<factory>)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 A complete, renderable treatment.
 
@@ -1301,7 +1133,7 @@ True
 Render a choreo video. The one verb that produces a file.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]
+  `dict`[`str`, `Any`]
 
 ### Modules
 
@@ -1408,7 +1240,7 @@ Resource bounds, env-configurable. Same defaults as the lyric video’s.
 Refuse any input naming more than [`MAX_INPUT_FILES`](_autosummary/muvid.choreo.pipeline.html.md#muvid.choreo.pipeline.MAX_INPUT_FILES) files.
 
 * **Return type:**
-  [`None`](https://docs.python.org/3/builtins/constants.html#None)
+  `None`
 
 ```pycon
 >>> check_input_counts({'audio': 'a.wav'})
@@ -1423,7 +1255,7 @@ ValueError: inputs['frames'] names 65 files; the bound is 64 (MUVID_CHOREO_MAX_I
 Refuse a render that would exceed the resource bounds. Refuse, not clamp.
 
 * **Return type:**
-  [`None`](https://docs.python.org/3/builtins/constants.html#None)
+  `None`
 
 ```pycon
 >>> check_render_bounds(Canvas(width=1920, height=1080, fps=30), 200.0)
@@ -1502,7 +1334,7 @@ should collapse onto it.
 
 ### *class* muvid.choreo.render.Painter(scene)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 Paints frames of one scene. Holds the grids and backdrops between frames.
 
@@ -1511,7 +1343,7 @@ Paints frames of one scene. Holds the grids and backdrops between frames.
 Objects alive at `t`. Frames must be asked for in increasing `t`.
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`Obj`](_autosummary/muvid.choreo.scene.html.md#muvid.choreo.scene.Obj)]
+  `list`[[`Obj`](_autosummary/muvid.choreo.scene.html.md#muvid.choreo.scene.Obj)]
 
 #### frame(k)
 
@@ -1522,7 +1354,7 @@ Frame `k` (at `k / fps` seconds) as a fresh `uint8` HxWx3 array.
 
 ### *class* muvid.choreo.render.RenderedVideo(, output, duration_s, n_frames, render_s)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 What [`render_scene()`](_autosummary/muvid.choreo.render.html.md#muvid.choreo.render.render_scene) produced, and how long it took.
 
@@ -1531,7 +1363,7 @@ What [`render_scene()`](_autosummary/muvid.choreo.render.html.md#muvid.choreo.re
 Every frame of `scene`, in order.
 
 * **Return type:**
-  [`Iterator`](https://docs.python.org/3/library/typing.html#typing.Iterator)[`ndarray`]
+  `Iterator`[`ndarray`]
 
 ### muvid.choreo.render.render_scene(scene, , audio, output, workdir, crf=18, preset='medium')
 
@@ -1540,7 +1372,7 @@ Paint every frame of `scene`, pipe them into ffmpeg, mux `audio`.
 * **Raises:**
   * [**FfmpegError**](_autosummary/muvid.visualize.html.md#muvid.visualize.FfmpegError) – ffmpeg exited non-zero, died mid-stream, or overran
         `$MUVID_FFMPEG_TIMEOUT_S`; the message carries the log’s tail.
-  * [**ValueError**](https://docs.python.org/3/builtins/exceptions.html#ValueError) – the canvas has an odd dimension (yuv420p cannot encode one).
+  * **ValueError** – the canvas has an odd dimension (yuv420p cannot encode one).
 * **Return type:**
   [`RenderedVideo`](_autosummary/muvid.choreo.render.html.md#muvid.choreo.render.RenderedVideo)
 
@@ -1593,19 +1425,19 @@ any resolution. Velocities are in the same fractions per second.
 
 ### *class* muvid.choreo.scene.Backdrop(, start, end, kind, top, bottom)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 What is behind the objects during `[start, end)`.
 
 ### *class* muvid.choreo.scene.Canvas(, width=1920, height=1080, fps=30)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 Output geometry.
 
 ### *class* muvid.choreo.scene.ChoreoScene(\*, canvas, duration, backdrops, objects, meta=<factory>)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 Everything the renderer needs, and nothing it has to interpret.
 
@@ -1619,21 +1451,21 @@ How an object moves between birth and death.
 
 ### *class* muvid.choreo.scene.Obj(, t_born, t_die, kind, x, y, size, colour, motion='hold', band='', strength=1.0, aspect=1.0, angle=0.0, vx=0.0, vy=0.0, attack_s=0.0, release_s=0.0, layer=0, seed=0)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 One drawable thing with a life.
 
 * **Parameters:**
-  * **y** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – centre, normalised (x of width, y of height), at birth.
-  * **size** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – the shape’s main dimension as a fraction of canvas height —
+  * **y** (`float`) – centre, normalised (x of width, y of height), at birth.
+  * **size** (`float`) – the shape’s main dimension as a fraction of canvas height —
     diameter for `circle`/`ring`/`diamond`, height for `rect`/
     `triangle`, length for `line`.
-  * **aspect** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – width/height for `rect`/`triangle`; length/thickness
+  * **aspect** (`float`) – width/height for `rect`/`triangle`; length/thickness
     for `line`.
-  * **angle** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – degrees, for `line`.
-  * **vy** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – velocity (fractions per second) for `scroll`/`drift`.
-  * **release_s** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – alpha ramps at the start and end of life.
-  * **seed** ([`int`](https://docs.python.org/3/builtins/functions.html#int)) – per-object key for `flicker`’s per-frame jitter.
+  * **angle** (`float`) – degrees, for `line`.
+  * **vy** (`float`) – velocity (fractions per second) for `scroll`/`drift`.
+  * **release_s** (`float`) – alpha ramps at the start and end of life.
+  * **seed** (`int`) – per-object key for `flicker`’s per-frame jitter.
 
 ### muvid.choreo.scene.compile_scene(treatment, analysis, , canvas=None, seed=0)
 
@@ -1660,7 +1492,7 @@ True
 Register an archetype under `name`.
 
 * **Return type:**
-  [`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[[`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[`...`](https://docs.python.org/3/builtins/constants.html#Ellipsis), [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`Obj`](_autosummary/muvid.choreo.scene.html.md#muvid.choreo.scene.Obj)]]], [`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[`...`](https://docs.python.org/3/builtins/constants.html#Ellipsis), [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`Obj`](_autosummary/muvid.choreo.scene.html.md#muvid.choreo.scene.Obj)]]]
+  `Callable`[[`Callable`[`...`, `list`[[`Obj`](_autosummary/muvid.choreo.scene.html.md#muvid.choreo.scene.Obj)]]], `Callable`[`...`, `list`[[`Obj`](_autosummary/muvid.choreo.scene.html.md#muvid.choreo.scene.Obj)]]]
 
 ```pycon
 >>> @register_archetype('doctest-demo')
@@ -1678,7 +1510,7 @@ splitmix64-style mixing; no state, no platform dependence, so it is the
 only “random” this package allows itself.
 
 * **Return type:**
-  [`float`](https://docs.python.org/3/builtins/functions.html#float)
+  `float`
 
 ```pycon
 >>> unit_hash(0, 1) == unit_hash(0, 1), 0.0 <= unit_hash(3, 4, 5) < 1.0
@@ -1737,28 +1569,28 @@ handing it back — a mechanical substitution renders something good now.
 | [`Scene`](_autosummary/muvid.choreo.spec.html.md#muvid.choreo.spec.Scene)(\*[, applies_to, archetype, params])        | One archetype applied to part of the song. |
 | [`TreatmentSpec`](_autosummary/muvid.choreo.spec.html.md#muvid.choreo.spec.TreatmentSpec)(\*[, spec_version, title, ...])     | A complete, renderable treatment.          |
 
-### muvid.choreo.spec.ARCHETYPES *: [dict](https://docs.python.org/3/builtins/stdtypes.html#dict)[[str](https://docs.python.org/3/builtins/stdtypes.html#str), [str](https://docs.python.org/3/builtins/stdtypes.html#str)]* *= {'fischinger': 'Geometric shapes ignite per onset on a grid — band picks the shape class (low: discs, mid: squares, high: triangles), strength the size, and each section a different arrangement. The Study No. 7 look.', 'mclaren': 'White scratches and marks on black, one per onset, jittered, gone within a fraction of a beat. Hand-scratched film.', 'star_guitar': 'A side-scrolling landscape: bass onsets are poles, mids are buildings, highs are wires. Everything scrolls left at one constant speed, so the spacing of the objects IS the rhythm. Sections change the sky.', 'swarm': 'Particles whose count and speed follow band energy, thrown from a band-specific origin and persisting as they slow. Continuous, organic.'}*
+### muvid.choreo.spec.ARCHETYPES *: dict[str, str]* *= {'fischinger': 'Geometric shapes ignite per onset on a grid — band picks the shape class (low: discs, mid: squares, high: triangles), strength the size, and each section a different arrangement. The Study No. 7 look.', 'mclaren': 'White scratches and marks on black, one per onset, jittered, gone within a fraction of a beat. Hand-scratched film.', 'star_guitar': 'A side-scrolling landscape: bass onsets are poles, mids are buildings, highs are wires. Everything scrolls left at one constant speed, so the spacing of the objects IS the rhythm. Sections change the sky.', 'swarm': 'Particles whose count and speed follow band energy, thrown from a band-specific origin and persisting as they slow. Continuous, organic.'}*
 
 How events become objects. Each is a function in [`muvid.choreo.scene`](_autosummary/muvid.choreo.scene.html.md#module-muvid.choreo.scene).
 
-### muvid.choreo.spec.ARCHETYPE_PARAMS *: [dict](https://docs.python.org/3/builtins/stdtypes.html#dict)[[str](https://docs.python.org/3/builtins/stdtypes.html#str), [dict](https://docs.python.org/3/builtins/stdtypes.html#dict)[[str](https://docs.python.org/3/builtins/stdtypes.html#str), [tuple](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[float](https://docs.python.org/3/builtins/functions.html#float), [float](https://docs.python.org/3/builtins/functions.html#float), [float](https://docs.python.org/3/builtins/functions.html#float), [str](https://docs.python.org/3/builtins/stdtypes.html#str)]]]* *= {'fischinger': {'columns': (6, 2, 24, 'grid columns'), 'hold_beats': (1.0, 0.1, 8.0, 'how long a shape lives, in beats'), 'rows': (3, 1, 12, 'grid rows')}, 'mclaren': {'life_beats': (0.25, 0.05, 2.0, 'how long a scratch lives, in beats')}, 'star_guitar': {'horizon': (0.72, 0.3, 0.95, 'ground line, fraction of height from the top'), 'speed': (0.35, 0.05, 2.0, 'scroll speed, canvas widths per second')}, 'swarm': {'life_s': (1.5, 0.2, 6.0, 'particle lifetime, seconds'), 'particles': (6, 1, 40, 'particles per event at normal density')}}*
+### muvid.choreo.spec.ARCHETYPE_PARAMS *: dict[str, dict[str, tuple[float, float, float, str]]]* *= {'fischinger': {'columns': (6, 2, 24, 'grid columns'), 'hold_beats': (1.0, 0.1, 8.0, 'how long a shape lives, in beats'), 'rows': (3, 1, 12, 'grid rows')}, 'mclaren': {'life_beats': (0.25, 0.05, 2.0, 'how long a scratch lives, in beats')}, 'star_guitar': {'horizon': (0.72, 0.3, 0.95, 'ground line, fraction of height from the top'), 'speed': (0.35, 0.05, 2.0, 'scroll speed, canvas widths per second')}, 'swarm': {'life_s': (1.5, 0.2, 6.0, 'particle lifetime, seconds'), 'particles': (6, 1, 40, 'particles per event at normal density')}}*
 
 Archetype parameters, documented once for the schema and the prompt. Each is
 read by its archetype with the default given here and clamped to the range.
 
-### muvid.choreo.spec.BACKGROUNDS *: [dict](https://docs.python.org/3/builtins/stdtypes.html#dict)[[str](https://docs.python.org/3/builtins/stdtypes.html#str), [str](https://docs.python.org/3/builtins/stdtypes.html#str)]* *= {'gradient': 'Vertical gradient from palette.bg (top) to palette.bg2 (bottom).', 'solid': 'One flat colour (palette.bg).', 'vignette': 'palette.bg, darkened toward the corners.'}*
+### muvid.choreo.spec.BACKGROUNDS *: dict[str, str]* *= {'gradient': 'Vertical gradient from palette.bg (top) to palette.bg2 (bottom).', 'solid': 'One flat colour (palette.bg).', 'vignette': 'palette.bg, darkened toward the corners.'}*
 
 What is behind the objects.
 
-### muvid.choreo.spec.DENSITIES *: [dict](https://docs.python.org/3/builtins/stdtypes.html#dict)[[str](https://docs.python.org/3/builtins/stdtypes.html#str), [str](https://docs.python.org/3/builtins/stdtypes.html#str)]* *= {'dense': 'Every onset marks, and each makes more.', 'normal': 'Most onsets mark.', 'sparse': 'Only strong onsets mark; few objects at a time.'}*
+### muvid.choreo.spec.DENSITIES *: dict[str, str]* *= {'dense': 'Every onset marks, and each makes more.', 'normal': 'Most onsets mark.', 'sparse': 'Only strong onsets mark; few objects at a time.'}*
 
 How many events become objects, and how many objects an event makes.
 
-### muvid.choreo.spec.DENSITY_FACTOR *: [dict](https://docs.python.org/3/builtins/stdtypes.html#dict)[[str](https://docs.python.org/3/builtins/stdtypes.html#str), [float](https://docs.python.org/3/builtins/functions.html#float)]* *= {'dense': 2.0, 'normal': 1.0, 'sparse': 0.5}*
+### muvid.choreo.spec.DENSITY_FACTOR *: dict[str, float]* *= {'dense': 2.0, 'normal': 1.0, 'sparse': 0.5}*
 
 Count multiplier per density, for the archetypes that spawn several per event.
 
-### muvid.choreo.spec.DENSITY_GATE *: [dict](https://docs.python.org/3/builtins/stdtypes.html#dict)[[str](https://docs.python.org/3/builtins/stdtypes.html#str), [float](https://docs.python.org/3/builtins/functions.html#float)]* *= {'dense': 0.0, 'normal': 0.15, 'sparse': 0.45}*
+### muvid.choreo.spec.DENSITY_GATE *: dict[str, float]* *= {'dense': 0.0, 'normal': 0.15, 'sparse': 0.45}*
 
 an event below it makes no object.
 
@@ -1767,19 +1599,19 @@ an event below it makes no object.
 
 ### *class* muvid.choreo.spec.Direction(\*, mood='', palette=<factory>, background='solid', density='normal', rationale='')
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 The song-level creative decision.
 
 ### *class* muvid.choreo.spec.Palette(, bg='#0b0b12', bg2='#1b1b2e', fg='#f4f1e8', low='#e4572e', mid='#f3c623', high='#4cc9f0')
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 Colours as `#rrggbb`. `low`/`mid`/`high` are the band colours.
 
 ### *class* muvid.choreo.spec.Scene(\*, applies_to=('\*', ), archetype='fischinger', params=<factory>)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 One archetype applied to part of the song.
 
@@ -1790,7 +1622,7 @@ first `"*"` scene, and to the first scene if there is none.
 
 ### *class* muvid.choreo.spec.TreatmentSpec(\*, spec_version='1.0', title='', direction=<factory>, scenes=<factory>)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 A complete, renderable treatment.
 
@@ -1822,7 +1654,7 @@ Build from a plain mapping — TOTAL over what a model or caller sends.
 Whatever a caller produced -> a renderable spec plus the repair notes.
 
 * **Return type:**
-  [`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`TreatmentSpec`](_autosummary/muvid.choreo.spec.html.md#muvid.choreo.spec.TreatmentSpec), [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]]
+  `tuple`[[`TreatmentSpec`](_autosummary/muvid.choreo.spec.html.md#muvid.choreo.spec.TreatmentSpec), `list`[`str`]]
 
 ### muvid.choreo.spec.default_treatment(archetype='fischinger', \*\*direction)
 
@@ -1841,7 +1673,7 @@ A one-scene treatment for `archetype`; the CLI’s `--archetype` shortcut.
 The JSON Schema for a [`TreatmentSpec`](_autosummary/muvid.choreo.spec.html.md#muvid.choreo.spec.TreatmentSpec).
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]
+  `dict`[`str`, `Any`]
 
 ```pycon
 >>> json_schema()['properties']['scenes']['items']['properties']['archetype']['enum']
@@ -1853,7 +1685,7 @@ The JSON Schema for a [`TreatmentSpec`](_autosummary/muvid.choreo.spec.html.md#m
 Project `spec` onto the valid space; return `(spec, notes)`.
 
 * **Return type:**
-  [`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`TreatmentSpec`](_autosummary/muvid.choreo.spec.html.md#muvid.choreo.spec.TreatmentSpec), [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]]
+  `tuple`[[`TreatmentSpec`](_autosummary/muvid.choreo.spec.html.md#muvid.choreo.spec.TreatmentSpec), `list`[`str`]]
 
 ```pycon
 >>> fixed, notes = repair(TreatmentSpec(scenes=(Scene(archetype='swirl',
@@ -1869,7 +1701,7 @@ Project `spec` onto the valid space; return `(spec, notes)`.
 Human-readable problems; empty means renderable.
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]
+  `list`[`str`]
 
 ```pycon
 >>> validate(TreatmentSpec(scenes=(Scene(archetype='nope'),)))
@@ -1881,7 +1713,7 @@ Human-readable problems; empty means renderable.
 Every closed vocabulary, for prompts and UI. One copy, several readers.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]
+  `dict`[`str`, `Any`]
 
 
 # _autosummary/muvid.choreo.tools.html.md
@@ -1919,21 +1751,21 @@ verb truncates it to `max_events` so a terminal or an agent gets the
 shape without the flood.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]
+  `dict`[`str`, `Any`]
 
 ### muvid.choreo.tools.catalog()
 
 Every installed subgenre, without importing any renderer.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]
+  `dict`[`str`, `Any`]
 
 ### muvid.choreo.tools.manifest()
 
 This subgenre’s manifest, as a catalogue would show it.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]
+  `dict`[`str`, `Any`]
 
 ```pycon
 >>> manifest()['slug']
@@ -1945,14 +1777,14 @@ This subgenre’s manifest, as a catalogue would show it.
 Render a choreo video. The one verb that produces a file.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]
+  `dict`[`str`, `Any`]
 
 ### muvid.choreo.tools.treatment_schema()
 
 JSON Schema for a treatment spec.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]
+  `dict`[`str`, `Any`]
 
 ```pycon
 >>> treatment_schema()['type']
@@ -1964,7 +1796,7 @@ JSON Schema for a treatment spec.
 Validate a treatment and return the repaired version alongside.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]
+  `dict`[`str`, `Any`]
 
 ```pycon
 >>> r = validate_treatment({'scenes': [{'archetype': 'swirl'}]})
@@ -1977,7 +1809,7 @@ Validate a treatment and return the repaired version alongside.
 The closed vocabularies a treatment may draw on.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]
+  `dict`[`str`, `Any`]
 
 ```pycon
 >>> sorted(vocabulary())
@@ -2010,7 +1842,7 @@ Set to False to keep each shot’s own audio (useful when most shots
 are lipsync renders that already carry their slice).
 
 * **Return type:**
-  [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)
+  `Path`
 
 
 # _autosummary/muvid.contracts.html.md
@@ -2078,7 +1910,7 @@ writes — pulled out as a public helper so other consumers (a UI
 SSE stream, a remote telemetry sink) don’t have to rebuild it.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]
+  `dict`[`str`, `Any`]
 
 ### muvid.contracts.shifted_word_timings(timings, , offset_s)
 
@@ -2089,7 +1921,7 @@ them relative to a shot’s audio slice (where t=0 is the slice’s
 start). Mirrors `audio[shot.start_s:shot.end_s]` cropping.
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`float`](https://docs.python.org/3/builtins/functions.html#float), [`float`](https://docs.python.org/3/builtins/functions.html#float)]]
+  `list`[`tuple`[`str`, `float`, `float`]]
 
 ### muvid.contracts.word_timings_for_window(project, start_s, end_s, , asset_id=None)
 
@@ -2101,7 +1933,7 @@ the alignment store doesn’t exist yet, or when `lacing` /
 gracefully).
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`float`](https://docs.python.org/3/builtins/functions.html#float), [`float`](https://docs.python.org/3/builtins/functions.html#float)]]
+  `list`[`tuple`[`str`, `float`, `float`]]
 
 
 # _autosummary/muvid.cost.html.md
@@ -2187,14 +2019,14 @@ Environment cards + canonical establishing image generation.
 Create or update an environment card.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]
+  `dict`[`str`, `Any`]
 
 ### muvid.environments.get_environment_anchor_image(project, name)
 
 Return the canonical environment image, or None if not yet rendered.
 
 * **Return type:**
-  [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path) | [`None`](https://docs.python.org/3/builtins/constants.html#None)
+  `Path` | `None`
 
 ### muvid.environments.render_environment(project, name, , quality='high')
 
@@ -2204,7 +2036,7 @@ Saves to `environments/<name>/establishing.png` and stores the
 relative path on the card as `reference_image_path`.
 
 * **Return type:**
-  [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)
+  `Path`
 
 
 # _autosummary/muvid.events.html.md
@@ -2240,14 +2072,14 @@ Subscribe a JSONL writer to falaw’s event bus for the duration.
 No-op (silent) if `falaw` isn’t installed.
 
 * **Return type:**
-  [`Iterator`](https://docs.python.org/3/library/typing.html#typing.Iterator)[[`None`](https://docs.python.org/3/builtins/constants.html#None)]
+  `Iterator`[`None`]
 
 ### muvid.events.read_recent_fal_events(path, , limit=50)
 
 Read the tail of the JSONL log. Returns empty list if absent.
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)]
+  `list`[`dict`]
 
 
 # _autosummary/muvid.facade.html.md
@@ -2295,7 +2127,7 @@ the chosen aligner. Defaults to `scribe-greedy`.
 Returns the path to the alignment store.
 
 * **Return type:**
-  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+  `str`
 
 ### muvid.facade.curate_character_interactive(root, name, , decisions, k=8, recipe='person_mock', present=6, max_rounds=20)
 
@@ -2308,7 +2140,7 @@ round. Useful for skill-driven flows: the agent shows the user the
 candidates, collects their answers, writes a JSON, and re-runs.
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]
+  `list`[`str`]
 
 ### muvid.facade.default_project_root(name)
 
@@ -2329,7 +2161,7 @@ cwd. See `muvid/paths.py` — the default is right, and it was the UI’s missin
 is-this-a-project precondition that made it write.
 
 * **Return type:**
-  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+  `str`
 
 ### muvid.facade.estimate_render_cost(root, , quality='balanced', force=False)
 
@@ -2347,14 +2179,14 @@ bar, alignment quality summary. No colour (we don’t pull in a TTY
 library).
 
 * **Return type:**
-  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+  `str`
 
 ### muvid.facade.init_project(root, , title='', song=None)
 
 Create a new music video project. Returns the absolute root path.
 
 * **Return type:**
-  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+  `str`
 
 ### muvid.facade.render(root, , quality='balanced', force=False, budget=None, allow_unpriced=False)
 
@@ -2378,7 +2210,7 @@ who has read the names can accept them. What it must never become is a
 silent default.
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]
+  `list`[`str`]
 
 ### muvid.facade.status(root)
 
@@ -2393,7 +2225,7 @@ histogram. Stable enough to be programmatic; pass through
 [`format_status()`](_autosummary/muvid.facade.html.md#muvid.facade.format_status) for human-readable text.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.facade.transcribe_song(root, , api_key=None)
 
@@ -2405,7 +2237,7 @@ expected to edit `lyrics.md` to fix mishears and add real section
 tags. Returns the path to the lyrics markdown.
 
 * **Return type:**
-  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+  `str`
 
 
 # _autosummary/muvid.footage.align.html.md
@@ -2494,17 +2326,17 @@ Heavy deps (mixing.audio → numpy/scipy/pydub) are imported lazily here so impo
 genre stays light.
 
 * **Parameters:**
-  * **song_path** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str)) – The clean master every clip is aligned to.
-  * **clips** ([`Sequence`](https://docs.python.org/3/library/typing.html#typing.Sequence)[[`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)]) – `(clip_id, clip_path)` pairs; a video path works directly.
-  * **song_duration** ([`float`](https://docs.python.org/3/builtins/functions.html#float) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – The song timeline length; probed from `song_path` when omitted.
-  * **sample_rate** ([`int`](https://docs.python.org/3/builtins/functions.html#int)) – Analysis sample rate (mono).
+  * **song_path** (`str`) – The clean master every clip is aligned to.
+  * **clips** (`Sequence`[`tuple`]) – `(clip_id, clip_path)` pairs; a video path works directly.
+  * **song_duration** (`float` | `None`) – The song timeline length; probed from `song_path` when omitted.
+  * **sample_rate** (`int`) – Analysis sample rate (mono).
   * **\*\*estimator_kwargs** – 
 
     Passed straight to `mixing.audio.align_clips_to_reference`
     — the seam for the windowed-consensus estimator’s parameters (muvid#59).
     Forwarding rather than enumerating keeps muvid out of the business of
     tracking `mixing`’s estimator vocabulary, and an argument the installed
-    `mixing` does not accept raises [`TypeError`](https://docs.python.org/3/builtins/exceptions.html#TypeError) from `mixing` naming
+    `mixing` does not accept raises `TypeError` from `mixing` naming
     it. That failure is the point: a window parameter silently ignored is a
     caller believing they tuned an estimator that never saw the value.
 
@@ -2513,7 +2345,7 @@ genre stays light.
     the gate that reads it, and muvid refuses them at this entry point regardless
     of whether `mixing` itself would also refuse or silently answer.
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`FootageAlignment`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.FootageAlignment)]
+  `list`[[`FootageAlignment`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.FootageAlignment)]
 
 ### muvid.footage.align.vouches_for(, confidence, support, margin=None, window_s=None)
 
@@ -2586,20 +2418,20 @@ short to be usable music-video footage, rather than the open question about a th
 of a shoot that it started as.
 
 * **Parameters:**
-  * **confidence** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – The estimator’s correlation coefficient at the chosen lag.
-  * **support** ([`float`](https://docs.python.org/3/builtins/functions.html#float) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – Graded fraction of window evidence reaching the offset, or `None`
+  * **confidence** (`float`) – The estimator’s correlation coefficient at the chosen lag.
+  * **support** (`float` | `None`) – Graded fraction of window evidence reaching the offset, or `None`
     when no vote could be held.
-  * **margin** ([`float`](https://docs.python.org/3/builtins/functions.html#float) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – That tally minus the tally at the best offset outside the tolerance.
+  * **margin** (`float` | `None`) – That tally minus the tally at the best offset outside the tolerance.
     `None` on exactly the same quorum as `support`. Required to vouch when a
     vote WAS held: an aligner reporting support without it has not answered the
     separating question, and unknown does not vouch. The `mixing>=0.0.51` floor
     guarantees both, and `tests/test_ci_extras_canary.py` asserts the
     capability so a mis-resolved floor fails loudly rather than quietly refusing
     every clip.
-  * **window_s** ([`float`](https://docs.python.org/3/builtins/functions.html#float) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – The window support was measured at. Recorded and reported as a
+  * **window_s** (`float` | `None`) – The window support was measured at. Recorded and reported as a
     diagnostic; it does **not** enter the verdict, for the reason above.
 * **Return type:**
-  [`bool`](https://docs.python.org/3/builtins/functions.html#bool)
+  `bool`
 * **Returns:**
   True when the offset may be cut to without the caller opting in.
 
@@ -2712,7 +2544,7 @@ a hang, not the total render. Parts equal cuts for an untransitioned edit and ap
 
 ### *exception* muvid.footage.assemble.AssemblyWarning
 
-Bases: [`RuntimeWarning`](https://docs.python.org/3/builtins/exceptions.html#RuntimeWarning)
+Bases: `RuntimeWarning`
 
 A render-plan finding the caller should see — not an error, not silence.
 
@@ -2759,7 +2591,7 @@ Returns `out_path`.
     about. A callback rather than a changed return type, because the
     return type is a public contract and because `catch_warnings`
     mutates process-global state that concurrent renders would share.
-  * **fade_out_s** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – fade the song out over this many seconds at the END of the
+  * **fade_out_s** (`float`) – fade the song out over this many seconds at the END of the
     render. For an edit that stops before the song does (a trimmed
     `span`), so the music does not stop dead mid-bar; `0` (the default)
     keeps the master untouched — and, for an aac/48k/2ch master, stream-copied
@@ -2769,7 +2601,7 @@ Returns `out_path`.
     and [`FootageCancelled`](_autosummary/muvid.footage.errors.html.md#muvid.footage.errors.FootageCancelled) is raised — so a
     cancelled render ends within one cut’s encode rather than minutes later.
 * **Return type:**
-  [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)
+  `Path`
 
 
 # _autosummary/muvid.footage.beat_fit.html.md
@@ -2822,7 +2654,7 @@ Pure numpy; nothing here reads a file.
 
 ### *class* muvid.footage.beat_fit.BeatGrid(period, phase)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 A steady beat: beat `k` falls at `phase + k * period` seconds of the song.
 
@@ -2833,7 +2665,7 @@ The least-squares grid through tracked beat instants (each beat numbered by
 `None` when the beats are too few or not steady (`beats.fitted_tempo`).
 
 * **Return type:**
-  [`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`BeatGrid`](_autosummary/muvid.footage.beat_fit.html.md#muvid.footage.beat_fit.BeatGrid)]
+  `Optional`[[`BeatGrid`](_autosummary/muvid.footage.beat_fit.html.md#muvid.footage.beat_fit.BeatGrid)]
 
 ### muvid.footage.beat_fit.FIT_MIN_BEATS *= 3.0*
 
@@ -2845,7 +2677,7 @@ Seconds of clip the fit is judged over, at least (centred on the cut).
 
 ### *class* muvid.footage.beat_fit.Fit(slip_s, rate, score, current_score, z, n_accents)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 The best `(slip, rate)` for one cut, its score, the current setting’s score,
 and the z of the best score against the null.
@@ -2859,7 +2691,7 @@ The best timing for a cut over song time `[song_start, song_end]` of a clip at
 when no accent lands in the window under any setting.
 
 * **Return type:**
-  [`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`Fit`](_autosummary/muvid.footage.beat_fit.html.md#muvid.footage.beat_fit.Fit)]
+  `Optional`[[`Fit`](_autosummary/muvid.footage.beat_fit.html.md#muvid.footage.beat_fit.Fit)]
 
 
 # _autosummary/muvid.footage.beats.html.md
@@ -2962,7 +2794,7 @@ What each signal is, in the words a screen can use.
 the install).
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.beats.binned_visual_signals(mids, motion, hists, hop, , cells=None)
 
@@ -2977,7 +2809,7 @@ the clip’s first frame (a negative container timestamp) are dropped. Pure nump
 the part of the visual pass a test can reach.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.beats.cache_key(kind)
 
@@ -2987,7 +2819,7 @@ record must never disagree with a fresh `beat_grid`), and every constant of the
 visual pass.
 
 * **Return type:**
-  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+  `str`
 
 ### muvid.footage.beats.cached_signals(root, media_hash, kind, compute)
 
@@ -3002,7 +2834,7 @@ truncated file or an unreadable stream must be measured again next time, not be
 remembered as silence — and `compute` should refuse rather than return one.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.beats.checkerboard_novelty(features, , half=None)
 
@@ -3023,7 +2855,7 @@ pooled peak stays where it was. `min` / `max` are the full-resolution ones;
 scaled by the full-resolution p99 would saturate).
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.beats.direction_histogram(fx, fy, , bins=8)
 
@@ -3052,21 +2884,21 @@ twice, re-numbering with the refined period. A train whose residual exceeds
 errors) has no single tempo: `None`, and the caller keeps the estimator’s.
 
 * **Return type:**
-  [`float`](https://docs.python.org/3/builtins/functions.html#float) | [`None`](https://docs.python.org/3/builtins/constants.html#None)
+  `float` | `None`
 
 ### muvid.footage.beats.has_audio(path)
 
 Whether a media file carries an audio stream (an unprobeable file: no).
 
 * **Return type:**
-  [`bool`](https://docs.python.org/3/builtins/functions.html#bool)
+  `bool`
 
 ### muvid.footage.beats.has_signal(record)
 
 Whether a measured record carries at least one sample of anything.
 
 * **Return type:**
-  [`bool`](https://docs.python.org/3/builtins/functions.html#bool)
+  `bool`
 
 ### muvid.footage.beats.novelty_signal(path)
 
@@ -3076,7 +2908,7 @@ of per-frame timbre (20 MFCCs) and harmony (12 chroma), each standardised. Peaks
 are where the music changes character — section boundaries.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.beats.region_speeds(fx, fy, , grid=(8, 6))
 
@@ -3092,7 +2924,7 @@ One signal on a regular grid: sample `i` is at `t0 + i * hop_s` seconds of the
 media’s own time. Non-finite samples become `None` (not measured, never zero).
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.beats.stop_strength(hists)
 
@@ -3122,7 +2954,7 @@ resolution changes it little. Bin `i` covers `[i, i + 1) / sample_fps` s; a bin
 no pair fell in is `None`.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 
 # _autosummary/muvid.footage.edl.html.md
@@ -3209,24 +3041,24 @@ implicitly, so spans stay one-per-song-span and nothing about reading an EDL cha
 
 ### *class* muvid.footage.edl.AssemblyCut(song_start, song_end, clip_id, clip_in, clip_path, transition=None, crop=None, crop_end=None, look=None, look_time_varying=False, rate=1.0)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 A validated cut ready to render: the EDL span + the derived in-point + clip path.
 
-#### crop *: [CropWindow](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.CropWindow) | [None](https://docs.python.org/3/builtins/constants.html#None)* *= None*
+#### crop *: [CropWindow](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.CropWindow) | None* *= None*
 
 Carried through from the EDL entry, unchanged — the assembler compiles these
 to a `crop` filter, because normalised fractions only become pixels once
 you know the source dimensions, which only ffmpeg knows.
 
-#### look *: [str](https://docs.python.org/3/builtins/stdtypes.html#str) | [None](https://docs.python.org/3/builtins/constants.html#None)* *= None*
+#### look *: str | None* *= None*
 
 Carried through from the EDL entry, unchanged and already validated — the
 `looks` seam. The assembler splices it into the ONE filter template both
 of its render sites share, so a look lands identically on a solo cut and on
 each side of a blended boundary. See [`EdlEntry.look`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.EdlEntry.look).
 
-#### look_time_varying *: [bool](https://docs.python.org/3/builtins/functions.html#bool)* *= False*
+#### look_time_varying *: bool* *= False*
 
 only it
 knows which boundaries become a separate two-input invocation, which is
@@ -3236,7 +3068,7 @@ where a moving look’s ramp restarts (muvid#73). See
 * **Type:**
   Carried through unchanged, and the assembler is its ONE consumer
 
-#### rate *: [float](https://docs.python.org/3/builtins/functions.html#float)* *= 1.0*
+#### rate *: float* *= 1.0*
 
 the assembler reads `duration * rate`
 seconds of source and retimes it (`setpts`, before `fps`) onto the span.
@@ -3244,11 +3076,11 @@ seconds of source and retimes it (`setpts`, before `fps`) onto the span.
 * **Type:**
   Carried through from the EDL entry
 
-#### *property* source_duration *: [float](https://docs.python.org/3/builtins/functions.html#float)*
+#### *property* source_duration *: float*
 
 Seconds of the clip this cut consumes — its span at its rate.
 
-#### transition *: [Transition](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.Transition) | [None](https://docs.python.org/3/builtins/constants.html#None)* *= None*
+#### transition *: [Transition](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.Transition) | None* *= None*
 
 Carried through from the EDL entry, unchanged. `derive_cuts` gains no
 transition arithmetic: the extra source material a blend needs is measured
@@ -3256,7 +3088,7 @@ in FRAMES at the render fps, which only the assembler knows.
 
 ### *class* muvid.footage.edl.CropWindow(x, y, w, h)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 A rectangle to take from the source frame, as fractions of its width/height.
 
@@ -3306,7 +3138,7 @@ Every reason [`exclude_unvouched()`](_autosummary/muvid.footage.edl.html.md#muvi
 
 ### *class* muvid.footage.edl.EdlEntry(song_start, song_end, clip_id, transition=None, crop=None, crop_end=None, look=None, look_time_varying=False, look_spec=None, slip_s=0.0, rate=1.0)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 One cut: show `clip_id` over the song span `[song_start, song_end]`.
 
@@ -3315,13 +3147,13 @@ fills it (black in v1). Gaps are explicit entries rather than absences so that a
 is always contiguous over its span, every span of the song is accounted for by
 exactly one entry, and “no clip here” survives a JSON round trip (`clip_id: null`).
 
-#### crop *: [CropWindow](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.CropWindow) | [None](https://docs.python.org/3/builtins/constants.html#None)* *= None*
+#### crop *: [CropWindow](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.CropWindow) | None* *= None*
 
 Take only this rectangle of the source frame. `None` keeps the whole frame
 letterboxed onto the canvas, which is what every EDL written before this
 field existed means — additive in both directions, like `transition`.
 
-#### crop_end *: [CropWindow](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.CropWindow) | [None](https://docs.python.org/3/builtins/constants.html#None)* *= None*
+#### crop_end *: [CropWindow](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.CropWindow) | None* *= None*
 
 With `crop`, makes the window MOVE linearly from `crop` to `crop_end`
 across the cut — a pan. Same size as `crop` (see [`validate_edl()`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.validate_edl)): a
@@ -3331,7 +3163,7 @@ expressed as a *different* fixed window on the *next* cut, or — since the
 `looks` seam below — as a `look` carrying a `zoompan` ramp, which is
 the one filter that CAN resize its window mid-cut (muvid#66).
 
-#### look *: [str](https://docs.python.org/3/builtins/stdtypes.html#str) | [None](https://docs.python.org/3/builtins/constants.html#None)* *= None*
+#### look *: str | None* *= None*
 
 \*\*The `looks` seam.\*\* A compiled ffmpeg filter-chain fragment applied to
 this cut’s picture once it has been normalised onto the canvas. `None`
@@ -3358,7 +3190,7 @@ the assembler rests on; the allowlist is what keeps a look from writing
 this machine’s disk; and the last two are what keep an allowlisted filter
 from spending 900 MB of it (muvid#75).
 
-#### look_spec *: [dict](https://docs.python.org/3/builtins/stdtypes.html#dict) | [None](https://docs.python.org/3/builtins/constants.html#None)* *= None*
+#### look_spec *: dict | None* *= None*
 
 WHICH named look produced [`look`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.EdlEntry.look) — `{"name": "slow_push", "zoom": 1.08}`
 ([`muvid.footage.named_looks`](_autosummary/muvid.footage.named_looks.html.md#module-muvid.footage.named_looks)) — so a screen can show and re-edit the choice
@@ -3367,7 +3199,7 @@ two are set together by `service.set_cut`. `None` (the default, and always
 for a hand-written filter) emits nothing — additive in both directions. Excluded
 from the hash because a dict is not hashable; equality still compares it.
 
-#### look_time_varying *: [bool](https://docs.python.org/3/builtins/functions.html#bool)* *= False*
+#### look_time_varying *: bool* *= False*
 
 Whether [`look`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.EdlEntry.look) READS THE FILTER CLOCK — a punch-in, a pan, anything
 whose expressions mention `t` / `in_time` / `n`. `False` (the
@@ -3406,7 +3238,7 @@ earlier. muvid’s own compilers declare it for you —
 plan, and [`punch_in_cuts()`](_autosummary/muvid.footage.look.html.md#muvid.footage.look.punch_in_cuts) sets this field FROM
 the fragment rather than hardcoding it.
 
-#### rate *: [float](https://docs.python.org/3/builtins/functions.html#float)* *= 1.0*
+#### rate *: float* *= 1.0*
 
 how fast this cut plays its video — `1.03` shows 3 % more footage
 over the same span of song, so the dancers move 3 % faster; the song is never
@@ -3418,7 +3250,7 @@ short cuts, each with its own, make a piecewise-linear time-warp. Bounded to
 * **Type:**
   **Speed**
 
-#### slip_s *: [float](https://docs.python.org/3/builtins/functions.html#float)* *= 0.0*
+#### slip_s *: float* *= 0.0*
 
 shift WHICH moment of the video this cut shows, by `slip_s`
 seconds, without moving the cut on the song. The clip’s alignment offset is
@@ -3432,7 +3264,7 @@ property and needs no speed change. Bounded by [`SLIP_MAX_S`](_autosummary/muvid
 * **Type:**
   **Slip**
 
-#### transition *: [Transition](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.Transition) | [None](https://docs.python.org/3/builtins/constants.html#None)* *= None*
+#### transition *: [Transition](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.Transition) | None* *= None*
 
 Blend in from the predecessor rather than hard-cutting. `None` (the
 default) is a hard cut, so an EDL written before this field existed is a
@@ -3441,7 +3273,7 @@ cuts — degraded, never wrong, in both directions.
 
 ### *class* muvid.footage.edl.ExcludedSpan(clip_id, song_start, song_end, reason='no_vouched_coverage', confidence=0.0, support=None, margin=None)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 One span an AUTO-selected edit gave up rather than cut to unvouched footage (muvid#88).
 
@@ -3456,18 +3288,18 @@ disagree about why.
 JSON-ready. `support`/`margin` stay `None` — “not measured” is not zero.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### *class* muvid.footage.edl.FootageAlignment(clip_id, offset_s, confidence, duration_s, coverage, overlaps=True, support=None, reliable=True, window_s=None, hop_s=None, margin=None, source='measured')
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 Where one uploaded clip sits on the song timeline (muvid’s per-clip record).
 
 Mirrors `mixing.audio.ClipAlignment` but keyed by the caller-facing `clip_id` and
 JSON-round-trippable (persisted in the project manifest).
 
-#### margin *: [float](https://docs.python.org/3/builtins/functions.html#float) | [None](https://docs.python.org/3/builtins/constants.html#None)* *= None*
+#### margin *: float | None* *= None*
 
 How far `support`’s tally for this offset sits ABOVE the tally for the best
 offset outside the tolerance — `None` on the same quorum as `support`.
@@ -3479,13 +3311,13 @@ weak endorsement. See [`MIN_MARGIN`](_autosummary/muvid.footage.edl.html.md#muvi
 actually missing, since its near-ties (0.993/0.989/0.987) are invisible to any
 fraction that does not look at the runner-up.
 
-#### overlaps *: [bool](https://docs.python.org/3/builtins/functions.html#bool)* *= True*
+#### overlaps *: bool* *= True*
 
 Whether the clip intersects the song timeline at all. A clip that does NOT is
 still recorded — a source must never leave the addressable set as a side effect
 of being measured. Selection filters on this; reporting shows it with a reason.
 
-#### reliable *: [bool](https://docs.python.org/3/builtins/functions.html#bool)* *= True*
+#### reliable *: bool* *= True*
 
 Whether the aligner VOUCHES for `offset_s`. False means “measured, recorded,
 and not to be cut to without the caller saying so” — see
@@ -3495,7 +3327,7 @@ Defaults True for a record built in code; a record read from disk that predates
 the field gets its verdict DERIVED instead (see `from_dict()`), never
 assumed.
 
-#### source *: [str](https://docs.python.org/3/builtins/stdtypes.html#str)* *= 'measured'*
+#### source *: str* *= 'measured'*
 
 [`MEASURED`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.MEASURED) (the aligner found it by audio) or
 `DECLARED` (a person set it — `muvid.footage.service.set_offset`). A
@@ -3507,7 +3339,7 @@ field were all written by the aligner, so it defaults to measured.
 * **Type:**
   How the offset is KNOWN
 
-#### support *: [float](https://docs.python.org/3/builtins/functions.html#float) | [None](https://docs.python.org/3/builtins/constants.html#None)* *= None*
+#### support *: float | None* *= None*
 
 Fraction of the clip’s independent analysis windows that agree on `offset_s`.
 `None` means no vote was held — since `mixing>=0.0.48` fits the window to the
@@ -3526,7 +3358,7 @@ shoot that produced this issue the three correct offsets carried 10/24, 17/37
 and 45/61, while the confidently-wrong ones the old estimator returned had no
 agreement to speak of at all.
 
-#### window_s *: [float](https://docs.python.org/3/builtins/functions.html#float) | [None](https://docs.python.org/3/builtins/constants.html#None)* *= None*
+#### window_s *: float | None* *= None*
 
 The analysis grid `support` was measured on — `None` in exactly the cases
 `support` is. Recorded because since `mixing>=0.0.48` the estimator fits the
@@ -3827,7 +3659,7 @@ prevent. Centring is also the NLE convention (“centered on cut”).
 
 ### *class* muvid.footage.edl.Transition(duration_s, curve='fade')
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 How this entry blends IN from its predecessor.
 
@@ -3858,7 +3690,7 @@ structurally — see `_absorb_neighbour()`, which repairs the repairable half.
 
 ### *exception* muvid.footage.edl.UnreliableAlignmentError(unvouched)
 
-Bases: [`ValueError`](https://docs.python.org/3/builtins/exceptions.html#ValueError)
+Bases: `ValueError`
 
 An edit cuts to a clip whose OFFSET the aligner could not vouch for (muvid#59).
 
@@ -3900,7 +3732,7 @@ Where cut `e` starts in its clip `a`’s own time — THE sign convention:
 a negative in-point); [`derive_cuts()`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.derive_cuts) clamps for the renderer.
 
 * **Return type:**
-  [`float`](https://docs.python.org/3/builtins/functions.html#float)
+  `float`
 
 ### muvid.footage.edl.clip_time_at(e, a, t)
 
@@ -3908,7 +3740,7 @@ The moment of clip `a` cut `e` shows at song time `t` — the cut’s affine
 map, `clip_in_of(e) + rate * (t - song_start)`.
 
 * **Return type:**
-  [`float`](https://docs.python.org/3/builtins/functions.html#float)
+  `float`
 
 ### muvid.footage.edl.derive_cuts(edl, alignments, clip_paths)
 
@@ -3919,7 +3751,7 @@ Strategies emit only `{song_start, song_end, clip_id}`; the sign convention
 strategy can desync the cut.
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`AssemblyCut`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.AssemblyCut)]
+  `list`[[`AssemblyCut`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.AssemblyCut)]
 
 ### muvid.footage.edl.exclude_unvouched(edl, alignments)
 
@@ -3971,7 +3803,7 @@ pan.
 Returns `(entries, excluded)`.
 
 * **Return type:**
-  [`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`EdlEntry`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.EdlEntry)], [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`ExcludedSpan`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.ExcludedSpan)]]
+  `tuple`[`list`[[`EdlEntry`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.EdlEntry)], `list`[[`ExcludedSpan`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.ExcludedSpan)]]
 
 ### muvid.footage.edl.fill_gaps(entries, song_duration, , start=0.0)
 
@@ -4001,7 +3833,7 @@ from black when it does not (the head gap precedes it). Both follow from the sam
 rule; the tests pin both so the coherence stays deliberate.
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`EdlEntry`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.EdlEntry)]
+  `list`[[`EdlEntry`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.EdlEntry)]
 
 ### muvid.footage.edl.validate_edl(edl, alignments, song_duration, , canvas=(1920, 1920), allow_unreliable=False)
 
@@ -4047,7 +3879,7 @@ the loosest bound rather than an absent one.
 Returns the normalized list of [`EdlEntry`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.EdlEntry).
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`EdlEntry`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.EdlEntry)]
+  `list`[[`EdlEntry`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.EdlEntry)]
 
 ### muvid.footage.edl.vouches_for(, confidence, support, margin=None, window_s=None)
 
@@ -4120,20 +3952,20 @@ short to be usable music-video footage, rather than the open question about a th
 of a shoot that it started as.
 
 * **Parameters:**
-  * **confidence** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – The estimator’s correlation coefficient at the chosen lag.
-  * **support** ([`float`](https://docs.python.org/3/builtins/functions.html#float) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – Graded fraction of window evidence reaching the offset, or `None`
+  * **confidence** (`float`) – The estimator’s correlation coefficient at the chosen lag.
+  * **support** (`float` | `None`) – Graded fraction of window evidence reaching the offset, or `None`
     when no vote could be held.
-  * **margin** ([`float`](https://docs.python.org/3/builtins/functions.html#float) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – That tally minus the tally at the best offset outside the tolerance.
+  * **margin** (`float` | `None`) – That tally minus the tally at the best offset outside the tolerance.
     `None` on exactly the same quorum as `support`. Required to vouch when a
     vote WAS held: an aligner reporting support without it has not answered the
     separating question, and unknown does not vouch. The `mixing>=0.0.51` floor
     guarantees both, and `tests/test_ci_extras_canary.py` asserts the
     capability so a mis-resolved floor fails loudly rather than quietly refusing
     every clip.
-  * **window_s** ([`float`](https://docs.python.org/3/builtins/functions.html#float) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – The window support was measured at. Recorded and reported as a
+  * **window_s** (`float` | `None`) – The window support was measured at. Recorded and reported as a
     diagnostic; it does **not** enter the verdict, for the reason above.
 * **Return type:**
-  [`bool`](https://docs.python.org/3/builtins/functions.html#bool)
+  `bool`
 * **Returns:**
   True when the offset may be cut to without the caller opting in.
 
@@ -4182,13 +4014,13 @@ keeps working.
 
 ### *exception* muvid.footage.errors.FootageCancelled
 
-Bases: [`Exception`](https://docs.python.org/3/builtins/exceptions.html#Exception)
+Bases: `Exception`
 
 An operation stopped between steps because its host asked it to.
 
 ### *exception* muvid.footage.errors.FootageError
 
-Bases: [`ValueError`](https://docs.python.org/3/builtins/exceptions.html#ValueError)
+Bases: `ValueError`
 
 An operation refused — the message says why and what to do next.
 
@@ -4252,7 +4084,7 @@ Modules:
 
 ### *class* muvid.footage.CropWindow(x, y, w, h)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 A rectangle to take from the source frame, as fractions of its width/height.
 
@@ -4273,7 +4105,7 @@ feet” is a decision per cut, not a default.
 
 ### *class* muvid.footage.EdlEntry(song_start, song_end, clip_id, transition=None, crop=None, crop_end=None, look=None, look_time_varying=False, look_spec=None, slip_s=0.0, rate=1.0)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 One cut: show `clip_id` over the song span `[song_start, song_end]`.
 
@@ -4282,13 +4114,13 @@ fills it (black in v1). Gaps are explicit entries rather than absences so that a
 is always contiguous over its span, every span of the song is accounted for by
 exactly one entry, and “no clip here” survives a JSON round trip (`clip_id: null`).
 
-#### crop *: [CropWindow](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.CropWindow) | [None](https://docs.python.org/3/builtins/constants.html#None)* *= None*
+#### crop *: [CropWindow](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.CropWindow) | None* *= None*
 
 Take only this rectangle of the source frame. `None` keeps the whole frame
 letterboxed onto the canvas, which is what every EDL written before this
 field existed means — additive in both directions, like `transition`.
 
-#### crop_end *: [CropWindow](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.CropWindow) | [None](https://docs.python.org/3/builtins/constants.html#None)* *= None*
+#### crop_end *: [CropWindow](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.CropWindow) | None* *= None*
 
 With `crop`, makes the window MOVE linearly from `crop` to `crop_end`
 across the cut — a pan. Same size as `crop` (see [`validate_edl()`](_autosummary/muvid.footage.html.md#muvid.footage.validate_edl)): a
@@ -4298,7 +4130,7 @@ expressed as a *different* fixed window on the *next* cut, or — since the
 `looks` seam below — as a `look` carrying a `zoompan` ramp, which is
 the one filter that CAN resize its window mid-cut (muvid#66).
 
-#### look *: [str](https://docs.python.org/3/builtins/stdtypes.html#str) | [None](https://docs.python.org/3/builtins/constants.html#None)* *= None*
+#### look *: str | None* *= None*
 
 \*\*The `looks` seam.\*\* A compiled ffmpeg filter-chain fragment applied to
 this cut’s picture once it has been normalised onto the canvas. `None`
@@ -4325,7 +4157,7 @@ the assembler rests on; the allowlist is what keeps a look from writing
 this machine’s disk; and the last two are what keep an allowlisted filter
 from spending 900 MB of it (muvid#75).
 
-#### look_spec *: [dict](https://docs.python.org/3/builtins/stdtypes.html#dict) | [None](https://docs.python.org/3/builtins/constants.html#None)* *= None*
+#### look_spec *: dict | None* *= None*
 
 WHICH named look produced [`look`](_autosummary/muvid.footage.look.html.md#module-muvid.footage.look) — `{"name": "slow_push", "zoom": 1.08}`
 ([`muvid.footage.named_looks`](_autosummary/muvid.footage.named_looks.html.md#module-muvid.footage.named_looks)) — so a screen can show and re-edit the choice
@@ -4334,7 +4166,7 @@ two are set together by `service.set_cut`. `None` (the default, and always
 for a hand-written filter) emits nothing — additive in both directions. Excluded
 from the hash because a dict is not hashable; equality still compares it.
 
-#### look_time_varying *: [bool](https://docs.python.org/3/builtins/functions.html#bool)* *= False*
+#### look_time_varying *: bool* *= False*
 
 Whether [`look`](_autosummary/muvid.footage.look.html.md#module-muvid.footage.look) READS THE FILTER CLOCK — a punch-in, a pan, anything
 whose expressions mention `t` / `in_time` / `n`. `False` (the
@@ -4373,7 +4205,7 @@ earlier. muvid’s own compilers declare it for you —
 plan, and [`punch_in_cuts()`](_autosummary/muvid.footage.look.html.md#muvid.footage.look.punch_in_cuts) sets this field FROM
 the fragment rather than hardcoding it.
 
-#### rate *: [float](https://docs.python.org/3/builtins/functions.html#float)* *= 1.0*
+#### rate *: float* *= 1.0*
 
 how fast this cut plays its video — `1.03` shows 3 % more footage
 over the same span of song, so the dancers move 3 % faster; the song is never
@@ -4385,7 +4217,7 @@ short cuts, each with its own, make a piecewise-linear time-warp. Bounded to
 * **Type:**
   **Speed**
 
-#### slip_s *: [float](https://docs.python.org/3/builtins/functions.html#float)* *= 0.0*
+#### slip_s *: float* *= 0.0*
 
 shift WHICH moment of the video this cut shows, by `slip_s`
 seconds, without moving the cut on the song. The clip’s alignment offset is
@@ -4399,7 +4231,7 @@ property and needs no speed change. Bounded by `SLIP_MAX_S`; `0.0`
 * **Type:**
   **Slip**
 
-#### transition *: [Transition](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.Transition) | [None](https://docs.python.org/3/builtins/constants.html#None)* *= None*
+#### transition *: [Transition](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.Transition) | None* *= None*
 
 Blend in from the predecessor rather than hard-cutting. `None` (the
 default) is a hard cut, so an EDL written before this field existed is a
@@ -4408,7 +4240,7 @@ cuts — degraded, never wrong, in both directions.
 
 ### *class* muvid.footage.ExcludedSpan(clip_id, song_start, song_end, reason='no_vouched_coverage', confidence=0.0, support=None, margin=None)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 One span an AUTO-selected edit gave up rather than cut to unvouched footage (muvid#88).
 
@@ -4423,18 +4255,18 @@ disagree about why.
 JSON-ready. `support`/`margin` stay `None` — “not measured” is not zero.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### *class* muvid.footage.FootageAlignment(clip_id, offset_s, confidence, duration_s, coverage, overlaps=True, support=None, reliable=True, window_s=None, hop_s=None, margin=None, source='measured')
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 Where one uploaded clip sits on the song timeline (muvid’s per-clip record).
 
 Mirrors `mixing.audio.ClipAlignment` but keyed by the caller-facing `clip_id` and
 JSON-round-trippable (persisted in the project manifest).
 
-#### margin *: [float](https://docs.python.org/3/builtins/functions.html#float) | [None](https://docs.python.org/3/builtins/constants.html#None)* *= None*
+#### margin *: float | None* *= None*
 
 How far `support`’s tally for this offset sits ABOVE the tally for the best
 offset outside the tolerance — `None` on the same quorum as `support`.
@@ -4446,13 +4278,13 @@ weak endorsement. See `MIN_MARGIN` — this is the number muvid#59 was
 actually missing, since its near-ties (0.993/0.989/0.987) are invisible to any
 fraction that does not look at the runner-up.
 
-#### overlaps *: [bool](https://docs.python.org/3/builtins/functions.html#bool)* *= True*
+#### overlaps *: bool* *= True*
 
 Whether the clip intersects the song timeline at all. A clip that does NOT is
 still recorded — a source must never leave the addressable set as a side effect
 of being measured. Selection filters on this; reporting shows it with a reason.
 
-#### reliable *: [bool](https://docs.python.org/3/builtins/functions.html#bool)* *= True*
+#### reliable *: bool* *= True*
 
 Whether the aligner VOUCHES for `offset_s`. False means “measured, recorded,
 and not to be cut to without the caller saying so” — see
@@ -4462,7 +4294,7 @@ Defaults True for a record built in code; a record read from disk that predates
 the field gets its verdict DERIVED instead (see `from_dict()`), never
 assumed.
 
-#### source *: [str](https://docs.python.org/3/builtins/stdtypes.html#str)* *= 'measured'*
+#### source *: str* *= 'measured'*
 
 `MEASURED` (the aligner found it by audio) or
 `DECLARED` (a person set it — `muvid.footage.service.set_offset`). A
@@ -4474,7 +4306,7 @@ field were all written by the aligner, so it defaults to measured.
 * **Type:**
   How the offset is KNOWN
 
-#### support *: [float](https://docs.python.org/3/builtins/functions.html#float) | [None](https://docs.python.org/3/builtins/constants.html#None)* *= None*
+#### support *: float | None* *= None*
 
 Fraction of the clip’s independent analysis windows that agree on `offset_s`.
 `None` means no vote was held — since `mixing>=0.0.48` fits the window to the
@@ -4493,7 +4325,7 @@ shoot that produced this issue the three correct offsets carried 10/24, 17/37
 and 45/61, while the confidently-wrong ones the old estimator returned had no
 agreement to speak of at all.
 
-#### window_s *: [float](https://docs.python.org/3/builtins/functions.html#float) | [None](https://docs.python.org/3/builtins/constants.html#None)* *= None*
+#### window_s *: float | None* *= None*
 
 The analysis grid `support` was measured on — `None` in exactly the cases
 `support` is. Recorded because since `mixing>=0.0.48` the estimator fits the
@@ -4506,13 +4338,13 @@ measurement is a record you have to take on faith.
 
 ### *exception* muvid.footage.LookError
 
-Bases: [`ValueError`](https://docs.python.org/3/builtins/exceptions.html#ValueError)
+Bases: `ValueError`
 
 A look could not be compiled. Carries what to do about it.
 
 ### *class* muvid.footage.LookFragment(fragment, , time_varying)
 
-Bases: [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+Bases: `str`
 
 A compiled filter chain that remembers whether it READS THE CLOCK.
 
@@ -4559,7 +4391,7 @@ An `EdlEntry` carrying one is an ordinary dataclass a caller may well copy.
 
 ### *exception* muvid.footage.UnreliableAlignmentError(unvouched)
 
-Bases: [`ValueError`](https://docs.python.org/3/builtins/exceptions.html#ValueError)
+Bases: `ValueError`
 
 An edit cuts to a clip whose OFFSET the aligner could not vouch for (muvid#59).
 
@@ -4615,7 +4447,7 @@ A plain `str` component contributes `False`, matching
 half of a chain quietly downgrades only that half’s claim, never the other’s.
 
 * **Return type:**
-  [`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`LookFragment`](_autosummary/muvid.footage.look.html.md#muvid.footage.look.LookFragment)]
+  `Optional`[[`LookFragment`](_autosummary/muvid.footage.look.html.md#muvid.footage.look.LookFragment)]
 
 ```pycon
 >>> chain("hue=s=0", None, "", "unsharp=5:5:1")
@@ -4637,7 +4469,7 @@ Strategies emit only `{song_start, song_end, clip_id}`; the sign convention
 strategy can desync the cut.
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`AssemblyCut`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.AssemblyCut)]
+  `list`[[`AssemblyCut`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.AssemblyCut)]
 
 ### muvid.footage.exclude_unvouched(edl, alignments)
 
@@ -4689,7 +4521,7 @@ pan.
 Returns `(entries, excluded)`.
 
 * **Return type:**
-  [`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`EdlEntry`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.EdlEntry)], [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`ExcludedSpan`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.ExcludedSpan)]]
+  `tuple`[`list`[[`EdlEntry`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.EdlEntry)], `list`[[`ExcludedSpan`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.ExcludedSpan)]]
 
 ### muvid.footage.is_time_varying(fragment)
 
@@ -4699,7 +4531,7 @@ The one place that default lives, so a caller reading a fragment and the EDL
 field’s own default cannot drift apart.
 
 * **Return type:**
-  [`bool`](https://docs.python.org/3/builtins/functions.html#bool)
+  `bool`
 
 ```pycon
 >>> is_time_varying(LookFragment("zoompan=d=1", time_varying=True))
@@ -4713,20 +4545,20 @@ True
 All strategy slugs (eager + lazy), sorted. Lazy slugs are NOT imported to list them.
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]
+  `list`[`str`]
 
 ### muvid.footage.motion(keyframes, , canvas, fps)
 
 A camera path over the cut, as a filter fragment. `looks` picks the filter.
 
 * **Parameters:**
-  * **keyframes** ([`Sequence`](https://docs.python.org/3/library/typing.html#typing.Sequence)) – `(t_seconds, window)` pairs, or `looks.Keyframe`s.
+  * **keyframes** (`Sequence`) – `(t_seconds, window)` pairs, or `looks.Keyframe`s.
     The window is anything with ``x``/`y`/`w`/`h` as fractions —
     [`muvid.footage.edl.CropWindow`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.CropWindow) satisfies that structurally,
     with no adapter, because both packages use `burns.Rect`’s
     convention on purpose.
   * **canvas** – `(width, height)` — the assembler’s delivery canvas.
-  * **fps** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – the assembler’s delivery frame rate.
+  * **fps** (`float`) – the assembler’s delivery frame rate.
 * **Return type:**
   [`LookFragment`](_autosummary/muvid.footage.look.html.md#muvid.footage.look.LookFragment)
 * **Returns:**
@@ -4773,13 +4605,13 @@ six lines of geometry and no ffmpeg.
 
 * **Parameters:**
   * **canvas** – `(width, height)` — the assembler’s delivery canvas.
-  * **fps** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – the assembler’s delivery frame rate.
-  * **duration_s** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – the cut’s length in seconds. The move ends here by default.
-  * **zoom** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – final magnification. `1.12` shows ~89% of the frame.
-  * **anchor** ([`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`float`](https://docs.python.org/3/builtins/functions.html#float), [`float`](https://docs.python.org/3/builtins/functions.html#float)]) – what stays put, as a fraction of the canvas. `(0.5, 0.5)`
+  * **fps** (`float`) – the assembler’s delivery frame rate.
+  * **duration_s** (`float`) – the cut’s length in seconds. The move ends here by default.
+  * **zoom** (`float`) – final magnification. `1.12` shows ~89% of the frame.
+  * **anchor** (`tuple`[`float`, `float`]) – what stays put, as a fraction of the canvas. `(0.5, 0.5)`
     centres it; `(0.5, 0.35)` pushes toward a face in the upper third.
-  * **start_s** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – hold the full frame until here, then move.
-  * **end_s** ([`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`float`](https://docs.python.org/3/builtins/functions.html#float)]) – reach the final framing here and hold. Defaults to `duration_s`.
+  * **start_s** (`float`) – hold the full frame until here, then move.
+  * **end_s** (`Optional`[`float`]) – reach the final framing here and hold. Defaults to `duration_s`.
 * **Return type:**
   [`LookFragment`](_autosummary/muvid.footage.look.html.md#muvid.footage.look.LookFragment)
 * **Returns:**
@@ -4822,15 +4654,15 @@ selector, so a stride lands the moves on musical time for free, where a
 seconds-based interval would drift off it.
 
 * **Parameters:**
-  * **entries** ([`Sequence`](https://docs.python.org/3/library/typing.html#typing.Sequence)) – validated [`EdlEntry`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.EdlEntry) objects.
+  * **entries** (`Sequence`) – validated [`EdlEntry`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.EdlEntry) objects.
   * **canvas** – `(width, height)` — the delivery canvas.
-  * **fps** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – the delivery frame rate.
-  * **every** ([`int`](https://docs.python.org/3/builtins/functions.html#int)) – stride. `2` punches every other footage cut; `1` punches all.
-  * **zoom** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – passed to [`punch_in()`](_autosummary/muvid.footage.html.md#muvid.footage.punch_in).
-  * **anchor** ([`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`float`](https://docs.python.org/3/builtins/functions.html#float), [`float`](https://docs.python.org/3/builtins/functions.html#float)]) – passed to [`punch_in()`](_autosummary/muvid.footage.html.md#muvid.footage.punch_in).
-  * **offset** ([`int`](https://docs.python.org/3/builtins/functions.html#int)) – which footage cut in each stride gets the move.
+  * **fps** (`float`) – the delivery frame rate.
+  * **every** (`int`) – stride. `2` punches every other footage cut; `1` punches all.
+  * **zoom** (`float`) – passed to [`punch_in()`](_autosummary/muvid.footage.html.md#muvid.footage.punch_in).
+  * **anchor** (`tuple`[`float`, `float`]) – passed to [`punch_in()`](_autosummary/muvid.footage.html.md#muvid.footage.punch_in).
+  * **offset** (`int`) – which footage cut in each stride gets the move.
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]
+  `list`[`Any`]
 * **Returns:**
   A NEW list of entries. Gaps are skipped (they have no footage to punch
   into, and `validate_edl` refuses a look on one), and an entry that
@@ -4851,7 +4683,7 @@ seconds-based interval would drift off it.
 Register a selection strategy under `slug` (returns it, for inline use).
 
 * **Return type:**
-  [`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[`...`](https://docs.python.org/3/builtins/constants.html#Ellipsis), [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`EdlEntry`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.EdlEntry)]]
+  `Callable`[`...`, `list`[[`EdlEntry`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.EdlEntry)]]
 
 ### muvid.footage.resolve_strategy(strategy)
 
@@ -4860,7 +4692,7 @@ Resolve a strategy name OR a bare callable to a `SelectionStrategy`.
 A lazy slug is imported here (and cached into the eager table) on first resolution.
 
 * **Return type:**
-  [`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[`...`](https://docs.python.org/3/builtins/constants.html#Ellipsis), [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`EdlEntry`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.EdlEntry)]]
+  `Callable`[`...`, `list`[[`EdlEntry`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.EdlEntry)]]
 
 ### muvid.footage.select_edl(strategy, alignments, song_duration, , context=None)
 
@@ -4870,7 +4702,7 @@ Run `strategy` (name or callable) to produce an EDL from `alignments`.
 the alignment-only built-ins ignore it. See `SelectionStrategy`.
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`EdlEntry`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.EdlEntry)]
+  `list`[[`EdlEntry`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.EdlEntry)]
 
 ### muvid.footage.stylize(look, , canvas, fps, duration_s=None, ffmpeg='ffmpeg', env=None, policy=None)
 
@@ -4879,9 +4711,9 @@ A `looks.Look` compiled against the binary muvid will run.
 * **Parameters:**
   * **look** – a `looks.Look` — an ordered stack of named effects.
   * **canvas** – `(width, height)` — the assembler’s delivery canvas.
-  * **fps** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – the assembler’s delivery frame rate.
-  * **duration_s** ([`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`float`](https://docs.python.org/3/builtins/functions.html#float)]) – the cut’s length, when a step needs to know it.
-  * **ffmpeg** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str)) – which binary to probe. Defaults to the bare name muvid runs.
+  * **fps** (`float`) – the assembler’s delivery frame rate.
+  * **duration_s** (`Optional`[`float`]) – the cut’s length, when a step needs to know it.
+  * **ffmpeg** (`str`) – which binary to probe. Defaults to the bare name muvid runs.
   * **env** – a `looks.FfmpegEnv` to compile against, instead of probing.
   * **policy** – a `looks.Policy` — the licence ceiling. `looks`’ default
     applies when omitted.
@@ -4971,7 +4803,7 @@ the loosest bound rather than an absent one.
 Returns the normalized list of [`EdlEntry`](_autosummary/muvid.footage.html.md#muvid.footage.EdlEntry).
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`EdlEntry`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.EdlEntry)]
+  `list`[[`EdlEntry`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.EdlEntry)]
 
 ### Modules
 
@@ -5055,7 +4887,7 @@ microseconds.
 One `clip-alignment/v1` per clip, spanning the clip’s coverage of the song.
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)
+  `list`
 
 ### muvid.footage.lacing_bridge.editor_document(proj, , attributed_to='')
 
@@ -5066,14 +4898,14 @@ lane. The EDL rendered into DECISION is the current default proposal; an editor
 mutates that tier and exports it back through [`edl_from_annotations()`](_autosummary/muvid.footage.lacing_bridge.html.md#muvid.footage.lacing_bridge.edl_from_annotations).
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.lacing_bridge.edl_annotations(entries, , song_asset_id, attributed_to)
 
 The DECISION lane: one `music-video-edl/v1` per EDL entry, gaps included.
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)
+  `list`
 
 ### muvid.footage.lacing_bridge.edl_from_annotations(annotations, , expected_song_asset_id=None)
 
@@ -5101,7 +4933,7 @@ carrying no `asset_id` at all (only `MediaRef` has one), is nothing to
 contradict — it reports a WRONG song, it does not demand proof of the right one.
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)]
+  `list`[`dict`]
 
 ### muvid.footage.lacing_bridge.score_track_annotations(tensor, , song_asset_id, attributed_to)
 
@@ -5111,7 +4943,7 @@ Dense JAMS-style arrays on the shared grid — values normalized to [0,1], `mask
 saying where the clip actually covers the song (blank, never flat-zero, in the UI).
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)
+  `list`
 
 
 # _autosummary/muvid.footage.look.html.md
@@ -5261,13 +5093,13 @@ is why it is a named constant a caller overrides rather than a hidden literal.
 
 ### *exception* muvid.footage.look.LookError
 
-Bases: [`ValueError`](https://docs.python.org/3/builtins/exceptions.html#ValueError)
+Bases: `ValueError`
 
 A look could not be compiled. Carries what to do about it.
 
 ### *class* muvid.footage.look.LookFragment(fragment, , time_varying)
 
-Bases: [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+Bases: `str`
 
 A compiled filter chain that remembers whether it READS THE CLOCK.
 
@@ -5350,7 +5182,7 @@ A plain `str` component contributes `False`, matching
 half of a chain quietly downgrades only that half’s claim, never the other’s.
 
 * **Return type:**
-  [`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`LookFragment`](_autosummary/muvid.footage.look.html.md#muvid.footage.look.LookFragment)]
+  `Optional`[[`LookFragment`](_autosummary/muvid.footage.look.html.md#muvid.footage.look.LookFragment)]
 
 ```pycon
 >>> chain("hue=s=0", None, "", "unsharp=5:5:1")
@@ -5371,7 +5203,7 @@ The one place that default lives, so a caller reading a fragment and the EDL
 field’s own default cannot drift apart.
 
 * **Return type:**
-  [`bool`](https://docs.python.org/3/builtins/functions.html#bool)
+  `bool`
 
 ```pycon
 >>> is_time_varying(LookFragment("zoompan=d=1", time_varying=True))
@@ -5385,13 +5217,13 @@ True
 A camera path over the cut, as a filter fragment. `looks` picks the filter.
 
 * **Parameters:**
-  * **keyframes** ([`Sequence`](https://docs.python.org/3/library/typing.html#typing.Sequence)) – `(t_seconds, window)` pairs, or `looks.Keyframe`s.
+  * **keyframes** (`Sequence`) – `(t_seconds, window)` pairs, or `looks.Keyframe`s.
     The window is anything with ``x``/`y`/`w`/`h` as fractions —
     [`muvid.footage.edl.CropWindow`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.CropWindow) satisfies that structurally,
     with no adapter, because both packages use `burns.Rect`’s
     convention on purpose.
   * **canvas** – `(width, height)` — the assembler’s delivery canvas.
-  * **fps** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – the assembler’s delivery frame rate.
+  * **fps** (`float`) – the assembler’s delivery frame rate.
 * **Return type:**
   [`LookFragment`](_autosummary/muvid.footage.look.html.md#muvid.footage.look.LookFragment)
 * **Returns:**
@@ -5438,13 +5270,13 @@ six lines of geometry and no ffmpeg.
 
 * **Parameters:**
   * **canvas** – `(width, height)` — the assembler’s delivery canvas.
-  * **fps** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – the assembler’s delivery frame rate.
-  * **duration_s** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – the cut’s length in seconds. The move ends here by default.
-  * **zoom** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – final magnification. `1.12` shows ~89% of the frame.
-  * **anchor** ([`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`float`](https://docs.python.org/3/builtins/functions.html#float), [`float`](https://docs.python.org/3/builtins/functions.html#float)]) – what stays put, as a fraction of the canvas. `(0.5, 0.5)`
+  * **fps** (`float`) – the assembler’s delivery frame rate.
+  * **duration_s** (`float`) – the cut’s length in seconds. The move ends here by default.
+  * **zoom** (`float`) – final magnification. `1.12` shows ~89% of the frame.
+  * **anchor** (`tuple`[`float`, `float`]) – what stays put, as a fraction of the canvas. `(0.5, 0.5)`
     centres it; `(0.5, 0.35)` pushes toward a face in the upper third.
-  * **start_s** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – hold the full frame until here, then move.
-  * **end_s** ([`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`float`](https://docs.python.org/3/builtins/functions.html#float)]) – reach the final framing here and hold. Defaults to `duration_s`.
+  * **start_s** (`float`) – hold the full frame until here, then move.
+  * **end_s** (`Optional`[`float`]) – reach the final framing here and hold. Defaults to `duration_s`.
 * **Return type:**
   [`LookFragment`](_autosummary/muvid.footage.look.html.md#muvid.footage.look.LookFragment)
 * **Returns:**
@@ -5487,15 +5319,15 @@ selector, so a stride lands the moves on musical time for free, where a
 seconds-based interval would drift off it.
 
 * **Parameters:**
-  * **entries** ([`Sequence`](https://docs.python.org/3/library/typing.html#typing.Sequence)) – validated [`EdlEntry`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.EdlEntry) objects.
+  * **entries** (`Sequence`) – validated [`EdlEntry`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.EdlEntry) objects.
   * **canvas** – `(width, height)` — the delivery canvas.
-  * **fps** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – the delivery frame rate.
-  * **every** ([`int`](https://docs.python.org/3/builtins/functions.html#int)) – stride. `2` punches every other footage cut; `1` punches all.
-  * **zoom** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – passed to [`punch_in()`](_autosummary/muvid.footage.look.html.md#muvid.footage.look.punch_in).
-  * **anchor** ([`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`float`](https://docs.python.org/3/builtins/functions.html#float), [`float`](https://docs.python.org/3/builtins/functions.html#float)]) – passed to [`punch_in()`](_autosummary/muvid.footage.look.html.md#muvid.footage.look.punch_in).
-  * **offset** ([`int`](https://docs.python.org/3/builtins/functions.html#int)) – which footage cut in each stride gets the move.
+  * **fps** (`float`) – the delivery frame rate.
+  * **every** (`int`) – stride. `2` punches every other footage cut; `1` punches all.
+  * **zoom** (`float`) – passed to [`punch_in()`](_autosummary/muvid.footage.look.html.md#muvid.footage.look.punch_in).
+  * **anchor** (`tuple`[`float`, `float`]) – passed to [`punch_in()`](_autosummary/muvid.footage.look.html.md#muvid.footage.look.punch_in).
+  * **offset** (`int`) – which footage cut in each stride gets the move.
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]
+  `list`[`Any`]
 * **Returns:**
   A NEW list of entries. Gaps are skipped (they have no footage to punch
   into, and `validate_edl` refuses a look on one), and an entry that
@@ -5518,9 +5350,9 @@ A `looks.Look` compiled against the binary muvid will run.
 * **Parameters:**
   * **look** – a `looks.Look` — an ordered stack of named effects.
   * **canvas** – `(width, height)` — the assembler’s delivery canvas.
-  * **fps** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – the assembler’s delivery frame rate.
-  * **duration_s** ([`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`float`](https://docs.python.org/3/builtins/functions.html#float)]) – the cut’s length, when a step needs to know it.
-  * **ffmpeg** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str)) – which binary to probe. Defaults to the bare name muvid runs.
+  * **fps** (`float`) – the assembler’s delivery frame rate.
+  * **duration_s** (`Optional`[`float`]) – the cut’s length, when a step needs to know it.
+  * **ffmpeg** (`str`) – which binary to probe. Defaults to the bare name muvid runs.
   * **env** – a `looks.FfmpegEnv` to compile against, instead of probing.
   * **policy** – a `looks.Policy` — the licence ceiling. `looks`’ default
     applies when omitted.
@@ -5622,14 +5454,14 @@ Returns `{duration_s, n_frames, frame_w, frame_h, sheets: [{artifact_id, cols,
 rows, first_frame, n_frames}]}`.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.media_views.filmstrip_key(clip_hash, , fps, height, cols, rows)
 
 The cache directory name: the clip’s content and every parameter.
 
 * **Return type:**
-  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+  `str`
 
 ```pycon
 >>> filmstrip_key("ab" * 32, fps=2.0, height=90, cols=10, rows=10)
@@ -5648,7 +5480,7 @@ The cache directory name: the clip’s content and every parameter.
 normalised so the loudest bucket is 1.0 (all zeros for a silent song).
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 
 # _autosummary/muvid.footage.named_looks.html.md
@@ -5709,13 +5541,13 @@ The largest magnification any named move may ask for.
 
 ### *class* muvid.footage.named_looks.NamedLook(name, title, description, kind, build, params=<factory>)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 A menu entry: `build(canvas=, fps=, duration_s=, **params) -> fragment`.
 
 ### *exception* muvid.footage.named_looks.NamedLookError
 
-Bases: [`ValueError`](https://docs.python.org/3/builtins/exceptions.html#ValueError)
+Bases: `ValueError`
 
 A named look that does not exist, or parameters it does not take.
 
@@ -5729,7 +5561,7 @@ which says whether it is time-varying). Unknown names and parameters are refused
 The menu as JSON rows (name, title, description, kind, params_schema).
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)]
+  `list`[`dict`]
 
 ### muvid.footage.named_looks.resolve_named_look(spec)
 
@@ -5737,7 +5569,7 @@ The menu as JSON rows (name, title, description, kind, params_schema).
 defaults included) — the spec a cut records so a screen can show the choice.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 
 # _autosummary/muvid.footage.scoring.frames.html.md
@@ -5785,7 +5617,7 @@ Default frame sample rate (Hz) — plenty for quality + a motion envelope onto a
 
 ### *class* muvid.footage.scoring.frames.FramePass(clip_times, sharpness, exposure, face, motion_residual, global_dx, global_dy, fps, n_sampled)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 Per-sampled-frame metrics for one clip, in CLIP time (seconds from the clip start).
 
@@ -5805,14 +5637,14 @@ Tasks `FaceDetector` ONLY when the operator supplies a model via
 Decode `clip_path` ONCE, sampling ~\`\`sample_fps\`\` frames → a [`FramePass`](_autosummary/muvid.footage.scoring.frames.html.md#muvid.footage.scoring.frames.FramePass).
 
 * **Parameters:**
-  * **clip_path** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str)) – the video file.
-  * **sample_fps** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – target frames/second to analyze (strided over the native fps).
-  * **max_frames** ([`int`](https://docs.python.org/3/builtins/functions.html#int)) – hard cap on analyzed frames (bounds cost).
-  * **face_fn** ([`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[`ndarray`], [`float`](https://docs.python.org/3/builtins/functions.html#float)]]) – optional `bgr_frame -> face_score | None` (mediapipe, injected by the
+  * **clip_path** (`str`) – the video file.
+  * **sample_fps** (`float`) – target frames/second to analyze (strided over the native fps).
+  * **max_frames** (`int`) – hard cap on analyzed frames (bounds cost).
+  * **face_fn** (`Optional`[`Callable`[[`ndarray`], `float`]]) – optional `bgr_frame -> face_score | None` (mediapipe, injected by the
     caller so this module stays cv2-only). `None` → face score is NaN
     everywhere, i.e. *not measured* rather than *measured as worst*.
-  * **flow_downscale** ([`int`](https://docs.python.org/3/builtins/functions.html#int)) – downscale factor for the Farneback flow (cost bound).
-  * **should_cancel** ([`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[], [`bool`](https://docs.python.org/3/builtins/functions.html#bool)]]) – polled every frame; returns early (a partial pass) when it goes True.
+  * **flow_downscale** (`int`) – downscale factor for the Farneback flow (cost bound).
+  * **should_cancel** (`Optional`[`Callable`[[], `bool`]]) – polled every frame; returns early (a partial pass) when it goes True.
 * **Return type:**
   [`FramePass`](_autosummary/muvid.footage.scoring.frames.html.md#muvid.footage.scoring.frames.FramePass)
 
@@ -5885,7 +5717,7 @@ Default grid step (seconds) → 10 Hz. Ample for a UI and beat-level selection.
 
 ### *class* muvid.footage.scoring.grid.ScoreTensor(clip_ids, metrics, t0, hop_s, n, S, M, raw, norms)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 The fused `S[clip, frame, metric]` (normalized) + `M[clip, frame]` mask.
 
@@ -5895,7 +5727,7 @@ The fused `S[clip, frame, metric]` (normalized) + `M[clip, frame]` mask.
 
 ### *class* muvid.footage.scoring.grid.ScoreTrack(clip_id, metric, t0, hop_s, raw_values, mask, direction='higher_better')
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 One `(clip, metric)` curve on the shared song-time grid.
 
@@ -5910,14 +5742,14 @@ normalized `values` are NOT stored here; they are derived at tensor assembly fro
 Fraction of frames that are valid — surfaced so an all-NA metric is visible.
 
 * **Return type:**
-  [`float`](https://docs.python.org/3/builtins/functions.html#float)
+  `float`
 
 #### to_meta()
 
 Everything except the arrays (arrays live in the `.npz`).
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.scoring.grid.align_fingerprint(alignments)
 
@@ -5929,7 +5761,7 @@ against the old offsets are detected as stale. Sorting the full triples (not jus
 clip_id) makes it independent of alignment order.
 
 * **Return type:**
-  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+  `str`
 
 ### muvid.footage.scoring.grid.apply_norm(raw, norm, , direction)
 
@@ -5964,14 +5796,14 @@ Returns `None` if there are no valid values (an all-masked metric) — the calle
 the manifest).
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict) | [`None`](https://docs.python.org/3/builtins/constants.html#None)
+  `dict` | `None`
 
 ### muvid.footage.scoring.grid.grid_len(song_duration, hop_s=0.1)
 
 Number of grid frames spanning `[0, song_duration]` at `hop_s`.
 
 * **Return type:**
-  [`int`](https://docs.python.org/3/builtins/functions.html#int)
+  `int`
 
 ### muvid.footage.scoring.grid.load_tensor(project_root)
 
@@ -5981,7 +5813,7 @@ Geometry + norms come from the manifest (SSOT); each clip’s `.npz` supplies ra
 A clip/metric absent from a `.npz` is filled as an all-masked column.
 
 * **Return type:**
-  [`ScoreTensor`](_autosummary/muvid.footage.scoring.grid.html.md#muvid.footage.scoring.grid.ScoreTensor) | [`None`](https://docs.python.org/3/builtins/constants.html#None)
+  [`ScoreTensor`](_autosummary/muvid.footage.scoring.grid.html.md#muvid.footage.scoring.grid.ScoreTensor) | `None`
 
 ### muvid.footage.scoring.grid.manifest_is_current(manifest, , song_hash, align_fingerprint)
 
@@ -5992,7 +5824,7 @@ manifest predating the fingerprint, is detected here so no stale/mislabeled scor
 served to the editor or the weighted selector.
 
 * **Return type:**
-  [`bool`](https://docs.python.org/3/builtins/functions.html#bool)
+  `bool`
 
 ### muvid.footage.scoring.grid.resample_to_grid(sample_times, sample_values, , t0, hop_s, n, max_gap_s=None)
 
@@ -6004,12 +5836,12 @@ ONLY across gaps ≤ `max_gap_s` (so a real coverage gap stays masked, never inv
 Outside `[first_sample, last_sample]` the grid is masked (no extrapolation).
 
 * **Parameters:**
-  * **sample_times** ([`Sequence`](https://docs.python.org/3/library/typing.html#typing.Sequence)[[`float`](https://docs.python.org/3/builtins/functions.html#float)]) – song-time (s) of each sample (any order; NaN values dropped).
-  * **sample_values** ([`Sequence`](https://docs.python.org/3/library/typing.html#typing.Sequence)[[`float`](https://docs.python.org/3/builtins/functions.html#float)]) – the sample values (parallel to `sample_times`).
+  * **sample_times** (`Sequence`[`float`]) – song-time (s) of each sample (any order; NaN values dropped).
+  * **sample_values** (`Sequence`[`float`]) – the sample values (parallel to `sample_times`).
   * **t0/hop_s/n** – the grid geometry (frame k ↔ `t0 + k*hop_s`, k in `[0, n)`).
-  * **max_gap_s** ([`float`](https://docs.python.org/3/builtins/functions.html#float) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – bridge gaps up to this many seconds (default `4*hop_s`).
+  * **max_gap_s** (`float` | `None`) – bridge gaps up to this many seconds (default `4*hop_s`).
 * **Return type:**
-  [`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[`ndarray`, `ndarray`]
+  `tuple`[`ndarray`, `ndarray`]
 * **Returns:**
   `(values, mask)` — `values` float32[n] (NaN where masked), `mask` bool[n].
 
@@ -6024,7 +5856,7 @@ whole consistent state or the prior one, never a torn mix. NaN never enters the 
 (all-masked metric → `null` norm).
 
 * **Return type:**
-  [`None`](https://docs.python.org/3/builtins/constants.html#None)
+  `None`
 
 
 # _autosummary/muvid.footage.scoring.html.md
@@ -6107,7 +5939,7 @@ first real use. It is structured to fail safe (skip) everywhere else.
 `(ok, reason)` — whether the opt-in lip-sync tier can run here.
 
 * **Return type:**
-  [`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`bool`](https://docs.python.org/3/builtins/functions.html#bool), [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]
+  `tuple`[`bool`, `str`]
 
 ### muvid.footage.scoring.lipsync.lipsync_tracks(clip_path, , clip_id, offset_s, duration_s, coverage, vocal_stem_path, t0, hop_s, n, device='cpu')
 
@@ -6119,7 +5951,7 @@ holds the per-face-track LSE-C over that track’s span, clamped to the clip’s
 (never fabricates lip-sync beyond the clip); spans with no detected face are NA.
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`ScoreTrack`](_autosummary/muvid.footage.scoring.grid.html.md#muvid.footage.scoring.grid.ScoreTrack)]
+  `list`[[`ScoreTrack`](_autosummary/muvid.footage.scoring.grid.html.md#muvid.footage.scoring.grid.ScoreTrack)]
 
 ### muvid.footage.scoring.lipsync.separate_master_vocals(song_path, , out_dir)
 
@@ -6130,7 +5962,7 @@ call as the co-temporal reference audio. Returns `None` (never raises) if Demucs
 absent — the caller then skips lip-sync.
 
 * **Return type:**
-  [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path) | [`None`](https://docs.python.org/3/builtins/constants.html#None)
+  `Path` | `None`
 
 
 # _autosummary/muvid.footage.scoring.motionbeat.html.md
@@ -6164,7 +5996,7 @@ Commercial-clean (librosa beats via `mixing[beats]`, numpy motion). See the desi
 The two motion-to-beat tracks for one clip.
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`ScoreTrack`](_autosummary/muvid.footage.scoring.grid.html.md#muvid.footage.scoring.grid.ScoreTrack)]
+  `list`[[`ScoreTrack`](_autosummary/muvid.footage.scoring.grid.html.md#muvid.footage.scoring.grid.ScoreTrack)]
 
 
 # _autosummary/muvid.footage.scoring.orchestrator.html.md
@@ -6214,7 +6046,7 @@ opt-in tier is enabled.
 Which tiers can run here (import + weight availability) — for diagnostics / the tool.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.scoring.orchestrator.score_project(project, , metrics=None, hop_s=0.1, sample_fps=None, enable_lipsync=None, progress_cb=None, should_cancel=None)
 
@@ -6223,14 +6055,14 @@ Score every aligned clip of `project` → persist the tensor; return a summary d
 * **Parameters:**
   * **project** – a `MusicVideoFootageProject` (needs `song_path`/`song_duration`/
     `load_alignments`/`clip_paths`/`root`/`song_hash`).
-  * **metrics** ([`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`Sequence`](https://docs.python.org/3/library/typing.html#typing.Sequence)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]]) – restrict to these metric names (default: the core set, + lip-sync if enabled).
-  * **hop_s** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – grid step (default 10 Hz).
-  * **sample_fps** ([`float`](https://docs.python.org/3/builtins/functions.html#float) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – frame analysis rate (default from `frames.DEFAULT_SAMPLE_FPS`).
-  * **enable_lipsync** ([`bool`](https://docs.python.org/3/builtins/functions.html#bool) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – force the opt-in tier on/off (default: the env flag).
-  * **progress_cb** ([`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[[`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)], [`None`](https://docs.python.org/3/builtins/constants.html#None)]]) – sink for `{'kind':'progress', ...}` dict events (nw.jobs mirror shape).
-  * **should_cancel** ([`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[], [`bool`](https://docs.python.org/3/builtins/functions.html#bool)]]) – polled between clips/stages; a True short-circuits to a clean cancel.
+  * **metrics** (`Optional`[`Sequence`[`str`]]) – restrict to these metric names (default: the core set, + lip-sync if enabled).
+  * **hop_s** (`float`) – grid step (default 10 Hz).
+  * **sample_fps** (`float` | `None`) – frame analysis rate (default from `frames.DEFAULT_SAMPLE_FPS`).
+  * **enable_lipsync** (`bool` | `None`) – force the opt-in tier on/off (default: the env flag).
+  * **progress_cb** (`Optional`[`Callable`[[`dict`], `None`]]) – sink for `{'kind':'progress', ...}` dict events (nw.jobs mirror shape).
+  * **should_cancel** (`Optional`[`Callable`[[], `bool`]]) – polled between clips/stages; a True short-circuits to a clean cancel.
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 
 # _autosummary/muvid.footage.scoring.quality.html.md
@@ -6280,7 +6112,7 @@ frozen) frame is excluded from selection. Disabled by default to avoid over-mask
 Sharpness / exposure / stability_shake / face_framing tracks for one clip.
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`ScoreTrack`](_autosummary/muvid.footage.scoring.grid.html.md#muvid.footage.scoring.grid.ScoreTrack)]
+  `list`[[`ScoreTrack`](_autosummary/muvid.footage.scoring.grid.html.md#muvid.footage.scoring.grid.ScoreTrack)]
 
 
 # _autosummary/muvid.footage.scoring.segment.html.md
@@ -6319,7 +6151,7 @@ Returns `[]` (never raises) if PySceneDetect is not installed, so the selector�
 `beats+shots` mode degrades cleanly to beats-only.
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`float`](https://docs.python.org/3/builtins/functions.html#float)]
+  `list`[`float`]
 
 
 # _autosummary/muvid.footage.select_score.html.md
@@ -6383,20 +6215,20 @@ numpy only (no cv2/torch): registered LAZILY in [`muvid.footage.strategy`](_auto
 |------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------|
 | [`WeightedSelectionConfig`](_autosummary/muvid.footage.select_score.html.md#muvid.footage.select_score.WeightedSelectionConfig)([weights, ...])       | The score-driven "strategy" as a pure config object (open-closed).                 |
 
-### muvid.footage.select_score.DEFAULT_WEIGHTS *: [dict](https://docs.python.org/3/builtins/stdtypes.html#dict)[[str](https://docs.python.org/3/builtins/stdtypes.html#str), [float](https://docs.python.org/3/builtins/functions.html#float)]* *= {'exposure': 0.3, 'face_framing': 0.4, 'lip_sync_lse_c': 1.0, 'motion_beat_bas': 0.8, 'motion_onset_xcorr': 0.5, 'sharpness': 0.4, 'stability_shake': 0.3}*
+### muvid.footage.select_score.DEFAULT_WEIGHTS *: dict[str, float]* *= {'exposure': 0.3, 'face_framing': 0.4, 'lip_sync_lse_c': 1.0, 'motion_beat_bas': 0.8, 'motion_onset_xcorr': 0.5, 'sharpness': 0.4, 'stability_shake': 0.3}*
 
 Default per-metric weights. A metric absent from the tensor collapses to weight 0
 (its column simply doesn’t exist), so a project scored without the lip-sync tier still
 selects cleanly on the metrics it has.
 
-### muvid.footage.select_score.PRESETS *: [dict](https://docs.python.org/3/builtins/stdtypes.html#dict)[[str](https://docs.python.org/3/builtins/stdtypes.html#str), [WeightedSelectionConfig](_autosummary/muvid.footage.select_score.html.md#muvid.footage.select_score.WeightedSelectionConfig)]* *= {'contemplative': WeightedSelectionConfig(weights={'lip_sync_lse_c': 1.0, 'motion_beat_bas': 0.8, 'motion_onset_xcorr': 0.5, 'sharpness': 0.6, 'exposure': 0.3, 'face_framing': 0.6, 'stability_shake': 0.3}, lambda_switch=0.6, l_min_s=3.0, l_max_s=12.0, l_max_overrun_penalty=0.05, boundary_mode='beats', beat_unit='beat'), 'energetic': WeightedSelectionConfig(weights={'lip_sync_lse_c': 1.0, 'motion_beat_bas': 1.0, 'motion_onset_xcorr': 0.8, 'sharpness': 0.4, 'exposure': 0.3, 'face_framing': 0.4, 'stability_shake': 0.3}, lambda_switch=0.2, l_min_s=0.8, l_max_s=4.0, l_max_overrun_penalty=0.25, boundary_mode='beats', beat_unit='beat')}*
+### muvid.footage.select_score.PRESETS *: dict[str, [WeightedSelectionConfig](_autosummary/muvid.footage.select_score.html.md#muvid.footage.select_score.WeightedSelectionConfig)]* *= {'contemplative': WeightedSelectionConfig(weights={'lip_sync_lse_c': 1.0, 'motion_beat_bas': 0.8, 'motion_onset_xcorr': 0.5, 'sharpness': 0.6, 'exposure': 0.3, 'face_framing': 0.6, 'stability_shake': 0.3}, lambda_switch=0.6, l_min_s=3.0, l_max_s=12.0, l_max_overrun_penalty=0.05, boundary_mode='beats', beat_unit='beat'), 'energetic': WeightedSelectionConfig(weights={'lip_sync_lse_c': 1.0, 'motion_beat_bas': 1.0, 'motion_onset_xcorr': 0.8, 'sharpness': 0.4, 'exposure': 0.3, 'face_framing': 0.4, 'stability_shake': 0.3}, lambda_switch=0.2, l_min_s=0.8, l_max_s=4.0, l_max_overrun_penalty=0.25, boundary_mode='beats', beat_unit='beat')}*
 
 Named presets — a filled-in config. “energetic” = many short cuts; “contemplative” = long
 dwells, few cuts.
 
 ### *class* muvid.footage.select_score.SelectionContext(tensor, beat_times=(), downbeat_times=(), shot_boundaries=None, pins=None, config=<factory>)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 Everything the score-driven strategy needs beyond `(alignments, song_duration)`.
 
@@ -6442,7 +6274,7 @@ passing `config=` to the MCP tool.
 
 ### *class* muvid.footage.select_score.WeightedSelectionConfig(weights=<factory>, lambda_switch=0.35, l_min_s=1.2, l_max_s=8.0, l_max_overrun_penalty=0.15, boundary_mode='beats', beat_unit='beat')
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 The score-driven “strategy” as a pure config object (open-closed).
 
@@ -6468,7 +6300,7 @@ Precedence: preset (or the default) < `config` dict fields < explicit `weights`.
 Run the DP and return `(edl, meta)`; `meta` carries any fallback + its cause.
 
 * **Return type:**
-  [`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`EdlEntry`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.EdlEntry)], [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)]
+  `tuple`[`list`[[`EdlEntry`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.EdlEntry)], `dict`]
 
 ### muvid.footage.select_score.selection_margin(alignments, tensor, , weights=None)
 
@@ -6488,7 +6320,7 @@ Requires a [`SelectionContext`](_autosummary/muvid.footage.select_score.html.md#
 scores are absent so the MCP layer can say “run muvid_score_footage first”.
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`EdlEntry`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.EdlEntry)]
+  `list`[[`EdlEntry`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.EdlEntry)]
 
 
 # _autosummary/muvid.footage.service.html.md
@@ -6618,19 +6450,19 @@ key” — a column rather than a hardcoded `None` because `look_time_varying`
 
 ### *exception* muvid.footage.service.FootageCancelled
 
-Bases: [`Exception`](https://docs.python.org/3/builtins/exceptions.html#Exception)
+Bases: `Exception`
 
 An operation stopped between steps because its host asked it to.
 
 ### *exception* muvid.footage.service.FootageError
 
-Bases: [`ValueError`](https://docs.python.org/3/builtins/exceptions.html#ValueError)
+Bases: `ValueError`
 
 An operation refused — the message says why and what to do next.
 
 ### *class* muvid.footage.service.OpSpec(name, title, effect, runs='now', hide=(), host_params=(), max_upload_bytes=None)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 One operation’s catalogue row: the function (by `name` in this module), a
 plain-language `title` (it becomes a button and a command title), what it does to
@@ -6642,7 +6474,7 @@ a transport’s hook).
 Host-agnostic data: `muvid.genre_music_video` turns these into `nw.GenreOp`
 rows, and [`muvid.mcp`](_autosummary/muvid.mcp.html.md#module-muvid.mcp) derives its footage tools from the same names.
 
-#### host_params *: [tuple](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[str](https://docs.python.org/3/builtins/stdtypes.html#str), ...]* *= ()*
+#### host_params *: tuple[str, ...]* *= ()*
 
 an upload’s
 server-side `path` and original `filename`. Never in a client’s schema.
@@ -6650,7 +6482,7 @@ server-side `path` and original `filename`. Never in a client’s schema.
 * **Type:**
   Parameters only the HOST supplies (`nw.GenreOp.host_params`)
 
-#### max_upload_bytes *: [int](https://docs.python.org/3/builtins/functions.html#int) | [None](https://docs.python.org/3/builtins/constants.html#None)* *= None*
+#### max_upload_bytes *: int | None* *= None*
 
 The op’s own ceiling for a host-streamed upload (`nw.GenreOp.max_upload_bytes`).
 
@@ -6667,7 +6499,7 @@ Run `align` afterwards: a new clip has no place on the song until then. Returns
 the `clip_id`, its `name` and `duration` (and `artifact_id` when hosted).
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.service.align(fp)
 
@@ -6705,7 +6537,7 @@ measured record says `source: "measured"`.
 Run this after adding/removing clips and before cutting.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.service.assemble(fp, , strategy='', edl=None, preset='', weights=None, config=None, canvas='', allow_unreliable=False, edit_id=None, label='', annotate=None, span=None, should_cancel=None)
 
@@ -6723,7 +6555,7 @@ renders only that stretch: the video AND the song cut to it, the song faded out 
 `TAIL_FADE_S` when the span ends before the song does.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.service.assemble_refusal(entries, aligns, song_dur, canvas)
 
@@ -6731,7 +6563,7 @@ renders only that stretch: the video AND the song cut to it, the song faded out 
 put to the GATE rather than re-implemented here.
 
 * **Return type:**
-  [`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)]
+  `Optional`[`dict`]
 
 ### muvid.footage.service.beat_grid(fp)
 
@@ -6755,7 +6587,7 @@ bars start on the first beat) — `beats_per_bar` and `bar_of_beat` (each beat�
 bar number, 1 for the first bar, 0 for a pickup before it).
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.service.beat_signals(fp, , source='song', max_points=1000)
 
@@ -6784,7 +6616,7 @@ Returns `{source, kind: audio|video, duration_s, tempo_bpm, beats, signals:
 and `tempo_bpm` are the soundtrack’s (`[]` / `None` without one).
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.service.clear_offset(fp, , clip_id)
 
@@ -6797,7 +6629,7 @@ runs again the clip has no place on the song, and footage scores made with the o
 offset are dropped.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.service.coverage_report(entries, aligns, song_dur, , excluded=(), span=None)
 
@@ -6810,7 +6642,7 @@ spans the auto path gave up because only an unvouched clip covered them.
 `span` (a trimmed edit’s `(start, end)`) bounds what counts as uncovered.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.service.declared_alignment(clip_id, offset_s, , clip_duration, song_duration)
 
@@ -6834,7 +6666,7 @@ Delete a saved edit. Videos already rendered from it are kept (they still name
 the edit they came from). An unknown `edit_id` is refused, naming the edits.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.service.editor_document(fp)
 
@@ -6847,7 +6679,7 @@ content hash, on one shared song-time axis. Needs the `editor` extra (lacing) an
 an alignment.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.service.edits(fp)
 
@@ -6857,7 +6689,7 @@ current alignment (`null` when it does). `unreliable` names clips it cuts to
 whose offsets rendering would refuse.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.service.edl_from_annotations(fp, , annotations)
 
@@ -6866,7 +6698,7 @@ ready for `save_edit` / `replace_edit` — a faithful read, not a re-selection.
 Annotations referencing another song are refused (muvid#35).
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.service.edl_json(e)
 
@@ -6877,14 +6709,14 @@ every existing `renders/*/meta.json` byte-identical and the render -> edit ->
 re-render round trip (muvid#21 item 3) exact.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.service.exclusion_note(x)
 
 One `warnings` line per span the auto path set aside (muvid#88).
 
 * **Return type:**
-  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+  `str`
 
 ### muvid.footage.service.filmstrip(fp, , clip_id)
 
@@ -6892,7 +6724,7 @@ One video’s filmstrip (the same record `filmstrips` gives per clip, with its
 `clip_id` and `fps`).
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.service.filmstrips(fp)
 
@@ -6909,7 +6741,7 @@ Returns `{fps, clips: {clip_id: {duration_s, n_frames, frame_w, frame_h, sheets:
 [{artifact_id, cols, rows, first_frame, n_frames}]}}}`.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.service.fit_to_beat(fp, , edit_id, indices=None, min_z=2.5, apply=True)
 
@@ -6939,21 +6771,21 @@ seconds a video; kept for next time). Returns the edit (`get_edit`’s shape) pl
 `fitted`, `kept` and `min_z`.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.service.frame_rate(video)
 
 A video’s average frame rate (frames per second), or `None` if unreadable.
 
 * **Return type:**
-  [`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`float`](https://docs.python.org/3/builtins/functions.html#float)]
+  `Optional`[`float`]
 
 ### muvid.footage.service.frame_size(video)
 
 `[width, height]` of a video as DISPLAYED (a ±90° rotation swaps them).
 
 * **Return type:**
-  [`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`list`](https://docs.python.org/3/builtins/stdtypes.html#list)]
+  `Optional`[`list`]
 
 ### muvid.footage.service.get_edit(fp, , edit_id)
 
@@ -6962,7 +6794,7 @@ One saved edit: its cut list (`edl`, every span of the song, gaps as
 `set_cut`/`merge_cut` refer to positions in this `edl`.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.service.grab_cover_frame(video, dest)
 
@@ -6970,7 +6802,7 @@ Write one JPEG frame of `video` to `dest` — `COVER_AT_FRACTION` of the
 way in, `COVER_WIDTH` wide. The cover of every hosted muvid production.
 
 * **Return type:**
-  [`None`](https://docs.python.org/3/builtins/constants.html#None)
+  `None`
 
 ### muvid.footage.service.import_render(fp, , path, render_id, label='', edit_id='')
 
@@ -6982,7 +6814,7 @@ Copied to `renders/<render_id>/final.mp4` with a meta that says it was imported:
 Idempotent: the same bytes under the same id change nothing.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.service.looks(fp=None)
 
@@ -6991,7 +6823,7 @@ and grades (vivid, black and white, posterize, cartoon) — each with its
 `params_schema`. Give one to `set_cut` as `look={"name": ..., **params}`.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.service.merge_cut(fp, , edit_id, index, into='previous')
 
@@ -7000,7 +6832,7 @@ Join cut `index` to its neighbour: the neighbour (`into` “previous” or
 cut keeps the neighbour’s video, framing and look. Returns the changed edit.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.service.peaks(fp, , n=2000)
 
@@ -7011,7 +6843,7 @@ Returns `{duration_s, n, peaks: [0..1, ...]}`; slice `i` covers song time
 `i * duration_s / n` to `(i + 1) * duration_s / n`. Kept per song and `n`.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.service.propose_edit(fp, , strategy='', preset='', weights=None, config=None, save=True, name='', span=None)
 
@@ -7032,7 +6864,7 @@ because no clip is trustworthy). With `save` it also returns the `edit_id` to
 change it (`set_cut` …) and render it (`render`).
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.service.public_render(fp, meta)
 
@@ -7041,7 +6873,7 @@ project (`renders/<id>/final.mp4`) — never an absolute server path; play it by
 `artifact_id`.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.service.redo_edit(fp, , edit_id)
 
@@ -7049,7 +6881,7 @@ Redo the change `undo_edit` last took back. A new change after an undo
 discards what could be redone. Returns the edit as it now is.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.service.refresh_cover(fp)
 
@@ -7057,7 +6889,7 @@ Take the project’s cover frame again — from the newest render, else from the
 first clip — and register it. Only for hosted projects (`None` otherwise).
 
 * **Return type:**
-  [`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]
+  `Optional`[`str`]
 
 ### muvid.footage.service.remove_clip(fp, , clip_id)
 
@@ -7070,7 +6902,7 @@ so run `align` again before cutting. Offsets a person DECLARED for the remaining
 clips are kept. An unknown `clip_id` is refused, naming the project’s clips.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.service.rename_edit(fp, , edit_id, name)
 
@@ -7080,7 +6912,7 @@ Only the name changes; the cuts, the span and the edit’s id stay as they are, 
 the rename can be undone like any other change. Returns the edit.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.service.render(fp, , edit_id, canvas='', allow_unreliable=False, annotate=None, should_cancel=None)
 
@@ -7101,7 +6933,7 @@ the render record: `render_id`, `edit_id`, its `coverage`, `ok` and the
 and `artifact_id` to play it by when the project is hosted.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.service.renders(fp)
 
@@ -7110,7 +6942,7 @@ the `edit_id` it was made from, its `label`, canvas, `ok`, the number of
 `warnings`, and `artifact_id` to play it by when the project is hosted.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.service.replace_edit(fp, , edit_id, edl)
 
@@ -7119,21 +6951,21 @@ once. The new list is checked exactly as `save_edit` checks one; on refusal the
 edit is left as it was. The previous list is not kept.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.service.require_scorable(fp)
 
 The alignments a scoring run would use; refuses without a song or an alignment.
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)
+  `list`
 
 ### muvid.footage.service.resolve_canvas(fp, canvas)
 
 The render canvas: an explicit per-render override, else the project’s.
 
 * **Return type:**
-  [`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`int`](https://docs.python.org/3/builtins/functions.html#int), [`int`](https://docs.python.org/3/builtins/functions.html#int)]
+  `tuple`[`int`, `int`]
 
 ### muvid.footage.service.run_scoring(fp, , hop_s=0.1, metrics=None, enable_lipsync=None, progress_cb=None, should_cancel=None)
 
@@ -7141,7 +6973,7 @@ Score every aligned clip and persist the tensor (the engine behind [`score()`](_
 with the job hooks a background runner passes).
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.service.save_edit(fp, , edl, name='', how_made='by hand', edit_id='', span=None)
 
@@ -7157,7 +6989,7 @@ makes the edit cover only that part of the song — its render is that long, the
 cut to it; default the whole song. Returns the saved edit.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.service.score(fp, , hop_s=0.1, metrics=None, should_cancel=None)
 
@@ -7170,7 +7002,7 @@ re-weighting never re-scores. The lip-sync tier is off unless the operator enabl
 it. Returns what was scored and what was skipped (and why).
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.service.scores(fp, , clip_id='', metrics=None, max_points=1500)
 
@@ -7182,7 +7014,7 @@ The saved footage curves — for the lanes under each video, and for inspection.
   `max_points` per metric).
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.service.set_cut(fp, , edit_id, index, clip_id=None, song_start=None, song_end=None, look=None, look_time_varying=None, slip_s=None, rate=None)
 
@@ -7213,7 +7045,7 @@ Change one cut of a saved edit (`index` is its position in `get_edit`’s edl).
 Parameters left out are unchanged. The changed edit is checked and saved; returns it.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.service.set_offset(fp, , clip_id, offset_s)
 
@@ -7228,7 +7060,7 @@ it); how much of the song the clip covers is computed from the two durations.
 scores stale, so they are dropped.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.service.set_song(fp, , path, ext='', filename='', duration_s=None)
 
@@ -7247,7 +7079,7 @@ Returns `song_duration` (seconds), the stored `song` (name, and the
 was dropped.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.service.set_span(fp, , edit_id, start_s, end_s)
 
@@ -7261,7 +7093,7 @@ cuts across an edge are shortened in the render only). Widening the span again �
 exactly what was there. Returns the edit, with its `span`.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.service.split_cut(fp, , edit_id, at_s)
 
@@ -7272,7 +7104,7 @@ divided where it was at `at_s`. Refused on a boundary (nothing to split). Return
 the changed edit; `changed` is the index of the second half.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.service.status(fp)
 
@@ -7286,7 +7118,7 @@ and whether it is trusted for rendering (`reliable`). `renders` is newest first
 `next_step` names the operation that moves the project forward and why.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.service.strategies(fp=None)
 
@@ -7294,7 +7126,7 @@ The ways to cut on offer — the selection strategies `propose_edit` accepts
 (`weighted` reads the footage scores; the rest use only the alignment).
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.service.timeline(fp)
 
@@ -7302,7 +7134,7 @@ Which videos cover which spans of the song (overlaps shown), from the saved
 alignment — the map for choosing what to cut to. Run `align` first.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.service.undo_edit(fp, , edit_id)
 
@@ -7311,7 +7143,7 @@ whole replacement — by a person or by the assistant). Returns the edit as it n
 is; `redo_edit` puts the change back. Up to 100 changes are kept per edit.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 
 # _autosummary/muvid.footage.strategy.html.md
@@ -7389,7 +7221,7 @@ alias of `Callable`[[…], `list[EdlEntry]`]
 For each covered span, show the highest-confidence clip (ties: longest coverage).
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`EdlEntry`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.EdlEntry)]
+  `list`[[`EdlEntry`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.EdlEntry)]
 
 ### muvid.footage.strategy.fewest_cuts(alignments, song_duration)
 
@@ -7397,14 +7229,14 @@ Stay on the current clip as long as it covers; only switch when it runs out
 (then to the clip extending furthest). Minimizes the number of cuts.
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`EdlEntry`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.EdlEntry)]
+  `list`[[`EdlEntry`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.EdlEntry)]
 
 ### muvid.footage.strategy.list_strategies()
 
 All strategy slugs (eager + lazy), sorted. Lazy slugs are NOT imported to list them.
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]
+  `list`[`str`]
 
 ### muvid.footage.strategy.longest_take(alignments, song_duration)
 
@@ -7412,7 +7244,7 @@ Prefer the clip that keeps rolling longest — pick the one whose coverage exten
 furthest forward (ties: higher confidence). Yields long, continuous takes.
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`EdlEntry`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.EdlEntry)]
+  `list`[[`EdlEntry`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.EdlEntry)]
 
 ### muvid.footage.strategy.register_lazy_strategy(slug, target_ref)
 
@@ -7422,14 +7254,14 @@ Lets a heavy strategy (numpy DP, cv2, …) be *listed* and *named* without impor
 module at registration time — the import happens in [`resolve_strategy()`](_autosummary/muvid.footage.strategy.html.md#muvid.footage.strategy.resolve_strategy).
 
 * **Return type:**
-  [`None`](https://docs.python.org/3/builtins/constants.html#None)
+  `None`
 
 ### muvid.footage.strategy.register_selection_strategy(slug, fn)
 
 Register a selection strategy under `slug` (returns it, for inline use).
 
 * **Return type:**
-  [`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[`...`](https://docs.python.org/3/builtins/constants.html#Ellipsis), [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`EdlEntry`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.EdlEntry)]]
+  `Callable`[`...`, `list`[[`EdlEntry`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.EdlEntry)]]
 
 ### muvid.footage.strategy.resolve_strategy(strategy)
 
@@ -7438,7 +7270,7 @@ Resolve a strategy name OR a bare callable to a [`SelectionStrategy`](_autosumma
 A lazy slug is imported here (and cached into the eager table) on first resolution.
 
 * **Return type:**
-  [`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[`...`](https://docs.python.org/3/builtins/constants.html#Ellipsis), [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`EdlEntry`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.EdlEntry)]]
+  `Callable`[`...`, `list`[[`EdlEntry`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.EdlEntry)]]
 
 ### muvid.footage.strategy.select_edl(strategy, alignments, song_duration, , context=None)
 
@@ -7448,7 +7280,7 @@ Run `strategy` (name or callable) to produce an EDL from `alignments`.
 the alignment-only built-ins ignore it. See [`SelectionStrategy`](_autosummary/muvid.footage.strategy.html.md#muvid.footage.strategy.SelectionStrategy).
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`EdlEntry`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.EdlEntry)]
+  `list`[[`EdlEntry`](_autosummary/muvid.footage.edl.html.md#muvid.footage.edl.EdlEntry)]
 
 
 # _autosummary/muvid.footage.workspace.html.md
@@ -7476,7 +7308,7 @@ with the visualizer’s root, different subtree). **Never** inside the app/deplo
 **The catalog seam.** `MusicVideoFootageProject(..., media_catalog=None)`: when a host
 places the project (`muvid.Project`), every song, clip, render and cover that
 lands here is also registered in the host’s artifact catalog
-([`muvid.catalog.HostArtifactCatalog`](_autosummary/muvid.catalog.html.md#muvid.catalog.HostArtifactCatalog)) and its `artifact_id` recorded beside it,
+(`muvid.catalog.HostArtifactCatalog`) and its `artifact_id` recorded beside it,
 so the host can serve the bytes. `None` — the MCP connector’s per-caller workspace —
 registers nothing and records nothing, so its on-disk records are unchanged.
 
@@ -7530,7 +7362,7 @@ clip, and the score tensor is keyed on that alignment’s fingerprint).
 |----------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------|
 | [`MusicVideoFootageProject`](_autosummary/muvid.footage.workspace.html.md#muvid.footage.workspace.MusicVideoFootageProject)(email, project_id, root) | One caller's stateful music-video project (song + clips + alignments + renders). |
 
-### muvid.footage.workspace.CANVASES *: [dict](https://docs.python.org/3/builtins/stdtypes.html#dict)[[str](https://docs.python.org/3/builtins/stdtypes.html#str), [tuple](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[int](https://docs.python.org/3/builtins/functions.html#int), [int](https://docs.python.org/3/builtins/functions.html#int)]]* *= {'landscape': (1920, 1080), 'portrait': (1080, 1920), 'square': (1080, 1080)}*
+### muvid.footage.workspace.CANVASES *: dict[str, tuple[int, int]]* *= {'landscape': (1920, 1080), 'portrait': (1080, 1920), 'square': (1080, 1080)}*
 
 Named output canvases a project may choose at create (the genre Templates).
 
@@ -7542,7 +7374,7 @@ names here because both are public API of this module (`muvid.mcp` re-exports
 
 ### *class* muvid.footage.workspace.FootageWorkspace(email, root)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 A caller’s private music-video area, addressed by `email`.
 
@@ -7555,7 +7387,7 @@ clip, and `" c1"` replace `c1`’s bytes under a different manifest key.
 
 ### *class* muvid.footage.workspace.MusicVideoFootageProject(email, project_id, root, media_catalog=None, defaults=<factory>)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 One caller’s stateful music-video project (song + clips + alignments + renders).
 
@@ -7564,16 +7396,16 @@ One caller’s stateful music-video project (song + clips + alignments + renders
 Store a footage clip from a local file; returns its `clip_id`.
 
 * **Return type:**
-  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+  `str`
 
 #### cover_info()
 
 `{file, artifact_id, taken_from}` of the cover frame, or `None`.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict) | [`None`](https://docs.python.org/3/builtins/constants.html#None)
+  `dict` | `None`
 
-#### defaults *: [dict](https://docs.python.org/3/builtins/stdtypes.html#dict)*
+#### defaults *: dict*
 
 What `manifest()` reads before anything is written — a hosted project’s
 title and canvas come from its genre envelope, so READING its footage creates
@@ -7584,7 +7416,7 @@ nothing; the first write persists them.
 Remove one edit record (and its undo history); whether it existed.
 
 * **Return type:**
-  [`bool`](https://docs.python.org/3/builtins/functions.html#bool)
+  `bool`
 
 #### edits_lock()
 
@@ -7619,33 +7451,33 @@ anything lists or resolves them, and the assignment is written back so
 it never moves again.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 #### invalidate_scores()
 
 Delete persisted score tracks — the primary invalidation on song/offset change.
 
 * **Return type:**
-  [`None`](https://docs.python.org/3/builtins/constants.html#None)
+  `None`
 
 #### list_clips()
 
 `[{clip_id, name}]` — plus `artifact_id` when the host catalog holds it.
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)]
+  `list`[`dict`]
 
 #### list_edit_records()
 
 Every readable edit record, oldest first (by its `created` stamp).
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)]
+  `list`[`dict`]
 
-#### media_catalog *: [object](https://docs.python.org/3/builtins/functions.html#object)* *= None*
+#### media_catalog *: object* *= None*
 
 Where this project’s media is registered for a host to serve it — a
-[`muvid.catalog.HostArtifactCatalog`](_autosummary/muvid.catalog.html.md#muvid.catalog.HostArtifactCatalog) (anything with its `register`), or
+`muvid.catalog.HostArtifactCatalog` (anything with its `register`), or
 `None` for the MCP workspace, which registers nothing.
 
 #### next_render_ref()
@@ -7653,21 +7485,21 @@ Where this project’s media is registered for a host to serve it — a
 The ordinal the next render will carry (1-based, never reused).
 
 * **Return type:**
-  [`int`](https://docs.python.org/3/builtins/functions.html#int)
+  `int`
 
 #### read_edit(edit_id)
 
 One edit record; `KeyError` if there is no such edit.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 #### read_edit_history(edit_id)
 
 `{"undo": [...], "redo": [...]}` — earlier/later versions of one edit.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 #### remove_clip(clip_id)
 
@@ -7692,9 +7524,9 @@ scores_invalidated}`. Raises `KeyError` for a `clip_id` the manifest does
 not hold; the MCP tool turns that into a refusal naming the known ids.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
-#### *property* renders_dir *: [Path](https://docs.python.org/3/library/pathlib.html#pathlib.Path)*
+#### *property* renders_dir *: Path*
 
 Where this project’s renders live.
 
@@ -7707,7 +7539,7 @@ branching on which drawer it is looking in.
 Store `image_path` as `cover.jpg`, register it; return its artifact id.
 
 * **Return type:**
-  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`None`](https://docs.python.org/3/builtins/constants.html#None)
+  `str` | `None`
 
 #### set_song(src_path, , ext, name='', duration_s=None)
 
@@ -7736,35 +7568,35 @@ With a host catalog the song is registered too, and its id recorded as
 `song_artifact_id` (it equals `song_hash`: both are the SHA-256 of the bytes).
 
 * **Return type:**
-  [`None`](https://docs.python.org/3/builtins/constants.html#None)
+  `None`
 
 #### song_hash()
 
 The clean song’s content hash (cached in the manifest; computed if missing).
 
 * **Return type:**
-  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+  `str`
 
 #### song_info()
 
 The song’s display facts (`None` before one is set).
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict) | [`None`](https://docs.python.org/3/builtins/constants.html#None)
+  `dict` | `None`
 
 #### write_edit(edit_id, record)
 
 Persist one named edit record (replacing it atomically).
 
 * **Return type:**
-  [`None`](https://docs.python.org/3/builtins/constants.html#None)
+  `None`
 
 #### write_edit_history(edit_id, history)
 
 Persist one edit’s undo/redo stacks (atomically; callers hold the lock).
 
 * **Return type:**
-  [`None`](https://docs.python.org/3/builtins/constants.html#None)
+  `None`
 
 ### muvid.footage.workspace.atomic_write_bytes(path, data)
 
@@ -7798,7 +7630,7 @@ what `downloads.organise` already did for `meta.json`; the mode of an existing
 file is not carried over, deliberately, so the outcome does not depend on history.
 
 * **Return type:**
-  [`None`](https://docs.python.org/3/builtins/constants.html#None)
+  `None`
 
 ### muvid.footage.workspace.atomic_write_text(path, text)
 
@@ -7811,7 +7643,7 @@ the bytes on disk are identical to what `write_text` produced and the locale-def
 way it gets there.
 
 * **Return type:**
-  [`None`](https://docs.python.org/3/builtins/constants.html#None)
+  `None`
 
 ### muvid.footage.workspace.data_root()
 
@@ -7824,7 +7656,7 @@ docstring would not render here) and this repo’s own drift-test idiom in
 `tests/test_mcp.py`. Costs one call; keeps the module’s surface introspectable.
 
 * **Return type:**
-  [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)
+  `Path`
 
 ### muvid.footage.workspace.file_lock(path)
 
@@ -7855,7 +7687,7 @@ Idempotent: an existing manifest is left exactly as it is.
 [`ID_PATTERN`](_autosummary/muvid.footage.workspace.html.md#muvid.footage.workspace.ID_PATTERN).
 
 * **Return type:**
-  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+  `str`
 
 ```pycon
 >>> normalise_id(" c01 ", label="clip_id")
@@ -7876,7 +7708,7 @@ silently change the bytes behind an id that names the old ones. A rename gives
 `dest` a new inode and leaves the blob exactly as it was.
 
 * **Return type:**
-  [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)
+  `Path`
 
 
 # _autosummary/muvid.html.md
@@ -7909,7 +7741,7 @@ import of a given name only pulls its dependencies when you actually use it.
 
 ### *class* muvid.CharacterRef(, name, description='')
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 Pointer to a character folder under `characters/<name>/`.
 
@@ -7919,13 +7751,13 @@ project SSOT stays small.
 
 ### *class* muvid.EnvironmentRef(, name, description='')
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 Pointer to an environment folder under `environments/<name>/`.
 
 ### *class* muvid.MusicVideoProject(root)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 Filesystem-backed music video project.
 
@@ -7948,7 +7780,7 @@ registered in `project.json`.
 Append a one-line JSON entry to `.muvid/decisions.jsonl`.
 
 * **Return type:**
-  [`None`](https://docs.python.org/3/builtins/constants.html#None)
+  `None`
 
 #### set_song(source, , copy=True)
 
@@ -7969,13 +7801,13 @@ Read, replace, write. Returns the new spec.
 
 ### *class* muvid.ProjectSpec(, schema_version=1, title='', song=None, characters=(), environments=(), sections=(), shots=(), global_style='', notes='')
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 The top-level project SSOT, persisted as `project.json`.
 
 ### *class* muvid.SectionSpec(, id, start_s, end_s, label='', energy='', mood='')
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 A non-overlapping span of the song with a label.
 
@@ -7984,7 +7816,7 @@ A non-overlapping span of the song with a label.
 
 ### *class* muvid.ShotSpec(, id, start_s, end_s, section_id='', render_strategy='image_to_video', environment='', characters=(), description='', camera='', framing='medium', notes='')
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 A timeline-locked visual unit of the music video.
 
@@ -7995,7 +7827,7 @@ isn’t supported by the basic compositor).
 
 ### *class* muvid.SongInfo(, audio_path, duration_s, sample_rate=0, bitrate=0, bpm=None)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 Metadata for the master audio file.
 
@@ -8010,7 +7842,7 @@ the chosen aligner. Defaults to `scribe-greedy`.
 Returns the path to the alignment store.
 
 * **Return type:**
-  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+  `str`
 
 ### muvid.default_project_root(name)
 
@@ -8031,14 +7863,14 @@ cwd. See `muvid/paths.py` — the default is right, and it was the UI’s missin
 is-this-a-project precondition that made it write.
 
 * **Return type:**
-  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+  `str`
 
 ### muvid.init_project(root, , title='', song=None)
 
 Create a new music video project. Returns the absolute root path.
 
 * **Return type:**
-  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+  `str`
 
 ### muvid.render(root, , quality='balanced', force=False, budget=None, allow_unpriced=False)
 
@@ -8062,7 +7894,7 @@ who has read the names can accept them. What it must never become is a
 silent default.
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]
+  `list`[`str`]
 
 ### muvid.render_audio_video(audio, image=None, , visual='auto', saveas=None, size=(1920, 1080), fps=24, title=None, layout=None, title_style=None, normalize=False, loudness=None, crf=18, preset='medium', audio_bitrate='384k', gop_seconds=2.0, options=None, workdir=None)
 
@@ -8074,30 +7906,30 @@ EBU R128 loudness with a two-pass `loudnorm`, which is what makes a batch
 of songs play back at a consistent level.
 
 * **Parameters:**
-  * **audio** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)) – The song (`.wav` is preferred when you have it — YouTube
+  * **audio** (`str` | `Path`) – The song (`.wav` is preferred when you have it — YouTube
     re-encodes regardless, so give it the cleanest input).
-  * **image** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – Cover art. Used for the picture, and composed onto a 16:9 canvas.
-  * **visual** (`Union`[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[[`VisualContext`](_autosummary/muvid.visualize.visuals.html.md#muvid.visualize.visuals.VisualContext)], [`VisualPlan`](_autosummary/muvid.visualize.visuals.html.md#muvid.visualize.visuals.VisualPlan) | [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path) | [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]]) – A registered strategy name (`"still"`, `"ken_burns"`,
+  * **image** (`str` | `Path` | `None`) – Cover art. Used for the picture, and composed onto a 16:9 canvas.
+  * **visual** (`Union`[`str`, `Callable`[[[`VisualContext`](_autosummary/muvid.visualize.visuals.html.md#muvid.visualize.visuals.VisualContext)], [`VisualPlan`](_autosummary/muvid.visualize.visuals.html.md#muvid.visualize.visuals.VisualPlan) | `Path` | `str`]]) – A registered strategy name (`"still"`, `"ken_burns"`,
     `"cqt"`, `"bars"`, `"spectrum"`, `"waves"`, `"scope"`),
     `"auto"`, or any callable (see [`muvid.visualize.visuals`](_autosummary/muvid.visualize.visuals.html.md#module-muvid.visualize.visuals)).
-  * **saveas** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – Output path (default: `<audio-stem>.mp4`).
-  * **size** ([`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`int`](https://docs.python.org/3/builtins/functions.html#int), [`int`](https://docs.python.org/3/builtins/functions.html#int)]) – Canvas size; the default is 1080p.
-  * **fps** ([`int`](https://docs.python.org/3/builtins/functions.html#int)) – Frame rate.
-  * **title** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – Burn this title into the frame.
-  * **layout** ([`CoverLayout`](_autosummary/muvid.visualize.canvas.html.md#muvid.visualize.canvas.CoverLayout) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – How the cover sits on the canvas.
-  * **title_style** ([`TitleStyle`](_autosummary/muvid.visualize.canvas.html.md#muvid.visualize.canvas.TitleStyle) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – How the title is drawn.
-  * **normalize** ([`bool`](https://docs.python.org/3/builtins/functions.html#bool)) – Loudness-normalize the audio (two-pass EBU R128).
-  * **loudness** ([`Loudness`](_autosummary/muvid.visualize.ffmpeg.html.md#muvid.visualize.ffmpeg.Loudness) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – The loudness target; a YouTube-appropriate default is used
+  * **saveas** (`str` | `Path` | `None`) – Output path (default: `<audio-stem>.mp4`).
+  * **size** (`tuple`[`int`, `int`]) – Canvas size; the default is 1080p.
+  * **fps** (`int`) – Frame rate.
+  * **title** (`str` | `None`) – Burn this title into the frame.
+  * **layout** ([`CoverLayout`](_autosummary/muvid.visualize.canvas.html.md#muvid.visualize.canvas.CoverLayout) | `None`) – How the cover sits on the canvas.
+  * **title_style** ([`TitleStyle`](_autosummary/muvid.visualize.canvas.html.md#muvid.visualize.canvas.TitleStyle) | `None`) – How the title is drawn.
+  * **normalize** (`bool`) – Loudness-normalize the audio (two-pass EBU R128).
+  * **loudness** ([`Loudness`](_autosummary/muvid.visualize.ffmpeg.html.md#muvid.visualize.ffmpeg.Loudness) | `None`) – The loudness target; a YouTube-appropriate default is used
     when omitted.
-  * **gop_seconds** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – Encoder knobs.
-  * **options** ([`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – Strategy-specific options, passed to the visual.
-  * **workdir** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – Where intermediates go (a temporary directory by default).
+  * **gop_seconds** (`float`) – Encoder knobs.
+  * **options** (`dict` | `None`) – Strategy-specific options, passed to the visual.
+  * **workdir** (`str` | `Path` | `None`) – Where intermediates go (a temporary directory by default).
 * **Return type:**
   [`RenderResult`](_autosummary/muvid.visualize.video.html.md#muvid.visualize.video.RenderResult)
 * **Returns:**
   A `RenderResult`.
 * **Raises:**
-  [**ValueError**](https://docs.python.org/3/builtins/exceptions.html#ValueError) – `size` has an odd dimension — H.264 at yuv420p (the only
+  **ValueError** – `size` has an odd dimension — H.264 at yuv420p (the only
       pixel format every player decodes) cannot encode one.
 
 ### muvid.status(root)
@@ -8113,7 +7945,7 @@ histogram. Stable enough to be programmatic; pass through
 `format_status()` for human-readable text.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.transcribe_song(root, , api_key=None)
 
@@ -8125,13 +7957,12 @@ expected to edit `lyrics.md` to fix mishears and add real section
 tags. Returns the path to the lyrics markdown.
 
 * **Return type:**
-  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+  `str`
 
 ### Modules
 
 | [`align`](_autosummary/muvid.align.html.md#module-muvid.align)               | Lyric → audio alignment.                                                             |
 |-----------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------|
-| [`catalog`](_autosummary/muvid.catalog.html.md#module-muvid.catalog)           | Make a hosted production's media *retrievable* — the host's artifact catalog.        |
 | [`characters`](_autosummary/muvid.characters.html.md#module-muvid.characters)     | Character cards + reference image curation via lookbook.                             |
 | [`choreo`](_autosummary/muvid.choreo.html.md#module-muvid.choreo)             | Choreo — event-driven visual music, muvid's second subgenre plugin.                  |
 | [`compose`](_autosummary/muvid.compose.html.md#module-muvid.compose)           | Compose all rendered shots into the final music video.                               |
@@ -8218,7 +8049,7 @@ Manifests name private paths, so they live beside the data or under
 
 ### *exception* muvid.importing.ImportRefused
 
-Bases: [`ValueError`](https://docs.python.org/3/builtins/exceptions.html#ValueError)
+Bases: `ValueError`
 
 The manifest cannot be imported as written (the message says which part).
 
@@ -8230,7 +8061,7 @@ The muvid EDL (a list of `EdlEntry` dicts) a production’s edit document means.
 for a framing document; a clip it does not name is refused rather than guessed.
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)]
+  `list`[`dict`]
 
 ```pycon
 >>> doc = {"edl": [
@@ -8252,14 +8083,14 @@ directory (the project lands at `projects_dir/<id>`). `dry_run` checks every
 file and every edit conversion and writes nothing.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.importing.load_manifest(path)
 
 `(manifest, base_dir)` — relative paths in it resolve against `base_dir`.
 
 * **Return type:**
-  [`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict), [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)]
+  `tuple`[`dict`, `Path`]
 
 
 # _autosummary/muvid.lyrics.html.md
@@ -8303,13 +8134,13 @@ to splice in.
 
 ### *class* muvid.lyrics.LyricLine(, text, line_index, section_label='', start_s=None)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 One line of lyric text, optionally with a known start time.
 
 ### *class* muvid.lyrics.LyricSection(, label, title='', start_s=None, end_s=None, lines=())
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 A user-tagged section in the lyrics markdown.
 
@@ -8318,7 +8149,7 @@ transcripts; if present, they override.
 
 ### *class* muvid.lyrics.LyricsDoc(, sections)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 Full parsed view of the user’s lyrics markdown.
 
@@ -8360,7 +8191,7 @@ non-lyric placeholder (no LyricLine emitted).
 Inverse of `parse_lyrics_md`. Stable round-trip.
 
 * **Return type:**
-  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+  `str`
 
 ### muvid.lyrics.transcribe(audio_path, , api_key=None, out_path=None, cache=True)
 
@@ -8374,7 +8205,7 @@ default, so re-running on the same audio is free. Pass
 `cache=False` to force a fresh round-trip.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]
+  `dict`[`str`, `Any`]
 
 ### muvid.lyrics.words_from_transcript(transcript)
 
@@ -8385,7 +8216,7 @@ Filters out non-word events (Scribe surfaces `(laughs)` etc. with
 pass-through; absent → `None`.
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]]
+  `list`[`dict`[`str`, `Any`]]
 
 
 # _autosummary/muvid.lyricvid.director.html.md
@@ -8469,7 +8300,7 @@ Import-safe: stdlib only at module scope. `anthropic` is imported inside
 | [`Persona`](_autosummary/muvid.lyricvid.director.html.md#muvid.lyricvid.director.Persona)(\*, slug, name[, doctrine, ...])   | One art director's doctrine, plus the dials that encode it.   |
 |---------------------------------------------------------------------------------------------|---------------------------------------------------------------|
 
-### muvid.lyricvid.director.PERSONAS *: [dict](https://docs.python.org/3/builtins/stdtypes.html#dict)[[str](https://docs.python.org/3/builtins/stdtypes.html#str), [Persona](_autosummary/muvid.lyricvid.director.html.md#muvid.lyricvid.director.Persona)]* *= {}*
+### muvid.lyricvid.director.PERSONAS *: dict[str, [Persona](_autosummary/muvid.lyricvid.director.html.md#muvid.lyricvid.director.Persona)]* *= {}*
 
 The persona registry. Populated from the packaged markdown on first use;
 [`register_persona()`](_autosummary/muvid.lyricvid.director.html.md#muvid.lyricvid.director.register_persona) adds more. Same idiom as `register_visual` /
@@ -8477,24 +8308,24 @@ The persona registry. Populated from the packaged markdown on first use;
 
 ### *class* muvid.lyricvid.director.Persona(\*, slug, name, doctrine='', legibility=0.5, prefers=(), mood='', palette=<factory>, typography=<factory>, motion=('fade', ), persistence='clear_on_line', quantize='word', cut_style='hard', attack_s=0.12, lead_s=0.0)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 One art director’s doctrine, plus the dials that encode it.
 
 * **Parameters:**
-  * **doctrine** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str)) – the prose a model reads. Never restated in Python.
-  * **legibility** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – 0..1. How far this director bends toward “the words are
+  * **doctrine** (`str`) – the prose a model reads. Never restated in Python.
+  * **legibility** (`float`) – 0..1. How far this director bends toward “the words are
     the picture” (1.0) versus “the words are the texture of a picture” (0.0).
     It is the axis the personas actually disagree on, and it is what makes
     two of them choose differently from the *same* measurements.
-  * **prefers** ([`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`...`](https://docs.python.org/3/builtins/constants.html#Ellipsis)]) – archetypes in order of preference.
+  * **prefers** (`tuple`[`str`, `...`]) – archetypes in order of preference.
 
 #### block()
 
 The persona as prompt text: heading, doctrine, dials.
 
 * **Return type:**
-  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+  `str`
 
 ### muvid.lyricvid.director.anthropic_llm(, model='claude-opus-5', api_key=None, max_tokens=8000, effort=None, client=None)
 
@@ -8514,10 +8345,10 @@ because a price this module cannot determine is unknown, not zero.
 muvid` must not pull an SDK, and this seam is optional by construction.
 
 * **Parameters:**
-  **client** ([`Any`](https://docs.python.org/3/library/typing.html#typing.Any) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – an already-built SDK client, mostly for tests. When given,
+  **client** (`Any` | `None`) – an already-built SDK client, mostly for tests. When given,
   `api_key` is ignored.
 * **Return type:**
-  [`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[[`Sequence`](https://docs.python.org/3/library/typing.html#typing.Sequence)[[`Mapping`](https://docs.python.org/3/library/typing.html#typing.Mapping)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]], [`Mapping`](https://docs.python.org/3/library/typing.html#typing.Mapping)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]], [`Mapping`](https://docs.python.org/3/library/typing.html#typing.Mapping)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]]
+  `Callable`[[`Sequence`[`Mapping`[`str`, `Any`]], `Mapping`[`str`, `Any`]], `Mapping`[`str`, `Any`]]
 
 ### muvid.lyricvid.director.build_messages(context, , persona=None, reference_image=None)
 
@@ -8533,7 +8364,7 @@ The context travels as a fenced JSON block, which is also how
 given literally the same message rather than two views of one idea.
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]]
+  `list`[`dict`[`str`, `Any`]]
 
 ```pycon
 >>> from muvid.lyricvid.timed_text import from_words
@@ -8562,7 +8393,7 @@ degraded result that presents as an intended one is the failure muvid keeps
 paying for elsewhere.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]
+  `dict`[`str`, `Any`]
 
 ```pycon
 >>> from muvid.lyricvid.timed_text import from_words
@@ -8581,7 +8412,7 @@ in it is written twice: the vocabularies come from
 [`output_schema()`](_autosummary/muvid.lyricvid.director.html.md#muvid.lyricvid.director.output_schema).
 
 * **Return type:**
-  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+  `str`
 
 ```pycon
 >>> text = director_prompt()
@@ -8610,7 +8441,7 @@ gets its own scene and none is `"*"`, because the compiler renders a
 `"*"` scene over the whole song and the words would double up.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]
+  `dict`[`str`, `Any`]
 
 ```pycon
 >>> from muvid.lyricvid.timed_text import from_words
@@ -8636,7 +8467,7 @@ same messages, same schema, same repair, same meta — so the free path is
 exercised by every test the paid one would be.
 
 * **Return type:**
-  [`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[[`Sequence`](https://docs.python.org/3/library/typing.html#typing.Sequence)[[`Mapping`](https://docs.python.org/3/library/typing.html#typing.Mapping)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]], [`Mapping`](https://docs.python.org/3/library/typing.html#typing.Mapping)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]], [`Mapping`](https://docs.python.org/3/library/typing.html#typing.Mapping)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]]
+  `Callable`[[`Sequence`[`Mapping`[`str`, `Any`]], `Mapping`[`str`, `Any`]], `Mapping`[`str`, `Any`]]
 
 ```pycon
 >>> from muvid.lyricvid.timed_text import from_words
@@ -8653,7 +8484,7 @@ exercised by every test the paid one would be.
 Every registered persona, packaged ones first, in file order.
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`Persona`](_autosummary/muvid.lyricvid.director.html.md#muvid.lyricvid.director.Persona)]
+  `list`[[`Persona`](_autosummary/muvid.lyricvid.director.html.md#muvid.lyricvid.director.Persona)]
 
 ```pycon
 >>> [p.slug for p in list_personas()]
@@ -8667,7 +8498,7 @@ True
 The JSON Schema a model generates against — a closed form of the spec’s.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]
+  `dict`[`str`, `Any`]
 
 ```pycon
 >>> s = output_schema()
@@ -8690,7 +8521,7 @@ through `extra` and lands under `measurements`, so the director can use
 a real number without this module growing an audio dependency.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]
+  `dict`[`str`, `Any`]
 
 ```pycon
 >>> from muvid.lyricvid.timed_text import from_words
@@ -8722,7 +8553,7 @@ Every returned spec has been through [`coerce()`](_autosummary/muvid.lyricvid.sp
 recorded in [`director_meta()`](_autosummary/muvid.lyricvid.director.html.md#muvid.lyricvid.director.director_meta) under `repairs`.
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`TreatmentSpec`](_autosummary/muvid.lyricvid.spec.html.md#muvid.lyricvid.spec.TreatmentSpec)]
+  `list`[[`TreatmentSpec`](_autosummary/muvid.lyricvid.spec.html.md#muvid.lyricvid.spec.TreatmentSpec)]
 
 ```pycon
 >>> from muvid.lyricvid.timed_text import from_words
@@ -8771,7 +8602,7 @@ Returns `(spec, score, why)`, best first, with ties broken on the leading
 archetype so the order is stable across runs.
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`TreatmentSpec`](_autosummary/muvid.lyricvid.spec.html.md#muvid.lyricvid.spec.TreatmentSpec), [`float`](https://docs.python.org/3/builtins/functions.html#float), [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]]
+  `list`[`tuple`[[`TreatmentSpec`](_autosummary/muvid.lyricvid.spec.html.md#muvid.lyricvid.spec.TreatmentSpec), `float`, `str`]]
 
 ```pycon
 >>> from muvid.lyricvid.timed_text import from_words
@@ -8856,23 +8687,23 @@ pulls nothing heavy, and each attribute is resolved on first use.
 
 ### *class* muvid.lyricvid.Canvas(, width=1920, height=1080, fps=30)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 Output geometry. Sizes in the scene are relative to `height`.
 
 ### *class* muvid.lyricvid.Scene(\*, canvas, duration, background, cues, typography, meta=<factory>)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 Everything a renderer needs, and nothing it has to interpret.
 
-#### meta *: [dict](https://docs.python.org/3/builtins/stdtypes.html#dict)[[str](https://docs.python.org/3/builtins/stdtypes.html#str), [Any](https://docs.python.org/3/library/typing.html#typing.Any)]*
+#### meta *: dict[str, Any]*
 
 Provenance, for reporting and for tests.
 
 ### *class* muvid.lyricvid.TimedText(, sections, duration=0.0, source='unknown')
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 The whole song’s text, timed.
 
@@ -8884,20 +8715,20 @@ The whole song’s text, timed.
 '*'
 ```
 
-#### *property* measured *: [bool](https://docs.python.org/3/builtins/functions.html#bool)*
+#### *property* measured *: bool*
 
 True when every word time was measured rather than interpolated.
 
 False for an empty text: “all of nothing was measured” is the kind of
 vacuous truth that reads as reassurance in a report.
 
-#### source *: [str](https://docs.python.org/3/builtins/stdtypes.html#str)*
+#### source *: str*
 
 Where the timing came from, for provenance and for honest reporting.
 
 ### *class* muvid.lyricvid.TreatmentSpec(\*, spec_version='1.0', title='', direction=<factory>, scenes=<factory>)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 A complete, renderable treatment.
 
@@ -8944,7 +8775,7 @@ A JSON-native dict: tuples become lists, so what this emits is
 exactly what `json_schema()` validates and what a file round-trips.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]
+  `dict`[`str`, `Any`]
 
 ### muvid.lyricvid.compile_scene(treatment, timed_text, , canvas=None)
 
@@ -8972,7 +8803,7 @@ Everything else in this module exists so that a caller can decide *what* to
 render before paying for it.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]
+  `dict`[`str`, `Any`]
 
 ### Modules
 
@@ -9039,7 +8870,7 @@ backend by name never falls back – it fails loudly.
 | [`build_timed_text`](_autosummary/muvid.lyricvid.pipeline.html.md#muvid.lyricvid.pipeline.build_timed_text)(\*, audio[, lyrics, ...]) | Get measured word times from whichever input the caller actually has. |
 | [`render`](_autosummary/muvid.lyricvid.pipeline.html.md#muvid.lyricvid.pipeline.render)(request)                            | Render one lyric video.                                               |
 
-### muvid.lyricvid.pipeline.RENDERERS *: [dict](https://docs.python.org/3/builtins/stdtypes.html#dict)[[str](https://docs.python.org/3/builtins/stdtypes.html#str), [str](https://docs.python.org/3/builtins/stdtypes.html#str)]* *= {'ass': 'muvid.lyricvid.render_ass:render', 'web': 'muvid.lyricvid.render_web:render'}*
+### muvid.lyricvid.pipeline.RENDERERS *: dict[str, str]* *= {'ass': 'muvid.lyricvid.render_ass:render', 'web': 'muvid.lyricvid.render_web:render'}*
 
 function”, resolved lazily so listing costs no import.
 
@@ -9065,7 +8896,7 @@ The house lazy-registry idiom (cf. `muvid.footage.strategy`): the target
 is a string so adding a backend costs the import path nothing.
 
 * **Return type:**
-  [`None`](https://docs.python.org/3/builtins/constants.html#None)
+  `None`
 
 ```pycon
 >>> register_renderer('doctest-demo', 'muvid.lyricvid.render_ass:render')
@@ -9091,7 +8922,7 @@ treatment spec as a mapping, or omitted to have one proposed), `renderer`,
 Import and return a renderer backend. Accepts a callable unchanged.
 
 * **Return type:**
-  [`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)
+  `Callable`
 
 ### muvid.lyricvid.pipeline.select_renderer(name='auto')
 
@@ -9109,7 +8940,7 @@ has been bitten by before. `auto` is the caller opting in to “whichever
 works”, and the choice it made is recorded in the result’s `meta`.
 
 * **Return type:**
-  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+  `str`
 
 ```pycon
 >>> select_renderer('web')
@@ -9167,12 +8998,12 @@ need them, so importing this module costs a caller nothing.
 | [`scene_to_ass`](_autosummary/muvid.lyricvid.render_ass.html.md#muvid.lyricvid.render_ass.scene_to_ass)(scene, \*[, font])                  | Render a Scene as an ASS (Advanced SubStation Alpha) document. |
 | [`render`](_autosummary/muvid.lyricvid.render_ass.html.md#muvid.lyricvid.render_ass.render)(scene, \*, audio, output, workdir[, ...]) | Burn the scene over a solid background and mux the song.       |
 
-### muvid.lyricvid.render_ass.FONT_FALLBACKS *: [tuple](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[str](https://docs.python.org/3/builtins/stdtypes.html#str), ...]* *= ('DejaVu Sans', 'Liberation Sans', 'Noto Sans', 'Arial', 'Helvetica', 'sans-serif')*
+### muvid.lyricvid.render_ass.FONT_FALLBACKS *: tuple[str, ...]* *= ('DejaVu Sans', 'Liberation Sans', 'Noto Sans', 'Arial', 'Helvetica', 'sans-serif')*
 
 Families to try, in order, when the treatment’s family is not installed.
 DejaVu first because it is what a Linux render box actually has.
 
-### muvid.lyricvid.render_ass.MOTION_FNS *: [dict](https://docs.python.org/3/builtins/stdtypes.html#dict)[[str](https://docs.python.org/3/builtins/stdtypes.html#str), [Callable](https://docs.python.org/3/library/typing.html#typing.Callable)[[\_Placed], [list](https://docs.python.org/3/builtins/stdtypes.html#list)[\_Event]]]* *= {'cut': <function \_motion_cut>, 'fade': <function \_motion_fade>, 'pop': <function \_motion_pop>, 'rise': <function \_motion_rise>, 'typewriter': <function \_motion_typewriter>, 'wipe': <function \_motion_wipe>}*
+### muvid.lyricvid.render_ass.MOTION_FNS *: dict[str, Callable[[\_Placed], list[\_Event]]]* *= {'cut': <function \_motion_cut>, 'fade': <function \_motion_fade>, 'pop': <function \_motion_pop>, 'rise': <function \_motion_rise>, 'typewriter': <function \_motion_typewriter>, 'wipe': <function \_motion_wipe>}*
 
 `motion` name -> the events it draws. muvid’s house registry idiom
 (`register_visual`, `register_archetype`, `register_selection_strategy`):
@@ -9195,7 +9026,7 @@ long is unreadable to the human this file is also written for.
 The motion families this renderer can draw.
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]
+  `list`[`str`]
 
 ### Examples
 
@@ -9209,7 +9040,7 @@ The motion families this renderer can draw.
 Register how one `motion` family draws itself.
 
 * **Return type:**
-  [`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[[`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[`_Placed`], [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[`_Event`]]], [`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[`_Placed`], [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[`_Event`]]]
+  `Callable`[[`Callable`[[`_Placed`], `list`[`_Event`]]], `Callable`[[`_Placed`], `list`[`_Event`]]]
 
 ### Examples
 
@@ -9237,12 +9068,12 @@ against, and it is run here on the finished file.
 
 * **Parameters:**
   * **scene** ([`Scene`](_autosummary/muvid.lyricvid.scene.html.md#muvid.lyricvid.scene.Scene)) – The compiled scene.
-  * **audio** ([`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)) – The song. Its duration sets the video’s.
-  * **output** ([`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)) – Where the mp4 goes.
-  * **workdir** ([`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)) – Directory for intermediates — this render owns it.
-  * **ass_path** ([`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – Where to keep the subtitle document (default:
+  * **audio** (`Path`) – The song. Its duration sets the video’s.
+  * **output** (`Path`) – Where the mp4 goes.
+  * **workdir** (`Path`) – Directory for intermediates — this render owns it.
+  * **ass_path** (`Path` | `None`) – Where to keep the subtitle document (default:
     `workdir/<output stem>.ass`). It is a deliverable, not a temp file.
-  * **crf** ([`int`](https://docs.python.org/3/builtins/functions.html#int)) – x264 quality, lower is better. 18 is visually lossless for flat
+  * **crf** (`int`) – x264 quality, lower is better. 18 is visually lossless for flat
     colour and text.
 * **Return type:**
   [`RenderResult`](_autosummary/muvid.subgenres.html.md#muvid.subgenres.RenderResult)
@@ -9272,10 +9103,10 @@ by changing the canvas it was compiled for.
 
 * **Parameters:**
   * **scene** ([`Scene`](_autosummary/muvid.lyricvid.scene.html.md#muvid.lyricvid.scene.Scene)) – The compiled scene. Every number in it is already resolved.
-  * **font** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – Family to typeset in. Defaults to the scene’s typography; an
+  * **font** (`str` | `None`) – Family to typeset in. Defaults to the scene’s typography; an
     uninstalled family falls back (see `_resolve_font()`).
 * **Return type:**
-  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+  `str`
 * **Returns:**
   The `.ass` document, as text.
 
@@ -9405,7 +9236,7 @@ the second is the failure people actually hit.
 
 ### *exception* muvid.lyricvid.render_web.WebRenderUnavailable
 
-Bases: [`RuntimeError`](https://docs.python.org/3/builtins/exceptions.html#RuntimeError)
+Bases: `RuntimeError`
 
 Playwright (or its Chromium build) is not installed. Carries the remedy.
 
@@ -9415,12 +9246,12 @@ Capture the scene’s page with Playwright and mux the song.
 
 * **Parameters:**
   * **scene** ([`Scene`](_autosummary/muvid.lyricvid.scene.html.md#muvid.lyricvid.scene.Scene)) – the compiled scene. Its canvas fixes the size and frame rate.
-  * **audio** ([`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)) – the song. Its stream is copied in unmodified.
-  * **output** ([`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)) – where the mp4 goes.
-  * **workdir** ([`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)) – scratch space owned by this render. The page is left behind as
+  * **audio** (`Path`) – the song. Its stream is copied in unmodified.
+  * **output** (`Path`) – where the mp4 goes.
+  * **workdir** (`Path`) – scratch space owned by this render. The page is left behind as
     an artifact; the frames are deleted.
-  * **crf** ([`int`](https://docs.python.org/3/builtins/functions.html#int)) – libx264 quality (lower is better; 18 is visually lossless-ish).
-  * **scale** ([`int`](https://docs.python.org/3/builtins/functions.html#int)) – device pixel ratio for the capture. The viewport is
+  * **crf** (`int`) – libx264 quality (lower is better; 18 is visually lossless-ish).
+  * **scale** (`int`) – device pixel ratio for the capture. The viewport is
     `canvas / scale` CSS pixels and the screenshot comes back at the
     canvas size either way, so the output resolution and the (all-`vh`)
     layout are unchanged — what moves is the CSS pixel grid the browser
@@ -9433,8 +9264,8 @@ Capture the scene’s page with Playwright and mux the song.
   the HTML that produced it — open it in a browser and call `setTime`.
 * **Raises:**
   * [**WebRenderUnavailable**](_autosummary/muvid.lyricvid.render_web.html.md#muvid.lyricvid.render_web.WebRenderUnavailable) – Playwright or its Chromium build is missing.
-  * [**FileNotFoundError**](https://docs.python.org/3/builtins/exceptions.html#FileNotFoundError) – `audio` does not exist.
-  * [**ValueError**](https://docs.python.org/3/builtins/exceptions.html#ValueError) – the canvas cannot be captured or encoded as asked.
+  * **FileNotFoundError** – `audio` does not exist.
+  * **ValueError** – the canvas cannot be captured or encoded as asked.
 
 ### muvid.lyricvid.render_web.scene_to_html(scene)
 
@@ -9448,7 +9279,7 @@ words cannot reflow. Nothing in the page depends on wall-clock time.
 * **Parameters:**
   **scene** ([`Scene`](_autosummary/muvid.lyricvid.scene.html.md#muvid.lyricvid.scene.Scene)) – the compiled scene. Colours must be `#rrggbb`.
 * **Return type:**
-  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+  `str`
 * **Returns:**
   A complete HTML document, safe to write to a file and open.
 
@@ -9527,36 +9358,36 @@ which is the seam a plugin author or a future muvid uses to grow the vocabulary.
 
 ### *class* muvid.lyricvid.scene.Canvas(, width=1920, height=1080, fps=30)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 Output geometry. Sizes in the scene are relative to `height`.
 
 ### *class* muvid.lyricvid.scene.Cue(\*, text, x, y, size, t_in, t_full, t_out=None, t_gone=None, colour='#ffffff', dim_colour=None, dim_from=None, motion='fade', layer=0, extra=<factory>)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 One piece of text, placed and timed.
 
 * **Parameters:**
-  * **y** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – centre of the text, normalised to the canvas (0..1).
-  * **size** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – cap height as a fraction of canvas height.
-  * **t_in** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – when it starts arriving.
-  * **t_full** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – when it is fully arrived. `t_in == t_full` is a hard cut.
-  * **t_out** ([`float`](https://docs.python.org/3/builtins/functions.html#float) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – when it starts leaving; `None` means it never leaves.
-  * **t_gone** ([`float`](https://docs.python.org/3/builtins/functions.html#float) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – when it has fully left.
-  * **dim_from** ([`float`](https://docs.python.org/3/builtins/functions.html#float) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – when it recedes to `dim_colour` (`persistence='dim'`).
+  * **y** (`float`) – centre of the text, normalised to the canvas (0..1).
+  * **size** (`float`) – cap height as a fraction of canvas height.
+  * **t_in** (`float`) – when it starts arriving.
+  * **t_full** (`float`) – when it is fully arrived. `t_in == t_full` is a hard cut.
+  * **t_out** (`float` | `None`) – when it starts leaving; `None` means it never leaves.
+  * **t_gone** (`float` | `None`) – when it has fully left.
+  * **dim_from** (`float` | `None`) – when it recedes to `dim_colour` (`persistence='dim'`).
 
-#### extra *: [dict](https://docs.python.org/3/builtins/stdtypes.html#dict)[[str](https://docs.python.org/3/builtins/stdtypes.html#str), [Any](https://docs.python.org/3/library/typing.html#typing.Any)]*
+#### extra *: dict[str, Any]*
 
 Free-form, for a renderer that can use it (e.g. per-word wipe fraction).
 
 ### *class* muvid.lyricvid.scene.Scene(\*, canvas, duration, background, cues, typography, meta=<factory>)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 Everything a renderer needs, and nothing it has to interpret.
 
-#### meta *: [dict](https://docs.python.org/3/builtins/stdtypes.html#dict)[[str](https://docs.python.org/3/builtins/stdtypes.html#str), [Any](https://docs.python.org/3/library/typing.html#typing.Any)]*
+#### meta *: dict[str, Any]*
 
 Provenance, for reporting and for tests.
 
@@ -9588,7 +9419,7 @@ function plus an entry in [`muvid.lyricvid.spec.ARCHETYPES`](_autosummary/muvid.
 model knows it exists.
 
 * **Return type:**
-  [`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[[`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[`...`](https://docs.python.org/3/builtins/constants.html#Ellipsis), [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`Cue`](_autosummary/muvid.lyricvid.scene.html.md#muvid.lyricvid.scene.Cue)]]], [`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[`...`](https://docs.python.org/3/builtins/constants.html#Ellipsis), [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`Cue`](_autosummary/muvid.lyricvid.scene.html.md#muvid.lyricvid.scene.Cue)]]]
+  `Callable`[[`Callable`[`...`, `list`[[`Cue`](_autosummary/muvid.lyricvid.scene.html.md#muvid.lyricvid.scene.Cue)]]], `Callable`[`...`, `list`[[`Cue`](_autosummary/muvid.lyricvid.scene.html.md#muvid.lyricvid.scene.Cue)]]]
 
 ```pycon
 >>> @register_archetype('doctest-demo')
@@ -9678,7 +9509,7 @@ subprocess to pull no numpy; the packing is the only thing here that needs it.
 
 ### *class* muvid.lyricvid.shape.Placement(, text, x, y, size, rotated=False)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 Where one word goes, in [`muvid.lyricvid.scene.Cue`](_autosummary/muvid.lyricvid.scene.html.md#muvid.lyricvid.scene.Cue)’s coordinates.
 
@@ -9687,14 +9518,14 @@ becomes: four of its five fields are geometry, and geometry read off a
 positional tuple is geometry nobody can check at the call site.
 
 * **Parameters:**
-  * **text** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str)) – the word, exactly as it should be drawn.
-  * **y** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – centre of the text, normalised to the canvas (0..1, top-left).
-  * **size** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – cap height as a fraction of canvas height.
-  * **rotated** ([`bool`](https://docs.python.org/3/builtins/functions.html#bool)) – the word is set at 90 degrees (bottom-up). Only ever True
+  * **text** (`str`) – the word, exactly as it should be drawn.
+  * **y** (`float`) – centre of the text, normalised to the canvas (0..1, top-left).
+  * **size** (`float`) – cap height as a fraction of canvas height.
+  * **rotated** (`bool`) – the word is set at 90 degrees (bottom-up). Only ever True
     when the caller asked for `allow_rotation`; `Cue` cannot express a
     rotation, so `shape_fill` does not ask for one.
 
-### muvid.lyricvid.shape.SHAPE_KINDS *: [dict](https://docs.python.org/3/builtins/stdtypes.html#dict)[[str](https://docs.python.org/3/builtins/stdtypes.html#str), [Callable](https://docs.python.org/3/library/typing.html#typing.Callable)[[...], [Any](https://docs.python.org/3/library/typing.html#typing.Any)]]* *= {'mask_image': <function \_image_ink>, 'named': <function \_named_ink>, 'svg_path': <function \_svg_ink>}*
+### muvid.lyricvid.shape.SHAPE_KINDS *: dict[str, Callable[[...], Any]]* *= {'mask_image': <function \_image_ink>, 'named': <function \_named_ink>, 'svg_path': <function \_svg_ink>}*
 
 The three sources a shape can come from. Closed, because
 [`muvid.lyricvid.spec.ShapeRef`](_autosummary/muvid.lyricvid.spec.html.md#muvid.lyricvid.spec.ShapeRef) is: the extension seam for a new
@@ -9709,7 +9540,7 @@ bearings — which is what a caller wants for a hit test, a debug overlay, or
 for asserting that two placements do not collide.
 
 * **Return type:**
-  [`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`float`](https://docs.python.org/3/builtins/functions.html#float), [`float`](https://docs.python.org/3/builtins/functions.html#float), [`float`](https://docs.python.org/3/builtins/functions.html#float), [`float`](https://docs.python.org/3/builtins/functions.html#float)]
+  `tuple`[`float`, `float`, `float`, `float`]
 
 ```pycon
 >>> p = Placement(text='apple', x=0.5, y=0.5, size=0.1)
@@ -9722,7 +9553,7 @@ for asserting that two placements do not collide.
 Every registered outline name, sorted.
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]
+  `list`[`str`]
 
 ```pycon
 >>> list_shapes()
@@ -9734,23 +9565,23 @@ Every registered outline name, sorted.
 Pack `texts` inside a shape, in the order given.
 
 * **Parameters:**
-  * **texts** ([`Sequence`](https://docs.python.org/3/library/typing.html#typing.Sequence)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]) – the words, in the order they are sung. Order matters twice:
+  * **texts** (`Sequence`[`str`]) – the words, in the order they are sung. Order matters twice:
     it decides who gets the roomy middle of the shape, and it feeds the
     salience weight.
-  * **shape_kind** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str)) – `'named'`, `'svg_path'` or `'mask_image'` — see
+  * **shape_kind** (`str`) – `'named'`, `'svg_path'` or `'mask_image'` — see
     [`SHAPE_KINDS`](_autosummary/muvid.lyricvid.shape.html.md#muvid.lyricvid.shape.SHAPE_KINDS) and [`muvid.lyricvid.spec.ShapeRef`](_autosummary/muvid.lyricvid.spec.html.md#muvid.lyricvid.spec.ShapeRef).
-  * **shape_value** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str)) – the outline’s name, path data, or image path.
-  * **aspect** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – canvas width / height.
-  * **base_size** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – cap height as a fraction of canvas height, before salience.
-  * **allow_rotation** ([`bool`](https://docs.python.org/3/builtins/functions.html#bool)) – also try each word turned 90 degrees.
+  * **shape_value** (`str`) – the outline’s name, path data, or image path.
+  * **aspect** (`float`) – canvas width / height.
+  * **base_size** (`float`) – cap height as a fraction of canvas height, before salience.
+  * **allow_rotation** (`bool`) – also try each word turned 90 degrees.
     `muvid.lyricvid.scene.Cue` cannot express a rotation, so `shape_fill`
     leaves this off; a renderer that can should turn it on.
-  * **shrink_steps** ([`int`](https://docs.python.org/3/builtins/functions.html#int)) – how many progressively smaller retries a word gets
+  * **shrink_steps** (`int`) – how many progressively smaller retries a word gets
     before it is dropped.
-  * **mask_options** ([`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`Mapping`](https://docs.python.org/3/library/typing.html#typing.Mapping)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]]) – forwarded to the kind’s builder (`threshold` and
+  * **mask_options** (`Optional`[`Mapping`[`str`, `Any`]]) – forwarded to the kind’s builder (`threshold` and
     `invert` for `'mask_image'`, `curve_samples` for `'svg_path'`).
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`Placement`](_autosummary/muvid.lyricvid.shape.html.md#muvid.lyricvid.shape.Placement) | [`None`](https://docs.python.org/3/builtins/constants.html#None)]
+  `list`[[`Placement`](_autosummary/muvid.lyricvid.shape.html.md#muvid.lyricvid.shape.Placement) | `None`]
 * **Returns:**
   one entry per input, in the same order. `None` is “did not fit”
   — dropping a word beats overlapping two.
@@ -9814,7 +9645,7 @@ returns a boolean array. Implicit functions and polygons both fit; see
 `polygon_shape()` for the latter.
 
 * **Return type:**
-  [`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[[`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[[`Any`](https://docs.python.org/3/library/typing.html#typing.Any), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)], [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]], [`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[[`Any`](https://docs.python.org/3/library/typing.html#typing.Any), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)], [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]]
+  `Callable`[[`Callable`[[`Any`, `Any`], `Any`]], `Callable`[[`Any`, `Any`], `Any`]]
 
 ```pycon
 >>> @register_shape('doctest-blob')
@@ -9829,7 +9660,7 @@ True
 The outline function for `name`, or a ValueError naming the options.
 
 * **Return type:**
-  [`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[[`Any`](https://docs.python.org/3/library/typing.html#typing.Any), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)], [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]
+  `Callable`[[`Any`, `Any`], `Any`]
 
 ```pycon
 >>> resolve_shape('banana')
@@ -9848,7 +9679,7 @@ The outline is drawn into the largest centred SQUARE the canvas allows (less
 `margin`), which is what keeps a circle round on a 16:9 frame.
 
 * **Return type:**
-  [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)
+  `Any`
 
 ```pycon
 >>> m = shape_mask('named', 'circle', aspect=1.0, grid_height=32)
@@ -9928,43 +9759,43 @@ slightly-wrong model output still renders.
 | [`TreatmentSpec`](_autosummary/muvid.lyricvid.spec.html.md#muvid.lyricvid.spec.TreatmentSpec)(\*[, spec_version, title, ...])     | A complete, renderable treatment.                          |
 | [`Typography`](_autosummary/muvid.lyricvid.spec.html.md#muvid.lyricvid.spec.Typography)(\*[, family, weight, case, ...])       | Type choices.                                              |
 
-### muvid.lyricvid.spec.ARCHETYPES *: [dict](https://docs.python.org/3/builtins/stdtypes.html#dict)[[str](https://docs.python.org/3/builtins/stdtypes.html#str), [str](https://docs.python.org/3/builtins/stdtypes.html#str)]* *= {'calligram': "Each line becomes a slanting streak of UPRIGHT letters, one letter per slot, the streaks fanning open as they descend — the Apollinaire 'Il pleut' construction. Use for a calligram or concrete poem whose shape is made by the run of the text itself rather than by an outline; prefer 'shape_fill' when the shape is a picture the words pour into, and 'concrete_page' when the layout is simply lines on a page.", 'concrete_page': "The whole lyric is typeset as a fixed page — one CENTRED HORIZONTAL ROW per line — and each word ignites in reading order as it is sung. The page never reflows. Use when the poem is lines on a page. It cannot slant, indent or shape anything: for a calligram or a concrete poem whose picture is made by the run of the text, use 'calligram'; for words poured into an outline, use 'shape_fill'.", 'karaoke_wipe': 'Two lines at the bottom, the current one wiped syllable by syllable as it is sung. The classic karaoke treatment; the most legible option.', 'one_word_centred': 'One word at a time, large, centred. The default lyric-video look: unmissable, works at any aspect ratio, reads on a phone.', 'scatter': 'Words appear away from centre and drift, density rising with energy. Use for chaos, crowds, or an instrumental-heavy chorus.', 'shape_fill': 'Words packed into the outline of a shape, filling it as the song proceeds. Use when the song has one strong concrete image.', 'stacked_lines': 'Lines accumulate down the frame and hold, so the viewer can read back what has already been sung. Good for narrative or dense lyrics.', 'text_on_path': 'Words follow a curve across the frame. Cheap, distinctive, and good for a single repeated hook.'}*
+### muvid.lyricvid.spec.ARCHETYPES *: dict[str, str]* *= {'calligram': "Each line becomes a slanting streak of UPRIGHT letters, one letter per slot, the streaks fanning open as they descend — the Apollinaire 'Il pleut' construction. Use for a calligram or concrete poem whose shape is made by the run of the text itself rather than by an outline; prefer 'shape_fill' when the shape is a picture the words pour into, and 'concrete_page' when the layout is simply lines on a page.", 'concrete_page': "The whole lyric is typeset as a fixed page — one CENTRED HORIZONTAL ROW per line — and each word ignites in reading order as it is sung. The page never reflows. Use when the poem is lines on a page. It cannot slant, indent or shape anything: for a calligram or a concrete poem whose picture is made by the run of the text, use 'calligram'; for words poured into an outline, use 'shape_fill'.", 'karaoke_wipe': 'Two lines at the bottom, the current one wiped syllable by syllable as it is sung. The classic karaoke treatment; the most legible option.', 'one_word_centred': 'One word at a time, large, centred. The default lyric-video look: unmissable, works at any aspect ratio, reads on a phone.', 'scatter': 'Words appear away from centre and drift, density rising with energy. Use for chaos, crowds, or an instrumental-heavy chorus.', 'shape_fill': 'Words packed into the outline of a shape, filling it as the song proceeds. Use when the song has one strong concrete image.', 'stacked_lines': 'Lines accumulate down the frame and hold, so the viewer can read back what has already been sung. Good for narrative or dense lyrics.', 'text_on_path': 'Words follow a curve across the frame. Cheap, distinctive, and good for a single repeated hook.'}*
 
 How words are placed on screen. The renderer owns the geometry; the spec
 only names the family and its knobs.
 
 ### *class* muvid.lyricvid.spec.Direction(\*, mood='', palette=<factory>, typography=<factory>, motion_vocabulary=('fade', ), rationale='')
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 The song-level creative decision. The half a model is actually good at.
 
-### muvid.lyricvid.spec.INLINE_SHAPE_KINDS *: [frozenset](https://docs.python.org/3/builtins/stdtypes.html#frozenset)[[str](https://docs.python.org/3/builtins/stdtypes.html#str)]* *= frozenset({'named', 'svg_path'})*
+### muvid.lyricvid.spec.INLINE_SHAPE_KINDS *: frozenset[str]* *= frozenset({'named', 'svg_path'})*
 
 The shape kinds that carry no reference to anything outside the spec. A
 surface serving untrusted callers (the MCP tools) admits ONLY these unless it
 has itself fetched and scoped the image.
 
-### muvid.lyricvid.spec.MOTIONS *: [dict](https://docs.python.org/3/builtins/stdtypes.html#dict)[[str](https://docs.python.org/3/builtins/stdtypes.html#str), [str](https://docs.python.org/3/builtins/stdtypes.html#str)]* *= {'cut': 'Appears instantly. Hardest, most rhythmic.', 'fade': 'Fades up over a fraction of a beat.', 'pop': 'Fades up with a slight overshoot in scale, then settles.', 'rise': 'Fades up while moving a short distance upward.', 'typewriter': "Letters appear one at a time across the word's duration.", 'wipe': 'Revealed left-to-right, like a karaoke wipe.'}*
+### muvid.lyricvid.spec.MOTIONS *: dict[str, str]* *= {'cut': 'Appears instantly. Hardest, most rhythmic.', 'fade': 'Fades up over a fraction of a beat.', 'pop': 'Fades up with a slight overshoot in scale, then settles.', 'rise': 'Fades up while moving a short distance upward.', 'typewriter': "Letters appear one at a time across the word's duration.", 'wipe': 'Revealed left-to-right, like a karaoke wipe.'}*
 
 How a single word arrives. Composable with the archetype rather than part of it.
 
-### muvid.lyricvid.spec.PERSISTENCE *: [dict](https://docs.python.org/3/builtins/stdtypes.html#dict)[[str](https://docs.python.org/3/builtins/stdtypes.html#str), [str](https://docs.python.org/3/builtins/stdtypes.html#str)]* *= {'clear_on_line': 'Cleared when its line ends.', 'clear_on_section': 'Cleared when its section ends.', 'dim': 'Stays but recedes, so the current word leads. Keeps context readable.', 'hold': 'Stays exactly as it arrived, forever. The page fills up.'}*
+### muvid.lyricvid.spec.PERSISTENCE *: dict[str, str]* *= {'clear_on_line': 'Cleared when its line ends.', 'clear_on_section': 'Cleared when its section ends.', 'dim': 'Stays but recedes, so the current word leads. Keeps context readable.', 'hold': 'Stays exactly as it arrived, forever. The page fills up.'}*
 
 What a word does when it is no longer current.
 
 ### *class* muvid.lyricvid.spec.Palette(, bg='#101014', fg='#f4f4f0', accent='#e0533d', dim='#4a4a52')
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 Colours, as `#rrggbb`. `dim` is the un-sung state where one exists.
 
-### muvid.lyricvid.spec.QUANTIZE *: [dict](https://docs.python.org/3/builtins/stdtypes.html#dict)[[str](https://docs.python.org/3/builtins/stdtypes.html#str), [str](https://docs.python.org/3/builtins/stdtypes.html#str)]* *= {'beat': 'Snapped to the nearest beat. Rhythmic, forgiving of alignment error.', 'downbeat': 'Snapped to the nearest bar start. Slow, deliberate.', 'line': "The whole line arrives together, at the line's start.", 'syllable': 'Sub-word timing, where the aligner provides it.', 'word': 'Each word ignites at its own measured onset. Tightest sync.'}*
+### muvid.lyricvid.spec.QUANTIZE *: dict[str, str]* *= {'beat': 'Snapped to the nearest beat. Rhythmic, forgiving of alignment error.', 'downbeat': 'Snapped to the nearest bar start. Slow, deliberate.', 'line': "The whole line arrives together, at the line's start.", 'syllable': 'Sub-word timing, where the aligner provides it.', 'word': 'Each word ignites at its own measured onset. Tightest sync.'}*
 
 What the animation clock is quantised to. The MODEL picks one of these; the
 numbers behind them always come from measurement, never from the model.
 
-### muvid.lyricvid.spec.SHAPE_KINDS *: [dict](https://docs.python.org/3/builtins/stdtypes.html#dict)[[str](https://docs.python.org/3/builtins/stdtypes.html#str), [str](https://docs.python.org/3/builtins/stdtypes.html#str)]* *= {'mask_image': 'An image whose dark ink (or alpha) is the outline. Trusted callers only: the value names a file.', 'named': 'A built-in outline: circle, heart, star, apple, square.', 'svg_path': 'An SVG path string (M/L/H/V/C/S/Q/T/Z) supplied inline.'}*
+### muvid.lyricvid.spec.SHAPE_KINDS *: dict[str, str]* *= {'mask_image': 'An image whose dark ink (or alpha) is the outline. Trusted callers only: the value names a file.', 'named': 'A built-in outline: circle, heart, star, apple, square.', 'svg_path': 'An SVG path string (M/L/H/V/C/S/Q/T/Z) supplied inline.'}*
 
 Where a shape outline may come from. A closed set for the same reason the
 others are — and additionally because `value` is INTERPRETED by the
@@ -9976,7 +9807,7 @@ decision (see `MASK_IMAGE_TRUSTED`).
 
 ### *class* muvid.lyricvid.spec.Scene(\*, applies_to=('\*', ), archetype='one_word_centred', motion='fade', persistence='clear_on_line', timing=<factory>, shape=None, params=<factory>)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 One treatment, applied to part of the song.
 
@@ -9987,7 +9818,7 @@ and complete.
 
 ### *class* muvid.lyricvid.spec.ShapeRef(, kind='named', value='circle')
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 Where a `shape_fill` / `concrete_page` outline comes from.
 
@@ -9997,21 +9828,21 @@ model may name a shape, but it never draws one.
 
 ### *class* muvid.lyricvid.spec.Timing(, quantize_to='word', cut_style='hard', attack_s=0.12, lead_s=0.0)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 The quantisation POLICY. Never actual times.
 
-#### attack_s *: [float](https://docs.python.org/3/builtins/functions.html#float)*
+#### attack_s *: float*
 
 Seconds a word takes to arrive. Small, or it stops reading as on-the-beat.
 
-#### lead_s *: [float](https://docs.python.org/3/builtins/functions.html#float)*
+#### lead_s *: float*
 
 Seconds before a word’s onset to start it. Compensates for perceived lag.
 
 ### *class* muvid.lyricvid.spec.TreatmentSpec(\*, spec_version='1.0', title='', direction=<factory>, scenes=<factory>)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 A complete, renderable treatment.
 
@@ -10058,11 +9889,11 @@ A JSON-native dict: tuples become lists, so what this emits is
 exactly what [`json_schema()`](_autosummary/muvid.lyricvid.spec.html.md#muvid.lyricvid.spec.json_schema) validates and what a file round-trips.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]
+  `dict`[`str`, `Any`]
 
 ### *class* muvid.lyricvid.spec.Typography(, family='DejaVu Sans', weight=700, case='as_written', tracking=0.0, max_line_chars=28)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 Type choices. `family` is resolved against installed/bundled fonts, and
 an unavailable family falls back rather than failing the render.
@@ -10075,14 +9906,14 @@ Accepts a [`TreatmentSpec`](_autosummary/muvid.lyricvid.spec.html.md#muvid.lyric
 it. This is the one entry point production code should use.
 
 * **Return type:**
-  [`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`TreatmentSpec`](_autosummary/muvid.lyricvid.spec.html.md#muvid.lyricvid.spec.TreatmentSpec), [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]]
+  `tuple`[[`TreatmentSpec`](_autosummary/muvid.lyricvid.spec.html.md#muvid.lyricvid.spec.TreatmentSpec), `list`[`str`]]
 
 ### muvid.lyricvid.spec.json_schema()
 
 The JSON Schema for a [`TreatmentSpec`](_autosummary/muvid.lyricvid.spec.html.md#muvid.lyricvid.spec.TreatmentSpec).
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]
+  `dict`[`str`, `Any`]
 
 ```pycon
 >>> s = json_schema()
@@ -10100,7 +9931,7 @@ now, where a retry costs a round trip and may fail the same way. Every
 substitution is reported so the caller can show or log it.
 
 * **Return type:**
-  [`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`TreatmentSpec`](_autosummary/muvid.lyricvid.spec.html.md#muvid.lyricvid.spec.TreatmentSpec), [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]]
+  `tuple`[[`TreatmentSpec`](_autosummary/muvid.lyricvid.spec.html.md#muvid.lyricvid.spec.TreatmentSpec), `list`[`str`]]
 
 ```pycon
 >>> fixed, notes = repair(TreatmentSpec(scenes=(Scene(archetype='swirl'),)))
@@ -10115,7 +9946,7 @@ substitution is reported so the caller can show or log it.
 Return a list of human-readable problems. Empty means renderable.
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]
+  `list`[`str`]
 
 ```pycon
 >>> validate(TreatmentSpec(scenes=(Scene(archetype='nope'),)))
@@ -10127,7 +9958,7 @@ Return a list of human-readable problems. Empty means renderable.
 Every closed vocabulary, for prompts and UI. One copy, several readers.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]]
+  `dict`[`str`, `dict`[`str`, `str`]]
 
 
 # _autosummary/muvid.lyricvid.timed_text.html.md
@@ -10175,19 +10006,19 @@ ASR are imported inside the functions that need them.
 
 ### *class* muvid.lyricvid.timed_text.Line(, words, index=0, text='')
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 One sung line.
 
 ### *class* muvid.lyricvid.timed_text.Section(, label, lines)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 A labelled span — `verse`, `chorus`, whatever the lyrics document says.
 
 ### *class* muvid.lyricvid.timed_text.TimedText(, sections, duration=0.0, source='unknown')
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 The whole song’s text, timed.
 
@@ -10199,24 +10030,24 @@ The whole song’s text, timed.
 '*'
 ```
 
-#### *property* measured *: [bool](https://docs.python.org/3/builtins/functions.html#bool)*
+#### *property* measured *: bool*
 
 True when every word time was measured rather than interpolated.
 
 False for an empty text: “all of nothing was measured” is the kind of
 vacuous truth that reads as reassurance in a report.
 
-#### source *: [str](https://docs.python.org/3/builtins/stdtypes.html#str)*
+#### source *: str*
 
 Where the timing came from, for provenance and for honest reporting.
 
 ### *class* muvid.lyricvid.timed_text.Word(, text, start, end, measured=True)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 One sung word on the song timeline. Times are seconds, absolute.
 
-#### measured *: [bool](https://docs.python.org/3/builtins/functions.html#bool)*
+#### measured *: bool*
 
 False when the time was interpolated inside a line rather than measured.
 
@@ -10343,14 +10174,14 @@ were **measured** or interpolated from line times. A caller that ignores
 that flag will ship a video that looks subtly out of sync.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]
+  `dict`[`str`, `Any`]
 
 ### muvid.lyricvid.tools.catalog()
 
 Every installed subgenre, without importing any renderer.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]
+  `dict`[`str`, `Any`]
 
 ```pycon
 >>> c = catalog()
@@ -10368,7 +10199,7 @@ then carries a `cost` block — unknown cost is reported as unknown, never
 as zero.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]
+  `dict`[`str`, `Any`]
 
 ### muvid.lyricvid.tools.render_lyric_video(audio, output, , lyrics=None, subtitles=None, project=None, treatment=None, renderer='auto', title='', persona=None, aligner=None, width=1920, height=1080, fps=30, workdir=None)
 
@@ -10378,14 +10209,14 @@ Everything else in this module exists so that a caller can decide *what* to
 render before paying for it.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]
+  `dict`[`str`, `Any`]
 
 ### muvid.lyricvid.tools.treatment_schema()
 
 JSON Schema for a treatment spec — also the model’s output constraint.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]
+  `dict`[`str`, `Any`]
 
 ```pycon
 >>> treatment_schema()['type']
@@ -10401,7 +10232,7 @@ a mechanical substitution renders something good now where a retry costs a
 round trip and may fail the same way. Every substitution is reported.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]
+  `dict`[`str`, `Any`]
 
 ```pycon
 >>> r = validate_treatment({'scenes': [{'archetype': 'swirl'}]})
@@ -10416,7 +10247,7 @@ The closed vocabularies a treatment may draw on.
 One copy, read by the prompt, the JSON Schema, the UI and the docs.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]
+  `dict`[`str`, `Any`]
 
 ```pycon
 >>> v = vocabulary()
@@ -10507,7 +10338,7 @@ For a whole shoot in one folder, use [`add_footage_folder()`](_autosummary/muvid
 many files and is refused here by name.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.mcp.footage_tools.add_footage_folder(project_id, , url, name_prefix='')
 
@@ -10524,7 +10355,7 @@ coverage decision made on quietly-shortened input is worse than one made on a sh
 Returns the added clips and the skipped members. Run `align_footage` afterwards.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.mcp.footage_tools.align_footage(project_id, , keep_declared=True)
 
@@ -10561,7 +10392,7 @@ A clip placed by hand (`footage_set_offset`) is left as placed and named in
 (`footage_clear_offset`) and measures every clip.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.mcp.footage_tools.assemble_music_video(project_id, , strategy='', edl=None, preset='', weights=None, config=None, canvas='', allow_unreliable=False, span=None)
 
@@ -10667,7 +10498,7 @@ these findings used to be Python warnings on the server’s stderr, which a
 remote caller has no access to.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.mcp.footage_tools.beat_grid(project_id)
 
@@ -10696,7 +10527,7 @@ backend has no downbeat tracker, and an empty list would read as “this song ha
 no downbeats”, a measurement nobody made (gate, don’t zero).
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.mcp.footage_tools.footage_beat_signals(project_id, , source='song', max_points=1000)
 
@@ -10725,7 +10556,7 @@ Returns `{source, kind: audio|video, duration_s, tempo_bpm, beats, signals:
 and `tempo_bpm` are the soundtrack’s (`[]` / `None` without one).
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.mcp.footage_tools.footage_clear_offset(project_id, , clip_id)
 
@@ -10738,7 +10569,7 @@ runs again the clip has no place on the song, and footage scores made with the o
 offset are dropped.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.mcp.footage_tools.footage_delete_edit(project_id, , edit_id)
 
@@ -10746,7 +10577,7 @@ Delete a saved edit. Videos already rendered from it are kept (they still name
 the edit they came from). An unknown `edit_id` is refused, naming the edits.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.mcp.footage_tools.footage_editor_document(project_id)
 
@@ -10762,7 +10593,7 @@ After a human edits the DECISION tier, feed its annotations back to
 `assemble_music_video` via `footage_edl_from_annotations`.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.mcp.footage_tools.footage_edits(project_id)
 
@@ -10772,7 +10603,7 @@ current alignment (`null` when it does). `unreliable` names clips it cuts to
 whose offsets rendering would refuse.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.mcp.footage_tools.footage_edl_from_annotations(project_id, , annotations)
 
@@ -10786,7 +10617,7 @@ song other than this project’s are refused, not read (muvid#35), so a clipboar
 another project fails saying so instead of splicing in the wrong spans.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.mcp.footage_tools.footage_filmstrip(project_id, , clip_id)
 
@@ -10794,7 +10625,7 @@ One video’s filmstrip (the same record `footage_filmstrips` gives per clip, wi
 `clip_id` and `fps`).
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.mcp.footage_tools.footage_filmstrips(project_id)
 
@@ -10811,7 +10642,7 @@ Returns `{fps, clips: {clip_id: {duration_s, n_frames, frame_w, frame_h, sheets:
 [{artifact_id, cols, rows, first_frame, n_frames}]}}}`.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.mcp.footage_tools.footage_fit_to_beat(project_id, , edit_id, indices=None, min_z=2.5, apply=True)
 
@@ -10841,7 +10672,7 @@ seconds a video; kept for next time). Returns the edit (`footage_get_edit`’s s
 `fitted`, `kept` and `min_z`.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.mcp.footage_tools.footage_get_edit(project_id, , edit_id)
 
@@ -10850,7 +10681,7 @@ One saved edit: its cut list (`edl`, every span of the song, gaps as
 `footage_set_cut`/`footage_merge_cut` refer to positions in this `edl`.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.mcp.footage_tools.footage_looks(project_id)
 
@@ -10859,7 +10690,7 @@ and grades (vivid, black and white, posterize, cartoon) — each with its
 `params_schema`. Give one to `footage_set_cut` as `look={"name": ..., **params}`.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.mcp.footage_tools.footage_merge_cut(project_id, , edit_id, index, into='previous')
 
@@ -10868,7 +10699,7 @@ Join cut `index` to its neighbour: the neighbour (`into` “previous” or
 cut keeps the neighbour’s video, framing and look. Returns the changed edit.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.mcp.footage_tools.footage_peaks(project_id, , n=2000)
 
@@ -10879,7 +10710,7 @@ Returns `{duration_s, n, peaks: [0..1, ...]}`; slice `i` covers song time
 `i * duration_s / n` to `(i + 1) * duration_s / n`. Kept per song and `n`.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.mcp.footage_tools.footage_redo_edit(project_id, , edit_id)
 
@@ -10887,7 +10718,7 @@ Redo the change `footage_undo_edit` last took back. A new change after an undo
 discards what could be redone. Returns the edit as it now is.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.mcp.footage_tools.footage_rename_edit(project_id, , edit_id, name)
 
@@ -10897,7 +10728,7 @@ Only the name changes; the cuts, the span and the edit’s id stay as they are, 
 the rename can be undone like any other change. Returns the edit.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.mcp.footage_tools.footage_render(project_id, , edit_id, canvas='', allow_unreliable=False)
 
@@ -10911,7 +10742,7 @@ the edit cuts to a clip whose offset the aligner will not vouch for, unless
 `allow_unreliable` (see `assemble_music_video`). Read the returned `warnings`.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.mcp.footage_tools.footage_renders(project_id)
 
@@ -10920,7 +10751,7 @@ the `edit_id` it was made from, its `label`, canvas, `ok`, the number of
 `warnings`, and `artifact_id` to play it by when the project is hosted.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.mcp.footage_tools.footage_replace_edit(project_id, , edit_id, edl)
 
@@ -10929,7 +10760,7 @@ once. The new list is checked exactly as `footage_save_edit` checks one; on refu
 edit is left as it was. The previous list is not kept.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.mcp.footage_tools.footage_save_edit(project_id, , edl, name='', how_made='by hand', edit_id='', span=None)
 
@@ -10945,7 +10776,7 @@ makes the edit cover only that part of the song — its render is that long, the
 cut to it; default the whole song. Returns the saved edit.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.mcp.footage_tools.footage_set_cut(project_id, , edit_id, index, clip_id=None, song_start=None, song_end=None, look=None, look_time_varying=None, slip_s=None, rate=None)
 
@@ -10976,7 +10807,7 @@ Change one cut of a saved edit (`index` is its position in `footage_get_edit`’
 Parameters left out are unchanged. The changed edit is checked and saved; returns it.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.mcp.footage_tools.footage_set_offset(project_id, , clip_id, offset_s)
 
@@ -10991,7 +10822,7 @@ it); how much of the song the clip covers is computed from the two durations.
 scores stale, so they are dropped.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.mcp.footage_tools.footage_set_span(project_id, , edit_id, start_s, end_s)
 
@@ -11005,7 +10836,7 @@ cuts across an edge are shortened in the render only). Widening the span again �
 exactly what was there. Returns the edit, with its `span`.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.mcp.footage_tools.footage_split_cut(project_id, , edit_id, at_s)
 
@@ -11016,7 +10847,7 @@ divided where it was at `at_s`. Refused on a boundary (nothing to split). Return
 the changed edit; `changed` is the index of the second half.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.mcp.footage_tools.footage_status(project_id)
 
@@ -11026,7 +10857,7 @@ Also: each clip’s offset and whether it was measured or declared (`alignments`
 the saved `edits`, and `next_step` — the operation that moves the project on.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.mcp.footage_tools.footage_timeline(project_id)
 
@@ -11036,7 +10867,7 @@ The surface for choosing which parts to use before `assemble_music_video`. Built
 the persisted alignment (run `align_footage` first).
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.mcp.footage_tools.footage_undo_edit(project_id, , edit_id)
 
@@ -11045,7 +10876,7 @@ whole replacement — by a person or by the assistant). Returns the edit as it n
 is; `footage_redo_edit` puts the change back. Up to 100 changes are kept per edit.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.mcp.footage_tools.list_music_video_projects()
 
@@ -11067,14 +10898,14 @@ reads off the listing without a `footage_status` per project:
 shows up in `list_projects` instead.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.mcp.footage_tools.list_strategies()
 
 The selection strategies available for full-auto assembly. Free.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.mcp.footage_tools.propose_edit(project_id, , strategy='', preset='', weights=None, config=None, save=False, name='')
 
@@ -11098,7 +10929,7 @@ its `edit_id` — change it cut by cut with `footage_set_cut` /
 `footage_split_cut` / `footage_merge_cut` and render it with `footage_render`.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.mcp.footage_tools.remove_footage(project_id, , clip_id)
 
@@ -11117,7 +10948,7 @@ refusal changes nothing on disk. Returns what was removed, the clips that remain
 and whether an alignment / score tracks were actually dropped.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.mcp.footage_tools.set_song(project_id, , url)
 
@@ -11131,7 +10962,7 @@ This is the reference every uploaded clip is aligned to and whose audio the fina
 video uses. Replaces any previous song. Duration/size-capped.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 
 # _autosummary/muvid.mcp.html.md
@@ -11190,7 +11021,7 @@ Bare tool name → its `module:function` reference (tools live in three modules)
 
 ### *class* muvid.mcp.VisualizerWorkspace(email, root)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 A single caller’s private visualizer area, addressed by `email`.
 
@@ -11209,7 +11040,7 @@ Create (and return) a new visualizer bucket under this user.
 This user’s buckets: `[{project_id, title}]` (newest-modified first).
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)]
+  `list`[`dict`]
 
 #### open_project(project_id)
 
@@ -11234,7 +11065,7 @@ tests), else the verified OAuth token — so tools work under any host middlewar
 an unauthenticated call is failed closed.
 
 * **Return type:**
-  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+  `str`
 
 ### muvid.mcp.data_root()
 
@@ -11244,7 +11075,7 @@ Public API (`muvid.mcp` re-exports it), so the name stays though the body moved.
 A forwarder, not an alias, for the introspection reason given on the footage twin.
 
 * **Return type:**
-  [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)
+  `Path`
 
 ### muvid.mcp.register_tools(server, , prefix='', include=None, exclude=None)
 
@@ -11266,7 +11097,7 @@ Lowercased, or `None` when there is no request/token context — deliberately no
 fallback, so a caller is failed closed rather than handed a shared identity.
 
 * **Return type:**
-  [`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]
+  `Optional`[`str`]
 
 ### muvid.mcp.use_email(email)
 
@@ -11311,7 +11142,7 @@ tests), else the verified OAuth token — so tools work under any host middlewar
 an unauthenticated call is failed closed.
 
 * **Return type:**
-  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+  `str`
 
 ### muvid.mcp.identity.token_email()
 
@@ -11321,7 +11152,7 @@ Lowercased, or `None` when there is no request/token context — deliberately no
 fallback, so a caller is failed closed rather than handed a shared identity.
 
 * **Return type:**
-  [`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]
+  `Optional`[`str`]
 
 ### muvid.mcp.identity.use_email(email)
 
@@ -11368,7 +11199,7 @@ Pass the `job_id` from `score_footage` (or omit for the newest scoring job). Wit
 terminal state — so an agent needs ~1 poll, not many.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.mcp.scoring_tools.footage_scores(project_id, , clip_id='', metrics=None, max_points=1500)
 
@@ -11380,7 +11211,7 @@ The persisted score tracks — for the multichannel editor + inspection. Free.
   `max_points` per metric), for the editor’s lanes.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.mcp.scoring_tools.score_footage(project_id, , hop_s=0.1, metrics=None)
 
@@ -11392,7 +11223,7 @@ a run of `align_footage` first. The heavy lip-sync tier is OFF by default (opt-i
 off-prod).
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 
 # _autosummary/muvid.mcp.workspace.html.md
@@ -11442,7 +11273,7 @@ verbatim copy of both, beside a second copy in `muvid/footage/workspace.py`.
 
 ### *class* muvid.mcp.workspace.VisualizerProject(email, project_id, root)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 One caller’s visualizer bucket — a folder its renders land in.
 
@@ -11455,18 +11286,18 @@ bucket. Kept storage-only: no nw graph, no asset library.
 This bucket’s renders (newest-first), from each render’s `meta.json`.
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)]
+  `list`[`dict`]
 
 #### new_render_dir(render_id)
 
 Create + return a fresh directory for one render (traversal-checked id).
 
 * **Return type:**
-  [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)
+  `Path`
 
 ### *class* muvid.mcp.workspace.VisualizerWorkspace(email, root)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 A single caller’s private visualizer area, addressed by `email`.
 
@@ -11485,7 +11316,7 @@ Create (and return) a new visualizer bucket under this user.
 This user’s buckets: `[{project_id, title}]` (newest-modified first).
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)]
+  `list`[`dict`]
 
 #### open_project(project_id)
 
@@ -11502,7 +11333,7 @@ Public API (`muvid.mcp` re-exports it), so the name stays though the body moved.
 A forwarder, not an alias, for the introspection reason given on the footage twin.
 
 * **Return type:**
-  [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)
+  `Path`
 
 
 # _autosummary/muvid.montage.analysis.html.md
@@ -11558,17 +11389,17 @@ Module scope is stdlib-only; numpy and ffmpeg are reached inside functions.
 
 ### *class* muvid.montage.analysis.Analysis(\*, duration, tempo_bpm, beats, downbeats, beats_per_bar=4, sections=(), beat_source='', section_source='', bar_energy_db=(), notes=<factory>)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 What the planner knows about the song.
 
-#### *property* beat_s *: [float](https://docs.python.org/3/builtins/functions.html#float)*
+#### *property* beat_s *: float*
 
 Seconds per beat at the estimated tempo.
 
 ### *class* muvid.montage.analysis.Media(, index, path, kind, width, height, duration=None, strength=0.0)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 One pool item, measured.
 
@@ -11577,11 +11408,11 @@ a still; `strength` is the closed-form score the reuse policy ranks on.
 
 ### *class* muvid.montage.analysis.Section(, label, start, end, energy_db=None)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 A labelled stretch of the song, in seconds.
 
-#### energy_db *: [float](https://docs.python.org/3/builtins/functions.html#float) | [None](https://docs.python.org/3/builtins/constants.html#None)*
+#### energy_db *: float | None*
 
 Mean bar energy in dB (relative), when measured.
 
@@ -11597,7 +11428,7 @@ Measure `audio`: duration, beat grid, downbeats, bar energy, sections.
 `(beats, tempo_bpm, onset_env, onset_hop_s, source_name, note)`.
 
 `source="auto"` tries `mixing.audio.beat_grid` and falls back to the
-numpy estimator only on [`ImportError`](https://docs.python.org/3/builtins/exceptions.html#ImportError) (librosa absent). Naming a
+numpy estimator only on `ImportError` (librosa absent). Naming a
 source never falls back.
 
 ### muvid.montage.analysis.derive_sections(bar_energy_db, bars, duration, , min_section_bars=4)
@@ -11611,7 +11442,7 @@ of at most `MAX_INTRO_BARS` bars is an intro/outro. A dynamically
 flat song is one verse — reported as such rather than invented.
 
 * **Return type:**
-  [`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`Section`](_autosummary/muvid.montage.analysis.html.md#muvid.montage.analysis.Section), [`...`](https://docs.python.org/3/builtins/constants.html#Ellipsis)]
+  `tuple`[[`Section`](_autosummary/muvid.montage.analysis.html.md#muvid.montage.analysis.Section), `...`]
 
 ```pycon
 >>> bars = [(i * 2.0, (i + 1) * 2.0) for i in range(8)]
@@ -11631,7 +11462,7 @@ phase 0 (the first beat), which is also the answer when there is nothing
 to vote with.
 
 * **Return type:**
-  [`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`float`](https://docs.python.org/3/builtins/functions.html#float), [`...`](https://docs.python.org/3/builtins/constants.html#Ellipsis)]
+  `tuple`[`float`, `...`]
 
 ```pycon
 >>> downbeats_from_beats([0, .5, 1, 1.5, 2, 2.5, 3, 3.5], [1, 0, 0, 0, 1, 0, 0, 0], 4)
@@ -11648,14 +11479,14 @@ A file with no video stream is refused with its path in the message — a
 montage that silently skipped a photo would be a different montage.
 
 * **Return type:**
-  [`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`Media`](_autosummary/muvid.montage.analysis.html.md#muvid.montage.analysis.Media), [`...`](https://docs.python.org/3/builtins/constants.html#Ellipsis)]
+  `tuple`[[`Media`](_autosummary/muvid.montage.analysis.html.md#muvid.montage.analysis.Media), `...`]
 
 ### muvid.montage.analysis.sections_from_labels(raw, duration)
 
 Caller-supplied sections, clamped to the song and gap-filled with verses.
 
 * **Return type:**
-  [`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`Section`](_autosummary/muvid.montage.analysis.html.md#muvid.montage.analysis.Section), [`...`](https://docs.python.org/3/builtins/constants.html#Ellipsis)]
+  `tuple`[[`Section`](_autosummary/muvid.montage.analysis.html.md#muvid.montage.analysis.Section), `...`]
 
 ```pycon
 >>> [(s.label, s.start, s.end) for s in sections_from_labels(
@@ -11708,23 +11539,23 @@ pulls nothing heavy, and each attribute is resolved on first use.
 
 ### *class* muvid.montage.Analysis(\*, duration, tempo_bpm, beats, downbeats, beats_per_bar=4, sections=(), beat_source='', section_source='', bar_energy_db=(), notes=<factory>)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 What the planner knows about the song.
 
-#### *property* beat_s *: [float](https://docs.python.org/3/builtins/functions.html#float)*
+#### *property* beat_s *: float*
 
 Seconds per beat at the estimated tempo.
 
 ### *class* muvid.montage.Canvas(, width=1920, height=1080, fps=30)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 Output geometry.
 
 ### *class* muvid.montage.Plan(\*, duration, tempo_bpm, beats_per_bar, beat_source, section_source, sections, media, slots, reuse=<factory>, treatment=<factory>, notes=(), plan_version='1.0')
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 The edit list. JSON-able, canvas-independent (windows are normalised).
 
@@ -11737,7 +11568,7 @@ Read a plan back — a hand-edited `plan.json` renders the same way.
 
 ### *class* muvid.montage.TreatmentSpec(\*, spec_version='1.0', title='', direction=<factory>, scenes=<factory>)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 A complete, plannable treatment.
 
@@ -11778,7 +11609,7 @@ A JSON-native dict: tuples become lists, so what this emits is
 exactly what `json_schema()` validates and what a file round-trips.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]
+  `dict`[`str`, `Any`]
 
 ### muvid.montage.analyze_song(audio, , beats='auto', beats_per_bar=4, sections=None)
 
@@ -11789,7 +11620,7 @@ the sections were supplied or derived from energy — a caller that ignores
 that will trust a fixed-tempo grid on a rubato ballad.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]
+  `dict`[`str`, `Any`]
 
 ### muvid.montage.plan_montage(audio, , photos=(), clips=(), cover=None, treatment=None, archetype=None, strict=False, beats='auto', beats_per_bar=4, sections=None, out=None)
 
@@ -11799,7 +11630,7 @@ Identical to what [`render_montage()`](_autosummary/muvid.montage.html.md#muvid.
 to a file as well.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]
+  `dict`[`str`, `Any`]
 
 ### muvid.montage.render_montage(audio, output, , photos=(), clips=(), cover=None, treatment=None, archetype=None, strict=False, beats='auto', beats_per_bar=4, sections=None, width=1920, height=1080, fps=30, workdir=None)
 
@@ -11810,7 +11641,7 @@ registered (so the schemas are enforced), and straight to the pipeline
 otherwise — the same renderer either way.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]
+  `dict`[`str`, `Any`]
 
 ### Modules
 
@@ -11907,7 +11738,7 @@ A supplied `treatment` is coerced and repaired; otherwise a one-scene
 treatment is built from `archetype` (default `beat_cut`).
 
 * **Return type:**
-  [`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`TreatmentSpec`](_autosummary/muvid.montage.spec.html.md#muvid.montage.spec.TreatmentSpec), [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)], [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]
+  `tuple`[[`TreatmentSpec`](_autosummary/muvid.montage.spec.html.md#muvid.montage.spec.TreatmentSpec), `list`[`str`], `str`]
 
 ```pycon
 >>> t, notes, source = build_treatment({'archetype': 'grid'})
@@ -11922,7 +11753,7 @@ treatment is built from `archetype` (default `beat_cut`).
 Refuse a render that would exceed the resource bounds. Refuse, not clamp.
 
 * **Return type:**
-  [`None`](https://docs.python.org/3/builtins/constants.html#None)
+  `None`
 
 ```pycon
 >>> check_render_bounds(Canvas(width=1920, height=1080, fps=30), 200.0, n_photos=12)
@@ -12020,7 +11851,7 @@ asks for.
 | [`Tile`](_autosummary/muvid.montage.plan.html.md#muvid.montage.plan.Tile)(\*, region, media, motion, variant, path)    | One region of a slot: which media, framed and moved how.                                     |
 | [`Window`](_autosummary/muvid.montage.plan.html.md#muvid.montage.plan.Window)(x, y, size)                                | A framing: top-left `(x, y)` and visible fraction `size` of the fitted frame, all in `0..1`. |
 
-### muvid.montage.plan.CROP_VARIANTS *: [dict](https://docs.python.org/3/builtins/stdtypes.html#dict)[[str](https://docs.python.org/3/builtins/stdtypes.html#str), [tuple](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[float](https://docs.python.org/3/builtins/functions.html#float), [float](https://docs.python.org/3/builtins/functions.html#float), [float](https://docs.python.org/3/builtins/functions.html#float)]]* *= {'bottom': (0.5, 0.68, 0.78), 'centre': (0.5, 0.5, 0.7), 'full': (0.5, 0.5, 1.0), 'left': (0.32, 0.5, 0.78), 'right': (0.68, 0.5, 0.78), 'top': (0.5, 0.32, 0.78)}*
+### muvid.montage.plan.CROP_VARIANTS *: dict[str, tuple[float, float, float]]* *= {'bottom': (0.5, 0.68, 0.78), 'centre': (0.5, 0.5, 0.7), 'full': (0.5, 0.5, 1.0), 'left': (0.32, 0.5, 0.78), 'right': (0.68, 0.5, 0.78), 'top': (0.5, 0.32, 0.78)}*
 
 The closed set of framings a still may be shown in, as `(cx, cy, size)`
 of the frame fitted to the canvas (`size` is the visible fraction; the
@@ -12029,13 +11860,13 @@ variant, so a revisit is a different picture.
 
 ### *class* muvid.montage.plan.Keyframe(t, window)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 `window` at slot-relative time `t` (seconds).
 
 ### *class* muvid.montage.plan.Plan(\*, duration, tempo_bpm, beats_per_bar, beat_source, section_source, sections, media, slots, reuse=<factory>, treatment=<factory>, notes=(), plan_version='1.0')
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 The edit list. JSON-able, canvas-independent (windows are normalised).
 
@@ -12048,43 +11879,43 @@ Read a plan back — a hand-edited `plan.json` renders the same way.
 
 ### *class* muvid.montage.plan.PlanContext(, analysis, direction)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 What every archetype gets: the measurements and the direction.
 
 ### *class* muvid.montage.plan.Slot(, index, start, end, section, archetype, regions, tiles, transition='cut', transition_s=0.0)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 One span of the montage, in song seconds.
 
-#### transition *: [str](https://docs.python.org/3/builtins/stdtypes.html#str)*
+#### transition *: str*
 
 How this slot ARRIVES. The first slot’s is always a cut.
 
 ### *class* muvid.montage.plan.SlotDraft(, start, end, section, archetype, regions=1, fresh=(0,), motions=('none',), amplitude=0.0, transition='cut', transition_s=0.0)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 What an archetype emits: a span with regions, before media assignment.
 
 ### *class* muvid.montage.plan.Tile(, region, media, motion, variant, path, source_in=0.0, use=0)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 One region of a slot: which media, framed and moved how.
 
-#### source_in *: [float](https://docs.python.org/3/builtins/functions.html#float)*
+#### source_in *: float*
 
 In-point into a clip (seconds). Ignored for stills.
 
-#### use *: [int](https://docs.python.org/3/builtins/functions.html#int)*
+#### use *: int*
 
 The ordinal of this use of the media, 0-based (drives variant/in-point).
 
 ### *class* muvid.montage.plan.Window(x, y, size)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 A framing: top-left `(x, y)` and visible fraction `size` of the
 fitted frame, all in `0..1`. The aspect is the canvas’s.
@@ -12098,7 +11929,7 @@ account of what it did (reserved images, uses, the smallest gap it
 actually produced), which goes into the plan for inspection.
 
 * **Return type:**
-  [`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`int`](https://docs.python.org/3/builtins/functions.html#int), [`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`int`](https://docs.python.org/3/builtins/functions.html#int), [`int`](https://docs.python.org/3/builtins/functions.html#int)]]], [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]]
+  `tuple`[`list`[`dict`[`int`, `tuple`[`int`, `int`]]], `dict`[`str`, `Any`]]
 
 ```pycon
 >>> from muvid.montage.analysis import Media
@@ -12125,7 +11956,7 @@ its neighbour — a half-beat pickup is not a slot — and a cut within
 `MIN_SLOT_S` of a boundary is dropped.
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`float`](https://docs.python.org/3/builtins/functions.html#float)]
+  `list`[`float`]
 
 ```pycon
 >>> from muvid.montage.analysis import Analysis, Section
@@ -12154,7 +11985,7 @@ Pool + measurements + treatment -> a [`Plan`](_autosummary/muvid.montage.plan.ht
 Register an archetype planner under `name`.
 
 * **Return type:**
-  [`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[[`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[[`Section`](_autosummary/muvid.montage.analysis.html.md#muvid.montage.analysis.Section), [`PlanContext`](_autosummary/muvid.montage.plan.html.md#muvid.montage.plan.PlanContext), [`Mapping`](https://docs.python.org/3/library/typing.html#typing.Mapping)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]], [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`SlotDraft`](_autosummary/muvid.montage.plan.html.md#muvid.montage.plan.SlotDraft)]]], [`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[[`Section`](_autosummary/muvid.montage.analysis.html.md#muvid.montage.analysis.Section), [`PlanContext`](_autosummary/muvid.montage.plan.html.md#muvid.montage.plan.PlanContext), [`Mapping`](https://docs.python.org/3/library/typing.html#typing.Mapping)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]], [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`SlotDraft`](_autosummary/muvid.montage.plan.html.md#muvid.montage.plan.SlotDraft)]]]
+  `Callable`[[`Callable`[[[`Section`](_autosummary/muvid.montage.analysis.html.md#muvid.montage.analysis.Section), [`PlanContext`](_autosummary/muvid.montage.plan.html.md#muvid.montage.plan.PlanContext), `Mapping`[`str`, `Any`]], `list`[[`SlotDraft`](_autosummary/muvid.montage.plan.html.md#muvid.montage.plan.SlotDraft)]]], `Callable`[[[`Section`](_autosummary/muvid.montage.analysis.html.md#muvid.montage.analysis.Section), [`PlanContext`](_autosummary/muvid.montage.plan.html.md#muvid.montage.plan.PlanContext), `Mapping`[`str`, `Any`]], `list`[[`SlotDraft`](_autosummary/muvid.montage.plan.html.md#muvid.montage.plan.SlotDraft)]]]
 
 ```pycon
 >>> @register_archetype('doctest-demo')
@@ -12169,7 +12000,7 @@ True
 The window path for one still: piecewise linear, slot-relative seconds.
 
 * **Return type:**
-  [`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`Keyframe`](_autosummary/muvid.montage.plan.html.md#muvid.montage.plan.Keyframe), [`...`](https://docs.python.org/3/builtins/constants.html#Ellipsis)]
+  `tuple`[[`Keyframe`](_autosummary/muvid.montage.plan.html.md#muvid.montage.plan.Keyframe), `...`]
 
 ```pycon
 >>> tile_path('full', 'none', 2.0)
@@ -12234,13 +12065,13 @@ the rest of muvid ships.
 
 ### *class* muvid.montage.render.Canvas(, width=1920, height=1080, fps=30)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 Output geometry.
 
 ### *class* muvid.montage.render.Part(, kind, slot, offset, n_frames, prev=None, prev_offset=0, curve='fade')
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 One ffmpeg invocation’s worth of frames.
 
@@ -12257,7 +12088,7 @@ slot i (0 for a cut; slot 0’s is always 0). A transition is clamped to
 half the shorter neighbour and dropped below `MIN_TRANSITION_FRAMES`.
 
 * **Return type:**
-  [`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`int`](https://docs.python.org/3/builtins/functions.html#int)], [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`int`](https://docs.python.org/3/builtins/functions.html#int)]]
+  `tuple`[`list`[`int`], `list`[`int`]]
 
 ```pycon
 >>> frame_layout([0.0, 1.0, 2.0], 3.0, [0.0, 0.5, 0.05], 24)
@@ -12274,7 +12105,7 @@ The ffmpeg fragment for a grade, or `""` for none.
 form over the accent colour, never a caller-supplied filter string.
 
 * **Return type:**
-  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+  `str`
 
 ```pycon
 >>> grade_filter('none')
@@ -12292,15 +12123,15 @@ Render `plan` over `audio` to `output`. Writes exactly `output`.
 * **Parameters:**
   * **plan** ([`Plan`](_autosummary/muvid.montage.plan.html.md#muvid.montage.plan.Plan)) – The edit list. Its media paths are opened as-is.
   * **canvas** ([`Canvas`](_autosummary/muvid.montage.render.html.md#muvid.montage.render.Canvas)) – Output size and frame rate. Even dimensions only.
-  * **audio** ([`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path) | [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)) – The song; the video is exactly as long as it.
-  * **output** ([`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path) | [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)) – The mp4 to write.
-  * **workdir** ([`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path) | [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)) – Where the parts go (`workdir/parts`, removed after a
+  * **audio** (`Path` | `str`) – The song; the video is exactly as long as it.
+  * **output** (`Path` | `str`) – The mp4 to write.
+  * **workdir** (`Path` | `str`) – Where the parts go (`workdir/parts`, removed after a
     successful mux unless `keep_parts`).
-  * **grade** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str)) – One of [`muvid.montage.spec.GRADES`](_autosummary/muvid.montage.spec.html.md#muvid.montage.spec.GRADES).
-  * **palette** ([`Palette`](_autosummary/muvid.montage.spec.html.md#muvid.montage.spec.Palette) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – Supplies the tint accent and the grid pad colour.
-  * **crf** ([`int`](https://docs.python.org/3/builtins/functions.html#int)) – libx264 knobs, per part.
-  * **preset** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str)) – libx264 knobs, per part.
-  * **keep_parts** ([`bool`](https://docs.python.org/3/builtins/functions.html#bool)) – Leave the intermediate parts on disk.
+  * **grade** (`str`) – One of [`muvid.montage.spec.GRADES`](_autosummary/muvid.montage.spec.html.md#muvid.montage.spec.GRADES).
+  * **palette** ([`Palette`](_autosummary/muvid.montage.spec.html.md#muvid.montage.spec.Palette) | `None`) – Supplies the tint accent and the grid pad colour.
+  * **crf** (`int`) – libx264 knobs, per part.
+  * **preset** (`str`) – libx264 knobs, per part.
+  * **keep_parts** (`bool`) – Leave the intermediate parts on disk.
 * **Return type:**
   [`RenderResult`](_autosummary/muvid.subgenres.html.md#muvid.subgenres.RenderResult)
 * **Returns:**
@@ -12316,7 +12147,7 @@ that starts mid-slot (or, negative, before the slot’s first frame on the
 incoming side of a blend) samples the slot’s own path.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]
+  `dict`[`str`, `str`]
 
 ```pycon
 >>> from muvid.montage.plan import Keyframe, Window
@@ -12394,53 +12225,53 @@ path of the plugin surface.
 | [`Scene`](_autosummary/muvid.montage.spec.html.md#muvid.montage.spec.Scene)(\*[, applies_to, archetype, params])      | One archetype, applied to part of the song.              |
 | [`TreatmentSpec`](_autosummary/muvid.montage.spec.html.md#muvid.montage.spec.TreatmentSpec)(\*[, spec_version, title, ...])   | A complete, plannable treatment.                         |
 
-### muvid.montage.spec.ARCHETYPES *: [dict](https://docs.python.org/3/builtins/stdtypes.html#dict)[[str](https://docs.python.org/3/builtins/stdtypes.html#str), [str](https://docs.python.org/3/builtins/stdtypes.html#str)]* *= {'ballad_dissolve': 'Cut every 2-4 bars on a downbeat, one-beat crossfades, a slow Ken Burns drift on each still. For slow songs and quiet sections.', 'beat_cut': "Hard cuts on the grid — every beat or half-bar in a chorus, every bar in a verse — with a punch-zoom on each cut. The 'photo beat sync' look.", 'grid': 'A 2x2 grid of tiles; one tile swaps on every beat. Dense and busy; wants a pool of eight or more.', 'stop_motion': 'Stills held for a beat subdivision with no motion at all — a flip-book. Mechanical, playful.'}*
+### muvid.montage.spec.ARCHETYPES *: dict[str, str]* *= {'ballad_dissolve': 'Cut every 2-4 bars on a downbeat, one-beat crossfades, a slow Ken Burns drift on each still. For slow songs and quiet sections.', 'beat_cut': "Hard cuts on the grid — every beat or half-bar in a chorus, every bar in a verse — with a punch-zoom on each cut. The 'photo beat sync' look.", 'grid': 'A 2x2 grid of tiles; one tile swaps on every beat. Dense and busy; wants a pool of eight or more.', 'stop_motion': 'Stills held for a beat subdivision with no motion at all — a flip-book. Mechanical, playful.'}*
 
 How the pool is cut to the song. The planner owns the timing and geometry;
 the spec only names the family and its knobs.
 
-### muvid.montage.spec.ARCHETYPE_PARAMS *: [dict](https://docs.python.org/3/builtins/stdtypes.html#dict)[[str](https://docs.python.org/3/builtins/stdtypes.html#str), [dict](https://docs.python.org/3/builtins/stdtypes.html#dict)[[str](https://docs.python.org/3/builtins/stdtypes.html#str), [dict](https://docs.python.org/3/builtins/stdtypes.html#dict)[[str](https://docs.python.org/3/builtins/stdtypes.html#str), [Any](https://docs.python.org/3/library/typing.html#typing.Any)]]]* *= {'ballad_dissolve': {'bars_per_cut': {'default': 4, 'description': 'Bars between cuts in a verse; a chorus halves it.', 'maximum': 16, 'minimum': 1, 'type': 'number'}, 'drift': {'default': 0.08, 'description': 'Ken Burns amplitude as a fraction of the frame.', 'maximum': 0.3, 'minimum': 0, 'type': 'number'}, 'fade_beats': {'default': 1, 'description': 'Crossfade length in beats. 0 is a hard cut.', 'maximum': 4, 'minimum': 0, 'type': 'number'}}, 'beat_cut': {'beats_per_cut': {'default': 4, 'description': 'Beats between cuts in a verse; a chorus halves it.', 'maximum': 16, 'minimum': 1, 'type': 'number'}, 'punch': {'default': 0.12, 'description': 'Punch-zoom amount on each cut (0 disables).', 'maximum': 0.3, 'minimum': 0, 'type': 'number'}}, 'grid': {'beats_per_swap': {'default': 2, 'description': 'Beats between tile swaps in a verse; a chorus halves it.', 'maximum': 16, 'minimum': 1, 'type': 'number'}}, 'stop_motion': {'subdivision': {'default': 2, 'description': 'Holds per beat (2 = eighth notes). A chorus doubles it, up to 4.', 'maximum': 4, 'minimum': 1, 'type': 'integer'}}}*
+### muvid.montage.spec.ARCHETYPE_PARAMS *: dict[str, dict[str, dict[str, Any]]]* *= {'ballad_dissolve': {'bars_per_cut': {'default': 4, 'description': 'Bars between cuts in a verse; a chorus halves it.', 'maximum': 16, 'minimum': 1, 'type': 'number'}, 'drift': {'default': 0.08, 'description': 'Ken Burns amplitude as a fraction of the frame.', 'maximum': 0.3, 'minimum': 0, 'type': 'number'}, 'fade_beats': {'default': 1, 'description': 'Crossfade length in beats. 0 is a hard cut.', 'maximum': 4, 'minimum': 0, 'type': 'number'}}, 'beat_cut': {'beats_per_cut': {'default': 4, 'description': 'Beats between cuts in a verse; a chorus halves it.', 'maximum': 16, 'minimum': 1, 'type': 'number'}, 'punch': {'default': 0.12, 'description': 'Punch-zoom amount on each cut (0 disables).', 'maximum': 0.3, 'minimum': 0, 'type': 'number'}}, 'grid': {'beats_per_swap': {'default': 2, 'description': 'Beats between tile swaps in a verse; a chorus halves it.', 'maximum': 16, 'minimum': 1, 'type': 'number'}}, 'stop_motion': {'subdivision': {'default': 2, 'description': 'Holds per beat (2 = eighth notes). A chorus doubles it, up to 4.', 'maximum': 4, 'minimum': 1, 'type': 'integer'}}}*
 
 The parameters each archetype accepts, as a small JSON Schema per key. A key
 outside this table is a validation error and is dropped by [`repair()`](_autosummary/muvid.montage.spec.html.md#muvid.montage.spec.repair);
 a value outside its range is clamped. Closed, so a plugin UI can render it.
 
-### muvid.montage.spec.CUT_FEELS *: [dict](https://docs.python.org/3/builtins/stdtypes.html#dict)[[str](https://docs.python.org/3/builtins/stdtypes.html#str), [str](https://docs.python.org/3/builtins/stdtypes.html#str)]* *= {'driving': 'Twice as many cuts. Pushes forward.', 'frantic': "Four times as many cuts, floored at the archetype's minimum.", 'slow': "Half as many cuts as the archetype's default. Contemplative.", 'steady': "The archetype's own pacing."}*
+### muvid.montage.spec.CUT_FEELS *: dict[str, str]* *= {'driving': 'Twice as many cuts. Pushes forward.', 'frantic': "Four times as many cuts, floored at the archetype's minimum.", 'slow': "Half as many cuts as the archetype's default. Contemplative.", 'steady': "The archetype's own pacing."}*
 
 How the cutting should feel. A MULTIPLIER over each archetype’s own pacing,
 so the same treatment reads “slow” on a ballad and “driving” on a banger
 without the model naming a number of beats.
 
-### muvid.montage.spec.CUT_FEEL_FACTORS *: [dict](https://docs.python.org/3/builtins/stdtypes.html#dict)[[str](https://docs.python.org/3/builtins/stdtypes.html#str), [float](https://docs.python.org/3/builtins/functions.html#float)]* *= {'driving': 0.5, 'frantic': 0.25, 'slow': 2.0, 'steady': 1.0}*
+### muvid.montage.spec.CUT_FEEL_FACTORS *: dict[str, float]* *= {'driving': 0.5, 'frantic': 0.25, 'slow': 2.0, 'steady': 1.0}*
 
 Multiplier on beats-per-cut per cut feel. Smaller is more cuts.
 
 ### *class* muvid.montage.spec.Direction(\*, mood='', palette=<factory>, cut_feel='steady', grade='none', reuse=<factory>, rationale='')
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 The song-level creative decision.
 
-### muvid.montage.spec.GRADES *: [dict](https://docs.python.org/3/builtins/stdtypes.html#dict)[[str](https://docs.python.org/3/builtins/stdtypes.html#str), [str](https://docs.python.org/3/builtins/stdtypes.html#str)]* *= {'mono': 'Desaturate to black and white.', 'none': 'The pool as shot.', 'tint': "Blend the palette's accent colour into the frame (a duotone-ish wash)."}*
+### muvid.montage.spec.GRADES *: dict[str, str]* *= {'mono': 'Desaturate to black and white.', 'none': 'The pool as shot.', 'tint': "Blend the palette's accent colour into the frame (a duotone-ish wash)."}*
 
 A colour grade applied to every frame. Closed because the grade is
 EXECUTABLE ffmpeg; the palette’s accent parameterises it, never a filter string.
 
-### muvid.montage.spec.MOTIONS *: [dict](https://docs.python.org/3/builtins/stdtypes.html#dict)[[str](https://docs.python.org/3/builtins/stdtypes.html#str), [str](https://docs.python.org/3/builtins/stdtypes.html#str)]* *= {'none': 'Held still.', 'pan_left': 'A slow drift leftward.', 'pan_right': 'A slow drift rightward.', 'punch': 'Arrives zoomed in and relaxes to rest within half a beat.', 'zoom_in': 'A slow push in.', 'zoom_out': 'A slow pull out.'}*
+### muvid.montage.spec.MOTIONS *: dict[str, str]* *= {'none': 'Held still.', 'pan_left': 'A slow drift leftward.', 'pan_right': 'A slow drift rightward.', 'punch': 'Arrives zoomed in and relaxes to rest within half a beat.', 'zoom_in': 'A slow push in.', 'zoom_out': 'A slow pull out.'}*
 
 How a still moves within a slot. Assigned by the ARCHETYPE, never by the
 spec — listed here so the plan’s vocabulary is closed and documented.
 
 ### *class* muvid.montage.spec.Palette(, bg='#000000', accent='#e0533d')
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 Colours, as `#rrggbb`. `accent` parameterises the `tint` grade;
 `bg` is the letterbox/pad colour when a tile does not fill its region.
 
 ### *class* muvid.montage.spec.Reuse(, min_gap=6, reserve_for_finale=True)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 The reuse POLICY — how a small pool carries a long song.
 
@@ -12449,13 +12280,13 @@ shrinks automatically to `pool - 1` for a small pool). Every return uses
 a different crop/move variant. `reserve_for_finale` holds the strongest
 quarter of the pool back for the last chorus.
 
-### muvid.montage.spec.SECTION_LABELS *: [dict](https://docs.python.org/3/builtins/stdtypes.html#dict)[[str](https://docs.python.org/3/builtins/stdtypes.html#str), [str](https://docs.python.org/3/builtins/stdtypes.html#str)]* *= {'bridge': 'Chorus density.', 'chorus': 'Dense cuts; the last chorus gets the strongest images.', 'intro': 'Sparse cuts.', 'outro': 'Sparse cuts.', 'verse': "The archetype's verse pacing."}*
+### muvid.montage.spec.SECTION_LABELS *: dict[str, str]* *= {'bridge': 'Chorus density.', 'chorus': 'Dense cuts; the last chorus gets the strongest images.', 'intro': 'Sparse cuts.', 'outro': 'Sparse cuts.', 'verse': "The archetype's verse pacing."}*
 
 Section labels the planner knows how to pace. Others are paced as a verse.
 
 ### *class* muvid.montage.spec.Scene(\*, applies_to=('\*', ), archetype='beat_cut', params=<factory>)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 One archetype, applied to part of the song.
 
@@ -12463,7 +12294,7 @@ One archetype, applied to part of the song.
 named scene wins its section; sections no scene names fall back to the
 first `"*"` scene, so a one-scene spec is valid and complete.
 
-### muvid.montage.spec.TRANSITIONS *: [dict](https://docs.python.org/3/builtins/stdtypes.html#dict)[[str](https://docs.python.org/3/builtins/stdtypes.html#str), [str](https://docs.python.org/3/builtins/stdtypes.html#str)]* *= {'cut': 'A hard cut.', 'dissolve': 'A noisy dissolve.', 'fade': 'A crossfade.', 'fadeblack': 'Dip to black.'}*
+### muvid.montage.spec.TRANSITIONS *: dict[str, str]* *= {'cut': 'A hard cut.', 'dissolve': 'A noisy dissolve.', 'fade': 'A crossfade.', 'fadeblack': 'Dip to black.'}*
 
 How a slot arrives. A curated subset of ffmpeg’s `xfade` transitions, the
 same posture as `muvid.footage.edl.TRANSITION_CURVES`: a name outside it is
@@ -12471,7 +12302,7 @@ refused here rather than discovered as an ffmpeg error three stages later.
 
 ### *class* muvid.montage.spec.TreatmentSpec(\*, spec_version='1.0', title='', direction=<factory>, scenes=<factory>)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 A complete, plannable treatment.
 
@@ -12512,7 +12343,7 @@ A JSON-native dict: tuples become lists, so what this emits is
 exactly what [`json_schema()`](_autosummary/muvid.montage.spec.html.md#muvid.montage.spec.json_schema) validates and what a file round-trips.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]
+  `dict`[`str`, `Any`]
 
 ### muvid.montage.spec.coerce(obj)
 
@@ -12522,7 +12353,7 @@ Accepts a [`TreatmentSpec`](_autosummary/muvid.montage.spec.html.md#muvid.montag
 it. This is the one entry point production code should use.
 
 * **Return type:**
-  [`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`TreatmentSpec`](_autosummary/muvid.montage.spec.html.md#muvid.montage.spec.TreatmentSpec), [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]]
+  `tuple`[[`TreatmentSpec`](_autosummary/muvid.montage.spec.html.md#muvid.montage.spec.TreatmentSpec), `list`[`str`]]
 
 ```pycon
 >>> spec, notes = coerce('{"scenes": [{"archetype": "grid"}]}')
@@ -12535,7 +12366,7 @@ it. This is the one entry point production code should use.
 The JSON Schema for a [`TreatmentSpec`](_autosummary/muvid.montage.spec.html.md#muvid.montage.spec.TreatmentSpec).
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]
+  `dict`[`str`, `Any`]
 
 ```pycon
 >>> s = json_schema()
@@ -12564,7 +12395,7 @@ mistake; projecting it onto the default renders something good now, where a
 retry costs a round trip. Every substitution is reported.
 
 * **Return type:**
-  [`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`TreatmentSpec`](_autosummary/muvid.montage.spec.html.md#muvid.montage.spec.TreatmentSpec), [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]]
+  `tuple`[[`TreatmentSpec`](_autosummary/muvid.montage.spec.html.md#muvid.montage.spec.TreatmentSpec), `list`[`str`]]
 
 ```pycon
 >>> fixed, notes = repair(TreatmentSpec(scenes=(Scene(archetype='swirl'),)))
@@ -12583,7 +12414,7 @@ retry costs a round trip. Every substitution is reported.
 Return a list of human-readable problems. Empty means plannable.
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]
+  `list`[`str`]
 
 ```pycon
 >>> validate(TreatmentSpec(scenes=(Scene(archetype='nope'),)))
@@ -12597,7 +12428,7 @@ Return a list of human-readable problems. Empty means plannable.
 Every closed vocabulary, for prompts and UI. One copy, several readers.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]]
+  `dict`[`str`, `dict`[`str`, `Any`]]
 
 
 # _autosummary/muvid.montage.tools.html.md
@@ -12638,7 +12469,7 @@ the sections were supplied or derived from energy — a caller that ignores
 that will trust a fixed-tempo grid on a rubato ballad.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]
+  `dict`[`str`, `Any`]
 
 ### muvid.montage.tools.plan_montage(audio, , photos=(), clips=(), cover=None, treatment=None, archetype=None, strict=False, beats='auto', beats_per_bar=4, sections=None, out=None)
 
@@ -12648,7 +12479,7 @@ Identical to what [`render_montage()`](_autosummary/muvid.montage.tools.html.md#
 to a file as well.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]
+  `dict`[`str`, `Any`]
 
 ### muvid.montage.tools.render_montage(audio, output, , photos=(), clips=(), cover=None, treatment=None, archetype=None, strict=False, beats='auto', beats_per_bar=4, sections=None, width=1920, height=1080, fps=30, workdir=None)
 
@@ -12659,14 +12490,14 @@ registered (so the schemas are enforced), and straight to the pipeline
 otherwise — the same renderer either way.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]
+  `dict`[`str`, `Any`]
 
 ### muvid.montage.tools.treatment_schema()
 
 JSON Schema for a treatment spec — also a model’s output constraint.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]
+  `dict`[`str`, `Any`]
 
 ```pycon
 >>> treatment_schema()['type']
@@ -12678,7 +12509,7 @@ JSON Schema for a treatment spec — also a model’s output constraint.
 Validate a treatment, and return the repaired version alongside.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]
+  `dict`[`str`, `Any`]
 
 ```pycon
 >>> r = validate_treatment({'scenes': [{'archetype': 'swirl'}]})
@@ -12691,7 +12522,7 @@ Validate a treatment, and return the repaired version alongside.
 The closed vocabularies a treatment may draw on.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]
+  `dict`[`str`, `Any`]
 
 ```pycon
 >>> sorted(vocabulary())[:3]
@@ -12790,7 +12621,7 @@ to prevent, reached through its own knob. A misconfigured root is refused loudly
 rather than read as something plausible.
 
 * **Return type:**
-  [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)
+  `Path`
 
 ### muvid.paths.project_root(name, , kind='projects')
 
@@ -12805,7 +12636,7 @@ a project would go.
 `visualizer/`) through the workspace classes that own those layouts.
 
 * **Return type:**
-  [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)
+  `Path`
 
 ### muvid.paths.safe_component(value, , label)
 
@@ -12818,7 +12649,7 @@ that surface. Behaviour is unchanged from the two copies this replaced — notab
 there is no length cap and no unicode normalisation, both pre-existing.
 
 * **Return type:**
-  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+  `str`
 
 
 # _autosummary/muvid.project.html.md
@@ -12843,7 +12674,7 @@ without learning the full schema.
 
 ### *class* muvid.project.MusicVideoProject(root)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 Filesystem-backed music video project.
 
@@ -12866,7 +12697,7 @@ registered in `project.json`.
 Append a one-line JSON entry to `.muvid/decisions.jsonl`.
 
 * **Return type:**
-  [`None`](https://docs.python.org/3/builtins/constants.html#None)
+  `None`
 
 #### set_song(source, , copy=True)
 
@@ -12951,7 +12782,7 @@ enforced at the only place that can see which `an` is actually there.
 |-------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------|
 | [`render_animation`](_autosummary/muvid.renderers.animation.html.md#muvid.renderers.animation.render_animation)(ctx, \*[, quality])           | Synthesize a tiny `an` scene for this shot and orchestrate it.        |
 
-### muvid.renderers.animation.AN_CAMERA_MOVE_PHRASES *: [tuple](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[tuple](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[str](https://docs.python.org/3/builtins/stdtypes.html#str), [str](https://docs.python.org/3/builtins/stdtypes.html#str)], ...]* *= (('push in', 'push_in'), ('push into', 'push_in'), ('dolly in', 'push_in'), ('zoom in', 'zoom_in'), ('pull out', 'pull_out'), ('pull back', 'pull_out'), ('dolly out', 'pull_out'), ('zoom out', 'zoom_out'), ('pan left', 'pan_left'), ('pan right', 'pan_right'), ('tilt up', 'tilt_up'), ('tilt down', 'tilt_down'), ('crane up', 'tilt_up'), ('crane down', 'tilt_down'), ('static', 'hold'), ('hold', 'hold'), ('locked', 'hold'), ('locked off', 'hold'), ('lock off', 'hold'), ('no movement', 'hold'))*
+### muvid.renderers.animation.AN_CAMERA_MOVE_PHRASES *: tuple[tuple[str, str], ...]* *= (('push in', 'push_in'), ('push into', 'push_in'), ('dolly in', 'push_in'), ('zoom in', 'zoom_in'), ('pull out', 'pull_out'), ('pull back', 'pull_out'), ('dolly out', 'pull_out'), ('zoom out', 'zoom_out'), ('pan left', 'pan_left'), ('pan right', 'pan_right'), ('tilt up', 'tilt_up'), ('tilt down', 'tilt_down'), ('crane up', 'tilt_up'), ('crane down', 'tilt_down'), ('static', 'hold'), ('hold', 'hold'), ('locked', 'hold'), ('locked off', 'hold'), ('lock off', 'hold'), ('no movement', 'hold'))*
 
 muvid prose -> `an` move name — the WHOLE recognised vocabulary, including
 the several ways a director spells “don’t move”. A direction that matches
@@ -13039,7 +12870,7 @@ True
 ```
 
 * **Return type:**
-  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+  `str`
 
 ### muvid.renderers.animation.render_animation(ctx, , quality='balanced')
 
@@ -13053,7 +12884,7 @@ installed and refuses the scene, because that is a bug in what muvid
 synthesized and a still image is a wrong answer, not a lesser one (muvid#46).
 
 * **Return type:**
-  [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)
+  `Path`
 
 
 # _autosummary/muvid.renderers.html.md
@@ -13087,7 +12918,7 @@ matches the current ShotSpec, we skip.
 
 ### *class* muvid.renderers.RenderContext(, project, shot, shot_dir, audio_slice_path, character_image_paths, environment_image_path, lyric_lines, global_style='')
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 Shared resolved inputs for rendering a shot.
 
@@ -13103,7 +12934,7 @@ billed one second, and a zero-duration shot priced at $0.00 with
 estimate paraphrasing the renderer’s arithmetic instead of calling it).
 
 * **Return type:**
-  [`int`](https://docs.python.org/3/builtins/functions.html#int)
+  `int`
 
 ### muvid.renderers.render_shot(project, shot_id, , quality='balanced', force=False)
 
@@ -13114,7 +12945,7 @@ matches the current shot definition’s hash, unless `force=True` —
 the [`shot_is_rendered()`](_autosummary/muvid.renderers.html.md#muvid.renderers.shot_is_rendered) predicate, which the cost estimate shares.
 
 * **Return type:**
-  [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)
+  `Path`
 
 ### muvid.renderers.shot_is_rendered(project, shot, global_style, , force=False)
 
@@ -13130,7 +12961,7 @@ predicates that must agree is the shape that produced it; this function is
 the agreement.
 
 * **Return type:**
-  [`bool`](https://docs.python.org/3/builtins/functions.html#bool)
+  `bool`
 
 ### Modules
 
@@ -13241,7 +13072,7 @@ mechanical (asdict / kwargs); `schema_version` lets us migrate later.
 
 ### *class* muvid.schema.CharacterRef(, name, description='')
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 Pointer to a character folder under `characters/<name>/`.
 
@@ -13251,13 +13082,13 @@ project SSOT stays small.
 
 ### *class* muvid.schema.EnvironmentRef(, name, description='')
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 Pointer to an environment folder under `environments/<name>/`.
 
 ### *class* muvid.schema.ProjectSpec(, schema_version=1, title='', song=None, characters=(), environments=(), sections=(), shots=(), global_style='', notes='')
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 The top-level project SSOT, persisted as `project.json`.
 
@@ -13266,11 +13097,11 @@ The top-level project SSOT, persisted as `project.json`.
 Render strategies a single shot can use. The `render` subpackage
 dispatches on this string.
 
-alias of [`Literal`](https://docs.python.org/3/library/typing.html#typing.Literal)[‘lipsync’, ‘image_to_video’, ‘text_to_video’, ‘animation’, ‘still’]
+alias of `Literal`[‘lipsync’, ‘image_to_video’, ‘text_to_video’, ‘animation’, ‘still’]
 
 ### *class* muvid.schema.SectionSpec(, id, start_s, end_s, label='', energy='', mood='')
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 A non-overlapping span of the song with a label.
 
@@ -13279,7 +13110,7 @@ A non-overlapping span of the song with a label.
 
 ### *class* muvid.schema.ShotSpec(, id, start_s, end_s, section_id='', render_strategy='image_to_video', environment='', characters=(), description='', camera='', framing='medium', notes='')
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 A timeline-locked visual unit of the music video.
 
@@ -13290,7 +13121,7 @@ isn’t supported by the basic compositor).
 
 ### *class* muvid.schema.SongInfo(, audio_path, duration_s, sample_rate=0, bitrate=0, bpm=None)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 Metadata for the master audio file.
 
@@ -13332,7 +13163,7 @@ Parse `script/script.md` and upsert any sections/shots it defines.
 Existing sections/shots not present in the script are left alone.
 
 * **Return type:**
-  [`None`](https://docs.python.org/3/builtins/constants.html#None)
+  `None`
 
 ### muvid.script.parse_script(md)
 
@@ -13343,21 +13174,21 @@ otherwise it’s an empty list and you should rely on the project’s
 section list separately.
 
 * **Return type:**
-  [`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`SectionSpec`](_autosummary/muvid.schema.html.md#muvid.schema.SectionSpec)], [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`ShotSpec`](_autosummary/muvid.schema.html.md#muvid.schema.ShotSpec)]]
+  `tuple`[`list`[[`SectionSpec`](_autosummary/muvid.schema.html.md#muvid.schema.SectionSpec)], `list`[[`ShotSpec`](_autosummary/muvid.schema.html.md#muvid.schema.ShotSpec)]]
 
 ### muvid.script.render_script(sections, shots)
 
 Inverse of `parse_script`. Writes the canonical markdown form.
 
 * **Return type:**
-  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+  `str`
 
 ### muvid.script.write_script(project)
 
 Render the project’s current sections+shots to `script/script.md`.
 
 * **Return type:**
-  [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)
+  `Path`
 
 
 # _autosummary/muvid.subgenres.html.md
@@ -13435,7 +13266,7 @@ This module imports nothing heavier than the standard library, so
 
 ### *class* muvid.subgenres.Example(\*, description, params=<factory>, inputs=<factory>, preview=None)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 One invocation worth showing to a human or an agent.
 
@@ -13443,54 +13274,54 @@ Agents pick better from examples than from prose — the Remotion registry’s
 finding, and the reason this is a first-class field rather than something
 buried in `description`.
 
-#### inputs *: [Mapping](https://docs.python.org/3/library/typing.html#typing.Mapping)[[str](https://docs.python.org/3/builtins/stdtypes.html#str), [Any](https://docs.python.org/3/library/typing.html#typing.Any)]*
+#### inputs *: Mapping[str, Any]*
 
 Inputs for this example, when they can be stated without a local path.
 The conformance kit uses the first Example’s inputs for its trial render.
 
-#### preview *: [str](https://docs.python.org/3/builtins/stdtypes.html#str) | [None](https://docs.python.org/3/builtins/constants.html#None)*
+#### preview *: str | None*
 
 Optional path, relative to the plugin package, of a short sample render.
 
 ### *class* muvid.subgenres.RenderRequest(\*, subgenre, inputs, params=<factory>, workdir, output)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 Everything a subgenre renderer gets.
 
 * **Parameters:**
-  * **subgenre** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str)) – the slug being rendered, so one function can serve several.
-  * **inputs** ([`Mapping`](https://docs.python.org/3/library/typing.html#typing.Mapping)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]) – the caller’s files and primitives, validated against the
+  * **subgenre** (`str`) – the slug being rendered, so one function can serve several.
+  * **inputs** (`Mapping`[`str`, `Any`]) – the caller’s files and primitives, validated against the
     manifest’s `inputs` schema before it gets here.
-  * **params** ([`Mapping`](https://docs.python.org/3/library/typing.html#typing.Mapping)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]) – the styling/treatment knobs, validated against
+  * **params** (`Mapping`[`str`, `Any`]) – the styling/treatment knobs, validated against
     `params_schema`.
-  * **workdir** ([`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)) – a directory the renderer may write intermediates into. It
+  * **workdir** (`Path`) – a directory the renderer may write intermediates into. It
     exists, and it belongs to this render — nothing else writes there.
-  * **output** ([`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)) – where the finished artifact must be written.
+  * **output** (`Path`) – where the finished artifact must be written.
 
 ### *class* muvid.subgenres.RenderResult(\*, output, duration_s=None, artifacts=<factory>, meta=<factory>)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 What a renderer gives back.
 
 * **Parameters:**
-  * **output** ([`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)) – the finished artifact. Must be the request’s `output`.
-  * **duration_s** ([`float`](https://docs.python.org/3/builtins/functions.html#float) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – length of the produced media, when it has one.
-  * **artifacts** ([`Mapping`](https://docs.python.org/3/library/typing.html#typing.Mapping)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)]) – named side products worth keeping — a `.ass` subtitle
+  * **output** (`Path`) – the finished artifact. Must be the request’s `output`.
+  * **duration_s** (`float` | `None`) – length of the produced media, when it has one.
+  * **artifacts** (`Mapping`[`str`, `Path`]) – named side products worth keeping — a `.ass` subtitle
     file, a thumbnail, the resolved treatment spec. These are how a
     subgenre stays inspectable instead of producing an opaque file.
-  * **meta** ([`Mapping`](https://docs.python.org/3/library/typing.html#typing.Mapping)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]) – anything else worth recording; must be JSON-able.
+  * **meta** (`Mapping`[`str`, `Any`]) – anything else worth recording; must be JSON-able.
 
 ### *class* muvid.subgenres.Renderer(\*args, \*\*kwargs)
 
-Bases: [`Protocol`](https://docs.python.org/3/library/typing.html#typing.Protocol)
+Bases: `Protocol`
 
 `(RenderRequest) -> RenderResult`, and nothing else.
 
 ### *class* muvid.subgenres.Subgenre(\*, slug, title, description, render, inputs=<factory>, params_schema=<factory>, produces='video/mp4', examples=(), intake_kinds=(), cost_profile=None, provider=None, api_versions=())
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 A declared kind of video, and how to render one.
 
@@ -13499,18 +13330,18 @@ to a callable rather than the callable itself. Construct one at module
 scope in a stdlib-only module and point an entry point at it.
 
 * **Parameters:**
-  * **slug** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str)) – stable id; also a path segment and a public contract value, so
+  * **slug** (`str`) – stable id; also a path segment and a public contract value, so
     choose it once. Lowercase, hyphen-separated.
-  * **inputs** ([`Mapping`](https://docs.python.org/3/library/typing.html#typing.Mapping)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]) – JSON Schema for the *files and primitives* the renderer
+  * **inputs** (`Mapping`[`str`, `Any`]) – JSON Schema for the *files and primitives* the renderer
     needs. One schema serves the UI form, CLI validation and the MCP tool
     definition, which is why it is a schema and not prose.
-  * **params_schema** ([`Mapping`](https://docs.python.org/3/library/typing.html#typing.Mapping)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]) – JSON Schema for the styling/treatment knobs.
-  * **render** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str)) – `"package.module:function"`. Imported lazily, once, at
+  * **params_schema** (`Mapping`[`str`, `Any`]) – JSON Schema for the styling/treatment knobs.
+  * **render** (`str`) – `"package.module:function"`. Imported lazily, once, at
     render time. The function must satisfy [`Renderer`](_autosummary/muvid.subgenres.html.md#muvid.subgenres.Renderer).
-  * **api_versions** ([`Sequence`](https://docs.python.org/3/library/typing.html#typing.Sequence)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]) – the manifest API versions this plugin is written
+  * **api_versions** (`Sequence`[`str`]) – the manifest API versions this plugin is written
     against. Must include the running `API_VERSION`.
 
-#### api_versions *: [Sequence](https://docs.python.org/3/library/typing.html#typing.Sequence)[[str](https://docs.python.org/3/builtins/stdtypes.html#str)]*
+#### api_versions *: Sequence[str]*
 
 a default bound at muvid’s import time
 would make a plugin that never stated a version “declare” whichever
@@ -13522,17 +13353,17 @@ against; the host decides.
 * **Type:**
   REQUIRED. No default on purpose
 
-#### cost_profile *: [str](https://docs.python.org/3/builtins/stdtypes.html#str) | [None](https://docs.python.org/3/builtins/constants.html#None)*
+#### cost_profile *: str | None*
 
 `None` means genuinely free. Anything else names a cost estimator, and
 an unknown cost must force approval rather than encode as zero — see
 muvid’s conjunctive budget gate.
 
-#### intake_kinds *: [Sequence](https://docs.python.org/3/library/typing.html#typing.Sequence)[[str](https://docs.python.org/3/builtins/stdtypes.html#str)]*
+#### intake_kinds *: Sequence[str]*
 
 Free-form tags a host may use to route “what are you making?” answers.
 
-#### provider *: [str](https://docs.python.org/3/builtins/stdtypes.html#str) | [None](https://docs.python.org/3/builtins/constants.html#None)*
+#### provider *: str | None*
 
 Which distribution provided this, filled in by the loader for
 entry-point plugins. `None` for in-process registrations.
@@ -13542,7 +13373,7 @@ entry-point plugins. `None` for in-process registrations.
 JSON-able form — what a catalogue, a UI or an agent actually reads.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]
+  `dict`[`str`, `Any`]
 
 ### muvid.subgenres.get_subgenre(slug, , refresh=False)
 
@@ -13556,20 +13387,20 @@ The manifest for `slug`. Imports no renderer.
 Iterate manifests in slug order.
 
 * **Return type:**
-  [`Iterator`](https://docs.python.org/3/library/typing.html#typing.Iterator)[[`Subgenre`](_autosummary/muvid.subgenres.html.md#muvid.subgenres.Subgenre)]
+  `Iterator`[[`Subgenre`](_autosummary/muvid.subgenres.html.md#muvid.subgenres.Subgenre)]
 
 ### muvid.subgenres.list_subgenres(, refresh=False)
 
 Every available subgenre slug, sorted. Imports no renderer.
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]
+  `list`[`str`]
 
 ### muvid.subgenres.register_subgenre(subgenre)
 
 Register a subgenre in this process. Returns it, so it can be used inline.
 
-Raises [`ValueError`](https://docs.python.org/3/builtins/exceptions.html#ValueError) on a slug collision, matching `nw.genres`’
+Raises `ValueError` on a slug collision, matching `nw.genres`’
 `on_conflict="error"`: a slug is a persisted path segment and a public
 contract value, so silently replacing one is never the kind thing to do.
 
@@ -13608,7 +13439,7 @@ This is the only function in the module that imports plugin code, and it is
 called at render time, not at listing time.
 
 * **Return type:**
-  [`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[`...`](https://docs.python.org/3/builtins/constants.html#Ellipsis), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]
+  `Callable`[`...`, `Any`]
 
 ### muvid.subgenres.subgenre_catalog(, refresh=False)
 
@@ -13619,14 +13450,14 @@ Imports no renderer, so this stays cheap however many plugins are installed.
 visible to whoever is choosing, not silently absent.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]
+  `dict`[`str`, `Any`]
 
 ### muvid.subgenres.unregister_subgenre(slug)
 
 Remove an in-process registration. Mostly for tests and doctests.
 
 * **Return type:**
-  [`None`](https://docs.python.org/3/builtins/constants.html#None)
+  `None`
 
 ### Modules
 
@@ -13675,7 +13506,7 @@ used by muvid’s own tests and by this module’s doctests.
 
 ### *class* muvid.subgenres.testing.ConformanceReport(slug, passed=<factory>, failures=<factory>, skipped=<factory>)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 What [`check_subgenre_conformance()`](_autosummary/muvid.subgenres.testing.html.md#muvid.subgenres.testing.check_subgenre_conformance) found.
 
@@ -13766,7 +13597,7 @@ assembles for audio-reactive visuals.
 
 ### *class* muvid.visualize.canvas.CoverLayout(background='blur', blur_sigma=30.0, dim=0.65, saturation=0.8, cover_fraction=0.92, cover_alpha=1.0, background_color='black')
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 How a cover image is placed on the canvas.
 
@@ -13810,7 +13641,7 @@ the blurred background — show through it.
 
 Fill colour when `background="color"`.
 
-#### dim *: [float](https://docs.python.org/3/builtins/functions.html#float)* *= 0.65*
+#### dim *: float* *= 0.65*
 
 the multiplicative dim that lands the plate’s mean
 DISPLAY luma where the additive `0.25` left it, pooled over four
@@ -13835,7 +13666,7 @@ YouTube rejects thumbnails over 2 MiB, and wants at least 1280x720.
 
 ### *class* muvid.visualize.canvas.TitleStyle(size_fraction=0.045, color='white', font=None, margin_fraction=0.06, box=True, box_color='black@0.45')
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 How a burnt-in title is drawn (ffmpeg `drawtext`).
 
@@ -13874,7 +13705,7 @@ to scale, not subtract, or the plate’s shadows are deleted rather than
 darkened. See [`dim_saturation_lut()`](_autosummary/muvid.visualize.canvas.html.md#muvid.visualize.canvas.dim_saturation_lut).
 
 * **Return type:**
-  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+  `str`
 
 ### muvid.visualize.canvas.brightness_saturation_lut(, brightness=0.0, saturation=1.0)
 
@@ -13892,11 +13723,11 @@ the other emits one `sendcmd` command per component — and a second copy of
 this arithmetic is exactly how the two would drift apart.
 
 * **Parameters:**
-  * **brightness** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – Additive luma offset, -1 to 1, in `eq`’s units (a fraction
+  * **brightness** (`float`) – Additive luma offset, -1 to 1, in `eq`’s units (a fraction
     of full scale). `0` is a no-op.
-  * **saturation** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – Chroma scaling about neutral. `1` is a no-op.
+  * **saturation** (`float`) – Chroma scaling about neutral. `1` is a no-op.
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]
+  `dict`[`str`, `str`]
 
 ### Examples
 
@@ -13919,14 +13750,14 @@ frame — is what makes a still-image music video cheap to render, and it
 gives the thumbnail and the video’s first frame a single source of truth.
 
 * **Parameters:**
-  * **image** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)) – The cover art.
-  * **saveas** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – Output PNG path (default: `<image-stem>.canvas.png`).
-  * **size** ([`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`int`](https://docs.python.org/3/builtins/functions.html#int), [`int`](https://docs.python.org/3/builtins/functions.html#int)]) – Canvas size.
-  * **layout** ([`CoverLayout`](_autosummary/muvid.visualize.canvas.html.md#muvid.visualize.canvas.CoverLayout) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – Placement/treatment of the cover (a default one when omitted).
-  * **title** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – Burn this title into the canvas (omit for no title).
-  * **title_style** ([`TitleStyle`](_autosummary/muvid.visualize.canvas.html.md#muvid.visualize.canvas.TitleStyle) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – How to draw that title.
+  * **image** (`str` | `Path`) – The cover art.
+  * **saveas** (`str` | `Path` | `None`) – Output PNG path (default: `<image-stem>.canvas.png`).
+  * **size** (`tuple`[`int`, `int`]) – Canvas size.
+  * **layout** ([`CoverLayout`](_autosummary/muvid.visualize.canvas.html.md#muvid.visualize.canvas.CoverLayout) | `None`) – Placement/treatment of the cover (a default one when omitted).
+  * **title** (`str` | `None`) – Burn this title into the canvas (omit for no title).
+  * **title_style** ([`TitleStyle`](_autosummary/muvid.visualize.canvas.html.md#muvid.visualize.canvas.TitleStyle) | `None`) – How to draw that title.
 * **Return type:**
-  [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)
+  `Path`
 * **Returns:**
   Path to the rendered PNG.
 
@@ -13938,7 +13769,7 @@ The whole cover-on-canvas filtergraph: background, centred cover, title.
 both the blurred background and the sharp foreground.
 
 * **Return type:**
-  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+  `str`
 
 ### muvid.visualize.canvas.cover_box(size, layout)
 
@@ -13949,7 +13780,7 @@ Scales with *both* frame dimensions, so a cover fitted into it with
 comes first — filling the frame up to `cover_fraction`, minus padding.
 
 * **Return type:**
-  [`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`int`](https://docs.python.org/3/builtins/functions.html#int), [`int`](https://docs.python.org/3/builtins/functions.html#int)]
+  `tuple`[`int`, `int`]
 
 ### muvid.visualize.canvas.cover_chain(size, layout, , src, out)
 
@@ -13961,14 +13792,14 @@ an alpha channel), so a following [`overlay_chain()`](_autosummary/muvid.visuali
 show through it.
 
 * **Return type:**
-  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+  `str`
 
 ### muvid.visualize.canvas.default_font()
 
 Path to a usable TrueType font, or `None` if none was found.
 
 * **Return type:**
-  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`None`](https://docs.python.org/3/builtins/constants.html#None)
+  `str` | `None`
 
 ### muvid.visualize.canvas.dim_saturation_lut(, dim=0.0, saturation=1.0)
 
@@ -13992,10 +13823,10 @@ and the constants that ship were re-measured rather than converted: see
 [`CoverLayout`](_autosummary/muvid.visualize.canvas.html.md#muvid.visualize.canvas.CoverLayout) and [`muvid.visualize.visuals`](_autosummary/muvid.visualize.visuals.html.md#module-muvid.visualize.visuals).
 
 * **Parameters:**
-  * **dim** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – How much to darken, 0 (unchanged) to 1 (black).
-  * **saturation** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – Chroma scaling about neutral. `1` is a no-op.
+  * **dim** (`float`) – How much to darken, 0 (unchanged) to 1 (black).
+  * **saturation** (`float`) – Chroma scaling about neutral. `1` is a no-op.
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]
+  `dict`[`str`, `str`]
 
 ### Examples
 
@@ -14035,7 +13866,7 @@ applies to that one filter’s `text` option only, and is out of scope for a
 general-purpose filtergraph escaper.
 
 * **Return type:**
-  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+  `str`
 
 ### muvid.visualize.canvas.lut_filter(exprs, , label='')
 
@@ -14046,10 +13877,10 @@ filter”, so every one goes through [`escape_filter_value()`](_autosummary/muvi
 escaper, and the same reason, as a `sendcmd` script path.
 
 * **Parameters:**
-  * **exprs** ([`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]) – `{component: expression}`.
-  * **label** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str)) – Optional `@label` so `sendcmd` can address this filter.
+  * **exprs** (`dict`[`str`, `str`]) – `{component: expression}`.
+  * **label** (`str`) – Optional `@label` so `sendcmd` can address this filter.
 * **Return type:**
-  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+  `str`
 
 ### Examples
 
@@ -14063,14 +13894,14 @@ escaper, and the same reason, as a `sendcmd` script path.
 Filter chain centring the `cover` stream over the `background` stream.
 
 * **Parameters:**
-  * **background** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str)) – Label of the background video stream.
-  * **cover** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str)) – Label of the (already scaled) cover stream.
-  * **out** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str)) – Label to emit.
-  * **shortest** ([`bool`](https://docs.python.org/3/builtins/functions.html#bool)) – End the overlay when the shortest input ends — required when a
+  * **background** (`str`) – Label of the background video stream.
+  * **cover** (`str`) – Label of the (already scaled) cover stream.
+  * **out** (`str`) – Label to emit.
+  * **shortest** (`bool`) – End the overlay when the shortest input ends — required when a
     finite, audio-driven background is overlaid with an endlessly
     looping still cover, or the render would never terminate.
 * **Return type:**
-  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+  `str`
 
 ### muvid.visualize.canvas.thumbnail_image(image, , saveas=None, size=(1280, 720), layout=None, title=None, title_style=None, max_bytes=2097152)
 
@@ -14081,15 +13912,15 @@ viewer sees when they press play. JPEG quality is stepped down until the
 file fits `max_bytes` (YouTube’s hard limit).
 
 * **Parameters:**
-  * **image** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)) – The cover art.
-  * **saveas** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – Output JPEG path (default: `<image-stem>.thumb.jpg`).
-  * **size** ([`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`int`](https://docs.python.org/3/builtins/functions.html#int), [`int`](https://docs.python.org/3/builtins/functions.html#int)]) – Thumbnail size (YouTube wants >= 1280x720, 16:9).
-  * **layout** ([`CoverLayout`](_autosummary/muvid.visualize.canvas.html.md#muvid.visualize.canvas.CoverLayout) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – Placement/treatment of the cover.
-  * **title** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – Burn this title into the thumbnail (omit for none).
-  * **title_style** ([`TitleStyle`](_autosummary/muvid.visualize.canvas.html.md#muvid.visualize.canvas.TitleStyle) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – How to draw that title.
-  * **max_bytes** ([`int`](https://docs.python.org/3/builtins/functions.html#int)) – Hard size ceiling.
+  * **image** (`str` | `Path`) – The cover art.
+  * **saveas** (`str` | `Path` | `None`) – Output JPEG path (default: `<image-stem>.thumb.jpg`).
+  * **size** (`tuple`[`int`, `int`]) – Thumbnail size (YouTube wants >= 1280x720, 16:9).
+  * **layout** ([`CoverLayout`](_autosummary/muvid.visualize.canvas.html.md#muvid.visualize.canvas.CoverLayout) | `None`) – Placement/treatment of the cover.
+  * **title** (`str` | `None`) – Burn this title into the thumbnail (omit for none).
+  * **title_style** ([`TitleStyle`](_autosummary/muvid.visualize.canvas.html.md#muvid.visualize.canvas.TitleStyle) | `None`) – How to draw that title.
+  * **max_bytes** (`int`) – Hard size ceiling.
 * **Return type:**
-  [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)
+  `Path`
 * **Returns:**
   Path to the rendered JPEG.
 
@@ -14100,7 +13931,7 @@ Filter chain burning `title` into the bottom of stream `src`.
 * **Raises:**
   [**FfmpegError**](_autosummary/muvid.visualize.html.md#muvid.visualize.FfmpegError) – This ffmpeg has no `drawtext`, or no font was found.
 * **Return type:**
-  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+  `str`
 
 
 # _autosummary/muvid.visualize.ffmpeg.html.md
@@ -14164,13 +13995,13 @@ on top of the caller’s own input-duration cap.
 
 ### *exception* muvid.visualize.ffmpeg.FfmpegError
 
-Bases: [`RuntimeError`](https://docs.python.org/3/builtins/exceptions.html#RuntimeError)
+Bases: `RuntimeError`
 
 An ffmpeg/ffprobe invocation failed, or a needed tool/filter is absent.
 
 ### *class* muvid.visualize.ffmpeg.Loudness(integrated=-14.0, true_peak=-1.0, lra=11.0, measured=None)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 An EBU R128 loudness target, plus the measurement of a specific track.
 
@@ -14184,7 +14015,7 @@ to the (less accurate) single-pass form when it does not.
 The `loudnorm` filter string for this target.
 
 * **Return type:**
-  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+  `str`
 
 ### muvid.visualize.ffmpeg.PCM_SAMPLE_FORMAT *= 'f32le'*
 
@@ -14204,12 +14035,12 @@ container. This is the single place muvid turns a media file into raw PCM,
 so `$MUVID_FFMPEG_TIMEOUT_S` bounds that decode like every other one.
 
 * **Parameters:**
-  * **audio** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)) – The media file to decode.
-  * **sample_rate** ([`int`](https://docs.python.org/3/builtins/functions.html#int)) – Resample to this rate. Analysis rarely needs full quality,
+  * **audio** (`str` | `Path`) – The media file to decode.
+  * **sample_rate** (`int`) – Resample to this rate. Analysis rarely needs full quality,
     and a low rate keeps a long track’s decode cheap.
-  * **channels** ([`int`](https://docs.python.org/3/builtins/functions.html#int)) – Downmix to this many channels (1 = mono).
+  * **channels** (`int`) – Downmix to this many channels (1 = mono).
 * **Return type:**
-  [`bytes`](https://docs.python.org/3/builtins/stdtypes.html#bytes)
+  `bytes`
 * **Returns:**
   The raw PCM bytes — empty when ffmpeg could not decode `audio`.
   Returning empty rather than raising lets a caller treat “no usable
@@ -14220,7 +14051,7 @@ so `$MUVID_FFMPEG_TIMEOUT_S` bounds that decode like every other one.
 Whether this ffmpeg build has the `name` filter compiled in.
 
 * **Return type:**
-  [`bool`](https://docs.python.org/3/builtins/functions.html#bool)
+  `bool`
 
 ### muvid.visualize.ffmpeg.measure_loudness(audio, target=None)
 
@@ -14232,8 +14063,8 @@ that measurement. Single-pass loudnorm is a dynamic normalizer and will
 both miss the target and squash the dynamics of music.
 
 * **Parameters:**
-  * **audio** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)) – The audio (or video) file to measure.
-  * **target** ([`Loudness`](_autosummary/muvid.visualize.ffmpeg.html.md#muvid.visualize.ffmpeg.Loudness) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – The loudness target; a default one is used when omitted.
+  * **audio** (`str` | `Path`) – The audio (or video) file to measure.
+  * **target** ([`Loudness`](_autosummary/muvid.visualize.ffmpeg.html.md#muvid.visualize.ffmpeg.Loudness) | `None`) – The loudness target; a default one is used when omitted.
 * **Return type:**
   [`Loudness`](_autosummary/muvid.visualize.ffmpeg.html.md#muvid.visualize.ffmpeg.Loudness)
 * **Returns:**
@@ -14248,25 +14079,25 @@ Falls back to the longest stream duration when the container has none.
 * **Raises:**
   [**FfmpegError**](_autosummary/muvid.visualize.ffmpeg.html.md#muvid.visualize.ffmpeg.FfmpegError) – The duration could not be determined.
 * **Return type:**
-  [`float`](https://docs.python.org/3/builtins/functions.html#float)
+  `float`
 
 ### muvid.visualize.ffmpeg.probe(media)
 
 Return `ffprobe`’s `format` + `streams` JSON for `media`.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.visualize.ffmpeg.require_ffmpeg(\*tools)
 
 Raise a helpful [`FfmpegError`](_autosummary/muvid.visualize.ffmpeg.html.md#muvid.visualize.ffmpeg.FfmpegError) if any of `tools` is not on PATH.
 
 * **Parameters:**
-  **\*tools** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str)) – Binaries to require (defaults to `ffmpeg` and `ffprobe`).
+  **\*tools** (`str`) – Binaries to require (defaults to `ffmpeg` and `ffprobe`).
 * **Raises:**
   [**FfmpegError**](_autosummary/muvid.visualize.ffmpeg.html.md#muvid.visualize.ffmpeg.FfmpegError) – With per-platform install instructions.
 * **Return type:**
-  [`None`](https://docs.python.org/3/builtins/constants.html#None)
+  `None`
 
 ### muvid.visualize.ffmpeg.require_filter(name, , needed_for)
 
@@ -14279,17 +14110,17 @@ specific filter has to be there.
 * **Raises:**
   [**FfmpegError**](_autosummary/muvid.visualize.ffmpeg.html.md#muvid.visualize.ffmpeg.FfmpegError) – Naming the filter, the feature that needs it, and the fix.
 * **Return type:**
-  [`None`](https://docs.python.org/3/builtins/constants.html#None)
+  `None`
 
 ### muvid.visualize.ffmpeg.run_ffmpeg(args, , overwrite=True)
 
 Run `ffmpeg` with `args`, raising a readable error on failure.
 
 * **Parameters:**
-  * **args** ([`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]) – Arguments after the global flags (inputs, filters, output).
-  * **overwrite** ([`bool`](https://docs.python.org/3/builtins/functions.html#bool)) – Pass `-y` (overwrite the output without prompting).
+  * **args** (`list`[`str`]) – Arguments after the global flags (inputs, filters, output).
+  * **overwrite** (`bool`) – Pass `-y` (overwrite the output without prompting).
 * **Return type:**
-  [`CompletedProcess`](https://docs.python.org/3/library/subprocess.html#subprocess.CompletedProcess)
+  `CompletedProcess`
 * **Returns:**
   The completed process.
 * **Raises:**
@@ -14374,13 +14205,13 @@ dependency of `mixing`, so it needs no extra).
 
 ### *class* muvid.visualize.Check(name, ok, detail)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 One verification result.
 
 ### *class* muvid.visualize.CoverLayout(background='blur', blur_sigma=30.0, dim=0.65, saturation=0.8, cover_fraction=0.92, cover_alpha=1.0, background_color='black')
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 How a cover image is placed on the canvas.
 
@@ -14424,7 +14255,7 @@ the blurred background — show through it.
 
 Fill colour when `background="color"`.
 
-#### dim *: [float](https://docs.python.org/3/builtins/functions.html#float)* *= 0.65*
+#### dim *: float* *= 0.65*
 
 the multiplicative dim that lands the plate’s mean
 DISPLAY luma where the additive `0.25` left it, pooled over four
@@ -14436,13 +14267,13 @@ nominal value — see `dim_saturation_lut()`.
 
 ### *exception* muvid.visualize.FfmpegError
 
-Bases: [`RuntimeError`](https://docs.python.org/3/builtins/exceptions.html#RuntimeError)
+Bases: `RuntimeError`
 
 An ffmpeg/ffprobe invocation failed, or a needed tool/filter is absent.
 
 ### *class* muvid.visualize.Loudness(integrated=-14.0, true_peak=-1.0, lra=11.0, measured=None)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 An EBU R128 loudness target, plus the measurement of a specific track.
 
@@ -14456,11 +14287,11 @@ to the (less accurate) single-pass form when it does not.
 The `loudnorm` filter string for this target.
 
 * **Return type:**
-  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+  `str`
 
 ### *class* muvid.visualize.RenderResult(path, duration, size, fps, visual, loudness=None, canvas=None, extras=<factory>)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 A rendered video and what is worth knowing about it.
 
@@ -14497,7 +14328,7 @@ it as the thumbnail rather than re-deriving it.
 
 ### *class* muvid.visualize.TitleStyle(size_fraction=0.045, color='white', font=None, margin_fraction=0.06, box=True, box_color='black@0.45')
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 How a burnt-in title is drawn (ffmpeg `drawtext`).
 
@@ -14528,7 +14359,7 @@ Colour (with alpha) of that plate.
 
 ### *class* muvid.visualize.VisualContext(audio, image, duration, size, fps, layout=<factory>, title=None, title_style=None, workdir=<factory>, options=<factory>)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 Everything a visual strategy needs to know about the render.
 
@@ -14574,14 +14405,14 @@ Strategy-specific knobs, passed straight through by the caller.
 
 #### require_image(visual)
 
-The cover image, or a [`ValueError`](https://docs.python.org/3/builtins/exceptions.html#ValueError) naming what to do instead.
+The cover image, or a `ValueError` naming what to do instead.
 
 * **Return type:**
-  [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)
+  `Path`
 
 ### *class* muvid.visualize.VisualPlan(inputs=<factory>, filters=<factory>, video='vbg', uses_audio=False, has_cover=False, has_title=False, still=None)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 The ffmpeg fragments that render one strategy’s video stream.
 
@@ -14627,14 +14458,14 @@ frame — is what makes a still-image music video cheap to render, and it
 gives the thumbnail and the video’s first frame a single source of truth.
 
 * **Parameters:**
-  * **image** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)) – The cover art.
-  * **saveas** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – Output PNG path (default: `<image-stem>.canvas.png`).
-  * **size** ([`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`int`](https://docs.python.org/3/builtins/functions.html#int), [`int`](https://docs.python.org/3/builtins/functions.html#int)]) – Canvas size.
-  * **layout** ([`CoverLayout`](_autosummary/muvid.visualize.canvas.html.md#muvid.visualize.canvas.CoverLayout) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – Placement/treatment of the cover (a default one when omitted).
-  * **title** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – Burn this title into the canvas (omit for no title).
-  * **title_style** ([`TitleStyle`](_autosummary/muvid.visualize.canvas.html.md#muvid.visualize.canvas.TitleStyle) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – How to draw that title.
+  * **image** (`str` | `Path`) – The cover art.
+  * **saveas** (`str` | `Path` | `None`) – Output PNG path (default: `<image-stem>.canvas.png`).
+  * **size** (`tuple`[`int`, `int`]) – Canvas size.
+  * **layout** ([`CoverLayout`](_autosummary/muvid.visualize.canvas.html.md#muvid.visualize.canvas.CoverLayout) | `None`) – Placement/treatment of the cover (a default one when omitted).
+  * **title** (`str` | `None`) – Burn this title into the canvas (omit for no title).
+  * **title_style** ([`TitleStyle`](_autosummary/muvid.visualize.canvas.html.md#muvid.visualize.canvas.TitleStyle) | `None`) – How to draw that title.
 * **Return type:**
-  [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)
+  `Path`
 * **Returns:**
   Path to the rendered PNG.
 
@@ -14647,12 +14478,12 @@ container. This is the single place muvid turns a media file into raw PCM,
 so `$MUVID_FFMPEG_TIMEOUT_S` bounds that decode like every other one.
 
 * **Parameters:**
-  * **audio** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)) – The media file to decode.
-  * **sample_rate** ([`int`](https://docs.python.org/3/builtins/functions.html#int)) – Resample to this rate. Analysis rarely needs full quality,
+  * **audio** (`str` | `Path`) – The media file to decode.
+  * **sample_rate** (`int`) – Resample to this rate. Analysis rarely needs full quality,
     and a low rate keeps a long track’s decode cheap.
-  * **channels** ([`int`](https://docs.python.org/3/builtins/functions.html#int)) – Downmix to this many channels (1 = mono).
+  * **channels** (`int`) – Downmix to this many channels (1 = mono).
 * **Return type:**
-  [`bytes`](https://docs.python.org/3/builtins/stdtypes.html#bytes)
+  `bytes`
 * **Returns:**
   The raw PCM bytes — empty when ffmpeg could not decode `audio`.
   Returning empty rather than raising lets a caller treat “no usable
@@ -14663,7 +14494,7 @@ so `$MUVID_FFMPEG_TIMEOUT_S` bounds that decode like every other one.
 Just the checks that failed.
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`Check`](_autosummary/muvid.visualize.verify.html.md#muvid.visualize.verify.Check)]
+  `list`[[`Check`](_autosummary/muvid.visualize.verify.html.md#muvid.visualize.verify.Check)]
 
 ### muvid.visualize.flash_filter(audio, , fps, duration, workdir, label='flash', brightness=0.25, saturation=0.8, decay=0.5)
 
@@ -14683,30 +14514,30 @@ in a GPL-configured ffmpeg (muvid#69) — see
 [`brightness_saturation_lut()`](_autosummary/muvid.visualize.canvas.html.md#muvid.visualize.canvas.brightness_saturation_lut).
 
 * **Parameters:**
-  * **audio** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)) – The track whose beats drive the flash.
-  * **fps** ([`int`](https://docs.python.org/3/builtins/functions.html#int)) – The render’s frame rate (one command per component per frame).
-  * **duration** ([`float`](https://docs.python.org/3/builtins/functions.html#float) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – Clamp the flash to this many seconds (`None` = whole track).
-  * **workdir** ([`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)) – Directory to write the `sendcmd` script into.
-  * **label** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str)) – `sendcmd` label for this flash’s `lutyuv`.
-  * **brightness** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – Peak brightness boost on a beat.
-  * **saturation** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – Peak saturation boost on a beat.
-  * **decay** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – Per-frame afterglow of a pulse.
+  * **audio** (`str` | `Path`) – The track whose beats drive the flash.
+  * **fps** (`int`) – The render’s frame rate (one command per component per frame).
+  * **duration** (`float` | `None`) – Clamp the flash to this many seconds (`None` = whole track).
+  * **workdir** (`Path`) – Directory to write the `sendcmd` script into.
+  * **label** (`str`) – `sendcmd` label for this flash’s `lutyuv`.
+  * **brightness** (`float`) – Peak brightness boost on a beat.
+  * **saturation** (`float`) – Peak saturation boost on a beat.
+  * **decay** (`float`) – Per-frame afterglow of a pulse.
 * **Return type:**
-  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+  `str`
 
 ### muvid.visualize.has_filter(name)
 
 Whether this ffmpeg build has the `name` filter compiled in.
 
 * **Return type:**
-  [`bool`](https://docs.python.org/3/builtins/functions.html#bool)
+  `bool`
 
 ### muvid.visualize.list_visuals()
 
 The names of every registered visual strategy.
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]
+  `list`[`str`]
 
 ### muvid.visualize.measure_loudness(audio, target=None)
 
@@ -14718,8 +14549,8 @@ that measurement. Single-pass loudnorm is a dynamic normalizer and will
 both miss the target and squash the dynamics of music.
 
 * **Parameters:**
-  * **audio** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)) – The audio (or video) file to measure.
-  * **target** ([`Loudness`](_autosummary/muvid.visualize.ffmpeg.html.md#muvid.visualize.ffmpeg.Loudness) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – The loudness target; a default one is used when omitted.
+  * **audio** (`str` | `Path`) – The audio (or video) file to measure.
+  * **target** ([`Loudness`](_autosummary/muvid.visualize.ffmpeg.html.md#muvid.visualize.ffmpeg.Loudness) | `None`) – The loudness target; a default one is used when omitted.
 * **Return type:**
   [`Loudness`](_autosummary/muvid.visualize.ffmpeg.html.md#muvid.visualize.ffmpeg.Loudness)
 * **Returns:**
@@ -14734,7 +14565,7 @@ Falls back to the longest stream duration when the container has none.
 * **Raises:**
   [**FfmpegError**](_autosummary/muvid.visualize.html.md#muvid.visualize.FfmpegError) – The duration could not be determined.
 * **Return type:**
-  [`float`](https://docs.python.org/3/builtins/functions.html#float)
+  `float`
 
 ### muvid.visualize.onset_envelope(audio, , fps, duration=None, sr=22050, decay=0.5)
 
@@ -14747,15 +14578,15 @@ robustly to `[0, 1]`, then lets each pulse fade by `decay` per frame so a
 beat flashes and trails off rather than blinking for a single frame.
 
 * **Parameters:**
-  * **audio** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)) – The track to analyse.
-  * **fps** ([`int`](https://docs.python.org/3/builtins/functions.html#int)) – Video frame rate — one envelope value per frame.
-  * **duration** ([`float`](https://docs.python.org/3/builtins/functions.html#float) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – Clamp the envelope to this many seconds (defaults to the whole
+  * **audio** (`str` | `Path`) – The track to analyse.
+  * **fps** (`int`) – Video frame rate — one envelope value per frame.
+  * **duration** (`float` | `None`) – Clamp the envelope to this many seconds (defaults to the whole
     track).
-  * **sr** ([`int`](https://docs.python.org/3/builtins/functions.html#int)) – Analysis sample rate.
-  * **decay** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – Per-frame persistence of a pulse, 0 (no trail) to <1 (longer
+  * **sr** (`int`) – Analysis sample rate.
+  * **decay** (`float`) – Per-frame persistence of a pulse, 0 (no trail) to <1 (longer
     afterglow).
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`float`](https://docs.python.org/3/builtins/functions.html#float)]
+  `list`[`float`]
 * **Returns:**
   One value per frame. Empty if the audio could not be decoded.
 
@@ -14764,14 +14595,14 @@ beat flashes and trails off rather than blinking for a single frame.
 Return `ffprobe`’s `format` + `streams` JSON for `media`.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.visualize.register_visual(name)
 
 Register a visual strategy under `name` (the open-closed seam).
 
 * **Return type:**
-  [`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[[`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[[`VisualContext`](_autosummary/muvid.visualize.visuals.html.md#muvid.visualize.visuals.VisualContext)], [`VisualPlan`](_autosummary/muvid.visualize.visuals.html.md#muvid.visualize.visuals.VisualPlan) | [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path) | [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]], [`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[[`VisualContext`](_autosummary/muvid.visualize.visuals.html.md#muvid.visualize.visuals.VisualContext)], [`VisualPlan`](_autosummary/muvid.visualize.visuals.html.md#muvid.visualize.visuals.VisualPlan) | [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path) | [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]]
+  `Callable`[[`Callable`[[[`VisualContext`](_autosummary/muvid.visualize.visuals.html.md#muvid.visualize.visuals.VisualContext)], [`VisualPlan`](_autosummary/muvid.visualize.visuals.html.md#muvid.visualize.visuals.VisualPlan) | `Path` | `str`]], `Callable`[[[`VisualContext`](_autosummary/muvid.visualize.visuals.html.md#muvid.visualize.visuals.VisualContext)], [`VisualPlan`](_autosummary/muvid.visualize.visuals.html.md#muvid.visualize.visuals.VisualPlan) | `Path` | `str`]]
 
 ### Examples
 
@@ -14795,30 +14626,30 @@ EBU R128 loudness with a two-pass `loudnorm`, which is what makes a batch
 of songs play back at a consistent level.
 
 * **Parameters:**
-  * **audio** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)) – The song (`.wav` is preferred when you have it — YouTube
+  * **audio** (`str` | `Path`) – The song (`.wav` is preferred when you have it — YouTube
     re-encodes regardless, so give it the cleanest input).
-  * **image** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – Cover art. Used for the picture, and composed onto a 16:9 canvas.
-  * **visual** (`Union`[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[[`VisualContext`](_autosummary/muvid.visualize.visuals.html.md#muvid.visualize.visuals.VisualContext)], [`VisualPlan`](_autosummary/muvid.visualize.visuals.html.md#muvid.visualize.visuals.VisualPlan) | [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path) | [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]]) – A registered strategy name (`"still"`, `"ken_burns"`,
+  * **image** (`str` | `Path` | `None`) – Cover art. Used for the picture, and composed onto a 16:9 canvas.
+  * **visual** (`Union`[`str`, `Callable`[[[`VisualContext`](_autosummary/muvid.visualize.visuals.html.md#muvid.visualize.visuals.VisualContext)], [`VisualPlan`](_autosummary/muvid.visualize.visuals.html.md#muvid.visualize.visuals.VisualPlan) | `Path` | `str`]]) – A registered strategy name (`"still"`, `"ken_burns"`,
     `"cqt"`, `"bars"`, `"spectrum"`, `"waves"`, `"scope"`),
     `"auto"`, or any callable (see [`muvid.visualize.visuals`](_autosummary/muvid.visualize.visuals.html.md#module-muvid.visualize.visuals)).
-  * **saveas** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – Output path (default: `<audio-stem>.mp4`).
-  * **size** ([`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`int`](https://docs.python.org/3/builtins/functions.html#int), [`int`](https://docs.python.org/3/builtins/functions.html#int)]) – Canvas size; the default is 1080p.
-  * **fps** ([`int`](https://docs.python.org/3/builtins/functions.html#int)) – Frame rate.
-  * **title** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – Burn this title into the frame.
-  * **layout** ([`CoverLayout`](_autosummary/muvid.visualize.canvas.html.md#muvid.visualize.canvas.CoverLayout) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – How the cover sits on the canvas.
-  * **title_style** ([`TitleStyle`](_autosummary/muvid.visualize.canvas.html.md#muvid.visualize.canvas.TitleStyle) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – How the title is drawn.
-  * **normalize** ([`bool`](https://docs.python.org/3/builtins/functions.html#bool)) – Loudness-normalize the audio (two-pass EBU R128).
-  * **loudness** ([`Loudness`](_autosummary/muvid.visualize.ffmpeg.html.md#muvid.visualize.ffmpeg.Loudness) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – The loudness target; a YouTube-appropriate default is used
+  * **saveas** (`str` | `Path` | `None`) – Output path (default: `<audio-stem>.mp4`).
+  * **size** (`tuple`[`int`, `int`]) – Canvas size; the default is 1080p.
+  * **fps** (`int`) – Frame rate.
+  * **title** (`str` | `None`) – Burn this title into the frame.
+  * **layout** ([`CoverLayout`](_autosummary/muvid.visualize.canvas.html.md#muvid.visualize.canvas.CoverLayout) | `None`) – How the cover sits on the canvas.
+  * **title_style** ([`TitleStyle`](_autosummary/muvid.visualize.canvas.html.md#muvid.visualize.canvas.TitleStyle) | `None`) – How the title is drawn.
+  * **normalize** (`bool`) – Loudness-normalize the audio (two-pass EBU R128).
+  * **loudness** ([`Loudness`](_autosummary/muvid.visualize.ffmpeg.html.md#muvid.visualize.ffmpeg.Loudness) | `None`) – The loudness target; a YouTube-appropriate default is used
     when omitted.
-  * **gop_seconds** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – Encoder knobs.
-  * **options** ([`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – Strategy-specific options, passed to the visual.
-  * **workdir** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – Where intermediates go (a temporary directory by default).
+  * **gop_seconds** (`float`) – Encoder knobs.
+  * **options** (`dict` | `None`) – Strategy-specific options, passed to the visual.
+  * **workdir** (`str` | `Path` | `None`) – Where intermediates go (a temporary directory by default).
 * **Return type:**
   [`RenderResult`](_autosummary/muvid.visualize.video.html.md#muvid.visualize.video.RenderResult)
 * **Returns:**
   A [`RenderResult`](_autosummary/muvid.visualize.html.md#muvid.visualize.RenderResult).
 * **Raises:**
-  [**ValueError**](https://docs.python.org/3/builtins/exceptions.html#ValueError) – `size` has an odd dimension — H.264 at yuv420p (the only
+  **ValueError** – `size` has an odd dimension — H.264 at yuv420p (the only
       pixel format every player decodes) cannot encode one.
 
 ### muvid.visualize.report(checks)
@@ -14826,18 +14657,18 @@ of songs play back at a consistent level.
 Render `checks` as an aligned, readable block.
 
 * **Return type:**
-  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+  `str`
 
 ### muvid.visualize.require_ffmpeg(\*tools)
 
 Raise a helpful [`FfmpegError`](_autosummary/muvid.visualize.html.md#muvid.visualize.FfmpegError) if any of `tools` is not on PATH.
 
 * **Parameters:**
-  **\*tools** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str)) – Binaries to require (defaults to `ffmpeg` and `ffprobe`).
+  **\*tools** (`str`) – Binaries to require (defaults to `ffmpeg` and `ffprobe`).
 * **Raises:**
   [**FfmpegError**](_autosummary/muvid.visualize.html.md#muvid.visualize.FfmpegError) – With per-platform install instructions.
 * **Return type:**
-  [`None`](https://docs.python.org/3/builtins/constants.html#None)
+  `None`
 
 ### muvid.visualize.resolve_visual(visual, ctx)
 
@@ -14852,7 +14683,7 @@ express themselves as an ffmpeg filtergraph (librosa/matplotlib, projectM,
 a headless-browser capture…).
 
 * **Raises:**
-  [**ValueError**](https://docs.python.org/3/builtins/exceptions.html#ValueError) – `visual` names a strategy that is not registered.
+  **ValueError** – `visual` names a strategy that is not registered.
 * **Return type:**
   [`VisualPlan`](_autosummary/muvid.visualize.visuals.html.md#muvid.visualize.visuals.VisualPlan)
 
@@ -14861,10 +14692,10 @@ a headless-browser capture…).
 Run `ffmpeg` with `args`, raising a readable error on failure.
 
 * **Parameters:**
-  * **args** ([`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]) – Arguments after the global flags (inputs, filters, output).
-  * **overwrite** ([`bool`](https://docs.python.org/3/builtins/functions.html#bool)) – Pass `-y` (overwrite the output without prompting).
+  * **args** (`list`[`str`]) – Arguments after the global flags (inputs, filters, output).
+  * **overwrite** (`bool`) – Pass `-y` (overwrite the output without prompting).
 * **Return type:**
-  [`CompletedProcess`](https://docs.python.org/3/library/subprocess.html#subprocess.CompletedProcess)
+  `CompletedProcess`
 * **Returns:**
   The completed process.
 * **Raises:**
@@ -14881,15 +14712,15 @@ viewer sees when they press play. JPEG quality is stepped down until the
 file fits `max_bytes` (YouTube’s hard limit).
 
 * **Parameters:**
-  * **image** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)) – The cover art.
-  * **saveas** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – Output JPEG path (default: `<image-stem>.thumb.jpg`).
-  * **size** ([`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`int`](https://docs.python.org/3/builtins/functions.html#int), [`int`](https://docs.python.org/3/builtins/functions.html#int)]) – Thumbnail size (YouTube wants >= 1280x720, 16:9).
-  * **layout** ([`CoverLayout`](_autosummary/muvid.visualize.canvas.html.md#muvid.visualize.canvas.CoverLayout) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – Placement/treatment of the cover.
-  * **title** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – Burn this title into the thumbnail (omit for none).
-  * **title_style** ([`TitleStyle`](_autosummary/muvid.visualize.canvas.html.md#muvid.visualize.canvas.TitleStyle) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – How to draw that title.
-  * **max_bytes** ([`int`](https://docs.python.org/3/builtins/functions.html#int)) – Hard size ceiling.
+  * **image** (`str` | `Path`) – The cover art.
+  * **saveas** (`str` | `Path` | `None`) – Output JPEG path (default: `<image-stem>.thumb.jpg`).
+  * **size** (`tuple`[`int`, `int`]) – Thumbnail size (YouTube wants >= 1280x720, 16:9).
+  * **layout** ([`CoverLayout`](_autosummary/muvid.visualize.canvas.html.md#muvid.visualize.canvas.CoverLayout) | `None`) – Placement/treatment of the cover.
+  * **title** (`str` | `None`) – Burn this title into the thumbnail (omit for none).
+  * **title_style** ([`TitleStyle`](_autosummary/muvid.visualize.canvas.html.md#muvid.visualize.canvas.TitleStyle) | `None`) – How to draw that title.
+  * **max_bytes** (`int`) – Hard size ceiling.
 * **Return type:**
-  [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)
+  `Path`
 * **Returns:**
   Path to the rendered JPEG.
 
@@ -14898,23 +14729,23 @@ file fits `max_bytes` (YouTube’s hard limit).
 Check `video` against YouTube’s expectations; return one result per check.
 
 * **Parameters:**
-  * **video** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)) – The rendered mp4.
-  * **audio** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – The source song — enables the duration-match check, which is the
+  * **video** (`str` | `Path`) – The rendered mp4.
+  * **audio** (`str` | `Path` | `None`) – The source song — enables the duration-match check, which is the
     one that catches a mis-built filtergraph.
-  * **thumbnail** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – The thumbnail to check against YouTube’s limits.
-  * **loudness** ([`Loudness`](_autosummary/muvid.visualize.ffmpeg.html.md#muvid.visualize.ffmpeg.Loudness) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – The target the video was normalized to.
-  * **check_loudness** ([`bool`](https://docs.python.org/3/builtins/functions.html#bool)) – Actually measure the output’s loudness. This decodes the
+  * **thumbnail** (`str` | `Path` | `None`) – The thumbnail to check against YouTube’s limits.
+  * **loudness** ([`Loudness`](_autosummary/muvid.visualize.ffmpeg.html.md#muvid.visualize.ffmpeg.Loudness) | `None`) – The target the video was normalized to.
+  * **check_loudness** (`bool`) – Actually measure the output’s loudness. This decodes the
     whole track, so it is off by default.
-  * **duration_tolerance** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – Allowed audio/video duration difference, in seconds.
-  * **expected_canvas** ([`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`int`](https://docs.python.org/3/builtins/functions.html#int), [`int`](https://docs.python.org/3/builtins/functions.html#int)] | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – The `(width, height)` the render was ASKED for. When
+  * **duration_tolerance** (`float`) – Allowed audio/video duration difference, in seconds.
+  * **expected_canvas** (`tuple`[`int`, `int`] | `None`) – The `(width, height)` the render was ASKED for. When
     given, the aspect/resolution checks verify the output matches it —
     a deliberate portrait render must not fail a hard-coded 16:9 check.
     When `None`, the classic YouTube-landscape expectations apply.
-  * **expected_duration** ([`float`](https://docs.python.org/3/builtins/functions.html#float) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – The length the render was ASKED for, when that is not
+  * **expected_duration** (`float` | `None`) – The length the render was ASKED for, when that is not
     the whole of `audio` — a trimmed edit renders only part of the song.
     Arms the duration check on its own, and wins over `audio`’s length.
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`Check`](_autosummary/muvid.visualize.verify.html.md#muvid.visualize.verify.Check)]
+  `list`[[`Check`](_autosummary/muvid.visualize.verify.html.md#muvid.visualize.verify.Check)]
 * **Returns:**
   A list of [`Check`](_autosummary/muvid.visualize.html.md#muvid.visualize.Check). Falsy checks are the problems; [`report()`](_autosummary/muvid.visualize.html.md#muvid.visualize.report)
   renders them, and [`failures()`](_autosummary/muvid.visualize.html.md#muvid.visualize.failures) filters them.
@@ -15061,16 +14892,16 @@ in a GPL-configured ffmpeg (muvid#69) — see
 [`brightness_saturation_lut()`](_autosummary/muvid.visualize.canvas.html.md#muvid.visualize.canvas.brightness_saturation_lut).
 
 * **Parameters:**
-  * **audio** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)) – The track whose beats drive the flash.
-  * **fps** ([`int`](https://docs.python.org/3/builtins/functions.html#int)) – The render’s frame rate (one command per component per frame).
-  * **duration** ([`float`](https://docs.python.org/3/builtins/functions.html#float) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – Clamp the flash to this many seconds (`None` = whole track).
-  * **workdir** ([`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)) – Directory to write the `sendcmd` script into.
-  * **label** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str)) – `sendcmd` label for this flash’s `lutyuv`.
-  * **brightness** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – Peak brightness boost on a beat.
-  * **saturation** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – Peak saturation boost on a beat.
-  * **decay** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – Per-frame afterglow of a pulse.
+  * **audio** (`str` | `Path`) – The track whose beats drive the flash.
+  * **fps** (`int`) – The render’s frame rate (one command per component per frame).
+  * **duration** (`float` | `None`) – Clamp the flash to this many seconds (`None` = whole track).
+  * **workdir** (`Path`) – Directory to write the `sendcmd` script into.
+  * **label** (`str`) – `sendcmd` label for this flash’s `lutyuv`.
+  * **brightness** (`float`) – Peak brightness boost on a beat.
+  * **saturation** (`float`) – Peak saturation boost on a beat.
+  * **decay** (`float`) – Per-frame afterglow of a pulse.
 * **Return type:**
-  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+  `str`
 
 ### muvid.visualize.reactive.onset_envelope(audio, , fps, duration=None, sr=22050, decay=0.5)
 
@@ -15083,15 +14914,15 @@ robustly to `[0, 1]`, then lets each pulse fade by `decay` per frame so a
 beat flashes and trails off rather than blinking for a single frame.
 
 * **Parameters:**
-  * **audio** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)) – The track to analyse.
-  * **fps** ([`int`](https://docs.python.org/3/builtins/functions.html#int)) – Video frame rate — one envelope value per frame.
-  * **duration** ([`float`](https://docs.python.org/3/builtins/functions.html#float) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – Clamp the envelope to this many seconds (defaults to the whole
+  * **audio** (`str` | `Path`) – The track to analyse.
+  * **fps** (`int`) – Video frame rate — one envelope value per frame.
+  * **duration** (`float` | `None`) – Clamp the envelope to this many seconds (defaults to the whole
     track).
-  * **sr** ([`int`](https://docs.python.org/3/builtins/functions.html#int)) – Analysis sample rate.
-  * **decay** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – Per-frame persistence of a pulse, 0 (no trail) to <1 (longer
+  * **sr** (`int`) – Analysis sample rate.
+  * **decay** (`float`) – Per-frame persistence of a pulse, 0 (no trail) to <1 (longer
     afterglow).
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`float`](https://docs.python.org/3/builtins/functions.html#float)]
+  `list`[`float`]
 * **Returns:**
   One value per frame. Empty if the audio could not be decoded.
 
@@ -15140,7 +14971,7 @@ skill carries the half that needs judgement.
 
 ### *class* muvid.visualize.verify.Check(name, ok, detail)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 One verification result.
 
@@ -15159,37 +14990,37 @@ AAC moves it slightly, so demanding an exact hit would fail every time.
 Just the checks that failed.
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`Check`](_autosummary/muvid.visualize.verify.html.md#muvid.visualize.verify.Check)]
+  `list`[[`Check`](_autosummary/muvid.visualize.verify.html.md#muvid.visualize.verify.Check)]
 
 ### muvid.visualize.verify.report(checks)
 
 Render `checks` as an aligned, readable block.
 
 * **Return type:**
-  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+  `str`
 
 ### muvid.visualize.verify.verify_video(video, , audio=None, thumbnail=None, loudness=None, check_loudness=False, duration_tolerance=0.5, expected_canvas=None, expected_duration=None)
 
 Check `video` against YouTube’s expectations; return one result per check.
 
 * **Parameters:**
-  * **video** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)) – The rendered mp4.
-  * **audio** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – The source song — enables the duration-match check, which is the
+  * **video** (`str` | `Path`) – The rendered mp4.
+  * **audio** (`str` | `Path` | `None`) – The source song — enables the duration-match check, which is the
     one that catches a mis-built filtergraph.
-  * **thumbnail** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – The thumbnail to check against YouTube’s limits.
-  * **loudness** ([`Loudness`](_autosummary/muvid.visualize.ffmpeg.html.md#muvid.visualize.ffmpeg.Loudness) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – The target the video was normalized to.
-  * **check_loudness** ([`bool`](https://docs.python.org/3/builtins/functions.html#bool)) – Actually measure the output’s loudness. This decodes the
+  * **thumbnail** (`str` | `Path` | `None`) – The thumbnail to check against YouTube’s limits.
+  * **loudness** ([`Loudness`](_autosummary/muvid.visualize.ffmpeg.html.md#muvid.visualize.ffmpeg.Loudness) | `None`) – The target the video was normalized to.
+  * **check_loudness** (`bool`) – Actually measure the output’s loudness. This decodes the
     whole track, so it is off by default.
-  * **duration_tolerance** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – Allowed audio/video duration difference, in seconds.
-  * **expected_canvas** ([`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`int`](https://docs.python.org/3/builtins/functions.html#int), [`int`](https://docs.python.org/3/builtins/functions.html#int)] | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – The `(width, height)` the render was ASKED for. When
+  * **duration_tolerance** (`float`) – Allowed audio/video duration difference, in seconds.
+  * **expected_canvas** (`tuple`[`int`, `int`] | `None`) – The `(width, height)` the render was ASKED for. When
     given, the aspect/resolution checks verify the output matches it —
     a deliberate portrait render must not fail a hard-coded 16:9 check.
     When `None`, the classic YouTube-landscape expectations apply.
-  * **expected_duration** ([`float`](https://docs.python.org/3/builtins/functions.html#float) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – The length the render was ASKED for, when that is not
+  * **expected_duration** (`float` | `None`) – The length the render was ASKED for, when that is not
     the whole of `audio` — a trimmed edit renders only part of the song.
     Arms the duration check on its own, and wins over `audio`’s length.
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`Check`](_autosummary/muvid.visualize.verify.html.md#muvid.visualize.verify.Check)]
+  `list`[[`Check`](_autosummary/muvid.visualize.verify.html.md#muvid.visualize.verify.Check)]
 * **Returns:**
   A list of [`Check`](_autosummary/muvid.visualize.verify.html.md#muvid.visualize.verify.Check). Falsy checks are the problems; [`report()`](_autosummary/muvid.visualize.verify.html.md#muvid.visualize.verify.report)
   renders them, and [`failures()`](_autosummary/muvid.visualize.verify.html.md#muvid.visualize.verify.failures) filters them.
@@ -15260,7 +15091,7 @@ Pass `gop_seconds=0.5` for strict compliance.
 
 ### *class* muvid.visualize.video.RenderResult(path, duration, size, fps, visual, loudness=None, canvas=None, extras=<factory>)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 A rendered video and what is worth knowing about it.
 
@@ -15305,30 +15136,30 @@ EBU R128 loudness with a two-pass `loudnorm`, which is what makes a batch
 of songs play back at a consistent level.
 
 * **Parameters:**
-  * **audio** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)) – The song (`.wav` is preferred when you have it — YouTube
+  * **audio** (`str` | `Path`) – The song (`.wav` is preferred when you have it — YouTube
     re-encodes regardless, so give it the cleanest input).
-  * **image** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – Cover art. Used for the picture, and composed onto a 16:9 canvas.
-  * **visual** (`Union`[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[[`VisualContext`](_autosummary/muvid.visualize.visuals.html.md#muvid.visualize.visuals.VisualContext)], [`VisualPlan`](_autosummary/muvid.visualize.visuals.html.md#muvid.visualize.visuals.VisualPlan) | [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path) | [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]]) – A registered strategy name (`"still"`, `"ken_burns"`,
+  * **image** (`str` | `Path` | `None`) – Cover art. Used for the picture, and composed onto a 16:9 canvas.
+  * **visual** (`Union`[`str`, `Callable`[[[`VisualContext`](_autosummary/muvid.visualize.visuals.html.md#muvid.visualize.visuals.VisualContext)], [`VisualPlan`](_autosummary/muvid.visualize.visuals.html.md#muvid.visualize.visuals.VisualPlan) | `Path` | `str`]]) – A registered strategy name (`"still"`, `"ken_burns"`,
     `"cqt"`, `"bars"`, `"spectrum"`, `"waves"`, `"scope"`),
     `"auto"`, or any callable (see [`muvid.visualize.visuals`](_autosummary/muvid.visualize.visuals.html.md#module-muvid.visualize.visuals)).
-  * **saveas** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – Output path (default: `<audio-stem>.mp4`).
-  * **size** ([`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`int`](https://docs.python.org/3/builtins/functions.html#int), [`int`](https://docs.python.org/3/builtins/functions.html#int)]) – Canvas size; the default is 1080p.
-  * **fps** ([`int`](https://docs.python.org/3/builtins/functions.html#int)) – Frame rate.
-  * **title** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – Burn this title into the frame.
-  * **layout** ([`CoverLayout`](_autosummary/muvid.visualize.canvas.html.md#muvid.visualize.canvas.CoverLayout) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – How the cover sits on the canvas.
-  * **title_style** ([`TitleStyle`](_autosummary/muvid.visualize.canvas.html.md#muvid.visualize.canvas.TitleStyle) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – How the title is drawn.
-  * **normalize** ([`bool`](https://docs.python.org/3/builtins/functions.html#bool)) – Loudness-normalize the audio (two-pass EBU R128).
-  * **loudness** ([`Loudness`](_autosummary/muvid.visualize.ffmpeg.html.md#muvid.visualize.ffmpeg.Loudness) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – The loudness target; a YouTube-appropriate default is used
+  * **saveas** (`str` | `Path` | `None`) – Output path (default: `<audio-stem>.mp4`).
+  * **size** (`tuple`[`int`, `int`]) – Canvas size; the default is 1080p.
+  * **fps** (`int`) – Frame rate.
+  * **title** (`str` | `None`) – Burn this title into the frame.
+  * **layout** ([`CoverLayout`](_autosummary/muvid.visualize.canvas.html.md#muvid.visualize.canvas.CoverLayout) | `None`) – How the cover sits on the canvas.
+  * **title_style** ([`TitleStyle`](_autosummary/muvid.visualize.canvas.html.md#muvid.visualize.canvas.TitleStyle) | `None`) – How the title is drawn.
+  * **normalize** (`bool`) – Loudness-normalize the audio (two-pass EBU R128).
+  * **loudness** ([`Loudness`](_autosummary/muvid.visualize.ffmpeg.html.md#muvid.visualize.ffmpeg.Loudness) | `None`) – The loudness target; a YouTube-appropriate default is used
     when omitted.
-  * **gop_seconds** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – Encoder knobs.
-  * **options** ([`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – Strategy-specific options, passed to the visual.
-  * **workdir** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – Where intermediates go (a temporary directory by default).
+  * **gop_seconds** (`float`) – Encoder knobs.
+  * **options** (`dict` | `None`) – Strategy-specific options, passed to the visual.
+  * **workdir** (`str` | `Path` | `None`) – Where intermediates go (a temporary directory by default).
 * **Return type:**
   [`RenderResult`](_autosummary/muvid.visualize.video.html.md#muvid.visualize.video.RenderResult)
 * **Returns:**
   A [`RenderResult`](_autosummary/muvid.visualize.video.html.md#muvid.visualize.video.RenderResult).
 * **Raises:**
-  [**ValueError**](https://docs.python.org/3/builtins/exceptions.html#ValueError) – `size` has an odd dimension — H.264 at yuv420p (the only
+  **ValueError** – `size` has an odd dimension — H.264 at yuv420p (the only
       pixel format every player decodes) cannot encode one.
 
 
@@ -15459,7 +15290,7 @@ alias of `Callable`[[[`VisualContext`](_autosummary/muvid.visualize.visuals.html
 
 ### *class* muvid.visualize.visuals.VisualContext(audio, image, duration, size, fps, layout=<factory>, title=None, title_style=None, workdir=<factory>, options=<factory>)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 Everything a visual strategy needs to know about the render.
 
@@ -15505,14 +15336,14 @@ Strategy-specific knobs, passed straight through by the caller.
 
 #### require_image(visual)
 
-The cover image, or a [`ValueError`](https://docs.python.org/3/builtins/exceptions.html#ValueError) naming what to do instead.
+The cover image, or a `ValueError` naming what to do instead.
 
 * **Return type:**
-  [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)
+  `Path`
 
 ### *class* muvid.visualize.visuals.VisualPlan(inputs=<factory>, filters=<factory>, video='vbg', uses_audio=False, has_cover=False, has_title=False, still=None)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 The ffmpeg fragments that render one strategy’s video stream.
 
@@ -15618,14 +15449,14 @@ Options:
 The names of every registered visual strategy.
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]
+  `list`[`str`]
 
 ### muvid.visualize.visuals.register_visual(name)
 
 Register a visual strategy under `name` (the open-closed seam).
 
 * **Return type:**
-  [`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[[`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[[`VisualContext`](_autosummary/muvid.visualize.visuals.html.md#muvid.visualize.visuals.VisualContext)], [`VisualPlan`](_autosummary/muvid.visualize.visuals.html.md#muvid.visualize.visuals.VisualPlan) | [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path) | [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]], [`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[[`VisualContext`](_autosummary/muvid.visualize.visuals.html.md#muvid.visualize.visuals.VisualContext)], [`VisualPlan`](_autosummary/muvid.visualize.visuals.html.md#muvid.visualize.visuals.VisualPlan) | [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path) | [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]]
+  `Callable`[[`Callable`[[[`VisualContext`](_autosummary/muvid.visualize.visuals.html.md#muvid.visualize.visuals.VisualContext)], [`VisualPlan`](_autosummary/muvid.visualize.visuals.html.md#muvid.visualize.visuals.VisualPlan) | `Path` | `str`]], `Callable`[[[`VisualContext`](_autosummary/muvid.visualize.visuals.html.md#muvid.visualize.visuals.VisualContext)], [`VisualPlan`](_autosummary/muvid.visualize.visuals.html.md#muvid.visualize.visuals.VisualPlan) | `Path` | `str`]]
 
 ### Examples
 
@@ -15652,7 +15483,7 @@ express themselves as an ffmpeg filtergraph (librosa/matplotlib, projectM,
 a headless-browser capture…).
 
 * **Raises:**
-  [**ValueError**](https://docs.python.org/3/builtins/exceptions.html#ValueError) – `visual` names a strategy that is not registered.
+  **ValueError** – `visual` names a strategy that is not registered.
 * **Return type:**
   [`VisualPlan`](_autosummary/muvid.visualize.visuals.html.md#muvid.visualize.visuals.VisualPlan)
 
@@ -15724,7 +15555,7 @@ Rendered white; colour comes from the accent `tint`. `options={"mode":
 
 # About this build
 
-This documentation was built on **2026-09-28 17:10 UTC** from commit <a href="https://github.com/thorwhalen/muvid/commit/53025d35477504171b7021dda24eca6022fb588c"><code>53025d3</code></a> on branch <code>main</code>, for **muvid 0.0.75** (from <code>pyproject.toml</code>).
+This documentation was built on **2026-10-01 09:19 UTC** from commit <a href="https://github.com/thorwhalen/muvid/commit/9f14075f874ae52b092c20e8be4db0b37c3dfe23"><code>9f14075</code></a> on branch <code>main</code>, for **muvid 0.0.76** (from <code>pyproject.toml</code>).
 
 #### NOTE
 Nothing suggests a mismatch: the tree was clean at the commit above, and the documented version is the one on PyPI.
@@ -15733,9 +15564,9 @@ Nothing suggests a mismatch: the tree was clean at the commit above, and the doc
 
 |                     |                                                                                                                                                         |
 |---------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Commit              | <a href="https://github.com/thorwhalen/muvid/commit/53025d35477504171b7021dda24eca6022fb588c"><code>53025d35477504171b7021dda24eca6022fb588c</code></a> |
+| Commit              | <a href="https://github.com/thorwhalen/muvid/commit/9f14075f874ae52b092c20e8be4db0b37c3dfe23"><code>9f14075f874ae52b092c20e8be4db0b37c3dfe23</code></a> |
 | Branch              | <code>main</code>                                                                                                                                       |
-| Tags at this commit | <code>0.0.75</code>                                                                                                                                     |
+| Tags at this commit | <code>0.0.76</code>                                                                                                                                     |
 | Working tree        | clean                                                                                                                                                   |
 | Remote              | <code>https://github.com/thorwhalen/muvid</code>                                                                                                        |
 
@@ -15744,9 +15575,9 @@ Nothing suggests a mismatch: the tree was clean at the commit above, and the doc
 |              |                                                                                            |
 |--------------|--------------------------------------------------------------------------------------------|
 | Repository   | <code>thorwhalen/muvid</code>                                                              |
-| Run          | <a href="https://github.com/thorwhalen/muvid/actions/runs/36455317269">36455317269</a>     |
+| Run          | <a href="https://github.com/thorwhalen/muvid/actions/runs/36841161692">36841161692</a>     |
 | Ref          | <code>refs/heads/main</code>                                                               |
-| Event commit | <code>9cb70fdb3382839a198d9998e02b73c513c605e8</code> (in the history of the built commit) |
+| Event commit | <code>7afc73409e1c6eb67a70627c67c10da3a8a9157e</code> (in the history of the built commit) |
 
 ## Tools
 
@@ -15771,13 +15602,13 @@ Nothing suggests a mismatch: the tree was clean at the commit above, and the doc
 
 ## Package on PyPI
 
-Latest release: <a href="https://pypi.org/project/muvid/0.0.75/">0.0.75</a>, the same as the documented version.
+Latest release: <a href="https://pypi.org/project/muvid/0.0.76/">0.0.76</a>, the same as the documented version.
 
 ## Reproduce
 
 ```bash
 git clone https://github.com/thorwhalen/muvid && cd muvid
-git checkout 53025d35477504171b7021dda24eca6022fb588c
+git checkout 9f14075f874ae52b092c20e8be4db0b37c3dfe23
 pip install "epythet==0.2.12"
 epythet quickstart . --ignore tests/ scrap/ examples/
 ```

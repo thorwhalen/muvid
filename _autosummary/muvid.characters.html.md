@@ -30,14 +30,14 @@ Reference images go through three states:
 Create or update a character card. Idempotent.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]
+  `dict`[`str`, `Any`]
 
 ### muvid.characters.add_reference_images(project, name, images, , copy=True)
 
 Drop user-provided images into `characters/<name>/refs/`.
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)]
+  `list`[`Path`]
 
 ### muvid.characters.curate_references(project, name, , k=8, recipe='person_mock')
 
@@ -47,7 +47,7 @@ Default recipe is `person_mock` so this works without the heavy ML
 dependencies; pass `recipe="person"` once those are installed.
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)]
+  `list`[`Path`]
 
 ### muvid.characters.curate_references_interactive(project, name, , on_decision, k=8, recipe='person_mock', present=6, max_rounds=20)
 
@@ -58,7 +58,7 @@ decision callable) drives keep/reject decisions per round.
 `on_decision` is forwarded directly; see lookbook for the API.
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)]
+  `list`[`Path`]
 
 ### muvid.characters.generate_reference_images(project, name, , n=6, style_variants=(), quality='balanced')
 
@@ -69,7 +69,7 @@ The character’s `description` is used as the prompt; each variant
 Output goes to `characters/<name>/refs/`.
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)]
+  `list`[`Path`]
 
 ### muvid.characters.get_character_anchor_image(project, name)
 
@@ -79,4 +79,4 @@ Resolves in order: `card.reference_image_path` (curated),
 first file in `selected/`, first file in `refs/`.
 
 * **Return type:**
-  [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)
+  `Path`

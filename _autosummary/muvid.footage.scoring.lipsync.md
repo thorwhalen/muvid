@@ -36,7 +36,7 @@ first real use. It is structured to fail safe (skip) everywhere else.
 `(ok, reason)` — whether the opt-in lip-sync tier can run here.
 
 * **Return type:**
-  [`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`bool`](https://docs.python.org/3/builtins/functions.html#bool), [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]
+  `tuple`[`bool`, `str`]
 
 ### muvid.footage.scoring.lipsync.lipsync_tracks(clip_path, , clip_id, offset_s, duration_s, coverage, vocal_stem_path, t0, hop_s, n, device='cpu')
 
@@ -48,7 +48,7 @@ holds the per-face-track LSE-C over that track’s span, clamped to the clip’s
 (never fabricates lip-sync beyond the clip); spans with no detected face are NA.
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`ScoreTrack`](muvid.footage.scoring.grid.md#muvid.footage.scoring.grid.ScoreTrack)]
+  `list`[[`ScoreTrack`](muvid.footage.scoring.grid.md#muvid.footage.scoring.grid.ScoreTrack)]
 
 ### muvid.footage.scoring.lipsync.separate_master_vocals(song_path, , out_dir)
 
@@ -59,4 +59,4 @@ call as the co-temporal reference audio. Returns `None` (never raises) if Demucs
 absent — the caller then skips lip-sync.
 
 * **Return type:**
-  [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path) | [`None`](https://docs.python.org/3/builtins/constants.html#None)
+  `Path` | `None`

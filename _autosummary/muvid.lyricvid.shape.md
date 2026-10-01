@@ -75,7 +75,7 @@ subprocess to pull no numpy; the packing is the only thing here that needs it.
 
 ### *class* muvid.lyricvid.shape.Placement(, text, x, y, size, rotated=False)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 Where one word goes, in [`muvid.lyricvid.scene.Cue`](muvid.lyricvid.scene.md#muvid.lyricvid.scene.Cue)’s coordinates.
 
@@ -84,14 +84,14 @@ becomes: four of its five fields are geometry, and geometry read off a
 positional tuple is geometry nobody can check at the call site.
 
 * **Parameters:**
-  * **text** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str)) – the word, exactly as it should be drawn.
-  * **y** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – centre of the text, normalised to the canvas (0..1, top-left).
-  * **size** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – cap height as a fraction of canvas height.
-  * **rotated** ([`bool`](https://docs.python.org/3/builtins/functions.html#bool)) – the word is set at 90 degrees (bottom-up). Only ever True
+  * **text** (`str`) – the word, exactly as it should be drawn.
+  * **y** (`float`) – centre of the text, normalised to the canvas (0..1, top-left).
+  * **size** (`float`) – cap height as a fraction of canvas height.
+  * **rotated** (`bool`) – the word is set at 90 degrees (bottom-up). Only ever True
     when the caller asked for `allow_rotation`; `Cue` cannot express a
     rotation, so `shape_fill` does not ask for one.
 
-### muvid.lyricvid.shape.SHAPE_KINDS *: [dict](https://docs.python.org/3/builtins/stdtypes.html#dict)[[str](https://docs.python.org/3/builtins/stdtypes.html#str), [Callable](https://docs.python.org/3/library/typing.html#typing.Callable)[[...], [Any](https://docs.python.org/3/library/typing.html#typing.Any)]]* *= {'mask_image': <function \_image_ink>, 'named': <function \_named_ink>, 'svg_path': <function \_svg_ink>}*
+### muvid.lyricvid.shape.SHAPE_KINDS *: dict[str, Callable[[...], Any]]* *= {'mask_image': <function \_image_ink>, 'named': <function \_named_ink>, 'svg_path': <function \_svg_ink>}*
 
 The three sources a shape can come from. Closed, because
 [`muvid.lyricvid.spec.ShapeRef`](muvid.lyricvid.spec.md#muvid.lyricvid.spec.ShapeRef) is: the extension seam for a new
@@ -106,7 +106,7 @@ bearings — which is what a caller wants for a hit test, a debug overlay, or
 for asserting that two placements do not collide.
 
 * **Return type:**
-  [`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`float`](https://docs.python.org/3/builtins/functions.html#float), [`float`](https://docs.python.org/3/builtins/functions.html#float), [`float`](https://docs.python.org/3/builtins/functions.html#float), [`float`](https://docs.python.org/3/builtins/functions.html#float)]
+  `tuple`[`float`, `float`, `float`, `float`]
 
 ```pycon
 >>> p = Placement(text='apple', x=0.5, y=0.5, size=0.1)
@@ -119,7 +119,7 @@ for asserting that two placements do not collide.
 Every registered outline name, sorted.
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]
+  `list`[`str`]
 
 ```pycon
 >>> list_shapes()
@@ -131,23 +131,23 @@ Every registered outline name, sorted.
 Pack `texts` inside a shape, in the order given.
 
 * **Parameters:**
-  * **texts** ([`Sequence`](https://docs.python.org/3/library/typing.html#typing.Sequence)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]) – the words, in the order they are sung. Order matters twice:
+  * **texts** (`Sequence`[`str`]) – the words, in the order they are sung. Order matters twice:
     it decides who gets the roomy middle of the shape, and it feeds the
     salience weight.
-  * **shape_kind** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str)) – `'named'`, `'svg_path'` or `'mask_image'` — see
+  * **shape_kind** (`str`) – `'named'`, `'svg_path'` or `'mask_image'` — see
     [`SHAPE_KINDS`](#muvid.lyricvid.shape.SHAPE_KINDS) and [`muvid.lyricvid.spec.ShapeRef`](muvid.lyricvid.spec.md#muvid.lyricvid.spec.ShapeRef).
-  * **shape_value** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str)) – the outline’s name, path data, or image path.
-  * **aspect** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – canvas width / height.
-  * **base_size** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – cap height as a fraction of canvas height, before salience.
-  * **allow_rotation** ([`bool`](https://docs.python.org/3/builtins/functions.html#bool)) – also try each word turned 90 degrees.
+  * **shape_value** (`str`) – the outline’s name, path data, or image path.
+  * **aspect** (`float`) – canvas width / height.
+  * **base_size** (`float`) – cap height as a fraction of canvas height, before salience.
+  * **allow_rotation** (`bool`) – also try each word turned 90 degrees.
     `muvid.lyricvid.scene.Cue` cannot express a rotation, so `shape_fill`
     leaves this off; a renderer that can should turn it on.
-  * **shrink_steps** ([`int`](https://docs.python.org/3/builtins/functions.html#int)) – how many progressively smaller retries a word gets
+  * **shrink_steps** (`int`) – how many progressively smaller retries a word gets
     before it is dropped.
-  * **mask_options** ([`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`Mapping`](https://docs.python.org/3/library/typing.html#typing.Mapping)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]]) – forwarded to the kind’s builder (`threshold` and
+  * **mask_options** (`Optional`[`Mapping`[`str`, `Any`]]) – forwarded to the kind’s builder (`threshold` and
     `invert` for `'mask_image'`, `curve_samples` for `'svg_path'`).
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`Placement`](#muvid.lyricvid.shape.Placement) | [`None`](https://docs.python.org/3/builtins/constants.html#None)]
+  `list`[[`Placement`](#muvid.lyricvid.shape.Placement) | `None`]
 * **Returns:**
   one entry per input, in the same order. `None` is “did not fit”
   — dropping a word beats overlapping two.
@@ -211,7 +211,7 @@ returns a boolean array. Implicit functions and polygons both fit; see
 `polygon_shape()` for the latter.
 
 * **Return type:**
-  [`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[[`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[[`Any`](https://docs.python.org/3/library/typing.html#typing.Any), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)], [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]], [`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[[`Any`](https://docs.python.org/3/library/typing.html#typing.Any), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)], [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]]
+  `Callable`[[`Callable`[[`Any`, `Any`], `Any`]], `Callable`[[`Any`, `Any`], `Any`]]
 
 ```pycon
 >>> @register_shape('doctest-blob')
@@ -226,7 +226,7 @@ True
 The outline function for `name`, or a ValueError naming the options.
 
 * **Return type:**
-  [`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[[`Any`](https://docs.python.org/3/library/typing.html#typing.Any), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)], [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]
+  `Callable`[[`Any`, `Any`], `Any`]
 
 ```pycon
 >>> resolve_shape('banana')
@@ -245,7 +245,7 @@ The outline is drawn into the largest centred SQUARE the canvas allows (less
 `margin`), which is what keeps a circle round on a 16:9 frame.
 
 * **Return type:**
-  [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)
+  `Any`
 
 ```pycon
 >>> m = shape_mask('named', 'circle', aspect=1.0, grid_height=32)

@@ -49,17 +49,17 @@ Module scope is stdlib-only; numpy and ffmpeg are reached inside functions.
 
 ### *class* muvid.montage.analysis.Analysis(\*, duration, tempo_bpm, beats, downbeats, beats_per_bar=4, sections=(), beat_source='', section_source='', bar_energy_db=(), notes=<factory>)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 What the planner knows about the song.
 
-#### *property* beat_s *: [float](https://docs.python.org/3/builtins/functions.html#float)*
+#### *property* beat_s *: float*
 
 Seconds per beat at the estimated tempo.
 
 ### *class* muvid.montage.analysis.Media(, index, path, kind, width, height, duration=None, strength=0.0)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 One pool item, measured.
 
@@ -68,11 +68,11 @@ a still; `strength` is the closed-form score the reuse policy ranks on.
 
 ### *class* muvid.montage.analysis.Section(, label, start, end, energy_db=None)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 A labelled stretch of the song, in seconds.
 
-#### energy_db *: [float](https://docs.python.org/3/builtins/functions.html#float) | [None](https://docs.python.org/3/builtins/constants.html#None)*
+#### energy_db *: float | None*
 
 Mean bar energy in dB (relative), when measured.
 
@@ -88,7 +88,7 @@ Measure `audio`: duration, beat grid, downbeats, bar energy, sections.
 `(beats, tempo_bpm, onset_env, onset_hop_s, source_name, note)`.
 
 `source="auto"` tries `mixing.audio.beat_grid` and falls back to the
-numpy estimator only on [`ImportError`](https://docs.python.org/3/builtins/exceptions.html#ImportError) (librosa absent). Naming a
+numpy estimator only on `ImportError` (librosa absent). Naming a
 source never falls back.
 
 ### muvid.montage.analysis.derive_sections(bar_energy_db, bars, duration, , min_section_bars=4)
@@ -102,7 +102,7 @@ of at most `MAX_INTRO_BARS` bars is an intro/outro. A dynamically
 flat song is one verse — reported as such rather than invented.
 
 * **Return type:**
-  [`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`Section`](#muvid.montage.analysis.Section), [`...`](https://docs.python.org/3/builtins/constants.html#Ellipsis)]
+  `tuple`[[`Section`](#muvid.montage.analysis.Section), `...`]
 
 ```pycon
 >>> bars = [(i * 2.0, (i + 1) * 2.0) for i in range(8)]
@@ -122,7 +122,7 @@ phase 0 (the first beat), which is also the answer when there is nothing
 to vote with.
 
 * **Return type:**
-  [`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`float`](https://docs.python.org/3/builtins/functions.html#float), [`...`](https://docs.python.org/3/builtins/constants.html#Ellipsis)]
+  `tuple`[`float`, `...`]
 
 ```pycon
 >>> downbeats_from_beats([0, .5, 1, 1.5, 2, 2.5, 3, 3.5], [1, 0, 0, 0, 1, 0, 0, 0], 4)
@@ -139,14 +139,14 @@ A file with no video stream is refused with its path in the message — a
 montage that silently skipped a photo would be a different montage.
 
 * **Return type:**
-  [`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`Media`](#muvid.montage.analysis.Media), [`...`](https://docs.python.org/3/builtins/constants.html#Ellipsis)]
+  `tuple`[[`Media`](#muvid.montage.analysis.Media), `...`]
 
 ### muvid.montage.analysis.sections_from_labels(raw, duration)
 
 Caller-supplied sections, clamped to the song and gap-filled with verses.
 
 * **Return type:**
-  [`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`Section`](#muvid.montage.analysis.Section), [`...`](https://docs.python.org/3/builtins/constants.html#Ellipsis)]
+  `tuple`[[`Section`](#muvid.montage.analysis.Section), `...`]
 
 ```pycon
 >>> [(s.label, s.start, s.end) for s in sections_from_labels(

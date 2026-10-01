@@ -29,7 +29,7 @@ mechanical (asdict / kwargs); `schema_version` lets us migrate later.
 
 ### *class* muvid.schema.CharacterRef(, name, description='')
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 Pointer to a character folder under `characters/<name>/`.
 
@@ -39,13 +39,13 @@ project SSOT stays small.
 
 ### *class* muvid.schema.EnvironmentRef(, name, description='')
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 Pointer to an environment folder under `environments/<name>/`.
 
 ### *class* muvid.schema.ProjectSpec(, schema_version=1, title='', song=None, characters=(), environments=(), sections=(), shots=(), global_style='', notes='')
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 The top-level project SSOT, persisted as `project.json`.
 
@@ -54,11 +54,11 @@ The top-level project SSOT, persisted as `project.json`.
 Render strategies a single shot can use. The `render` subpackage
 dispatches on this string.
 
-alias of [`Literal`](https://docs.python.org/3/library/typing.html#typing.Literal)[‘lipsync’, ‘image_to_video’, ‘text_to_video’, ‘animation’, ‘still’]
+alias of `Literal`[‘lipsync’, ‘image_to_video’, ‘text_to_video’, ‘animation’, ‘still’]
 
 ### *class* muvid.schema.SectionSpec(, id, start_s, end_s, label='', energy='', mood='')
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 A non-overlapping span of the song with a label.
 
@@ -67,7 +67,7 @@ A non-overlapping span of the song with a label.
 
 ### *class* muvid.schema.ShotSpec(, id, start_s, end_s, section_id='', render_strategy='image_to_video', environment='', characters=(), description='', camera='', framing='medium', notes='')
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 A timeline-locked visual unit of the music video.
 
@@ -78,6 +78,6 @@ isn’t supported by the basic compositor).
 
 ### *class* muvid.schema.SongInfo(, audio_path, duration_s, sample_rate=0, bitrate=0, bpm=None)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 Metadata for the master audio file.

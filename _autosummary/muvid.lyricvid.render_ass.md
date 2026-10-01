@@ -44,12 +44,12 @@ need them, so importing this module costs a caller nothing.
 | [`scene_to_ass`](#muvid.lyricvid.render_ass.scene_to_ass)(scene, \*[, font])                  | Render a Scene as an ASS (Advanced SubStation Alpha) document. |
 | [`render`](#muvid.lyricvid.render_ass.render)(scene, \*, audio, output, workdir[, ...]) | Burn the scene over a solid background and mux the song.       |
 
-### muvid.lyricvid.render_ass.FONT_FALLBACKS *: [tuple](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[str](https://docs.python.org/3/builtins/stdtypes.html#str), ...]* *= ('DejaVu Sans', 'Liberation Sans', 'Noto Sans', 'Arial', 'Helvetica', 'sans-serif')*
+### muvid.lyricvid.render_ass.FONT_FALLBACKS *: tuple[str, ...]* *= ('DejaVu Sans', 'Liberation Sans', 'Noto Sans', 'Arial', 'Helvetica', 'sans-serif')*
 
 Families to try, in order, when the treatment’s family is not installed.
 DejaVu first because it is what a Linux render box actually has.
 
-### muvid.lyricvid.render_ass.MOTION_FNS *: [dict](https://docs.python.org/3/builtins/stdtypes.html#dict)[[str](https://docs.python.org/3/builtins/stdtypes.html#str), [Callable](https://docs.python.org/3/library/typing.html#typing.Callable)[[\_Placed], [list](https://docs.python.org/3/builtins/stdtypes.html#list)[\_Event]]]* *= {'cut': <function \_motion_cut>, 'fade': <function \_motion_fade>, 'pop': <function \_motion_pop>, 'rise': <function \_motion_rise>, 'typewriter': <function \_motion_typewriter>, 'wipe': <function \_motion_wipe>}*
+### muvid.lyricvid.render_ass.MOTION_FNS *: dict[str, Callable[[\_Placed], list[\_Event]]]* *= {'cut': <function \_motion_cut>, 'fade': <function \_motion_fade>, 'pop': <function \_motion_pop>, 'rise': <function \_motion_rise>, 'typewriter': <function \_motion_typewriter>, 'wipe': <function \_motion_wipe>}*
 
 `motion` name -> the events it draws. muvid’s house registry idiom
 (`register_visual`, `register_archetype`, `register_selection_strategy`):
@@ -72,7 +72,7 @@ long is unreadable to the human this file is also written for.
 The motion families this renderer can draw.
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]
+  `list`[`str`]
 
 ### Examples
 
@@ -86,7 +86,7 @@ The motion families this renderer can draw.
 Register how one `motion` family draws itself.
 
 * **Return type:**
-  [`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[[`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[`_Placed`], [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[`_Event`]]], [`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[`_Placed`], [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[`_Event`]]]
+  `Callable`[[`Callable`[[`_Placed`], `list`[`_Event`]]], `Callable`[[`_Placed`], `list`[`_Event`]]]
 
 ### Examples
 
@@ -114,12 +114,12 @@ against, and it is run here on the finished file.
 
 * **Parameters:**
   * **scene** ([`Scene`](muvid.lyricvid.scene.md#muvid.lyricvid.scene.Scene)) – The compiled scene.
-  * **audio** ([`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)) – The song. Its duration sets the video’s.
-  * **output** ([`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)) – Where the mp4 goes.
-  * **workdir** ([`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)) – Directory for intermediates — this render owns it.
-  * **ass_path** ([`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – Where to keep the subtitle document (default:
+  * **audio** (`Path`) – The song. Its duration sets the video’s.
+  * **output** (`Path`) – Where the mp4 goes.
+  * **workdir** (`Path`) – Directory for intermediates — this render owns it.
+  * **ass_path** (`Path` | `None`) – Where to keep the subtitle document (default:
     `workdir/<output stem>.ass`). It is a deliverable, not a temp file.
-  * **crf** ([`int`](https://docs.python.org/3/builtins/functions.html#int)) – x264 quality, lower is better. 18 is visually lossless for flat
+  * **crf** (`int`) – x264 quality, lower is better. 18 is visually lossless for flat
     colour and text.
 * **Return type:**
   [`RenderResult`](muvid.subgenres.md#muvid.subgenres.RenderResult)
@@ -149,10 +149,10 @@ by changing the canvas it was compiled for.
 
 * **Parameters:**
   * **scene** ([`Scene`](muvid.lyricvid.scene.md#muvid.lyricvid.scene.Scene)) – The compiled scene. Every number in it is already resolved.
-  * **font** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – Family to typeset in. Defaults to the scene’s typography; an
+  * **font** (`str` | `None`) – Family to typeset in. Defaults to the scene’s typography; an
     uninstalled family falls back (see `_resolve_font()`).
 * **Return type:**
-  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+  `str`
 * **Returns:**
   The `.ass` document, as text.
 

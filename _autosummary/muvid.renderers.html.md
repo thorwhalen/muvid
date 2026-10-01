@@ -27,7 +27,7 @@ matches the current ShotSpec, we skip.
 
 ### *class* muvid.renderers.RenderContext(, project, shot, shot_dir, audio_slice_path, character_image_paths, environment_image_path, lyric_lines, global_style='')
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 Shared resolved inputs for rendering a shot.
 
@@ -43,7 +43,7 @@ billed one second, and a zero-duration shot priced at $0.00 with
 estimate paraphrasing the renderer’s arithmetic instead of calling it).
 
 * **Return type:**
-  [`int`](https://docs.python.org/3/builtins/functions.html#int)
+  `int`
 
 ### muvid.renderers.render_shot(project, shot_id, , quality='balanced', force=False)
 
@@ -54,7 +54,7 @@ matches the current shot definition’s hash, unless `force=True` —
 the [`shot_is_rendered()`](#muvid.renderers.shot_is_rendered) predicate, which the cost estimate shares.
 
 * **Return type:**
-  [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)
+  `Path`
 
 ### muvid.renderers.shot_is_rendered(project, shot, global_style, , force=False)
 
@@ -70,7 +70,7 @@ predicates that must agree is the shape that produced it; this function is
 the agreement.
 
 * **Return type:**
-  [`bool`](https://docs.python.org/3/builtins/functions.html#bool)
+  `bool`
 
 ### Modules
 

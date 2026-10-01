@@ -26,7 +26,7 @@ import of a given name only pulls its dependencies when you actually use it.
 
 ### *class* muvid.CharacterRef(, name, description='')
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 Pointer to a character folder under `characters/<name>/`.
 
@@ -36,13 +36,13 @@ project SSOT stays small.
 
 ### *class* muvid.EnvironmentRef(, name, description='')
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 Pointer to an environment folder under `environments/<name>/`.
 
 ### *class* muvid.MusicVideoProject(root)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 Filesystem-backed music video project.
 
@@ -65,7 +65,7 @@ registered in `project.json`.
 Append a one-line JSON entry to `.muvid/decisions.jsonl`.
 
 * **Return type:**
-  [`None`](https://docs.python.org/3/builtins/constants.html#None)
+  `None`
 
 #### set_song(source, , copy=True)
 
@@ -86,13 +86,13 @@ Read, replace, write. Returns the new spec.
 
 ### *class* muvid.ProjectSpec(, schema_version=1, title='', song=None, characters=(), environments=(), sections=(), shots=(), global_style='', notes='')
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 The top-level project SSOT, persisted as `project.json`.
 
 ### *class* muvid.SectionSpec(, id, start_s, end_s, label='', energy='', mood='')
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 A non-overlapping span of the song with a label.
 
@@ -101,7 +101,7 @@ A non-overlapping span of the song with a label.
 
 ### *class* muvid.ShotSpec(, id, start_s, end_s, section_id='', render_strategy='image_to_video', environment='', characters=(), description='', camera='', framing='medium', notes='')
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 A timeline-locked visual unit of the music video.
 
@@ -112,7 +112,7 @@ isn’t supported by the basic compositor).
 
 ### *class* muvid.SongInfo(, audio_path, duration_s, sample_rate=0, bitrate=0, bpm=None)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 Metadata for the master audio file.
 
@@ -127,7 +127,7 @@ the chosen aligner. Defaults to `scribe-greedy`.
 Returns the path to the alignment store.
 
 * **Return type:**
-  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+  `str`
 
 ### muvid.default_project_root(name)
 
@@ -148,14 +148,14 @@ cwd. See `muvid/paths.py` — the default is right, and it was the UI’s missin
 is-this-a-project precondition that made it write.
 
 * **Return type:**
-  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+  `str`
 
 ### muvid.init_project(root, , title='', song=None)
 
 Create a new music video project. Returns the absolute root path.
 
 * **Return type:**
-  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+  `str`
 
 ### muvid.render(root, , quality='balanced', force=False, budget=None, allow_unpriced=False)
 
@@ -179,7 +179,7 @@ who has read the names can accept them. What it must never become is a
 silent default.
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]
+  `list`[`str`]
 
 ### muvid.render_audio_video(audio, image=None, , visual='auto', saveas=None, size=(1920, 1080), fps=24, title=None, layout=None, title_style=None, normalize=False, loudness=None, crf=18, preset='medium', audio_bitrate='384k', gop_seconds=2.0, options=None, workdir=None)
 
@@ -191,30 +191,30 @@ EBU R128 loudness with a two-pass `loudnorm`, which is what makes a batch
 of songs play back at a consistent level.
 
 * **Parameters:**
-  * **audio** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)) – The song (`.wav` is preferred when you have it — YouTube
+  * **audio** (`str` | `Path`) – The song (`.wav` is preferred when you have it — YouTube
     re-encodes regardless, so give it the cleanest input).
-  * **image** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – Cover art. Used for the picture, and composed onto a 16:9 canvas.
-  * **visual** (`Union`[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[[`VisualContext`](muvid.visualize.visuals.md#muvid.visualize.visuals.VisualContext)], [`VisualPlan`](muvid.visualize.visuals.md#muvid.visualize.visuals.VisualPlan) | [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path) | [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]]) – A registered strategy name (`"still"`, `"ken_burns"`,
+  * **image** (`str` | `Path` | `None`) – Cover art. Used for the picture, and composed onto a 16:9 canvas.
+  * **visual** (`Union`[`str`, `Callable`[[[`VisualContext`](muvid.visualize.visuals.md#muvid.visualize.visuals.VisualContext)], [`VisualPlan`](muvid.visualize.visuals.md#muvid.visualize.visuals.VisualPlan) | `Path` | `str`]]) – A registered strategy name (`"still"`, `"ken_burns"`,
     `"cqt"`, `"bars"`, `"spectrum"`, `"waves"`, `"scope"`),
     `"auto"`, or any callable (see [`muvid.visualize.visuals`](muvid.visualize.visuals.md#module-muvid.visualize.visuals)).
-  * **saveas** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – Output path (default: `<audio-stem>.mp4`).
-  * **size** ([`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`int`](https://docs.python.org/3/builtins/functions.html#int), [`int`](https://docs.python.org/3/builtins/functions.html#int)]) – Canvas size; the default is 1080p.
-  * **fps** ([`int`](https://docs.python.org/3/builtins/functions.html#int)) – Frame rate.
-  * **title** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – Burn this title into the frame.
-  * **layout** ([`CoverLayout`](muvid.visualize.canvas.md#muvid.visualize.canvas.CoverLayout) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – How the cover sits on the canvas.
-  * **title_style** ([`TitleStyle`](muvid.visualize.canvas.md#muvid.visualize.canvas.TitleStyle) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – How the title is drawn.
-  * **normalize** ([`bool`](https://docs.python.org/3/builtins/functions.html#bool)) – Loudness-normalize the audio (two-pass EBU R128).
-  * **loudness** ([`Loudness`](muvid.visualize.ffmpeg.md#muvid.visualize.ffmpeg.Loudness) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – The loudness target; a YouTube-appropriate default is used
+  * **saveas** (`str` | `Path` | `None`) – Output path (default: `<audio-stem>.mp4`).
+  * **size** (`tuple`[`int`, `int`]) – Canvas size; the default is 1080p.
+  * **fps** (`int`) – Frame rate.
+  * **title** (`str` | `None`) – Burn this title into the frame.
+  * **layout** ([`CoverLayout`](muvid.visualize.canvas.md#muvid.visualize.canvas.CoverLayout) | `None`) – How the cover sits on the canvas.
+  * **title_style** ([`TitleStyle`](muvid.visualize.canvas.md#muvid.visualize.canvas.TitleStyle) | `None`) – How the title is drawn.
+  * **normalize** (`bool`) – Loudness-normalize the audio (two-pass EBU R128).
+  * **loudness** ([`Loudness`](muvid.visualize.ffmpeg.md#muvid.visualize.ffmpeg.Loudness) | `None`) – The loudness target; a YouTube-appropriate default is used
     when omitted.
-  * **gop_seconds** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – Encoder knobs.
-  * **options** ([`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – Strategy-specific options, passed to the visual.
-  * **workdir** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – Where intermediates go (a temporary directory by default).
+  * **gop_seconds** (`float`) – Encoder knobs.
+  * **options** (`dict` | `None`) – Strategy-specific options, passed to the visual.
+  * **workdir** (`str` | `Path` | `None`) – Where intermediates go (a temporary directory by default).
 * **Return type:**
   [`RenderResult`](muvid.visualize.video.md#muvid.visualize.video.RenderResult)
 * **Returns:**
   A `RenderResult`.
 * **Raises:**
-  [**ValueError**](https://docs.python.org/3/builtins/exceptions.html#ValueError) – `size` has an odd dimension — H.264 at yuv420p (the only
+  **ValueError** – `size` has an odd dimension — H.264 at yuv420p (the only
       pixel format every player decodes) cannot encode one.
 
 ### muvid.status(root)
@@ -230,7 +230,7 @@ histogram. Stable enough to be programmatic; pass through
 `format_status()` for human-readable text.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.transcribe_song(root, , api_key=None)
 
@@ -242,13 +242,12 @@ expected to edit `lyrics.md` to fix mishears and add real section
 tags. Returns the path to the lyrics markdown.
 
 * **Return type:**
-  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+  `str`
 
 ### Modules
 
 | [`align`](muvid.align.md#module-muvid.align)               | Lyric → audio alignment.                                                             |
 |-----------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------|
-| [`catalog`](muvid.catalog.md#module-muvid.catalog)           | Make a hosted production's media *retrievable* — the host's artifact catalog.        |
 | [`characters`](muvid.characters.md#module-muvid.characters)     | Character cards + reference image curation via lookbook.                             |
 | [`choreo`](muvid.choreo.md#module-muvid.choreo)             | Choreo — event-driven visual music, muvid's second subgenre plugin.                  |
 | [`compose`](muvid.compose.md#module-muvid.compose)           | Compose all rendered shots into the final music video.                               |

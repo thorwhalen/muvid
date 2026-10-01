@@ -61,7 +61,7 @@ writes — pulled out as a public helper so other consumers (a UI
 SSE stream, a remote telemetry sink) don’t have to rebuild it.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]
+  `dict`[`str`, `Any`]
 
 ### muvid.contracts.shifted_word_timings(timings, , offset_s)
 
@@ -72,7 +72,7 @@ them relative to a shot’s audio slice (where t=0 is the slice’s
 start). Mirrors `audio[shot.start_s:shot.end_s]` cropping.
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`float`](https://docs.python.org/3/builtins/functions.html#float), [`float`](https://docs.python.org/3/builtins/functions.html#float)]]
+  `list`[`tuple`[`str`, `float`, `float`]]
 
 ### muvid.contracts.word_timings_for_window(project, start_s, end_s, , asset_id=None)
 
@@ -84,4 +84,4 @@ the alignment store doesn’t exist yet, or when `lacing` /
 gracefully).
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`float`](https://docs.python.org/3/builtins/functions.html#float), [`float`](https://docs.python.org/3/builtins/functions.html#float)]]
+  `list`[`tuple`[`str`, `float`, `float`]]

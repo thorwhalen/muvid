@@ -41,19 +41,19 @@ ASR are imported inside the functions that need them.
 
 ### *class* muvid.lyricvid.timed_text.Line(, words, index=0, text='')
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 One sung line.
 
 ### *class* muvid.lyricvid.timed_text.Section(, label, lines)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 A labelled span — `verse`, `chorus`, whatever the lyrics document says.
 
 ### *class* muvid.lyricvid.timed_text.TimedText(, sections, duration=0.0, source='unknown')
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 The whole song’s text, timed.
 
@@ -65,24 +65,24 @@ The whole song’s text, timed.
 '*'
 ```
 
-#### *property* measured *: [bool](https://docs.python.org/3/builtins/functions.html#bool)*
+#### *property* measured *: bool*
 
 True when every word time was measured rather than interpolated.
 
 False for an empty text: “all of nothing was measured” is the kind of
 vacuous truth that reads as reassurance in a report.
 
-#### source *: [str](https://docs.python.org/3/builtins/stdtypes.html#str)*
+#### source *: str*
 
 Where the timing came from, for provenance and for honest reporting.
 
 ### *class* muvid.lyricvid.timed_text.Word(, text, start, end, measured=True)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 One sung word on the song timeline. Times are seconds, absolute.
 
-#### measured *: [bool](https://docs.python.org/3/builtins/functions.html#bool)*
+#### measured *: bool*
 
 False when the time was interpolated inside a line rather than measured.
 

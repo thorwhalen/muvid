@@ -67,7 +67,7 @@ asks for.
 | [`Tile`](#muvid.montage.plan.Tile)(\*, region, media, motion, variant, path)    | One region of a slot: which media, framed and moved how.                                     |
 | [`Window`](#muvid.montage.plan.Window)(x, y, size)                                | A framing: top-left `(x, y)` and visible fraction `size` of the fitted frame, all in `0..1`. |
 
-### muvid.montage.plan.CROP_VARIANTS *: [dict](https://docs.python.org/3/builtins/stdtypes.html#dict)[[str](https://docs.python.org/3/builtins/stdtypes.html#str), [tuple](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[float](https://docs.python.org/3/builtins/functions.html#float), [float](https://docs.python.org/3/builtins/functions.html#float), [float](https://docs.python.org/3/builtins/functions.html#float)]]* *= {'bottom': (0.5, 0.68, 0.78), 'centre': (0.5, 0.5, 0.7), 'full': (0.5, 0.5, 1.0), 'left': (0.32, 0.5, 0.78), 'right': (0.68, 0.5, 0.78), 'top': (0.5, 0.32, 0.78)}*
+### muvid.montage.plan.CROP_VARIANTS *: dict[str, tuple[float, float, float]]* *= {'bottom': (0.5, 0.68, 0.78), 'centre': (0.5, 0.5, 0.7), 'full': (0.5, 0.5, 1.0), 'left': (0.32, 0.5, 0.78), 'right': (0.68, 0.5, 0.78), 'top': (0.5, 0.32, 0.78)}*
 
 The closed set of framings a still may be shown in, as `(cx, cy, size)`
 of the frame fitted to the canvas (`size` is the visible fraction; the
@@ -76,13 +76,13 @@ variant, so a revisit is a different picture.
 
 ### *class* muvid.montage.plan.Keyframe(t, window)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 `window` at slot-relative time `t` (seconds).
 
 ### *class* muvid.montage.plan.Plan(\*, duration, tempo_bpm, beats_per_bar, beat_source, section_source, sections, media, slots, reuse=<factory>, treatment=<factory>, notes=(), plan_version='1.0')
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 The edit list. JSON-able, canvas-independent (windows are normalised).
 
@@ -95,43 +95,43 @@ Read a plan back — a hand-edited `plan.json` renders the same way.
 
 ### *class* muvid.montage.plan.PlanContext(, analysis, direction)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 What every archetype gets: the measurements and the direction.
 
 ### *class* muvid.montage.plan.Slot(, index, start, end, section, archetype, regions, tiles, transition='cut', transition_s=0.0)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 One span of the montage, in song seconds.
 
-#### transition *: [str](https://docs.python.org/3/builtins/stdtypes.html#str)*
+#### transition *: str*
 
 How this slot ARRIVES. The first slot’s is always a cut.
 
 ### *class* muvid.montage.plan.SlotDraft(, start, end, section, archetype, regions=1, fresh=(0,), motions=('none',), amplitude=0.0, transition='cut', transition_s=0.0)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 What an archetype emits: a span with regions, before media assignment.
 
 ### *class* muvid.montage.plan.Tile(, region, media, motion, variant, path, source_in=0.0, use=0)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 One region of a slot: which media, framed and moved how.
 
-#### source_in *: [float](https://docs.python.org/3/builtins/functions.html#float)*
+#### source_in *: float*
 
 In-point into a clip (seconds). Ignored for stills.
 
-#### use *: [int](https://docs.python.org/3/builtins/functions.html#int)*
+#### use *: int*
 
 The ordinal of this use of the media, 0-based (drives variant/in-point).
 
 ### *class* muvid.montage.plan.Window(x, y, size)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 A framing: top-left `(x, y)` and visible fraction `size` of the
 fitted frame, all in `0..1`. The aspect is the canvas’s.
@@ -145,7 +145,7 @@ account of what it did (reserved images, uses, the smallest gap it
 actually produced), which goes into the plan for inspection.
 
 * **Return type:**
-  [`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`int`](https://docs.python.org/3/builtins/functions.html#int), [`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`int`](https://docs.python.org/3/builtins/functions.html#int), [`int`](https://docs.python.org/3/builtins/functions.html#int)]]], [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]]
+  `tuple`[`list`[`dict`[`int`, `tuple`[`int`, `int`]]], `dict`[`str`, `Any`]]
 
 ```pycon
 >>> from muvid.montage.analysis import Media
@@ -172,7 +172,7 @@ its neighbour — a half-beat pickup is not a slot — and a cut within
 `MIN_SLOT_S` of a boundary is dropped.
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`float`](https://docs.python.org/3/builtins/functions.html#float)]
+  `list`[`float`]
 
 ```pycon
 >>> from muvid.montage.analysis import Analysis, Section
@@ -201,7 +201,7 @@ Pool + measurements + treatment -> a [`Plan`](#muvid.montage.plan.Plan). Pure an
 Register an archetype planner under `name`.
 
 * **Return type:**
-  [`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[[`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[[`Section`](muvid.montage.analysis.html.md#muvid.montage.analysis.Section), [`PlanContext`](#muvid.montage.plan.PlanContext), [`Mapping`](https://docs.python.org/3/library/typing.html#typing.Mapping)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]], [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`SlotDraft`](#muvid.montage.plan.SlotDraft)]]], [`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[[`Section`](muvid.montage.analysis.html.md#muvid.montage.analysis.Section), [`PlanContext`](#muvid.montage.plan.PlanContext), [`Mapping`](https://docs.python.org/3/library/typing.html#typing.Mapping)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]], [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`SlotDraft`](#muvid.montage.plan.SlotDraft)]]]
+  `Callable`[[`Callable`[[[`Section`](muvid.montage.analysis.html.md#muvid.montage.analysis.Section), [`PlanContext`](#muvid.montage.plan.PlanContext), `Mapping`[`str`, `Any`]], `list`[[`SlotDraft`](#muvid.montage.plan.SlotDraft)]]], `Callable`[[[`Section`](muvid.montage.analysis.html.md#muvid.montage.analysis.Section), [`PlanContext`](#muvid.montage.plan.PlanContext), `Mapping`[`str`, `Any`]], `list`[[`SlotDraft`](#muvid.montage.plan.SlotDraft)]]]
 
 ```pycon
 >>> @register_archetype('doctest-demo')
@@ -216,7 +216,7 @@ True
 The window path for one still: piecewise linear, slot-relative seconds.
 
 * **Return type:**
-  [`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`Keyframe`](#muvid.montage.plan.Keyframe), [`...`](https://docs.python.org/3/builtins/constants.html#Ellipsis)]
+  `tuple`[[`Keyframe`](#muvid.montage.plan.Keyframe), `...`]
 
 ```pycon
 >>> tile_path('full', 'none', 2.0)

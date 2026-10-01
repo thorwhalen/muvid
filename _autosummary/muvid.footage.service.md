@@ -123,19 +123,19 @@ key” — a column rather than a hardcoded `None` because `look_time_varying`
 
 ### *exception* muvid.footage.service.FootageCancelled
 
-Bases: [`Exception`](https://docs.python.org/3/builtins/exceptions.html#Exception)
+Bases: `Exception`
 
 An operation stopped between steps because its host asked it to.
 
 ### *exception* muvid.footage.service.FootageError
 
-Bases: [`ValueError`](https://docs.python.org/3/builtins/exceptions.html#ValueError)
+Bases: `ValueError`
 
 An operation refused — the message says why and what to do next.
 
 ### *class* muvid.footage.service.OpSpec(name, title, effect, runs='now', hide=(), host_params=(), max_upload_bytes=None)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 One operation’s catalogue row: the function (by `name` in this module), a
 plain-language `title` (it becomes a button and a command title), what it does to
@@ -147,7 +147,7 @@ a transport’s hook).
 Host-agnostic data: `muvid.genre_music_video` turns these into `nw.GenreOp`
 rows, and [`muvid.mcp`](muvid.mcp.md#module-muvid.mcp) derives its footage tools from the same names.
 
-#### host_params *: [tuple](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[str](https://docs.python.org/3/builtins/stdtypes.html#str), ...]* *= ()*
+#### host_params *: tuple[str, ...]* *= ()*
 
 an upload’s
 server-side `path` and original `filename`. Never in a client’s schema.
@@ -155,7 +155,7 @@ server-side `path` and original `filename`. Never in a client’s schema.
 * **Type:**
   Parameters only the HOST supplies (`nw.GenreOp.host_params`)
 
-#### max_upload_bytes *: [int](https://docs.python.org/3/builtins/functions.html#int) | [None](https://docs.python.org/3/builtins/constants.html#None)* *= None*
+#### max_upload_bytes *: int | None* *= None*
 
 The op’s own ceiling for a host-streamed upload (`nw.GenreOp.max_upload_bytes`).
 
@@ -172,7 +172,7 @@ Run `align` afterwards: a new clip has no place on the song until then. Returns
 the `clip_id`, its `name` and `duration` (and `artifact_id` when hosted).
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.service.align(fp)
 
@@ -210,7 +210,7 @@ measured record says `source: "measured"`.
 Run this after adding/removing clips and before cutting.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.service.assemble(fp, , strategy='', edl=None, preset='', weights=None, config=None, canvas='', allow_unreliable=False, edit_id=None, label='', annotate=None, span=None, should_cancel=None)
 
@@ -228,7 +228,7 @@ renders only that stretch: the video AND the song cut to it, the song faded out 
 `TAIL_FADE_S` when the span ends before the song does.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.service.assemble_refusal(entries, aligns, song_dur, canvas)
 
@@ -236,7 +236,7 @@ renders only that stretch: the video AND the song cut to it, the song faded out 
 put to the GATE rather than re-implemented here.
 
 * **Return type:**
-  [`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)]
+  `Optional`[`dict`]
 
 ### muvid.footage.service.beat_grid(fp)
 
@@ -260,7 +260,7 @@ bars start on the first beat) — `beats_per_bar` and `bar_of_beat` (each beat�
 bar number, 1 for the first bar, 0 for a pickup before it).
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.service.beat_signals(fp, , source='song', max_points=1000)
 
@@ -289,7 +289,7 @@ Returns `{source, kind: audio|video, duration_s, tempo_bpm, beats, signals:
 and `tempo_bpm` are the soundtrack’s (`[]` / `None` without one).
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.service.clear_offset(fp, , clip_id)
 
@@ -302,7 +302,7 @@ runs again the clip has no place on the song, and footage scores made with the o
 offset are dropped.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.service.coverage_report(entries, aligns, song_dur, , excluded=(), span=None)
 
@@ -315,7 +315,7 @@ spans the auto path gave up because only an unvouched clip covered them.
 `span` (a trimmed edit’s `(start, end)`) bounds what counts as uncovered.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.service.declared_alignment(clip_id, offset_s, , clip_duration, song_duration)
 
@@ -339,7 +339,7 @@ Delete a saved edit. Videos already rendered from it are kept (they still name
 the edit they came from). An unknown `edit_id` is refused, naming the edits.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.service.editor_document(fp)
 
@@ -352,7 +352,7 @@ content hash, on one shared song-time axis. Needs the `editor` extra (lacing) an
 an alignment.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.service.edits(fp)
 
@@ -362,7 +362,7 @@ current alignment (`null` when it does). `unreliable` names clips it cuts to
 whose offsets rendering would refuse.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.service.edl_from_annotations(fp, , annotations)
 
@@ -371,7 +371,7 @@ ready for `save_edit` / `replace_edit` — a faithful read, not a re-selection.
 Annotations referencing another song are refused (muvid#35).
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.service.edl_json(e)
 
@@ -382,14 +382,14 @@ every existing `renders/*/meta.json` byte-identical and the render -> edit ->
 re-render round trip (muvid#21 item 3) exact.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.service.exclusion_note(x)
 
 One `warnings` line per span the auto path set aside (muvid#88).
 
 * **Return type:**
-  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+  `str`
 
 ### muvid.footage.service.filmstrip(fp, , clip_id)
 
@@ -397,7 +397,7 @@ One video’s filmstrip (the same record `filmstrips` gives per clip, with its
 `clip_id` and `fps`).
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.service.filmstrips(fp)
 
@@ -414,7 +414,7 @@ Returns `{fps, clips: {clip_id: {duration_s, n_frames, frame_w, frame_h, sheets:
 [{artifact_id, cols, rows, first_frame, n_frames}]}}}`.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.service.fit_to_beat(fp, , edit_id, indices=None, min_z=2.5, apply=True)
 
@@ -444,21 +444,21 @@ seconds a video; kept for next time). Returns the edit (`get_edit`’s shape) pl
 `fitted`, `kept` and `min_z`.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.service.frame_rate(video)
 
 A video’s average frame rate (frames per second), or `None` if unreadable.
 
 * **Return type:**
-  [`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`float`](https://docs.python.org/3/builtins/functions.html#float)]
+  `Optional`[`float`]
 
 ### muvid.footage.service.frame_size(video)
 
 `[width, height]` of a video as DISPLAYED (a ±90° rotation swaps them).
 
 * **Return type:**
-  [`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`list`](https://docs.python.org/3/builtins/stdtypes.html#list)]
+  `Optional`[`list`]
 
 ### muvid.footage.service.get_edit(fp, , edit_id)
 
@@ -467,7 +467,7 @@ One saved edit: its cut list (`edl`, every span of the song, gaps as
 `set_cut`/`merge_cut` refer to positions in this `edl`.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.service.grab_cover_frame(video, dest)
 
@@ -475,7 +475,7 @@ Write one JPEG frame of `video` to `dest` — `COVER_AT_FRACTION` of the
 way in, `COVER_WIDTH` wide. The cover of every hosted muvid production.
 
 * **Return type:**
-  [`None`](https://docs.python.org/3/builtins/constants.html#None)
+  `None`
 
 ### muvid.footage.service.import_render(fp, , path, render_id, label='', edit_id='')
 
@@ -487,7 +487,7 @@ Copied to `renders/<render_id>/final.mp4` with a meta that says it was imported:
 Idempotent: the same bytes under the same id change nothing.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.service.looks(fp=None)
 
@@ -496,7 +496,7 @@ and grades (vivid, black and white, posterize, cartoon) — each with its
 `params_schema`. Give one to `set_cut` as `look={"name": ..., **params}`.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.service.merge_cut(fp, , edit_id, index, into='previous')
 
@@ -505,7 +505,7 @@ Join cut `index` to its neighbour: the neighbour (`into` “previous” or
 cut keeps the neighbour’s video, framing and look. Returns the changed edit.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.service.peaks(fp, , n=2000)
 
@@ -516,7 +516,7 @@ Returns `{duration_s, n, peaks: [0..1, ...]}`; slice `i` covers song time
 `i * duration_s / n` to `(i + 1) * duration_s / n`. Kept per song and `n`.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.service.propose_edit(fp, , strategy='', preset='', weights=None, config=None, save=True, name='', span=None)
 
@@ -537,7 +537,7 @@ because no clip is trustworthy). With `save` it also returns the `edit_id` to
 change it (`set_cut` …) and render it (`render`).
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.service.public_render(fp, meta)
 
@@ -546,7 +546,7 @@ project (`renders/<id>/final.mp4`) — never an absolute server path; play it by
 `artifact_id`.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.service.redo_edit(fp, , edit_id)
 
@@ -554,7 +554,7 @@ Redo the change `undo_edit` last took back. A new change after an undo
 discards what could be redone. Returns the edit as it now is.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.service.refresh_cover(fp)
 
@@ -562,7 +562,7 @@ Take the project’s cover frame again — from the newest render, else from the
 first clip — and register it. Only for hosted projects (`None` otherwise).
 
 * **Return type:**
-  [`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]
+  `Optional`[`str`]
 
 ### muvid.footage.service.remove_clip(fp, , clip_id)
 
@@ -575,7 +575,7 @@ so run `align` again before cutting. Offsets a person DECLARED for the remaining
 clips are kept. An unknown `clip_id` is refused, naming the project’s clips.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.service.rename_edit(fp, , edit_id, name)
 
@@ -585,7 +585,7 @@ Only the name changes; the cuts, the span and the edit’s id stay as they are, 
 the rename can be undone like any other change. Returns the edit.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.service.render(fp, , edit_id, canvas='', allow_unreliable=False, annotate=None, should_cancel=None)
 
@@ -606,7 +606,7 @@ the render record: `render_id`, `edit_id`, its `coverage`, `ok` and the
 and `artifact_id` to play it by when the project is hosted.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.service.renders(fp)
 
@@ -615,7 +615,7 @@ the `edit_id` it was made from, its `label`, canvas, `ok`, the number of
 `warnings`, and `artifact_id` to play it by when the project is hosted.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.service.replace_edit(fp, , edit_id, edl)
 
@@ -624,21 +624,21 @@ once. The new list is checked exactly as `save_edit` checks one; on refusal the
 edit is left as it was. The previous list is not kept.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.service.require_scorable(fp)
 
 The alignments a scoring run would use; refuses without a song or an alignment.
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)
+  `list`
 
 ### muvid.footage.service.resolve_canvas(fp, canvas)
 
 The render canvas: an explicit per-render override, else the project’s.
 
 * **Return type:**
-  [`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`int`](https://docs.python.org/3/builtins/functions.html#int), [`int`](https://docs.python.org/3/builtins/functions.html#int)]
+  `tuple`[`int`, `int`]
 
 ### muvid.footage.service.run_scoring(fp, , hop_s=0.1, metrics=None, enable_lipsync=None, progress_cb=None, should_cancel=None)
 
@@ -646,7 +646,7 @@ Score every aligned clip and persist the tensor (the engine behind [`score()`](#
 with the job hooks a background runner passes).
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.service.save_edit(fp, , edl, name='', how_made='by hand', edit_id='', span=None)
 
@@ -662,7 +662,7 @@ makes the edit cover only that part of the song — its render is that long, the
 cut to it; default the whole song. Returns the saved edit.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.service.score(fp, , hop_s=0.1, metrics=None, should_cancel=None)
 
@@ -675,7 +675,7 @@ re-weighting never re-scores. The lip-sync tier is off unless the operator enabl
 it. Returns what was scored and what was skipped (and why).
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.service.scores(fp, , clip_id='', metrics=None, max_points=1500)
 
@@ -687,7 +687,7 @@ The saved footage curves — for the lanes under each video, and for inspection.
   `max_points` per metric).
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.service.set_cut(fp, , edit_id, index, clip_id=None, song_start=None, song_end=None, look=None, look_time_varying=None, slip_s=None, rate=None)
 
@@ -718,7 +718,7 @@ Change one cut of a saved edit (`index` is its position in `get_edit`’s edl).
 Parameters left out are unchanged. The changed edit is checked and saved; returns it.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.service.set_offset(fp, , clip_id, offset_s)
 
@@ -733,7 +733,7 @@ it); how much of the song the clip covers is computed from the two durations.
 scores stale, so they are dropped.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.service.set_song(fp, , path, ext='', filename='', duration_s=None)
 
@@ -752,7 +752,7 @@ Returns `song_duration` (seconds), the stored `song` (name, and the
 was dropped.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.service.set_span(fp, , edit_id, start_s, end_s)
 
@@ -766,7 +766,7 @@ cuts across an edge are shortened in the render only). Widening the span again �
 exactly what was there. Returns the edit, with its `span`.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.service.split_cut(fp, , edit_id, at_s)
 
@@ -777,7 +777,7 @@ divided where it was at `at_s`. Refused on a boundary (nothing to split). Return
 the changed edit; `changed` is the index of the second half.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.service.status(fp)
 
@@ -791,7 +791,7 @@ and whether it is trusted for rendering (`reliable`). `renders` is newest first
 `next_step` names the operation that moves the project forward and why.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.service.strategies(fp=None)
 
@@ -799,7 +799,7 @@ The ways to cut on offer — the selection strategies `propose_edit` accepts
 (`weighted` reads the footage scores; the rest use only the alignment).
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.service.timeline(fp)
 
@@ -807,7 +807,7 @@ Which videos cover which spans of the song (overlaps shown), from the saved
 alignment — the map for choosing what to cut to. Run `align` first.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.footage.service.undo_edit(fp, , edit_id)
 
@@ -816,4 +816,4 @@ whole replacement — by a person or by the assistant). Returns the edit as it n
 is; `redo_edit` puts the change back. Up to 100 changes are kept per edit.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`

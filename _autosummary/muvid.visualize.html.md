@@ -72,13 +72,13 @@ dependency of `mixing`, so it needs no extra).
 
 ### *class* muvid.visualize.Check(name, ok, detail)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 One verification result.
 
 ### *class* muvid.visualize.CoverLayout(background='blur', blur_sigma=30.0, dim=0.65, saturation=0.8, cover_fraction=0.92, cover_alpha=1.0, background_color='black')
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 How a cover image is placed on the canvas.
 
@@ -122,7 +122,7 @@ the blurred background — show through it.
 
 Fill colour when `background="color"`.
 
-#### dim *: [float](https://docs.python.org/3/builtins/functions.html#float)* *= 0.65*
+#### dim *: float* *= 0.65*
 
 the multiplicative dim that lands the plate’s mean
 DISPLAY luma where the additive `0.25` left it, pooled over four
@@ -134,13 +134,13 @@ nominal value — see `dim_saturation_lut()`.
 
 ### *exception* muvid.visualize.FfmpegError
 
-Bases: [`RuntimeError`](https://docs.python.org/3/builtins/exceptions.html#RuntimeError)
+Bases: `RuntimeError`
 
 An ffmpeg/ffprobe invocation failed, or a needed tool/filter is absent.
 
 ### *class* muvid.visualize.Loudness(integrated=-14.0, true_peak=-1.0, lra=11.0, measured=None)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 An EBU R128 loudness target, plus the measurement of a specific track.
 
@@ -154,11 +154,11 @@ to the (less accurate) single-pass form when it does not.
 The `loudnorm` filter string for this target.
 
 * **Return type:**
-  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+  `str`
 
 ### *class* muvid.visualize.RenderResult(path, duration, size, fps, visual, loudness=None, canvas=None, extras=<factory>)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 A rendered video and what is worth knowing about it.
 
@@ -195,7 +195,7 @@ it as the thumbnail rather than re-deriving it.
 
 ### *class* muvid.visualize.TitleStyle(size_fraction=0.045, color='white', font=None, margin_fraction=0.06, box=True, box_color='black@0.45')
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 How a burnt-in title is drawn (ffmpeg `drawtext`).
 
@@ -226,7 +226,7 @@ Colour (with alpha) of that plate.
 
 ### *class* muvid.visualize.VisualContext(audio, image, duration, size, fps, layout=<factory>, title=None, title_style=None, workdir=<factory>, options=<factory>)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 Everything a visual strategy needs to know about the render.
 
@@ -272,14 +272,14 @@ Strategy-specific knobs, passed straight through by the caller.
 
 #### require_image(visual)
 
-The cover image, or a [`ValueError`](https://docs.python.org/3/builtins/exceptions.html#ValueError) naming what to do instead.
+The cover image, or a `ValueError` naming what to do instead.
 
 * **Return type:**
-  [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)
+  `Path`
 
 ### *class* muvid.visualize.VisualPlan(inputs=<factory>, filters=<factory>, video='vbg', uses_audio=False, has_cover=False, has_title=False, still=None)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 The ffmpeg fragments that render one strategy’s video stream.
 
@@ -325,14 +325,14 @@ frame — is what makes a still-image music video cheap to render, and it
 gives the thumbnail and the video’s first frame a single source of truth.
 
 * **Parameters:**
-  * **image** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)) – The cover art.
-  * **saveas** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – Output PNG path (default: `<image-stem>.canvas.png`).
-  * **size** ([`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`int`](https://docs.python.org/3/builtins/functions.html#int), [`int`](https://docs.python.org/3/builtins/functions.html#int)]) – Canvas size.
-  * **layout** ([`CoverLayout`](muvid.visualize.canvas.html.md#muvid.visualize.canvas.CoverLayout) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – Placement/treatment of the cover (a default one when omitted).
-  * **title** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – Burn this title into the canvas (omit for no title).
-  * **title_style** ([`TitleStyle`](muvid.visualize.canvas.html.md#muvid.visualize.canvas.TitleStyle) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – How to draw that title.
+  * **image** (`str` | `Path`) – The cover art.
+  * **saveas** (`str` | `Path` | `None`) – Output PNG path (default: `<image-stem>.canvas.png`).
+  * **size** (`tuple`[`int`, `int`]) – Canvas size.
+  * **layout** ([`CoverLayout`](muvid.visualize.canvas.html.md#muvid.visualize.canvas.CoverLayout) | `None`) – Placement/treatment of the cover (a default one when omitted).
+  * **title** (`str` | `None`) – Burn this title into the canvas (omit for no title).
+  * **title_style** ([`TitleStyle`](muvid.visualize.canvas.html.md#muvid.visualize.canvas.TitleStyle) | `None`) – How to draw that title.
 * **Return type:**
-  [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)
+  `Path`
 * **Returns:**
   Path to the rendered PNG.
 
@@ -345,12 +345,12 @@ container. This is the single place muvid turns a media file into raw PCM,
 so `$MUVID_FFMPEG_TIMEOUT_S` bounds that decode like every other one.
 
 * **Parameters:**
-  * **audio** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)) – The media file to decode.
-  * **sample_rate** ([`int`](https://docs.python.org/3/builtins/functions.html#int)) – Resample to this rate. Analysis rarely needs full quality,
+  * **audio** (`str` | `Path`) – The media file to decode.
+  * **sample_rate** (`int`) – Resample to this rate. Analysis rarely needs full quality,
     and a low rate keeps a long track’s decode cheap.
-  * **channels** ([`int`](https://docs.python.org/3/builtins/functions.html#int)) – Downmix to this many channels (1 = mono).
+  * **channels** (`int`) – Downmix to this many channels (1 = mono).
 * **Return type:**
-  [`bytes`](https://docs.python.org/3/builtins/stdtypes.html#bytes)
+  `bytes`
 * **Returns:**
   The raw PCM bytes — empty when ffmpeg could not decode `audio`.
   Returning empty rather than raising lets a caller treat “no usable
@@ -361,7 +361,7 @@ so `$MUVID_FFMPEG_TIMEOUT_S` bounds that decode like every other one.
 Just the checks that failed.
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`Check`](muvid.visualize.verify.html.md#muvid.visualize.verify.Check)]
+  `list`[[`Check`](muvid.visualize.verify.html.md#muvid.visualize.verify.Check)]
 
 ### muvid.visualize.flash_filter(audio, , fps, duration, workdir, label='flash', brightness=0.25, saturation=0.8, decay=0.5)
 
@@ -381,30 +381,30 @@ in a GPL-configured ffmpeg (muvid#69) — see
 [`brightness_saturation_lut()`](muvid.visualize.canvas.html.md#muvid.visualize.canvas.brightness_saturation_lut).
 
 * **Parameters:**
-  * **audio** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)) – The track whose beats drive the flash.
-  * **fps** ([`int`](https://docs.python.org/3/builtins/functions.html#int)) – The render’s frame rate (one command per component per frame).
-  * **duration** ([`float`](https://docs.python.org/3/builtins/functions.html#float) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – Clamp the flash to this many seconds (`None` = whole track).
-  * **workdir** ([`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)) – Directory to write the `sendcmd` script into.
-  * **label** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str)) – `sendcmd` label for this flash’s `lutyuv`.
-  * **brightness** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – Peak brightness boost on a beat.
-  * **saturation** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – Peak saturation boost on a beat.
-  * **decay** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – Per-frame afterglow of a pulse.
+  * **audio** (`str` | `Path`) – The track whose beats drive the flash.
+  * **fps** (`int`) – The render’s frame rate (one command per component per frame).
+  * **duration** (`float` | `None`) – Clamp the flash to this many seconds (`None` = whole track).
+  * **workdir** (`Path`) – Directory to write the `sendcmd` script into.
+  * **label** (`str`) – `sendcmd` label for this flash’s `lutyuv`.
+  * **brightness** (`float`) – Peak brightness boost on a beat.
+  * **saturation** (`float`) – Peak saturation boost on a beat.
+  * **decay** (`float`) – Per-frame afterglow of a pulse.
 * **Return type:**
-  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+  `str`
 
 ### muvid.visualize.has_filter(name)
 
 Whether this ffmpeg build has the `name` filter compiled in.
 
 * **Return type:**
-  [`bool`](https://docs.python.org/3/builtins/functions.html#bool)
+  `bool`
 
 ### muvid.visualize.list_visuals()
 
 The names of every registered visual strategy.
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]
+  `list`[`str`]
 
 ### muvid.visualize.measure_loudness(audio, target=None)
 
@@ -416,8 +416,8 @@ that measurement. Single-pass loudnorm is a dynamic normalizer and will
 both miss the target and squash the dynamics of music.
 
 * **Parameters:**
-  * **audio** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)) – The audio (or video) file to measure.
-  * **target** ([`Loudness`](muvid.visualize.ffmpeg.html.md#muvid.visualize.ffmpeg.Loudness) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – The loudness target; a default one is used when omitted.
+  * **audio** (`str` | `Path`) – The audio (or video) file to measure.
+  * **target** ([`Loudness`](muvid.visualize.ffmpeg.html.md#muvid.visualize.ffmpeg.Loudness) | `None`) – The loudness target; a default one is used when omitted.
 * **Return type:**
   [`Loudness`](muvid.visualize.ffmpeg.html.md#muvid.visualize.ffmpeg.Loudness)
 * **Returns:**
@@ -432,7 +432,7 @@ Falls back to the longest stream duration when the container has none.
 * **Raises:**
   [**FfmpegError**](#muvid.visualize.FfmpegError) – The duration could not be determined.
 * **Return type:**
-  [`float`](https://docs.python.org/3/builtins/functions.html#float)
+  `float`
 
 ### muvid.visualize.onset_envelope(audio, , fps, duration=None, sr=22050, decay=0.5)
 
@@ -445,15 +445,15 @@ robustly to `[0, 1]`, then lets each pulse fade by `decay` per frame so a
 beat flashes and trails off rather than blinking for a single frame.
 
 * **Parameters:**
-  * **audio** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)) – The track to analyse.
-  * **fps** ([`int`](https://docs.python.org/3/builtins/functions.html#int)) – Video frame rate — one envelope value per frame.
-  * **duration** ([`float`](https://docs.python.org/3/builtins/functions.html#float) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – Clamp the envelope to this many seconds (defaults to the whole
+  * **audio** (`str` | `Path`) – The track to analyse.
+  * **fps** (`int`) – Video frame rate — one envelope value per frame.
+  * **duration** (`float` | `None`) – Clamp the envelope to this many seconds (defaults to the whole
     track).
-  * **sr** ([`int`](https://docs.python.org/3/builtins/functions.html#int)) – Analysis sample rate.
-  * **decay** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – Per-frame persistence of a pulse, 0 (no trail) to <1 (longer
+  * **sr** (`int`) – Analysis sample rate.
+  * **decay** (`float`) – Per-frame persistence of a pulse, 0 (no trail) to <1 (longer
     afterglow).
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`float`](https://docs.python.org/3/builtins/functions.html#float)]
+  `list`[`float`]
 * **Returns:**
   One value per frame. Empty if the audio could not be decoded.
 
@@ -462,14 +462,14 @@ beat flashes and trails off rather than blinking for a single frame.
 Return `ffprobe`’s `format` + `streams` JSON for `media`.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+  `dict`
 
 ### muvid.visualize.register_visual(name)
 
 Register a visual strategy under `name` (the open-closed seam).
 
 * **Return type:**
-  [`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[[`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[[`VisualContext`](muvid.visualize.visuals.html.md#muvid.visualize.visuals.VisualContext)], [`VisualPlan`](muvid.visualize.visuals.html.md#muvid.visualize.visuals.VisualPlan) | [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path) | [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]], [`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[[`VisualContext`](muvid.visualize.visuals.html.md#muvid.visualize.visuals.VisualContext)], [`VisualPlan`](muvid.visualize.visuals.html.md#muvid.visualize.visuals.VisualPlan) | [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path) | [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]]
+  `Callable`[[`Callable`[[[`VisualContext`](muvid.visualize.visuals.html.md#muvid.visualize.visuals.VisualContext)], [`VisualPlan`](muvid.visualize.visuals.html.md#muvid.visualize.visuals.VisualPlan) | `Path` | `str`]], `Callable`[[[`VisualContext`](muvid.visualize.visuals.html.md#muvid.visualize.visuals.VisualContext)], [`VisualPlan`](muvid.visualize.visuals.html.md#muvid.visualize.visuals.VisualPlan) | `Path` | `str`]]
 
 ### Examples
 
@@ -493,30 +493,30 @@ EBU R128 loudness with a two-pass `loudnorm`, which is what makes a batch
 of songs play back at a consistent level.
 
 * **Parameters:**
-  * **audio** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)) – The song (`.wav` is preferred when you have it — YouTube
+  * **audio** (`str` | `Path`) – The song (`.wav` is preferred when you have it — YouTube
     re-encodes regardless, so give it the cleanest input).
-  * **image** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – Cover art. Used for the picture, and composed onto a 16:9 canvas.
-  * **visual** (`Union`[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[[`VisualContext`](muvid.visualize.visuals.html.md#muvid.visualize.visuals.VisualContext)], [`VisualPlan`](muvid.visualize.visuals.html.md#muvid.visualize.visuals.VisualPlan) | [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path) | [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]]) – A registered strategy name (`"still"`, `"ken_burns"`,
+  * **image** (`str` | `Path` | `None`) – Cover art. Used for the picture, and composed onto a 16:9 canvas.
+  * **visual** (`Union`[`str`, `Callable`[[[`VisualContext`](muvid.visualize.visuals.html.md#muvid.visualize.visuals.VisualContext)], [`VisualPlan`](muvid.visualize.visuals.html.md#muvid.visualize.visuals.VisualPlan) | `Path` | `str`]]) – A registered strategy name (`"still"`, `"ken_burns"`,
     `"cqt"`, `"bars"`, `"spectrum"`, `"waves"`, `"scope"`),
     `"auto"`, or any callable (see [`muvid.visualize.visuals`](muvid.visualize.visuals.html.md#module-muvid.visualize.visuals)).
-  * **saveas** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – Output path (default: `<audio-stem>.mp4`).
-  * **size** ([`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`int`](https://docs.python.org/3/builtins/functions.html#int), [`int`](https://docs.python.org/3/builtins/functions.html#int)]) – Canvas size; the default is 1080p.
-  * **fps** ([`int`](https://docs.python.org/3/builtins/functions.html#int)) – Frame rate.
-  * **title** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – Burn this title into the frame.
-  * **layout** ([`CoverLayout`](muvid.visualize.canvas.html.md#muvid.visualize.canvas.CoverLayout) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – How the cover sits on the canvas.
-  * **title_style** ([`TitleStyle`](muvid.visualize.canvas.html.md#muvid.visualize.canvas.TitleStyle) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – How the title is drawn.
-  * **normalize** ([`bool`](https://docs.python.org/3/builtins/functions.html#bool)) – Loudness-normalize the audio (two-pass EBU R128).
-  * **loudness** ([`Loudness`](muvid.visualize.ffmpeg.html.md#muvid.visualize.ffmpeg.Loudness) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – The loudness target; a YouTube-appropriate default is used
+  * **saveas** (`str` | `Path` | `None`) – Output path (default: `<audio-stem>.mp4`).
+  * **size** (`tuple`[`int`, `int`]) – Canvas size; the default is 1080p.
+  * **fps** (`int`) – Frame rate.
+  * **title** (`str` | `None`) – Burn this title into the frame.
+  * **layout** ([`CoverLayout`](muvid.visualize.canvas.html.md#muvid.visualize.canvas.CoverLayout) | `None`) – How the cover sits on the canvas.
+  * **title_style** ([`TitleStyle`](muvid.visualize.canvas.html.md#muvid.visualize.canvas.TitleStyle) | `None`) – How the title is drawn.
+  * **normalize** (`bool`) – Loudness-normalize the audio (two-pass EBU R128).
+  * **loudness** ([`Loudness`](muvid.visualize.ffmpeg.html.md#muvid.visualize.ffmpeg.Loudness) | `None`) – The loudness target; a YouTube-appropriate default is used
     when omitted.
-  * **gop_seconds** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – Encoder knobs.
-  * **options** ([`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – Strategy-specific options, passed to the visual.
-  * **workdir** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – Where intermediates go (a temporary directory by default).
+  * **gop_seconds** (`float`) – Encoder knobs.
+  * **options** (`dict` | `None`) – Strategy-specific options, passed to the visual.
+  * **workdir** (`str` | `Path` | `None`) – Where intermediates go (a temporary directory by default).
 * **Return type:**
   [`RenderResult`](muvid.visualize.video.html.md#muvid.visualize.video.RenderResult)
 * **Returns:**
   A [`RenderResult`](#muvid.visualize.RenderResult).
 * **Raises:**
-  [**ValueError**](https://docs.python.org/3/builtins/exceptions.html#ValueError) – `size` has an odd dimension — H.264 at yuv420p (the only
+  **ValueError** – `size` has an odd dimension — H.264 at yuv420p (the only
       pixel format every player decodes) cannot encode one.
 
 ### muvid.visualize.report(checks)
@@ -524,18 +524,18 @@ of songs play back at a consistent level.
 Render `checks` as an aligned, readable block.
 
 * **Return type:**
-  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+  `str`
 
 ### muvid.visualize.require_ffmpeg(\*tools)
 
 Raise a helpful [`FfmpegError`](#muvid.visualize.FfmpegError) if any of `tools` is not on PATH.
 
 * **Parameters:**
-  **\*tools** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str)) – Binaries to require (defaults to `ffmpeg` and `ffprobe`).
+  **\*tools** (`str`) – Binaries to require (defaults to `ffmpeg` and `ffprobe`).
 * **Raises:**
   [**FfmpegError**](#muvid.visualize.FfmpegError) – With per-platform install instructions.
 * **Return type:**
-  [`None`](https://docs.python.org/3/builtins/constants.html#None)
+  `None`
 
 ### muvid.visualize.resolve_visual(visual, ctx)
 
@@ -550,7 +550,7 @@ express themselves as an ffmpeg filtergraph (librosa/matplotlib, projectM,
 a headless-browser capture…).
 
 * **Raises:**
-  [**ValueError**](https://docs.python.org/3/builtins/exceptions.html#ValueError) – `visual` names a strategy that is not registered.
+  **ValueError** – `visual` names a strategy that is not registered.
 * **Return type:**
   [`VisualPlan`](muvid.visualize.visuals.html.md#muvid.visualize.visuals.VisualPlan)
 
@@ -559,10 +559,10 @@ a headless-browser capture…).
 Run `ffmpeg` with `args`, raising a readable error on failure.
 
 * **Parameters:**
-  * **args** ([`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]) – Arguments after the global flags (inputs, filters, output).
-  * **overwrite** ([`bool`](https://docs.python.org/3/builtins/functions.html#bool)) – Pass `-y` (overwrite the output without prompting).
+  * **args** (`list`[`str`]) – Arguments after the global flags (inputs, filters, output).
+  * **overwrite** (`bool`) – Pass `-y` (overwrite the output without prompting).
 * **Return type:**
-  [`CompletedProcess`](https://docs.python.org/3/library/subprocess.html#subprocess.CompletedProcess)
+  `CompletedProcess`
 * **Returns:**
   The completed process.
 * **Raises:**
@@ -579,15 +579,15 @@ viewer sees when they press play. JPEG quality is stepped down until the
 file fits `max_bytes` (YouTube’s hard limit).
 
 * **Parameters:**
-  * **image** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)) – The cover art.
-  * **saveas** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – Output JPEG path (default: `<image-stem>.thumb.jpg`).
-  * **size** ([`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`int`](https://docs.python.org/3/builtins/functions.html#int), [`int`](https://docs.python.org/3/builtins/functions.html#int)]) – Thumbnail size (YouTube wants >= 1280x720, 16:9).
-  * **layout** ([`CoverLayout`](muvid.visualize.canvas.html.md#muvid.visualize.canvas.CoverLayout) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – Placement/treatment of the cover.
-  * **title** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – Burn this title into the thumbnail (omit for none).
-  * **title_style** ([`TitleStyle`](muvid.visualize.canvas.html.md#muvid.visualize.canvas.TitleStyle) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – How to draw that title.
-  * **max_bytes** ([`int`](https://docs.python.org/3/builtins/functions.html#int)) – Hard size ceiling.
+  * **image** (`str` | `Path`) – The cover art.
+  * **saveas** (`str` | `Path` | `None`) – Output JPEG path (default: `<image-stem>.thumb.jpg`).
+  * **size** (`tuple`[`int`, `int`]) – Thumbnail size (YouTube wants >= 1280x720, 16:9).
+  * **layout** ([`CoverLayout`](muvid.visualize.canvas.html.md#muvid.visualize.canvas.CoverLayout) | `None`) – Placement/treatment of the cover.
+  * **title** (`str` | `None`) – Burn this title into the thumbnail (omit for none).
+  * **title_style** ([`TitleStyle`](muvid.visualize.canvas.html.md#muvid.visualize.canvas.TitleStyle) | `None`) – How to draw that title.
+  * **max_bytes** (`int`) – Hard size ceiling.
 * **Return type:**
-  [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)
+  `Path`
 * **Returns:**
   Path to the rendered JPEG.
 
@@ -596,23 +596,23 @@ file fits `max_bytes` (YouTube’s hard limit).
 Check `video` against YouTube’s expectations; return one result per check.
 
 * **Parameters:**
-  * **video** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)) – The rendered mp4.
-  * **audio** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – The source song — enables the duration-match check, which is the
+  * **video** (`str` | `Path`) – The rendered mp4.
+  * **audio** (`str` | `Path` | `None`) – The source song — enables the duration-match check, which is the
     one that catches a mis-built filtergraph.
-  * **thumbnail** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – The thumbnail to check against YouTube’s limits.
-  * **loudness** ([`Loudness`](muvid.visualize.ffmpeg.html.md#muvid.visualize.ffmpeg.Loudness) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – The target the video was normalized to.
-  * **check_loudness** ([`bool`](https://docs.python.org/3/builtins/functions.html#bool)) – Actually measure the output’s loudness. This decodes the
+  * **thumbnail** (`str` | `Path` | `None`) – The thumbnail to check against YouTube’s limits.
+  * **loudness** ([`Loudness`](muvid.visualize.ffmpeg.html.md#muvid.visualize.ffmpeg.Loudness) | `None`) – The target the video was normalized to.
+  * **check_loudness** (`bool`) – Actually measure the output’s loudness. This decodes the
     whole track, so it is off by default.
-  * **duration_tolerance** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – Allowed audio/video duration difference, in seconds.
-  * **expected_canvas** ([`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`int`](https://docs.python.org/3/builtins/functions.html#int), [`int`](https://docs.python.org/3/builtins/functions.html#int)] | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – The `(width, height)` the render was ASKED for. When
+  * **duration_tolerance** (`float`) – Allowed audio/video duration difference, in seconds.
+  * **expected_canvas** (`tuple`[`int`, `int`] | `None`) – The `(width, height)` the render was ASKED for. When
     given, the aspect/resolution checks verify the output matches it —
     a deliberate portrait render must not fail a hard-coded 16:9 check.
     When `None`, the classic YouTube-landscape expectations apply.
-  * **expected_duration** ([`float`](https://docs.python.org/3/builtins/functions.html#float) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – The length the render was ASKED for, when that is not
+  * **expected_duration** (`float` | `None`) – The length the render was ASKED for, when that is not
     the whole of `audio` — a trimmed edit renders only part of the song.
     Arms the duration check on its own, and wins over `audio`’s length.
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`Check`](muvid.visualize.verify.html.md#muvid.visualize.verify.Check)]
+  `list`[[`Check`](muvid.visualize.verify.html.md#muvid.visualize.verify.Check)]
 * **Returns:**
   A list of [`Check`](#muvid.visualize.Check). Falsy checks are the problems; [`report()`](#muvid.visualize.report)
   renders them, and [`failures()`](#muvid.visualize.failures) filters them.

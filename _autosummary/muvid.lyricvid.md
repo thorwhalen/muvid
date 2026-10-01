@@ -37,23 +37,23 @@ pulls nothing heavy, and each attribute is resolved on first use.
 
 ### *class* muvid.lyricvid.Canvas(, width=1920, height=1080, fps=30)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 Output geometry. Sizes in the scene are relative to `height`.
 
 ### *class* muvid.lyricvid.Scene(\*, canvas, duration, background, cues, typography, meta=<factory>)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 Everything a renderer needs, and nothing it has to interpret.
 
-#### meta *: [dict](https://docs.python.org/3/builtins/stdtypes.html#dict)[[str](https://docs.python.org/3/builtins/stdtypes.html#str), [Any](https://docs.python.org/3/library/typing.html#typing.Any)]*
+#### meta *: dict[str, Any]*
 
 Provenance, for reporting and for tests.
 
 ### *class* muvid.lyricvid.TimedText(, sections, duration=0.0, source='unknown')
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 The whole song’s text, timed.
 
@@ -65,20 +65,20 @@ The whole song’s text, timed.
 '*'
 ```
 
-#### *property* measured *: [bool](https://docs.python.org/3/builtins/functions.html#bool)*
+#### *property* measured *: bool*
 
 True when every word time was measured rather than interpolated.
 
 False for an empty text: “all of nothing was measured” is the kind of
 vacuous truth that reads as reassurance in a report.
 
-#### source *: [str](https://docs.python.org/3/builtins/stdtypes.html#str)*
+#### source *: str*
 
 Where the timing came from, for provenance and for honest reporting.
 
 ### *class* muvid.lyricvid.TreatmentSpec(\*, spec_version='1.0', title='', direction=<factory>, scenes=<factory>)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 A complete, renderable treatment.
 
@@ -125,7 +125,7 @@ A JSON-native dict: tuples become lists, so what this emits is
 exactly what `json_schema()` validates and what a file round-trips.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]
+  `dict`[`str`, `Any`]
 
 ### muvid.lyricvid.compile_scene(treatment, timed_text, , canvas=None)
 
@@ -153,7 +153,7 @@ Everything else in this module exists so that a caller can decide *what* to
 render before paying for it.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]
+  `dict`[`str`, `Any`]
 
 ### Modules
 

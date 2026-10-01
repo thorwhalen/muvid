@@ -38,7 +38,7 @@ pulls nothing heavy, and each attribute is resolved on first use.
 
 ### *class* muvid.choreo.Analysis(\*, duration, tempo, events, sections, bands=<factory>, meta=<factory>)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 Everything an archetype needs, and the JSON artifact a render leaves behind.
 
@@ -55,23 +55,23 @@ True
 Events with `start <= t < end` (optionally one band).
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`Event`](muvid.choreo.analysis.html.md#muvid.choreo.analysis.Event)]
+  `list`[[`Event`](muvid.choreo.analysis.html.md#muvid.choreo.analysis.Event)]
 
 ### *class* muvid.choreo.Canvas(, width=1920, height=1080, fps=30)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 Output geometry.
 
 ### *class* muvid.choreo.ChoreoScene(\*, canvas, duration, backdrops, objects, meta=<factory>)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 Everything the renderer needs, and nothing it has to interpret.
 
 ### *class* muvid.choreo.TreatmentSpec(\*, spec_version='1.0', title='', direction=<factory>, scenes=<factory>)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 A complete, renderable treatment.
 
@@ -133,7 +133,7 @@ True
 Render a choreo video. The one verb that produces a file.
 
 * **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]
+  `dict`[`str`, `Any`]
 
 ### Modules
 

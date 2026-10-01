@@ -87,7 +87,7 @@ to prevent, reached through its own knob. A misconfigured root is refused loudly
 rather than read as something plausible.
 
 * **Return type:**
-  [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)
+  `Path`
 
 ### muvid.paths.project_root(name, , kind='projects')
 
@@ -102,7 +102,7 @@ a project would go.
 `visualizer/`) through the workspace classes that own those layouts.
 
 * **Return type:**
-  [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)
+  `Path`
 
 ### muvid.paths.safe_component(value, , label)
 
@@ -115,4 +115,4 @@ that surface. Behaviour is unchanged from the two copies this replaced — notab
 there is no length cap and no unicode normalisation, both pre-existing.
 
 * **Return type:**
-  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+  `str`

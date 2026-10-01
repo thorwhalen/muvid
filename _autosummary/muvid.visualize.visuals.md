@@ -123,7 +123,7 @@ alias of `Callable`[[[`VisualContext`](#muvid.visualize.visuals.VisualContext)],
 
 ### *class* muvid.visualize.visuals.VisualContext(audio, image, duration, size, fps, layout=<factory>, title=None, title_style=None, workdir=<factory>, options=<factory>)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 Everything a visual strategy needs to know about the render.
 
@@ -169,14 +169,14 @@ Strategy-specific knobs, passed straight through by the caller.
 
 #### require_image(visual)
 
-The cover image, or a [`ValueError`](https://docs.python.org/3/builtins/exceptions.html#ValueError) naming what to do instead.
+The cover image, or a `ValueError` naming what to do instead.
 
 * **Return type:**
-  [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)
+  `Path`
 
 ### *class* muvid.visualize.visuals.VisualPlan(inputs=<factory>, filters=<factory>, video='vbg', uses_audio=False, has_cover=False, has_title=False, still=None)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `object`
 
 The ffmpeg fragments that render one strategy’s video stream.
 
@@ -282,14 +282,14 @@ Options:
 The names of every registered visual strategy.
 
 * **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]
+  `list`[`str`]
 
 ### muvid.visualize.visuals.register_visual(name)
 
 Register a visual strategy under `name` (the open-closed seam).
 
 * **Return type:**
-  [`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[[`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[[`VisualContext`](#muvid.visualize.visuals.VisualContext)], [`VisualPlan`](#muvid.visualize.visuals.VisualPlan) | [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path) | [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]], [`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[[`VisualContext`](#muvid.visualize.visuals.VisualContext)], [`VisualPlan`](#muvid.visualize.visuals.VisualPlan) | [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path) | [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]]
+  `Callable`[[`Callable`[[[`VisualContext`](#muvid.visualize.visuals.VisualContext)], [`VisualPlan`](#muvid.visualize.visuals.VisualPlan) | `Path` | `str`]], `Callable`[[[`VisualContext`](#muvid.visualize.visuals.VisualContext)], [`VisualPlan`](#muvid.visualize.visuals.VisualPlan) | `Path` | `str`]]
 
 ### Examples
 
@@ -316,7 +316,7 @@ express themselves as an ffmpeg filtergraph (librosa/matplotlib, projectM,
 a headless-browser capture…).
 
 * **Raises:**
-  [**ValueError**](https://docs.python.org/3/builtins/exceptions.html#ValueError) – `visual` names a strategy that is not registered.
+  **ValueError** – `visual` names a strategy that is not registered.
 * **Return type:**
   [`VisualPlan`](#muvid.visualize.visuals.VisualPlan)
 
