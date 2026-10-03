@@ -104,7 +104,7 @@ a hang, not the total render. Parts equal cuts for an untransitioned edit and ap
 
 ### *exception* muvid.footage.assemble.AssemblyWarning
 
-Bases: `RuntimeWarning`
+Bases: [`RuntimeWarning`](https://docs.python.org/3/builtins/exceptions.html#RuntimeWarning)
 
 A render-plan finding the caller should see — not an error, not silence.
 
@@ -151,7 +151,7 @@ Returns `out_path`.
     about. A callback rather than a changed return type, because the
     return type is a public contract and because `catch_warnings`
     mutates process-global state that concurrent renders would share.
-  * **fade_out_s** (`float`) – fade the song out over this many seconds at the END of the
+  * **fade_out_s** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – fade the song out over this many seconds at the END of the
     render. For an edit that stops before the song does (a trimmed
     `span`), so the music does not stop dead mid-bar; `0` (the default)
     keeps the master untouched — and, for an aac/48k/2ch master, stream-copied
@@ -161,4 +161,4 @@ Returns `out_path`.
     and [`FootageCancelled`](muvid.footage.errors.html.md#muvid.footage.errors.FootageCancelled) is raised — so a
     cancelled render ends within one cut’s encode rather than minutes later.
 * **Return type:**
-  `Path`
+  [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)

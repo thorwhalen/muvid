@@ -50,7 +50,7 @@ manifest side of the package free of it.
 
 ### *class* muvid.choreo.analysis.Analysis(\*, duration, tempo, events, sections, bands=<factory>, meta=<factory>)
 
-Bases: `object`
+Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
 Everything an archetype needs, and the JSON artifact a render leaves behind.
 
@@ -67,31 +67,31 @@ True
 Events with `start <= t < end` (optionally one band).
 
 * **Return type:**
-  `list`[[`Event`](#muvid.choreo.analysis.Event)]
+  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`Event`](#muvid.choreo.analysis.Event)]
 
-### muvid.choreo.analysis.BANDS *: dict[str, tuple[float, float]]* *= {'high': (2000.0, 11025.0), 'low': (20.0, 200.0), 'mid': (200.0, 2000.0)}*
+### muvid.choreo.analysis.BANDS *: [dict](https://docs.python.org/3/builtins/stdtypes.html#dict)[[str](https://docs.python.org/3/builtins/stdtypes.html#str), [tuple](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[float](https://docs.python.org/3/builtins/functions.html#float), [float](https://docs.python.org/3/builtins/functions.html#float)]]* *= {'high': (2000.0, 11025.0), 'low': (20.0, 200.0), 'mid': (200.0, 2000.0)}*
 
 The three registers, as (low_hz, high_hz]. `high` runs to Nyquist.
 
 ### *class* muvid.choreo.analysis.Event(, t, band, strength)
 
-Bases: `object`
+Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
 One onset: when, in which band, how hard (0..1, band-relative).
 
 ### *class* muvid.choreo.analysis.Section(, index, label, start, end, energy_db)
 
-Bases: `object`
+Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
 A contiguous stretch of similar loudness. `label` is its tier.
 
 ### *class* muvid.choreo.analysis.Tempo(, bpm, beats, source)
 
-Bases: `object`
+Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
 The beat grid, and where it came from (`"mixing"` or `"numpy"`).
 
-#### *property* period *: float*
+#### *property* period *: [float](https://docs.python.org/3/builtins/functions.html#float)*
 
 Seconds per beat.
 
@@ -136,7 +136,7 @@ the section is already `min_bars` long. Sections tile `[0, duration]`
 exactly and there is always at least one.
 
 * **Return type:**
-  `tuple`[[`Section`](#muvid.choreo.analysis.Section), `...`]
+  [`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`Section`](#muvid.choreo.analysis.Section), [`...`](https://docs.python.org/3/builtins/constants.html#Ellipsis)]
 
 ```pycon
 >>> import numpy as np
@@ -167,7 +167,7 @@ the peak’s height over the 95th percentile of all peak heights, clipped
 to 1, so the loudest hits read as 1 and a click reads as small.
 
 * **Return type:**
-  `list`[`tuple`[`float`, `float`]]
+  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`float`](https://docs.python.org/3/builtins/functions.html#float), [`float`](https://docs.python.org/3/builtins/functions.html#float)]]
 
 ```pycon
 >>> import numpy as np

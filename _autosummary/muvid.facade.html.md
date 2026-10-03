@@ -41,7 +41,7 @@ the chosen aligner. Defaults to `scribe-greedy`.
 Returns the path to the alignment store.
 
 * **Return type:**
-  `str`
+  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
 
 ### muvid.facade.curate_character_interactive(root, name, , decisions, k=8, recipe='person_mock', present=6, max_rounds=20)
 
@@ -54,7 +54,7 @@ round. Useful for skill-driven flows: the agent shows the user the
 candidates, collects their answers, writes a JSON, and re-runs.
 
 * **Return type:**
-  `list`[`str`]
+  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]
 
 ### muvid.facade.default_project_root(name)
 
@@ -75,7 +75,7 @@ cwd. See `muvid/paths.py` — the default is right, and it was the UI’s missin
 is-this-a-project precondition that made it write.
 
 * **Return type:**
-  `str`
+  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
 
 ### muvid.facade.estimate_render_cost(root, , quality='balanced', force=False)
 
@@ -93,14 +93,14 @@ bar, alignment quality summary. No colour (we don’t pull in a TTY
 library).
 
 * **Return type:**
-  `str`
+  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
 
 ### muvid.facade.init_project(root, , title='', song=None)
 
 Create a new music video project. Returns the absolute root path.
 
 * **Return type:**
-  `str`
+  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
 
 ### muvid.facade.render(root, , quality='balanced', force=False, budget=None, allow_unpriced=False)
 
@@ -124,7 +124,7 @@ who has read the names can accept them. What it must never become is a
 silent default.
 
 * **Return type:**
-  `list`[`str`]
+  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]
 
 ### muvid.facade.status(root)
 
@@ -139,7 +139,7 @@ histogram. Stable enough to be programmatic; pass through
 [`format_status()`](#muvid.facade.format_status) for human-readable text.
 
 * **Return type:**
-  `dict`
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
 
 ### muvid.facade.transcribe_song(root, , api_key=None)
 
@@ -151,4 +151,4 @@ expected to edit `lyrics.md` to fix mishears and add real section
 tags. Returns the path to the lyrics markdown.
 
 * **Return type:**
-  `str`
+  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)

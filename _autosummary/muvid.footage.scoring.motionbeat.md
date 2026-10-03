@@ -27,4 +27,4 @@ Commercial-clean (librosa beats via `mixing[beats]`, numpy motion). See the desi
 The two motion-to-beat tracks for one clip.
 
 * **Return type:**
-  `list`[[`ScoreTrack`](muvid.footage.scoring.grid.md#muvid.footage.scoring.grid.ScoreTrack)]
+  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`ScoreTrack`](muvid.footage.scoring.grid.md#muvid.footage.scoring.grid.ScoreTrack)]

@@ -37,7 +37,7 @@ used by muvid’s own tests and by this module’s doctests.
 
 ### *class* muvid.subgenres.testing.ConformanceReport(slug, passed=<factory>, failures=<factory>, skipped=<factory>)
 
-Bases: `object`
+Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
 What [`check_subgenre_conformance()`](#muvid.subgenres.testing.check_subgenre_conformance) found.
 

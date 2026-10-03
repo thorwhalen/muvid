@@ -52,7 +52,7 @@ Bare tool name → its `module:function` reference (tools live in three modules)
 
 ### *class* muvid.mcp.VisualizerWorkspace(email, root)
 
-Bases: `object`
+Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
 A single caller’s private visualizer area, addressed by `email`.
 
@@ -71,7 +71,7 @@ Create (and return) a new visualizer bucket under this user.
 This user’s buckets: `[{project_id, title}]` (newest-modified first).
 
 * **Return type:**
-  `list`[`dict`]
+  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)]
 
 #### open_project(project_id)
 
@@ -96,7 +96,7 @@ tests), else the verified OAuth token — so tools work under any host middlewar
 an unauthenticated call is failed closed.
 
 * **Return type:**
-  `str`
+  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
 
 ### muvid.mcp.data_root()
 
@@ -106,7 +106,7 @@ Public API (`muvid.mcp` re-exports it), so the name stays though the body moved.
 A forwarder, not an alias, for the introspection reason given on the footage twin.
 
 * **Return type:**
-  `Path`
+  [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)
 
 ### muvid.mcp.register_tools(server, , prefix='', include=None, exclude=None)
 
@@ -128,7 +128,7 @@ Lowercased, or `None` when there is no request/token context — deliberately no
 fallback, so a caller is failed closed rather than handed a shared identity.
 
 * **Return type:**
-  `Optional`[`str`]
+  [`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]
 
 ### muvid.mcp.use_email(email)
 

@@ -44,19 +44,19 @@ any resolution. Velocities are in the same fractions per second.
 
 ### *class* muvid.choreo.scene.Backdrop(, start, end, kind, top, bottom)
 
-Bases: `object`
+Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
 What is behind the objects during `[start, end)`.
 
 ### *class* muvid.choreo.scene.Canvas(, width=1920, height=1080, fps=30)
 
-Bases: `object`
+Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
 Output geometry.
 
 ### *class* muvid.choreo.scene.ChoreoScene(\*, canvas, duration, backdrops, objects, meta=<factory>)
 
-Bases: `object`
+Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
 Everything the renderer needs, and nothing it has to interpret.
 
@@ -70,21 +70,21 @@ How an object moves between birth and death.
 
 ### *class* muvid.choreo.scene.Obj(, t_born, t_die, kind, x, y, size, colour, motion='hold', band='', strength=1.0, aspect=1.0, angle=0.0, vx=0.0, vy=0.0, attack_s=0.0, release_s=0.0, layer=0, seed=0)
 
-Bases: `object`
+Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
 One drawable thing with a life.
 
 * **Parameters:**
-  * **y** (`float`) – centre, normalised (x of width, y of height), at birth.
-  * **size** (`float`) – the shape’s main dimension as a fraction of canvas height —
+  * **y** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – centre, normalised (x of width, y of height), at birth.
+  * **size** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – the shape’s main dimension as a fraction of canvas height —
     diameter for `circle`/`ring`/`diamond`, height for `rect`/
     `triangle`, length for `line`.
-  * **aspect** (`float`) – width/height for `rect`/`triangle`; length/thickness
+  * **aspect** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – width/height for `rect`/`triangle`; length/thickness
     for `line`.
-  * **angle** (`float`) – degrees, for `line`.
-  * **vy** (`float`) – velocity (fractions per second) for `scroll`/`drift`.
-  * **release_s** (`float`) – alpha ramps at the start and end of life.
-  * **seed** (`int`) – per-object key for `flicker`’s per-frame jitter.
+  * **angle** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – degrees, for `line`.
+  * **vy** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – velocity (fractions per second) for `scroll`/`drift`.
+  * **release_s** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – alpha ramps at the start and end of life.
+  * **seed** ([`int`](https://docs.python.org/3/builtins/functions.html#int)) – per-object key for `flicker`’s per-frame jitter.
 
 ### muvid.choreo.scene.compile_scene(treatment, analysis, , canvas=None, seed=0)
 
@@ -111,7 +111,7 @@ True
 Register an archetype under `name`.
 
 * **Return type:**
-  `Callable`[[`Callable`[`...`, `list`[[`Obj`](#muvid.choreo.scene.Obj)]]], `Callable`[`...`, `list`[[`Obj`](#muvid.choreo.scene.Obj)]]]
+  [`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[[`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[`...`](https://docs.python.org/3/builtins/constants.html#Ellipsis), [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`Obj`](#muvid.choreo.scene.Obj)]]], [`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[`...`](https://docs.python.org/3/builtins/constants.html#Ellipsis), [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`Obj`](#muvid.choreo.scene.Obj)]]]
 
 ```pycon
 >>> @register_archetype('doctest-demo')
@@ -129,7 +129,7 @@ splitmix64-style mixing; no state, no platform dependence, so it is the
 only “random” this package allows itself.
 
 * **Return type:**
-  `float`
+  [`float`](https://docs.python.org/3/builtins/functions.html#float)
 
 ```pycon
 >>> unit_hash(0, 1) == unit_hash(0, 1), 0.0 <= unit_hash(3, 4, 5) < 1.0

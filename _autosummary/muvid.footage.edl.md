@@ -80,24 +80,24 @@ implicitly, so spans stay one-per-song-span and nothing about reading an EDL cha
 
 ### *class* muvid.footage.edl.AssemblyCut(song_start, song_end, clip_id, clip_in, clip_path, transition=None, crop=None, crop_end=None, look=None, look_time_varying=False, rate=1.0)
 
-Bases: `object`
+Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
 A validated cut ready to render: the EDL span + the derived in-point + clip path.
 
-#### crop *: [CropWindow](#muvid.footage.edl.CropWindow) | None* *= None*
+#### crop *: [CropWindow](#muvid.footage.edl.CropWindow) | [None](https://docs.python.org/3/builtins/constants.html#None)* *= None*
 
 Carried through from the EDL entry, unchanged — the assembler compiles these
 to a `crop` filter, because normalised fractions only become pixels once
 you know the source dimensions, which only ffmpeg knows.
 
-#### look *: str | None* *= None*
+#### look *: [str](https://docs.python.org/3/builtins/stdtypes.html#str) | [None](https://docs.python.org/3/builtins/constants.html#None)* *= None*
 
 Carried through from the EDL entry, unchanged and already validated — the
 `looks` seam. The assembler splices it into the ONE filter template both
 of its render sites share, so a look lands identically on a solo cut and on
 each side of a blended boundary. See [`EdlEntry.look`](#muvid.footage.edl.EdlEntry.look).
 
-#### look_time_varying *: bool* *= False*
+#### look_time_varying *: [bool](https://docs.python.org/3/builtins/functions.html#bool)* *= False*
 
 only it
 knows which boundaries become a separate two-input invocation, which is
@@ -107,7 +107,7 @@ where a moving look’s ramp restarts (muvid#73). See
 * **Type:**
   Carried through unchanged, and the assembler is its ONE consumer
 
-#### rate *: float* *= 1.0*
+#### rate *: [float](https://docs.python.org/3/builtins/functions.html#float)* *= 1.0*
 
 the assembler reads `duration * rate`
 seconds of source and retimes it (`setpts`, before `fps`) onto the span.
@@ -115,11 +115,11 @@ seconds of source and retimes it (`setpts`, before `fps`) onto the span.
 * **Type:**
   Carried through from the EDL entry
 
-#### *property* source_duration *: float*
+#### *property* source_duration *: [float](https://docs.python.org/3/builtins/functions.html#float)*
 
 Seconds of the clip this cut consumes — its span at its rate.
 
-#### transition *: [Transition](#muvid.footage.edl.Transition) | None* *= None*
+#### transition *: [Transition](#muvid.footage.edl.Transition) | [None](https://docs.python.org/3/builtins/constants.html#None)* *= None*
 
 Carried through from the EDL entry, unchanged. `derive_cuts` gains no
 transition arithmetic: the extra source material a blend needs is measured
@@ -127,7 +127,7 @@ in FRAMES at the render fps, which only the assembler knows.
 
 ### *class* muvid.footage.edl.CropWindow(x, y, w, h)
 
-Bases: `object`
+Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
 A rectangle to take from the source frame, as fractions of its width/height.
 
@@ -177,7 +177,7 @@ Every reason [`exclude_unvouched()`](#muvid.footage.edl.exclude_unvouched) can g
 
 ### *class* muvid.footage.edl.EdlEntry(song_start, song_end, clip_id, transition=None, crop=None, crop_end=None, look=None, look_time_varying=False, look_spec=None, slip_s=0.0, rate=1.0)
 
-Bases: `object`
+Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
 One cut: show `clip_id` over the song span `[song_start, song_end]`.
 
@@ -186,13 +186,13 @@ fills it (black in v1). Gaps are explicit entries rather than absences so that a
 is always contiguous over its span, every span of the song is accounted for by
 exactly one entry, and “no clip here” survives a JSON round trip (`clip_id: null`).
 
-#### crop *: [CropWindow](#muvid.footage.edl.CropWindow) | None* *= None*
+#### crop *: [CropWindow](#muvid.footage.edl.CropWindow) | [None](https://docs.python.org/3/builtins/constants.html#None)* *= None*
 
 Take only this rectangle of the source frame. `None` keeps the whole frame
 letterboxed onto the canvas, which is what every EDL written before this
 field existed means — additive in both directions, like `transition`.
 
-#### crop_end *: [CropWindow](#muvid.footage.edl.CropWindow) | None* *= None*
+#### crop_end *: [CropWindow](#muvid.footage.edl.CropWindow) | [None](https://docs.python.org/3/builtins/constants.html#None)* *= None*
 
 With `crop`, makes the window MOVE linearly from `crop` to `crop_end`
 across the cut — a pan. Same size as `crop` (see [`validate_edl()`](#muvid.footage.edl.validate_edl)): a
@@ -202,7 +202,7 @@ expressed as a *different* fixed window on the *next* cut, or — since the
 `looks` seam below — as a `look` carrying a `zoompan` ramp, which is
 the one filter that CAN resize its window mid-cut (muvid#66).
 
-#### look *: str | None* *= None*
+#### look *: [str](https://docs.python.org/3/builtins/stdtypes.html#str) | [None](https://docs.python.org/3/builtins/constants.html#None)* *= None*
 
 \*\*The `looks` seam.\*\* A compiled ffmpeg filter-chain fragment applied to
 this cut’s picture once it has been normalised onto the canvas. `None`
@@ -229,7 +229,7 @@ the assembler rests on; the allowlist is what keeps a look from writing
 this machine’s disk; and the last two are what keep an allowlisted filter
 from spending 900 MB of it (muvid#75).
 
-#### look_spec *: dict | None* *= None*
+#### look_spec *: [dict](https://docs.python.org/3/builtins/stdtypes.html#dict) | [None](https://docs.python.org/3/builtins/constants.html#None)* *= None*
 
 WHICH named look produced [`look`](#muvid.footage.edl.EdlEntry.look) — `{"name": "slow_push", "zoom": 1.08}`
 ([`muvid.footage.named_looks`](muvid.footage.named_looks.md#module-muvid.footage.named_looks)) — so a screen can show and re-edit the choice
@@ -238,7 +238,7 @@ two are set together by `service.set_cut`. `None` (the default, and always
 for a hand-written filter) emits nothing — additive in both directions. Excluded
 from the hash because a dict is not hashable; equality still compares it.
 
-#### look_time_varying *: bool* *= False*
+#### look_time_varying *: [bool](https://docs.python.org/3/builtins/functions.html#bool)* *= False*
 
 Whether [`look`](#muvid.footage.edl.EdlEntry.look) READS THE FILTER CLOCK — a punch-in, a pan, anything
 whose expressions mention `t` / `in_time` / `n`. `False` (the
@@ -277,7 +277,7 @@ earlier. muvid’s own compilers declare it for you —
 plan, and [`punch_in_cuts()`](muvid.footage.look.md#muvid.footage.look.punch_in_cuts) sets this field FROM
 the fragment rather than hardcoding it.
 
-#### rate *: float* *= 1.0*
+#### rate *: [float](https://docs.python.org/3/builtins/functions.html#float)* *= 1.0*
 
 how fast this cut plays its video — `1.03` shows 3 % more footage
 over the same span of song, so the dancers move 3 % faster; the song is never
@@ -289,7 +289,7 @@ short cuts, each with its own, make a piecewise-linear time-warp. Bounded to
 * **Type:**
   **Speed**
 
-#### slip_s *: float* *= 0.0*
+#### slip_s *: [float](https://docs.python.org/3/builtins/functions.html#float)* *= 0.0*
 
 shift WHICH moment of the video this cut shows, by `slip_s`
 seconds, without moving the cut on the song. The clip’s alignment offset is
@@ -303,7 +303,7 @@ property and needs no speed change. Bounded by [`SLIP_MAX_S`](#muvid.footage.edl
 * **Type:**
   **Slip**
 
-#### transition *: [Transition](#muvid.footage.edl.Transition) | None* *= None*
+#### transition *: [Transition](#muvid.footage.edl.Transition) | [None](https://docs.python.org/3/builtins/constants.html#None)* *= None*
 
 Blend in from the predecessor rather than hard-cutting. `None` (the
 default) is a hard cut, so an EDL written before this field existed is a
@@ -312,7 +312,7 @@ cuts — degraded, never wrong, in both directions.
 
 ### *class* muvid.footage.edl.ExcludedSpan(clip_id, song_start, song_end, reason='no_vouched_coverage', confidence=0.0, support=None, margin=None)
 
-Bases: `object`
+Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
 One span an AUTO-selected edit gave up rather than cut to unvouched footage (muvid#88).
 
@@ -327,18 +327,18 @@ disagree about why.
 JSON-ready. `support`/`margin` stay `None` — “not measured” is not zero.
 
 * **Return type:**
-  `dict`
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
 
 ### *class* muvid.footage.edl.FootageAlignment(clip_id, offset_s, confidence, duration_s, coverage, overlaps=True, support=None, reliable=True, window_s=None, hop_s=None, margin=None, source='measured')
 
-Bases: `object`
+Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
 Where one uploaded clip sits on the song timeline (muvid’s per-clip record).
 
 Mirrors `mixing.audio.ClipAlignment` but keyed by the caller-facing `clip_id` and
 JSON-round-trippable (persisted in the project manifest).
 
-#### margin *: float | None* *= None*
+#### margin *: [float](https://docs.python.org/3/builtins/functions.html#float) | [None](https://docs.python.org/3/builtins/constants.html#None)* *= None*
 
 How far `support`’s tally for this offset sits ABOVE the tally for the best
 offset outside the tolerance — `None` on the same quorum as `support`.
@@ -350,13 +350,13 @@ weak endorsement. See [`MIN_MARGIN`](#muvid.footage.edl.MIN_MARGIN) — this is 
 actually missing, since its near-ties (0.993/0.989/0.987) are invisible to any
 fraction that does not look at the runner-up.
 
-#### overlaps *: bool* *= True*
+#### overlaps *: [bool](https://docs.python.org/3/builtins/functions.html#bool)* *= True*
 
 Whether the clip intersects the song timeline at all. A clip that does NOT is
 still recorded — a source must never leave the addressable set as a side effect
 of being measured. Selection filters on this; reporting shows it with a reason.
 
-#### reliable *: bool* *= True*
+#### reliable *: [bool](https://docs.python.org/3/builtins/functions.html#bool)* *= True*
 
 Whether the aligner VOUCHES for `offset_s`. False means “measured, recorded,
 and not to be cut to without the caller saying so” — see
@@ -366,7 +366,7 @@ Defaults True for a record built in code; a record read from disk that predates
 the field gets its verdict DERIVED instead (see `from_dict()`), never
 assumed.
 
-#### source *: str* *= 'measured'*
+#### source *: [str](https://docs.python.org/3/builtins/stdtypes.html#str)* *= 'measured'*
 
 [`MEASURED`](#muvid.footage.edl.MEASURED) (the aligner found it by audio) or
 `DECLARED` (a person set it — `muvid.footage.service.set_offset`). A
@@ -378,7 +378,7 @@ field were all written by the aligner, so it defaults to measured.
 * **Type:**
   How the offset is KNOWN
 
-#### support *: float | None* *= None*
+#### support *: [float](https://docs.python.org/3/builtins/functions.html#float) | [None](https://docs.python.org/3/builtins/constants.html#None)* *= None*
 
 Fraction of the clip’s independent analysis windows that agree on `offset_s`.
 `None` means no vote was held — since `mixing>=0.0.48` fits the window to the
@@ -397,7 +397,7 @@ shoot that produced this issue the three correct offsets carried 10/24, 17/37
 and 45/61, while the confidently-wrong ones the old estimator returned had no
 agreement to speak of at all.
 
-#### window_s *: float | None* *= None*
+#### window_s *: [float](https://docs.python.org/3/builtins/functions.html#float) | [None](https://docs.python.org/3/builtins/constants.html#None)* *= None*
 
 The analysis grid `support` was measured on — `None` in exactly the cases
 `support` is. Recorded because since `mixing>=0.0.48` the estimator fits the
@@ -698,7 +698,7 @@ prevent. Centring is also the NLE convention (“centered on cut”).
 
 ### *class* muvid.footage.edl.Transition(duration_s, curve='fade')
 
-Bases: `object`
+Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
 How this entry blends IN from its predecessor.
 
@@ -729,7 +729,7 @@ structurally — see `_absorb_neighbour()`, which repairs the repairable half.
 
 ### *exception* muvid.footage.edl.UnreliableAlignmentError(unvouched)
 
-Bases: `ValueError`
+Bases: [`ValueError`](https://docs.python.org/3/builtins/exceptions.html#ValueError)
 
 An edit cuts to a clip whose OFFSET the aligner could not vouch for (muvid#59).
 
@@ -771,7 +771,7 @@ Where cut `e` starts in its clip `a`’s own time — THE sign convention:
 a negative in-point); [`derive_cuts()`](#muvid.footage.edl.derive_cuts) clamps for the renderer.
 
 * **Return type:**
-  `float`
+  [`float`](https://docs.python.org/3/builtins/functions.html#float)
 
 ### muvid.footage.edl.clip_time_at(e, a, t)
 
@@ -779,7 +779,7 @@ The moment of clip `a` cut `e` shows at song time `t` — the cut’s affine
 map, `clip_in_of(e) + rate * (t - song_start)`.
 
 * **Return type:**
-  `float`
+  [`float`](https://docs.python.org/3/builtins/functions.html#float)
 
 ### muvid.footage.edl.derive_cuts(edl, alignments, clip_paths)
 
@@ -790,7 +790,7 @@ Strategies emit only `{song_start, song_end, clip_id}`; the sign convention
 strategy can desync the cut.
 
 * **Return type:**
-  `list`[[`AssemblyCut`](#muvid.footage.edl.AssemblyCut)]
+  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`AssemblyCut`](#muvid.footage.edl.AssemblyCut)]
 
 ### muvid.footage.edl.exclude_unvouched(edl, alignments)
 
@@ -842,7 +842,7 @@ pan.
 Returns `(entries, excluded)`.
 
 * **Return type:**
-  `tuple`[`list`[[`EdlEntry`](#muvid.footage.edl.EdlEntry)], `list`[[`ExcludedSpan`](#muvid.footage.edl.ExcludedSpan)]]
+  [`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`EdlEntry`](#muvid.footage.edl.EdlEntry)], [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`ExcludedSpan`](#muvid.footage.edl.ExcludedSpan)]]
 
 ### muvid.footage.edl.fill_gaps(entries, song_duration, , start=0.0)
 
@@ -872,7 +872,7 @@ from black when it does not (the head gap precedes it). Both follow from the sam
 rule; the tests pin both so the coherence stays deliberate.
 
 * **Return type:**
-  `list`[[`EdlEntry`](#muvid.footage.edl.EdlEntry)]
+  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`EdlEntry`](#muvid.footage.edl.EdlEntry)]
 
 ### muvid.footage.edl.validate_edl(edl, alignments, song_duration, , canvas=(1920, 1920), allow_unreliable=False)
 
@@ -918,7 +918,7 @@ the loosest bound rather than an absent one.
 Returns the normalized list of [`EdlEntry`](#muvid.footage.edl.EdlEntry).
 
 * **Return type:**
-  `list`[[`EdlEntry`](#muvid.footage.edl.EdlEntry)]
+  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`EdlEntry`](#muvid.footage.edl.EdlEntry)]
 
 ### muvid.footage.edl.vouches_for(, confidence, support, margin=None, window_s=None)
 
@@ -991,20 +991,20 @@ short to be usable music-video footage, rather than the open question about a th
 of a shoot that it started as.
 
 * **Parameters:**
-  * **confidence** (`float`) – The estimator’s correlation coefficient at the chosen lag.
-  * **support** (`float` | `None`) – Graded fraction of window evidence reaching the offset, or `None`
+  * **confidence** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – The estimator’s correlation coefficient at the chosen lag.
+  * **support** ([`float`](https://docs.python.org/3/builtins/functions.html#float) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – Graded fraction of window evidence reaching the offset, or `None`
     when no vote could be held.
-  * **margin** (`float` | `None`) – That tally minus the tally at the best offset outside the tolerance.
+  * **margin** ([`float`](https://docs.python.org/3/builtins/functions.html#float) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – That tally minus the tally at the best offset outside the tolerance.
     `None` on exactly the same quorum as `support`. Required to vouch when a
     vote WAS held: an aligner reporting support without it has not answered the
     separating question, and unknown does not vouch. The `mixing>=0.0.51` floor
     guarantees both, and `tests/test_ci_extras_canary.py` asserts the
     capability so a mis-resolved floor fails loudly rather than quietly refusing
     every clip.
-  * **window_s** (`float` | `None`) – The window support was measured at. Recorded and reported as a
+  * **window_s** ([`float`](https://docs.python.org/3/builtins/functions.html#float) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – The window support was measured at. Recorded and reported as a
     diagnostic; it does **not** enter the verdict, for the reason above.
 * **Return type:**
-  `bool`
+  [`bool`](https://docs.python.org/3/builtins/functions.html#bool)
 * **Returns:**
   True when the offset may be cut to without the caller opting in.
 

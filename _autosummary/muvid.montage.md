@@ -40,23 +40,23 @@ pulls nothing heavy, and each attribute is resolved on first use.
 
 ### *class* muvid.montage.Analysis(\*, duration, tempo_bpm, beats, downbeats, beats_per_bar=4, sections=(), beat_source='', section_source='', bar_energy_db=(), notes=<factory>)
 
-Bases: `object`
+Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
 What the planner knows about the song.
 
-#### *property* beat_s *: float*
+#### *property* beat_s *: [float](https://docs.python.org/3/builtins/functions.html#float)*
 
 Seconds per beat at the estimated tempo.
 
 ### *class* muvid.montage.Canvas(, width=1920, height=1080, fps=30)
 
-Bases: `object`
+Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
 Output geometry.
 
 ### *class* muvid.montage.Plan(\*, duration, tempo_bpm, beats_per_bar, beat_source, section_source, sections, media, slots, reuse=<factory>, treatment=<factory>, notes=(), plan_version='1.0')
 
-Bases: `object`
+Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
 The edit list. JSON-able, canvas-independent (windows are normalised).
 
@@ -69,7 +69,7 @@ Read a plan back — a hand-edited `plan.json` renders the same way.
 
 ### *class* muvid.montage.TreatmentSpec(\*, spec_version='1.0', title='', direction=<factory>, scenes=<factory>)
 
-Bases: `object`
+Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
 A complete, plannable treatment.
 
@@ -110,7 +110,7 @@ A JSON-native dict: tuples become lists, so what this emits is
 exactly what `json_schema()` validates and what a file round-trips.
 
 * **Return type:**
-  `dict`[`str`, `Any`]
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]
 
 ### muvid.montage.analyze_song(audio, , beats='auto', beats_per_bar=4, sections=None)
 
@@ -121,7 +121,7 @@ the sections were supplied or derived from energy — a caller that ignores
 that will trust a fixed-tempo grid on a rubato ballad.
 
 * **Return type:**
-  `dict`[`str`, `Any`]
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]
 
 ### muvid.montage.plan_montage(audio, , photos=(), clips=(), cover=None, treatment=None, archetype=None, strict=False, beats='auto', beats_per_bar=4, sections=None, out=None)
 
@@ -131,7 +131,7 @@ Identical to what [`render_montage()`](#muvid.montage.render_montage) would rend
 to a file as well.
 
 * **Return type:**
-  `dict`[`str`, `Any`]
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]
 
 ### muvid.montage.render_montage(audio, output, , photos=(), clips=(), cover=None, treatment=None, archetype=None, strict=False, beats='auto', beats_per_bar=4, sections=None, width=1920, height=1080, fps=30, workdir=None)
 
@@ -142,7 +142,7 @@ registered (so the schemas are enforced), and straight to the pipeline
 otherwise — the same renderer either way.
 
 * **Return type:**
-  `dict`[`str`, `Any`]
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]
 
 ### Modules
 

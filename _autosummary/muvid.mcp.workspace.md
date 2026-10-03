@@ -43,7 +43,7 @@ verbatim copy of both, beside a second copy in `muvid/footage/workspace.py`.
 
 ### *class* muvid.mcp.workspace.VisualizerProject(email, project_id, root)
 
-Bases: `object`
+Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
 One caller’s visualizer bucket — a folder its renders land in.
 
@@ -56,18 +56,18 @@ bucket. Kept storage-only: no nw graph, no asset library.
 This bucket’s renders (newest-first), from each render’s `meta.json`.
 
 * **Return type:**
-  `list`[`dict`]
+  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)]
 
 #### new_render_dir(render_id)
 
 Create + return a fresh directory for one render (traversal-checked id).
 
 * **Return type:**
-  `Path`
+  [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)
 
 ### *class* muvid.mcp.workspace.VisualizerWorkspace(email, root)
 
-Bases: `object`
+Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
 A single caller’s private visualizer area, addressed by `email`.
 
@@ -86,7 +86,7 @@ Create (and return) a new visualizer bucket under this user.
 This user’s buckets: `[{project_id, title}]` (newest-modified first).
 
 * **Return type:**
-  `list`[`dict`]
+  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)]
 
 #### open_project(project_id)
 
@@ -103,4 +103,4 @@ Public API (`muvid.mcp` re-exports it), so the name stays though the body moved.
 A forwarder, not an alias, for the introspection reason given on the footage twin.
 
 * **Return type:**
-  `Path`
+  [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)

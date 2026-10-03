@@ -29,11 +29,11 @@ Subscribe a JSONL writer to falaw’s event bus for the duration.
 No-op (silent) if `falaw` isn’t installed.
 
 * **Return type:**
-  `Iterator`[`None`]
+  [`Iterator`](https://docs.python.org/3/library/typing.html#typing.Iterator)[[`None`](https://docs.python.org/3/builtins/constants.html#None)]
 
 ### muvid.events.read_recent_fal_events(path, , limit=50)
 
 Read the tail of the JSONL log. Returns empty list if absent.
 
 * **Return type:**
-  `list`[`dict`]
+  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)]

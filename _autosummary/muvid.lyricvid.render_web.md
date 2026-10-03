@@ -62,7 +62,7 @@ the second is the failure people actually hit.
 
 ### *exception* muvid.lyricvid.render_web.WebRenderUnavailable
 
-Bases: `RuntimeError`
+Bases: [`RuntimeError`](https://docs.python.org/3/builtins/exceptions.html#RuntimeError)
 
 Playwright (or its Chromium build) is not installed. Carries the remedy.
 
@@ -72,12 +72,12 @@ Capture the scene’s page with Playwright and mux the song.
 
 * **Parameters:**
   * **scene** ([`Scene`](muvid.lyricvid.scene.md#muvid.lyricvid.scene.Scene)) – the compiled scene. Its canvas fixes the size and frame rate.
-  * **audio** (`Path`) – the song. Its stream is copied in unmodified.
-  * **output** (`Path`) – where the mp4 goes.
-  * **workdir** (`Path`) – scratch space owned by this render. The page is left behind as
+  * **audio** ([`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)) – the song. Its stream is copied in unmodified.
+  * **output** ([`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)) – where the mp4 goes.
+  * **workdir** ([`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)) – scratch space owned by this render. The page is left behind as
     an artifact; the frames are deleted.
-  * **crf** (`int`) – libx264 quality (lower is better; 18 is visually lossless-ish).
-  * **scale** (`int`) – device pixel ratio for the capture. The viewport is
+  * **crf** ([`int`](https://docs.python.org/3/builtins/functions.html#int)) – libx264 quality (lower is better; 18 is visually lossless-ish).
+  * **scale** ([`int`](https://docs.python.org/3/builtins/functions.html#int)) – device pixel ratio for the capture. The viewport is
     `canvas / scale` CSS pixels and the screenshot comes back at the
     canvas size either way, so the output resolution and the (all-`vh`)
     layout are unchanged — what moves is the CSS pixel grid the browser
@@ -90,8 +90,8 @@ Capture the scene’s page with Playwright and mux the song.
   the HTML that produced it — open it in a browser and call `setTime`.
 * **Raises:**
   * [**WebRenderUnavailable**](#muvid.lyricvid.render_web.WebRenderUnavailable) – Playwright or its Chromium build is missing.
-  * **FileNotFoundError** – `audio` does not exist.
-  * **ValueError** – the canvas cannot be captured or encoded as asked.
+  * [**FileNotFoundError**](https://docs.python.org/3/builtins/exceptions.html#FileNotFoundError) – `audio` does not exist.
+  * [**ValueError**](https://docs.python.org/3/builtins/exceptions.html#ValueError) – the canvas cannot be captured or encoded as asked.
 
 ### muvid.lyricvid.render_web.scene_to_html(scene)
 
@@ -105,7 +105,7 @@ words cannot reflow. Nothing in the page depends on wall-clock time.
 * **Parameters:**
   **scene** ([`Scene`](muvid.lyricvid.scene.md#muvid.lyricvid.scene.Scene)) – the compiled scene. Colours must be `#rrggbb`.
 * **Return type:**
-  `str`
+  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
 * **Returns:**
   A complete HTML document, safe to write to a file and open.
 

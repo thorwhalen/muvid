@@ -43,7 +43,7 @@ opt-in tier is enabled.
 Which tiers can run here (import + weight availability) — for diagnostics / the tool.
 
 * **Return type:**
-  `dict`
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
 
 ### muvid.footage.scoring.orchestrator.score_project(project, , metrics=None, hop_s=0.1, sample_fps=None, enable_lipsync=None, progress_cb=None, should_cancel=None)
 
@@ -52,11 +52,11 @@ Score every aligned clip of `project` → persist the tensor; return a summary d
 * **Parameters:**
   * **project** – a `MusicVideoFootageProject` (needs `song_path`/`song_duration`/
     `load_alignments`/`clip_paths`/`root`/`song_hash`).
-  * **metrics** (`Optional`[`Sequence`[`str`]]) – restrict to these metric names (default: the core set, + lip-sync if enabled).
-  * **hop_s** (`float`) – grid step (default 10 Hz).
-  * **sample_fps** (`float` | `None`) – frame analysis rate (default from `frames.DEFAULT_SAMPLE_FPS`).
-  * **enable_lipsync** (`bool` | `None`) – force the opt-in tier on/off (default: the env flag).
-  * **progress_cb** (`Optional`[`Callable`[[`dict`], `None`]]) – sink for `{'kind':'progress', ...}` dict events (nw.jobs mirror shape).
-  * **should_cancel** (`Optional`[`Callable`[[], `bool`]]) – polled between clips/stages; a True short-circuits to a clean cancel.
+  * **metrics** ([`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`Sequence`](https://docs.python.org/3/library/typing.html#typing.Sequence)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]]) – restrict to these metric names (default: the core set, + lip-sync if enabled).
+  * **hop_s** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – grid step (default 10 Hz).
+  * **sample_fps** ([`float`](https://docs.python.org/3/builtins/functions.html#float) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – frame analysis rate (default from `frames.DEFAULT_SAMPLE_FPS`).
+  * **enable_lipsync** ([`bool`](https://docs.python.org/3/builtins/functions.html#bool) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – force the opt-in tier on/off (default: the env flag).
+  * **progress_cb** ([`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[[`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)], [`None`](https://docs.python.org/3/builtins/constants.html#None)]]) – sink for `{'kind':'progress', ...}` dict events (nw.jobs mirror shape).
+  * **should_cancel** ([`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[], [`bool`](https://docs.python.org/3/builtins/functions.html#bool)]]) – polled between clips/stages; a True short-circuits to a clean cancel.
 * **Return type:**
-  `dict`
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)

@@ -32,4 +32,4 @@ Returns `[]` (never raises) if PySceneDetect is not installed, so the selectorâ€
 `beats+shots` mode degrades cleanly to beats-only.
 
 * **Return type:**
-  `list`[`float`]
+  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`float`](https://docs.python.org/3/builtins/functions.html#float)]

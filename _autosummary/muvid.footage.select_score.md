@@ -57,20 +57,20 @@ numpy only (no cv2/torch): registered LAZILY in [`muvid.footage.strategy`](muvid
 |------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------|
 | [`WeightedSelectionConfig`](#muvid.footage.select_score.WeightedSelectionConfig)([weights, ...])       | The score-driven "strategy" as a pure config object (open-closed).                 |
 
-### muvid.footage.select_score.DEFAULT_WEIGHTS *: dict[str, float]* *= {'exposure': 0.3, 'face_framing': 0.4, 'lip_sync_lse_c': 1.0, 'motion_beat_bas': 0.8, 'motion_onset_xcorr': 0.5, 'sharpness': 0.4, 'stability_shake': 0.3}*
+### muvid.footage.select_score.DEFAULT_WEIGHTS *: [dict](https://docs.python.org/3/builtins/stdtypes.html#dict)[[str](https://docs.python.org/3/builtins/stdtypes.html#str), [float](https://docs.python.org/3/builtins/functions.html#float)]* *= {'exposure': 0.3, 'face_framing': 0.4, 'lip_sync_lse_c': 1.0, 'motion_beat_bas': 0.8, 'motion_onset_xcorr': 0.5, 'sharpness': 0.4, 'stability_shake': 0.3}*
 
 Default per-metric weights. A metric absent from the tensor collapses to weight 0
 (its column simply doesn’t exist), so a project scored without the lip-sync tier still
 selects cleanly on the metrics it has.
 
-### muvid.footage.select_score.PRESETS *: dict[str, [WeightedSelectionConfig](#muvid.footage.select_score.WeightedSelectionConfig)]* *= {'contemplative': WeightedSelectionConfig(weights={'lip_sync_lse_c': 1.0, 'motion_beat_bas': 0.8, 'motion_onset_xcorr': 0.5, 'sharpness': 0.6, 'exposure': 0.3, 'face_framing': 0.6, 'stability_shake': 0.3}, lambda_switch=0.6, l_min_s=3.0, l_max_s=12.0, l_max_overrun_penalty=0.05, boundary_mode='beats', beat_unit='beat'), 'energetic': WeightedSelectionConfig(weights={'lip_sync_lse_c': 1.0, 'motion_beat_bas': 1.0, 'motion_onset_xcorr': 0.8, 'sharpness': 0.4, 'exposure': 0.3, 'face_framing': 0.4, 'stability_shake': 0.3}, lambda_switch=0.2, l_min_s=0.8, l_max_s=4.0, l_max_overrun_penalty=0.25, boundary_mode='beats', beat_unit='beat')}*
+### muvid.footage.select_score.PRESETS *: [dict](https://docs.python.org/3/builtins/stdtypes.html#dict)[[str](https://docs.python.org/3/builtins/stdtypes.html#str), [WeightedSelectionConfig](#muvid.footage.select_score.WeightedSelectionConfig)]* *= {'contemplative': WeightedSelectionConfig(weights={'lip_sync_lse_c': 1.0, 'motion_beat_bas': 0.8, 'motion_onset_xcorr': 0.5, 'sharpness': 0.6, 'exposure': 0.3, 'face_framing': 0.6, 'stability_shake': 0.3}, lambda_switch=0.6, l_min_s=3.0, l_max_s=12.0, l_max_overrun_penalty=0.05, boundary_mode='beats', beat_unit='beat'), 'energetic': WeightedSelectionConfig(weights={'lip_sync_lse_c': 1.0, 'motion_beat_bas': 1.0, 'motion_onset_xcorr': 0.8, 'sharpness': 0.4, 'exposure': 0.3, 'face_framing': 0.4, 'stability_shake': 0.3}, lambda_switch=0.2, l_min_s=0.8, l_max_s=4.0, l_max_overrun_penalty=0.25, boundary_mode='beats', beat_unit='beat')}*
 
 Named presets — a filled-in config. “energetic” = many short cuts; “contemplative” = long
 dwells, few cuts.
 
 ### *class* muvid.footage.select_score.SelectionContext(tensor, beat_times=(), downbeat_times=(), shot_boundaries=None, pins=None, config=<factory>)
 
-Bases: `object`
+Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
 Everything the score-driven strategy needs beyond `(alignments, song_duration)`.
 
@@ -116,7 +116,7 @@ passing `config=` to the MCP tool.
 
 ### *class* muvid.footage.select_score.WeightedSelectionConfig(weights=<factory>, lambda_switch=0.35, l_min_s=1.2, l_max_s=8.0, l_max_overrun_penalty=0.15, boundary_mode='beats', beat_unit='beat')
 
-Bases: `object`
+Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
 The score-driven “strategy” as a pure config object (open-closed).
 
@@ -142,7 +142,7 @@ Precedence: preset (or the default) < `config` dict fields < explicit `weights`.
 Run the DP and return `(edl, meta)`; `meta` carries any fallback + its cause.
 
 * **Return type:**
-  `tuple`[`list`[[`EdlEntry`](muvid.footage.edl.md#muvid.footage.edl.EdlEntry)], `dict`]
+  [`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`EdlEntry`](muvid.footage.edl.md#muvid.footage.edl.EdlEntry)], [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)]
 
 ### muvid.footage.select_score.selection_margin(alignments, tensor, , weights=None)
 
@@ -162,4 +162,4 @@ Requires a [`SelectionContext`](#muvid.footage.select_score.SelectionContext) ca
 scores are absent so the MCP layer can say “run muvid_score_footage first”.
 
 * **Return type:**
-  `list`[[`EdlEntry`](muvid.footage.edl.md#muvid.footage.edl.EdlEntry)]
+  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`EdlEntry`](muvid.footage.edl.md#muvid.footage.edl.EdlEntry)]

@@ -43,4 +43,4 @@ frozen) frame is excluded from selection. Disabled by default to avoid over-mask
 Sharpness / exposure / stability_shake / face_framing tracks for one clip.
 
 * **Return type:**
-  `list`[[`ScoreTrack`](muvid.footage.scoring.grid.html.md#muvid.footage.scoring.grid.ScoreTrack)]
+  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`ScoreTrack`](muvid.footage.scoring.grid.html.md#muvid.footage.scoring.grid.ScoreTrack)]

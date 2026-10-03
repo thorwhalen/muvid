@@ -36,7 +36,7 @@ Pass the `job_id` from `score_footage` (or omit for the newest scoring job). Wit
 terminal state — so an agent needs ~1 poll, not many.
 
 * **Return type:**
-  `dict`
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
 
 ### muvid.mcp.scoring_tools.footage_scores(project_id, , clip_id='', metrics=None, max_points=1500)
 
@@ -48,7 +48,7 @@ The persisted score tracks — for the multichannel editor + inspection. Free.
   `max_points` per metric), for the editor’s lanes.
 
 * **Return type:**
-  `dict`
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
 
 ### muvid.mcp.scoring_tools.score_footage(project_id, , hop_s=0.1, metrics=None)
 
@@ -60,4 +60,4 @@ a run of `align_footage` first. The heavy lip-sync tier is OFF by default (opt-i
 off-prod).
 
 * **Return type:**
-  `dict`
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)

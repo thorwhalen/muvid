@@ -33,7 +33,7 @@ Parse `script/script.md` and upsert any sections/shots it defines.
 Existing sections/shots not present in the script are left alone.
 
 * **Return type:**
-  `None`
+  [`None`](https://docs.python.org/3/builtins/constants.html#None)
 
 ### muvid.script.parse_script(md)
 
@@ -44,18 +44,18 @@ otherwise it’s an empty list and you should rely on the project’s
 section list separately.
 
 * **Return type:**
-  `tuple`[`list`[[`SectionSpec`](muvid.schema.md#muvid.schema.SectionSpec)], `list`[[`ShotSpec`](muvid.schema.md#muvid.schema.ShotSpec)]]
+  [`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`SectionSpec`](muvid.schema.md#muvid.schema.SectionSpec)], [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`ShotSpec`](muvid.schema.md#muvid.schema.ShotSpec)]]
 
 ### muvid.script.render_script(sections, shots)
 
 Inverse of `parse_script`. Writes the canonical markdown form.
 
 * **Return type:**
-  `str`
+  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
 
 ### muvid.script.write_script(project)
 
 Render the project’s current sections+shots to `script/script.md`.
 
 * **Return type:**
-  `Path`
+  [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)

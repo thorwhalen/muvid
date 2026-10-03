@@ -49,13 +49,13 @@ the rest of muvid ships.
 
 ### *class* muvid.montage.render.Canvas(, width=1920, height=1080, fps=30)
 
-Bases: `object`
+Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
 Output geometry.
 
 ### *class* muvid.montage.render.Part(, kind, slot, offset, n_frames, prev=None, prev_offset=0, curve='fade')
 
-Bases: `object`
+Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
 One ffmpeg invocation’s worth of frames.
 
@@ -72,7 +72,7 @@ slot i (0 for a cut; slot 0’s is always 0). A transition is clamped to
 half the shorter neighbour and dropped below `MIN_TRANSITION_FRAMES`.
 
 * **Return type:**
-  `tuple`[`list`[`int`], `list`[`int`]]
+  [`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`int`](https://docs.python.org/3/builtins/functions.html#int)], [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`int`](https://docs.python.org/3/builtins/functions.html#int)]]
 
 ```pycon
 >>> frame_layout([0.0, 1.0, 2.0], 3.0, [0.0, 0.5, 0.05], 24)
@@ -89,7 +89,7 @@ The ffmpeg fragment for a grade, or `""` for none.
 form over the accent colour, never a caller-supplied filter string.
 
 * **Return type:**
-  `str`
+  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
 
 ```pycon
 >>> grade_filter('none')
@@ -107,15 +107,15 @@ Render `plan` over `audio` to `output`. Writes exactly `output`.
 * **Parameters:**
   * **plan** ([`Plan`](muvid.montage.plan.html.md#muvid.montage.plan.Plan)) – The edit list. Its media paths are opened as-is.
   * **canvas** ([`Canvas`](#muvid.montage.render.Canvas)) – Output size and frame rate. Even dimensions only.
-  * **audio** (`Path` | `str`) – The song; the video is exactly as long as it.
-  * **output** (`Path` | `str`) – The mp4 to write.
-  * **workdir** (`Path` | `str`) – Where the parts go (`workdir/parts`, removed after a
+  * **audio** ([`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path) | [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)) – The song; the video is exactly as long as it.
+  * **output** ([`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path) | [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)) – The mp4 to write.
+  * **workdir** ([`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path) | [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)) – Where the parts go (`workdir/parts`, removed after a
     successful mux unless `keep_parts`).
-  * **grade** (`str`) – One of [`muvid.montage.spec.GRADES`](muvid.montage.spec.html.md#muvid.montage.spec.GRADES).
-  * **palette** ([`Palette`](muvid.montage.spec.html.md#muvid.montage.spec.Palette) | `None`) – Supplies the tint accent and the grid pad colour.
-  * **crf** (`int`) – libx264 knobs, per part.
-  * **preset** (`str`) – libx264 knobs, per part.
-  * **keep_parts** (`bool`) – Leave the intermediate parts on disk.
+  * **grade** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str)) – One of [`muvid.montage.spec.GRADES`](muvid.montage.spec.html.md#muvid.montage.spec.GRADES).
+  * **palette** ([`Palette`](muvid.montage.spec.html.md#muvid.montage.spec.Palette) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – Supplies the tint accent and the grid pad colour.
+  * **crf** ([`int`](https://docs.python.org/3/builtins/functions.html#int)) – libx264 knobs, per part.
+  * **preset** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str)) – libx264 knobs, per part.
+  * **keep_parts** ([`bool`](https://docs.python.org/3/builtins/functions.html#bool)) – Leave the intermediate parts on disk.
 * **Return type:**
   [`RenderResult`](muvid.subgenres.html.md#muvid.subgenres.RenderResult)
 * **Returns:**
@@ -131,7 +131,7 @@ that starts mid-slot (or, negative, before the slot’s first frame on the
 incoming side of a blend) samples the slot’s own path.
 
 * **Return type:**
-  `dict`[`str`, `str`]
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]
 
 ```pycon
 >>> from muvid.montage.plan import Keyframe, Window

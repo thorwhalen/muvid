@@ -96,7 +96,7 @@ What each signal is, in the words a screen can use.
 the install).
 
 * **Return type:**
-  `dict`
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
 
 ### muvid.footage.beats.binned_visual_signals(mids, motion, hists, hop, , cells=None)
 
@@ -111,7 +111,7 @@ the clip’s first frame (a negative container timestamp) are dropped. Pure nump
 the part of the visual pass a test can reach.
 
 * **Return type:**
-  `dict`
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
 
 ### muvid.footage.beats.cache_key(kind)
 
@@ -121,7 +121,7 @@ record must never disagree with a fresh `beat_grid`), and every constant of the
 visual pass.
 
 * **Return type:**
-  `str`
+  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
 
 ### muvid.footage.beats.cached_signals(root, media_hash, kind, compute)
 
@@ -136,7 +136,7 @@ truncated file or an unreadable stream must be measured again next time, not be
 remembered as silence — and `compute` should refuse rather than return one.
 
 * **Return type:**
-  `dict`
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
 
 ### muvid.footage.beats.checkerboard_novelty(features, , half=None)
 
@@ -157,7 +157,7 @@ pooled peak stays where it was. `min` / `max` are the full-resolution ones;
 scaled by the full-resolution p99 would saturate).
 
 * **Return type:**
-  `dict`
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
 
 ### muvid.footage.beats.direction_histogram(fx, fy, , bins=8)
 
@@ -186,21 +186,21 @@ twice, re-numbering with the refined period. A train whose residual exceeds
 errors) has no single tempo: `None`, and the caller keeps the estimator’s.
 
 * **Return type:**
-  `float` | `None`
+  [`float`](https://docs.python.org/3/builtins/functions.html#float) | [`None`](https://docs.python.org/3/builtins/constants.html#None)
 
 ### muvid.footage.beats.has_audio(path)
 
 Whether a media file carries an audio stream (an unprobeable file: no).
 
 * **Return type:**
-  `bool`
+  [`bool`](https://docs.python.org/3/builtins/functions.html#bool)
 
 ### muvid.footage.beats.has_signal(record)
 
 Whether a measured record carries at least one sample of anything.
 
 * **Return type:**
-  `bool`
+  [`bool`](https://docs.python.org/3/builtins/functions.html#bool)
 
 ### muvid.footage.beats.novelty_signal(path)
 
@@ -210,7 +210,7 @@ of per-frame timbre (20 MFCCs) and harmony (12 chroma), each standardised. Peaks
 are where the music changes character — section boundaries.
 
 * **Return type:**
-  `dict`
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
 
 ### muvid.footage.beats.region_speeds(fx, fy, , grid=(8, 6))
 
@@ -226,7 +226,7 @@ One signal on a regular grid: sample `i` is at `t0 + i * hop_s` seconds of the
 media’s own time. Non-finite samples become `None` (not measured, never zero).
 
 * **Return type:**
-  `dict`
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
 
 ### muvid.footage.beats.stop_strength(hists)
 
@@ -256,4 +256,4 @@ resolution changes it little. Bin `i` covers `[i, i + 1) / sample_fps` s; a bin
 no pair fell in is `None`.
 
 * **Return type:**
-  `dict`
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)

@@ -71,7 +71,7 @@ alias of `Callable`[[…], `list[EdlEntry]`]
 For each covered span, show the highest-confidence clip (ties: longest coverage).
 
 * **Return type:**
-  `list`[[`EdlEntry`](muvid.footage.edl.html.md#muvid.footage.edl.EdlEntry)]
+  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`EdlEntry`](muvid.footage.edl.html.md#muvid.footage.edl.EdlEntry)]
 
 ### muvid.footage.strategy.fewest_cuts(alignments, song_duration)
 
@@ -79,14 +79,14 @@ Stay on the current clip as long as it covers; only switch when it runs out
 (then to the clip extending furthest). Minimizes the number of cuts.
 
 * **Return type:**
-  `list`[[`EdlEntry`](muvid.footage.edl.html.md#muvid.footage.edl.EdlEntry)]
+  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`EdlEntry`](muvid.footage.edl.html.md#muvid.footage.edl.EdlEntry)]
 
 ### muvid.footage.strategy.list_strategies()
 
 All strategy slugs (eager + lazy), sorted. Lazy slugs are NOT imported to list them.
 
 * **Return type:**
-  `list`[`str`]
+  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]
 
 ### muvid.footage.strategy.longest_take(alignments, song_duration)
 
@@ -94,7 +94,7 @@ Prefer the clip that keeps rolling longest — pick the one whose coverage exten
 furthest forward (ties: higher confidence). Yields long, continuous takes.
 
 * **Return type:**
-  `list`[[`EdlEntry`](muvid.footage.edl.html.md#muvid.footage.edl.EdlEntry)]
+  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`EdlEntry`](muvid.footage.edl.html.md#muvid.footage.edl.EdlEntry)]
 
 ### muvid.footage.strategy.register_lazy_strategy(slug, target_ref)
 
@@ -104,14 +104,14 @@ Lets a heavy strategy (numpy DP, cv2, …) be *listed* and *named* without impor
 module at registration time — the import happens in [`resolve_strategy()`](#muvid.footage.strategy.resolve_strategy).
 
 * **Return type:**
-  `None`
+  [`None`](https://docs.python.org/3/builtins/constants.html#None)
 
 ### muvid.footage.strategy.register_selection_strategy(slug, fn)
 
 Register a selection strategy under `slug` (returns it, for inline use).
 
 * **Return type:**
-  `Callable`[`...`, `list`[[`EdlEntry`](muvid.footage.edl.html.md#muvid.footage.edl.EdlEntry)]]
+  [`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[`...`](https://docs.python.org/3/builtins/constants.html#Ellipsis), [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`EdlEntry`](muvid.footage.edl.html.md#muvid.footage.edl.EdlEntry)]]
 
 ### muvid.footage.strategy.resolve_strategy(strategy)
 
@@ -120,7 +120,7 @@ Resolve a strategy name OR a bare callable to a [`SelectionStrategy`](#muvid.foo
 A lazy slug is imported here (and cached into the eager table) on first resolution.
 
 * **Return type:**
-  `Callable`[`...`, `list`[[`EdlEntry`](muvid.footage.edl.html.md#muvid.footage.edl.EdlEntry)]]
+  [`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[`...`](https://docs.python.org/3/builtins/constants.html#Ellipsis), [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`EdlEntry`](muvid.footage.edl.html.md#muvid.footage.edl.EdlEntry)]]
 
 ### muvid.footage.strategy.select_edl(strategy, alignments, song_duration, , context=None)
 
@@ -130,4 +130,4 @@ Run `strategy` (name or callable) to produce an EDL from `alignments`.
 the alignment-only built-ins ignore it. See [`SelectionStrategy`](#muvid.footage.strategy.SelectionStrategy).
 
 * **Return type:**
-  `list`[[`EdlEntry`](muvid.footage.edl.html.md#muvid.footage.edl.EdlEntry)]
+  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`EdlEntry`](muvid.footage.edl.html.md#muvid.footage.edl.EdlEntry)]

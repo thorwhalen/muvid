@@ -55,7 +55,7 @@ Modules:
 
 ### *class* muvid.footage.CropWindow(x, y, w, h)
 
-Bases: `object`
+Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
 A rectangle to take from the source frame, as fractions of its width/height.
 
@@ -76,7 +76,7 @@ feet” is a decision per cut, not a default.
 
 ### *class* muvid.footage.EdlEntry(song_start, song_end, clip_id, transition=None, crop=None, crop_end=None, look=None, look_time_varying=False, look_spec=None, slip_s=0.0, rate=1.0)
 
-Bases: `object`
+Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
 One cut: show `clip_id` over the song span `[song_start, song_end]`.
 
@@ -85,13 +85,13 @@ fills it (black in v1). Gaps are explicit entries rather than absences so that a
 is always contiguous over its span, every span of the song is accounted for by
 exactly one entry, and “no clip here” survives a JSON round trip (`clip_id: null`).
 
-#### crop *: [CropWindow](muvid.footage.edl.html.md#muvid.footage.edl.CropWindow) | None* *= None*
+#### crop *: [CropWindow](muvid.footage.edl.html.md#muvid.footage.edl.CropWindow) | [None](https://docs.python.org/3/builtins/constants.html#None)* *= None*
 
 Take only this rectangle of the source frame. `None` keeps the whole frame
 letterboxed onto the canvas, which is what every EDL written before this
 field existed means — additive in both directions, like `transition`.
 
-#### crop_end *: [CropWindow](muvid.footage.edl.html.md#muvid.footage.edl.CropWindow) | None* *= None*
+#### crop_end *: [CropWindow](muvid.footage.edl.html.md#muvid.footage.edl.CropWindow) | [None](https://docs.python.org/3/builtins/constants.html#None)* *= None*
 
 With `crop`, makes the window MOVE linearly from `crop` to `crop_end`
 across the cut — a pan. Same size as `crop` (see [`validate_edl()`](#muvid.footage.validate_edl)): a
@@ -101,7 +101,7 @@ expressed as a *different* fixed window on the *next* cut, or — since the
 `looks` seam below — as a `look` carrying a `zoompan` ramp, which is
 the one filter that CAN resize its window mid-cut (muvid#66).
 
-#### look *: str | None* *= None*
+#### look *: [str](https://docs.python.org/3/builtins/stdtypes.html#str) | [None](https://docs.python.org/3/builtins/constants.html#None)* *= None*
 
 \*\*The `looks` seam.\*\* A compiled ffmpeg filter-chain fragment applied to
 this cut’s picture once it has been normalised onto the canvas. `None`
@@ -128,7 +128,7 @@ the assembler rests on; the allowlist is what keeps a look from writing
 this machine’s disk; and the last two are what keep an allowlisted filter
 from spending 900 MB of it (muvid#75).
 
-#### look_spec *: dict | None* *= None*
+#### look_spec *: [dict](https://docs.python.org/3/builtins/stdtypes.html#dict) | [None](https://docs.python.org/3/builtins/constants.html#None)* *= None*
 
 WHICH named look produced [`look`](muvid.footage.look.html.md#module-muvid.footage.look) — `{"name": "slow_push", "zoom": 1.08}`
 ([`muvid.footage.named_looks`](muvid.footage.named_looks.html.md#module-muvid.footage.named_looks)) — so a screen can show and re-edit the choice
@@ -137,7 +137,7 @@ two are set together by `service.set_cut`. `None` (the default, and always
 for a hand-written filter) emits nothing — additive in both directions. Excluded
 from the hash because a dict is not hashable; equality still compares it.
 
-#### look_time_varying *: bool* *= False*
+#### look_time_varying *: [bool](https://docs.python.org/3/builtins/functions.html#bool)* *= False*
 
 Whether [`look`](muvid.footage.look.html.md#module-muvid.footage.look) READS THE FILTER CLOCK — a punch-in, a pan, anything
 whose expressions mention `t` / `in_time` / `n`. `False` (the
@@ -176,7 +176,7 @@ earlier. muvid’s own compilers declare it for you —
 plan, and [`punch_in_cuts()`](muvid.footage.look.html.md#muvid.footage.look.punch_in_cuts) sets this field FROM
 the fragment rather than hardcoding it.
 
-#### rate *: float* *= 1.0*
+#### rate *: [float](https://docs.python.org/3/builtins/functions.html#float)* *= 1.0*
 
 how fast this cut plays its video — `1.03` shows 3 % more footage
 over the same span of song, so the dancers move 3 % faster; the song is never
@@ -188,7 +188,7 @@ short cuts, each with its own, make a piecewise-linear time-warp. Bounded to
 * **Type:**
   **Speed**
 
-#### slip_s *: float* *= 0.0*
+#### slip_s *: [float](https://docs.python.org/3/builtins/functions.html#float)* *= 0.0*
 
 shift WHICH moment of the video this cut shows, by `slip_s`
 seconds, without moving the cut on the song. The clip’s alignment offset is
@@ -202,7 +202,7 @@ property and needs no speed change. Bounded by `SLIP_MAX_S`; `0.0`
 * **Type:**
   **Slip**
 
-#### transition *: [Transition](muvid.footage.edl.html.md#muvid.footage.edl.Transition) | None* *= None*
+#### transition *: [Transition](muvid.footage.edl.html.md#muvid.footage.edl.Transition) | [None](https://docs.python.org/3/builtins/constants.html#None)* *= None*
 
 Blend in from the predecessor rather than hard-cutting. `None` (the
 default) is a hard cut, so an EDL written before this field existed is a
@@ -211,7 +211,7 @@ cuts — degraded, never wrong, in both directions.
 
 ### *class* muvid.footage.ExcludedSpan(clip_id, song_start, song_end, reason='no_vouched_coverage', confidence=0.0, support=None, margin=None)
 
-Bases: `object`
+Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
 One span an AUTO-selected edit gave up rather than cut to unvouched footage (muvid#88).
 
@@ -226,18 +226,18 @@ disagree about why.
 JSON-ready. `support`/`margin` stay `None` — “not measured” is not zero.
 
 * **Return type:**
-  `dict`
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
 
 ### *class* muvid.footage.FootageAlignment(clip_id, offset_s, confidence, duration_s, coverage, overlaps=True, support=None, reliable=True, window_s=None, hop_s=None, margin=None, source='measured')
 
-Bases: `object`
+Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
 Where one uploaded clip sits on the song timeline (muvid’s per-clip record).
 
 Mirrors `mixing.audio.ClipAlignment` but keyed by the caller-facing `clip_id` and
 JSON-round-trippable (persisted in the project manifest).
 
-#### margin *: float | None* *= None*
+#### margin *: [float](https://docs.python.org/3/builtins/functions.html#float) | [None](https://docs.python.org/3/builtins/constants.html#None)* *= None*
 
 How far `support`’s tally for this offset sits ABOVE the tally for the best
 offset outside the tolerance — `None` on the same quorum as `support`.
@@ -249,13 +249,13 @@ weak endorsement. See `MIN_MARGIN` — this is the number muvid#59 was
 actually missing, since its near-ties (0.993/0.989/0.987) are invisible to any
 fraction that does not look at the runner-up.
 
-#### overlaps *: bool* *= True*
+#### overlaps *: [bool](https://docs.python.org/3/builtins/functions.html#bool)* *= True*
 
 Whether the clip intersects the song timeline at all. A clip that does NOT is
 still recorded — a source must never leave the addressable set as a side effect
 of being measured. Selection filters on this; reporting shows it with a reason.
 
-#### reliable *: bool* *= True*
+#### reliable *: [bool](https://docs.python.org/3/builtins/functions.html#bool)* *= True*
 
 Whether the aligner VOUCHES for `offset_s`. False means “measured, recorded,
 and not to be cut to without the caller saying so” — see
@@ -265,7 +265,7 @@ Defaults True for a record built in code; a record read from disk that predates
 the field gets its verdict DERIVED instead (see `from_dict()`), never
 assumed.
 
-#### source *: str* *= 'measured'*
+#### source *: [str](https://docs.python.org/3/builtins/stdtypes.html#str)* *= 'measured'*
 
 `MEASURED` (the aligner found it by audio) or
 `DECLARED` (a person set it — `muvid.footage.service.set_offset`). A
@@ -277,7 +277,7 @@ field were all written by the aligner, so it defaults to measured.
 * **Type:**
   How the offset is KNOWN
 
-#### support *: float | None* *= None*
+#### support *: [float](https://docs.python.org/3/builtins/functions.html#float) | [None](https://docs.python.org/3/builtins/constants.html#None)* *= None*
 
 Fraction of the clip’s independent analysis windows that agree on `offset_s`.
 `None` means no vote was held — since `mixing>=0.0.48` fits the window to the
@@ -296,7 +296,7 @@ shoot that produced this issue the three correct offsets carried 10/24, 17/37
 and 45/61, while the confidently-wrong ones the old estimator returned had no
 agreement to speak of at all.
 
-#### window_s *: float | None* *= None*
+#### window_s *: [float](https://docs.python.org/3/builtins/functions.html#float) | [None](https://docs.python.org/3/builtins/constants.html#None)* *= None*
 
 The analysis grid `support` was measured on — `None` in exactly the cases
 `support` is. Recorded because since `mixing>=0.0.48` the estimator fits the
@@ -309,13 +309,13 @@ measurement is a record you have to take on faith.
 
 ### *exception* muvid.footage.LookError
 
-Bases: `ValueError`
+Bases: [`ValueError`](https://docs.python.org/3/builtins/exceptions.html#ValueError)
 
 A look could not be compiled. Carries what to do about it.
 
 ### *class* muvid.footage.LookFragment(fragment, , time_varying)
 
-Bases: `str`
+Bases: [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
 
 A compiled filter chain that remembers whether it READS THE CLOCK.
 
@@ -362,7 +362,7 @@ An `EdlEntry` carrying one is an ordinary dataclass a caller may well copy.
 
 ### *exception* muvid.footage.UnreliableAlignmentError(unvouched)
 
-Bases: `ValueError`
+Bases: [`ValueError`](https://docs.python.org/3/builtins/exceptions.html#ValueError)
 
 An edit cuts to a clip whose OFFSET the aligner could not vouch for (muvid#59).
 
@@ -418,7 +418,7 @@ A plain `str` component contributes `False`, matching
 half of a chain quietly downgrades only that half’s claim, never the other’s.
 
 * **Return type:**
-  `Optional`[[`LookFragment`](muvid.footage.look.html.md#muvid.footage.look.LookFragment)]
+  [`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`LookFragment`](muvid.footage.look.html.md#muvid.footage.look.LookFragment)]
 
 ```pycon
 >>> chain("hue=s=0", None, "", "unsharp=5:5:1")
@@ -440,7 +440,7 @@ Strategies emit only `{song_start, song_end, clip_id}`; the sign convention
 strategy can desync the cut.
 
 * **Return type:**
-  `list`[[`AssemblyCut`](muvid.footage.edl.html.md#muvid.footage.edl.AssemblyCut)]
+  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`AssemblyCut`](muvid.footage.edl.html.md#muvid.footage.edl.AssemblyCut)]
 
 ### muvid.footage.exclude_unvouched(edl, alignments)
 
@@ -492,7 +492,7 @@ pan.
 Returns `(entries, excluded)`.
 
 * **Return type:**
-  `tuple`[`list`[[`EdlEntry`](muvid.footage.edl.html.md#muvid.footage.edl.EdlEntry)], `list`[[`ExcludedSpan`](muvid.footage.edl.html.md#muvid.footage.edl.ExcludedSpan)]]
+  [`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`EdlEntry`](muvid.footage.edl.html.md#muvid.footage.edl.EdlEntry)], [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`ExcludedSpan`](muvid.footage.edl.html.md#muvid.footage.edl.ExcludedSpan)]]
 
 ### muvid.footage.is_time_varying(fragment)
 
@@ -502,7 +502,7 @@ The one place that default lives, so a caller reading a fragment and the EDL
 field’s own default cannot drift apart.
 
 * **Return type:**
-  `bool`
+  [`bool`](https://docs.python.org/3/builtins/functions.html#bool)
 
 ```pycon
 >>> is_time_varying(LookFragment("zoompan=d=1", time_varying=True))
@@ -516,20 +516,20 @@ True
 All strategy slugs (eager + lazy), sorted. Lazy slugs are NOT imported to list them.
 
 * **Return type:**
-  `list`[`str`]
+  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]
 
 ### muvid.footage.motion(keyframes, , canvas, fps)
 
 A camera path over the cut, as a filter fragment. `looks` picks the filter.
 
 * **Parameters:**
-  * **keyframes** (`Sequence`) – `(t_seconds, window)` pairs, or `looks.Keyframe`s.
+  * **keyframes** ([`Sequence`](https://docs.python.org/3/library/typing.html#typing.Sequence)) – `(t_seconds, window)` pairs, or `looks.Keyframe`s.
     The window is anything with ``x``/`y`/`w`/`h` as fractions —
     [`muvid.footage.edl.CropWindow`](muvid.footage.edl.html.md#muvid.footage.edl.CropWindow) satisfies that structurally,
     with no adapter, because both packages use `burns.Rect`’s
     convention on purpose.
   * **canvas** – `(width, height)` — the assembler’s delivery canvas.
-  * **fps** (`float`) – the assembler’s delivery frame rate.
+  * **fps** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – the assembler’s delivery frame rate.
 * **Return type:**
   [`LookFragment`](muvid.footage.look.html.md#muvid.footage.look.LookFragment)
 * **Returns:**
@@ -576,13 +576,13 @@ six lines of geometry and no ffmpeg.
 
 * **Parameters:**
   * **canvas** – `(width, height)` — the assembler’s delivery canvas.
-  * **fps** (`float`) – the assembler’s delivery frame rate.
-  * **duration_s** (`float`) – the cut’s length in seconds. The move ends here by default.
-  * **zoom** (`float`) – final magnification. `1.12` shows ~89% of the frame.
-  * **anchor** (`tuple`[`float`, `float`]) – what stays put, as a fraction of the canvas. `(0.5, 0.5)`
+  * **fps** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – the assembler’s delivery frame rate.
+  * **duration_s** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – the cut’s length in seconds. The move ends here by default.
+  * **zoom** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – final magnification. `1.12` shows ~89% of the frame.
+  * **anchor** ([`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`float`](https://docs.python.org/3/builtins/functions.html#float), [`float`](https://docs.python.org/3/builtins/functions.html#float)]) – what stays put, as a fraction of the canvas. `(0.5, 0.5)`
     centres it; `(0.5, 0.35)` pushes toward a face in the upper third.
-  * **start_s** (`float`) – hold the full frame until here, then move.
-  * **end_s** (`Optional`[`float`]) – reach the final framing here and hold. Defaults to `duration_s`.
+  * **start_s** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – hold the full frame until here, then move.
+  * **end_s** ([`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`float`](https://docs.python.org/3/builtins/functions.html#float)]) – reach the final framing here and hold. Defaults to `duration_s`.
 * **Return type:**
   [`LookFragment`](muvid.footage.look.html.md#muvid.footage.look.LookFragment)
 * **Returns:**
@@ -625,15 +625,15 @@ selector, so a stride lands the moves on musical time for free, where a
 seconds-based interval would drift off it.
 
 * **Parameters:**
-  * **entries** (`Sequence`) – validated [`EdlEntry`](muvid.footage.edl.html.md#muvid.footage.edl.EdlEntry) objects.
+  * **entries** ([`Sequence`](https://docs.python.org/3/library/typing.html#typing.Sequence)) – validated [`EdlEntry`](muvid.footage.edl.html.md#muvid.footage.edl.EdlEntry) objects.
   * **canvas** – `(width, height)` — the delivery canvas.
-  * **fps** (`float`) – the delivery frame rate.
-  * **every** (`int`) – stride. `2` punches every other footage cut; `1` punches all.
-  * **zoom** (`float`) – passed to [`punch_in()`](#muvid.footage.punch_in).
-  * **anchor** (`tuple`[`float`, `float`]) – passed to [`punch_in()`](#muvid.footage.punch_in).
-  * **offset** (`int`) – which footage cut in each stride gets the move.
+  * **fps** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – the delivery frame rate.
+  * **every** ([`int`](https://docs.python.org/3/builtins/functions.html#int)) – stride. `2` punches every other footage cut; `1` punches all.
+  * **zoom** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – passed to [`punch_in()`](#muvid.footage.punch_in).
+  * **anchor** ([`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`float`](https://docs.python.org/3/builtins/functions.html#float), [`float`](https://docs.python.org/3/builtins/functions.html#float)]) – passed to [`punch_in()`](#muvid.footage.punch_in).
+  * **offset** ([`int`](https://docs.python.org/3/builtins/functions.html#int)) – which footage cut in each stride gets the move.
 * **Return type:**
-  `list`[`Any`]
+  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]
 * **Returns:**
   A NEW list of entries. Gaps are skipped (they have no footage to punch
   into, and `validate_edl` refuses a look on one), and an entry that
@@ -654,7 +654,7 @@ seconds-based interval would drift off it.
 Register a selection strategy under `slug` (returns it, for inline use).
 
 * **Return type:**
-  `Callable`[`...`, `list`[[`EdlEntry`](muvid.footage.edl.html.md#muvid.footage.edl.EdlEntry)]]
+  [`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[`...`](https://docs.python.org/3/builtins/constants.html#Ellipsis), [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`EdlEntry`](muvid.footage.edl.html.md#muvid.footage.edl.EdlEntry)]]
 
 ### muvid.footage.resolve_strategy(strategy)
 
@@ -663,7 +663,7 @@ Resolve a strategy name OR a bare callable to a `SelectionStrategy`.
 A lazy slug is imported here (and cached into the eager table) on first resolution.
 
 * **Return type:**
-  `Callable`[`...`, `list`[[`EdlEntry`](muvid.footage.edl.html.md#muvid.footage.edl.EdlEntry)]]
+  [`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[`...`](https://docs.python.org/3/builtins/constants.html#Ellipsis), [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`EdlEntry`](muvid.footage.edl.html.md#muvid.footage.edl.EdlEntry)]]
 
 ### muvid.footage.select_edl(strategy, alignments, song_duration, , context=None)
 
@@ -673,7 +673,7 @@ Run `strategy` (name or callable) to produce an EDL from `alignments`.
 the alignment-only built-ins ignore it. See `SelectionStrategy`.
 
 * **Return type:**
-  `list`[[`EdlEntry`](muvid.footage.edl.html.md#muvid.footage.edl.EdlEntry)]
+  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`EdlEntry`](muvid.footage.edl.html.md#muvid.footage.edl.EdlEntry)]
 
 ### muvid.footage.stylize(look, , canvas, fps, duration_s=None, ffmpeg='ffmpeg', env=None, policy=None)
 
@@ -682,9 +682,9 @@ A `looks.Look` compiled against the binary muvid will run.
 * **Parameters:**
   * **look** – a `looks.Look` — an ordered stack of named effects.
   * **canvas** – `(width, height)` — the assembler’s delivery canvas.
-  * **fps** (`float`) – the assembler’s delivery frame rate.
-  * **duration_s** (`Optional`[`float`]) – the cut’s length, when a step needs to know it.
-  * **ffmpeg** (`str`) – which binary to probe. Defaults to the bare name muvid runs.
+  * **fps** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – the assembler’s delivery frame rate.
+  * **duration_s** ([`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`float`](https://docs.python.org/3/builtins/functions.html#float)]) – the cut’s length, when a step needs to know it.
+  * **ffmpeg** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str)) – which binary to probe. Defaults to the bare name muvid runs.
   * **env** – a `looks.FfmpegEnv` to compile against, instead of probing.
   * **policy** – a `looks.Policy` — the licence ceiling. `looks`’ default
     applies when omitted.
@@ -774,7 +774,7 @@ the loosest bound rather than an absent one.
 Returns the normalized list of [`EdlEntry`](#muvid.footage.EdlEntry).
 
 * **Return type:**
-  `list`[[`EdlEntry`](muvid.footage.edl.html.md#muvid.footage.edl.EdlEntry)]
+  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`EdlEntry`](muvid.footage.edl.html.md#muvid.footage.edl.EdlEntry)]
 
 ### Modules
 

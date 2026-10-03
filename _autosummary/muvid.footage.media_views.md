@@ -51,14 +51,14 @@ Returns `{duration_s, n_frames, frame_w, frame_h, sheets: [{artifact_id, cols,
 rows, first_frame, n_frames}]}`.
 
 * **Return type:**
-  `dict`
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
 
 ### muvid.footage.media_views.filmstrip_key(clip_hash, , fps, height, cols, rows)
 
 The cache directory name: the clip’s content and every parameter.
 
 * **Return type:**
-  `str`
+  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
 
 ```pycon
 >>> filmstrip_key("ab" * 32, fps=2.0, height=90, cols=10, rows=10)
@@ -77,4 +77,4 @@ The cache directory name: the clip’s content and every parameter.
 normalised so the loudest bucket is 1.0 (all zeros for a silent song).
 
 * **Return type:**
-  `dict`
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)

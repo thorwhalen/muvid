@@ -37,13 +37,13 @@ to splice in.
 
 ### *class* muvid.lyrics.LyricLine(, text, line_index, section_label='', start_s=None)
 
-Bases: `object`
+Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
 One line of lyric text, optionally with a known start time.
 
 ### *class* muvid.lyrics.LyricSection(, label, title='', start_s=None, end_s=None, lines=())
 
-Bases: `object`
+Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
 A user-tagged section in the lyrics markdown.
 
@@ -52,7 +52,7 @@ transcripts; if present, they override.
 
 ### *class* muvid.lyrics.LyricsDoc(, sections)
 
-Bases: `object`
+Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
 Full parsed view of the user’s lyrics markdown.
 
@@ -94,7 +94,7 @@ non-lyric placeholder (no LyricLine emitted).
 Inverse of `parse_lyrics_md`. Stable round-trip.
 
 * **Return type:**
-  `str`
+  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
 
 ### muvid.lyrics.transcribe(audio_path, , api_key=None, out_path=None, cache=True)
 
@@ -108,7 +108,7 @@ default, so re-running on the same audio is free. Pass
 `cache=False` to force a fresh round-trip.
 
 * **Return type:**
-  `dict`[`str`, `Any`]
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]
 
 ### muvid.lyrics.words_from_transcript(transcript)
 
@@ -119,4 +119,4 @@ Filters out non-word events (Scribe surfaces `(laughs)` etc. with
 pass-through; absent → `None`.
 
 * **Return type:**
-  `list`[`dict`[`str`, `Any`]]
+  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]]

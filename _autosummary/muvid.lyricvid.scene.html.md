@@ -31,36 +31,36 @@ which is the seam a plugin author or a future muvid uses to grow the vocabulary.
 
 ### *class* muvid.lyricvid.scene.Canvas(, width=1920, height=1080, fps=30)
 
-Bases: `object`
+Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
 Output geometry. Sizes in the scene are relative to `height`.
 
 ### *class* muvid.lyricvid.scene.Cue(\*, text, x, y, size, t_in, t_full, t_out=None, t_gone=None, colour='#ffffff', dim_colour=None, dim_from=None, motion='fade', layer=0, extra=<factory>)
 
-Bases: `object`
+Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
 One piece of text, placed and timed.
 
 * **Parameters:**
-  * **y** (`float`) – centre of the text, normalised to the canvas (0..1).
-  * **size** (`float`) – cap height as a fraction of canvas height.
-  * **t_in** (`float`) – when it starts arriving.
-  * **t_full** (`float`) – when it is fully arrived. `t_in == t_full` is a hard cut.
-  * **t_out** (`float` | `None`) – when it starts leaving; `None` means it never leaves.
-  * **t_gone** (`float` | `None`) – when it has fully left.
-  * **dim_from** (`float` | `None`) – when it recedes to `dim_colour` (`persistence='dim'`).
+  * **y** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – centre of the text, normalised to the canvas (0..1).
+  * **size** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – cap height as a fraction of canvas height.
+  * **t_in** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – when it starts arriving.
+  * **t_full** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – when it is fully arrived. `t_in == t_full` is a hard cut.
+  * **t_out** ([`float`](https://docs.python.org/3/builtins/functions.html#float) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – when it starts leaving; `None` means it never leaves.
+  * **t_gone** ([`float`](https://docs.python.org/3/builtins/functions.html#float) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – when it has fully left.
+  * **dim_from** ([`float`](https://docs.python.org/3/builtins/functions.html#float) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – when it recedes to `dim_colour` (`persistence='dim'`).
 
-#### extra *: dict[str, Any]*
+#### extra *: [dict](https://docs.python.org/3/builtins/stdtypes.html#dict)[[str](https://docs.python.org/3/builtins/stdtypes.html#str), [Any](https://docs.python.org/3/library/typing.html#typing.Any)]*
 
 Free-form, for a renderer that can use it (e.g. per-word wipe fraction).
 
 ### *class* muvid.lyricvid.scene.Scene(\*, canvas, duration, background, cues, typography, meta=<factory>)
 
-Bases: `object`
+Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
 Everything a renderer needs, and nothing it has to interpret.
 
-#### meta *: dict[str, Any]*
+#### meta *: [dict](https://docs.python.org/3/builtins/stdtypes.html#dict)[[str](https://docs.python.org/3/builtins/stdtypes.html#str), [Any](https://docs.python.org/3/library/typing.html#typing.Any)]*
 
 Provenance, for reporting and for tests.
 
@@ -92,7 +92,7 @@ function plus an entry in [`muvid.lyricvid.spec.ARCHETYPES`](muvid.lyricvid.spec
 model knows it exists.
 
 * **Return type:**
-  `Callable`[[`Callable`[`...`, `list`[[`Cue`](#muvid.lyricvid.scene.Cue)]]], `Callable`[`...`, `list`[[`Cue`](#muvid.lyricvid.scene.Cue)]]]
+  [`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[[`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[`...`](https://docs.python.org/3/builtins/constants.html#Ellipsis), [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`Cue`](#muvid.lyricvid.scene.Cue)]]], [`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[`...`](https://docs.python.org/3/builtins/constants.html#Ellipsis), [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`Cue`](#muvid.lyricvid.scene.Cue)]]]
 
 ```pycon
 >>> @register_archetype('doctest-demo')

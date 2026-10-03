@@ -46,7 +46,7 @@ Pure numpy; nothing here reads a file.
 
 ### *class* muvid.footage.beat_fit.BeatGrid(period, phase)
 
-Bases: `object`
+Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
 A steady beat: beat `k` falls at `phase + k * period` seconds of the song.
 
@@ -57,7 +57,7 @@ The least-squares grid through tracked beat instants (each beat numbered by
 `None` when the beats are too few or not steady (`beats.fitted_tempo`).
 
 * **Return type:**
-  `Optional`[[`BeatGrid`](#muvid.footage.beat_fit.BeatGrid)]
+  [`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`BeatGrid`](#muvid.footage.beat_fit.BeatGrid)]
 
 ### muvid.footage.beat_fit.FIT_MIN_BEATS *= 3.0*
 
@@ -69,7 +69,7 @@ Seconds of clip the fit is judged over, at least (centred on the cut).
 
 ### *class* muvid.footage.beat_fit.Fit(slip_s, rate, score, current_score, z, n_accents)
 
-Bases: `object`
+Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
 The best `(slip, rate)` for one cut, its score, the current setting’s score,
 and the z of the best score against the null.
@@ -83,4 +83,4 @@ The best timing for a cut over song time `[song_start, song_end]` of a clip at
 when no accent lands in the window under any setting.
 
 * **Return type:**
-  `Optional`[[`Fit`](#muvid.footage.beat_fit.Fit)]
+  [`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`Fit`](#muvid.footage.beat_fit.Fit)]

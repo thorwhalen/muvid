@@ -57,7 +57,7 @@ Manifests name private paths, so they live beside the data or under
 
 ### *exception* muvid.importing.ImportRefused
 
-Bases: `ValueError`
+Bases: [`ValueError`](https://docs.python.org/3/builtins/exceptions.html#ValueError)
 
 The manifest cannot be imported as written (the message says which part).
 
@@ -69,7 +69,7 @@ The muvid EDL (a list of `EdlEntry` dicts) a production’s edit document means.
 for a framing document; a clip it does not name is refused rather than guessed.
 
 * **Return type:**
-  `list`[`dict`]
+  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)]
 
 ```pycon
 >>> doc = {"edl": [
@@ -91,11 +91,11 @@ directory (the project lands at `projects_dir/<id>`). `dry_run` checks every
 file and every edit conversion and writes nothing.
 
 * **Return type:**
-  `dict`
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
 
 ### muvid.importing.load_manifest(path)
 
 `(manifest, base_dir)` — relative paths in it resolve against `base_dir`.
 
 * **Return type:**
-  `tuple`[`dict`, `Path`]
+  [`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict), [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)]

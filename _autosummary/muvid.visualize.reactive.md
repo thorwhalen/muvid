@@ -127,16 +127,16 @@ in a GPL-configured ffmpeg (muvid#69) — see
 [`brightness_saturation_lut()`](muvid.visualize.canvas.md#muvid.visualize.canvas.brightness_saturation_lut).
 
 * **Parameters:**
-  * **audio** (`str` | `Path`) – The track whose beats drive the flash.
-  * **fps** (`int`) – The render’s frame rate (one command per component per frame).
-  * **duration** (`float` | `None`) – Clamp the flash to this many seconds (`None` = whole track).
-  * **workdir** (`Path`) – Directory to write the `sendcmd` script into.
-  * **label** (`str`) – `sendcmd` label for this flash’s `lutyuv`.
-  * **brightness** (`float`) – Peak brightness boost on a beat.
-  * **saturation** (`float`) – Peak saturation boost on a beat.
-  * **decay** (`float`) – Per-frame afterglow of a pulse.
+  * **audio** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)) – The track whose beats drive the flash.
+  * **fps** ([`int`](https://docs.python.org/3/builtins/functions.html#int)) – The render’s frame rate (one command per component per frame).
+  * **duration** ([`float`](https://docs.python.org/3/builtins/functions.html#float) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – Clamp the flash to this many seconds (`None` = whole track).
+  * **workdir** ([`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)) – Directory to write the `sendcmd` script into.
+  * **label** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str)) – `sendcmd` label for this flash’s `lutyuv`.
+  * **brightness** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – Peak brightness boost on a beat.
+  * **saturation** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – Peak saturation boost on a beat.
+  * **decay** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – Per-frame afterglow of a pulse.
 * **Return type:**
-  `str`
+  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
 
 ### muvid.visualize.reactive.onset_envelope(audio, , fps, duration=None, sr=22050, decay=0.5)
 
@@ -149,14 +149,14 @@ robustly to `[0, 1]`, then lets each pulse fade by `decay` per frame so a
 beat flashes and trails off rather than blinking for a single frame.
 
 * **Parameters:**
-  * **audio** (`str` | `Path`) – The track to analyse.
-  * **fps** (`int`) – Video frame rate — one envelope value per frame.
-  * **duration** (`float` | `None`) – Clamp the envelope to this many seconds (defaults to the whole
+  * **audio** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)) – The track to analyse.
+  * **fps** ([`int`](https://docs.python.org/3/builtins/functions.html#int)) – Video frame rate — one envelope value per frame.
+  * **duration** ([`float`](https://docs.python.org/3/builtins/functions.html#float) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – Clamp the envelope to this many seconds (defaults to the whole
     track).
-  * **sr** (`int`) – Analysis sample rate.
-  * **decay** (`float`) – Per-frame persistence of a pulse, 0 (no trail) to <1 (longer
+  * **sr** ([`int`](https://docs.python.org/3/builtins/functions.html#int)) – Analysis sample rate.
+  * **decay** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – Per-frame persistence of a pulse, 0 (no trail) to <1 (longer
     afterglow).
 * **Return type:**
-  `list`[`float`]
+  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`float`](https://docs.python.org/3/builtins/functions.html#float)]
 * **Returns:**
   One value per frame. Empty if the audio could not be decoded.

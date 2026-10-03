@@ -54,13 +54,13 @@ The largest magnification any named move may ask for.
 
 ### *class* muvid.footage.named_looks.NamedLook(name, title, description, kind, build, params=<factory>)
 
-Bases: `object`
+Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
 A menu entry: `build(canvas=, fps=, duration_s=, **params) -> fragment`.
 
 ### *exception* muvid.footage.named_looks.NamedLookError
 
-Bases: `ValueError`
+Bases: [`ValueError`](https://docs.python.org/3/builtins/exceptions.html#ValueError)
 
 A named look that does not exist, or parameters it does not take.
 
@@ -74,7 +74,7 @@ which says whether it is time-varying). Unknown names and parameters are refused
 The menu as JSON rows (name, title, description, kind, params_schema).
 
 * **Return type:**
-  `list`[`dict`]
+  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)]
 
 ### muvid.footage.named_looks.resolve_named_look(spec)
 
@@ -82,4 +82,4 @@ The menu as JSON rows (name, title, description, kind, params_schema).
 defaults included) — the spec a cut records so a screen can show the choice.
 
 * **Return type:**
-  `dict`
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)

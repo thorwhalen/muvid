@@ -41,7 +41,7 @@ Default frame sample rate (Hz) — plenty for quality + a motion envelope onto a
 
 ### *class* muvid.footage.scoring.frames.FramePass(clip_times, sharpness, exposure, face, motion_residual, global_dx, global_dy, fps, n_sampled)
 
-Bases: `object`
+Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
 Per-sampled-frame metrics for one clip, in CLIP time (seconds from the clip start).
 
@@ -61,13 +61,13 @@ Tasks `FaceDetector` ONLY when the operator supplies a model via
 Decode `clip_path` ONCE, sampling ~\`\`sample_fps\`\` frames → a [`FramePass`](#muvid.footage.scoring.frames.FramePass).
 
 * **Parameters:**
-  * **clip_path** (`str`) – the video file.
-  * **sample_fps** (`float`) – target frames/second to analyze (strided over the native fps).
-  * **max_frames** (`int`) – hard cap on analyzed frames (bounds cost).
-  * **face_fn** (`Optional`[`Callable`[[`ndarray`], `float`]]) – optional `bgr_frame -> face_score | None` (mediapipe, injected by the
+  * **clip_path** ([`str`](https://docs.python.org/3/builtins/stdtypes.html#str)) – the video file.
+  * **sample_fps** ([`float`](https://docs.python.org/3/builtins/functions.html#float)) – target frames/second to analyze (strided over the native fps).
+  * **max_frames** ([`int`](https://docs.python.org/3/builtins/functions.html#int)) – hard cap on analyzed frames (bounds cost).
+  * **face_fn** ([`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[`ndarray`], [`float`](https://docs.python.org/3/builtins/functions.html#float)]]) – optional `bgr_frame -> face_score | None` (mediapipe, injected by the
     caller so this module stays cv2-only). `None` → face score is NaN
     everywhere, i.e. *not measured* rather than *measured as worst*.
-  * **flow_downscale** (`int`) – downscale factor for the Farneback flow (cost bound).
-  * **should_cancel** (`Optional`[`Callable`[[], `bool`]]) – polled every frame; returns early (a partial pass) when it goes True.
+  * **flow_downscale** ([`int`](https://docs.python.org/3/builtins/functions.html#int)) – downscale factor for the Farneback flow (cost bound).
+  * **should_cancel** ([`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[], [`bool`](https://docs.python.org/3/builtins/functions.html#bool)]]) – polled every frame; returns early (a partial pass) when it goes True.
 * **Return type:**
   [`FramePass`](#muvid.footage.scoring.frames.FramePass)

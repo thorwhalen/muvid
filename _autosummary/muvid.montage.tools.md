@@ -34,7 +34,7 @@ the sections were supplied or derived from energy — a caller that ignores
 that will trust a fixed-tempo grid on a rubato ballad.
 
 * **Return type:**
-  `dict`[`str`, `Any`]
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]
 
 ### muvid.montage.tools.plan_montage(audio, , photos=(), clips=(), cover=None, treatment=None, archetype=None, strict=False, beats='auto', beats_per_bar=4, sections=None, out=None)
 
@@ -44,7 +44,7 @@ Identical to what [`render_montage()`](#muvid.montage.tools.render_montage) woul
 to a file as well.
 
 * **Return type:**
-  `dict`[`str`, `Any`]
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]
 
 ### muvid.montage.tools.render_montage(audio, output, , photos=(), clips=(), cover=None, treatment=None, archetype=None, strict=False, beats='auto', beats_per_bar=4, sections=None, width=1920, height=1080, fps=30, workdir=None)
 
@@ -55,14 +55,14 @@ registered (so the schemas are enforced), and straight to the pipeline
 otherwise — the same renderer either way.
 
 * **Return type:**
-  `dict`[`str`, `Any`]
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]
 
 ### muvid.montage.tools.treatment_schema()
 
 JSON Schema for a treatment spec — also a model’s output constraint.
 
 * **Return type:**
-  `dict`[`str`, `Any`]
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]
 
 ```pycon
 >>> treatment_schema()['type']
@@ -74,7 +74,7 @@ JSON Schema for a treatment spec — also a model’s output constraint.
 Validate a treatment, and return the repaired version alongside.
 
 * **Return type:**
-  `dict`[`str`, `Any`]
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]
 
 ```pycon
 >>> r = validate_treatment({'scenes': [{'archetype': 'swirl'}]})
@@ -87,7 +87,7 @@ Validate a treatment, and return the repaired version alongside.
 The closed vocabularies a treatment may draw on.
 
 * **Return type:**
-  `dict`[`str`, `Any`]
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]
 
 ```pycon
 >>> sorted(vocabulary())[:3]

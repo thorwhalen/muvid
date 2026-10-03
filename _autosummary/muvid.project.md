@@ -18,7 +18,7 @@ without learning the full schema.
 
 ### *class* muvid.project.MusicVideoProject(root)
 
-Bases: `object`
+Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
 Filesystem-backed music video project.
 
@@ -41,7 +41,7 @@ registered in `project.json`.
 Append a one-line JSON entry to `.muvid/decisions.jsonl`.
 
 * **Return type:**
-  `None`
+  [`None`](https://docs.python.org/3/builtins/constants.html#None)
 
 #### set_song(source, , copy=True)
 

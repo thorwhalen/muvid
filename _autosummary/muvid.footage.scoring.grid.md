@@ -64,7 +64,7 @@ Default grid step (seconds) → 10 Hz. Ample for a UI and beat-level selection.
 
 ### *class* muvid.footage.scoring.grid.ScoreTensor(clip_ids, metrics, t0, hop_s, n, S, M, raw, norms)
 
-Bases: `object`
+Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
 The fused `S[clip, frame, metric]` (normalized) + `M[clip, frame]` mask.
 
@@ -74,7 +74,7 @@ The fused `S[clip, frame, metric]` (normalized) + `M[clip, frame]` mask.
 
 ### *class* muvid.footage.scoring.grid.ScoreTrack(clip_id, metric, t0, hop_s, raw_values, mask, direction='higher_better')
 
-Bases: `object`
+Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
 One `(clip, metric)` curve on the shared song-time grid.
 
@@ -89,14 +89,14 @@ normalized `values` are NOT stored here; they are derived at tensor assembly fro
 Fraction of frames that are valid — surfaced so an all-NA metric is visible.
 
 * **Return type:**
-  `float`
+  [`float`](https://docs.python.org/3/builtins/functions.html#float)
 
 #### to_meta()
 
 Everything except the arrays (arrays live in the `.npz`).
 
 * **Return type:**
-  `dict`
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
 
 ### muvid.footage.scoring.grid.align_fingerprint(alignments)
 
@@ -108,7 +108,7 @@ against the old offsets are detected as stale. Sorting the full triples (not jus
 clip_id) makes it independent of alignment order.
 
 * **Return type:**
-  `str`
+  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
 
 ### muvid.footage.scoring.grid.apply_norm(raw, norm, , direction)
 
@@ -143,14 +143,14 @@ Returns `None` if there are no valid values (an all-masked metric) — the calle
 the manifest).
 
 * **Return type:**
-  `dict` | `None`
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict) | [`None`](https://docs.python.org/3/builtins/constants.html#None)
 
 ### muvid.footage.scoring.grid.grid_len(song_duration, hop_s=0.1)
 
 Number of grid frames spanning `[0, song_duration]` at `hop_s`.
 
 * **Return type:**
-  `int`
+  [`int`](https://docs.python.org/3/builtins/functions.html#int)
 
 ### muvid.footage.scoring.grid.load_tensor(project_root)
 
@@ -160,7 +160,7 @@ Geometry + norms come from the manifest (SSOT); each clip’s `.npz` supplies ra
 A clip/metric absent from a `.npz` is filled as an all-masked column.
 
 * **Return type:**
-  [`ScoreTensor`](#muvid.footage.scoring.grid.ScoreTensor) | `None`
+  [`ScoreTensor`](#muvid.footage.scoring.grid.ScoreTensor) | [`None`](https://docs.python.org/3/builtins/constants.html#None)
 
 ### muvid.footage.scoring.grid.manifest_is_current(manifest, , song_hash, align_fingerprint)
 
@@ -171,7 +171,7 @@ manifest predating the fingerprint, is detected here so no stale/mislabeled scor
 served to the editor or the weighted selector.
 
 * **Return type:**
-  `bool`
+  [`bool`](https://docs.python.org/3/builtins/functions.html#bool)
 
 ### muvid.footage.scoring.grid.resample_to_grid(sample_times, sample_values, , t0, hop_s, n, max_gap_s=None)
 
@@ -183,12 +183,12 @@ ONLY across gaps ≤ `max_gap_s` (so a real coverage gap stays masked, never inv
 Outside `[first_sample, last_sample]` the grid is masked (no extrapolation).
 
 * **Parameters:**
-  * **sample_times** (`Sequence`[`float`]) – song-time (s) of each sample (any order; NaN values dropped).
-  * **sample_values** (`Sequence`[`float`]) – the sample values (parallel to `sample_times`).
+  * **sample_times** ([`Sequence`](https://docs.python.org/3/library/typing.html#typing.Sequence)[[`float`](https://docs.python.org/3/builtins/functions.html#float)]) – song-time (s) of each sample (any order; NaN values dropped).
+  * **sample_values** ([`Sequence`](https://docs.python.org/3/library/typing.html#typing.Sequence)[[`float`](https://docs.python.org/3/builtins/functions.html#float)]) – the sample values (parallel to `sample_times`).
   * **t0/hop_s/n** – the grid geometry (frame k ↔ `t0 + k*hop_s`, k in `[0, n)`).
-  * **max_gap_s** (`float` | `None`) – bridge gaps up to this many seconds (default `4*hop_s`).
+  * **max_gap_s** ([`float`](https://docs.python.org/3/builtins/functions.html#float) | [`None`](https://docs.python.org/3/builtins/constants.html#None)) – bridge gaps up to this many seconds (default `4*hop_s`).
 * **Return type:**
-  `tuple`[`ndarray`, `ndarray`]
+  [`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[`ndarray`, `ndarray`]
 * **Returns:**
   `(values, mask)` — `values` float32[n] (NaN where masked), `mask` bool[n].
 
@@ -203,4 +203,4 @@ whole consistent state or the prior one, never a torn mix. NaN never enters the 
 (all-masked metric → `null` norm).
 
 * **Return type:**
-  `None`
+  [`None`](https://docs.python.org/3/builtins/constants.html#None)

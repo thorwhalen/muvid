@@ -75,7 +75,7 @@ clip, and the score tensor is keyed on that alignment’s fingerprint).
 |----------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------|
 | [`MusicVideoFootageProject`](#muvid.footage.workspace.MusicVideoFootageProject)(email, project_id, root) | One caller's stateful music-video project (song + clips + alignments + renders). |
 
-### muvid.footage.workspace.CANVASES *: dict[str, tuple[int, int]]* *= {'landscape': (1920, 1080), 'portrait': (1080, 1920), 'square': (1080, 1080)}*
+### muvid.footage.workspace.CANVASES *: [dict](https://docs.python.org/3/builtins/stdtypes.html#dict)[[str](https://docs.python.org/3/builtins/stdtypes.html#str), [tuple](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[int](https://docs.python.org/3/builtins/functions.html#int), [int](https://docs.python.org/3/builtins/functions.html#int)]]* *= {'landscape': (1920, 1080), 'portrait': (1080, 1920), 'square': (1080, 1080)}*
 
 Named output canvases a project may choose at create (the genre Templates).
 
@@ -87,7 +87,7 @@ names here because both are public API of this module (`muvid.mcp` re-exports
 
 ### *class* muvid.footage.workspace.FootageWorkspace(email, root)
 
-Bases: `object`
+Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
 A caller’s private music-video area, addressed by `email`.
 
@@ -100,7 +100,7 @@ clip, and `" c1"` replace `c1`’s bytes under a different manifest key.
 
 ### *class* muvid.footage.workspace.MusicVideoFootageProject(email, project_id, root, media_catalog=None, defaults=<factory>)
 
-Bases: `object`
+Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
 One caller’s stateful music-video project (song + clips + alignments + renders).
 
@@ -109,16 +109,16 @@ One caller’s stateful music-video project (song + clips + alignments + renders
 Store a footage clip from a local file; returns its `clip_id`.
 
 * **Return type:**
-  `str`
+  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
 
 #### cover_info()
 
 `{file, artifact_id, taken_from}` of the cover frame, or `None`.
 
 * **Return type:**
-  `dict` | `None`
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict) | [`None`](https://docs.python.org/3/builtins/constants.html#None)
 
-#### defaults *: dict*
+#### defaults *: [dict](https://docs.python.org/3/builtins/stdtypes.html#dict)*
 
 What `manifest()` reads before anything is written — a hosted project’s
 title and canvas come from its genre envelope, so READING its footage creates
@@ -129,7 +129,7 @@ nothing; the first write persists them.
 Remove one edit record (and its undo history); whether it existed.
 
 * **Return type:**
-  `bool`
+  [`bool`](https://docs.python.org/3/builtins/functions.html#bool)
 
 #### edits_lock()
 
@@ -164,30 +164,30 @@ anything lists or resolves them, and the assignment is written back so
 it never moves again.
 
 * **Return type:**
-  `dict`
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
 
 #### invalidate_scores()
 
 Delete persisted score tracks — the primary invalidation on song/offset change.
 
 * **Return type:**
-  `None`
+  [`None`](https://docs.python.org/3/builtins/constants.html#None)
 
 #### list_clips()
 
 `[{clip_id, name}]` — plus `artifact_id` when the host catalog holds it.
 
 * **Return type:**
-  `list`[`dict`]
+  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)]
 
 #### list_edit_records()
 
 Every readable edit record, oldest first (by its `created` stamp).
 
 * **Return type:**
-  `list`[`dict`]
+  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)]
 
-#### media_catalog *: object* *= None*
+#### media_catalog *: [object](https://docs.python.org/3/builtins/functions.html#object)* *= None*
 
 Where this project’s media is registered for a host to serve it — a
 `muvid.catalog.HostArtifactCatalog` (anything with its `register`), or
@@ -198,21 +198,21 @@ Where this project’s media is registered for a host to serve it — a
 The ordinal the next render will carry (1-based, never reused).
 
 * **Return type:**
-  `int`
+  [`int`](https://docs.python.org/3/builtins/functions.html#int)
 
 #### read_edit(edit_id)
 
 One edit record; `KeyError` if there is no such edit.
 
 * **Return type:**
-  `dict`
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
 
 #### read_edit_history(edit_id)
 
 `{"undo": [...], "redo": [...]}` — earlier/later versions of one edit.
 
 * **Return type:**
-  `dict`
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
 
 #### remove_clip(clip_id)
 
@@ -237,9 +237,9 @@ scores_invalidated}`. Raises `KeyError` for a `clip_id` the manifest does
 not hold; the MCP tool turns that into a refusal naming the known ids.
 
 * **Return type:**
-  `dict`
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
 
-#### *property* renders_dir *: Path*
+#### *property* renders_dir *: [Path](https://docs.python.org/3/library/pathlib.html#pathlib.Path)*
 
 Where this project’s renders live.
 
@@ -252,7 +252,7 @@ branching on which drawer it is looking in.
 Store `image_path` as `cover.jpg`, register it; return its artifact id.
 
 * **Return type:**
-  `str` | `None`
+  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`None`](https://docs.python.org/3/builtins/constants.html#None)
 
 #### set_song(src_path, , ext, name='', duration_s=None)
 
@@ -281,35 +281,35 @@ With a host catalog the song is registered too, and its id recorded as
 `song_artifact_id` (it equals `song_hash`: both are the SHA-256 of the bytes).
 
 * **Return type:**
-  `None`
+  [`None`](https://docs.python.org/3/builtins/constants.html#None)
 
 #### song_hash()
 
 The clean song’s content hash (cached in the manifest; computed if missing).
 
 * **Return type:**
-  `str`
+  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
 
 #### song_info()
 
 The song’s display facts (`None` before one is set).
 
 * **Return type:**
-  `dict` | `None`
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict) | [`None`](https://docs.python.org/3/builtins/constants.html#None)
 
 #### write_edit(edit_id, record)
 
 Persist one named edit record (replacing it atomically).
 
 * **Return type:**
-  `None`
+  [`None`](https://docs.python.org/3/builtins/constants.html#None)
 
 #### write_edit_history(edit_id, history)
 
 Persist one edit’s undo/redo stacks (atomically; callers hold the lock).
 
 * **Return type:**
-  `None`
+  [`None`](https://docs.python.org/3/builtins/constants.html#None)
 
 ### muvid.footage.workspace.atomic_write_bytes(path, data)
 
@@ -343,7 +343,7 @@ what `downloads.organise` already did for `meta.json`; the mode of an existing
 file is not carried over, deliberately, so the outcome does not depend on history.
 
 * **Return type:**
-  `None`
+  [`None`](https://docs.python.org/3/builtins/constants.html#None)
 
 ### muvid.footage.workspace.atomic_write_text(path, text)
 
@@ -356,7 +356,7 @@ the bytes on disk are identical to what `write_text` produced and the locale-def
 way it gets there.
 
 * **Return type:**
-  `None`
+  [`None`](https://docs.python.org/3/builtins/constants.html#None)
 
 ### muvid.footage.workspace.data_root()
 
@@ -369,7 +369,7 @@ docstring would not render here) and this repo’s own drift-test idiom in
 `tests/test_mcp.py`. Costs one call; keeps the module’s surface introspectable.
 
 * **Return type:**
-  `Path`
+  [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)
 
 ### muvid.footage.workspace.file_lock(path)
 
@@ -400,7 +400,7 @@ Idempotent: an existing manifest is left exactly as it is.
 [`ID_PATTERN`](#muvid.footage.workspace.ID_PATTERN).
 
 * **Return type:**
-  `str`
+  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
 
 ```pycon
 >>> normalise_id(" c01 ", label="clip_id")
@@ -421,4 +421,4 @@ silently change the bytes behind an id that names the old ones. A rename gives
 `dest` a new inode and leaves the blob exactly as it was.
 
 * **Return type:**
-  `Path`
+  [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)
