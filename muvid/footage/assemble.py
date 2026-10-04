@@ -483,6 +483,24 @@ def _video_codec_args(crf: int, preset: str) -> list[str]:
     ]
 
 
+#: Source files read as a still picture, held for the cut — mirrors
+#: :data:`muvid.footage.service.STILL_SUFFIXES` (kept here so the assembler needs no
+#: service import).
+_STILL_SUFFIXES = (".jpg", ".jpeg", ".png", ".webp", ".bmp", ".tif", ".tiff")
+
+
+def _is_still(path: str) -> bool:
+    return Path(path).suffix.lower() in _STILL_SUFFIXES
+
+
+def _source_input(path: str, clip_in: float, seconds: float, *, fps: int) -> list:
+    """The ``-i`` arguments for one cut's source: an input-side seek into a video, or a
+    still looped at the render rate for ``seconds`` (a picture has no time to seek)."""
+    if _is_still(path):
+        return ["-loop", "1", "-framerate", str(fps), "-t", f"{seconds:.6f}", "-i", path]
+    return ["-ss", f"{clip_in:.6f}", "-t", f"{seconds:.6f}", "-i", path]
+
+
 def _render_part(
     cut: AssemblyCut,
     part: Path,
@@ -504,20 +522,16 @@ def _render_part(
     # count exact whenever the source yields at least one frame.
     vf = _part_filter(cut, w=w, h=h, fps=fps)
     if cut.clip_path:
-        args = [
-            # Input-side seek: lands on the keyframe before clip_in and decodes forward
-            # to it, so a cut 3 minutes into a clip does not decode 3 minutes of video.
-            "-ss",
-            f"{cut.clip_in:.6f}",
-            # One spare frame of input beyond the target; -frames:v is the exact cap.
-            # At speed `rate` the span consumes `duration * rate` s of source.
-            "-t",
-            f"{(cut.duration + 1.0 / fps) * getattr(cut, 'rate', 1.0):.6f}",
-            "-i",
+        # Input-side seek: lands on the keyframe before clip_in and decodes forward to
+        # it, so a cut 3 minutes into a clip does not decode 3 minutes of video. One
+        # spare frame of input beyond the target; -frames:v is the exact cap. At speed
+        # `rate` the span consumes `duration * rate` s of source.
+        args = _source_input(
             str(cut.clip_path),
-            "-vf",
-            vf,
-        ]
+            cut.clip_in,
+            (cut.duration + 1.0 / fps) * getattr(cut, "rate", 1.0),
+            fps=fps,
+        ) + ["-vf", vf]
     else:  # a gap entry: no footage for this span — fill black on the same grid
         vf = f"setsar=1,fps={fps}"
         args = [
@@ -547,14 +561,12 @@ def _xfade_input(cut: AssemblyCut, clip_in: float, n_frames: int, *, w, h, fps):
     skips gap sides — not because anything at HEAD is unbounded.
     """
     if cut.clip_path:
-        return [
-            "-ss",
-            f"{clip_in:.6f}",
-            "-t",
-            f"{(n_frames + 1) / fps * getattr(cut, 'rate', 1.0):.6f}",
-            "-i",
+        return _source_input(
             str(cut.clip_path),
-        ]
+            clip_in,
+            (n_frames + 1) / fps * getattr(cut, "rate", 1.0),
+            fps=fps,
+        )
     return [
         "-f",
         "lavfi",

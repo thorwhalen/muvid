@@ -143,6 +143,36 @@ class Analysis:
         """Seconds per beat at the estimated tempo."""
         return 60.0 / max(1e-6, self.tempo_bpm)
 
+    @classmethod
+    def from_dict(cls, d: Mapping[str, Any]) -> "Analysis":
+        """The inverse of :meth:`to_dict` (as rounded) — so a measured song can be kept.
+
+        >>> a = Analysis(duration=4.0, tempo_bpm=120.0, beats=(0.0, 0.5), downbeats=(0.0,),
+        ...              sections=(Section(label='verse', start=0.0, end=4.0),))
+        >>> Analysis.from_dict(a.to_dict()) == a
+        True
+        """
+        return cls(
+            duration=float(d["duration"]),
+            tempo_bpm=float(d["tempo_bpm"]),
+            beats=tuple(float(t) for t in d.get("beats", ())),
+            downbeats=tuple(float(t) for t in d.get("downbeats", ())),
+            beats_per_bar=int(d.get("beats_per_bar", DEFAULT_BEATS_PER_BAR)),
+            sections=tuple(
+                Section(
+                    label=str(x["label"]),
+                    start=float(x["start"]),
+                    end=float(x["end"]),
+                    energy_db=None if x.get("energy_db") is None else float(x["energy_db"]),
+                )
+                for x in d.get("sections", ())
+            ),
+            beat_source=str(d.get("beat_source", "")),
+            section_source=str(d.get("section_source", "")),
+            bar_energy_db=tuple(float(e) for e in d.get("bar_energy_db", ())),
+            notes=tuple(str(n) for n in d.get("notes", ())),
+        )
+
     def to_dict(self) -> dict[str, Any]:
         return {
             "duration": round(self.duration, 4),

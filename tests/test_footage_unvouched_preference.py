@@ -286,6 +286,20 @@ class _StubProject:
     def load_alignments(self):
         return self._aligns
 
+    def manifest(self):
+        # Every clip here is a recording of the song (the muvid#88 shoot), so each says
+        # so: an unplaceable clip left on "auto" would be cut to the music instead of
+        # set aside (tests/test_music_cut.py), which is not what is under test here.
+        return {
+            "clips": [
+                {"clip_id": a.clip_id, "file": f"{a.clip_id}.mp4", "has_song": "yes"}
+                for a in self._aligns
+            ]
+        }
+
+    def list_clips(self):
+        return [{"clip_id": c["clip_id"], "name": c["clip_id"]} for c in self.manifest()["clips"]]
+
     def song_duration(self):
         return self._dur
 

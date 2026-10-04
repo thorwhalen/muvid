@@ -98,6 +98,9 @@ NOVELTY = "novelty"
 MOTION = "motion"
 MOTION_STOPS = "motion_stops"
 MOTION_STOPS_LOCAL = "motion_stops_local"
+ACTIVITY = "activity"
+ACTIVITY_HITS = "activity_hits"
+SHARPNESS = "sharpness"
 
 #: What each signal is, in the words a screen can use.
 SIGNAL_LABELS = {
@@ -106,6 +109,9 @@ SIGNAL_LABELS = {
     MOTION: "Movement",
     MOTION_STOPS: "Moves that stop or turn",
     MOTION_STOPS_LOCAL: "Moves that stop, place by place",
+    ACTIVITY: "Picture change",
+    ACTIVITY_HITS: "Picture change hits",
+    SHARPNESS: "Sharpness",
 }
 
 
@@ -579,6 +585,87 @@ def _package_version(name: str) -> str:
         return "0"
 
 
+#: The sampling of :func:`activity_signal`: frames a second, and the width (pixels) a
+#: frame is shrunk to before differencing. Coarse on purpose — it answers "when does the
+#: picture change", not "what moves".
+ACTIVITY_FPS = float(os.environ.get("MUVID_ACTIVITY_FPS", "12"))
+ACTIVITY_WIDTH = 160
+
+
+def activity_signal(
+    path,
+    *,
+    sample_fps: float = ACTIVITY_FPS,
+    width: int = ACTIVITY_WIDTH,
+    max_seconds: float = VISUAL_MAX_SECONDS,
+) -> dict:
+    """``{signals: {activity, activity_hits, sharpness}}`` — how much the WHOLE picture
+    changes, and how sharp it is while it does.
+
+    The mean absolute difference between consecutive small grey frames, camera move
+    INCLUDED. That is the deliberate difference from :func:`visual_signals`, whose
+    ``motion`` takes the camera's own move out so a pan does not read as a dancer
+    moving: in holiday footage and b-roll the camera move IS the event (a pan arriving
+    on the abbey, a whip to the dog), and a montage cut wants to land on it.
+
+    ``activity_hits`` is its positive rate of change, the onsets of visual change —
+    the visual counterpart of an audio onset envelope, what a montage aligns to the
+    song's beats (Davis & Agrawala's "visual beats", in its cheapest form). Values are
+    per frame-sample, in [0, 1] units of grey level; one decode pass, no flow.
+    ``sharpness`` is the variance of the frame's Laplacian (the standard blur measure),
+    so a montage can prefer the stretch that is lively AND in focus over a whip-pan
+    blur, which changes a lot and shows nothing.
+    """
+    import cv2  # lazy: the 'scoring' extra
+
+    cap = cv2.VideoCapture(str(path))
+    if not cap.isOpened():
+        raise ValueError(f"cannot open video: {path}")
+    hop = 1.0 / max(0.5, float(sample_fps))
+    times, diffs, sharp = [], [], []
+    prev, next_t = None, 0.0
+    try:
+        while cap.grab():
+            t = cap.get(cv2.CAP_PROP_POS_MSEC) / 1000.0
+            if t > max_seconds:
+                break
+            if t + 1e-9 < next_t:
+                continue
+            ok, frame = cap.retrieve()
+            if not ok:
+                break
+            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY) if frame.ndim == 3 else frame
+            h, w = gray.shape[:2]
+            small = cv2.resize(gray, (width, max(1, int(round(h * width / max(1, w))))))
+            small = small.astype(np.float32) / 255.0
+            if prev is not None:
+                times.append(t)
+                diffs.append(float(np.mean(np.abs(small - prev))))
+                sharp.append(float(cv2.Laplacian(small, cv2.CV_32F).var()))
+            prev, next_t = small, t + hop
+    finally:
+        cap.release()
+    if not diffs:
+        return {"signals": {}}
+    # Resample onto a regular grid (phone files drop and duplicate frames).
+    n = int(math.floor(times[-1] / hop)) + 1
+    grid = np.arange(n) * hop
+    act = np.interp(grid, np.asarray(times), np.asarray(diffs))
+    hits = np.maximum(0.0, np.diff(act, prepend=act[0]))
+    focus = np.interp(grid, np.asarray(times), np.asarray(sharp))
+    return {
+        "signals": {
+            ACTIVITY: signal_record(act, t0=0.0, hop_s=hop, name=ACTIVITY, domain="video"),
+            ACTIVITY_HITS: signal_record(
+                hits, t0=0.0, hop_s=hop, name=ACTIVITY_HITS, domain="video"
+            ),
+            SHARPNESS: signal_record(
+                focus, t0=0.0, hop_s=hop, name=SHARPNESS, domain="video"
+            ),
+        }
+    }
+
+
 def cache_key(kind: str) -> str:
     """Every parameter that changes the bytes, so a new setting is a new file: the
     record format, the audio estimator's versions (``mixing`` and ``librosa`` — a
@@ -595,6 +682,8 @@ def cache_key(kind: str) -> str:
             f"-h{NOVELTY_HOP_S:g}-k{NOVELTY_KERNEL_S:g}"
             f"-r{_NOVELTY_SAMPLE_RATE}-m{NOVELTY_MFCC}"
         )
+    if kind == ACTIVITY:
+        return f"t{BEAT_SIGNALS_FORMAT}-{ACTIVITY_FPS:g}fps-w{ACTIVITY_WIDTH}-s1"
     return (
         f"v{BEAT_SIGNALS_FORMAT}-{VISUAL_SAMPLE_FPS:g}fps-d{FLOW_DOWNSCALE}"
         f"-b{DIRECTION_BINS}-m{VISUAL_MAX_SECONDS:g}s-p{_MAX_PAIR_RATE:g}"
@@ -638,6 +727,9 @@ def cached_signals(
 
 
 __all__ = [
+    "ACTIVITY",
+    "ACTIVITY_HITS",
+    "activity_signal",
     "AUDIO_ONSET",
     "MOTION",
     "MOTION_STOPS",

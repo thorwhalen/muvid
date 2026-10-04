@@ -583,6 +583,13 @@ class TestTheToolSurface:
         proj.save_alignments(
             [FootageAlignment("A", 0.0, 0.04, 10.0, (0.0, 10.0), True, 0.05, False)]
         )
+        # A is a recording of the song (the muvid#59 case): its offset must be trusted
+        # before it is synced. Left on "auto", an unplaceable clip is cut to the music
+        # instead — a free cut claims no sync, so it is never refused
+        # (tests/test_music_cut.py pins that half).
+        from muvid.footage import service
+
+        service.set_has_song(proj, clip_id="A", has_song="yes")
         return proj, dur
 
     @needs_pipeline
