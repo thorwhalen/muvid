@@ -61,6 +61,11 @@ _FOLDER_MAX_BYTES = int(
 _VIDEO_EXTENSIONS = ("mp4", "mov", "m4v", "webm", "avi", "mkv", "mpg", "mpeg", "3gp")
 
 
+def _n_videos(proj) -> int:
+    """Videos only: photos have their own cap (``service.MAX_STILLS``)."""
+    return sum(1 for c in proj.list_clips() if c.get("kind") != "still")
+
+
 def _tool_error(msg: str):
     from fastmcp.exceptions import ToolError
 
@@ -214,7 +219,7 @@ def add_footage(project_id: str, *, url: str, name: str = "") -> dict:
     from muvid.mcp._fetch import FetchError, fetch_to_file_streaming
 
     proj = _open(project_id)
-    if len(proj.list_clips()) >= _MAX_CLIPS:
+    if _n_videos(proj) >= _MAX_CLIPS:
         raise _tool_error(f"clip limit reached ({_MAX_CLIPS}); this is a bounded v1")
     direct = _resolve_media_url(url, what="clip")
     ext = _url_ext(url, "") or _url_ext(direct, "mp4")
@@ -263,7 +268,7 @@ def add_footage_folder(project_id: str, *, url: str, name_prefix: str = "") -> d
     )
 
     proj = _open(project_id)
-    existing = len(proj.list_clips())
+    existing = _n_videos(proj)
     room = _MAX_CLIPS - existing
     if room <= 0:
         raise _tool_error(f"clip limit reached ({_MAX_CLIPS}); this is a bounded v1")
@@ -393,6 +398,7 @@ def propose_edit(
     config: dict | None = None,
     save: bool = False,
     name: str = "",
+    pace: str = "",
 ) -> dict:
     """Propose an EDL **without rendering it** — the cheap half of assembly. Free, seconds.
 
@@ -412,6 +418,14 @@ def propose_edit(
     ``save=true`` also keeps it as a named edit (``name``, default "Edit N") and returns
     its ``edit_id`` — change it cut by cut with ``footage_set_cut`` /
     ``footage_split_cut`` / ``footage_merge_cut`` and render it with ``footage_render``.
+
+    **Footage without the song in it is cut to the music.** Only videos that are
+    recordings of the song are synced; every span they leave is filled from the other
+    videos, cut on the song's beats with each video at the stretch whose picture changes
+    land on the beat (``music`` in the reply). ``roles`` says how each clip was used;
+    overrule one with ``footage_set_has_song``. Every video must have been listened to
+    (``align_footage``) or declared. ``pace`` (``slow``/``steady``/``driving``/
+    ``frantic``) sets how often the cuts to the music come.
     """
     return _call(
         project_id,
@@ -422,6 +436,7 @@ def propose_edit(
         config=config,
         save=save,
         name=name,
+        pace=pace,
     )
 
 
@@ -663,7 +678,8 @@ def _alignment_covers_clips(proj) -> bool:
     file on disk would still say "aligned". Reading it this way makes the listing's next
     action honest — false means "run align_footage", whichever way it became false.
     """
-    clip_ids = {c["clip_id"] for c in proj.list_clips()}
+    # photos have no sound to listen to: they are never aligned, and need not be
+    clip_ids = {c["clip_id"] for c in proj.list_clips() if c.get("kind") != "still"}
     aligned_ids = {a.clip_id for a in proj.load_alignments()}
     return bool(clip_ids) and clip_ids <= aligned_ids
 

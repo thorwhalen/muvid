@@ -21,13 +21,14 @@ The audio of the result is always the clean song. Both halves mix in one edit: s
 
 1. a photo → `to_the_music`, always;
 2. the person said so (`set_has_song`, `"yes"` or `"no"`) → that, and it survives listening again;
-3. otherwise listening decides: a video the aligner **vouches for** (`edl.vouches_for`: windowed-vote support and margin) is `synced`; any other — including one never listened to — is `to_the_music`.
+3. a video nobody has listened to → `not_listened`, and `propose_edit` **refuses** until it is (`align`) or declared. Nothing is guessed: a concert cut to the music is a desynced concert, the muvid#59 failure by another road;
+4. otherwise listening decides (`service.heard_the_song`): a video the aligner **vouches for** (`edl.vouches_for`) is `synced`; one it cannot place but where enough of the clip agreed on SOME offset and that offset beat every rival (support ≥ `HEARD_SUPPORT`, 0.4, and margin > 0) is also `synced` — the song is plainly there, its place is ambiguous (muvid#59) — and is set aside until placed by hand; anything else ("couldn't hear the song in it") is `to_the_music`.
 
-So the detection is the aligner's own trust verdict: a clip whose soundtrack does not contain the song cannot be placed confidently, and is cut to the music instead of being dropped as a black gap. The known risk is the other direction: a muffled concert video that listening cannot place is also cut to the music. The remedy is `set_has_song(clip_id, "yes")` and then place it by hand (`set_offset`). A fingerprint-based second opinion is [mixing#55](https://github.com/thorwhalen/mixing/issues/55).
+`HEARD_SUPPORT` is a first cut, not a calibration: b-roll with no song in it scored at most 0.33 with a positive margin (a 6 s clip reached 0.5 at margin 0.0: short clips vote with few windows), and a bar-multiple alias of a real recording 0.487 at margin +0.115. Its independent second opinion (landmark fingerprints) is [mixing#55](https://github.com/thorwhalen/mixing/issues/55). When a synced clip is set aside and there is footage to cut to the music, its span is filled from it (`service._set_aside_unvouched`); with none, the muvid#59 refusal stands exactly as before.
 
 ## Doing it
 
-**In the studio** (reelee-studio → Music video): drop the song, then videos and photos into "Add a video or photo". Press "Listen to the videos": each row then says "Has the song in it" or "Couldn't hear the song in it — so it's cut to the music", and each row has a "Has the song in it / Doesn't have the song" choice. Then go to Edit, "Cut it for me", and "Make the video". With no recording of the song at all, listening is optional: "Cut it for me" cuts everything to the music.
+**In the studio** (reelee-studio → Music video): drop the song, then videos and photos into "Add a video or photo". Press "Listen to the videos": each row then says "Has the song in it", "Heard the song in it, but couldn't tell where" or "Couldn't hear the song in it — so it's cut to the music", and each row has a "Has the song in it / Doesn't have the song" choice. Then go to Edit, "Cut it for me", and "Make the video". "Cut it for me" waits until every video has been listened to or declared; a project of photos only needs no listening.
 
 **In Python** (the same functions the studio and the MCP connector call):
 
@@ -36,7 +37,7 @@ from muvid.footage import service
 service.set_song(fp, path="song.mp3")
 service.add_clip(fp, path="walk.mp4")          # a video
 service.add_clip(fp, path="abbey.jpg")         # a photo: stored upright, kind="still"
-service.align(fp)                              # optional when nothing has the song in it
+service.align(fp)                              # every video: listened to, or declared below
 service.set_has_song(fp, clip_id="…", has_song="no")   # overrule listening, per clip
 out = service.propose_edit(fp, pace="steady")  # slow | steady | driving | frantic
 out["music"]       # what the cut to the music did: style, n_cuts, uses, on_beat per video
@@ -53,6 +54,7 @@ service.render(fp, edit_id=out["edit_id"])
 - **Photos.** Named camera looks (`slow_push`, `pan_right`, `slow_pull`, `pan_left`, `punch_in`) at zoom 1.12, anchored on `burns.salient_box` (the photo's detailed region; the centre without `burns`).
 - **Framing.** Free cuts are `cover`-cropped to the canvas, centred on the subject for photos (`music_cut.cover_crop`), computed on the size the picture is SHOWN at: a phone video stored 640×360 with a −90° rotation is portrait (`music_cut.display_size`).
 - **Render.** The same assembler as synced cuts. A photo is a looped still input (`assemble._source_input`).
+- **Speed.** "Cut it for me" is a synchronous op, so nothing heavy happens there: the song's analysis is measured at `set_song` and kept (`service.song_analysis`, keyed on the song hash), each video's hash and picture signal at `add_clip`, and probes and photo anchors are memoised per file. Photos are stored upright as JPEG; HEIC needs `pillow-heif`, and without it is refused with a plain reason.
 
 ## Traps
 
@@ -64,7 +66,7 @@ service.render(fp, edit_id=out["edit_id"])
 
 ## Extensions (filed, not built)
 
-More visual channels [muvid#132](https://github.com/thorwhalen/muvid/issues/132) · more music features [muvid#133](https://github.com/thorwhalen/muvid/issues/133) · emotion matching [muvid#134](https://github.com/thorwhalen/muvid/issues/134) · choose the best song of several [muvid#135](https://github.com/thorwhalen/muvid/issues/135) · several songs with transitions [muvid#136](https://github.com/thorwhalen/muvid/issues/136) · capture-time order [muvid#137](https://github.com/thorwhalen/muvid/issues/137) · fingerprint detector [mixing#55](https://github.com/thorwhalen/mixing/issues/55) · studio photo strip, preview, pace control [reelee-web#402](https://github.com/thorwhalen/reelee-web/issues/402).
+More visual channels [muvid#132](https://github.com/thorwhalen/muvid/issues/132) · more music features [muvid#133](https://github.com/thorwhalen/muvid/issues/133) · emotion matching [muvid#134](https://github.com/thorwhalen/muvid/issues/134) · choose the best song of several [muvid#135](https://github.com/thorwhalen/muvid/issues/135) · several songs with transitions [muvid#136](https://github.com/thorwhalen/muvid/issues/136) · capture-time order [muvid#137](https://github.com/thorwhalen/muvid/issues/137) · fingerprint detector [mixing#55](https://github.com/thorwhalen/mixing/issues/55) · studio photo strip, preview, pace control [reelee-web#402](https://github.com/thorwhalen/reelee-web/issues/402) · the timeline-editor document [muvid#138](https://github.com/thorwhalen/muvid/issues/138).
 
 ## Neighbours in the fleet
 

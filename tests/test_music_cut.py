@@ -205,7 +205,20 @@ def bath(tmp_path, monkeypatch):
         clip = tmp_path / f"{cid}.mp4"
         clip.write_bytes(cid.encode())
         service.add_clip(proj, path=str(clip), clip_id=cid, duration_s=dur)
+    # what listening found on the real shoot: no song in either (support 0.03-0.33)
+    proj.save_alignments([_heard(cid, dur, support=0.2) for cid, dur in (("abbey", 12.0), ("dog", 6.0))])
     return proj
+
+
+def _heard(cid, dur, *, support, reliable=False, offset=3.0, margin=None):
+    from muvid.footage.edl import FootageAlignment
+
+    return FootageAlignment(
+        clip_id=cid, offset_s=offset, confidence=0.1, duration_s=dur,
+        coverage=(offset, offset + dur), overlaps=True, support=support,
+        reliable=reliable,
+        margin=margin if margin is not None else (-0.2 if not reliable else 0.3),
+    )
 
 
 def test_a_project_nothing_could_be_synced_in_is_cut_to_the_music(bath):
@@ -294,3 +307,93 @@ def test_photos_and_unsynced_videos_render_over_the_song(tmp_path, monkeypatch):
         ["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "json",
          str(video)], capture_output=True, check=True, text=True).stdout)
     assert float(probe["format"]["duration"]) == pytest.approx(8.0, abs=0.3)
+
+
+def test_a_video_nobody_listened_to_is_not_guessed_about(bath):
+    """A concert cut to the music is a desynced concert (muvid#59 by another road)."""
+    bath.save_alignments([_heard("abbey", 12.0, support=0.2)])  # dog: never listened to
+    assert service.footage_roles(bath)["dog"] == "not_listened"
+    with pytest.raises(service.FootageError, match="not been listened to"):
+        service.propose_edit(bath, save=False)
+    service.set_has_song(bath, clip_id="dog", has_song="no")  # or say what it is
+    assert all(e["clip_id"] for e in service.propose_edit(bath, save=False)["edl"])
+
+
+def test_a_song_heard_but_not_placed_stays_synced_and_is_set_aside(bath):
+    """The muvid#59 case: the song is there, its place ambiguous. Not montaged; its
+    span is set aside (and filled from the footage that IS cut to the music)."""
+    bath.save_alignments(
+        [_heard("abbey", 12.0, support=0.45, margin=0.1), _heard("dog", 6.0, support=0.5, margin=0.0)]
+    )
+    assert service.footage_roles(bath) == {"abbey": "synced", "dog": "to_the_music"}
+    out = service.propose_edit(bath, save=False)
+    assert not any(e["clip_id"] == "abbey" for e in out["edl"])
+    assert [x["clip_id"] for x in out["coverage"]["excluded"]] == ["abbey"]
+    assert all(e["clip_id"] == "dog" for e in out["edl"])
+
+
+def test_swapping_a_cut_onto_a_clip_cut_to_the_music_starts_it_at_its_start(bath):
+    out = service.propose_edit(bath)
+    edl = service.get_edit(bath, edit_id=out["edit_id"])["edl"]
+    i, e = next((i, e) for i, e in enumerate(edl) if e["clip_id"] == "abbey" and not e.get("transition"))
+    reply = service.set_cut(bath, edit_id=out["edit_id"], index=i, clip_id="dog")
+    swapped = reply["edl"][i]
+    assert swapped["clip_id"] == "dog" and 0.0 <= swapped["source_in"] <= 1.0
+
+
+@pytest.mark.parametrize("seed", range(150))
+def test_planned_cuts_always_pass_the_edit_gate(seed):
+    """Random pools, tempos and spans: what the planner emits is a valid edit (the
+    adversarial review's fuzz, kept)."""
+    import random
+
+    from muvid.footage.edl import fill_gaps
+
+    r = random.Random(seed)
+    d, bpm = r.uniform(2, 120), r.uniform(55, 150)
+    srcs = [
+        FreeSource(f"v{i}", f"/x/v{i}.mp4", duration_s=r.choice([r.uniform(0.6, 4), r.uniform(3, 40)]))
+        for i in range(r.randint(1, 6))
+    ]
+    if r.random() < 0.4:
+        srcs += [FreeSource(f"p{i}", f"/x/p{i}.jpg", kind="still") for i in range(r.randint(1, 3))]
+    spans = [(0, d * 0.3), (d * 0.5, d * 0.8)] if r.random() < 0.3 else None
+    cut = fill_spans(
+        "/x/s.wav", srcs, spans=spans, analysis=_analysis(d, bpm),
+        envelope_of=lambda s: None, anchor_of=lambda s: (0.5, 0.5),
+        size_of=lambda p: (1080, 1920), canvas=(1080, 1920),
+    )
+    if not cut.entries:  # only a sub-second video: nothing can be shown, and it says so
+        assert all((s.duration_s or 99) < 1.0 for s in srcs)
+        return
+    places = [unplaced(s.clip_id, s.duration_s or STILL_DURATION_S) for s in srcs]
+    validate_edl(fill_gaps(cut.entries, d), places, d, canvas=(1080, 1920))
+
+
+def test_a_dissolve_into_a_photo_passes_the_gate():
+    srcs = [FreeSource("p1", "/x/p1.jpg", kind="still"), FreeSource("p2", "/x/p2.jpg", kind="still")]
+    cut = fill_spans(
+        "/x/s.wav", srcs, analysis=_analysis(30.0, 70.0), envelope_of=lambda s: None,
+        anchor_of=lambda s: (0.5, 0.5), size_of=lambda p: (1080, 1920), canvas=(1080, 1920),
+    )
+    assert cut.report["style"] == "ballad_dissolve"
+    assert any(e.transition for e in cut.entries), "the slow song keeps its dissolves"
+    places = [unplaced(s.clip_id, STILL_DURATION_S) for s in srcs]
+    validate_edl(cut.entries, places, 30.0, canvas=(1080, 1920))
+
+
+def test_a_heic_photo_is_refused_plainly_without_its_decoder(bath, tmp_path, monkeypatch):
+    import builtins
+
+    real_import = builtins.__import__
+
+    def no_heif(name, *a, **k):
+        if name == "pillow_heif":
+            raise ImportError("no pillow_heif")
+        return real_import(name, *a, **k)
+
+    monkeypatch.setattr(builtins, "__import__", no_heif)
+    heic = tmp_path / "IMG_0001.HEIC"
+    heic.write_bytes(b"not really")
+    with pytest.raises(service.FootageError, match="HEIC"):
+        service.add_clip(bath, path=str(heic), filename=heic.name)

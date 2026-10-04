@@ -199,7 +199,7 @@ def choose_source_in(
         golden = room_lo + ((ordinal * 0.6180339887498949) % 1.0) * span
         overlap = np.array([_overlap(s, s + length, used) for s in candidates])
         best = candidates[np.argmin(overlap * 1e3 + np.abs(candidates - golden))]
-        return float(best), 0.0
+        return math.floor(max(0.0, float(best)) * 1e4) / 1e4, 0.0
 
     hop = env.hop_s
     hits = np.nan_to_num(env.hits, nan=0.0)
@@ -243,7 +243,9 @@ def choose_source_in(
         mean_sharp = float(np.mean(sharp)) + 1e-9
         score = score + W_SHARP * np.clip(np.log((window + 1e-9) / mean_sharp), -2.0, 1.0)
     j = int(np.argmax(score))
-    return float(starts[j] * hop), float(hit_term[j])
+    # never past the room (grid rounding), never negative, rounded DOWN for the wire
+    s_in = max(0.0, min(float(starts[j] * hop), max(room_lo, room_hi)))
+    return math.floor(s_in * 1e4) / 1e4, float(hit_term[j])
 
 
 def _overlap(a: float, b: float, used: Sequence[tuple[float, float]]) -> float:
@@ -272,21 +274,54 @@ def _default_analysis(song_path: str):
     return analyze(song_path)
 
 
+def _file_key(path: str) -> tuple:
+    """``(path, mtime_ns, size)`` — what a per-file memo is keyed on, so a replaced file
+    is measured again and an unchanged one never is."""
+    import os
+
+    try:
+        st = os.stat(path)
+    except OSError:
+        return (str(path), None, None)
+    return (str(path), st.st_mtime_ns, st.st_size)
+
+
+def _memo(fn):
+    """Memoise a per-file measurement for the life of the process (a server answers
+    many "Cut it for me"s over the same files)."""
+    from functools import lru_cache, wraps
+
+    @lru_cache(maxsize=1024)
+    def cached(key, *rest):
+        return fn(key[0], *rest)
+
+    @wraps(fn)
+    def wrapper(path, *rest):
+        return cached(_file_key(path), *rest)
+
+    wrapper.cache_clear = cached.cache_clear
+    return wrapper
+
+
+@_memo
+def _salient_centre(path: str) -> tuple[float, float]:
+    from burns import salient_box
+
+    x, y, w, h = salient_box(path)
+    return float(x + w / 2.0), float(y + h / 2.0)
+
+
 def _default_anchor(source: FreeSource) -> tuple[float, float]:
     """Where a still's camera move should go: the centre of ``burns.salient_box`` —
     the photo's busy, detailed region, away from sky and wall — or the frame's centre
     without ``burns``."""
     try:
-        from burns import salient_box
-    except ImportError:
+        return _salient_centre(source.path)
+    except Exception:  # no burns, or an unreadable image: the centre, never a failure
         return 0.5, 0.5
-    try:
-        x, y, w, h = salient_box(source.path)
-    except Exception:  # an unreadable image moves to the centre, never fails the plan
-        return 0.5, 0.5
-    return float(x + w / 2.0), float(y + h / 2.0)
 
 
+@_memo
 def display_size(path: str) -> Optional[tuple[int, int]]:
     """A picture's size as SHOWN — a phone video stored 640x360 with a -90 rotation is
     360x640 on screen, and ffmpeg rotates before any filter, so a crop must be computed
@@ -342,16 +377,26 @@ def cover_crop(
     return CropWindow(x=0.0, y=round(y, 4), w=1.0, h=round(h, 4))
 
 
+@_memo
+def _probe_one(path: str, kind: str):
+    from muvid.montage.analysis import probe_media
+
+    (m,) = list(probe_media([path], kind=kind, start_index=0))
+    return m
+
+
 def _media_for(sources: Sequence[FreeSource]):
     """The montage planner's pool, one :class:`~muvid.montage.analysis.Media` per source,
     ranked by the planner's own strength measure."""
-    from muvid.montage.analysis import Media, probe_media
+    from dataclasses import replace
+
+    from muvid.montage.analysis import Media
 
     media = []
     for i, s in enumerate(sources):
         kind = "photo" if s.is_still else "clip"
         try:
-            (m,) = list(probe_media([s.path], kind=kind, start_index=i))
+            m = replace(_probe_one(s.path, kind), index=i)
         except Exception:  # unmeasurable: plan with it anyway, weakest
             m = Media(index=i, path=s.path, kind=kind, width=1, height=1, strength=0.0)
         if not s.is_still and s.duration_s is not None:
@@ -517,7 +562,11 @@ def fill_spans(
             crop_for=crop_for,
         )
     entries = _feasible_blends(entries, {s.clip_id: s for s in sources})
+    asked = sum(b - a for a, b in spans)
+    covered = sum(e.song_end - e.song_start for e in entries)
     report = {
+        # seconds of the asked spans no picture could fill (left as gaps) — 0 normally
+        "uncovered_s": round(max(0.0, asked - covered), 2),
         "tempo_bpm": round(float(analysis.tempo_bpm), 2),
         "beat_source": getattr(analysis, "beat_source", ""),
         "style": chosen,
@@ -575,9 +624,9 @@ def _cuts_for_piece(p, k, *, sources, beats, energy_at, envelope, anchor_of, anc
     # the pictures either side of this piece, so a take-over does not repeat them
     avoid = {sources[q["media"]].clip_id for q in (p.get("prev"), p.get("next")) if q}
     fade = p["fade"] if not p["first_in_span"] else 0.0
-    guard = 0
-    while end - start > 1e-6 and guard < 8:
-        guard += 1
+    steps, max_steps = 0, int((end - start) / MIN_PIECE_S) + 4
+    while end - start > 1e-6 and steps < max_steps:
+        steps += 1
         length = end - start
         need = length + 2 * EDGE_S + fade + p.get("next_fade", 0.0)
         if not src.is_still and (src.duration_s or 0.0) < need:
@@ -585,9 +634,13 @@ def _cuts_for_piece(p, k, *, sources, beats, energy_at, envelope, anchor_of, anc
             cap = max(0.0, (src.duration_s or 0.0) - 2 * EDGE_S - fade)
             cut_at = _last_beat_before(beats, start + cap, after=start + MIN_PIECE_S)
             if cut_at is None or cap < MIN_PIECE_S:
-                src = _take_over(sources, src, need=length, avoid=avoid, uses=uses)
+                nxt = _take_over(sources, src, need=length, avoid=avoid, uses=uses)
+                if nxt.clip_id == src.clip_id:
+                    break  # nothing else to show: the rest stays uncovered (reported)
+                avoid.add(src.clip_id)
+                src = nxt
                 continue
-            piece_end = cut_at
+            piece_end = min(cut_at, end)
         else:
             piece_end = end
         trail = p.get("next_fade", 0.0) if piece_end >= end - 1e-6 else 0.0
@@ -617,19 +670,23 @@ def _last_beat_before(beats, t: float, *, after: float) -> Optional[float]:
 
 
 def _take_over(sources, current, *, need: float, avoid: set, uses: Mapping[str, int]):
-    """A source to take over the rest of a piece: not the one that ran out, nor the
-    pictures either side, the least used of those that can hold ``need`` seconds (a
-    still always can); failing that, whatever is longest."""
-    others = [s for s in sources if s.clip_id != current.clip_id] or [current]
-    fresh = [s for s in others if s.clip_id not in avoid] or others
+    """A source to take over the rest of a piece: one that can hold ``need`` seconds (a
+    still always can) — preferably not a picture either side, the least used first —
+    and only when nothing can hold it, the longest of the rest. ``current`` back means
+    there is nothing else at all."""
+    others = [s for s in sources if s.clip_id != current.clip_id]
+    if not others:
+        return current
 
     def holds(s):
         return s.is_still or (s.duration_s or 0.0) >= need + 2 * EDGE_S
 
-    able = [s for s in fresh if holds(s)]
-    if not able:
-        return max(fresh, key=lambda s: (s.is_still, s.duration_s or 0.0))
-    return min(able, key=lambda s: (uses.get(s.clip_id, 0), -(s.duration_s or 1e9), s.clip_id))
+    able = [s for s in others if holds(s)]
+    pool = [s for s in able if s.clip_id not in avoid] or able
+    if pool:
+        return min(pool, key=lambda s: (uses.get(s.clip_id, 0), -(s.duration_s or 1e9), s.clip_id))
+    fresh = [s for s in others if s.clip_id not in avoid] or others
+    return max(fresh, key=lambda s: (s.is_still, s.duration_s or 0.0))
 
 
 def _one_cut(src, start, end, *, fade, trail, motion, k, beats, energy_at, envelope, anchor_of,
@@ -658,7 +715,9 @@ def _one_cut(src, start, end, *, fade, trail, motion, k, beats, energy_at, envel
             look=look,
             look_time_varying=bool(getattr(look, "time_varying", True)),
             look_spec=resolved,
-            source_in=0.0,
+            # a blend reads its lead BEFORE the cut's in-point; a still has all the
+            # time it wants, so it starts that far in
+            source_in=round(fade, 4),
         )
     inner = [float(b - start) for b in beats if start < b < end]
     s_in, fit = choose_source_in(
@@ -685,28 +744,28 @@ def _one_cut(src, start, end, *, fade, trail, motion, k, beats, energy_at, envel
 
 
 def _feasible_blends(entries: list, by_id: Mapping[str, FreeSource]) -> list:
-    """Drop a blend either side of which has no footage to blend with — a short video
-    that could not keep the margin. A hard cut there is the honest fallback; the edit
-    gate (:func:`muvid.footage.edl.validate_edl`) would refuse the blend."""
+    """Drop a blend the edit gate would refuse — a short video that could not keep the
+    margin, a cut too short to give its neighbour the blend — asking the gate's own
+    check (:func:`muvid.footage.edl._validate_transition`), so the two cannot drift. A
+    hard cut there is the honest fallback."""
     from dataclasses import replace
 
-    from muvid.footage.edl import TRANSITION_SPLIT
+    from muvid.footage.edl import STILL_DURATION_S, _validate_transition, unplaced
 
+    places = {
+        cid: unplaced(cid, STILL_DURATION_S if s.is_still else float(s.duration_s or 0.0))
+        for cid, s in by_id.items()
+    }
     out = list(entries)
-    for i in range(1, len(out)):
-        e, prev = out[i], out[i - 1]
+    for i in range(len(out)):
+        e = out[i]
         if e.transition is None:
             continue
-        lead = e.transition.duration_s * TRANSITION_SPLIT
-        trail = e.transition.duration_s * (1 - TRANSITION_SPLIT)
-        ok = abs(prev.song_end - e.song_start) < 1e-6
-        src = by_id.get(e.clip_id)
-        if ok and src is not None and not src.is_still:
-            ok = e.source_in - lead >= -1e-6
-        psrc = by_id.get(prev.clip_id)
-        if ok and psrc is not None and not psrc.is_still:
-            end_in = prev.source_in + (prev.song_end - prev.song_start)
-            ok = end_in + trail <= (psrc.duration_s or 0.0) + 1e-6
-        if not ok:
+        prev = out[i - 1] if i > 0 else None
+        try:
+            if prev is None or abs(prev.song_end - e.song_start) > 1e-6:
+                raise ValueError("no contiguous predecessor")
+            _validate_transition(i, e, prev, places)
+        except (ValueError, KeyError):
             out[i] = replace(e, transition=None)
     return out
