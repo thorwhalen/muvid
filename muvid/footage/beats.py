@@ -655,7 +655,9 @@ def activity_signal(
     focus = np.interp(grid, np.asarray(times), np.asarray(sharp))
     return {
         "signals": {
-            ACTIVITY: signal_record(act, t0=0.0, hop_s=hop, name=ACTIVITY, domain="video"),
+            ACTIVITY: signal_record(
+                act, t0=0.0, hop_s=hop, name=ACTIVITY, domain="video"
+            ),
             ACTIVITY_HITS: signal_record(
                 hits, t0=0.0, hop_s=hop, name=ACTIVITY_HITS, domain="video"
             ),

@@ -163,7 +163,9 @@ class Analysis:
                     label=str(x["label"]),
                     start=float(x["start"]),
                     end=float(x["end"]),
-                    energy_db=None if x.get("energy_db") is None else float(x["energy_db"]),
+                    energy_db=None
+                    if x.get("energy_db") is None
+                    else float(x["energy_db"]),
                 )
                 for x in d.get("sections", ())
             ),

@@ -34,13 +34,14 @@ The audio of the result is always the clean song. Both halves mix in one edit: s
 
 ```python
 from muvid.footage import service
+
 service.set_song(fp, path="song.mp3")
-service.add_clip(fp, path="walk.mp4")          # a video
-service.add_clip(fp, path="abbey.jpg")         # a photo: stored upright, kind="still"
-service.align(fp)                              # every video: listened to, or declared below
-service.set_has_song(fp, clip_id="…", has_song="no")   # overrule listening, per clip
+service.add_clip(fp, path="walk.mp4")  # a video
+service.add_clip(fp, path="abbey.jpg")  # a photo: stored upright, kind="still"
+service.align(fp)  # every video: listened to, or declared below
+service.set_has_song(fp, clip_id="…", has_song="no")  # overrule listening, per clip
 out = service.propose_edit(fp, pace="steady")  # slow | steady | driving | frantic
-out["music"]       # what the cut to the music did: style, n_cuts, uses, on_beat per video
+out["music"]  # what the cut to the music did: style, n_cuts, uses, on_beat per video
 service.render(fp, edit_id=out["edit_id"])
 ```
 

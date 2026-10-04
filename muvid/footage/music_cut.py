@@ -241,7 +241,9 @@ def choose_source_in(
         m = sharp.size
         window = (ssum[np.clip(starts + w, 0, m)] - ssum[np.clip(starts, 0, m)]) / w
         mean_sharp = float(np.mean(sharp)) + 1e-9
-        score = score + W_SHARP * np.clip(np.log((window + 1e-9) / mean_sharp), -2.0, 1.0)
+        score = score + W_SHARP * np.clip(
+            np.log((window + 1e-9) / mean_sharp), -2.0, 1.0
+        )
     j = int(np.argmax(score))
     # never past the room (grid rounding), never negative, rounded DOWN for the wire
     s_in = max(0.0, min(float(starts[j] * hop), max(room_lo, room_hi)))
@@ -486,9 +488,13 @@ def fill_spans(
     if analysis is None:
         analysis = _default_analysis(song_path)
     duration = float(song_duration or analysis.duration)
-    spans = [(0.0, duration)] if spans is None else [(float(a), float(b)) for a, b in spans]
+    spans = (
+        [(0.0, duration)] if spans is None else [(float(a), float(b)) for a, b in spans]
+    )
     spans = [(a, b) for a, b in spans if b - a > MIN_PIECE_S]
-    chosen = pick_archetype(analysis) if archetype in ("", ARCHETYPE_AUTO) else archetype
+    chosen = (
+        pick_archetype(analysis) if archetype in ("", ARCHETYPE_AUTO) else archetype
+    )
     if chosen not in SINGLE_PICTURE_ARCHETYPES:
         raise ValueError(
             f"archetype {chosen!r} cannot be an edit (one picture per cut); use one of "
@@ -507,7 +513,11 @@ def fill_spans(
         if fit != "cover":
             return None
         if src.clip_id not in crops:
-            anchor = anchors.setdefault(src.clip_id, anchor_of(src)) if src.is_still else (0.5, 0.5)
+            anchor = (
+                anchors.setdefault(src.clip_id, anchor_of(src))
+                if src.is_still
+                else (0.5, 0.5)
+            )
             crops[src.clip_id] = cover_crop(size_of(src.path), canvas, anchor=anchor)
         return crops[src.clip_id]
 
@@ -531,10 +541,20 @@ def fill_spans(
             if hi - lo <= 1e-6:
                 continue
             tile = slot.tiles[0]
-            fade = slot.transition_s if (lo == slot.start and slot.transition != "cut") else 0.0
+            fade = (
+                slot.transition_s
+                if (lo == slot.start and slot.transition != "cut")
+                else 0.0
+            )
             pieces.append(
-                {"start": lo, "end": hi, "media": tile.media, "motion": tile.motion,
-                 "fade": fade, "first_in_span": abs(lo - a) < 1e-6}
+                {
+                    "start": lo,
+                    "end": hi,
+                    "media": tile.media,
+                    "motion": tile.motion,
+                    "fade": fade,
+                    "first_in_span": abs(lo - a) < 1e-6,
+                }
             )
     pieces = _fold_tiny(pieces)
     for this, nxt in zip(pieces, pieces[1:]):
@@ -593,7 +613,12 @@ def _fold_tiny(pieces: list[dict]) -> list[dict]:
     out: list[dict] = []
     for p in pieces:
         short = p["end"] - p["start"] < MIN_PIECE_S
-        if short and out and not p["first_in_span"] and abs(out[-1]["end"] - p["start"]) < 1e-6:
+        if (
+            short
+            and out
+            and not p["first_in_span"]
+            and abs(out[-1]["end"] - p["start"]) < 1e-6
+        ):
             out[-1] = dict(out[-1], end=p["end"])
         else:
             out.append(dict(p))
@@ -612,8 +637,23 @@ def _fold_tiny(pieces: list[dict]) -> list[dict]:
     return merged
 
 
-def _cuts_for_piece(p, k, *, sources, beats, energy_at, envelope, anchor_of, anchors,
-                    used, fits, uses, canvas, fps, crop_for) -> list:
+def _cuts_for_piece(
+    p,
+    k,
+    *,
+    sources,
+    beats,
+    energy_at,
+    envelope,
+    anchor_of,
+    anchors,
+    used,
+    fits,
+    uses,
+    canvas,
+    fps,
+    crop_for,
+) -> list:
     """One planned piece -> one or more free cuts (more when its video is shorter than
     the piece: the rest goes to the longest other source)."""
     from muvid.footage.edl import EdlEntry, Transition
@@ -644,11 +684,27 @@ def _cuts_for_piece(p, k, *, sources, beats, energy_at, envelope, anchor_of, anc
         else:
             piece_end = end
         trail = p.get("next_fade", 0.0) if piece_end >= end - 1e-6 else 0.0
-        entry = _one_cut(src, start, piece_end, fade=fade, trail=trail, motion=p["motion"], k=k,
-                         beats=beats, energy_at=energy_at, envelope=envelope,
-                         anchor_of=anchor_of, anchors=anchors, used=used, fits=fits,
-                         uses=uses, canvas=canvas, fps=fps,
-                         transition_cls=Transition, entry_cls=EdlEntry)
+        entry = _one_cut(
+            src,
+            start,
+            piece_end,
+            fade=fade,
+            trail=trail,
+            motion=p["motion"],
+            k=k,
+            beats=beats,
+            energy_at=energy_at,
+            envelope=envelope,
+            anchor_of=anchor_of,
+            anchors=anchors,
+            used=used,
+            fits=fits,
+            uses=uses,
+            canvas=canvas,
+            fps=fps,
+            transition_cls=Transition,
+            entry_cls=EdlEntry,
+        )
         crop = crop_for(src)
         if crop is not None:
             from dataclasses import replace as _replace
@@ -684,13 +740,36 @@ def _take_over(sources, current, *, need: float, avoid: set, uses: Mapping[str, 
     able = [s for s in others if holds(s)]
     pool = [s for s in able if s.clip_id not in avoid] or able
     if pool:
-        return min(pool, key=lambda s: (uses.get(s.clip_id, 0), -(s.duration_s or 1e9), s.clip_id))
+        return min(
+            pool,
+            key=lambda s: (uses.get(s.clip_id, 0), -(s.duration_s or 1e9), s.clip_id),
+        )
     fresh = [s for s in others if s.clip_id not in avoid] or others
     return max(fresh, key=lambda s: (s.is_still, s.duration_s or 0.0))
 
 
-def _one_cut(src, start, end, *, fade, trail, motion, k, beats, energy_at, envelope, anchor_of,
-             anchors, used, fits, uses, canvas, fps, transition_cls, entry_cls):
+def _one_cut(
+    src,
+    start,
+    end,
+    *,
+    fade,
+    trail,
+    motion,
+    k,
+    beats,
+    energy_at,
+    envelope,
+    anchor_of,
+    anchors,
+    used,
+    fits,
+    uses,
+    canvas,
+    fps,
+    transition_cls,
+    entry_cls,
+):
     from muvid.footage.named_looks import compile_named_look, resolve_named_look
 
     length = end - start
@@ -753,7 +832,9 @@ def _feasible_blends(entries: list, by_id: Mapping[str, FreeSource]) -> list:
     from muvid.footage.edl import STILL_DURATION_S, _validate_transition, unplaced
 
     places = {
-        cid: unplaced(cid, STILL_DURATION_S if s.is_still else float(s.duration_s or 0.0))
+        cid: unplaced(
+            cid, STILL_DURATION_S if s.is_still else float(s.duration_s or 0.0)
+        )
         for cid, s in by_id.items()
     }
     out = list(entries)

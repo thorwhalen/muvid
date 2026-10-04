@@ -497,7 +497,16 @@ def _source_input(path: str, clip_in: float, seconds: float, *, fps: int) -> lis
     """The ``-i`` arguments for one cut's source: an input-side seek into a video, or a
     still looped at the render rate for ``seconds`` (a picture has no time to seek)."""
     if _is_still(path):
-        return ["-loop", "1", "-framerate", str(fps), "-t", f"{seconds:.6f}", "-i", path]
+        return [
+            "-loop",
+            "1",
+            "-framerate",
+            str(fps),
+            "-t",
+            f"{seconds:.6f}",
+            "-i",
+            path,
+        ]
     return ["-ss", f"{clip_in:.6f}", "-t", f"{seconds:.6f}", "-i", path]
 
 

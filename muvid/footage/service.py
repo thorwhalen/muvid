@@ -68,7 +68,17 @@ MAX_CLIPS = int(os.environ.get("MUVID_FOOTAGE_MAX_CLIPS", "8"))
 #: :data:`MAX_CLIPS`: a photo costs no decode at cut time and a day out is dozens of them.
 MAX_STILLS = int(os.environ.get("MUVID_FOOTAGE_MAX_STILLS", "40"))
 #: The file types taken as a photo rather than a video (lower-case, with the dot).
-STILL_SUFFIXES = (".jpg", ".jpeg", ".png", ".webp", ".bmp", ".tif", ".tiff", ".heic", ".heif")
+STILL_SUFFIXES = (
+    ".jpg",
+    ".jpeg",
+    ".png",
+    ".webp",
+    ".bmp",
+    ".tif",
+    ".tiff",
+    ".heic",
+    ".heif",
+)
 #: How much of a song listening must have heard in a video — its windowed-vote support —
 #: for an UNPLACEABLE video to count as "has the song, place it by hand" rather than "has
 #: no song in it, cut it to the music" (env ``MUVID_HEARD_SUPPORT``). Below
@@ -281,22 +291,28 @@ def _add_still(fp, src: Path, *, clip_id: str, name: str, filename: str) -> dict
                 width, height = im.size
                 cid = clip_id or uuid.uuid4().hex[:_CLIP_ID_HEX]
                 label = name or (Path(filename).stem if filename else "") or cid
-                fp.add_clip(cid, str(normalised), ext="jpg", name=label, kind=STILL_KIND)
+                fp.add_clip(
+                    cid, str(normalised), ext="jpg", name=label, kind=STILL_KIND
+                )
     except (OSError, ValueError, Image.DecompressionBombError) as e:
         # PIL's "cannot identify image file" is an OSError; a huge photo is a bomb error
         raise FootageError(f"could not read {src.name!r} as a photo: {e}") from e
     _ensure_cover(fp)
-    out = {"clip_id": cid, "name": label, "kind": STILL_KIND, "duration": None,
-           "width": width, "height": height}
+    out = {
+        "clip_id": cid,
+        "name": label,
+        "kind": STILL_KIND,
+        "duration": None,
+        "width": width,
+        "height": height,
+    }
     row = next((c for c in fp.list_clips() if c["clip_id"] == cid), {})
     if row.get("artifact_id"):
         out["artifact_id"] = row["artifact_id"]
     return out
 
 
-def set_has_song(
-    fp, *, clip_id: str, has_song: Literal["auto", "yes", "no"]
-) -> dict:
+def set_has_song(fp, *, clip_id: str, has_song: Literal["auto", "yes", "no"]) -> dict:
     """Say whether a video has the song in its own sound — overriding what listening found.
 
     ``"yes"``: it is a recording of the song (a concert, a dance); it is synced to the
@@ -323,8 +339,11 @@ def set_has_song(
         row["has_song"] = has_song
     fp._write_manifest(m)
     placements = {a.clip_id: a for a in fp.load_alignments()}
-    return {"clip_id": cid, "has_song": has_song,
-            "role": _role_of(row, placements.get(cid))}
+    return {
+        "clip_id": cid,
+        "has_song": has_song,
+        "role": _role_of(row, placements.get(cid)),
+    }
 
 
 #: A clip's role in the edit: SYNCED to the song where it was filmed, cut FREEly to the
@@ -534,7 +553,9 @@ def _music_fill(fp, entries, sources, song_dur, *, pace: str = "", canvas=None):
         fps=DEFAULT_FPS,
     )
     kept = [e for e in entries if not e.is_gap]
-    return fill_gaps(sorted(kept + cut.entries, key=lambda e: e.song_start), song_dur), cut.report
+    return fill_gaps(
+        sorted(kept + cut.entries, key=lambda e: e.song_start), song_dur
+    ), cut.report
 
 
 def remove_clip(fp, *, clip_id: str) -> dict:
@@ -1481,8 +1502,9 @@ def _require_song_and_alignment(fp) -> list:
     return _placements(fp)
 
 
-def _auto_edit(fp, placements, song_dur, *, strategy, context, recover, pace="",
-               canvas=None):
+def _auto_edit(
+    fp, placements, song_dur, *, strategy, context, recover, pace="", canvas=None
+):
     """The auto path, synced half then music half: the strategy cuts the clips that
     carry the song (:func:`_role_of`); every span it leaves empty is cut to the music
     from the rest and the photos (:func:`_music_fill`). ``(entries, excluded, music)``
@@ -1513,7 +1535,9 @@ def _auto_edit(fp, placements, song_dur, *, strategy, context, recover, pace="",
         entries, more = _set_aside_unvouched(entries, synced)
         excluded = list(excluded) + more
     try:
-        entries, music = _music_fill(fp, entries, free, song_dur, pace=pace, canvas=canvas)
+        entries, music = _music_fill(
+            fp, entries, free, song_dur, pace=pace, canvas=canvas
+        )
     except (ImportError, OSError) as e:
         # The music half needs the montage analysis (librosa, ffmpeg). Without it the
         # synced half still stands; the spans it leaves stay gaps, and the reply says why.
@@ -1692,7 +1716,12 @@ def propose_edit(
     try:
         context = _selection_context(fp, strat, preset, weights, config)
         proposal, excluded, music = _auto_edit(
-            fp, aligns, song_dur, strategy=strat, context=context, recover=True,
+            fp,
+            aligns,
+            song_dur,
+            strategy=strat,
+            context=context,
+            recover=True,
             pace=pace,
         )
         if span is not None:
@@ -1742,7 +1771,7 @@ def propose_edit(
             if value:
                 selection[key] = value
         how = f"cut automatically ({strat}{', ' + preset if preset else ''}"
-        how += (", the rest cut to the music)" if music else ")")
+        how += ", the rest cut to the music)" if music else ")"
         record = _new_edit_record(
             fp, out["edl"], name=name or _default_edit_name(fp), how_made=how, span=span
         )
@@ -1965,7 +1994,9 @@ def _swap_in_point(fp, clip_id: str, e) -> Optional[float]:
 
     if not clip_id:
         return None
-    row = next((c for c in fp.manifest().get("clips", []) if c.get("clip_id") == clip_id), None)
+    row = next(
+        (c for c in fp.manifest().get("clips", []) if c.get("clip_id") == clip_id), None
+    )
     if row is None:
         return None  # unknown: the edit gate names it
     aligns = {a.clip_id: a for a in fp.load_alignments()}
@@ -1974,7 +2005,13 @@ def _swap_in_point(fp, clip_id: str, e) -> Optional[float]:
     lead = e.transition.duration_s if e.transition is not None else 0.0
     if row.get("kind") == STILL_KIND:
         return round(lead, 4)
-    return round(min(EDGE_S + lead, max(0.0, _clip_duration(fp, clip_id) - (e.song_end - e.song_start))), 4)
+    return round(
+        min(
+            EDGE_S + lead,
+            max(0.0, _clip_duration(fp, clip_id) - (e.song_end - e.song_start)),
+        ),
+        4,
+    )
 
 
 def _moved_start(e, start: float):
@@ -3281,7 +3318,10 @@ def _warm_activity(fp, clip_id: str) -> None:
     from muvid.footage.music_cut import FreeSource
 
     _activity_envelope(
-        fp, FreeSource(clip_id, fp.clip_paths()[clip_id], duration_s=_clip_duration(fp, clip_id))
+        fp,
+        FreeSource(
+            clip_id, fp.clip_paths()[clip_id], duration_s=_clip_duration(fp, clip_id)
+        ),
     )
 
 
@@ -3360,8 +3400,10 @@ def grab_cover_frame(video, dest) -> None:
 
     video, dest = Path(video), Path(dest)
     # a photo is its own cover: no duration to seek a fraction into
-    at = 0.0 if _is_still_name(video.name) else max(
-        0.0, _probe_duration(video) * COVER_AT_FRACTION
+    at = (
+        0.0
+        if _is_still_name(video.name)
+        else max(0.0, _probe_duration(video) * COVER_AT_FRACTION)
     )
     run_ffmpeg(
         [
