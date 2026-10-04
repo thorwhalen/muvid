@@ -78,6 +78,11 @@ STILL_SUFFIXES = (".jpg", ".jpeg", ".png", ".webp", ".bmp", ".tif", ".tiff", ".h
 #: off-by-a-bar alias of a real recording scored 0.487 at margin +0.115 (muvid#59). A
 #: first cut, not a calibration — the independent second opinion is thorwhalen/mixing#55.
 HEARD_SUPPORT = float(os.environ.get("MUVID_HEARD_SUPPORT", "0.4"))
+#: ...and how many windows that vote must have had. A short clip votes with two or three
+#: windows, where support moves in steps of a third or a half: measured, one of six 6 s
+#: pure-NOISE clips against a click track scored support 0.5, margin +0.167 on a 3-window
+#: vote. Below this many windows "couldn't place it" means "couldn't hear it".
+MIN_HEARD_WINDOWS = int(os.environ.get("MUVID_MIN_HEARD_WINDOWS", "4"))
 #: A stored photo's longest side, pixels: enough for a 4K canvas with a Ken Burns zoom,
 #: small enough that a 48-megapixel phone photo does not cost every cut a big decode.
 STILL_MAX_SIDE = 3840
@@ -345,7 +350,16 @@ def heard_the_song(alignment) -> bool:
         and alignment.support >= HEARD_SUPPORT
         and alignment.margin is not None
         and alignment.margin > 0.0
+        and _vote_windows(alignment) >= MIN_HEARD_WINDOWS
     )
+
+
+def _vote_windows(alignment) -> int:
+    """How many windows the aligner's vote had (0 when it does not say)."""
+    w, h = alignment.window_s, alignment.hop_s
+    if not w or not h or alignment.duration_s < w:
+        return 0
+    return 1 + int((alignment.duration_s - w) // h)
 
 
 def _role_of(row: dict, alignment) -> str:

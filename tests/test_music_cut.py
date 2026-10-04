@@ -216,7 +216,7 @@ def _heard(cid, dur, *, support, reliable=False, offset=3.0, margin=None):
     return FootageAlignment(
         clip_id=cid, offset_s=offset, confidence=0.1, duration_s=dur,
         coverage=(offset, offset + dur), overlaps=True, support=support,
-        reliable=reliable,
+        reliable=reliable, window_s=3.0, hop_s=1.5,
         margin=margin if margin is not None else (-0.2 if not reliable else 0.3),
     )
 
@@ -285,7 +285,7 @@ def test_photos_and_unsynced_videos_render_over_the_song(tmp_path, monkeypatch):
             "aevalsrc='0.8*sin(2*PI*880*t)*lt(mod(t,0.5),0.03)':s=22050:d=8", str(song))
     clip = tmp_path / "walk.mp4"
     _ffmpeg("-f", "lavfi", "-i", "testsrc=size=320x240:rate=25:duration=6",
-            "-f", "lavfi", "-i", "anoisesrc=d=6:a=0.3", "-shortest", "-pix_fmt",
+            "-f", "lavfi", "-i", "anoisesrc=d=6:a=0.3:seed=2", "-shortest", "-pix_fmt",
             "yuv420p", str(clip))
     photo = tmp_path / "abbey.png"
     _ffmpeg("-f", "lavfi", "-i", "testsrc=size=400x300:duration=1", "-frames:v", "1",
@@ -321,9 +321,10 @@ def test_a_video_nobody_listened_to_is_not_guessed_about(bath):
 
 def test_a_song_heard_but_not_placed_stays_synced_and_is_set_aside(bath):
     """The muvid#59 case: the song is there, its place ambiguous. Not montaged; its
-    span is set aside (and filled from the footage that IS cut to the music)."""
+    span is set aside (and filled from the footage that IS cut to the music). A short
+    clip's vote (dog: 6 s, three windows) is too coarse to count as heard."""
     bath.save_alignments(
-        [_heard("abbey", 12.0, support=0.45, margin=0.1), _heard("dog", 6.0, support=0.5, margin=0.0)]
+        [_heard("abbey", 12.0, support=0.45, margin=0.1), _heard("dog", 6.0, support=0.5, margin=0.2)]
     )
     assert service.footage_roles(bath) == {"abbey": "synced", "dog": "to_the_music"}
     out = service.propose_edit(bath, save=False)
