@@ -356,8 +356,14 @@ class MusicVideoFootageProject:
         return bool(self.manifest().get("song"))
 
     # -- footage clips -------------------------------------------------------
-    def add_clip(self, clip_id: str, src_path: str, *, ext: str, name: str = "") -> str:
-        """Store a footage clip from a local file; returns its ``clip_id``."""
+    def add_clip(
+        self, clip_id: str, src_path: str, *, ext: str, name: str = "", kind: str = ""
+    ) -> str:
+        """Store a footage clip from a local file; returns its ``clip_id``.
+
+        ``kind="still"`` stores a photo (no sound, no duration); the default is a video,
+        and writes no ``kind`` key, so a manifest written before photos existed reads
+        the same."""
         import shutil
 
         cid = normalise_id(clip_id, label="clip_id")
@@ -368,11 +374,12 @@ class MusicVideoFootageProject:
         for old in _files_with_stem(clips_dir, cid):
             old.unlink()
         dest = replace_file(src_path, clips_dir / f"{cid}{_safe_ext(ext)}")
-        artifact_id = self._register(dest, kind="video")
+        artifact_id = self._register(dest, kind="image" if kind == "still" else "video")
         m = self.manifest()
         clips = m.setdefault("clips", [])
         clips[:] = [c for c in clips if c.get("clip_id") != cid]
         entry = {"clip_id": cid, "file": dest.name, "name": name or cid}
+        _set_or_drop(entry, "kind", kind or None)
         _set_or_drop(entry, "artifact_id", artifact_id)
         clips.append(entry)
         self._write_manifest(m)
@@ -441,11 +448,14 @@ class MusicVideoFootageProject:
         return out
 
     def list_clips(self) -> list[dict]:
-        """``[{clip_id, name}]`` — plus ``artifact_id`` when the host catalog holds it."""
+        """``[{clip_id, name}]`` — plus ``artifact_id`` when the host catalog holds it,
+        ``kind: "still"`` for a photo, and ``has_song`` when a person said (``set_has_song``)."""
         rows = []
         for c in self.manifest().get("clips", []):
             row = {"clip_id": c["clip_id"], "name": c.get("name", c["clip_id"])}
             _set_or_drop(row, "artifact_id", c.get("artifact_id"))
+            _set_or_drop(row, "kind", c.get("kind"))
+            _set_or_drop(row, "has_song", c.get("has_song"))
             rows.append(row)
         return rows
 

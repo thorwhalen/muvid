@@ -31,6 +31,7 @@ implicitly, so spans stay one-per-song-span and nothing about reading an EDL cha
 
 from __future__ import annotations
 
+import math
 import os
 import re
 from dataclasses import dataclass, field, replace
@@ -449,6 +450,39 @@ class UnreliableAlignmentError(ValueError):
 MEASURED = "measured"
 DECLARED = "declared"
 ALIGNMENT_SOURCES = (MEASURED, DECLARED)
+#: Two more ``source`` values, for records that are NEVER persisted. ``UNPLACED`` stands
+#: for a clip (or a still) nobody has placed on the song — :func:`unplaced` — so that a
+#: free cut (:attr:`EdlEntry.source_in`) can still find its clip's duration through the
+#: same table every other cut uses. ``FREE`` is what :func:`placed_as` derives for one
+#: free cut: the placement the cut itself implies.
+UNPLACED = "unplaced"
+FREE = "free"
+
+#: How long a still image "lasts" as a source: it can be held for any span of song, so
+#: its duration is a bound rather than a measurement — longer than any song muvid takes.
+STILL_DURATION_S = 3600.0
+
+
+def unplaced(clip_id: str, duration_s: float) -> "FootageAlignment":
+    """The record of a clip with no place on the song: usable by free cuts only.
+
+    Not vouched (an anchored cut to it is refused exactly like a cut to a clip the
+    aligner could not place), never overlapping, never persisted.
+
+    >>> a = unplaced('c1', 12.0)
+    >>> a.reliable, a.overlaps, a.source
+    (False, False, 'unplaced')
+    """
+    return FootageAlignment(
+        clip_id=clip_id,
+        offset_s=0.0,
+        confidence=0.0,
+        duration_s=float(duration_s),
+        coverage=(0.0, 0.0),
+        overlaps=False,
+        reliable=False,
+        source=UNPLACED,
+    )
 
 
 @dataclass(frozen=True)
@@ -769,10 +803,26 @@ class EdlEntry:
     #: short cuts, each with its own, make a piecewise-linear time-warp. Bounded to
     #: ``1 +- RATE_MAX_DEV``; ``1.0`` (the default) emits nothing.
     rate: float = 1.0
+    #: **Free placement** — the cut shows its clip from ``source_in`` seconds of the
+    #: clip's OWN time, whatever the clip's alignment says. ``None`` (the default) is an
+    #: ANCHORED cut: footage time follows from where the clip sits on the song
+    #: (``song_start - offset + slip``), which is what a recording of the song needs.
+    #: A free cut is what footage that does NOT contain the song needs — holiday clips,
+    #: b-roll, stills — cut to the music rather than synced to it: its map is
+    #: ``source_in + slip + rate * (t - song_start)`` (:func:`clip_in_of`), and since it
+    #: claims no sync there is nothing for the aligner to vouch for (see
+    #: :func:`placed_as`). Additive in both directions, like the rest: an EDL without it
+    #: means what it always meant.
+    source_in: "float | None" = None
 
     @property
     def is_gap(self) -> bool:
         return not self.clip_id
+
+    @property
+    def is_free(self) -> bool:
+        """A free cut (:attr:`source_in` set) — cut to the music, not synced to it."""
+        return self.source_in is not None
 
 
 @dataclass(frozen=True)
@@ -894,9 +944,43 @@ RATE_MAX_DEV = 0.08
 
 def clip_in_of(e: "EdlEntry", a: "FootageAlignment") -> float:
     """Where cut ``e`` starts in its clip ``a``'s own time — THE sign convention:
-    ``song_start - offset + slip``. UNCLAMPED (a caller checking containment must see
-    a negative in-point); :func:`derive_cuts` clamps for the renderer."""
+    ``song_start - offset + slip`` — or, for a free cut, ``source_in + slip``, the
+    alignment playing no part. UNCLAMPED (a caller checking containment must see a
+    negative in-point); :func:`derive_cuts` clamps for the renderer."""
+    source_in = getattr(e, "source_in", None)
+    if source_in is not None:
+        return source_in + getattr(e, "slip_s", 0.0)
     return e.song_start - a.offset_s + getattr(e, "slip_s", 0.0)
+
+
+def placed_as(e: "EdlEntry", a: "FootageAlignment") -> "FootageAlignment":
+    """The placement cut ``e`` reads its clip ``a`` through — THE free-cut rule.
+
+    An anchored cut reads the clip's own alignment, unchanged. A free cut reads the
+    placement it implies itself — offset ``song_start - source_in`` — which it vouches
+    for by construction (it claims no sync with the song), so every containment and
+    blend check below applies to it with no second code path, and the trust gate has
+    nothing to refuse.
+
+    >>> a = unplaced('c1', 10.0)
+    >>> e = EdlEntry(song_start=30.0, song_end=34.0, clip_id='c1', source_in=2.0)
+    >>> p = placed_as(e, a)
+    >>> p.offset_s, p.reliable, p.source, p.duration_s
+    (28.0, True, 'free', 10.0)
+    >>> clip_in_of(e, a)
+    2.0
+    """
+    if getattr(e, "source_in", None) is None:
+        return a
+    offset = e.song_start - e.source_in
+    return replace(
+        a,
+        offset_s=offset,
+        coverage=(max(0.0, offset), offset + a.duration_s),
+        overlaps=True,
+        reliable=True,
+        source=FREE,
+    )
 
 
 def clip_time_at(e: "EdlEntry", a: "FootageAlignment", t: float) -> float:
@@ -913,6 +997,13 @@ def with_start(e: "EdlEntry", start: float, *, bounded: bool = True) -> "EdlEntr
     that would take the slip past :data:`SLIP_MAX_S` — unless ``bounded=False``, for a
     render-time window that is never stored."""
     rate = getattr(e, "rate", 1.0)
+    if getattr(e, "source_in", None) is not None:
+        # A free cut keeps its map by moving its in-point: no slip, so no bound.
+        return replace(
+            e,
+            song_start=float(start),
+            source_in=e.source_in + rate * (float(start) - e.song_start),
+        )
     slip = e.slip_s + (rate - 1.0) * (float(start) - e.song_start)
     if bounded and abs(slip) > SLIP_MAX_S + _EPS:
         raise ValueError(
@@ -991,7 +1082,26 @@ def _as_entry(e) -> EdlEntry:
         look_spec=_as_look_spec(e.get("look_spec")),
         slip_s=_as_slip(e.get("slip_s")),
         rate=_as_rate(e.get("rate")),
+        source_in=_as_source_in(e.get("source_in")),
     )
+
+
+def _as_source_in(raw) -> "float | None":
+    """A free cut's in-point: absent/None is an anchored cut; else seconds >= 0.
+    Raises on anything else, like the other request-side reads."""
+    if raw is None:
+        return None
+    if isinstance(raw, bool) or not isinstance(raw, (int, float)):
+        raise ValueError(
+            f"EDL entry source_in is malformed ({raw!r}): it must be a number of "
+            "seconds into the clip, or null for a cut synced to the song."
+        )
+    v = float(raw)
+    if not (v >= -_EPS and math.isfinite(v)):
+        raise ValueError(
+            f"EDL entry source_in={v:.3f} is negative: it is a time in the clip."
+        )
+    return max(0.0, v)
 
 
 def _as_look_spec(raw) -> "dict | None":
@@ -1167,8 +1277,12 @@ def validate_edl(
             raise ValueError(
                 f"EDL entry {i}: a gap has no footage to speed up (rate={e.rate:g})."
             )
+        if e.is_gap and e.source_in is not None:
+            raise ValueError(
+                f"EDL entry {i}: a gap has no footage to start at (source_in={e.source_in:g})."
+            )
         if not e.is_gap:
-            a = by_id[e.clip_id]
+            a = placed_as(e, by_id[e.clip_id])
             if not _clip_contains(a, e.song_start, e.song_end, e.slip_s, e.rate):
                 slipped = (
                     f" once slipped by {e.slip_s:+.3f} s at speed x{e.rate:.2f} (the cut "
@@ -1219,7 +1333,7 @@ def _refuse_unvouched(entries: Sequence[EdlEntry], by_id: dict) -> None:
     seen: set[str] = set()
     unvouched: list[FootageAlignment] = []
     for e in entries:
-        if e.is_gap or e.clip_id in seen:
+        if e.is_gap or e.is_free or e.clip_id in seen:
             continue
         seen.add(e.clip_id)
         a = by_id[e.clip_id]
@@ -1333,7 +1447,7 @@ def exclude_unvouched(
     excluded: list[ExcludedSpan] = []
     for i, e in enumerate(entries):
         a = None if e.is_gap else by_id.get(e.clip_id)
-        if a is None or a.reliable:
+        if a is None or a.reliable or e.is_free:
             kept.append(e)
             continue
         if _absorb_neighbour(e, kept, entries, i, by_id):
@@ -1388,6 +1502,7 @@ def _absorbable(e: "EdlEntry | None", by_id: dict) -> bool:
         and e.look is None
         and not e.slip_s
         and e.rate == 1.0
+        and not e.is_free
     )
 
 
@@ -1448,10 +1563,18 @@ def _coalesce_absorbed(entries: list) -> list:
 
 def _continues(prev: "EdlEntry", e: "EdlEntry") -> bool:
     """Does ``e`` show exactly the footage ``prev`` would, were ``prev`` longer?"""
+    if prev.is_free != e.is_free:
+        return False
     try:
-        return abs(with_start(prev, e.song_start).slip_s - e.slip_s) <= _EPS
+        moved = with_start(prev, e.song_start)
     except ValueError:
         return False
+    if e.is_free:
+        return (
+            abs(moved.source_in - e.source_in) <= _EPS
+            and abs(moved.slip_s - e.slip_s) <= _EPS
+        )
+    return abs(moved.slip_s - e.slip_s) <= _EPS
 
 
 def _exclusion_reason(e, alignments: Sequence[FootageAlignment]) -> str:
@@ -2545,7 +2668,7 @@ def _validate_transition(i, e, prev, by_id) -> None:
     # black source is synthetic and re-parameterizable, so it can always supply the
     # window.
     if not prev.is_gap:
-        a = by_id[prev.clip_id]
+        a = placed_as(prev, by_id[prev.clip_id])
         # UNCLAMPED, deliberately: `derive_cuts` clamps `clip_in` at 0 for the
         # renderer, and reading a clamped value here would let a short clip pass
         # by silently pretending it starts earlier than it does.
@@ -2557,7 +2680,7 @@ def _validate_transition(i, e, prev, by_id) -> None:
                 f"ends {a.duration_s - end_in_clip:.3f}s after it."
             )
     if not e.is_gap:
-        a = by_id[e.clip_id]
+        a = placed_as(e, by_id[e.clip_id])
         start_in_clip = clip_in_of(e, a)
         if start_in_clip - lead * e.rate < -_EPS:
             raise ValueError(
@@ -2598,7 +2721,7 @@ def derive_cuts(
                 )
             )
             continue
-        a = by_id[e.clip_id]
+        a = placed_as(e, by_id[e.clip_id])
         if e.clip_id not in clip_paths:
             raise ValueError(f"no stored file for clip {e.clip_id!r}")
         cuts.append(

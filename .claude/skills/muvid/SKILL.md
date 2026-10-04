@@ -32,10 +32,11 @@ the song's own surface:
 | a concrete poem, a **calligram**, shaped text, a poem turned into a video | the same skill — its `calligram` and `shape_fill` archetypes |
 | an audio visualizer, or a cover held over the song | the `muvid-visualize` skill |
 | cutting N phone recordings of one gig into one video | `muvid-choose-footage-segments`, then `muvid-score-footage` |
+| your own videos and photos **put to a song** (a day out, a trip — the footage does not contain the song), a "memories" video, a montage or slideshow to music | the `muvid-montage` skill |
 
 The first two rows are one **subgenre plugin** — `python -m muvid.lyricvid
 subgenres` lists the installed ones (today, `lyric-video`) and the whole family
-renders through `python -m muvid.lyricvid render`. The other two are separate
+renders through `python -m muvid.lyricvid render`. The other rows are separate
 parts of the package with their own entry points; their skills say so.
 
 **The eight-stage pipeline below** is the other thing: a **narrative,

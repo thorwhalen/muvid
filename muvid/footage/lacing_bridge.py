@@ -187,6 +187,9 @@ def _edl_body(e) -> dict:
     # Omit-at-1, the same rule: speed 1 is the field's absent value.
     if getattr(e, "rate", 1.0) != 1.0:
         body["rate"] = float(e.rate)
+    # Omit-when-None: an anchored cut (the absent value) writes no key.
+    if getattr(e, "source_in", None) is not None:
+        body["source_in"] = float(e.source_in)
     return body
 
 
@@ -323,6 +326,11 @@ def edl_from_annotations(
             and abs(raw - 1.0) <= RATE_MAX_DEV
         ):
             entry["rate"] = float(raw)
+        # A free cut's in-point: a non-negative number is forwarded, anything else
+        # reads as an anchored cut (skip, never crash — a browser's output).
+        raw = a.body.get("source_in")
+        if isinstance(raw, (int, float)) and not isinstance(raw, bool) and raw >= 0:
+            entry["source_in"] = float(raw)
         out.append(entry)
     return sorted(out, key=lambda e: e["song_start"])
 

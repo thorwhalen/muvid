@@ -122,6 +122,10 @@ def _public_filmstrip(fp, folder: Path, index: dict) -> dict:
     }
 
 
+#: Photo file types (see ``muvid.footage.service.STILL_SUFFIXES``).
+_STILL_SUFFIXES = (".jpg", ".jpeg", ".png", ".webp", ".bmp", ".tif", ".tiff")
+
+
 def _make_filmstrip(
     clip: Path, folder: Path, *, fps: float, height: int, cols: int, rows: int
 ) -> dict:
@@ -132,8 +136,13 @@ def _make_filmstrip(
     folder.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(dir=folder.parent) as tmp:
         frames = Path(tmp)
+        # A photo has no timeline to sample: loop it for one sample period, so its
+        # strip is its one frame.
+        still = clip.suffix.lower() in _STILL_SUFFIXES
+        source = ["-loop", "1", "-t", f"{1.0 / fps:.4f}"] if still else []
         run_ffmpeg(
             [
+                *source,
                 "-i",
                 str(clip),
                 "-an",
@@ -170,7 +179,7 @@ def _make_filmstrip(
     index = {
         "clip": clip.name,
         "fps": fps,
-        "duration_s": round(float(media_duration(clip)), 3),
+        "duration_s": None if still else round(float(media_duration(clip)), 3),
         "n_frames": len(names),
         "frame_w": frame_w,
         "frame_h": frame_h,

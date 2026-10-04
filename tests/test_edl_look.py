@@ -1233,6 +1233,7 @@ def test_every_optional_edl_field_is_carried_by_the_returned_edl():
         "look_spec",
         "slip_s",
         "rate",
+        "source_in",
     ], (
         f"EdlEntry grew or lost an optional field ({optional}). Decide whether it "
         "belongs in the returned/persisted edit, add it to "
@@ -1254,6 +1255,8 @@ def test_every_optional_edl_field_is_carried_by_the_returned_edl():
         "slip_s": 0.12,
         # A speed's ABSENT value is 1.0, so the value that has to survive is not 1.
         "rate": 1.03,
+        # A free cut's ABSENT value is None (anchored), so any number must survive.
+        "source_in": 2.5,
     }
     for field in optional:
         kwargs = {field: values[field]}

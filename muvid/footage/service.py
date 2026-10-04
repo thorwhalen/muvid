@@ -64,6 +64,18 @@ from muvid.footage.errors import FootageCancelled, FootageError
 # -- resource caps (env-tunable) ----------------------------------------------
 #: Most clips one project may hold (env ``MUVID_FOOTAGE_MAX_CLIPS``).
 MAX_CLIPS = int(os.environ.get("MUVID_FOOTAGE_MAX_CLIPS", "8"))
+#: Most photos one project may hold (env ``MUVID_FOOTAGE_MAX_STILLS``) — separate from
+#: :data:`MAX_CLIPS`: a photo costs no decode at cut time and a day out is dozens of them.
+MAX_STILLS = int(os.environ.get("MUVID_FOOTAGE_MAX_STILLS", "40"))
+#: The file types taken as a photo rather than a video (lower-case, with the dot).
+STILL_SUFFIXES = (".jpg", ".jpeg", ".png", ".webp", ".bmp", ".tif", ".tiff")
+#: A stored photo's longest side, pixels: enough for a 4K canvas with a Ken Burns zoom,
+#: small enough that a 48-megapixel phone photo does not cost every cut a big decode.
+STILL_MAX_SIDE = 3840
+#: What a clip's ``has_song`` may say: ``auto`` (the default — believe the listening),
+#: ``yes`` (it is a recording of the song: sync it, never cut it to the music) or ``no``
+#: (it is not: always cut it to the music).
+HAS_SONG_CHOICES = ("auto", "yes", "no")
 #: Largest clip file accepted, bytes (env ``MUVID_FOOTAGE_MAX_BYTES``).
 CLIP_MAX_BYTES = int(os.environ.get("MUVID_FOOTAGE_MAX_BYTES", str(400 * 1024 * 1024)))
 #: Longest clip accepted, seconds (env ``MUVID_FOOTAGE_MAX_CLIP_DURATION_S``).
@@ -162,19 +174,31 @@ def add_clip(
     ext: str = "",
     duration_s: Optional[float] = None,
 ) -> dict:
-    """Add one footage video — a recording of the song — to the project.
+    """Add one video or photo to the project.
+
+    A video that is a recording of the song (a concert, a dance) is synced to it once
+    ``align`` has listened to it; any other video, and every photo, is cut to the music
+    instead (``propose_edit``). A photo (a file ending in one of
+    :data:`STILL_SUFFIXES`) is stored upright and at most :data:`STILL_MAX_SIDE` pixels
+    on its longest side, and moves on screen with a pan or zoom.
 
     The file arrives from the host (an upload): ``path`` is where the host put it and
     ``filename`` its original name; it is copied into the project. ``name`` is what the
     video is called on screen (default: the original file name without its extension). ``clip_id`` fixes the id (default: a fresh one); an id already in the
     project is refused. Size-, duration- and count-capped.
 
-    Run ``align`` afterwards: a new clip has no place on the song until then. Returns
-    the ``clip_id``, its ``name`` and ``duration`` (and ``artifact_id`` when hosted).
+    Run ``align`` afterwards: listening is how a video with the song in it gets its
+    place on the song. Returns the ``clip_id``, its ``name`` and ``duration`` (and
+    ``artifact_id`` when hosted); a photo also ``kind: "still"``, ``width``, ``height``.
     """
-    known = {c["clip_id"] for c in fp.list_clips()}
-    if len(known) >= MAX_CLIPS:
-        raise FootageError(f"clip limit reached ({MAX_CLIPS}); this is a bounded v1")
+    rows = fp.list_clips()
+    known = {c["clip_id"] for c in rows}
+    still = _is_still_name(filename or str(path), ext)
+    n_stills = sum(1 for c in rows if c.get("kind") == STILL_KIND)
+    if still and n_stills >= MAX_STILLS:
+        raise FootageError(f"photo limit reached ({MAX_STILLS}); this is a bounded v1")
+    if not still and len(known) - n_stills >= MAX_CLIPS:
+        raise FootageError(f"video limit reached ({MAX_CLIPS}); this is a bounded v1")
     clip_id = _normalised_id(clip_id, label="clip_id") if clip_id else ""
     if clip_id and clip_id in known:
         raise FootageError(
@@ -183,6 +207,8 @@ def add_clip(
         )
     src = _existing_file(path, what="clip")
     _refuse_oversize(src, cap=CLIP_MAX_BYTES, what="clip")
+    if still:
+        return _add_still(fp, src, clip_id=clip_id, name=name, filename=filename)
     dur = float(duration_s) if duration_s is not None else _probe_duration(src)
     if dur > CLIP_MAX_DURATION_S:
         raise FootageError(
@@ -199,6 +225,195 @@ def add_clip(
     if row.get("artifact_id"):
         out["artifact_id"] = row["artifact_id"]
     return out
+
+
+STILL_KIND = "still"
+
+
+def _is_still_name(name: str, ext: str = "") -> bool:
+    suffix = ("." + ext.lstrip(".")) if ext else Path(name or "").suffix
+    return suffix.lower() in STILL_SUFFIXES
+
+
+def _add_still(fp, src: Path, *, clip_id: str, name: str, filename: str) -> dict:
+    """Store a photo upright (its EXIF orientation applied — a phone portrait is stored
+    sideways otherwise, and ffmpeg does not turn it), RGB, as JPEG, bounded in size."""
+    import tempfile
+
+    try:
+        from PIL import Image, ImageOps
+    except ImportError as e:  # pragma: no cover - pillow ships with the scoring extra
+        raise FootageError(f"adding photos needs Pillow ({e})") from e
+    try:
+        with Image.open(src) as im:
+            im = ImageOps.exif_transpose(im).convert("RGB")
+            im.thumbnail((STILL_MAX_SIDE, STILL_MAX_SIDE))
+            with tempfile.TemporaryDirectory() as tmp:
+                normalised = Path(tmp) / "still.jpg"
+                im.save(normalised, "JPEG", quality=92)
+                width, height = im.size
+                cid = clip_id or uuid.uuid4().hex[:_CLIP_ID_HEX]
+                label = name or (Path(filename).stem if filename else "") or cid
+                fp.add_clip(cid, str(normalised), ext="jpg", name=label, kind=STILL_KIND)
+    except (OSError, ValueError) as e:  # PIL's "cannot identify image file" is an OSError
+        raise FootageError(f"could not read {src.name!r} as a photo: {e}") from e
+    _ensure_cover(fp)
+    out = {"clip_id": cid, "name": label, "kind": STILL_KIND, "duration": None,
+           "width": width, "height": height}
+    row = next((c for c in fp.list_clips() if c["clip_id"] == cid), {})
+    if row.get("artifact_id"):
+        out["artifact_id"] = row["artifact_id"]
+    return out
+
+
+def set_has_song(
+    fp, *, clip_id: str, has_song: Literal["auto", "yes", "no"]
+) -> dict:
+    """Say whether a video has the song in its own sound — overriding what listening found.
+
+    ``"yes"``: it is a recording of the song (a concert, a dance); it is synced to the
+    song and never cut freely to the music. ``"no"``: it is not (a day out, b-roll); it
+    is always cut to the music. ``"auto"`` (the default) believes the listening: a
+    video ``align`` placed confidently is synced, any other is cut to the music. A
+    photo is always cut to the music. Like a hand-placed offset, the choice survives
+    listening again. Takes effect at the next ``propose_edit``.
+    """
+    cid = _normalised_id(clip_id, label="clip_id")
+    if has_song not in HAS_SONG_CHOICES:
+        raise FootageError(
+            f"has_song must be one of {list(HAS_SONG_CHOICES)}, got {has_song!r}"
+        )
+    m = fp.manifest()
+    row = next((c for c in m.get("clips", []) if c.get("clip_id") == cid), None)
+    if row is None:
+        raise FootageError(_unknown_clip_message(cid, fp.list_clips()))
+    if row.get("kind") == STILL_KIND and has_song != "auto":
+        raise FootageError("a photo has no sound — it is always cut to the music")
+    if has_song == "auto":
+        row.pop("has_song", None)
+    else:
+        row["has_song"] = has_song
+    fp._write_manifest(m)
+    placements = {a.clip_id: a for a in fp.load_alignments()}
+    return {"clip_id": cid, "has_song": has_song,
+            "role": _role_of(row, placements.get(cid))}
+
+
+#: A clip's role in the edit: SYNCED to the song where it was filmed, or cut FREEly to
+#: the music (:mod:`muvid.footage.music_cut`).
+SYNCED, FREE_ROLE = "synced", "to_the_music"
+
+
+def _role_of(row: dict, alignment) -> str:
+    """The one rule that decides whether a clip is synced or cut to the music."""
+    if row.get("kind") == STILL_KIND:
+        return FREE_ROLE
+    has = row.get("has_song", "auto")
+    if has == "yes":
+        return SYNCED
+    if has == "no":
+        return FREE_ROLE
+    return SYNCED if alignment is not None and alignment.reliable else FREE_ROLE
+
+
+def _placements(fp) -> list:
+    """A placement for EVERY clip: its alignment where it has one, else an UNPLACED
+    record (never persisted) carrying its duration — what a free cut needs to be
+    validated and rendered. A photo's duration is the bound
+    :data:`~muvid.footage.edl.STILL_DURATION_S`."""
+    from muvid.footage.edl import STILL_DURATION_S, unplaced
+
+    aligns = fp.load_alignments()
+    have = {a.clip_id for a in aligns}
+    out = list(aligns)
+    for c in fp.manifest().get("clips", []):
+        cid = c["clip_id"]
+        if cid in have:
+            continue
+        if c.get("kind") == STILL_KIND:
+            out.append(unplaced(cid, STILL_DURATION_S))
+        else:
+            out.append(unplaced(cid, _clip_duration(fp, cid)))
+    return out
+
+
+def footage_roles(fp) -> dict:
+    """``{clip_id: "synced" | "to_the_music"}`` — how ``propose_edit`` will use each clip."""
+    by_id = {a.clip_id: a for a in fp.load_alignments()}
+    return {
+        c["clip_id"]: _role_of(c, by_id.get(c["clip_id"]))
+        for c in fp.manifest().get("clips", [])
+    }
+
+
+def _free_sources(fp, placements) -> list:
+    """The clips and photos to cut to the music, as :class:`music_cut.FreeSource`."""
+    from muvid.footage.music_cut import STILL, VIDEO, FreeSource
+
+    by_id = {a.clip_id: a for a in fp.load_alignments()}
+    paths = fp.clip_paths()
+    out = []
+    for c in fp.manifest().get("clips", []):
+        cid = c["clip_id"]
+        if _role_of(c, by_id.get(cid)) != FREE_ROLE:
+            continue
+        still = c.get("kind") == STILL_KIND
+        out.append(
+            FreeSource(
+                clip_id=cid,
+                path=paths[cid],
+                kind=STILL if still else VIDEO,
+                duration_s=None if still else _clip_duration(fp, cid),
+            )
+        )
+    return out
+
+
+def _activity_envelope(fp, source):
+    """A video's picture-change envelope, measured once and kept (``beats/``)."""
+    from muvid.footage import beats as bs
+    from muvid.footage.music_cut import Envelope
+
+    path = Path(source.path)
+    try:
+        record = bs.cached_signals(
+            fp.root,
+            _recorded_clip_hash(fp, source.clip_id, path),
+            bs.ACTIVITY,
+            lambda: bs.activity_signal(path),
+        )
+    except (ImportError, ValueError, OSError):
+        return None  # unmeasurable: the planner's blind stride, never a failure
+    return Envelope.from_signals(record.get("signals") or {})
+
+
+def _music_fill(fp, entries, sources, song_dur, *, pace: str = "", canvas=None):
+    """Replace the gap entries of ``entries`` with free cuts of ``sources`` cut to the
+    music; ``(entries, report)``. The synced cuts are untouched."""
+    from muvid.footage.assemble import DEFAULT_FPS
+    from muvid.footage.edl import fill_gaps
+    from muvid.footage.music_cut import fill_spans
+
+    entries = fill_gaps(entries, song_dur) if entries else []
+    gaps = (
+        [(e.song_start, e.song_end) for e in entries if e.is_gap]
+        if entries
+        else [(0.0, song_dur)]
+    )
+    if not gaps or not sources:
+        return entries, None
+    cut = fill_spans(
+        str(fp.song_path()),
+        sources,
+        spans=gaps,
+        song_duration=song_dur,
+        cut_feel=pace,
+        envelope_of=lambda s: _activity_envelope(fp, s),
+        canvas=canvas or fp.canvas(),
+        fps=DEFAULT_FPS,
+    )
+    kept = [e for e in entries if not e.is_gap]
+    return fill_gaps(sorted(kept + cut.entries, key=lambda e: e.song_start), song_dur), cut.report
 
 
 def remove_clip(fp, *, clip_id: str) -> dict:
@@ -275,6 +490,8 @@ def status(fp) -> dict:
         "renders": render_rows,
         "song": fp.song_info(),
         "alignments": [_alignment_row(a) for a in aligns],
+        # how "Cut it for me" will use each clip: synced, or cut to the music
+        "roles": footage_roles(fp),
         "edits": edit_rows,
         "next_step": _next_step(fp, aligns, edit_rows, render_rows),
     }
@@ -298,21 +515,25 @@ def _alignment_row(a: FootageAlignment) -> dict:
 
 def _next_step(fp, aligns, edit_rows, render_rows) -> dict:
     """The one operation that moves the project forward, and why — in workflow order."""
-    clip_ids = {c["clip_id"] for c in fp.list_clips()}
+    rows = fp.list_clips()
+    clip_ids = {c["clip_id"] for c in rows}
+    video_ids = {c["clip_id"] for c in rows if c.get("kind") != STILL_KIND}
+    said_yes = {c["clip_id"] for c in rows if c.get("has_song") == "yes"}
     aligned = {a.clip_id for a in aligns}
     steps = (
         (not fp.has_song(), "set_song", "there is no song yet"),
-        (not clip_ids, "add_clip", "there are no videos yet"),
+        (not clip_ids, "add_clip", "there are no videos or photos yet"),
         (
-            not clip_ids <= aligned,
+            not video_ids <= aligned,
             "align",
-            "some videos have no place on the song yet",
+            "some videos have not been listened to yet — listening is how a video "
+            "with the song in it gets synced (the others are cut to the music)",
         ),
         (
-            any(not a.reliable for a in aligns),
+            any(not a.reliable and a.clip_id in said_yes for a in aligns),
             "set_offset",
-            "some offsets are not trustworthy — place those videos by hand, or leave "
-            "them out of the edit",
+            "a video you said has the song in it could not be placed by listening — "
+            "place it by hand",
         ),
         (not edit_rows, "propose_edit", "there is no edit yet"),
         (not render_rows, "render", "no edit has been made into a video yet"),
@@ -339,11 +560,13 @@ def align(fp) -> dict:
     whole-clip measurement), and its coverage of the song, plus these lists:
 
     - ``low_confidence`` — clips that matched weakly, for reporting;
-    - ``unreliable`` — clips whose offset the aligner will NOT vouch for. These stay in
-      the project and stay addressable, and the auto path simply prefers other clips
-      over them: a span another clip covers goes to that clip, and a span only an
-      unreliable clip covers is left as a gap and reported in ``coverage.excluded``
-      (muvid#88). Rendering still REFUSES an explicit edit that cuts to one, and still
+    - ``unreliable`` — clips whose offset the aligner will NOT vouch for: most often a
+      video that simply does not have the song in it (a day out, b-roll). These stay
+      in the project, and ``propose_edit`` cuts them TO the music instead of syncing
+      them (``footage_roles``) — unless a person said they have the song
+      (``set_has_song yes``), in which case the auto path prefers other clips over
+      them and a span only they cover is left as a gap, reported in
+      ``coverage.excluded`` (muvid#88). Rendering still REFUSES an explicit edit that cuts to one, and still
       refuses an auto edit when NO clip is trustworthy, unless called with
       ``allow_unreliable=true`` — because a wrong offset does not fail, it renders a
       video out of sync with the song (muvid#59). Re-align, place the clip by hand
@@ -370,9 +593,12 @@ def align(fp) -> dict:
 
     if not fp.has_song():
         raise FootageError("no song set — call set_song first")
-    clips = list(fp.clip_paths().items())
+    stills = {c["clip_id"] for c in fp.list_clips() if c.get("kind") == STILL_KIND}
+    clips = [(cid, p) for cid, p in fp.clip_paths().items() if cid not in stills]
     if not clips:
-        raise FootageError("no footage added — call add_footage first")
+        raise FootageError(
+            "no videos to listen to — add a video (photos have no sound to place them by)"
+        )
     previous = fp.load_alignments()
     declared = {a.clip_id: a for a in previous if a.source == DECLARED}
     to_measure = [(cid, p) for cid, p in clips if cid not in declared]
@@ -1003,6 +1229,7 @@ EDL_OPTIONAL_FIELDS = (
     ("look_spec", dict, None),
     ("slip_s", float, 0.0),
     ("rate", float, 1.0),
+    ("source_in", float, None),
 )
 
 
@@ -1063,7 +1290,8 @@ def coverage_report(
             "margin": _round_opt(by_id[e.clip_id].margin),
         }
         for e in entries
-        if e.clip_id in by_id and not by_id[e.clip_id].reliable
+        # a free cut claims no sync, so its clip's placement cannot make it weak
+        if e.clip_id in by_id and not by_id[e.clip_id].reliable and not e.is_free
     ]
     covered_s = sum(hi - lo for lo, hi in covered)
     length = hi_bound - lo_bound
@@ -1121,12 +1349,40 @@ def _auto_edl(aligns, song_dur: float, *, strategy, context, recover: bool):
 
 
 def _require_song_and_alignment(fp) -> list:
+    """The song is set and there is footage; returns a placement for EVERY clip
+    (:func:`_placements`) — an edit may cut a clip to the music without its ever having
+    been placed on the song."""
     if not fp.has_song():
         raise FootageError("no song set — call set_song first")
-    aligns = fp.load_alignments()
-    if not aligns:
-        raise FootageError("no alignment — call align_footage first")
-    return aligns
+    if not fp.list_clips():
+        raise FootageError("no footage added — call add_clip first")
+    return _placements(fp)
+
+
+def _auto_edit(fp, placements, song_dur, *, strategy, context, recover, pace="",
+               canvas=None):
+    """The auto path, synced half then music half: the strategy cuts the clips that
+    carry the song (:func:`_role_of`); every span it leaves empty is cut to the music
+    from the rest and the photos (:func:`_music_fill`). ``(entries, excluded, music)``
+    where ``music`` is the music-cut report (``None`` when nothing was cut to it)."""
+    roles = footage_roles(fp)
+    synced = [a for a in placements if roles.get(a.clip_id) == SYNCED]
+    # A score-driven strategy is asked even with nothing to sync, so a missing scoring
+    # run is still reported as one rather than quietly bypassed.
+    if synced or context is not None:
+        entries, excluded = _auto_edl(
+            synced, song_dur, strategy=strategy, context=context, recover=recover
+        )
+    else:
+        entries, excluded = [], []
+    free = _free_sources(fp, placements)
+    entries, music = _music_fill(fp, entries, free, song_dur, pace=pace, canvas=canvas)
+    if not entries:
+        raise FootageError(
+            "nothing to cut: no video has a confident place on the song, and there are "
+            "no other videos or photos to cut to the music"
+        )
+    return entries, excluded, music
 
 
 def _check_span(fp, span) -> Optional[tuple[float, float]]:
@@ -1254,6 +1510,7 @@ def propose_edit(
     save: bool = True,
     name: str = "",
     span: Optional[tuple[float, float]] = None,
+    pace: Literal["", "slow", "steady", "driving", "frantic"] = "",
 ) -> dict:
     """Cut it for me: build an edit of the whole song — or of ``span`` (``[start_s,
     end_s]``, the part of the song the video covers) — from the placed videos, and (by
@@ -1270,6 +1527,15 @@ def propose_edit(
     ``warnings``, and ``assemble_refusal`` (non-null when rendering it would be refused
     because no clip is trustworthy). With ``save`` it also returns the ``edit_id`` to
     change it (``set_cut`` …) and render it (``render``).
+
+    **Footage that does not contain the song is cut to the music.** The strategy cuts
+    only the videos that are recordings of the song (placed confidently by ``align``,
+    or marked ``set_has_song yes``); every span they leave is filled from the other
+    videos and the photos, cut on the song's beats and bars, each video shown at the
+    stretch whose picture changes land on the beat (``music`` in the reply says how
+    that went). With no recording of the song at all, the whole song is cut to the
+    music — no ``align`` needed. ``pace`` (``slow``/``steady``/``driving``/``frantic``)
+    sets how often those cuts come.
     """
     from muvid.footage.edl import validate_edl
     from muvid.footage.strategy import DEFAULT_STRATEGY
@@ -1281,8 +1547,9 @@ def propose_edit(
     strat = strategy or ("weighted" if has_selection_config else DEFAULT_STRATEGY)
     try:
         context = _selection_context(fp, strat, preset, weights, config)
-        proposal, excluded = _auto_edl(
-            aligns, song_dur, strategy=strat, context=context, recover=True
+        proposal, excluded, music = _auto_edit(
+            fp, aligns, song_dur, strategy=strat, context=context, recover=True,
+            pace=pace,
         )
         if span is not None:
             excluded = [
@@ -1305,6 +1572,8 @@ def propose_edit(
         raise FootageError(f"could not build a valid edit: {e}") from e
     out = {
         "strategy": strat,
+        "music": music,
+        "roles": footage_roles(fp),
         "edl": [edl_json(e) for e in entries],
         "assemble_refusal": assemble_refusal(window, aligns, song_dur, fp.canvas()),
         "coverage": coverage_report(
@@ -1324,10 +1593,12 @@ def propose_edit(
             ("preset", preset),
             ("weights", weights),
             ("config", config),
+            ("pace", pace),
         ):
             if value:
                 selection[key] = value
-        how = f"cut automatically ({strat}{', ' + preset if preset else ''})"
+        how = f"cut automatically ({strat}{', ' + preset if preset else ''}"
+        how += (", the rest cut to the music)" if music else ")")
         record = _new_edit_record(
             fp, out["edl"], name=name or _default_edit_name(fp), how_made=how, span=span
         )
@@ -1821,7 +2092,7 @@ def fit_to_beat(
 
     from muvid.footage import beats as bs
     from muvid.footage.beat_fit import FIT_MIN_BEATS, BeatGrid, fit_cut
-    from muvid.footage.edl import _clip_contains
+    from muvid.footage.edl import _clip_contains, placed_as
 
     record, entries = _edit_entries(fp, edit_id)
     grid = BeatGrid.fitted(beat_grid(fp)["beats"])
@@ -1844,7 +2115,7 @@ def fit_to_beat(
         if indices is None
         else sorted({_check_index(entries, int(i)) for i in indices})
     )
-    aligns = {a.clip_id: a for a in fp.load_alignments()}
+    aligns = {a.clip_id: a for a in _placements(fp)}
     accents: dict = {}
 
     def accents_of(clip_id: str):
@@ -1882,6 +2153,8 @@ def fit_to_beat(
             )
             continue
         a = aligns.get(e.clip_id)
+        # a free cut is fitted through the placement its own in-point implies
+        a = placed_as(e, a) if a is not None else None
         sig = accents_of(e.clip_id)
         if a is None or sig is None:
             report.append(
@@ -2228,7 +2501,10 @@ def _edit_check(fp, record: dict) -> tuple[Optional[str], list, list]:
 
     if not fp.has_song():
         return "no song set", [], []
-    aligns = fp.load_alignments()
+    try:
+        aligns = _placements(fp)
+    except FootageError as e:
+        return str(e), [], []
     try:
         entries = validate_edl(
             record.get("edl") or [],
@@ -2294,7 +2570,7 @@ def _edit_reply(fp, record: dict) -> dict:
     if entries:
         reply["coverage"] = coverage_report(
             [e for e in entries if not e.is_gap],
-            fp.load_alignments(),
+            _placements(fp),
             fp.song_duration(),
             span=_span_of(record),
         )
@@ -2419,12 +2695,14 @@ def assemble(
                     f"selection config only applies to strategy='weighted' (got {strat!r})"
                 )
             context = _selection_context(fp, strat, preset, weights, config)
-            proposal, excluded = _auto_edl(
+            proposal, excluded, _music = _auto_edit(
+                fp,
                 aligns,
                 song_dur,
                 strategy=strat,
                 context=context,
                 recover=not allow_unreliable,
+                canvas=canvas_wh,
             )
             entries = validate_edl(
                 proposal,
@@ -2803,7 +3081,11 @@ def _probe_duration(path: Path) -> float:
 
 def _clip_duration(fp, clip_id: str) -> float:
     """A clip's duration: recorded at add time, else measured (and then recorded)."""
+    from muvid.footage.edl import STILL_DURATION_S
+
     for c in fp.manifest().get("clips", []):
+        if c.get("clip_id") == clip_id and c.get("kind") == STILL_KIND:
+            return STILL_DURATION_S  # a photo can be held for any span
         if c.get("clip_id") == clip_id and c.get("duration") is not None:
             return float(c["duration"])
     dur = _probe_duration(Path(fp.clip_paths()[clip_id]))
@@ -2885,7 +3167,10 @@ def grab_cover_frame(video, dest) -> None:
     from muvid.visualize.ffmpeg import run_ffmpeg
 
     video, dest = Path(video), Path(dest)
-    at = max(0.0, _probe_duration(video) * COVER_AT_FRACTION)
+    # a photo is its own cover: no duration to seek a fraction into
+    at = 0.0 if _is_still_name(video.name) else max(
+        0.0, _probe_duration(video) * COVER_AT_FRACTION
+    )
     run_ffmpeg(
         [
             "-ss",
@@ -2943,16 +3228,17 @@ FOOTAGE_OP_SPECS: tuple[OpSpec, ...] = (
     ),
     OpSpec(
         "add_clip",
-        "Add a video",
+        "Add a video or photo",
         "write",
         hide=("duration_s", "ext"),
         host_params=("path", "filename"),
         max_upload_bytes=CLIP_MAX_BYTES,
     ),
     OpSpec("remove_clip", "Remove a video", "destroy"),
-    OpSpec("align", "Find where each video fits", "write", runs="job"),
+    OpSpec("align", "Listen to the videos", "write", runs="job"),
     OpSpec("set_offset", "Place a video on the song by hand", "write"),
     OpSpec("clear_offset", "Forget where I placed this video", "destroy"),
+    OpSpec("set_has_song", "Say whether a video has the song in it", "write"),
     OpSpec("timeline", "Show which videos cover which parts of the song", "read"),
     OpSpec("beat_grid", "Find the beat", "read"),
     OpSpec("peaks", "Show the song's waveform", "read"),
