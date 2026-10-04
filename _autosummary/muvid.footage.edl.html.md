@@ -44,6 +44,8 @@ implicitly, so spans stay one-per-song-span and nothing about reading an EDL cha
 | [`MIN_SUPPORT`](#muvid.footage.edl.MIN_SUPPORT)         | Support must EXCEED this for an offset to be vouched for (env `MUVID_FOOTAGE_MIN_SUPPORT`).                                                                                                                                                                     |
 | [`MIN_MARGIN`](#muvid.footage.edl.MIN_MARGIN)          | Margin must EXCEED this for an offset to be vouched for (env `MUVID_FOOTAGE_MIN_MARGIN`).                                                                                                                                                                       |
 | [`MEASURED`](#muvid.footage.edl.MEASURED)            | the aligner found the offset, or a person set it.                                                                                                                                                                                                               |
+| [`UNPLACED`](#muvid.footage.edl.UNPLACED)            | Two more `source` values, for records that are NEVER persisted.                                                                                                                                                                                                 |
+| [`STILL_DURATION_S`](#muvid.footage.edl.STILL_DURATION_S)    | it can be held for any span of song, so its duration is a bound rather than a measurement — longer than any song muvid takes.                                                                                                                                   |
 | [`SLIP_MAX_S`](#muvid.footage.edl.SLIP_MAX_S)          | about one beat at 128 BPM.                                                                                                                                                                                                                                      |
 | [`RATE_MAX_DEV`](#muvid.footage.edl.RATE_MAX_DEV)        | 8 %, a nudge that keeps a dancer looking like themselves.                                                                                                                                                                                                       |
 | [`NO_VOUCHED_COVERAGE`](#muvid.footage.edl.NO_VOUCHED_COVERAGE) | nothing the aligner vouches for covers it at all.                                                                                                                                                                                                               |
@@ -53,15 +55,17 @@ implicitly, so spans stay one-per-song-span and nothing about reading an EDL cha
 
 ### Functions
 
-| [`clip_in_of`](#muvid.footage.edl.clip_in_of)(e, a)                                 | Where cut `e` starts in its clip `a`'s own time — THE sign convention: `song_start - offset + slip`.                                                             |
-|---------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| [`clip_time_at`](#muvid.footage.edl.clip_time_at)(e, a, t)                            | The moment of clip `a` cut `e` shows at song time `t` — the cut's affine map, `clip_in_of(e) + rate * (t - song_start)`.                                         |
-| [`derive_cuts`](#muvid.footage.edl.derive_cuts)(edl, alignments, clip_paths)         | Turn a *validated* EDL into render-ready cuts — the ONE place `clip_in` is derived.                                                                              |
-| [`exclude_unvouched`](#muvid.footage.edl.exclude_unvouched)(edl, alignments)               | Set aside the spans of an AUTO edit whose only footage is unvouched (muvid#88).                                                                                  |
-| [`fill_gaps`](#muvid.footage.edl.fill_gaps)(entries, song_duration, \*[, start])   | Make an edit span the WHOLE song by inserting explicit gap entries.                                                                                              |
-| [`validate_edl`](#muvid.footage.edl.validate_edl)(edl, alignments, song_duration, \*) | Validate an EDL (from a strategy OR a caller) — the ONE gate before any cutting.                                                                                 |
-| [`vouches_for`](#muvid.footage.edl.vouches_for)(\*, confidence, support[, ...])      | Does the aligner vouch for this offset? The ONE place that verdict is reached.                                                                                   |
-| [`with_start`](#muvid.footage.edl.with_start)(e, start, \*[, bounded])              | `e` starting at song time `start` and showing, at every moment it still covers, exactly the footage it showed before — its map from song time to clip time kept. |
+| [`clip_in_of`](#muvid.footage.edl.clip_in_of)(e, a)                                 | Where cut `e` starts in its clip `a`'s own time — THE sign convention: `song_start - offset + slip` — or, for a free cut, `source_in + slip`, the alignment playing no part.   |
+|---------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [`clip_time_at`](#muvid.footage.edl.clip_time_at)(e, a, t)                            | The moment of clip `a` cut `e` shows at song time `t` — the cut's affine map, `clip_in_of(e) + rate * (t - song_start)`.                                                       |
+| [`derive_cuts`](#muvid.footage.edl.derive_cuts)(edl, alignments, clip_paths)         | Turn a *validated* EDL into render-ready cuts — the ONE place `clip_in` is derived.                                                                                            |
+| [`exclude_unvouched`](#muvid.footage.edl.exclude_unvouched)(edl, alignments)               | Set aside the spans of an AUTO edit whose only footage is unvouched (muvid#88).                                                                                                |
+| [`fill_gaps`](#muvid.footage.edl.fill_gaps)(entries, song_duration, \*[, start])   | Make an edit span the WHOLE song by inserting explicit gap entries.                                                                                                            |
+| [`placed_as`](#muvid.footage.edl.placed_as)(e, a)                                  | The placement cut `e` reads its clip `a` through — THE free-cut rule.                                                                                                          |
+| [`unplaced`](#muvid.footage.edl.unplaced)(clip_id, duration_s)                    | The record of a clip with no place on the song: usable by free cuts only.                                                                                                      |
+| [`validate_edl`](#muvid.footage.edl.validate_edl)(edl, alignments, song_duration, \*) | Validate an EDL (from a strategy OR a caller) — the ONE gate before any cutting.                                                                                               |
+| [`vouches_for`](#muvid.footage.edl.vouches_for)(\*, confidence, support[, ...])      | Does the aligner vouch for this offset? The ONE place that verdict is reached.                                                                                                 |
+| [`with_start`](#muvid.footage.edl.with_start)(e, start, \*[, bounded])              | `e` starting at song time `start` and showing, at every moment it still covers, exactly the footage it showed before — its map from song time to clip time kept.               |
 
 ### Classes
 
@@ -175,7 +179,7 @@ it for free.
 
 Every reason [`exclude_unvouched()`](#muvid.footage.edl.exclude_unvouched) can give, for a caller matching on the value.
 
-### *class* muvid.footage.edl.EdlEntry(song_start, song_end, clip_id, transition=None, crop=None, crop_end=None, look=None, look_time_varying=False, look_spec=None, slip_s=0.0, rate=1.0)
+### *class* muvid.footage.edl.EdlEntry(song_start, song_end, clip_id, transition=None, crop=None, crop_end=None, look=None, look_time_varying=False, look_spec=None, slip_s=0.0, rate=1.0, source_in=None)
 
 Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
@@ -201,6 +205,10 @@ which is a different and much less robust thing than a pan. A push-in is
 expressed as a *different* fixed window on the *next* cut, or — since the
 `looks` seam below — as a `look` carrying a `zoompan` ramp, which is
 the one filter that CAN resize its window mid-cut (muvid#66).
+
+#### *property* is_free *: [bool](https://docs.python.org/3/builtins/functions.html#bool)*
+
+A free cut ([`source_in`](#muvid.footage.edl.EdlEntry.source_in) set) — cut to the music, not synced to it.
 
 #### look *: [str](https://docs.python.org/3/builtins/stdtypes.html#str) | [None](https://docs.python.org/3/builtins/constants.html#None)* *= None*
 
@@ -302,6 +310,19 @@ property and needs no speed change. Bounded by [`SLIP_MAX_S`](#muvid.footage.edl
 
 * **Type:**
   **Slip**
+
+#### source_in *: [float](https://docs.python.org/3/builtins/functions.html#float) | [None](https://docs.python.org/3/builtins/constants.html#None)* *= None*
+
+**Free placement** — the cut shows its clip from `source_in` seconds of the
+clip’s OWN time, whatever the clip’s alignment says. `None` (the default) is an
+ANCHORED cut: footage time follows from where the clip sits on the song
+(`song_start - offset + slip`), which is what a recording of the song needs.
+A free cut is what footage that does NOT contain the song needs — holiday clips,
+b-roll, stills — cut to the music rather than synced to it: its map is
+`source_in + slip + rate * (t - song_start)` ([`clip_in_of()`](#muvid.footage.edl.clip_in_of)), and since it
+claims no sync there is nothing for the aligner to vouch for (see
+[`placed_as()`](#muvid.footage.edl.placed_as)). Additive in both directions, like the rest: an EDL without it
+means what it always meant.
 
 #### transition *: [Transition](#muvid.footage.edl.Transition) | [None](https://docs.python.org/3/builtins/constants.html#None)* *= None*
 
@@ -671,6 +692,14 @@ larger than a beat is a different alignment, which is `set_offset`’s job.
 * **Type:**
   The largest slip a cut may carry, either way (s)
 
+### muvid.footage.edl.STILL_DURATION_S *= 3600.0*
+
+it can be held for any span of song, so
+its duration is a bound rather than a measurement — longer than any song muvid takes.
+
+* **Type:**
+  How long a still image “lasts” as a source
+
 ### muvid.footage.edl.TRANSITION_CURVES *= frozenset({'circleclose', 'circleopen', 'dissolve', 'fade', 'fadeblack', 'fadewhite', 'slidedown', 'slideleft', 'slideright', 'slideup', 'smoothleft', 'smoothright', 'wipedown', 'wipeleft', 'wiperight', 'wipeup'})*
 
 The transition curves muvid offers. A curated subset of ffmpeg’s 58 `xfade`
@@ -718,6 +747,14 @@ heavily-cut edit for a purely presentational reason.)
 A transition on the FIRST entry is rejected, not ignored: there is no
 predecessor to blend from, so it is a request that cannot be honoured, and
 honouring nothing quietly is how a direction gets lost.
+
+### muvid.footage.edl.UNPLACED *= 'unplaced'*
+
+Two more `source` values, for records that are NEVER persisted. `UNPLACED` stands
+for a clip (or a still) nobody has placed on the song — [`unplaced()`](#muvid.footage.edl.unplaced) — so that a
+free cut ([`EdlEntry.source_in`](#muvid.footage.edl.EdlEntry.source_in)) can still find its clip’s duration through the
+same table every other cut uses. `FREE` is what [`placed_as()`](#muvid.footage.edl.placed_as) derives for one
+free cut: the placement the cut itself implies.
 
 ### muvid.footage.edl.UNVOUCHED_SELECTION *= 'unvouched_selection'*
 
@@ -767,8 +804,9 @@ The offending clips, in EDL order — so a caller can re-align exactly these.
 ### muvid.footage.edl.clip_in_of(e, a)
 
 Where cut `e` starts in its clip `a`’s own time — THE sign convention:
-`song_start - offset + slip`. UNCLAMPED (a caller checking containment must see
-a negative in-point); [`derive_cuts()`](#muvid.footage.edl.derive_cuts) clamps for the renderer.
+`song_start - offset + slip` — or, for a free cut, `source_in + slip`, the
+alignment playing no part. UNCLAMPED (a caller checking containment must see a
+negative in-point); [`derive_cuts()`](#muvid.footage.edl.derive_cuts) clamps for the renderer.
 
 * **Return type:**
   [`float`](https://docs.python.org/3/builtins/functions.html#float)
@@ -873,6 +911,45 @@ rule; the tests pin both so the coherence stays deliberate.
 
 * **Return type:**
   [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`EdlEntry`](#muvid.footage.edl.EdlEntry)]
+
+### muvid.footage.edl.placed_as(e, a)
+
+The placement cut `e` reads its clip `a` through — THE free-cut rule.
+
+An anchored cut reads the clip’s own alignment, unchanged. A free cut reads the
+placement it implies itself — offset `song_start - source_in` — which it vouches
+for by construction (it claims no sync with the song), so every containment and
+blend check below applies to it with no second code path, and the trust gate has
+nothing to refuse.
+
+* **Return type:**
+  [`FootageAlignment`](#muvid.footage.edl.FootageAlignment)
+
+```pycon
+>>> a = unplaced('c1', 10.0)
+>>> e = EdlEntry(song_start=30.0, song_end=34.0, clip_id='c1', source_in=2.0)
+>>> p = placed_as(e, a)
+>>> p.offset_s, p.reliable, p.source, p.duration_s
+(28.0, True, 'free', 10.0)
+>>> clip_in_of(e, a)
+2.0
+```
+
+### muvid.footage.edl.unplaced(clip_id, duration_s)
+
+The record of a clip with no place on the song: usable by free cuts only.
+
+Not vouched (an anchored cut to it is refused exactly like a cut to a clip the
+aligner could not place), never overlapping, never persisted.
+
+* **Return type:**
+  [`FootageAlignment`](#muvid.footage.edl.FootageAlignment)
+
+```pycon
+>>> a = unplaced('c1', 12.0)
+>>> a.reliable, a.overlaps, a.source
+(False, False, 'unplaced')
+```
 
 ### muvid.footage.edl.validate_edl(edl, alignments, song_duration, , canvas=(1920, 1920), allow_unreliable=False)
 

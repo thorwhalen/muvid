@@ -68,8 +68,9 @@ beside `peaks/` — derived from media the project holds, expensive to make, che
 
 ### Functions
 
-| [`audio_signals`](#muvid.footage.beats.audio_signals)(path)                                | `{signals: {audio_onset}, beats, tempo_bpm}` for a media file's soundtrack, from `mixing.audio.beat_grid`.                                                                                                                                                                   |
+| [`activity_signal`](#muvid.footage.beats.activity_signal)(path, \*[, sample_fps, ...])       | `{signals: {activity, activity_hits, sharpness}}` — how much the WHOLE picture changes, and how sharp it is while it does.                                                                                                                                                   |
 |-----------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [`audio_signals`](#muvid.footage.beats.audio_signals)(path)                                | `{signals: {audio_onset}, beats, tempo_bpm}` for a media file's soundtrack, from `mixing.audio.beat_grid`.                                                                                                                                                                   |
 | [`visual_signals`](#muvid.footage.beats.visual_signals)(path, \*[, sample_fps, ...])        | `{signals: {motion, motion_stops, motion_stops_local}}` for a video, in one decode pass.                                                                                                                                                                                     |
 | [`has_audio`](#muvid.footage.beats.has_audio)(path)                                    | Whether a media file carries an audio stream (an unprobeable file: no).                                                                                                                                                                                                      |
 | [`fitted_tempo`](#muvid.footage.beats.fitted_tempo)(beats, \*[, min_beats])               | The tempo (BPM) of a steady beat train, fitted to ALL its beats — or `None` when the beats are too few or not steady enough to have one tempo.                                                                                                                               |
@@ -85,9 +86,31 @@ beside `peaks/` — derived from media the project holds, expensive to make, che
 | [`has_signal`](#muvid.footage.beats.has_signal)(record)                                 | Whether a measured record carries at least one sample of anything.                                                                                                                                                                                                           |
 | [`binned_visual_signals`](#muvid.footage.beats.binned_visual_signals)(mids, motion, hists, ...)    | Per-pair rates (at pair midpoints `mids`) averaged into `hop`-second bins.                                                                                                                                                                                                   |
 
-### muvid.footage.beats.SIGNAL_LABELS *= {'audio_onset': 'Sound hits', 'motion': 'Movement', 'motion_stops': 'Moves that stop or turn', 'motion_stops_local': 'Moves that stop, place by place', 'novelty': 'Section changes'}*
+### muvid.footage.beats.SIGNAL_LABELS *= {'activity': 'Picture change', 'activity_hits': 'Picture change hits', 'audio_onset': 'Sound hits', 'motion': 'Movement', 'motion_stops': 'Moves that stop or turn', 'motion_stops_local': 'Moves that stop, place by place', 'novelty': 'Section changes', 'sharpness': 'Sharpness'}*
 
 What each signal is, in the words a screen can use.
+
+### muvid.footage.beats.activity_signal(path, , sample_fps=12.0, width=160, max_seconds=900.0)
+
+`{signals: {activity, activity_hits, sharpness}}` — how much the WHOLE picture
+changes, and how sharp it is while it does.
+
+The mean absolute difference between consecutive small grey frames, camera move
+INCLUDED. That is the deliberate difference from [`visual_signals()`](#muvid.footage.beats.visual_signals), whose
+`motion` takes the camera’s own move out so a pan does not read as a dancer
+moving: in holiday footage and b-roll the camera move IS the event (a pan arriving
+on the abbey, a whip to the dog), and a montage cut wants to land on it.
+
+`activity_hits` is its positive rate of change, the onsets of visual change —
+the visual counterpart of an audio onset envelope, what a montage aligns to the
+song’s beats (Davis & Agrawala’s “visual beats”, in its cheapest form). Values are
+per frame-sample, in [0, 1] units of grey level; one decode pass, no flow.
+`sharpness` is the variance of the frame’s Laplacian (the standard blur measure),
+so a montage can prefer the stretch that is lively AND in focus over a whip-pan
+blur, which changes a lot and shows nothing.
+
+* **Return type:**
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
 
 ### muvid.footage.beats.audio_signals(path)
 

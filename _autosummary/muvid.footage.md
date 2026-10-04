@@ -74,7 +74,7 @@ editorial — on a real 478x850 clip of dancers a whole body does not fit in a
 full-width 16:9 window at all (315-380px of subject into 269px), so “heads or
 feet” is a decision per cut, not a default.
 
-### *class* muvid.footage.EdlEntry(song_start, song_end, clip_id, transition=None, crop=None, crop_end=None, look=None, look_time_varying=False, look_spec=None, slip_s=0.0, rate=1.0)
+### *class* muvid.footage.EdlEntry(song_start, song_end, clip_id, transition=None, crop=None, crop_end=None, look=None, look_time_varying=False, look_spec=None, slip_s=0.0, rate=1.0, source_in=None)
 
 Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
@@ -100,6 +100,10 @@ which is a different and much less robust thing than a pan. A push-in is
 expressed as a *different* fixed window on the *next* cut, or — since the
 `looks` seam below — as a `look` carrying a `zoompan` ramp, which is
 the one filter that CAN resize its window mid-cut (muvid#66).
+
+#### *property* is_free *: [bool](https://docs.python.org/3/builtins/functions.html#bool)*
+
+A free cut ([`source_in`](#muvid.footage.EdlEntry.source_in) set) — cut to the music, not synced to it.
 
 #### look *: [str](https://docs.python.org/3/builtins/stdtypes.html#str) | [None](https://docs.python.org/3/builtins/constants.html#None)* *= None*
 
@@ -201,6 +205,19 @@ property and needs no speed change. Bounded by `SLIP_MAX_S`; `0.0`
 
 * **Type:**
   **Slip**
+
+#### source_in *: [float](https://docs.python.org/3/builtins/functions.html#float) | [None](https://docs.python.org/3/builtins/constants.html#None)* *= None*
+
+**Free placement** — the cut shows its clip from `source_in` seconds of the
+clip’s OWN time, whatever the clip’s alignment says. `None` (the default) is an
+ANCHORED cut: footage time follows from where the clip sits on the song
+(`song_start - offset + slip`), which is what a recording of the song needs.
+A free cut is what footage that does NOT contain the song needs — holiday clips,
+b-roll, stills — cut to the music rather than synced to it: its map is
+`source_in + slip + rate * (t - song_start)` (`clip_in_of()`), and since it
+claims no sync there is nothing for the aligner to vouch for (see
+`placed_as()`). Additive in both directions, like the rest: an EDL without it
+means what it always meant.
 
 #### transition *: [Transition](muvid.footage.edl.md#muvid.footage.edl.Transition) | [None](https://docs.python.org/3/builtins/constants.html#None)* *= None*
 
@@ -788,6 +805,7 @@ Returns the normalized list of [`EdlEntry`](#muvid.footage.EdlEntry).
 | [`lacing_bridge`](muvid.footage.lacing_bridge.md#module-muvid.footage.lacing_bridge) | muvid project → lacing standoff records, and the DECISION tier back to an EDL.                                                                                      |
 | [`look`](muvid.footage.look.md#module-muvid.footage.look)                   | Compile a `looks` artifact into the fragment the assembler splices.                                                                                                 |
 | [`media_views`](muvid.footage.media_views.md#module-muvid.footage.media_views)     | What an editor draws: per-camera filmstrips and the song's waveform peaks.                                                                                          |
+| [`music_cut`](muvid.footage.music_cut.md#module-muvid.footage.music_cut)         | Cut footage to the music — the montage half of a music video.                                                                                                       |
 | [`named_looks`](muvid.footage.named_looks.md#module-muvid.footage.named_looks)     | Named looks — the camera moves and grades a person can pick for a cut.                                                                                              |
 | [`scoring`](muvid.footage.scoring.md#module-muvid.footage.scoring)             | Footage scoring — per-clip score tracks on the shared song-time grid (thorwhalen/muvid#13).                                                                         |
 | [`select_score`](muvid.footage.select_score.md#module-muvid.footage.select_score)   | The score-driven `weighted` selection strategy: a beat-snapped semi-Markov Viterbi DP.                                                                              |

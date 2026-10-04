@@ -21,6 +21,16 @@ gh skill install thorwhalen/muvid muvid-lyric-video --agent claude-code
 
 Source: [`muvid/data/skills/muvid-lyric-video`](https://github.com/thorwhalen/muvid/tree/HEAD/muvid/data/skills/muvid-lyric-video) (bundled with the pip package).
 
+### `muvid-montage`
+
+Cut a person's own videos and photos to a song — the "memories" kind of music video, where the footage does NOT contain the song (a day out, a trip, a party filmed in clips, a folder of photos) and the audio is the song itself. Use when someone has a song plus footage and photos and wants them "put to music", "cut to the beat", "made into a memories video", a slideshow to music, a montage, a recap; when a music video came out mostly black or oddly placed because the clips have no song in their sound; or when deciding whether a clip should be synced to the song or cut to the music. Covers the studio flow, the Python and MCP calls, how each clip's role is decided (and overridden), photos with Ken Burns moves, the pace knob, how the picture is aligned to the beat, and the research behind it (methods, libraries and licences, apps and market, UX).
+
+```bash
+gh skill install thorwhalen/muvid muvid-montage --agent claude-code
+```
+
+Source: [`muvid/data/skills/muvid-montage`](https://github.com/thorwhalen/muvid/tree/HEAD/muvid/data/skills/muvid-montage) (bundled with the pip package).
+
 ### `muvid`
 
 Use when the user wants to make a music video from a song. Triggers on "make a music video", "turn this song into a video", "/muvid", or any work inside a muvid project folder (look for project.json with muvid schema_version). Drives muvid's NARRATIVE, shot-by-shot pipeline: transcribing the lyrics off the audio, aligning them, casting characters, establishing environments, writing the script, rendering shots. Also the router to muvid's one-command surfaces — song in, video out, no project folder: lyric video, karaoke, kinetic typography, concrete poem, CALLIGRAM, audio visualizer, and assembling N phone recordings of one gig. If the user has no audio file, muvid cannot make one — see "muvid needs a song" below.

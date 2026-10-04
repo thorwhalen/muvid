@@ -51,11 +51,12 @@ trust refusal belongs where the encode does, in [`render()`](#muvid.footage.serv
 | [`status`](#muvid.footage.service.status)(fp)                                       | Where the music video stands: the song, the videos and where each sits on the song, the saved edits, the finished videos, and the next useful step.                                                                                                                     |
 |---------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | [`set_song`](#muvid.footage.service.set_song)(fp, \*, path[, ext, filename, ...])     | Set the project's song — the clean master every video is aligned to and whose audio the finished video uses.                                                                                                                                                            |
-| [`add_clip`](#muvid.footage.service.add_clip)(fp, \*, path[, name, filename, ...])    | Add one footage video — a recording of the song — to the project.                                                                                                                                                                                                       |
+| [`add_clip`](#muvid.footage.service.add_clip)(fp, \*, path[, name, filename, ...])    | Add one video or photo to the project.                                                                                                                                                                                                                                  |
 | [`remove_clip`](#muvid.footage.service.remove_clip)(fp, \*, clip_id)                     | Remove one footage video from the project — its stored file and its entry.                                                                                                                                                                                              |
 | [`align`](#muvid.footage.service.align)(fp)                                        | Find where each video sits on the song by listening to its own audio, and save it.                                                                                                                                                                                      |
 | [`set_offset`](#muvid.footage.service.set_offset)(fp, \*, clip_id, offset_s)            | Place one video on the song BY HAND: the song time at which the video's own first frame plays (negative = the video starts before the song does).                                                                                                                       |
 | [`clear_offset`](#muvid.footage.service.clear_offset)(fp, \*, clip_id)                    | Forget where I placed this video: remove a hand-declared offset, so the next `align` measures the clip by its audio instead.                                                                                                                                            |
+| [`set_has_song`](#muvid.footage.service.set_has_song)(fp, \*, clip_id, has_song)          | Say whether a video has the song in its own sound — overriding what listening found.                                                                                                                                                                                    |
 | [`timeline`](#muvid.footage.service.timeline)(fp)                                     | Which videos cover which spans of the song (overlaps shown), from the saved alignment — the map for choosing what to cut to.                                                                                                                                            |
 | [`beat_grid`](#muvid.footage.service.beat_grid)(fp)                                    | The song's beat grid — tempo and beat instants on the song timeline — without looking at the footage.                                                                                                                                                                   |
 | [`peaks`](#muvid.footage.service.peaks)(fp, \*[, n])                               | The song's waveform, to draw under the timeline: `n` equal slices of the song, each the loudest moment in it (mono), scaled so the loudest slice is 1.0.                                                                                                                |
@@ -111,7 +112,7 @@ trust refusal belongs where the encode does, in [`render()`](#muvid.footage.serv
 |-------------------------------------------------------------------|--------------------------------------------------------------------|
 | [`FootageCancelled`](#muvid.footage.service.FootageCancelled) | An operation stopped between steps because its host asked it to.   |
 
-### muvid.footage.service.EDL_OPTIONAL_FIELDS *= (('transition', <function <lambda>>, None), ('crop', <function <lambda>>, None), ('crop_end', <function <lambda>>, None), ('look', <class 'str'>, None), ('look_time_varying', <class 'bool'>, False), ('look_spec', <class 'dict'>, None), ('slip_s', <class 'float'>, 0.0), ('rate', <class 'float'>, 1.0))*
+### muvid.footage.service.EDL_OPTIONAL_FIELDS *= (('transition', <function <lambda>>, None), ('crop', <function <lambda>>, None), ('crop_end', <function <lambda>>, None), ('look', <class 'str'>, None), ('look_time_varying', <class 'bool'>, False), ('look_spec', <class 'dict'>, None), ('slip_s', <class 'float'>, 0.0), ('rate', <class 'float'>, 1.0), ('source_in', <class 'float'>, None))*
 
 Every optional [`EdlEntry`](muvid.footage.edl.html.md#muvid.footage.edl.EdlEntry) field [`edl_json()`](#muvid.footage.service.edl_json) carries,
 and how to render it. **The list is the round trip.** `_as_entry` reads all of
@@ -161,15 +162,22 @@ The op’s own ceiling for a host-streamed upload (`nw.GenreOp.max_upload_bytes`
 
 ### muvid.footage.service.add_clip(fp, , path, name='', filename='', clip_id='', ext='', duration_s=None)
 
-Add one footage video — a recording of the song — to the project.
+Add one video or photo to the project.
+
+A video that is a recording of the song (a concert, a dance) is synced to it once
+`align` has listened to it; any other video, and every photo, is cut to the music
+instead (`propose_edit`). A photo (a file ending in one of
+`STILL_SUFFIXES`) is stored upright and at most `STILL_MAX_SIDE` pixels
+on its longest side, and moves on screen with a pan or zoom.
 
 The file arrives from the host (an upload): `path` is where the host put it and
 `filename` its original name; it is copied into the project. `name` is what the
 video is called on screen (default: the original file name without its extension). `clip_id` fixes the id (default: a fresh one); an id already in the
 project is refused. Size-, duration- and count-capped.
 
-Run `align` afterwards: a new clip has no place on the song until then. Returns
-the `clip_id`, its `name` and `duration` (and `artifact_id` when hosted).
+Run `align` afterwards: listening is how a video with the song in it gets its
+place on the song. Returns the `clip_id`, its `name` and `duration` (and
+`artifact_id` when hosted); a photo also `kind: "still"`, `width`, `height`.
 
 * **Return type:**
   [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
@@ -183,11 +191,14 @@ the clip that agrees on that offset, `null` when the aligner took a single
 whole-clip measurement), and its coverage of the song, plus these lists:
 
 - `low_confidence` — clips that matched weakly, for reporting;
-- `unreliable` — clips whose offset the aligner will NOT vouch for. These stay in
-  the project and stay addressable, and the auto path simply prefers other clips
-  over them: a span another clip covers goes to that clip, and a span only an
-  unreliable clip covers is left as a gap and reported in `coverage.excluded`
-  (muvid#88). Rendering still REFUSES an explicit edit that cuts to one, and still
+- `unreliable` — clips whose offset the aligner will NOT vouch for: most often a
+  video that simply does not have the song in it (a day out, b-roll). These stay
+  in the project, and `propose_edit` cuts them TO the music instead of syncing
+  them (`footage_roles`) — unless listening heard the song in them without being
+  able to place it (`heard_the_song`), or a person said they have the song
+  (`set_has_song yes`). Those stay synced: the auto path prefers other clips over
+  them and sets aside a span only they cover (`coverage.excluded`, muvid#88),
+  which is then filled from the footage cut to the music, if there is any. Rendering still REFUSES an explicit edit that cuts to one, and still
   refuses an auto edit when NO clip is trustworthy, unless called with
   `allow_unreliable=true` — because a wrong offset does not fail, it renders a
   video out of sync with the song (muvid#59). Re-align, place the clip by hand
@@ -518,7 +529,7 @@ Returns `{duration_s, n, peaks: [0..1, ...]}`; slice `i` covers song time
 * **Return type:**
   [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
 
-### muvid.footage.service.propose_edit(fp, , strategy='', preset='', weights=None, config=None, save=True, name='', span=None)
+### muvid.footage.service.propose_edit(fp, , strategy='', preset='', weights=None, config=None, save=True, name='', span=None, pace='')
 
 Cut it for me: build an edit of the whole song — or of `span` (`[start_s,
 end_s]`, the part of the song the video covers) — from the placed videos, and (by
@@ -535,6 +546,15 @@ entries, `clip_id: null`, rendered as black), the `strategy` used, a
 `warnings`, and `assemble_refusal` (non-null when rendering it would be refused
 because no clip is trustworthy). With `save` it also returns the `edit_id` to
 change it (`set_cut` …) and render it (`render`).
+
+**Footage that does not contain the song is cut to the music.** The strategy cuts
+only the videos that are recordings of the song (placed confidently by `align`,
+or marked `set_has_song yes`); every span they leave is filled from the other
+videos and the photos, cut on the song’s beats and bars, each video shown at the
+stretch whose picture changes land on the beat (`music` in the reply says how
+that went). With no recording of the song at all, the whole song is cut to the
+music — no `align` needed. `pace` (`slow`/`steady`/`driving`/`frantic`)
+sets how often those cuts come.
 
 * **Return type:**
   [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
@@ -695,7 +715,8 @@ Change one cut of a saved edit (`index` is its position in `get_edit`’s edl).
 
 - `clip_id`: show another video over this span (`""` makes it a gap). The new
   video must cover the span. Its framing (`crop`) is dropped, since it was chosen
-  for the old video’s frame; its `look` is kept.
+  for the old video’s frame; its `look` is kept. A video cut to the music (or a
+  photo) is shown from its start; a video with the song in it, where it was filmed.
 - `song_start` / `song_end`: move the cut’s boundaries. The neighbouring cut’s
   boundary moves with it, so the edit stays one continuous timeline; a move that
   would swallow a neighbour whole is refused (join them with `merge_cut`).
@@ -716,6 +737,20 @@ Change one cut of a saved edit (`index` is its position in `get_edit`’s edl).
   footage the cut then reads. A new video starts at speed 1.
 
 Parameters left out are unchanged. The changed edit is checked and saved; returns it.
+
+* **Return type:**
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+
+### muvid.footage.service.set_has_song(fp, , clip_id, has_song)
+
+Say whether a video has the song in its own sound — overriding what listening found.
+
+`"yes"`: it is a recording of the song (a concert, a dance); it is synced to the
+song and never cut freely to the music. `"no"`: it is not (a day out, b-roll); it
+is always cut to the music. `"auto"` (the default) believes the listening: a
+video `align` placed confidently is synced, any other is cut to the music. A
+photo is always cut to the music. Like a hand-placed offset, the choice survives
+listening again. Takes effect at the next `propose_edit`.
 
 * **Return type:**
   [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)

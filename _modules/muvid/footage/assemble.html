@@ -672,392 +672,413 @@
 </span><span id="line-483">    <span class="p">]</span>
 </span><span id="line-484">
 </span><span id="line-485">
-</span><span id="line-486"><span class="k">def</span><span class="w"> </span><span class="nf">_render_part</span><span class="p">(</span>
-</span><span id="line-487">    <span class="n">cut</span><span class="p">:</span> <span class="n">AssemblyCut</span><span class="p">,</span>
-</span><span id="line-488">    <span class="n">part</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
-</span><span id="line-489">    <span class="o">*</span><span class="p">,</span>
-</span><span id="line-490">    <span class="n">w</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-</span><span id="line-491">    <span class="n">h</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-</span><span id="line-492">    <span class="n">fps</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-</span><span id="line-493">    <span class="n">n_frames</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-</span><span id="line-494">    <span class="n">crf</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-</span><span id="line-495">    <span class="n">preset</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-</span><span id="line-496"><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-497"><span class="w">    </span><span class="sd">"""Render ONE cut (footage or gap) to an intermediate — the single-decoder stage."""</span>
-</span><span id="line-498">    <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.visualize.ffmpeg</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_ffmpeg</span>
-</span><span id="line-499">
-</span><span id="line-500">    <span class="c1"># tpad at the tail: -frames:v alone is a CAP, not a guarantee — a clip whose audio</span>
-</span><span id="line-501">    <span class="c1"># outlives its video (alignment durations come from the AUDIO length) legitimately</span>
-</span><span id="line-502">    <span class="c1"># validates a span past the last video frame, and without tpad that part comes up</span>
-</span><span id="line-503">    <span class="c1"># short, silently desyncing every later cut. Cloning the last frame makes the frame</span>
-</span><span id="line-504">    <span class="c1"># count exact whenever the source yields at least one frame.</span>
-</span><span id="line-505">    <span class="n">vf</span> <span class="o">=</span> <span class="n">_part_filter</span><span class="p">(</span><span class="n">cut</span><span class="p">,</span> <span class="n">w</span><span class="o">=</span><span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="o">=</span><span class="n">h</span><span class="p">,</span> <span class="n">fps</span><span class="o">=</span><span class="n">fps</span><span class="p">)</span>
-</span><span id="line-506">    <span class="k">if</span> <span class="n">cut</span><span class="o">.</span><span class="n">clip_path</span><span class="p">:</span>
-</span><span id="line-507">        <span class="n">args</span> <span class="o">=</span> <span class="p">[</span>
-</span><span id="line-508">            <span class="c1"># Input-side seek: lands on the keyframe before clip_in and decodes forward</span>
-</span><span id="line-509">            <span class="c1"># to it, so a cut 3 minutes into a clip does not decode 3 minutes of video.</span>
-</span><span id="line-510">            <span class="s2">"-ss"</span><span class="p">,</span>
-</span><span id="line-511">            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">cut</span><span class="o">.</span><span class="n">clip_in</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
-</span><span id="line-512">            <span class="c1"># One spare frame of input beyond the target; -frames:v is the exact cap.</span>
-</span><span id="line-513">            <span class="c1"># At speed `rate` the span consumes `duration * rate` s of source.</span>
-</span><span id="line-514">            <span class="s2">"-t"</span><span class="p">,</span>
-</span><span id="line-515">            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="p">(</span><span class="n">cut</span><span class="o">.</span><span class="n">duration</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">1.0</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">fps</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="nb">getattr</span><span class="p">(</span><span class="n">cut</span><span class="p">,</span><span class="w"> </span><span class="s1">'rate'</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="p">)</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
-</span><span id="line-516">            <span class="s2">"-i"</span><span class="p">,</span>
-</span><span id="line-517">            <span class="nb">str</span><span class="p">(</span><span class="n">cut</span><span class="o">.</span><span class="n">clip_path</span><span class="p">),</span>
-</span><span id="line-518">            <span class="s2">"-vf"</span><span class="p">,</span>
-</span><span id="line-519">            <span class="n">vf</span><span class="p">,</span>
-</span><span id="line-520">        <span class="p">]</span>
-</span><span id="line-521">    <span class="k">else</span><span class="p">:</span>  <span class="c1"># a gap entry: no footage for this span — fill black on the same grid</span>
-</span><span id="line-522">        <span class="n">vf</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"setsar=1,fps=</span><span class="si">{</span><span class="n">fps</span><span class="si">}</span><span class="s2">"</span>
-</span><span id="line-523">        <span class="n">args</span> <span class="o">=</span> <span class="p">[</span>
-</span><span id="line-524">            <span class="s2">"-f"</span><span class="p">,</span>
-</span><span id="line-525">            <span class="s2">"lavfi"</span><span class="p">,</span>
-</span><span id="line-526">            <span class="s2">"-i"</span><span class="p">,</span>
-</span><span id="line-527">            <span class="sa">f</span><span class="s2">"color=black:size=</span><span class="si">{</span><span class="n">w</span><span class="si">}</span><span class="s2">x</span><span class="si">{</span><span class="n">h</span><span class="si">}</span><span class="s2">:rate=</span><span class="si">{</span><span class="n">fps</span><span class="si">}</span><span class="s2">:duration=</span><span class="si">{</span><span class="n">cut</span><span class="o">.</span><span class="n">duration</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">1.0</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">fps</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
-</span><span id="line-528">            <span class="s2">"-vf"</span><span class="p">,</span>
-</span><span id="line-529">            <span class="n">vf</span><span class="p">,</span>
-</span><span id="line-530">        <span class="p">]</span>
-</span><span id="line-531">    <span class="n">args</span> <span class="o">+=</span> <span class="p">[</span>
-</span><span id="line-532">        <span class="s2">"-frames:v"</span><span class="p">,</span>
-</span><span id="line-533">        <span class="nb">str</span><span class="p">(</span><span class="n">n_frames</span><span class="p">),</span>
-</span><span id="line-534">        <span class="s2">"-an"</span><span class="p">,</span>
-</span><span id="line-535">        <span class="o">*</span><span class="n">_video_codec_args</span><span class="p">(</span><span class="n">crf</span><span class="p">,</span> <span class="n">preset</span><span class="p">),</span>
-</span><span id="line-536">        <span class="nb">str</span><span class="p">(</span><span class="n">part</span><span class="p">),</span>
-</span><span id="line-537">    <span class="p">]</span>
-</span><span id="line-538">    <span class="n">run_ffmpeg</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
-</span><span id="line-539">
-</span><span id="line-540">
-</span><span id="line-541"><span class="k">def</span><span class="w"> </span><span class="nf">_xfade_input</span><span class="p">(</span><span class="n">cut</span><span class="p">:</span> <span class="n">AssemblyCut</span><span class="p">,</span> <span class="n">clip_in</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">n_frames</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">fps</span><span class="p">):</span>
-</span><span id="line-542"><span class="w">    </span><span class="sd">"""One decoder for the transition stage — a real clip, or a gap's black source.</span>
-</span><span id="line-543">
-</span><span id="line-544"><span class="sd">    A gap side is always satisfiable: its ``color`` source is synthetic and</span>
-</span><span id="line-545"><span class="sd">    re-parameterizable per invocation, so it can supply the blend window however far</span>
-</span><span id="line-546"><span class="sd">    it reaches. That is why :func:`~muvid.footage.edl.validate_edl`'s coverage rule</span>
-</span><span id="line-547"><span class="sd">    skips gap sides — not because anything at HEAD is unbounded.</span>
-</span><span id="line-548"><span class="sd">    """</span>
-</span><span id="line-549">    <span class="k">if</span> <span class="n">cut</span><span class="o">.</span><span class="n">clip_path</span><span class="p">:</span>
-</span><span id="line-550">        <span class="k">return</span> <span class="p">[</span>
-</span><span id="line-551">            <span class="s2">"-ss"</span><span class="p">,</span>
-</span><span id="line-552">            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">clip_in</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
-</span><span id="line-553">            <span class="s2">"-t"</span><span class="p">,</span>
-</span><span id="line-554">            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="p">(</span><span class="n">n_frames</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">fps</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="nb">getattr</span><span class="p">(</span><span class="n">cut</span><span class="p">,</span><span class="w"> </span><span class="s1">'rate'</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="p">)</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
-</span><span id="line-555">            <span class="s2">"-i"</span><span class="p">,</span>
-</span><span id="line-556">            <span class="nb">str</span><span class="p">(</span><span class="n">cut</span><span class="o">.</span><span class="n">clip_path</span><span class="p">),</span>
-</span><span id="line-557">        <span class="p">]</span>
-</span><span id="line-558">    <span class="k">return</span> <span class="p">[</span>
-</span><span id="line-559">        <span class="s2">"-f"</span><span class="p">,</span>
-</span><span id="line-560">        <span class="s2">"lavfi"</span><span class="p">,</span>
-</span><span id="line-561">        <span class="s2">"-i"</span><span class="p">,</span>
-</span><span id="line-562">        <span class="sa">f</span><span class="s2">"color=black:size=</span><span class="si">{</span><span class="n">w</span><span class="si">}</span><span class="s2">x</span><span class="si">{</span><span class="n">h</span><span class="si">}</span><span class="s2">:rate=</span><span class="si">{</span><span class="n">fps</span><span class="si">}</span><span class="s2">:duration=</span><span class="si">{</span><span class="p">(</span><span class="n">n_frames</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">fps</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
-</span><span id="line-563">    <span class="p">]</span>
-</span><span id="line-564">
-</span><span id="line-565">
-</span><span id="line-566"><span class="k">def</span><span class="w"> </span><span class="nf">_render_transition</span><span class="p">(</span><span class="n">part</span><span class="p">,</span> <span class="n">out</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">fps</span><span class="p">,</span> <span class="n">crf</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">preset</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-567"><span class="w">    </span><span class="sd">"""Render one blended boundary — the only two-decoder stage.</span>
-</span><span id="line-568">
-</span><span id="line-569"><span class="sd">    Both inputs are already seeked to the window's first frame, so ``offset=0`` is</span>
-</span><span id="line-570"><span class="sd">    correct and ``-frames:v`` is the exact cap.</span>
-</span><span id="line-571">
-</span><span id="line-572"><span class="sd">    **What the blend actually looks like, stated precisely rather than called</span>
-</span><span id="line-573"><span class="sd">    seamless.** With ``duration = n/fps`` the filter's progress runs ``0, 1/n, ...,</span>
-</span><span id="line-574"><span class="sd">    (n-1)/n`` across the emitted frames, so across the whole boundary — last solo-A</span>
-</span><span id="line-575"><span class="sd">    frame, ``n`` blended frames, first solo-B frame — the ramp is ``0, 0, 1/n, ...,</span>
-</span><span id="line-576"><span class="sd">    (n-1)/n, 1``: uniform, monotone, with one duplicated endpoint on the A side.</span>
-</span><span id="line-577"><span class="sd">    Measured on a 12-frame fade: SSIM to a pure-A render of the same window falls</span>
-</span><span id="line-578"><span class="sd">    0.9895 -&gt; 0.4533 while SSIM to pure-B rises 0.4206 -&gt; 0.9580, both strictly</span>
-</span><span id="line-579"><span class="sd">    monotone. The endpoints approach but do not equal the neighbouring solo parts,</span>
-</span><span id="line-580"><span class="sd">    which is why the guard asserts MONOTONICITY and not endpoint identity.</span>
-</span><span id="line-581"><span class="sd">    """</span>
-</span><span id="line-582">    <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.visualize.ffmpeg</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_ffmpeg</span>
-</span><span id="line-583">
-</span><span id="line-584">    <span class="c1"># Per-input, not one shared string: the two sides of a boundary are different</span>
-</span><span id="line-585">    <span class="c1"># cuts and may carry different crops. A single `norm` would silently apply the</span>
-</span><span id="line-586">    <span class="c1"># A-side framing to the B-side — the blend would still render, at the wrong</span>
-</span><span id="line-587">    <span class="c1"># framing, which is exactly the kind of failure nothing downstream can see.</span>
-</span><span id="line-588">    <span class="k">def</span><span class="w"> </span><span class="nf">_norm</span><span class="p">(</span><span class="n">cut</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-</span><span id="line-589">        <span class="k">return</span> <span class="n">_part_filter</span><span class="p">(</span><span class="n">cut</span><span class="p">,</span> <span class="n">w</span><span class="o">=</span><span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="o">=</span><span class="n">h</span><span class="p">,</span> <span class="n">fps</span><span class="o">=</span><span class="n">fps</span><span class="p">,</span> <span class="n">tail</span><span class="o">=</span><span class="s2">",format=yuv420p"</span><span class="p">)</span>
-</span><span id="line-590">
-</span><span id="line-591">    <span class="n">n</span> <span class="o">=</span> <span class="n">part</span><span class="o">.</span><span class="n">n_frames</span>
-</span><span id="line-592">    <span class="n">run_ffmpeg</span><span class="p">(</span>
-</span><span id="line-593">        <span class="p">[</span>
-</span><span id="line-594">            <span class="o">*</span><span class="n">_xfade_input</span><span class="p">(</span><span class="n">part</span><span class="o">.</span><span class="n">prev</span><span class="p">,</span> <span class="n">part</span><span class="o">.</span><span class="n">prev_in</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">w</span><span class="o">=</span><span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="o">=</span><span class="n">h</span><span class="p">,</span> <span class="n">fps</span><span class="o">=</span><span class="n">fps</span><span class="p">),</span>
-</span><span id="line-595">            <span class="o">*</span><span class="n">_xfade_input</span><span class="p">(</span><span class="n">part</span><span class="o">.</span><span class="n">cut</span><span class="p">,</span> <span class="n">part</span><span class="o">.</span><span class="n">clip_in</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">w</span><span class="o">=</span><span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="o">=</span><span class="n">h</span><span class="p">,</span> <span class="n">fps</span><span class="o">=</span><span class="n">fps</span><span class="p">),</span>
-</span><span id="line-596">            <span class="s2">"-filter_complex"</span><span class="p">,</span>
-</span><span id="line-597">            <span class="sa">f</span><span class="s2">"[0:v]</span><span class="si">{</span><span class="n">_norm</span><span class="p">(</span><span class="n">part</span><span class="o">.</span><span class="n">prev</span><span class="p">)</span><span class="si">}</span><span class="s2">[a];[1:v]</span><span class="si">{</span><span class="n">_norm</span><span class="p">(</span><span class="n">part</span><span class="o">.</span><span class="n">cut</span><span class="p">)</span><span class="si">}</span><span class="s2">[b];"</span>
-</span><span id="line-598">            <span class="sa">f</span><span class="s2">"[a][b]xfade=transition=</span><span class="si">{</span><span class="n">part</span><span class="o">.</span><span class="n">curve</span><span class="si">}</span><span class="s2">:duration=</span><span class="si">{</span><span class="n">n</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">fps</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">:offset=0[v]"</span><span class="p">,</span>
-</span><span id="line-599">            <span class="s2">"-map"</span><span class="p">,</span>
-</span><span id="line-600">            <span class="s2">"[v]"</span><span class="p">,</span>
-</span><span id="line-601">            <span class="s2">"-frames:v"</span><span class="p">,</span>
-</span><span id="line-602">            <span class="nb">str</span><span class="p">(</span><span class="n">n</span><span class="p">),</span>
-</span><span id="line-603">            <span class="s2">"-an"</span><span class="p">,</span>
-</span><span id="line-604">            <span class="o">*</span><span class="n">_video_codec_args</span><span class="p">(</span><span class="n">crf</span><span class="p">,</span> <span class="n">preset</span><span class="p">),</span>
-</span><span id="line-605">            <span class="nb">str</span><span class="p">(</span><span class="n">out</span><span class="p">),</span>
-</span><span id="line-606">        <span class="p">]</span>
-</span><span id="line-607">    <span class="p">)</span>
-</span><span id="line-608">
-</span><span id="line-609">
-</span><span id="line-610"><span class="k">def</span><span class="w"> </span><span class="nf">_render_first_usable</span><span class="p">(</span><span class="n">candidates</span><span class="p">,</span> <span class="n">part</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="o">**</span><span class="n">render_kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-611"><span class="w">    </span><span class="sd">"""Render the first candidate that actually yields frames; black if none does.</span>
-</span><span id="line-612">
-</span><span id="line-613"><span class="sd">    ONE implementation, used by both part kinds, and that is the point. The</span>
-</span><span id="line-614"><span class="sd">    per-cut and the transition-fallback paths were doing the same three things —</span>
-</span><span id="line-615"><span class="sd">    render, check the part really has a video stream, degrade — and only the</span>
-</span><span id="line-616"><span class="sd">    first got it right. The transition path re-rendered from ``p.cut``</span>
-</span><span id="line-617"><span class="sd">    *unconditionally* and then never re-checked, so when the incoming side was the</span>
-</span><span id="line-618"><span class="sd">    one that had failed it produced a **streamless** part: the concat demuxer</span>
-</span><span id="line-619"><span class="sd">    swallows it in silence and ffmpeg exits 0, so the delivered video came up short</span>
-</span><span id="line-620"><span class="sd">    by exactly the transition length with no error anywhere. Measured: 168 frames</span>
-</span><span id="line-621"><span class="sd">    against a 180-frame song.</span>
-</span><span id="line-622">
-</span><span id="line-623"><span class="sd">    Two rules follow, and they are why this is a loop rather than a preference:</span>
-</span><span id="line-624">
-</span><span id="line-625"><span class="sd">    - **Verify every attempt.** ``-frames:v`` is a cap, not a guarantee — a clip</span>
-</span><span id="line-626"><span class="sd">      whose audio outlives its video (alignment durations come from the AUDIO</span>
-</span><span id="line-627"><span class="sd">      length, so this shape is normal and documented) legitimately validates a span</span>
-</span><span id="line-628"><span class="sd">      past its last video frame and can yield nothing at all.</span>
-</span><span id="line-629"><span class="sd">    - **Try the other side before giving up on picture.** The fallback exists</span>
-</span><span id="line-630"><span class="sd">      *because* one side failed; preferring a fixed side ignores which. Black is the</span>
-</span><span id="line-631"><span class="sd">      last resort, not the second option — a 0.4 s black flash where the surviving</span>
-</span><span id="line-632"><span class="sd">      clip could have carried the boundary is a visible defect, not a graceful one.</span>
-</span><span id="line-633"><span class="sd">    """</span>
-</span><span id="line-634">    <span class="k">for</span> <span class="n">cut</span> <span class="ow">in</span> <span class="n">candidates</span><span class="p">:</span>
-</span><span id="line-635">        <span class="k">if</span> <span class="ow">not</span> <span class="n">cut</span><span class="o">.</span><span class="n">clip_path</span><span class="p">:</span>
-</span><span id="line-636">            <span class="k">continue</span>
-</span><span id="line-637">        <span class="n">_render_part</span><span class="p">(</span><span class="n">cut</span><span class="p">,</span> <span class="n">part</span><span class="p">,</span> <span class="o">**</span><span class="n">render_kwargs</span><span class="p">)</span>
-</span><span id="line-638">        <span class="k">if</span> <span class="ow">not</span> <span class="n">part</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span> <span class="ow">or</span> <span class="n">_has_video_frames</span><span class="p">(</span><span class="n">part</span><span class="p">):</span>
-</span><span id="line-639">            <span class="c1"># A part that does not exist at all is a DIFFERENT failure — ffmpeg</span>
-</span><span id="line-640">            <span class="c1"># did not write one — and degrading it to black here would cost a</span>
-</span><span id="line-641">            <span class="c1"># second invocation per cut, breaking the one-ffmpeg-per-part bound</span>
-</span><span id="line-642">            <span class="c1"># that muvid#24's OOM fix is pinned by</span>
-</span><span id="line-643">            <span class="c1"># (`test_assemble_runs_one_bounded_ffmpeg_per_cut`). This function</span>
-</span><span id="line-644">            <span class="c1"># answers exactly one question: "the file is there, but is anything</span>
-</span><span id="line-645">            <span class="c1"># IN it?"</span>
-</span><span id="line-646">            <span class="k">return</span>
-</span><span id="line-647">        <span class="n">part</span><span class="o">.</span><span class="n">unlink</span><span class="p">(</span><span class="n">missing_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-</span><span id="line-648">    <span class="n">_render_part</span><span class="p">(</span>
-</span><span id="line-649">        <span class="n">replace</span><span class="p">(</span><span class="n">candidates</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">clip_path</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span> <span class="n">clip_in</span><span class="o">=</span><span class="mf">0.0</span><span class="p">),</span> <span class="n">part</span><span class="p">,</span> <span class="o">**</span><span class="n">render_kwargs</span>
-</span><span id="line-650">    <span class="p">)</span>
-</span><span id="line-651">
-</span><span id="line-652">
-</span><span id="line-653"><span class="k">def</span><span class="w"> </span><span class="nf">_audio_args</span><span class="p">(</span>
-</span><span id="line-654">    <span class="n">song_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-</span><span id="line-655">    <span class="o">*</span><span class="p">,</span>
-</span><span id="line-656">    <span class="n">fade_out_s</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
-</span><span id="line-657">    <span class="n">total_s</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
-</span><span id="line-658">    <span class="n">trimmed_head</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-</span><span id="line-659"><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-</span><span id="line-660"><span class="w">    </span><span class="sd">"""Stream-copy the master when it already is the delivery contract; else encode to it.</span>
-</span><span id="line-661">
-</span><span id="line-662"><span class="sd">    Bit-identical audio (muvid#21 item 5) and the fixed 2ch@48kHz delivery contract</span>
-</span><span id="line-663"><span class="sd">    (muvid#24 B3) are only simultaneously satisfiable when the master is already</span>
-</span><span id="line-664"><span class="sd">    aac/48000/2ch — so that is exactly the copy condition, decided by probe, not hope.</span>
-</span><span id="line-665"><span class="sd">    A tail fade (``fade_out_s`` over the last seconds of a ``total_s`` render) is a</span>
-</span><span id="line-666"><span class="sd">    filter, so it always encodes. So does a render that starts after the song does</span>
-</span><span id="line-667"><span class="sd">    (``trimmed_head``): a stream copy after an input ``-ss`` begins on an AAC packet</span>
-</span><span id="line-668"><span class="sd">    boundary rather than at the seek point, and the picture, cut exactly, would run</span>
-</span><span id="line-669"><span class="sd">    that fraction of a frame out of sync with the music.</span>
-</span><span id="line-670"><span class="sd">    """</span>
-</span><span id="line-671">    <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.visualize.ffmpeg</span><span class="w"> </span><span class="kn">import</span> <span class="n">probe</span>
+</span><span id="line-486"><span class="c1">#: Source files read as a still picture, held for the cut — mirrors</span>
+</span><span id="line-487"><span class="c1">#: :data:`muvid.footage.service.STILL_SUFFIXES` (kept here so the assembler needs no</span>
+</span><span id="line-488"><span class="c1">#: service import).</span>
+</span><span id="line-489"><span class="n">_STILL_SUFFIXES</span> <span class="o">=</span> <span class="p">(</span><span class="s2">".jpg"</span><span class="p">,</span> <span class="s2">".jpeg"</span><span class="p">,</span> <span class="s2">".png"</span><span class="p">,</span> <span class="s2">".webp"</span><span class="p">,</span> <span class="s2">".bmp"</span><span class="p">,</span> <span class="s2">".tif"</span><span class="p">,</span> <span class="s2">".tiff"</span><span class="p">)</span>
+</span><span id="line-490">
+</span><span id="line-491">
+</span><span id="line-492"><span class="k">def</span><span class="w"> </span><span class="nf">_is_still</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+</span><span id="line-493">    <span class="k">return</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="o">.</span><span class="n">suffix</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="n">_STILL_SUFFIXES</span>
+</span><span id="line-494">
+</span><span id="line-495">
+</span><span id="line-496"><span class="k">def</span><span class="w"> </span><span class="nf">_source_input</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">clip_in</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">seconds</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">fps</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
+</span><span id="line-497"><span class="w">    </span><span class="sd">"""The ``-i`` arguments for one cut's source: an input-side seek into a video, or a</span>
+</span><span id="line-498"><span class="sd">    still looped at the render rate for ``seconds`` (a picture has no time to seek)."""</span>
+</span><span id="line-499">    <span class="k">if</span> <span class="n">_is_still</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+</span><span id="line-500">        <span class="k">return</span> <span class="p">[</span>
+</span><span id="line-501">            <span class="s2">"-loop"</span><span class="p">,</span>
+</span><span id="line-502">            <span class="s2">"1"</span><span class="p">,</span>
+</span><span id="line-503">            <span class="s2">"-framerate"</span><span class="p">,</span>
+</span><span id="line-504">            <span class="nb">str</span><span class="p">(</span><span class="n">fps</span><span class="p">),</span>
+</span><span id="line-505">            <span class="s2">"-t"</span><span class="p">,</span>
+</span><span id="line-506">            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">seconds</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+</span><span id="line-507">            <span class="s2">"-i"</span><span class="p">,</span>
+</span><span id="line-508">            <span class="n">path</span><span class="p">,</span>
+</span><span id="line-509">        <span class="p">]</span>
+</span><span id="line-510">    <span class="k">return</span> <span class="p">[</span><span class="s2">"-ss"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">clip_in</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="s2">"-t"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">seconds</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="s2">"-i"</span><span class="p">,</span> <span class="n">path</span><span class="p">]</span>
+</span><span id="line-511">
+</span><span id="line-512">
+</span><span id="line-513"><span class="k">def</span><span class="w"> </span><span class="nf">_render_part</span><span class="p">(</span>
+</span><span id="line-514">    <span class="n">cut</span><span class="p">:</span> <span class="n">AssemblyCut</span><span class="p">,</span>
+</span><span id="line-515">    <span class="n">part</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+</span><span id="line-516">    <span class="o">*</span><span class="p">,</span>
+</span><span id="line-517">    <span class="n">w</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+</span><span id="line-518">    <span class="n">h</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+</span><span id="line-519">    <span class="n">fps</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+</span><span id="line-520">    <span class="n">n_frames</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+</span><span id="line-521">    <span class="n">crf</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+</span><span id="line-522">    <span class="n">preset</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+</span><span id="line-523"><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-524"><span class="w">    </span><span class="sd">"""Render ONE cut (footage or gap) to an intermediate — the single-decoder stage."""</span>
+</span><span id="line-525">    <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.visualize.ffmpeg</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_ffmpeg</span>
+</span><span id="line-526">
+</span><span id="line-527">    <span class="c1"># tpad at the tail: -frames:v alone is a CAP, not a guarantee — a clip whose audio</span>
+</span><span id="line-528">    <span class="c1"># outlives its video (alignment durations come from the AUDIO length) legitimately</span>
+</span><span id="line-529">    <span class="c1"># validates a span past the last video frame, and without tpad that part comes up</span>
+</span><span id="line-530">    <span class="c1"># short, silently desyncing every later cut. Cloning the last frame makes the frame</span>
+</span><span id="line-531">    <span class="c1"># count exact whenever the source yields at least one frame.</span>
+</span><span id="line-532">    <span class="n">vf</span> <span class="o">=</span> <span class="n">_part_filter</span><span class="p">(</span><span class="n">cut</span><span class="p">,</span> <span class="n">w</span><span class="o">=</span><span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="o">=</span><span class="n">h</span><span class="p">,</span> <span class="n">fps</span><span class="o">=</span><span class="n">fps</span><span class="p">)</span>
+</span><span id="line-533">    <span class="k">if</span> <span class="n">cut</span><span class="o">.</span><span class="n">clip_path</span><span class="p">:</span>
+</span><span id="line-534">        <span class="c1"># Input-side seek: lands on the keyframe before clip_in and decodes forward to</span>
+</span><span id="line-535">        <span class="c1"># it, so a cut 3 minutes into a clip does not decode 3 minutes of video. One</span>
+</span><span id="line-536">        <span class="c1"># spare frame of input beyond the target; -frames:v is the exact cap. At speed</span>
+</span><span id="line-537">        <span class="c1"># `rate` the span consumes `duration * rate` s of source.</span>
+</span><span id="line-538">        <span class="n">args</span> <span class="o">=</span> <span class="n">_source_input</span><span class="p">(</span>
+</span><span id="line-539">            <span class="nb">str</span><span class="p">(</span><span class="n">cut</span><span class="o">.</span><span class="n">clip_path</span><span class="p">),</span>
+</span><span id="line-540">            <span class="n">cut</span><span class="o">.</span><span class="n">clip_in</span><span class="p">,</span>
+</span><span id="line-541">            <span class="p">(</span><span class="n">cut</span><span class="o">.</span><span class="n">duration</span> <span class="o">+</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">fps</span><span class="p">)</span> <span class="o">*</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">cut</span><span class="p">,</span> <span class="s2">"rate"</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">),</span>
+</span><span id="line-542">            <span class="n">fps</span><span class="o">=</span><span class="n">fps</span><span class="p">,</span>
+</span><span id="line-543">        <span class="p">)</span> <span class="o">+</span> <span class="p">[</span><span class="s2">"-vf"</span><span class="p">,</span> <span class="n">vf</span><span class="p">]</span>
+</span><span id="line-544">    <span class="k">else</span><span class="p">:</span>  <span class="c1"># a gap entry: no footage for this span — fill black on the same grid</span>
+</span><span id="line-545">        <span class="n">vf</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"setsar=1,fps=</span><span class="si">{</span><span class="n">fps</span><span class="si">}</span><span class="s2">"</span>
+</span><span id="line-546">        <span class="n">args</span> <span class="o">=</span> <span class="p">[</span>
+</span><span id="line-547">            <span class="s2">"-f"</span><span class="p">,</span>
+</span><span id="line-548">            <span class="s2">"lavfi"</span><span class="p">,</span>
+</span><span id="line-549">            <span class="s2">"-i"</span><span class="p">,</span>
+</span><span id="line-550">            <span class="sa">f</span><span class="s2">"color=black:size=</span><span class="si">{</span><span class="n">w</span><span class="si">}</span><span class="s2">x</span><span class="si">{</span><span class="n">h</span><span class="si">}</span><span class="s2">:rate=</span><span class="si">{</span><span class="n">fps</span><span class="si">}</span><span class="s2">:duration=</span><span class="si">{</span><span class="n">cut</span><span class="o">.</span><span class="n">duration</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">1.0</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">fps</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+</span><span id="line-551">            <span class="s2">"-vf"</span><span class="p">,</span>
+</span><span id="line-552">            <span class="n">vf</span><span class="p">,</span>
+</span><span id="line-553">        <span class="p">]</span>
+</span><span id="line-554">    <span class="n">args</span> <span class="o">+=</span> <span class="p">[</span>
+</span><span id="line-555">        <span class="s2">"-frames:v"</span><span class="p">,</span>
+</span><span id="line-556">        <span class="nb">str</span><span class="p">(</span><span class="n">n_frames</span><span class="p">),</span>
+</span><span id="line-557">        <span class="s2">"-an"</span><span class="p">,</span>
+</span><span id="line-558">        <span class="o">*</span><span class="n">_video_codec_args</span><span class="p">(</span><span class="n">crf</span><span class="p">,</span> <span class="n">preset</span><span class="p">),</span>
+</span><span id="line-559">        <span class="nb">str</span><span class="p">(</span><span class="n">part</span><span class="p">),</span>
+</span><span id="line-560">    <span class="p">]</span>
+</span><span id="line-561">    <span class="n">run_ffmpeg</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+</span><span id="line-562">
+</span><span id="line-563">
+</span><span id="line-564"><span class="k">def</span><span class="w"> </span><span class="nf">_xfade_input</span><span class="p">(</span><span class="n">cut</span><span class="p">:</span> <span class="n">AssemblyCut</span><span class="p">,</span> <span class="n">clip_in</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">n_frames</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">fps</span><span class="p">):</span>
+</span><span id="line-565"><span class="w">    </span><span class="sd">"""One decoder for the transition stage — a real clip, or a gap's black source.</span>
+</span><span id="line-566">
+</span><span id="line-567"><span class="sd">    A gap side is always satisfiable: its ``color`` source is synthetic and</span>
+</span><span id="line-568"><span class="sd">    re-parameterizable per invocation, so it can supply the blend window however far</span>
+</span><span id="line-569"><span class="sd">    it reaches. That is why :func:`~muvid.footage.edl.validate_edl`'s coverage rule</span>
+</span><span id="line-570"><span class="sd">    skips gap sides — not because anything at HEAD is unbounded.</span>
+</span><span id="line-571"><span class="sd">    """</span>
+</span><span id="line-572">    <span class="k">if</span> <span class="n">cut</span><span class="o">.</span><span class="n">clip_path</span><span class="p">:</span>
+</span><span id="line-573">        <span class="k">return</span> <span class="n">_source_input</span><span class="p">(</span>
+</span><span id="line-574">            <span class="nb">str</span><span class="p">(</span><span class="n">cut</span><span class="o">.</span><span class="n">clip_path</span><span class="p">),</span>
+</span><span id="line-575">            <span class="n">clip_in</span><span class="p">,</span>
+</span><span id="line-576">            <span class="p">(</span><span class="n">n_frames</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">fps</span> <span class="o">*</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">cut</span><span class="p">,</span> <span class="s2">"rate"</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">),</span>
+</span><span id="line-577">            <span class="n">fps</span><span class="o">=</span><span class="n">fps</span><span class="p">,</span>
+</span><span id="line-578">        <span class="p">)</span>
+</span><span id="line-579">    <span class="k">return</span> <span class="p">[</span>
+</span><span id="line-580">        <span class="s2">"-f"</span><span class="p">,</span>
+</span><span id="line-581">        <span class="s2">"lavfi"</span><span class="p">,</span>
+</span><span id="line-582">        <span class="s2">"-i"</span><span class="p">,</span>
+</span><span id="line-583">        <span class="sa">f</span><span class="s2">"color=black:size=</span><span class="si">{</span><span class="n">w</span><span class="si">}</span><span class="s2">x</span><span class="si">{</span><span class="n">h</span><span class="si">}</span><span class="s2">:rate=</span><span class="si">{</span><span class="n">fps</span><span class="si">}</span><span class="s2">:duration=</span><span class="si">{</span><span class="p">(</span><span class="n">n_frames</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">fps</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+</span><span id="line-584">    <span class="p">]</span>
+</span><span id="line-585">
+</span><span id="line-586">
+</span><span id="line-587"><span class="k">def</span><span class="w"> </span><span class="nf">_render_transition</span><span class="p">(</span><span class="n">part</span><span class="p">,</span> <span class="n">out</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">fps</span><span class="p">,</span> <span class="n">crf</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">preset</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-588"><span class="w">    </span><span class="sd">"""Render one blended boundary — the only two-decoder stage.</span>
+</span><span id="line-589">
+</span><span id="line-590"><span class="sd">    Both inputs are already seeked to the window's first frame, so ``offset=0`` is</span>
+</span><span id="line-591"><span class="sd">    correct and ``-frames:v`` is the exact cap.</span>
+</span><span id="line-592">
+</span><span id="line-593"><span class="sd">    **What the blend actually looks like, stated precisely rather than called</span>
+</span><span id="line-594"><span class="sd">    seamless.** With ``duration = n/fps`` the filter's progress runs ``0, 1/n, ...,</span>
+</span><span id="line-595"><span class="sd">    (n-1)/n`` across the emitted frames, so across the whole boundary — last solo-A</span>
+</span><span id="line-596"><span class="sd">    frame, ``n`` blended frames, first solo-B frame — the ramp is ``0, 0, 1/n, ...,</span>
+</span><span id="line-597"><span class="sd">    (n-1)/n, 1``: uniform, monotone, with one duplicated endpoint on the A side.</span>
+</span><span id="line-598"><span class="sd">    Measured on a 12-frame fade: SSIM to a pure-A render of the same window falls</span>
+</span><span id="line-599"><span class="sd">    0.9895 -&gt; 0.4533 while SSIM to pure-B rises 0.4206 -&gt; 0.9580, both strictly</span>
+</span><span id="line-600"><span class="sd">    monotone. The endpoints approach but do not equal the neighbouring solo parts,</span>
+</span><span id="line-601"><span class="sd">    which is why the guard asserts MONOTONICITY and not endpoint identity.</span>
+</span><span id="line-602"><span class="sd">    """</span>
+</span><span id="line-603">    <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.visualize.ffmpeg</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_ffmpeg</span>
+</span><span id="line-604">
+</span><span id="line-605">    <span class="c1"># Per-input, not one shared string: the two sides of a boundary are different</span>
+</span><span id="line-606">    <span class="c1"># cuts and may carry different crops. A single `norm` would silently apply the</span>
+</span><span id="line-607">    <span class="c1"># A-side framing to the B-side — the blend would still render, at the wrong</span>
+</span><span id="line-608">    <span class="c1"># framing, which is exactly the kind of failure nothing downstream can see.</span>
+</span><span id="line-609">    <span class="k">def</span><span class="w"> </span><span class="nf">_norm</span><span class="p">(</span><span class="n">cut</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="line-610">        <span class="k">return</span> <span class="n">_part_filter</span><span class="p">(</span><span class="n">cut</span><span class="p">,</span> <span class="n">w</span><span class="o">=</span><span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="o">=</span><span class="n">h</span><span class="p">,</span> <span class="n">fps</span><span class="o">=</span><span class="n">fps</span><span class="p">,</span> <span class="n">tail</span><span class="o">=</span><span class="s2">",format=yuv420p"</span><span class="p">)</span>
+</span><span id="line-611">
+</span><span id="line-612">    <span class="n">n</span> <span class="o">=</span> <span class="n">part</span><span class="o">.</span><span class="n">n_frames</span>
+</span><span id="line-613">    <span class="n">run_ffmpeg</span><span class="p">(</span>
+</span><span id="line-614">        <span class="p">[</span>
+</span><span id="line-615">            <span class="o">*</span><span class="n">_xfade_input</span><span class="p">(</span><span class="n">part</span><span class="o">.</span><span class="n">prev</span><span class="p">,</span> <span class="n">part</span><span class="o">.</span><span class="n">prev_in</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">w</span><span class="o">=</span><span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="o">=</span><span class="n">h</span><span class="p">,</span> <span class="n">fps</span><span class="o">=</span><span class="n">fps</span><span class="p">),</span>
+</span><span id="line-616">            <span class="o">*</span><span class="n">_xfade_input</span><span class="p">(</span><span class="n">part</span><span class="o">.</span><span class="n">cut</span><span class="p">,</span> <span class="n">part</span><span class="o">.</span><span class="n">clip_in</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">w</span><span class="o">=</span><span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="o">=</span><span class="n">h</span><span class="p">,</span> <span class="n">fps</span><span class="o">=</span><span class="n">fps</span><span class="p">),</span>
+</span><span id="line-617">            <span class="s2">"-filter_complex"</span><span class="p">,</span>
+</span><span id="line-618">            <span class="sa">f</span><span class="s2">"[0:v]</span><span class="si">{</span><span class="n">_norm</span><span class="p">(</span><span class="n">part</span><span class="o">.</span><span class="n">prev</span><span class="p">)</span><span class="si">}</span><span class="s2">[a];[1:v]</span><span class="si">{</span><span class="n">_norm</span><span class="p">(</span><span class="n">part</span><span class="o">.</span><span class="n">cut</span><span class="p">)</span><span class="si">}</span><span class="s2">[b];"</span>
+</span><span id="line-619">            <span class="sa">f</span><span class="s2">"[a][b]xfade=transition=</span><span class="si">{</span><span class="n">part</span><span class="o">.</span><span class="n">curve</span><span class="si">}</span><span class="s2">:duration=</span><span class="si">{</span><span class="n">n</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">fps</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">:offset=0[v]"</span><span class="p">,</span>
+</span><span id="line-620">            <span class="s2">"-map"</span><span class="p">,</span>
+</span><span id="line-621">            <span class="s2">"[v]"</span><span class="p">,</span>
+</span><span id="line-622">            <span class="s2">"-frames:v"</span><span class="p">,</span>
+</span><span id="line-623">            <span class="nb">str</span><span class="p">(</span><span class="n">n</span><span class="p">),</span>
+</span><span id="line-624">            <span class="s2">"-an"</span><span class="p">,</span>
+</span><span id="line-625">            <span class="o">*</span><span class="n">_video_codec_args</span><span class="p">(</span><span class="n">crf</span><span class="p">,</span> <span class="n">preset</span><span class="p">),</span>
+</span><span id="line-626">            <span class="nb">str</span><span class="p">(</span><span class="n">out</span><span class="p">),</span>
+</span><span id="line-627">        <span class="p">]</span>
+</span><span id="line-628">    <span class="p">)</span>
+</span><span id="line-629">
+</span><span id="line-630">
+</span><span id="line-631"><span class="k">def</span><span class="w"> </span><span class="nf">_render_first_usable</span><span class="p">(</span><span class="n">candidates</span><span class="p">,</span> <span class="n">part</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="o">**</span><span class="n">render_kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-632"><span class="w">    </span><span class="sd">"""Render the first candidate that actually yields frames; black if none does.</span>
+</span><span id="line-633">
+</span><span id="line-634"><span class="sd">    ONE implementation, used by both part kinds, and that is the point. The</span>
+</span><span id="line-635"><span class="sd">    per-cut and the transition-fallback paths were doing the same three things —</span>
+</span><span id="line-636"><span class="sd">    render, check the part really has a video stream, degrade — and only the</span>
+</span><span id="line-637"><span class="sd">    first got it right. The transition path re-rendered from ``p.cut``</span>
+</span><span id="line-638"><span class="sd">    *unconditionally* and then never re-checked, so when the incoming side was the</span>
+</span><span id="line-639"><span class="sd">    one that had failed it produced a **streamless** part: the concat demuxer</span>
+</span><span id="line-640"><span class="sd">    swallows it in silence and ffmpeg exits 0, so the delivered video came up short</span>
+</span><span id="line-641"><span class="sd">    by exactly the transition length with no error anywhere. Measured: 168 frames</span>
+</span><span id="line-642"><span class="sd">    against a 180-frame song.</span>
+</span><span id="line-643">
+</span><span id="line-644"><span class="sd">    Two rules follow, and they are why this is a loop rather than a preference:</span>
+</span><span id="line-645">
+</span><span id="line-646"><span class="sd">    - **Verify every attempt.** ``-frames:v`` is a cap, not a guarantee — a clip</span>
+</span><span id="line-647"><span class="sd">      whose audio outlives its video (alignment durations come from the AUDIO</span>
+</span><span id="line-648"><span class="sd">      length, so this shape is normal and documented) legitimately validates a span</span>
+</span><span id="line-649"><span class="sd">      past its last video frame and can yield nothing at all.</span>
+</span><span id="line-650"><span class="sd">    - **Try the other side before giving up on picture.** The fallback exists</span>
+</span><span id="line-651"><span class="sd">      *because* one side failed; preferring a fixed side ignores which. Black is the</span>
+</span><span id="line-652"><span class="sd">      last resort, not the second option — a 0.4 s black flash where the surviving</span>
+</span><span id="line-653"><span class="sd">      clip could have carried the boundary is a visible defect, not a graceful one.</span>
+</span><span id="line-654"><span class="sd">    """</span>
+</span><span id="line-655">    <span class="k">for</span> <span class="n">cut</span> <span class="ow">in</span> <span class="n">candidates</span><span class="p">:</span>
+</span><span id="line-656">        <span class="k">if</span> <span class="ow">not</span> <span class="n">cut</span><span class="o">.</span><span class="n">clip_path</span><span class="p">:</span>
+</span><span id="line-657">            <span class="k">continue</span>
+</span><span id="line-658">        <span class="n">_render_part</span><span class="p">(</span><span class="n">cut</span><span class="p">,</span> <span class="n">part</span><span class="p">,</span> <span class="o">**</span><span class="n">render_kwargs</span><span class="p">)</span>
+</span><span id="line-659">        <span class="k">if</span> <span class="ow">not</span> <span class="n">part</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span> <span class="ow">or</span> <span class="n">_has_video_frames</span><span class="p">(</span><span class="n">part</span><span class="p">):</span>
+</span><span id="line-660">            <span class="c1"># A part that does not exist at all is a DIFFERENT failure — ffmpeg</span>
+</span><span id="line-661">            <span class="c1"># did not write one — and degrading it to black here would cost a</span>
+</span><span id="line-662">            <span class="c1"># second invocation per cut, breaking the one-ffmpeg-per-part bound</span>
+</span><span id="line-663">            <span class="c1"># that muvid#24's OOM fix is pinned by</span>
+</span><span id="line-664">            <span class="c1"># (`test_assemble_runs_one_bounded_ffmpeg_per_cut`). This function</span>
+</span><span id="line-665">            <span class="c1"># answers exactly one question: "the file is there, but is anything</span>
+</span><span id="line-666">            <span class="c1"># IN it?"</span>
+</span><span id="line-667">            <span class="k">return</span>
+</span><span id="line-668">        <span class="n">part</span><span class="o">.</span><span class="n">unlink</span><span class="p">(</span><span class="n">missing_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</span><span id="line-669">    <span class="n">_render_part</span><span class="p">(</span>
+</span><span id="line-670">        <span class="n">replace</span><span class="p">(</span><span class="n">candidates</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">clip_path</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span> <span class="n">clip_in</span><span class="o">=</span><span class="mf">0.0</span><span class="p">),</span> <span class="n">part</span><span class="p">,</span> <span class="o">**</span><span class="n">render_kwargs</span>
+</span><span id="line-671">    <span class="p">)</span>
 </span><span id="line-672">
-</span><span id="line-673">    <span class="n">encode</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"-c:a"</span><span class="p">,</span> <span class="s2">"aac"</span><span class="p">,</span> <span class="s2">"-b:a"</span><span class="p">,</span> <span class="s2">"192k"</span><span class="p">,</span> <span class="s2">"-ar"</span><span class="p">,</span> <span class="s2">"48000"</span><span class="p">,</span> <span class="s2">"-ac"</span><span class="p">,</span> <span class="s2">"2"</span><span class="p">]</span>
-</span><span id="line-674">    <span class="k">if</span> <span class="n">trimmed_head</span> <span class="ow">and</span> <span class="ow">not</span> <span class="p">(</span><span class="n">fade_out_s</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">total_s</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
-</span><span id="line-675">        <span class="k">return</span> <span class="n">encode</span>
-</span><span id="line-676">    <span class="k">if</span> <span class="n">fade_out_s</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">total_s</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-</span><span id="line-677">        <span class="n">fade</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">fade_out_s</span><span class="p">,</span> <span class="n">total_s</span><span class="p">)</span>
-</span><span id="line-678">        <span class="k">return</span> <span class="p">[</span>
-</span><span id="line-679">            <span class="s2">"-af"</span><span class="p">,</span>
-</span><span id="line-680">            <span class="sa">f</span><span class="s2">"afade=t=out:st=</span><span class="si">{</span><span class="nb">max</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="n">total_s</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">fade</span><span class="p">)</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">:d=</span><span class="si">{</span><span class="n">fade</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
-</span><span id="line-681">            <span class="o">*</span><span class="n">encode</span><span class="p">,</span>
-</span><span id="line-682">        <span class="p">]</span>
-</span><span id="line-683">
-</span><span id="line-684">    <span class="k">try</span><span class="p">:</span>
-</span><span id="line-685">        <span class="n">astreams</span> <span class="o">=</span> <span class="p">[</span>
-</span><span id="line-686">            <span class="n">s</span>
-</span><span id="line-687">            <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">probe</span><span class="p">(</span><span class="n">song_path</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"streams"</span><span class="p">,</span> <span class="p">[])</span>
-</span><span id="line-688">            <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"codec_type"</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"audio"</span>
-</span><span id="line-689">        <span class="p">]</span>
-</span><span id="line-690">        <span class="n">a</span> <span class="o">=</span> <span class="n">astreams</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">astreams</span> <span class="k">else</span> <span class="p">{}</span>
-</span><span id="line-691">    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>  <span class="c1"># noqa: BLE001 — un-probeable song: encode, never crash the render</span>
-</span><span id="line-692">        <span class="n">a</span> <span class="o">=</span> <span class="p">{}</span>
-</span><span id="line-693">    <span class="k">if</span> <span class="p">(</span>
-</span><span id="line-694">        <span class="n">a</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"codec_name"</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"aac"</span>
-</span><span id="line-695">        <span class="ow">and</span> <span class="nb">str</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"sample_rate"</span><span class="p">))</span> <span class="o">==</span> <span class="s2">"48000"</span>
-</span><span id="line-696">        <span class="ow">and</span> <span class="n">a</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"channels"</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span>
-</span><span id="line-697">    <span class="p">):</span>
-</span><span id="line-698">        <span class="k">return</span> <span class="p">[</span><span class="s2">"-c:a"</span><span class="p">,</span> <span class="s2">"copy"</span><span class="p">]</span>
-</span><span id="line-699">    <span class="k">return</span> <span class="n">encode</span>
-</span><span id="line-700">
-</span><span id="line-701">
-</span><span id="line-702"><span class="k">def</span><span class="w"> </span><span class="nf">_has_video_frames</span><span class="p">(</span><span class="n">part</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-</span><span id="line-703"><span class="w">    </span><span class="sd">"""Whether a rendered part actually carries a video stream.</span>
+</span><span id="line-673">
+</span><span id="line-674"><span class="k">def</span><span class="w"> </span><span class="nf">_audio_args</span><span class="p">(</span>
+</span><span id="line-675">    <span class="n">song_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+</span><span id="line-676">    <span class="o">*</span><span class="p">,</span>
+</span><span id="line-677">    <span class="n">fade_out_s</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
+</span><span id="line-678">    <span class="n">total_s</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
+</span><span id="line-679">    <span class="n">trimmed_head</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+</span><span id="line-680"><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+</span><span id="line-681"><span class="w">    </span><span class="sd">"""Stream-copy the master when it already is the delivery contract; else encode to it.</span>
+</span><span id="line-682">
+</span><span id="line-683"><span class="sd">    Bit-identical audio (muvid#21 item 5) and the fixed 2ch@48kHz delivery contract</span>
+</span><span id="line-684"><span class="sd">    (muvid#24 B3) are only simultaneously satisfiable when the master is already</span>
+</span><span id="line-685"><span class="sd">    aac/48000/2ch — so that is exactly the copy condition, decided by probe, not hope.</span>
+</span><span id="line-686"><span class="sd">    A tail fade (``fade_out_s`` over the last seconds of a ``total_s`` render) is a</span>
+</span><span id="line-687"><span class="sd">    filter, so it always encodes. So does a render that starts after the song does</span>
+</span><span id="line-688"><span class="sd">    (``trimmed_head``): a stream copy after an input ``-ss`` begins on an AAC packet</span>
+</span><span id="line-689"><span class="sd">    boundary rather than at the seek point, and the picture, cut exactly, would run</span>
+</span><span id="line-690"><span class="sd">    that fraction of a frame out of sync with the music.</span>
+</span><span id="line-691"><span class="sd">    """</span>
+</span><span id="line-692">    <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.visualize.ffmpeg</span><span class="w"> </span><span class="kn">import</span> <span class="n">probe</span>
+</span><span id="line-693">
+</span><span id="line-694">    <span class="n">encode</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"-c:a"</span><span class="p">,</span> <span class="s2">"aac"</span><span class="p">,</span> <span class="s2">"-b:a"</span><span class="p">,</span> <span class="s2">"192k"</span><span class="p">,</span> <span class="s2">"-ar"</span><span class="p">,</span> <span class="s2">"48000"</span><span class="p">,</span> <span class="s2">"-ac"</span><span class="p">,</span> <span class="s2">"2"</span><span class="p">]</span>
+</span><span id="line-695">    <span class="k">if</span> <span class="n">trimmed_head</span> <span class="ow">and</span> <span class="ow">not</span> <span class="p">(</span><span class="n">fade_out_s</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">total_s</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
+</span><span id="line-696">        <span class="k">return</span> <span class="n">encode</span>
+</span><span id="line-697">    <span class="k">if</span> <span class="n">fade_out_s</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">total_s</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+</span><span id="line-698">        <span class="n">fade</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">fade_out_s</span><span class="p">,</span> <span class="n">total_s</span><span class="p">)</span>
+</span><span id="line-699">        <span class="k">return</span> <span class="p">[</span>
+</span><span id="line-700">            <span class="s2">"-af"</span><span class="p">,</span>
+</span><span id="line-701">            <span class="sa">f</span><span class="s2">"afade=t=out:st=</span><span class="si">{</span><span class="nb">max</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="n">total_s</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">fade</span><span class="p">)</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">:d=</span><span class="si">{</span><span class="n">fade</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+</span><span id="line-702">            <span class="o">*</span><span class="n">encode</span><span class="p">,</span>
+</span><span id="line-703">        <span class="p">]</span>
 </span><span id="line-704">
-</span><span id="line-705"><span class="sd">    ffmpeg exits 0 even when an input-side ``-ss`` lands wholly past the source's last</span>
-</span><span id="line-706"><span class="sd">    video frame — the result is a streamless few-hundred-byte mp4 the concat demuxer</span>
-</span><span id="line-707"><span class="sd">    silently swallows, shortening the video and desyncing every later cut. This is the</span>
-</span><span id="line-708"><span class="sd">    check that turns that silence into the black-gap fallback.</span>
-</span><span id="line-709"><span class="sd">    """</span>
-</span><span id="line-710">    <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.visualize.ffmpeg</span><span class="w"> </span><span class="kn">import</span> <span class="n">probe</span>
-</span><span id="line-711">
-</span><span id="line-712">    <span class="k">try</span><span class="p">:</span>
-</span><span id="line-713">        <span class="n">streams</span> <span class="o">=</span> <span class="n">probe</span><span class="p">(</span><span class="n">part</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"streams"</span><span class="p">,</span> <span class="p">[])</span>
-</span><span id="line-714">    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>  <span class="c1"># noqa: BLE001 — unreadable part: treat as frameless, fall back</span>
-</span><span id="line-715">        <span class="k">return</span> <span class="kc">False</span>
-</span><span id="line-716">    <span class="k">return</span> <span class="nb">any</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"codec_type"</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"video"</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">streams</span><span class="p">)</span>
-</span><span id="line-717">
-</span><span id="line-718">
+</span><span id="line-705">    <span class="k">try</span><span class="p">:</span>
+</span><span id="line-706">        <span class="n">astreams</span> <span class="o">=</span> <span class="p">[</span>
+</span><span id="line-707">            <span class="n">s</span>
+</span><span id="line-708">            <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">probe</span><span class="p">(</span><span class="n">song_path</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"streams"</span><span class="p">,</span> <span class="p">[])</span>
+</span><span id="line-709">            <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"codec_type"</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"audio"</span>
+</span><span id="line-710">        <span class="p">]</span>
+</span><span id="line-711">        <span class="n">a</span> <span class="o">=</span> <span class="n">astreams</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">astreams</span> <span class="k">else</span> <span class="p">{}</span>
+</span><span id="line-712">    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>  <span class="c1"># noqa: BLE001 — un-probeable song: encode, never crash the render</span>
+</span><span id="line-713">        <span class="n">a</span> <span class="o">=</span> <span class="p">{}</span>
+</span><span id="line-714">    <span class="k">if</span> <span class="p">(</span>
+</span><span id="line-715">        <span class="n">a</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"codec_name"</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"aac"</span>
+</span><span id="line-716">        <span class="ow">and</span> <span class="nb">str</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"sample_rate"</span><span class="p">))</span> <span class="o">==</span> <span class="s2">"48000"</span>
+</span><span id="line-717">        <span class="ow">and</span> <span class="n">a</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"channels"</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span>
+</span><span id="line-718">    <span class="p">):</span>
+</span><span id="line-719">        <span class="k">return</span> <span class="p">[</span><span class="s2">"-c:a"</span><span class="p">,</span> <span class="s2">"copy"</span><span class="p">]</span>
+</span><span id="line-720">    <span class="k">return</span> <span class="n">encode</span>
+</span><span id="line-721">
+</span><span id="line-722">
+</span><span id="line-723"><span class="k">def</span><span class="w"> </span><span class="nf">_has_video_frames</span><span class="p">(</span><span class="n">part</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+</span><span id="line-724"><span class="w">    </span><span class="sd">"""Whether a rendered part actually carries a video stream.</span>
+</span><span id="line-725">
+</span><span id="line-726"><span class="sd">    ffmpeg exits 0 even when an input-side ``-ss`` lands wholly past the source's last</span>
+</span><span id="line-727"><span class="sd">    video frame — the result is a streamless few-hundred-byte mp4 the concat demuxer</span>
+</span><span id="line-728"><span class="sd">    silently swallows, shortening the video and desyncing every later cut. This is the</span>
+</span><span id="line-729"><span class="sd">    check that turns that silence into the black-gap fallback.</span>
+</span><span id="line-730"><span class="sd">    """</span>
+</span><span id="line-731">    <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.visualize.ffmpeg</span><span class="w"> </span><span class="kn">import</span> <span class="n">probe</span>
+</span><span id="line-732">
+</span><span id="line-733">    <span class="k">try</span><span class="p">:</span>
+</span><span id="line-734">        <span class="n">streams</span> <span class="o">=</span> <span class="n">probe</span><span class="p">(</span><span class="n">part</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"streams"</span><span class="p">,</span> <span class="p">[])</span>
+</span><span id="line-735">    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>  <span class="c1"># noqa: BLE001 — unreadable part: treat as frameless, fall back</span>
+</span><span id="line-736">        <span class="k">return</span> <span class="kc">False</span>
+</span><span id="line-737">    <span class="k">return</span> <span class="nb">any</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"codec_type"</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"video"</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">streams</span><span class="p">)</span>
+</span><span id="line-738">
+</span><span id="line-739">
 <div class="viewcode-block" id="assemble_music_video">
 <a class="viewcode-back" href="../../../_autosummary/muvid.footage.assemble.html#muvid.footage.assemble.assemble_music_video">[docs]</a>
-</span><span id="line-719"><span class="k">def</span><span class="w"> </span><span class="nf">assemble_music_video</span><span class="p">(</span>
-</span><span id="line-720">    <span class="n">cuts</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">AssemblyCut</span><span class="p">],</span>
-</span><span id="line-721">    <span class="n">song_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-</span><span id="line-722">    <span class="n">out_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-</span><span id="line-723">    <span class="o">*</span><span class="p">,</span>
-</span><span id="line-724">    <span class="n">canvas</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">DEFAULT_CANVAS</span><span class="p">,</span>
-</span><span id="line-725">    <span class="n">fps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">DEFAULT_FPS</span><span class="p">,</span>
-</span><span id="line-726">    <span class="n">crf</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span>
-</span><span id="line-727">    <span class="n">preset</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"veryfast"</span><span class="p">,</span>
-</span><span id="line-728">    <span class="n">on_note</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-</span><span id="line-729">    <span class="n">fade_out_s</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
-</span><span id="line-730">    <span class="n">should_cancel</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-</span><span id="line-731"><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
-</span><span id="line-732"><span class="w">    </span><span class="sd">"""Render ``cuts`` (a validated, contiguous, gap-filled EDL) into ``out_path``.</span>
-</span><span id="line-733">
-</span><span id="line-734"><span class="sd">    Bounded stages: one single-input ffmpeg run per cut (gaps render black), a stream-copy</span>
-</span><span id="line-735"><span class="sd">    concat, and a final mux of the clean song for ``[cuts[0].song_start,</span>
-</span><span id="line-736"><span class="sd">    cuts[-1].song_end]`` — which, for EDLs produced by ``fill_gaps``, is the whole song.</span>
-</span><span id="line-737"><span class="sd">    Returns ``out_path``.</span>
-</span><span id="line-738">
-</span><span id="line-739"><span class="sd">    Args:</span>
-</span><span id="line-740"><span class="sd">        on_note: optional ``str -&gt; None`` sink for the render-plan findings</span>
-</span><span id="line-741"><span class="sd">            :func:`_part_plan` raises (a transition that rounds to zero frames; a</span>
-</span><span id="line-742"><span class="sd">            time-varying look on a blended boundary — muvid#73). They are ALWAYS</span>
-</span><span id="line-743"><span class="sd">            raised as :class:`AssemblyWarning` as well; this is the additional</span>
-</span><span id="line-744"><span class="sd">            path, and the only one a remote caller can see. ``assemble_music_video``</span>
-</span><span id="line-745"><span class="sd">            is a live per-caller MCP tool, so a finding that reaches only the</span>
-</span><span id="line-746"><span class="sd">            server's stderr is a hitch the caller is billed for and never told</span>
-</span><span id="line-747"><span class="sd">            about. A callback rather than a changed return type, because the</span>
-</span><span id="line-748"><span class="sd">            return type is a public contract and because ``catch_warnings``</span>
-</span><span id="line-749"><span class="sd">            mutates process-global state that concurrent renders would share.</span>
-</span><span id="line-750"><span class="sd">        fade_out_s: fade the song out over this many seconds at the END of the</span>
-</span><span id="line-751"><span class="sd">            render. For an edit that stops before the song does (a trimmed</span>
-</span><span id="line-752"><span class="sd">            ``span``), so the music does not stop dead mid-bar; ``0`` (the default)</span>
-</span><span id="line-753"><span class="sd">            keeps the master untouched — and, for an aac/48k/2ch master, stream-copied</span>
-</span><span id="line-754"><span class="sd">            bit for bit. A fade re-encodes the audio (a filter cannot run on a copy).</span>
-</span><span id="line-755"><span class="sd">        should_cancel: a zero-argument callable polled before every part and before the</span>
-</span><span id="line-756"><span class="sd">            mux; when it returns True the render stops there (its parts are removed)</span>
-</span><span id="line-757"><span class="sd">            and :class:`~muvid.footage.errors.FootageCancelled` is raised — so a</span>
-</span><span id="line-758"><span class="sd">            cancelled render ends within one cut's encode rather than minutes later.</span>
-</span><span id="line-759"><span class="sd">    """</span>
-</span><span id="line-760">    <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.visualize.ffmpeg</span><span class="w"> </span><span class="kn">import</span> <span class="n">require_ffmpeg</span><span class="p">,</span> <span class="n">require_filter</span><span class="p">,</span> <span class="n">run_ffmpeg</span>
-</span><span id="line-761">
-</span><span id="line-762">    <span class="k">if</span> <span class="ow">not</span> <span class="n">cuts</span><span class="p">:</span>
-</span><span id="line-763">        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"no cuts to assemble"</span><span class="p">)</span>
-</span><span id="line-764">    <span class="n">require_ffmpeg</span><span class="p">(</span><span class="s2">"ffmpeg"</span><span class="p">)</span>
-</span><span id="line-765">    <span class="n">require_ffmpeg</span><span class="p">(</span><span class="s2">"ffprobe"</span><span class="p">)</span>
-</span><span id="line-766">    <span class="n">w</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="n">_even</span><span class="p">(</span><span class="n">canvas</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">_even</span><span class="p">(</span><span class="n">canvas</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
-</span><span id="line-767">    <span class="n">out</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">out_path</span><span class="p">)</span>
-</span><span id="line-768">    <span class="n">out</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-</span><span id="line-769">
-</span><span id="line-770">    <span class="c1"># A unique, per-call directory: a fixed name next to out_path would rmtree</span>
-</span><span id="line-771">    <span class="c1"># whatever already lived there, and two concurrent renders into one directory</span>
-</span><span id="line-772">    <span class="c1"># would interleave part files and delete each other's work.</span>
-</span><span id="line-773">    <span class="n">parts_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">tempfile</span><span class="o">.</span><span class="n">mkdtemp</span><span class="p">(</span><span class="nb">dir</span><span class="o">=</span><span class="n">out</span><span class="o">.</span><span class="n">parent</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s2">".parts-"</span><span class="p">))</span>
-</span><span id="line-774">    <span class="k">try</span><span class="p">:</span>
-</span><span id="line-775">        <span class="c1"># Planned in full BEFORE any encoding, so a transition that does not fit at</span>
-</span><span id="line-776">        <span class="c1"># this fps fails on cut 0 rather than after forty parts are on disk.</span>
-</span><span id="line-777">        <span class="n">plan</span> <span class="o">=</span> <span class="n">_part_plan</span><span class="p">(</span><span class="n">cuts</span><span class="p">,</span> <span class="n">fps</span><span class="p">,</span> <span class="n">on_note</span><span class="p">)</span>
-</span><span id="line-778">        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s2">"xfade"</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">plan</span><span class="p">):</span>
-</span><span id="line-779">            <span class="n">require_filter</span><span class="p">(</span><span class="s2">"xfade"</span><span class="p">,</span> <span class="n">needed_for</span><span class="o">=</span><span class="s2">"EDL transitions"</span><span class="p">)</span>
-</span><span id="line-780">
-</span><span id="line-781">        <span class="k">def</span><span class="w"> </span><span class="nf">stop_if_asked</span><span class="p">(</span><span class="n">where</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-782">            <span class="k">if</span> <span class="n">should_cancel</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">should_cancel</span><span class="p">():</span>
-</span><span id="line-783">                <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.footage.errors</span><span class="w"> </span><span class="kn">import</span> <span class="n">FootageCancelled</span>
-</span><span id="line-784">
-</span><span id="line-785">                <span class="k">raise</span> <span class="n">FootageCancelled</span><span class="p">(</span><span class="sa">f</span><span class="s2">"render stopped </span><span class="si">{</span><span class="n">where</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-</span><span id="line-786">
-</span><span id="line-787">        <span class="n">names</span> <span class="o">=</span> <span class="p">[]</span>
-</span><span id="line-788">        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">plan</span><span class="p">):</span>
-</span><span id="line-789">            <span class="n">stop_if_asked</span><span class="p">(</span><span class="sa">f</span><span class="s2">"before part </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2"> of </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">plan</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-</span><span id="line-790">            <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">n_frames</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>  <span class="c1"># a sub-frame cut owns no grid frame — _frame_counts</span>
-</span><span id="line-791">                <span class="k">continue</span>
-</span><span id="line-792">            <span class="n">name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"part</span><span class="si">{</span><span class="n">i</span><span class="si">:</span><span class="s2">04d</span><span class="si">}</span><span class="s2">.mp4"</span>
-</span><span id="line-793">            <span class="n">part</span> <span class="o">=</span> <span class="n">parts_dir</span> <span class="o">/</span> <span class="n">name</span>
-</span><span id="line-794">            <span class="n">render_kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
-</span><span id="line-795">                <span class="n">w</span><span class="o">=</span><span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="o">=</span><span class="n">h</span><span class="p">,</span> <span class="n">fps</span><span class="o">=</span><span class="n">fps</span><span class="p">,</span> <span class="n">n_frames</span><span class="o">=</span><span class="n">p</span><span class="o">.</span><span class="n">n_frames</span><span class="p">,</span> <span class="n">crf</span><span class="o">=</span><span class="n">crf</span><span class="p">,</span> <span class="n">preset</span><span class="o">=</span><span class="n">preset</span>
-</span><span id="line-796">            <span class="p">)</span>
-</span><span id="line-797">            <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s2">"xfade"</span><span class="p">:</span>
-</span><span id="line-798">                <span class="n">_render_transition</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">part</span><span class="p">,</span> <span class="n">w</span><span class="o">=</span><span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="o">=</span><span class="n">h</span><span class="p">,</span> <span class="n">fps</span><span class="o">=</span><span class="n">fps</span><span class="p">,</span> <span class="n">crf</span><span class="o">=</span><span class="n">crf</span><span class="p">,</span> <span class="n">preset</span><span class="o">=</span><span class="n">preset</span><span class="p">)</span>
-</span><span id="line-799">                <span class="k">if</span> <span class="n">part</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">_has_video_frames</span><span class="p">(</span><span class="n">part</span><span class="p">):</span>
-</span><span id="line-800">                    <span class="c1"># One side yielded nothing, so the blend is not renderable. The</span>
-</span><span id="line-801">                    <span class="c1"># window still exists in song time — fill it from a side that CAN</span>
-</span><span id="line-802">                    <span class="c1"># supply frames: a hard cut displaced by at most duration/2, with</span>
-</span><span id="line-803">                    <span class="c1"># the frame count unchanged.</span>
-</span><span id="line-804">                    <span class="n">part</span><span class="o">.</span><span class="n">unlink</span><span class="p">()</span>
-</span><span id="line-805">                    <span class="n">_render_first_usable</span><span class="p">(</span>
-</span><span id="line-806">                        <span class="p">[</span>
-</span><span id="line-807">                            <span class="n">replace</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">cut</span><span class="p">,</span> <span class="n">clip_in</span><span class="o">=</span><span class="n">p</span><span class="o">.</span><span class="n">clip_in</span><span class="p">),</span>
-</span><span id="line-808">                            <span class="n">replace</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">prev</span><span class="p">,</span> <span class="n">clip_in</span><span class="o">=</span><span class="n">p</span><span class="o">.</span><span class="n">prev_in</span><span class="p">),</span>
-</span><span id="line-809">                        <span class="p">],</span>
-</span><span id="line-810">                        <span class="n">part</span><span class="p">,</span>
-</span><span id="line-811">                        <span class="o">**</span><span class="n">render_kwargs</span><span class="p">,</span>
-</span><span id="line-812">                    <span class="p">)</span>
-</span><span id="line-813">            <span class="k">else</span><span class="p">:</span>
-</span><span id="line-814">                <span class="c1"># `clip_in` is the PART's in-point, not the cut's: a cut whose head</span>
-</span><span id="line-815">                <span class="c1"># was consumed by an incoming transition starts later in its clip.</span>
-</span><span id="line-816">                <span class="n">_render_first_usable</span><span class="p">(</span>
-</span><span id="line-817">                    <span class="p">[</span><span class="n">replace</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">cut</span><span class="p">,</span> <span class="n">clip_in</span><span class="o">=</span><span class="n">p</span><span class="o">.</span><span class="n">clip_in</span><span class="p">)],</span> <span class="n">part</span><span class="p">,</span> <span class="o">**</span><span class="n">render_kwargs</span>
-</span><span id="line-818">                <span class="p">)</span>
-</span><span id="line-819">            <span class="n">names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
-</span><span id="line-820">        <span class="k">if</span> <span class="ow">not</span> <span class="n">names</span><span class="p">:</span>
-</span><span id="line-821">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"no renderable cuts — every span rounds to zero frames"</span><span class="p">)</span>
-</span><span id="line-822">        <span class="c1"># Concat-demuxer entries resolve relative to the LIST file, and the names are</span>
-</span><span id="line-823">        <span class="c1"># ours (partNNNN.mp4) — plain relative names, so the demuxer's default "safe"</span>
-</span><span id="line-824">        <span class="c1"># mode is fine and no quoting/escaping surface exists here.</span>
-</span><span id="line-825">        <span class="n">stop_if_asked</span><span class="p">(</span><span class="s2">"before the final mux"</span><span class="p">)</span>
-</span><span id="line-826">        <span class="n">concat_list</span> <span class="o">=</span> <span class="n">parts_dir</span> <span class="o">/</span> <span class="s2">"parts.txt"</span>
-</span><span id="line-827">        <span class="n">concat_list</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="s2">""</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">"file </span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="se">\n</span><span class="s2">"</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">names</span><span class="p">))</span>
-</span><span id="line-828">        <span class="n">song_start</span> <span class="o">=</span> <span class="n">cuts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">song_start</span>
-</span><span id="line-829">        <span class="n">total</span> <span class="o">=</span> <span class="n">cuts</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">song_end</span> <span class="o">-</span> <span class="n">song_start</span>
-</span><span id="line-830">        <span class="c1"># The song is trimmed to the covered span. For a fill_gaps EDL that span IS the</span>
-</span><span id="line-831">        <span class="c1"># whole song, so the -ss is omitted and -t admits every packet — which is what</span>
-</span><span id="line-832">        <span class="c1"># keeps the stream-copy path bit-identical to the master.</span>
-</span><span id="line-833">        <span class="n">song_input</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"-i"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">song_path</span><span class="p">)]</span>
-</span><span id="line-834">        <span class="k">if</span> <span class="n">song_start</span> <span class="o">&gt;</span> <span class="mf">1e-3</span><span class="p">:</span>
-</span><span id="line-835">            <span class="n">song_input</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"-ss"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">song_start</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="o">*</span><span class="n">song_input</span><span class="p">]</span>
-</span><span id="line-836">        <span class="n">run_ffmpeg</span><span class="p">(</span>
-</span><span id="line-837">            <span class="p">[</span>
-</span><span id="line-838">                <span class="s2">"-f"</span><span class="p">,</span>
-</span><span id="line-839">                <span class="s2">"concat"</span><span class="p">,</span>
-</span><span id="line-840">                <span class="s2">"-i"</span><span class="p">,</span>
-</span><span id="line-841">                <span class="nb">str</span><span class="p">(</span><span class="n">concat_list</span><span class="p">),</span>
-</span><span id="line-842">                <span class="o">*</span><span class="n">song_input</span><span class="p">,</span>
-</span><span id="line-843">                <span class="s2">"-map"</span><span class="p">,</span>
-</span><span id="line-844">                <span class="s2">"0:v"</span><span class="p">,</span>
-</span><span id="line-845">                <span class="c1"># :a:0, not :a — a multi-stream master would otherwise carry extra audio</span>
-</span><span id="line-846">                <span class="c1"># tracks past the contract decision, which probes only the first.</span>
-</span><span id="line-847">                <span class="s2">"-map"</span><span class="p">,</span>
-</span><span id="line-848">                <span class="s2">"1:a:0"</span><span class="p">,</span>
-</span><span id="line-849">                <span class="s2">"-t"</span><span class="p">,</span>
-</span><span id="line-850">                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">total</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
-</span><span id="line-851">                <span class="s2">"-c:v"</span><span class="p">,</span>
-</span><span id="line-852">                <span class="s2">"copy"</span><span class="p">,</span>
-</span><span id="line-853">                <span class="o">*</span><span class="n">_audio_args</span><span class="p">(</span>
-</span><span id="line-854">                    <span class="n">song_path</span><span class="p">,</span>
-</span><span id="line-855">                    <span class="n">fade_out_s</span><span class="o">=</span><span class="n">fade_out_s</span><span class="p">,</span>
-</span><span id="line-856">                    <span class="n">total_s</span><span class="o">=</span><span class="n">total</span><span class="p">,</span>
-</span><span id="line-857">                    <span class="n">trimmed_head</span><span class="o">=</span><span class="n">song_start</span> <span class="o">&gt;</span> <span class="mf">1e-3</span><span class="p">,</span>
-</span><span id="line-858">                <span class="p">),</span>
-</span><span id="line-859">                <span class="c1"># Delivery contract (muvid#24 B3): no edit lists, moov up front.</span>
-</span><span id="line-860">                <span class="s2">"-use_editlist"</span><span class="p">,</span>
-</span><span id="line-861">                <span class="s2">"0"</span><span class="p">,</span>
-</span><span id="line-862">                <span class="s2">"-movflags"</span><span class="p">,</span>
-</span><span id="line-863">                <span class="s2">"+faststart"</span><span class="p">,</span>
-</span><span id="line-864">                <span class="nb">str</span><span class="p">(</span><span class="n">out</span><span class="p">),</span>
-</span><span id="line-865">            <span class="p">]</span>
-</span><span id="line-866">        <span class="p">)</span>
-</span><span id="line-867">    <span class="k">finally</span><span class="p">:</span>
-</span><span id="line-868">        <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">parts_dir</span><span class="p">,</span> <span class="n">ignore_errors</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-</span><span id="line-869">    <span class="k">return</span> <span class="n">out</span></div>
+</span><span id="line-740"><span class="k">def</span><span class="w"> </span><span class="nf">assemble_music_video</span><span class="p">(</span>
+</span><span id="line-741">    <span class="n">cuts</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">AssemblyCut</span><span class="p">],</span>
+</span><span id="line-742">    <span class="n">song_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+</span><span id="line-743">    <span class="n">out_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+</span><span id="line-744">    <span class="o">*</span><span class="p">,</span>
+</span><span id="line-745">    <span class="n">canvas</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">DEFAULT_CANVAS</span><span class="p">,</span>
+</span><span id="line-746">    <span class="n">fps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">DEFAULT_FPS</span><span class="p">,</span>
+</span><span id="line-747">    <span class="n">crf</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span>
+</span><span id="line-748">    <span class="n">preset</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"veryfast"</span><span class="p">,</span>
+</span><span id="line-749">    <span class="n">on_note</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+</span><span id="line-750">    <span class="n">fade_out_s</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
+</span><span id="line-751">    <span class="n">should_cancel</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+</span><span id="line-752"><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+</span><span id="line-753"><span class="w">    </span><span class="sd">"""Render ``cuts`` (a validated, contiguous, gap-filled EDL) into ``out_path``.</span>
+</span><span id="line-754">
+</span><span id="line-755"><span class="sd">    Bounded stages: one single-input ffmpeg run per cut (gaps render black), a stream-copy</span>
+</span><span id="line-756"><span class="sd">    concat, and a final mux of the clean song for ``[cuts[0].song_start,</span>
+</span><span id="line-757"><span class="sd">    cuts[-1].song_end]`` — which, for EDLs produced by ``fill_gaps``, is the whole song.</span>
+</span><span id="line-758"><span class="sd">    Returns ``out_path``.</span>
+</span><span id="line-759">
+</span><span id="line-760"><span class="sd">    Args:</span>
+</span><span id="line-761"><span class="sd">        on_note: optional ``str -&gt; None`` sink for the render-plan findings</span>
+</span><span id="line-762"><span class="sd">            :func:`_part_plan` raises (a transition that rounds to zero frames; a</span>
+</span><span id="line-763"><span class="sd">            time-varying look on a blended boundary — muvid#73). They are ALWAYS</span>
+</span><span id="line-764"><span class="sd">            raised as :class:`AssemblyWarning` as well; this is the additional</span>
+</span><span id="line-765"><span class="sd">            path, and the only one a remote caller can see. ``assemble_music_video``</span>
+</span><span id="line-766"><span class="sd">            is a live per-caller MCP tool, so a finding that reaches only the</span>
+</span><span id="line-767"><span class="sd">            server's stderr is a hitch the caller is billed for and never told</span>
+</span><span id="line-768"><span class="sd">            about. A callback rather than a changed return type, because the</span>
+</span><span id="line-769"><span class="sd">            return type is a public contract and because ``catch_warnings``</span>
+</span><span id="line-770"><span class="sd">            mutates process-global state that concurrent renders would share.</span>
+</span><span id="line-771"><span class="sd">        fade_out_s: fade the song out over this many seconds at the END of the</span>
+</span><span id="line-772"><span class="sd">            render. For an edit that stops before the song does (a trimmed</span>
+</span><span id="line-773"><span class="sd">            ``span``), so the music does not stop dead mid-bar; ``0`` (the default)</span>
+</span><span id="line-774"><span class="sd">            keeps the master untouched — and, for an aac/48k/2ch master, stream-copied</span>
+</span><span id="line-775"><span class="sd">            bit for bit. A fade re-encodes the audio (a filter cannot run on a copy).</span>
+</span><span id="line-776"><span class="sd">        should_cancel: a zero-argument callable polled before every part and before the</span>
+</span><span id="line-777"><span class="sd">            mux; when it returns True the render stops there (its parts are removed)</span>
+</span><span id="line-778"><span class="sd">            and :class:`~muvid.footage.errors.FootageCancelled` is raised — so a</span>
+</span><span id="line-779"><span class="sd">            cancelled render ends within one cut's encode rather than minutes later.</span>
+</span><span id="line-780"><span class="sd">    """</span>
+</span><span id="line-781">    <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.visualize.ffmpeg</span><span class="w"> </span><span class="kn">import</span> <span class="n">require_ffmpeg</span><span class="p">,</span> <span class="n">require_filter</span><span class="p">,</span> <span class="n">run_ffmpeg</span>
+</span><span id="line-782">
+</span><span id="line-783">    <span class="k">if</span> <span class="ow">not</span> <span class="n">cuts</span><span class="p">:</span>
+</span><span id="line-784">        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"no cuts to assemble"</span><span class="p">)</span>
+</span><span id="line-785">    <span class="n">require_ffmpeg</span><span class="p">(</span><span class="s2">"ffmpeg"</span><span class="p">)</span>
+</span><span id="line-786">    <span class="n">require_ffmpeg</span><span class="p">(</span><span class="s2">"ffprobe"</span><span class="p">)</span>
+</span><span id="line-787">    <span class="n">w</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="n">_even</span><span class="p">(</span><span class="n">canvas</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">_even</span><span class="p">(</span><span class="n">canvas</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+</span><span id="line-788">    <span class="n">out</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">out_path</span><span class="p">)</span>
+</span><span id="line-789">    <span class="n">out</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</span><span id="line-790">
+</span><span id="line-791">    <span class="c1"># A unique, per-call directory: a fixed name next to out_path would rmtree</span>
+</span><span id="line-792">    <span class="c1"># whatever already lived there, and two concurrent renders into one directory</span>
+</span><span id="line-793">    <span class="c1"># would interleave part files and delete each other's work.</span>
+</span><span id="line-794">    <span class="n">parts_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">tempfile</span><span class="o">.</span><span class="n">mkdtemp</span><span class="p">(</span><span class="nb">dir</span><span class="o">=</span><span class="n">out</span><span class="o">.</span><span class="n">parent</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s2">".parts-"</span><span class="p">))</span>
+</span><span id="line-795">    <span class="k">try</span><span class="p">:</span>
+</span><span id="line-796">        <span class="c1"># Planned in full BEFORE any encoding, so a transition that does not fit at</span>
+</span><span id="line-797">        <span class="c1"># this fps fails on cut 0 rather than after forty parts are on disk.</span>
+</span><span id="line-798">        <span class="n">plan</span> <span class="o">=</span> <span class="n">_part_plan</span><span class="p">(</span><span class="n">cuts</span><span class="p">,</span> <span class="n">fps</span><span class="p">,</span> <span class="n">on_note</span><span class="p">)</span>
+</span><span id="line-799">        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s2">"xfade"</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">plan</span><span class="p">):</span>
+</span><span id="line-800">            <span class="n">require_filter</span><span class="p">(</span><span class="s2">"xfade"</span><span class="p">,</span> <span class="n">needed_for</span><span class="o">=</span><span class="s2">"EDL transitions"</span><span class="p">)</span>
+</span><span id="line-801">
+</span><span id="line-802">        <span class="k">def</span><span class="w"> </span><span class="nf">stop_if_asked</span><span class="p">(</span><span class="n">where</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-803">            <span class="k">if</span> <span class="n">should_cancel</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">should_cancel</span><span class="p">():</span>
+</span><span id="line-804">                <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.footage.errors</span><span class="w"> </span><span class="kn">import</span> <span class="n">FootageCancelled</span>
+</span><span id="line-805">
+</span><span id="line-806">                <span class="k">raise</span> <span class="n">FootageCancelled</span><span class="p">(</span><span class="sa">f</span><span class="s2">"render stopped </span><span class="si">{</span><span class="n">where</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</span><span id="line-807">
+</span><span id="line-808">        <span class="n">names</span> <span class="o">=</span> <span class="p">[]</span>
+</span><span id="line-809">        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">plan</span><span class="p">):</span>
+</span><span id="line-810">            <span class="n">stop_if_asked</span><span class="p">(</span><span class="sa">f</span><span class="s2">"before part </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2"> of </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">plan</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</span><span id="line-811">            <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">n_frames</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>  <span class="c1"># a sub-frame cut owns no grid frame — _frame_counts</span>
+</span><span id="line-812">                <span class="k">continue</span>
+</span><span id="line-813">            <span class="n">name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"part</span><span class="si">{</span><span class="n">i</span><span class="si">:</span><span class="s2">04d</span><span class="si">}</span><span class="s2">.mp4"</span>
+</span><span id="line-814">            <span class="n">part</span> <span class="o">=</span> <span class="n">parts_dir</span> <span class="o">/</span> <span class="n">name</span>
+</span><span id="line-815">            <span class="n">render_kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+</span><span id="line-816">                <span class="n">w</span><span class="o">=</span><span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="o">=</span><span class="n">h</span><span class="p">,</span> <span class="n">fps</span><span class="o">=</span><span class="n">fps</span><span class="p">,</span> <span class="n">n_frames</span><span class="o">=</span><span class="n">p</span><span class="o">.</span><span class="n">n_frames</span><span class="p">,</span> <span class="n">crf</span><span class="o">=</span><span class="n">crf</span><span class="p">,</span> <span class="n">preset</span><span class="o">=</span><span class="n">preset</span>
+</span><span id="line-817">            <span class="p">)</span>
+</span><span id="line-818">            <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s2">"xfade"</span><span class="p">:</span>
+</span><span id="line-819">                <span class="n">_render_transition</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">part</span><span class="p">,</span> <span class="n">w</span><span class="o">=</span><span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="o">=</span><span class="n">h</span><span class="p">,</span> <span class="n">fps</span><span class="o">=</span><span class="n">fps</span><span class="p">,</span> <span class="n">crf</span><span class="o">=</span><span class="n">crf</span><span class="p">,</span> <span class="n">preset</span><span class="o">=</span><span class="n">preset</span><span class="p">)</span>
+</span><span id="line-820">                <span class="k">if</span> <span class="n">part</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">_has_video_frames</span><span class="p">(</span><span class="n">part</span><span class="p">):</span>
+</span><span id="line-821">                    <span class="c1"># One side yielded nothing, so the blend is not renderable. The</span>
+</span><span id="line-822">                    <span class="c1"># window still exists in song time — fill it from a side that CAN</span>
+</span><span id="line-823">                    <span class="c1"># supply frames: a hard cut displaced by at most duration/2, with</span>
+</span><span id="line-824">                    <span class="c1"># the frame count unchanged.</span>
+</span><span id="line-825">                    <span class="n">part</span><span class="o">.</span><span class="n">unlink</span><span class="p">()</span>
+</span><span id="line-826">                    <span class="n">_render_first_usable</span><span class="p">(</span>
+</span><span id="line-827">                        <span class="p">[</span>
+</span><span id="line-828">                            <span class="n">replace</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">cut</span><span class="p">,</span> <span class="n">clip_in</span><span class="o">=</span><span class="n">p</span><span class="o">.</span><span class="n">clip_in</span><span class="p">),</span>
+</span><span id="line-829">                            <span class="n">replace</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">prev</span><span class="p">,</span> <span class="n">clip_in</span><span class="o">=</span><span class="n">p</span><span class="o">.</span><span class="n">prev_in</span><span class="p">),</span>
+</span><span id="line-830">                        <span class="p">],</span>
+</span><span id="line-831">                        <span class="n">part</span><span class="p">,</span>
+</span><span id="line-832">                        <span class="o">**</span><span class="n">render_kwargs</span><span class="p">,</span>
+</span><span id="line-833">                    <span class="p">)</span>
+</span><span id="line-834">            <span class="k">else</span><span class="p">:</span>
+</span><span id="line-835">                <span class="c1"># `clip_in` is the PART's in-point, not the cut's: a cut whose head</span>
+</span><span id="line-836">                <span class="c1"># was consumed by an incoming transition starts later in its clip.</span>
+</span><span id="line-837">                <span class="n">_render_first_usable</span><span class="p">(</span>
+</span><span id="line-838">                    <span class="p">[</span><span class="n">replace</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">cut</span><span class="p">,</span> <span class="n">clip_in</span><span class="o">=</span><span class="n">p</span><span class="o">.</span><span class="n">clip_in</span><span class="p">)],</span> <span class="n">part</span><span class="p">,</span> <span class="o">**</span><span class="n">render_kwargs</span>
+</span><span id="line-839">                <span class="p">)</span>
+</span><span id="line-840">            <span class="n">names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+</span><span id="line-841">        <span class="k">if</span> <span class="ow">not</span> <span class="n">names</span><span class="p">:</span>
+</span><span id="line-842">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"no renderable cuts — every span rounds to zero frames"</span><span class="p">)</span>
+</span><span id="line-843">        <span class="c1"># Concat-demuxer entries resolve relative to the LIST file, and the names are</span>
+</span><span id="line-844">        <span class="c1"># ours (partNNNN.mp4) — plain relative names, so the demuxer's default "safe"</span>
+</span><span id="line-845">        <span class="c1"># mode is fine and no quoting/escaping surface exists here.</span>
+</span><span id="line-846">        <span class="n">stop_if_asked</span><span class="p">(</span><span class="s2">"before the final mux"</span><span class="p">)</span>
+</span><span id="line-847">        <span class="n">concat_list</span> <span class="o">=</span> <span class="n">parts_dir</span> <span class="o">/</span> <span class="s2">"parts.txt"</span>
+</span><span id="line-848">        <span class="n">concat_list</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="s2">""</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">"file </span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="se">\n</span><span class="s2">"</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">names</span><span class="p">))</span>
+</span><span id="line-849">        <span class="n">song_start</span> <span class="o">=</span> <span class="n">cuts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">song_start</span>
+</span><span id="line-850">        <span class="n">total</span> <span class="o">=</span> <span class="n">cuts</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">song_end</span> <span class="o">-</span> <span class="n">song_start</span>
+</span><span id="line-851">        <span class="c1"># The song is trimmed to the covered span. For a fill_gaps EDL that span IS the</span>
+</span><span id="line-852">        <span class="c1"># whole song, so the -ss is omitted and -t admits every packet — which is what</span>
+</span><span id="line-853">        <span class="c1"># keeps the stream-copy path bit-identical to the master.</span>
+</span><span id="line-854">        <span class="n">song_input</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"-i"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">song_path</span><span class="p">)]</span>
+</span><span id="line-855">        <span class="k">if</span> <span class="n">song_start</span> <span class="o">&gt;</span> <span class="mf">1e-3</span><span class="p">:</span>
+</span><span id="line-856">            <span class="n">song_input</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"-ss"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">song_start</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="o">*</span><span class="n">song_input</span><span class="p">]</span>
+</span><span id="line-857">        <span class="n">run_ffmpeg</span><span class="p">(</span>
+</span><span id="line-858">            <span class="p">[</span>
+</span><span id="line-859">                <span class="s2">"-f"</span><span class="p">,</span>
+</span><span id="line-860">                <span class="s2">"concat"</span><span class="p">,</span>
+</span><span id="line-861">                <span class="s2">"-i"</span><span class="p">,</span>
+</span><span id="line-862">                <span class="nb">str</span><span class="p">(</span><span class="n">concat_list</span><span class="p">),</span>
+</span><span id="line-863">                <span class="o">*</span><span class="n">song_input</span><span class="p">,</span>
+</span><span id="line-864">                <span class="s2">"-map"</span><span class="p">,</span>
+</span><span id="line-865">                <span class="s2">"0:v"</span><span class="p">,</span>
+</span><span id="line-866">                <span class="c1"># :a:0, not :a — a multi-stream master would otherwise carry extra audio</span>
+</span><span id="line-867">                <span class="c1"># tracks past the contract decision, which probes only the first.</span>
+</span><span id="line-868">                <span class="s2">"-map"</span><span class="p">,</span>
+</span><span id="line-869">                <span class="s2">"1:a:0"</span><span class="p">,</span>
+</span><span id="line-870">                <span class="s2">"-t"</span><span class="p">,</span>
+</span><span id="line-871">                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">total</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+</span><span id="line-872">                <span class="s2">"-c:v"</span><span class="p">,</span>
+</span><span id="line-873">                <span class="s2">"copy"</span><span class="p">,</span>
+</span><span id="line-874">                <span class="o">*</span><span class="n">_audio_args</span><span class="p">(</span>
+</span><span id="line-875">                    <span class="n">song_path</span><span class="p">,</span>
+</span><span id="line-876">                    <span class="n">fade_out_s</span><span class="o">=</span><span class="n">fade_out_s</span><span class="p">,</span>
+</span><span id="line-877">                    <span class="n">total_s</span><span class="o">=</span><span class="n">total</span><span class="p">,</span>
+</span><span id="line-878">                    <span class="n">trimmed_head</span><span class="o">=</span><span class="n">song_start</span> <span class="o">&gt;</span> <span class="mf">1e-3</span><span class="p">,</span>
+</span><span id="line-879">                <span class="p">),</span>
+</span><span id="line-880">                <span class="c1"># Delivery contract (muvid#24 B3): no edit lists, moov up front.</span>
+</span><span id="line-881">                <span class="s2">"-use_editlist"</span><span class="p">,</span>
+</span><span id="line-882">                <span class="s2">"0"</span><span class="p">,</span>
+</span><span id="line-883">                <span class="s2">"-movflags"</span><span class="p">,</span>
+</span><span id="line-884">                <span class="s2">"+faststart"</span><span class="p">,</span>
+</span><span id="line-885">                <span class="nb">str</span><span class="p">(</span><span class="n">out</span><span class="p">),</span>
+</span><span id="line-886">            <span class="p">]</span>
+</span><span id="line-887">        <span class="p">)</span>
+</span><span id="line-888">    <span class="k">finally</span><span class="p">:</span>
+</span><span id="line-889">        <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">parts_dir</span><span class="p">,</span> <span class="n">ignore_errors</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</span><span id="line-890">    <span class="k">return</span> <span class="n">out</span></div>
 
 </span></code></pre></div>
     </div></div>
@@ -1072,7 +1093,7 @@
 </footer>
     </div>
     
-    <script src="../../../_static/documentation_options.js?v=e264953e"></script>
+    <script src="../../../_static/documentation_options.js?v=0a7e36fc"></script>
     <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>

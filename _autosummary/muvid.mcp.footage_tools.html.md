@@ -54,6 +54,7 @@ alignment, exactly as `set_song` does.
 | [`footage_replace_edit`](#muvid.mcp.footage_tools.footage_replace_edit)(project_id, \*, edit_id, edl) | Replace a saved edit's whole cut list — the power tool for rewriting an edit at once.                                                                                                                                                                                   |
 | [`footage_save_edit`](#muvid.mcp.footage_tools.footage_save_edit)(project_id, \*, edl[, ...])      | Save a cut list as a new named edit.                                                                                                                                                                                                                                    |
 | [`footage_set_cut`](#muvid.mcp.footage_tools.footage_set_cut)(project_id, \*, edit_id, index)    | Change one cut of a saved edit (`index` is its position in `footage_get_edit`'s edl).                                                                                                                                                                                   |
+| [`footage_set_has_song`](#muvid.mcp.footage_tools.footage_set_has_song)(project_id, \*, clip_id, ...) | Say whether a video has the song in its own sound — overriding what listening found.                                                                                                                                                                                    |
 | [`footage_set_offset`](#muvid.mcp.footage_tools.footage_set_offset)(project_id, \*, clip_id, ...)   | Place one video on the song BY HAND: the song time at which the video's own first frame plays (negative = the video starts before the song does).                                                                                                                       |
 | [`footage_set_span`](#muvid.mcp.footage_tools.footage_set_span)(project_id, \*, edit_id, ...)     | Choose which part of the song the video covers — where it starts and ends.                                                                                                                                                                                              |
 | [`footage_split_cut`](#muvid.mcp.footage_tools.footage_split_cut)(project_id, \*, edit_id, at_s)   | Split the cut playing at song time `at_s` into two cuts of the same video.                                                                                                                                                                                              |
@@ -524,7 +525,8 @@ Change one cut of a saved edit (`index` is its position in `footage_get_edit`’
 
 - `clip_id`: show another video over this span (`""` makes it a gap). The new
   video must cover the span. Its framing (`crop`) is dropped, since it was chosen
-  for the old video’s frame; its `look` is kept.
+  for the old video’s frame; its `look` is kept. A video cut to the music (or a
+  photo) is shown from its start; a video with the song in it, where it was filmed.
 - `song_start` / `song_end`: move the cut’s boundaries. The neighbouring cut’s
   boundary moves with it, so the edit stays one continuous timeline; a move that
   would swallow a neighbour whole is refused (join them with `footage_merge_cut`).
@@ -545,6 +547,20 @@ Change one cut of a saved edit (`index` is its position in `footage_get_edit`’
   footage the cut then reads. A new video starts at speed 1.
 
 Parameters left out are unchanged. The changed edit is checked and saved; returns it.
+
+* **Return type:**
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+
+### muvid.mcp.footage_tools.footage_set_has_song(project_id, , clip_id, has_song)
+
+Say whether a video has the song in its own sound — overriding what listening found.
+
+`"yes"`: it is a recording of the song (a concert, a dance); it is synced to the
+song and never cut freely to the music. `"no"`: it is not (a day out, b-roll); it
+is always cut to the music. `"auto"` (the default) believes the listening: a
+video `align_footage` placed confidently is synced, any other is cut to the music. A
+photo is always cut to the music. Like a hand-placed offset, the choice survives
+listening again. Takes effect at the next `propose_edit`.
 
 * **Return type:**
   [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
@@ -647,7 +663,7 @@ The selection strategies available for full-auto assembly. Free.
 * **Return type:**
   [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
 
-### muvid.mcp.footage_tools.propose_edit(project_id, , strategy='', preset='', weights=None, config=None, save=False, name='')
+### muvid.mcp.footage_tools.propose_edit(project_id, , strategy='', preset='', weights=None, config=None, save=False, name='', pace='')
 
 Propose an EDL **without rendering it** — the cheap half of assembly. Free, seconds.
 
@@ -667,6 +683,14 @@ the song and every segment that made the cut despite weak alignment. Same argume
 `save=true` also keeps it as a named edit (`name`, default “Edit N”) and returns
 its `edit_id` — change it cut by cut with `footage_set_cut` /
 `footage_split_cut` / `footage_merge_cut` and render it with `footage_render`.
+
+**Footage without the song in it is cut to the music.** Only videos that are
+recordings of the song are synced; every span they leave is filled from the other
+videos, cut on the song’s beats with each video at the stretch whose picture changes
+land on the beat (`music` in the reply). `roles` says how each clip was used;
+overrule one with `footage_set_has_song`. Every video must have been listened to
+(`align_footage`) or declared. `pace` (`slow`/`steady`/`driving`/
+`frantic`) sets how often the cuts to the music come.
 
 * **Return type:**
   [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)

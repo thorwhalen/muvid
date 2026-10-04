@@ -48,6 +48,20 @@ What the planner knows about the song.
 
 Seconds per beat at the estimated tempo.
 
+#### *classmethod* from_dict(d)
+
+The inverse of `to_dict()` (as rounded) — so a measured song can be kept.
+
+* **Return type:**
+  [`Analysis`](muvid.montage.analysis.md#muvid.montage.analysis.Analysis)
+
+```pycon
+>>> a = Analysis(duration=4.0, tempo_bpm=120.0, beats=(0.0, 0.5), downbeats=(0.0,),
+...              sections=(Section(label='verse', start=0.0, end=4.0),))
+>>> Analysis.from_dict(a.to_dict()) == a
+True
+```
+
 ### *class* muvid.montage.Canvas(, width=1920, height=1080, fps=30)
 
 Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)

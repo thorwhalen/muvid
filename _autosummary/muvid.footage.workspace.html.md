@@ -104,9 +104,13 @@ Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
 One caller’s stateful music-video project (song + clips + alignments + renders).
 
-#### add_clip(clip_id, src_path, , ext, name='')
+#### add_clip(clip_id, src_path, , ext, name='', kind='')
 
 Store a footage clip from a local file; returns its `clip_id`.
+
+`kind="still"` stores a photo (no sound, no duration); the default is a video,
+and writes no `kind` key, so a manifest written before photos existed reads
+the same.
 
 * **Return type:**
   [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
@@ -175,7 +179,8 @@ Delete persisted score tracks — the primary invalidation on song/offset change
 
 #### list_clips()
 
-`[{clip_id, name}]` — plus `artifact_id` when the host catalog holds it.
+`[{clip_id, name}]` — plus `artifact_id` when the host catalog holds it,
+`kind: "still"` for a photo, and `has_song` when a person said (`set_has_song`).
 
 * **Return type:**
   [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)]
