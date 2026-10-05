@@ -69,6 +69,7 @@ trust refusal belongs where the encode does, in [`render()`](#muvid.footage.serv
 | [`propose_edit`](#muvid.footage.service.propose_edit)(fp, \*[, strategy, preset, ...])    | Cut it for me: build an edit of the whole song — or of `span` (`[start_s, end_s]`, the part of the song the video covers) — from the placed videos, and (by default) save it as a named edit, without rendering anything.                                               |
 | [`save_edit`](#muvid.footage.service.save_edit)(fp, \*, edl[, name, how_made, ...])    | Save a cut list as a new named edit.                                                                                                                                                                                                                                    |
 | [`edits`](#muvid.footage.service.edits)(fp)                                        | The saved edits, oldest first: each one's `edit_id`, `name`, how it was made, how many cuts it has, and `problem` — why it would not validate against the current alignment (`null` when it does).                                                                      |
+| [`explain_edit`](#muvid.footage.service.explain_edit)(fp, \*, edit_id[, start_s, end_s])  | Why each cut of an edit is where it is — the post-mortem, in plain words.                                                                                                                                                                                               |
 | [`get_edit`](#muvid.footage.service.get_edit)(fp, \*, edit_id)                        | One saved edit: its cut list (`edl`, every span of the song, gaps as `clip_id: null`), its name and history, and a `coverage` report.                                                                                                                                   |
 | [`replace_edit`](#muvid.footage.service.replace_edit)(fp, \*, edit_id, edl)               | Replace a saved edit's whole cut list — the power tool for rewriting an edit at once.                                                                                                                                                                                   |
 | [`set_cut`](#muvid.footage.service.set_cut)(fp, \*, edit_id, index[, clip_id, ...])  | Change one cut of a saved edit (`index` is its position in `get_edit`'s edl).                                                                                                                                                                                           |
@@ -402,6 +403,26 @@ One `warnings` line per span the auto path set aside (muvid#88).
 * **Return type:**
   [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
 
+### muvid.footage.service.explain_edit(fp, , edit_id, start_s=None, end_s=None)
+
+Why each cut of an edit is where it is — the post-mortem, in plain words.
+
+For every cut: where it lands (on which beat of which bar, or how far off one),
+how the picture changes (a hard cut, or a fade and where that fade really
+starts), what picture it shows and why that stretch (its picture changes on the
+beats inside the cut; a photo’s camera move; a video synced where it was
+filmed), and `flags` for the ones worth a look (`straddles_the_beat`,
+`off_the_beat`, `long_hold`, `repeated_stretch`). Plus a `summary` of the
+whole edit (fades vs cuts, the song’s pace and shape, the longest shot).
+
+Every clock time in a sentence is listed in `times` (`{label, s}`) so a screen
+can link it to the player. `start_s`/`end_s` keep only the cuts overlapping
+that part of the song (the summary stays whole). Explains the edit as it stands
+now, hand changes included. Free; reads only.
+
+* **Return type:**
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+
 ### muvid.footage.service.filmstrip(fp, , clip_id)
 
 One video’s filmstrip (the same record `filmstrips` gives per clip, with its
@@ -529,7 +550,7 @@ Returns `{duration_s, n, peaks: [0..1, ...]}`; slice `i` covers song time
 * **Return type:**
   [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
 
-### muvid.footage.service.propose_edit(fp, , strategy='', preset='', weights=None, config=None, save=True, name='', span=None, pace='')
+### muvid.footage.service.propose_edit(fp, , strategy='', preset='', weights=None, config=None, save=True, name='', span=None, pace='', style='auto')
 
 Cut it for me: build an edit of the whole song — or of `span` (`[start_s,
 end_s]`, the part of the song the video covers) — from the placed videos, and (by
@@ -554,7 +575,10 @@ videos and the photos, cut on the song’s beats and bars, each video shown at t
 stretch whose picture changes land on the beat (`music` in the reply says how
 that went). With no recording of the song at all, the whole song is cut to the
 music — no `align` needed. `pace` (`slow`/`steady`/`driving`/`frantic`)
-sets how often those cuts come.
+sets how often those cuts come; `style` how the picture changes: `cuts` (hard,
+on the beat), `fades` (each starting on the beat), or `auto` (the song’s
+choice — fades for a slow song). `explain_edit` says why
+each cut is where it is.
 
 * **Return type:**
   [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)

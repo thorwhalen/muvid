@@ -40,6 +40,7 @@ alignment, exactly as `set_song` does.
 | [`footage_editor_document`](#muvid.mcp.footage_tools.footage_editor_document)(project_id)                | The project as lacing-native standoff annotations, for a multitrack editor.                                                                                                                                                                                             |
 | [`footage_edits`](#muvid.mcp.footage_tools.footage_edits)(project_id)                          | The saved edits, oldest first: each one's `edit_id`, `name`, how it was made, how many cuts it has, and `problem` — why it would not validate against the current alignment (`null` when it does).                                                                      |
 | [`footage_edl_from_annotations`](#muvid.mcp.footage_tools.footage_edl_from_annotations)(project_id, \*, ...)  | The DECISION tier's annotations, turned back into an `edl=` argument.                                                                                                                                                                                                   |
+| [`footage_explain_edit`](#muvid.mcp.footage_tools.footage_explain_edit)(project_id, \*, edit_id)      | Why each cut of an edit is where it is — the post-mortem, in plain words.                                                                                                                                                                                               |
 | [`footage_filmstrip`](#muvid.mcp.footage_tools.footage_filmstrip)(project_id, \*, clip_id)         | One video's filmstrip (the same record `footage_filmstrips` gives per clip, with its `clip_id` and `fps`).                                                                                                                                                              |
 | [`footage_filmstrips`](#muvid.mcp.footage_tools.footage_filmstrips)(project_id)                     | Every video's filmstrip — thumbnails to draw each camera's lane.                                                                                                                                                                                                        |
 | [`footage_fit_to_beat`](#muvid.mcp.footage_tools.footage_fit_to_beat)(project_id, \*, edit_id)       | Fit the moves to the beat: for each cut that shows a video in the part of the song the edit covers (its span) — or the cuts at `indices` — find the slip and speed that put its video's movement accents on the song's beat, and apply it where the evidence is strong. |
@@ -356,6 +357,26 @@ The timeline-to-EDL half: pass `footage_editor_document`’s `DECISION` tier
 or `propose_edit` — a faithful read, not a re-selection. Annotations referencing a
 song other than this project’s are refused, not read (muvid#35), so a clipboard from
 another project fails saying so instead of splicing in the wrong spans.
+
+* **Return type:**
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+
+### muvid.mcp.footage_tools.footage_explain_edit(project_id, , edit_id, start_s=None, end_s=None)
+
+Why each cut of an edit is where it is — the post-mortem, in plain words.
+
+For every cut: where it lands (on which beat of which bar, or how far off one),
+how the picture changes (a hard cut, or a fade and where that fade really
+starts), what picture it shows and why that stretch (its picture changes on the
+beats inside the cut; a photo’s camera move; a video synced where it was
+filmed), and `flags` for the ones worth a look (`straddles_the_beat`,
+`off_the_beat`, `long_hold`, `repeated_stretch`). Plus a `summary` of the
+whole edit (fades vs cuts, the song’s pace and shape, the longest shot).
+
+Every clock time in a sentence is listed in `times` (`{label, s}`) so a screen
+can link it to the player. `start_s`/`end_s` keep only the cuts overlapping
+that part of the song (the summary stays whole). Explains the edit as it stands
+now, hand changes included. Free; reads only.
 
 * **Return type:**
   [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
