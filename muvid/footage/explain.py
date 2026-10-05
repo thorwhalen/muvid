@@ -114,7 +114,11 @@ class _Grid:
             return "a beat before the first bar"
         start = self.downs[bar - 1]
         k = int(np.sum((self.beats >= start - 1e-6) & (self.beats < t - 1e-6))) + 1
-        return f"the {_ORDINAL.get(k, f'{k}th')} beat of bar {bar}" if k > 1 else f"the first beat of bar {bar}"
+        return (
+            f"the {_ORDINAL.get(k, f'{k}th')} beat of bar {bar}"
+            if k > 1
+            else f"the first beat of bar {bar}"
+        )
 
     def inner(self, a: float, b: float) -> np.ndarray:
         return self.beats[(self.beats > a + ON_BEAT_S) & (self.beats < b - ON_BEAT_S)]
@@ -169,6 +173,7 @@ def explain(
                 shown=shown,
             )
         )
+
     def within(cs, span):
         if span is None:
             return cs
@@ -178,20 +183,31 @@ def explain(
     in_scope = within(cuts, scope)
     length = (scope[1] - scope[0]) if scope is not None else song_duration
     summary, summary_times = _summary(
-        in_scope, sections, length, selection, grid_note, getattr(analysis, "tempo_bpm", None)
+        in_scope,
+        sections,
+        length,
+        selection,
+        grid_note,
+        getattr(analysis, "tempo_bpm", None),
     )
     cuts = within(in_scope, window)
     return {"summary": summary, "times": summary_times, "cuts": cuts}
 
 
-def _explain_cut(i, e, *, prev, grid, bar_s, section_starts, clips, alignments, envelope_of, shown):
+def _explain_cut(
+    i, e, *, prev, grid, bar_s, section_starts, clips, alignments, envelope_of, shown
+):
     from muvid.footage.edl import TRANSITION_SPLIT
 
     start, end = float(e.song_start), float(e.song_end)
     length = end - start
     row = clips.get(e.clip_id or "", {})
     name = row.get("name") or e.clip_id or ""
-    kind = "black" if not e.clip_id else ("photo" if row.get("kind") == "still" else "video")
+    kind = (
+        "black"
+        if not e.clip_id
+        else ("photo" if row.get("kind") == "still" else "video")
+    )
     times: list[dict] = []
     flags: list[str] = []
     said: list[str] = []
@@ -203,7 +219,9 @@ def _explain_cut(i, e, *, prev, grid, bar_s, section_starts, clips, alignments, 
     # 1. where, and on what — and 2. how the picture changes
     beat, off = grid.nearest(start)
     synced = kind == "video" and getattr(e, "source_in", None) is None
-    fade = e.transition.duration_s if getattr(e, "transition", None) is not None else 0.0
+    fade = (
+        e.transition.duration_s if getattr(e, "transition", None) is not None else 0.0
+    )
     lead = fade * TRANSITION_SPLIT
     fade_start = start - lead
     section = section_starts.get(round(start, 2))
@@ -213,7 +231,11 @@ def _explain_cut(i, e, *, prev, grid, bar_s, section_starts, clips, alignments, 
     elif synced:
         # A synced cut sits where its strategy put it among the videos of the song;
         # whether that is on a beat is a fact, not a fault.
-        on = f" on {grid.name(beat)}" if beat is not None and abs(off) <= ON_BEAT_S else ""
+        on = (
+            f" on {grid.name(beat)}"
+            if beat is not None and abs(off) <= ON_BEAT_S
+            else ""
+        )
         how = f"A fade of about {_span_words(fade)} into" if fade > 0 else "A cut to"
         said.append(f"{how} another camera at {t(start)}{on}{where}.")
     elif fade > 0:
@@ -232,7 +254,9 @@ def _explain_cut(i, e, *, prev, grid, bar_s, section_starts, clips, alignments, 
             )
         else:
             flags.append("off_the_beat")
-            said.append(f"A fade of about {_span_words(fade)} starts at {t(fade_start)}, not on a beat{where}.")
+            said.append(
+                f"A fade of about {_span_words(fade)} starts at {t(fade_start)}, not on a beat{where}."
+            )
     elif beat is not None and abs(off) <= ON_BEAT_S:
         said.append(f"A hard cut on {grid.name(beat)} at {t(start)}{where}.")
     else:
@@ -249,7 +273,9 @@ def _explain_cut(i, e, *, prev, grid, bar_s, section_starts, clips, alignments, 
     if kind == "black":
         said.append("Nothing was there to show, so the screen is black.")
     elif kind == "photo":
-        move = _MOVES.get((getattr(e, "look_spec", None) or {}).get("name", ""), "is held")
+        move = _MOVES.get(
+            (getattr(e, "look_spec", None) or {}).get("name", ""), "is held"
+        )
         said.append(f"The photo {name} {move}.")
     elif getattr(e, "source_in", None) is None:
         a = alignments.get(e.clip_id)
@@ -262,7 +288,9 @@ def _explain_cut(i, e, *, prev, grid, bar_s, section_starts, clips, alignments, 
         )
     else:
         from_s = float(e.source_in) + getattr(e, "slip_s", 0.0)
-        said.append(f"It shows {name} from {clock(from_s)} into the clip{_why_stretch(e, grid, envelope_of, from_s)}.")
+        said.append(
+            f"It shows {name} from {clock(from_s)} into the clip{_why_stretch(e, grid, envelope_of, from_s)}."
+        )
     if from_s is not None and kind == "video":
         to_s = from_s + length * getattr(e, "rate", 1.0)
         for a0, a1, at in shown.get(e.clip_id, []):
@@ -277,7 +305,9 @@ def _explain_cut(i, e, *, prev, grid, bar_s, section_starts, clips, alignments, 
     long_limit = max(LONG_HOLD_S, (bar_s or 0.0) * LONG_HOLD_BARS)
     if kind != "black" and length > long_limit:
         flags.append("long_hold")
-        said.append(f"It holds for {_span_words(length)}, much longer than most shots here.")
+        said.append(
+            f"It holds for {_span_words(length)}, much longer than most shots here."
+        )
 
     return {
         "index": i,
@@ -285,9 +315,18 @@ def _explain_cut(i, e, *, prev, grid, bar_s, section_starts, clips, alignments, 
         "end_s": round(end, 3),
         "clip_id": e.clip_id or None,
         "free": getattr(e, "source_in", None) is not None,
-        "picture": {"kind": kind, "name": name or None, "from_s": None if from_s is None else round(from_s, 3)},
+        "picture": {
+            "kind": kind,
+            "name": name or None,
+            "from_s": None if from_s is None else round(from_s, 3),
+        },
         "transition": (
-            {"kind": "fade", "length_s": round(fade, 3), "starts_s": round(fade_start, 3), "ends_s": round(start + fade - lead, 3)}
+            {
+                "kind": "fade",
+                "length_s": round(fade, 3),
+                "starts_s": round(fade_start, 3),
+                "ends_s": round(start + fade - lead, 3),
+            }
             if fade > 0
             else {"kind": "cut"}
         ),
@@ -311,7 +350,9 @@ def _why_stretch(e, grid, envelope_of, from_s: float) -> str:
     typical = float(np.mean(hits)) + 1e-9
     k = 0
     for b in inner:
-        j = int(round((from_s + (b - e.song_start) * getattr(e, "rate", 1.0)) / env.hop_s))
+        j = int(
+            round((from_s + (b - e.song_start) * getattr(e, "rate", 1.0)) / env.hop_s)
+        )
         lo, hi = max(0, j - 1), min(hits.size, j + 2)
         if hi > lo and float(np.max(hits[lo:hi])) >= HIT_FACTOR * typical:
             k += 1
@@ -335,7 +376,9 @@ def _summary(cuts, sections, song_duration, selection, grid_note, tempo):
     fades = sum(1 for c in cuts if c["transition"]["kind"] == "fade")
     straddle = sum(1 for c in cuts if "straddles_the_beat" in c["flags"])
     off = sum(1 for c in cuts if "off_the_beat" in c["flags"])
-    said = [f"{n} shots over the {clock(song_duration)} song: {fades} fades and {n - fades} hard cuts."]
+    said = [
+        f"{n} shots over the {clock(song_duration)} song: {fades} fades and {n - fades} hard cuts."
+    ]
     if straddle:
         said.append(
             f"{straddle} of the fades are centred on their beat, so the picture starts changing a little before it — "

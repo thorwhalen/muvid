@@ -1878,20 +1878,31 @@ def explain_edit(
     paths = fp.clip_paths()
     roles = footage_roles(fp)
     clips = {
-        cid: {"name": r.get("name", cid), "kind": r.get("kind") or "video", "role": roles.get(cid)}
+        cid: {
+            "name": r.get("name", cid),
+            "kind": r.get("kind") or "video",
+            "role": roles.get(cid),
+        }
         for cid, r in rows.items()
     }
 
     def envelope_of(clip_id: str):
         from muvid.footage.music_cut import FreeSource
 
-        if not clip_id or clip_id not in paths or rows.get(clip_id, {}).get("kind") == STILL_KIND:
+        if (
+            not clip_id
+            or clip_id not in paths
+            or rows.get(clip_id, {}).get("kind") == STILL_KIND
+        ):
             return None
         return _activity_envelope(fp, FreeSource(clip_id, paths[clip_id]))
 
     window = None
     if start_s is not None or end_s is not None:
-        window = (float(start_s or 0.0), float(end_s if end_s is not None else fp.song_duration()))
+        window = (
+            float(start_s or 0.0),
+            float(end_s if end_s is not None else fp.song_duration()),
+        )
     out = explain(
         entries,
         analysis=analysis,

@@ -331,7 +331,9 @@ def extend_grid(analysis, duration: Optional[float] = None):
             "the song's own pace, to the end"
         )
     elif filled:
-        note = "the song's beat was carried on through its quiet passages, at its own pace"
+        note = (
+            "the song's beat was carried on through its quiet passages, at its own pace"
+        )
     else:
         note = None  # only a lead-in before the first beat: nothing worth saying
     return replace(analysis, beats=grid, downbeats=new_downs), note
@@ -345,7 +347,9 @@ def _carried_downbeats(grid, measured, bpb: int) -> tuple:
     g = list(grid)
     if not g:
         return tuple(measured)
-    idx = sorted({min(range(len(g)), key=lambda i: abs(g[i] - d)) for d in measured}) or [0]
+    idx = sorted(
+        {min(range(len(g)), key=lambda i: abs(g[i] - d)) for d in measured}
+    ) or [0]
     out = set(idx)
     for a, b in zip(idx, idx[1:] + [len(g) + bpb]):
         k = a + bpb
@@ -965,17 +969,28 @@ def _back_on_the_beat(entries: list, shifted: Mapping[float, float], by_id) -> l
     for i in range(1, len(out)):
         e, prev = out[i], out[i - 1]
         shift = shifted.get(round(e.song_start, 6))
-        if not shift or e.transition is not None or abs(prev.song_end - e.song_start) > 1e-6:
+        if (
+            not shift
+            or e.transition is not None
+            or abs(prev.song_end - e.song_start) > 1e-6
+        ):
             continue
         at = e.song_start - shift
         if at - prev.song_start < MIN_PIECE_S:
             continue
-        moved = with_start(e, at, bounded=False) if e.source_in is not None else replace(e, song_start=at)
+        moved = (
+            with_start(e, at, bounded=False)
+            if e.source_in is not None
+            else replace(e, song_start=at)
+        )
         src = by_id.get(e.clip_id)
         if moved.source_in is not None and moved.source_in < 0:
             continue
         if src is not None and not src.is_still and moved.source_in is not None:
-            if moved.source_in + (moved.song_end - at) * moved.rate > (src.duration_s or 0.0) + 1e-6:
+            if (
+                moved.source_in + (moved.song_end - at) * moved.rate
+                > (src.duration_s or 0.0) + 1e-6
+            ):
                 continue
         out[i - 1], out[i] = replace(prev, song_end=at), moved
     return out

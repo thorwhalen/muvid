@@ -40,10 +40,14 @@ service.add_clip(fp, path="walk.mp4")  # a video
 service.add_clip(fp, path="abbey.jpg")  # a photo: stored upright, kind="still"
 service.align(fp)  # every video: listened to, or declared below
 service.set_has_song(fp, clip_id="…", has_song="no")  # overrule listening, per clip
-out = service.propose_edit(fp, pace="steady", style="auto")  # pace: slow|steady|driving|frantic; style: auto|cuts|fades
+out = service.propose_edit(
+    fp, pace="steady", style="auto"
+)  # pace: slow|steady|driving|frantic; style: auto|cuts|fades
 out["music"]  # what the cut to the music did: style, n_cuts, uses, on_beat per video
 service.render(fp, edit_id=out["edit_id"])
-why = service.explain_edit(fp, edit_id=out["edit_id"])  # the post-mortem: summary + per-cut sentences, times, flags
+why = service.explain_edit(
+    fp, edit_id=out["edit_id"]
+)  # the post-mortem: summary + per-cut sentences, times, flags
 ```
 
 **Explaining an edit** (`explain_edit`, also a studio command and an Ask Reelee tool): per cut, where it lands (which beat of which bar, or how far off one), how the picture changes (hard cut, or a fade and where it really starts), what picture and why that stretch (its picture changes on k of the m beats inside the cut; a photo's move; a synced video), and flags — `straddles_the_beat`, `off_the_beat`, `long_hold`, `repeated_stretch`. Every clock time is also in `times` so a screen links it to the player. Use it to answer "why is this cut off the beat?" rather than reasoning from the cut list.
