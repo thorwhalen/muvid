@@ -526,7 +526,21 @@ def _set_aside_unvouched(entries, alignments):
     return [e for e in kept if not e.is_gap], excluded
 
 
-def _music_fill(fp, entries, sources, song_dur, *, pace: str = "", canvas=None):
+#: How the cuts to the music change picture — the person's words for the montage
+#: archetypes (``muvid.montage.spec.ARCHETYPES``): hard cuts on the beat, fades that
+#: start on the beat, or the song's choice (a slow song: fades). The flip-book
+#: archetype (``stop_motion``) is not offered: a hold every half beat is 1,400 cuts on
+#: a four-minute song, past the edit's cut limit — it is for short songs and photos.
+STYLES = {
+    "auto": "auto",
+    "cuts": "beat_cut",
+    "fades": "ballad_dissolve",
+}
+
+
+def _music_fill(
+    fp, entries, sources, song_dur, *, pace: str = "", style: str = "auto", canvas=None
+):
     """Replace the gap entries of ``entries`` with free cuts of ``sources`` cut to the
     music; ``(entries, report)``. The synced cuts are untouched."""
     from muvid.footage.assemble import DEFAULT_FPS
@@ -547,6 +561,7 @@ def _music_fill(fp, entries, sources, song_dur, *, pace: str = "", canvas=None):
         analysis=song_analysis(fp),
         spans=gaps,
         song_duration=song_dur,
+        archetype=STYLES[style or "auto"],
         cut_feel=pace,
         envelope_of=lambda s: _activity_envelope(fp, s),
         canvas=canvas or fp.canvas(),
@@ -1503,7 +1518,16 @@ def _require_song_and_alignment(fp) -> list:
 
 
 def _auto_edit(
-    fp, placements, song_dur, *, strategy, context, recover, pace="", canvas=None
+    fp,
+    placements,
+    song_dur,
+    *,
+    strategy,
+    context,
+    recover,
+    pace="",
+    style="auto",
+    canvas=None,
 ):
     """The auto path, synced half then music half: the strategy cuts the clips that
     carry the song (:func:`_role_of`); every span it leaves empty is cut to the music
@@ -1536,7 +1560,7 @@ def _auto_edit(
         excluded = list(excluded) + more
     try:
         entries, music = _music_fill(
-            fp, entries, free, song_dur, pace=pace, canvas=canvas
+            fp, entries, free, song_dur, pace=pace, style=style, canvas=canvas
         )
     except (ImportError, OSError) as e:
         # The music half needs the montage analysis (librosa, ffmpeg). Without it the
@@ -1679,6 +1703,7 @@ def propose_edit(
     name: str = "",
     span: Optional[tuple[float, float]] = None,
     pace: Literal["", "slow", "steady", "driving", "frantic"] = "",
+    style: Literal["auto", "cuts", "fades"] = "auto",
 ) -> dict:
     """Cut it for me: build an edit of the whole song — or of ``span`` (``[start_s,
     end_s]``, the part of the song the video covers) — from the placed videos, and (by
@@ -1703,7 +1728,10 @@ def propose_edit(
     stretch whose picture changes land on the beat (``music`` in the reply says how
     that went). With no recording of the song at all, the whole song is cut to the
     music — no ``align`` needed. ``pace`` (``slow``/``steady``/``driving``/``frantic``)
-    sets how often those cuts come.
+    sets how often those cuts come; ``style`` how the picture changes: ``cuts`` (hard,
+    on the beat), ``fades`` (each starting on the beat), or ``auto`` (the song's
+    choice — fades for a slow song). ``explain_edit`` says why
+    each cut is where it is.
     """
     from muvid.footage.edl import validate_edl
     from muvid.footage.strategy import DEFAULT_STRATEGY
@@ -1713,6 +1741,8 @@ def propose_edit(
     span = _check_span(fp, span)
     has_selection_config = bool(preset or weights or config)
     strat = strategy or ("weighted" if has_selection_config else DEFAULT_STRATEGY)
+    if style not in STYLES:
+        raise FootageError(f"style must be one of {sorted(STYLES)}, got {style!r}")
     try:
         context = _selection_context(fp, strat, preset, weights, config)
         proposal, excluded, music = _auto_edit(
@@ -1723,6 +1753,7 @@ def propose_edit(
             context=context,
             recover=True,
             pace=pace,
+            style=style,
         )
         if span is not None:
             excluded = [
@@ -1767,6 +1798,7 @@ def propose_edit(
             ("weights", weights),
             ("config", config),
             ("pace", pace),
+            ("style", "" if style == "auto" else style),
         ):
             if value:
                 selection[key] = value
@@ -1807,6 +1839,67 @@ def _edits_locked(fn):
 
 
 @_edits_locked
+def explain_edit(
+    fp,
+    *,
+    edit_id: str,
+    start_s: Optional[float] = None,
+    end_s: Optional[float] = None,
+) -> dict:
+    """Why each cut of an edit is where it is — the post-mortem, in plain words.
+
+    For every cut: where it lands (on which beat of which bar, or how far off one),
+    how the picture changes (a hard cut, or a fade and where that fade really
+    starts), what picture it shows and why that stretch (its picture changes on the
+    beats inside the cut; a photo's camera move; a video synced where it was
+    filmed), and ``flags`` for the ones worth a look (``straddles_the_beat``,
+    ``off_the_beat``, ``long_hold``, ``repeated_stretch``). Plus a ``summary`` of the
+    whole edit (fades vs cuts, the song's pace and shape, the longest shot).
+
+    Every clock time in a sentence is listed in ``times`` (``{label, s}``) so a screen
+    can link it to the player. ``start_s``/``end_s`` keep only the cuts overlapping
+    that part of the song (the summary stays whole). Explains the edit as it stands
+    now, hand changes included. Free; reads only.
+    """
+    from muvid.footage.explain import explain
+    from muvid.footage.music_cut import extend_grid
+
+    record = _read_edit(fp, edit_id)
+    entries = _validated_entries(fp, record.get("edl") or [])
+    analysis, grid_note = extend_grid(song_analysis(fp), fp.song_duration())
+    rows = {c["clip_id"]: c for c in fp.manifest().get("clips", [])}
+    aligns = {a.clip_id: a for a in fp.load_alignments()}
+    paths = fp.clip_paths()
+    roles = footage_roles(fp)
+    clips = {
+        cid: {"name": r.get("name", cid), "kind": r.get("kind") or "video", "role": roles.get(cid)}
+        for cid, r in rows.items()
+    }
+
+    def envelope_of(clip_id: str):
+        from muvid.footage.music_cut import FreeSource
+
+        if not clip_id or clip_id not in paths or rows.get(clip_id, {}).get("kind") == STILL_KIND:
+            return None
+        return _activity_envelope(fp, FreeSource(clip_id, paths[clip_id]))
+
+    window = None
+    if start_s is not None or end_s is not None:
+        window = (float(start_s or 0.0), float(end_s if end_s is not None else fp.song_duration()))
+    out = explain(
+        entries,
+        analysis=analysis,
+        song_duration=fp.song_duration(),
+        clips=clips,
+        alignments=aligns,
+        envelope_of=envelope_of,
+        selection=record.get("selection") or {},
+        grid_note=grid_note,
+        window=window,
+    )
+    return {"edit_id": edit_id, "name": record.get("name"), **out}
+
+
 def save_edit(
     fp,
     *,
@@ -3491,6 +3584,7 @@ FOOTAGE_OP_SPECS: tuple[OpSpec, ...] = (
     OpSpec("propose_edit", "Cut it for me", "write"),
     OpSpec("save_edit", "Save a cut list as a new edit", "write"),
     OpSpec("edits", "List the edits", "read"),
+    OpSpec("explain_edit", "Explain the cuts", "read"),
     OpSpec("get_edit", "Open an edit", "read"),
     OpSpec("replace_edit", "Replace an edit's whole cut list", "destroy"),
     OpSpec("set_cut", "Change a cut", "write"),

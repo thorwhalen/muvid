@@ -270,6 +270,80 @@ def pick_archetype(analysis) -> str:
     return "ballad_dissolve" if analysis.tempo_bpm < SLOW_TEMPO_BPM else "beat_cut"
 
 
+#: Fill a hole in the beat grid longer than this many beats (a quiet passage the beat
+#: tracker went silent on) — and run the grid on to the song's ends.
+GRID_HOLE_BEATS = 1.6
+
+
+def extend_grid(analysis, duration: Optional[float] = None):
+    """``analysis`` with its beat grid carried through the quiet passages a beat
+    tracker goes silent on, and on to both ends of the song, at its own pace.
+
+    Without this, a song whose last 25 s are a quiet outro has no beats there: the
+    planner cannot cut on them, and the last picture holds to the end (measured: a
+    21 s hold on a 4:24 song whose beat was last found at 3:58). Returns
+    ``(analysis, note)``; ``note`` is ``None`` when nothing was added.
+
+    >>> from muvid.montage.analysis import Analysis
+    >>> a = Analysis(duration=4.6, tempo_bpm=120.0, beats=(1.0, 1.5, 2.0, 2.5, 3.0),
+    ...              downbeats=(1.0, 3.0))
+    >>> b, note = extend_grid(a)
+    >>> b.beats[:3], b.beats[-2:], b.downbeats, note is not None
+    ((0.0, 0.5, 1.0), (3.5, 4.0), (1.0, 3.0), True)
+    """
+    from dataclasses import replace
+
+    beats = list(analysis.beats)
+    dur = float(duration if duration is not None else analysis.duration)
+    if len(beats) < 4:
+        return analysis, None
+    period = float(np.median(np.diff(beats)))
+    if not period > 0:
+        return analysis, None
+    out = []
+    filled = []
+    for a, b in zip(beats, beats[1:]):
+        out.append(a)
+        if b - a > GRID_HOLE_BEATS * period:
+            n = int(round((b - a) / period))
+            step = (b - a) / n
+            out += [a + k * step for k in range(1, n)]
+            filled.append((a, b))
+    out.append(beats[-1])
+    head = []
+    t = beats[0] - period
+    while t > -1e-6:
+        head.insert(0, max(0.0, t))
+        t -= period
+    tail = []
+    t = beats[-1] + period
+    while t < dur - 0.5 * period:
+        tail.append(t)
+        t += period
+    if not head and not tail and not filled:
+        return analysis, None
+    grid = tuple(round(x, 4) for x in head + out + tail)
+    bpb = int(getattr(analysis, "beats_per_bar", 4) or 4)
+    downs = list(analysis.downbeats) or [grid[0]]
+    # downbeats: keep the measured ones, and continue the bar count over what was added
+    first = min(range(len(grid)), key=lambda i: abs(grid[i] - downs[0]))
+    phase = first % bpb
+    new_downs = tuple(grid[i] for i in range(len(grid)) if i % bpb == phase)
+    note = (
+        f"the song's beat was last heard at {_clock(beats[-1])}; it was carried on, at the "
+        "song's own pace, to the end"
+        if tail
+        else "the song's beat was carried on through its quiet passages, at its own pace"
+    )
+    return replace(analysis, beats=grid, downbeats=new_downs), note
+
+
+def _clock(t: float) -> str:
+    """``72.41`` -> ``"1:12.4"``."""
+    m, sec = divmod(max(0.0, float(t)), 60.0)
+    return f"{int(m)}:{sec:04.1f}"
+
+
 def _default_analysis(song_path: str):
     from muvid.montage.analysis import analyze
 
@@ -488,6 +562,7 @@ def fill_spans(
     if analysis is None:
         analysis = _default_analysis(song_path)
     duration = float(song_duration or analysis.duration)
+    analysis, grid_note = extend_grid(analysis, duration)
     spans = (
         [(0.0, duration)] if spans is None else [(float(a), float(b)) for a, b in spans]
     )
@@ -548,6 +623,9 @@ def fill_spans(
             )
             pieces.append(
                 {
+                    # a sliver a span boundary cut off a slot — not a slot the
+                    # planner made short on purpose (a flip-book hold)
+                    "clipped": lo > slot.start + 1e-6 or hi < slot.end - 1e-6,
                     "start": lo,
                     "end": hi,
                     "media": tile.media,
@@ -557,6 +635,7 @@ def fill_spans(
                 }
             )
     pieces = _fold_tiny(pieces)
+    _fades_start_on_the_beat(pieces)
     for this, nxt in zip(pieces, pieces[1:]):
         this["next"], nxt["prev"] = {"media": nxt["media"]}, {"media": this["media"]}
         # The next cut's blend reads past this cut's end in this cut's source.
@@ -587,6 +666,7 @@ def fill_spans(
     report = {
         # seconds of the asked spans no picture could fill (left as gaps) — 0 normally
         "uncovered_s": round(max(0.0, asked - covered), 2),
+        "grid_note": grid_note,
         "tempo_bpm": round(float(analysis.tempo_bpm), 2),
         "beat_source": getattr(analysis, "beat_source", ""),
         "style": chosen,
@@ -607,12 +687,34 @@ def fill_spans(
     return MusicCut(entries=entries, report=report)
 
 
+def _fades_start_on_the_beat(pieces: list[dict]) -> None:
+    """Move each faded boundary later by the fade's lead, so the fade STARTS on the
+    beat the planner chose, instead of straddling it (measured on a real edit: 44 of
+    62 cuts were fades centred on their beat, so the picture began changing a third
+    of a second early — heard as "slightly off the beat"). In place; a piece the move
+    would leave shorter than :data:`MIN_PIECE_S` keeps a hard cut instead."""
+    from muvid.footage.edl import TRANSITION_SPLIT
+
+    for prev, p in zip(pieces, pieces[1:]):
+        fade = p.get("fade") or 0.0
+        if fade <= 0 or p["first_in_span"] or abs(prev["end"] - p["start"]) > 1e-6:
+            continue
+        lead = fade * TRANSITION_SPLIT
+        if p["end"] - (p["start"] + lead) < MIN_PIECE_S:
+            p["fade"] = 0.0
+            continue
+        prev["end"] = p["start"] = p["start"] + lead
+
+
 def _fold_tiny(pieces: list[dict]) -> list[dict]:
-    """Fold pieces shorter than :data:`MIN_PIECE_S` into the previous piece of the same
-    span (or the next one), so a span clipped mid-slot leaves no flash frames."""
+    """Fold the slivers a span boundary clipped off a slot — shorter than
+    :data:`MIN_PIECE_S` — into the previous piece of the same span (or the next
+    one), so a clipped slot leaves no flash frames. A slot the planner made short
+    ON PURPOSE (a flip-book hold of a third of a second) is left alone: folding
+    those cascades them into one long hold."""
     out: list[dict] = []
     for p in pieces:
-        short = p["end"] - p["start"] < MIN_PIECE_S
+        short = p.get("clipped", True) and p["end"] - p["start"] < MIN_PIECE_S
         if (
             short
             and out
@@ -626,6 +728,7 @@ def _fold_tiny(pieces: list[dict]) -> list[dict]:
     for p in out:
         if (
             merged
+            and merged[-1].get("clipped", True)
             and merged[-1]["end"] - merged[-1]["start"] < MIN_PIECE_S
             and abs(merged[-1]["end"] - p["start"]) < 1e-6
             and not p["first_in_span"]

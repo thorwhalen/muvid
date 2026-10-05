@@ -40,10 +40,13 @@ service.add_clip(fp, path="walk.mp4")  # a video
 service.add_clip(fp, path="abbey.jpg")  # a photo: stored upright, kind="still"
 service.align(fp)  # every video: listened to, or declared below
 service.set_has_song(fp, clip_id="…", has_song="no")  # overrule listening, per clip
-out = service.propose_edit(fp, pace="steady")  # slow | steady | driving | frantic
+out = service.propose_edit(fp, pace="steady", style="auto")  # pace: slow|steady|driving|frantic; style: auto|cuts|fades
 out["music"]  # what the cut to the music did: style, n_cuts, uses, on_beat per video
 service.render(fp, edit_id=out["edit_id"])
+why = service.explain_edit(fp, edit_id=out["edit_id"])  # the post-mortem: summary + per-cut sentences, times, flags
 ```
+
+**Explaining an edit** (`explain_edit`, also a studio command and an Ask Reelee tool): per cut, where it lands (which beat of which bar, or how far off one), how the picture changes (hard cut, or a fade and where it really starts), what picture and why that stretch (its picture changes on k of the m beats inside the cut; a photo's move; a synced video), and flags — `straddles_the_beat`, `off_the_beat`, `long_hold`, `repeated_stretch`. Every clock time is also in `times` so a screen links it to the player. Use it to answer "why is this cut off the beat?" rather than reasoning from the cut list.
 
 **Without a project** — just plan free cuts over a song: `muvid.footage.music_cut.fill_spans(song_path, [FreeSource(...)], spans=..., envelope_of=..., canvas=...)`. It is pure: no file is written, and the result is ordinary `EdlEntry` cuts.
 
@@ -54,6 +57,8 @@ service.render(fp, edit_id=out["edit_id"])
 - **Which stretch of a video.** `music_cut.choose_source_in` scores every in-point by: picture-change hits on the beats inside the cut (relative to the clip's own mean), liveliness matched to the section's loudness, sharpness (so a whip-pan blur loses), and reuse of stretches already shown. The signal is `footage.beats.activity_signal`: frame differences with the camera move included, because in b-roll a pan arriving IS the event. It is measured once per clip (about 0.7 s for a 34 s phone clip) and cached under `beats/`.
 - **Photos.** Named camera looks (`slow_push`, `pan_right`, `slow_pull`, `pan_left`, `punch_in`) at zoom 1.12, anchored on `burns.salient_box` (the photo's detailed region; the centre without `burns`).
 - **Framing.** Free cuts are `cover`-cropped to the canvas, centred on the subject for photos (`music_cut.cover_crop`), computed on the size the picture is SHOWN at: a phone video stored 640×360 with a −90° rotation is portrait (`music_cut.display_size`).
+- **Fades start on the beat.** A fade is shifted so its first frame is on the planner's beat (`_fades_start_on_the_beat`); a fade centred on its beat began changing a third of a second early and was heard as "slightly off" (measured on a real edit: 44 of 62 cuts).
+- **The beat grid runs to the end.** `extend_grid` carries the beat through quiet passages and on to both ends at the song's own pace; without it a quiet outro got one 21 s shot.
 - **Render.** The same assembler as synced cuts. A photo is a looped still input (`assemble._source_input`).
 - **Speed.** "Cut it for me" is a synchronous op, so nothing heavy happens there: the song's analysis is measured at `set_song` and kept (`service.song_analysis`, keyed on the song hash), each video's hash and picture signal at `add_clip`, and probes and photo anchors are memoised per file. Photos are stored upright as JPEG; HEIC needs `pillow-heif`, and without it is refused with a plain reason.
 
