@@ -131,3 +131,27 @@ def test_explain_edit_and_the_style_choice_through_the_service(proj):
     with pytest.raises(service.FootageError):
         service.propose_edit(proj, style="swirl", save=False)
     assert "explain_edit" in {op.name for op in service.FOOTAGE_OP_SPECS}
+
+
+def test_synced_cuts_are_described_not_scolded_and_a_span_scopes_the_summary():
+    from muvid.footage.edl import FootageAlignment
+
+    an = _analysis(bpm=60.0)
+    entries = [
+        EdlEntry(0.0, 2.2, "", ),  # black, outside the span
+        EdlEntry(2.2, 6.0, "v1"),  # synced, not on a beat
+        EdlEntry(6.0, 10.0, "v1", source_in=1.0),
+    ]
+    a = FootageAlignment("v1", 0.0, 0.9, 30.0, (0.0, 30.0))
+    out = explain(entries, analysis=an, song_duration=40.0, clips=_clips(), alignments={"v1": a}, scope=(2.2, 10.0))
+    synced = out["cuts"][0]  # the window keeps cuts 1 and 2
+    assert "off_the_beat" not in synced["flags"] and "plays where it was filmed" in synced["text"]
+    assert out["summary"].startswith("2 shots")
+    assert [c["index"] for c in out["cuts"]] == [1, 2]
+
+
+def test_an_edit_whose_clip_was_removed_is_still_explained(proj):
+    made = service.propose_edit(proj, style="cuts")
+    service.remove_clip(proj, clip_id="v2")
+    out = service.explain_edit(proj, edit_id=made["edit_id"])
+    assert out["cuts"]

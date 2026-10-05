@@ -1838,7 +1838,6 @@ def _edits_locked(fn):
     return locked
 
 
-@_edits_locked
 def explain_edit(
     fp,
     *,
@@ -1865,7 +1864,14 @@ def explain_edit(
     from muvid.footage.music_cut import extend_grid
 
     record = _read_edit(fp, edit_id)
-    entries = _validated_entries(fp, record.get("edl") or [])
+    try:
+        entries = _validated_entries(fp, record.get("edl") or [])
+    except FootageError:
+        # An edit that no longer fits (a clip removed, the song changed) is still
+        # worth explaining — it is the one a person wonders about.
+        from muvid.footage.edl import _as_entry
+
+        entries = [_as_entry(e) for e in record.get("edl") or []]
     analysis, grid_note = extend_grid(song_analysis(fp), fp.song_duration())
     rows = {c["clip_id"]: c for c in fp.manifest().get("clips", [])}
     aligns = {a.clip_id: a for a in fp.load_alignments()}
@@ -1896,10 +1902,12 @@ def explain_edit(
         selection=record.get("selection") or {},
         grid_note=grid_note,
         window=window,
+        scope=_span_of(record),
     )
     return {"edit_id": edit_id, "name": record.get("name"), **out}
 
 
+@_edits_locked
 def save_edit(
     fp,
     *,

@@ -134,6 +134,7 @@ def explain(
     selection: Mapping[str, Any] = {},
     grid_note: Optional[str] = None,
     window: Optional[tuple[float, float]] = None,
+    scope: Optional[tuple[float, float]] = None,
 ) -> dict:
     """The post-mortem of an edit: ``{summary, times, cuts: [...]}``.
 
@@ -143,7 +144,9 @@ def explain(
     placements (for synced cuts); ``envelope_of(clip_id)`` a video's picture signal
     (:class:`muvid.footage.music_cut.Envelope`) or ``None``; ``selection`` how the
     edit was made (``pace``, ``style``, ``strategy``). ``window`` (song seconds)
-    keeps only the cuts that overlap it; the summary is always of the whole edit.
+    keeps only the cuts that overlap it; the summary is of the whole edit — or of
+    ``scope``, the part of the song a trimmed edit covers (its ``span``), so the
+    black outside it is not counted as shots.
     """
     grid = _Grid(analysis.beats, analysis.downbeats)
     bar_s = grid.bar_s()
@@ -166,12 +169,18 @@ def explain(
                 shown=shown,
             )
         )
+    def within(cs, span):
+        if span is None:
+            return cs
+        lo, hi = span
+        return [c for c in cs if c["end_s"] > lo and c["start_s"] < hi]
+
+    in_scope = within(cuts, scope)
+    length = (scope[1] - scope[0]) if scope is not None else song_duration
     summary, summary_times = _summary(
-        cuts, sections, song_duration, selection, grid_note, getattr(analysis, "tempo_bpm", None)
+        in_scope, sections, length, selection, grid_note, getattr(analysis, "tempo_bpm", None)
     )
-    if window is not None:
-        lo, hi = window
-        cuts = [c for c in cuts if c["end_s"] > lo and c["start_s"] < hi]
+    cuts = within(in_scope, window)
     return {"summary": summary, "times": summary_times, "cuts": cuts}
 
 
@@ -193,6 +202,7 @@ def _explain_cut(i, e, *, prev, grid, bar_s, section_starts, clips, alignments, 
 
     # 1. where, and on what — and 2. how the picture changes
     beat, off = grid.nearest(start)
+    synced = kind == "video" and getattr(e, "source_in", None) is None
     fade = e.transition.duration_s if getattr(e, "transition", None) is not None else 0.0
     lead = fade * TRANSITION_SPLIT
     fade_start = start - lead
@@ -200,6 +210,12 @@ def _explain_cut(i, e, *, prev, grid, bar_s, section_starts, clips, alignments, 
     where = f" — where the song's {section} starts" if section else ""
     if i == 0:
         said.append(f"The video opens at {t(start)}.")
+    elif synced:
+        # A synced cut sits where its strategy put it among the videos of the song;
+        # whether that is on a beat is a fact, not a fault.
+        on = f" on {grid.name(beat)}" if beat is not None and abs(off) <= ON_BEAT_S else ""
+        how = f"A fade of about {_span_words(fade)} into" if fade > 0 else "A cut to"
+        said.append(f"{how} another camera at {t(start)}{on}{where}.")
     elif fade > 0:
         fbeat, foff = grid.nearest(fade_start)
         if fbeat is not None and abs(foff) <= ON_BEAT_S:
@@ -239,7 +255,11 @@ def _explain_cut(i, e, *, prev, grid, bar_s, section_starts, clips, alignments, 
         a = alignments.get(e.clip_id)
         if a is not None:
             from_s = start - a.offset_s + getattr(e, "slip_s", 0.0)
-        said.append(f"{name} plays where it was filmed: its own sound has the song in it here.")
+        said.append(
+            f"{name or 'This video'} plays where it was filmed: its own sound has the song in it here."
+            if name
+            else "A video that is no longer in the project."
+        )
     else:
         from_s = float(e.source_in) + getattr(e, "slip_s", 0.0)
         said.append(f"It shows {name} from {clock(from_s)} into the clip{_why_stretch(e, grid, envelope_of, from_s)}.")
@@ -264,6 +284,7 @@ def _explain_cut(i, e, *, prev, grid, bar_s, section_starts, clips, alignments, 
         "start_s": round(start, 3),
         "end_s": round(end, 3),
         "clip_id": e.clip_id or None,
+        "free": getattr(e, "source_in", None) is not None,
         "picture": {"kind": kind, "name": name or None, "from_s": None if from_s is None else round(from_s, 3)},
         "transition": (
             {"kind": "fade", "length_s": round(fade, 3), "starts_s": round(fade_start, 3), "ends_s": round(start + fade - lead, 3)}
@@ -301,6 +322,8 @@ def _why_stretch(e, grid, envelope_of, from_s: float) -> str:
 
 
 def _summary(cuts, sections, song_duration, selection, grid_note, tempo):
+    from muvid.footage.music_cut import SLOW_TEMPO_BPM
+
     times: list[dict] = []
 
     def t(x):
@@ -320,8 +343,8 @@ def _summary(cuts, sections, song_duration, selection, grid_note, tempo):
         )
     if off:
         said.append(f"{off} change{'s are' if off > 1 else ' is'} not on a beat.")
-    elif not straddle:
-        said.append("Every change starts on a beat.")
+    elif not straddle and any(c.get("free") for c in cuts):
+        said.append("Every change to the music starts on a beat.")
     style = selection.get("style") or ""
     pace = selection.get("pace") or ""
     chose = []
@@ -331,10 +354,10 @@ def _summary(cuts, sections, song_duration, selection, grid_note, tempo):
         chose.append({"driving": "lively"}.get(pace, pace) + " pace")
     if chose:
         said.append(f"You chose {' and '.join(chose)}.")
-    elif tempo:
+    elif tempo and selection.get("strategy") and any(c.get("free") for c in cuts):
         said.append(
             f"The song is about {round(tempo)} beats a minute, so Reelee picked "
-            f"{'fades, for a slower song' if tempo < 92 else 'hard cuts on the beat'}."
+            f"{'fades, for a slower song' if tempo < SLOW_TEMPO_BPM else 'hard cuts on the beat'}."
         )
     if sections:
         big = max(sections, key=lambda s: s.end - s.start)

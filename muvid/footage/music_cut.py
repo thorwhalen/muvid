@@ -289,7 +289,7 @@ def extend_grid(analysis, duration: Optional[float] = None):
     ...              downbeats=(1.0, 3.0))
     >>> b, note = extend_grid(a)
     >>> b.beats[:3], b.beats[-2:], b.downbeats, note is not None
-    ((0.0, 0.5, 1.0), (3.5, 4.0), (1.0, 3.0), True)
+    ((0.5, 1.0, 1.5), (3.5, 4.0), (1.0, 3.0), True)
     """
     from dataclasses import replace
 
@@ -312,8 +312,8 @@ def extend_grid(analysis, duration: Optional[float] = None):
     out.append(beats[-1])
     head = []
     t = beats[0] - period
-    while t > -1e-6:
-        head.insert(0, max(0.0, t))
+    while t >= 0.5 * period:  # no beat crammed against 0
+        head.insert(0, t)
         t -= period
     tail = []
     t = beats[-1] + period
@@ -324,18 +324,39 @@ def extend_grid(analysis, duration: Optional[float] = None):
         return analysis, None
     grid = tuple(round(x, 4) for x in head + out + tail)
     bpb = int(getattr(analysis, "beats_per_bar", 4) or 4)
-    downs = list(analysis.downbeats) or [grid[0]]
-    # downbeats: keep the measured ones, and continue the bar count over what was added
-    first = min(range(len(grid)), key=lambda i: abs(grid[i] - downs[0]))
-    phase = first % bpb
-    new_downs = tuple(grid[i] for i in range(len(grid)) if i % bpb == phase)
-    note = (
-        f"the song's beat was last heard at {_clock(beats[-1])}; it was carried on, at the "
-        "song's own pace, to the end"
-        if tail
-        else "the song's beat was carried on through its quiet passages, at its own pace"
-    )
+    new_downs = _carried_downbeats(grid, analysis.downbeats, bpb)
+    if tail:
+        note = (
+            f"the song's beat was last heard at {_clock(beats[-1])}; it was carried on, at "
+            "the song's own pace, to the end"
+        )
+    elif filled:
+        note = "the song's beat was carried on through its quiet passages, at its own pace"
+    else:
+        note = None  # only a lead-in before the first beat: nothing worth saying
     return replace(analysis, beats=grid, downbeats=new_downs), note
+
+
+def _carried_downbeats(grid, measured, bpb: int) -> tuple:
+    """The measured downbeats, kept exactly, plus every ``bpb``-th grid beat before
+    the first and after each measured one where the measurement leaves a gap of more
+    than a bar and a half — so a filled hole or a carried-on ending gets bars without
+    relabelling a single measured one."""
+    g = list(grid)
+    if not g:
+        return tuple(measured)
+    idx = sorted({min(range(len(g)), key=lambda i: abs(g[i] - d)) for d in measured}) or [0]
+    out = set(idx)
+    for a, b in zip(idx, idx[1:] + [len(g) + bpb]):
+        k = a + bpb
+        while k < len(g) and b - k > bpb // 2:
+            out.add(k)
+            k += bpb
+    k = idx[0] - bpb
+    while k >= 0:
+        out.add(k)
+        k -= bpb
+    return tuple(g[i] for i in sorted(out))
 
 
 def _clock(t: float) -> str:
@@ -661,6 +682,11 @@ def fill_spans(
             crop_for=crop_for,
         )
     entries = _feasible_blends(entries, {s.clip_id: s for s in sources})
+    entries = _back_on_the_beat(
+        entries,
+        {round(p["start"], 6): p["shift"] for p in pieces if p.get("shift")},
+        {s.clip_id: s for s in sources},
+    )
     asked = sum(b - a for a, b in spans)
     covered = sum(e.song_end - e.song_start for e in entries)
     report = {
@@ -704,6 +730,7 @@ def _fades_start_on_the_beat(pieces: list[dict]) -> None:
             p["fade"] = 0.0
             continue
         prev["end"] = p["start"] = p["start"] + lead
+        p["shift"] = lead  # undone if the blend is later dropped (_back_on_the_beat)
 
 
 def _fold_tiny(pieces: list[dict]) -> list[dict]:
@@ -923,6 +950,35 @@ def _one_cut(
         transition=transition,
         source_in=round(s_in, 4),
     )
+
+
+def _back_on_the_beat(entries: list, shifted: Mapping[float, float], by_id) -> list:
+    """A boundary moved later so its fade would START on the beat, whose fade was
+    then dropped (no footage to blend), goes back ON the beat as a hard cut — else
+    the fallback lands a third of a second after it. Skipped where the move back
+    would read past either clip's footage."""
+    from dataclasses import replace
+
+    from muvid.footage.edl import with_start
+
+    out = list(entries)
+    for i in range(1, len(out)):
+        e, prev = out[i], out[i - 1]
+        shift = shifted.get(round(e.song_start, 6))
+        if not shift or e.transition is not None or abs(prev.song_end - e.song_start) > 1e-6:
+            continue
+        at = e.song_start - shift
+        if at - prev.song_start < MIN_PIECE_S:
+            continue
+        moved = with_start(e, at, bounded=False) if e.source_in is not None else replace(e, song_start=at)
+        src = by_id.get(e.clip_id)
+        if moved.source_in is not None and moved.source_in < 0:
+            continue
+        if src is not None and not src.is_still and moved.source_in is not None:
+            if moved.source_in + (moved.song_end - at) * moved.rate > (src.duration_s or 0.0) + 1e-6:
+                continue
+        out[i - 1], out[i] = replace(prev, song_end=at), moved
+    return out
 
 
 def _feasible_blends(entries: list, by_id: Mapping[str, FreeSource]) -> list:
