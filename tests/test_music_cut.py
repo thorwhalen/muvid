@@ -359,8 +359,16 @@ def test_planned_cuts_always_pass_the_edit_gate(seed):
     if r.random() < 0.4:
         srcs += [FreeSource(f"p{i}", f"/x/p{i}.jpg", kind="still") for i in range(r.randint(1, 3))]
     spans = [(0, d * 0.3), (d * 0.5, d * 0.8)] if r.random() < 0.3 else None
+    an = _analysis(d, bpm)
+    if r.random() < 0.5:  # the beat tracker went silent before the end (a quiet outro)
+        from dataclasses import replace
+
+        keep = tuple(b for b in an.beats if b < d * r.uniform(0.6, 1.0))
+        if len(keep) >= 4:
+            an = replace(an, beats=keep, downbeats=keep[::4])
     cut = fill_spans(
-        "/x/s.wav", srcs, spans=spans, analysis=_analysis(d, bpm),
+        "/x/s.wav", srcs, spans=spans, analysis=an,
+        archetype=r.choice(["auto", "beat_cut", "ballad_dissolve"]),
         envelope_of=lambda s: None, anchor_of=lambda s: (0.5, 0.5),
         size_of=lambda p: (1080, 1920), canvas=(1080, 1920),
     )
@@ -369,6 +377,16 @@ def test_planned_cuts_always_pass_the_edit_gate(seed):
         return
     places = [unplaced(s.clip_id, s.duration_s or STILL_DURATION_S) for s in srcs]
     validate_edl(fill_gaps(cut.entries, d), places, d, canvas=(1080, 1920))
+    # every fade STARTS on a beat of the (carried-on) grid
+    from muvid.footage.edl import TRANSITION_SPLIT
+    from muvid.footage.music_cut import extend_grid
+
+    # (or a section boundary — the fixture's sections change at half the song)
+    beats = np.asarray(list(extend_grid(an, d)[0].beats) + [x.start for x in an.sections])
+    for e in cut.entries:
+        if e.transition is not None:
+            start = e.song_start - e.transition.duration_s * TRANSITION_SPLIT
+            assert np.min(np.abs(beats - start)) < 1e-3
 
 
 def test_a_dissolve_into_a_photo_passes_the_gate():
