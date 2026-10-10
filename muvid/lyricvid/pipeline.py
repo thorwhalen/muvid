@@ -171,13 +171,22 @@ def build_timed_text(
     subtitles: Path | str | None = None,
     project: Path | str | None = None,
     aligner: str | None = None,
+    timed_text: Path | str | None = None,
 ) -> TimedText:
     """Get measured word times from whichever input the caller actually has.
 
-    Order of preference is by how much the input is *trusted*: an existing muvid
+    Order of preference is by how much the input is *trusted*: a saved timing
+    file (``TimedText.to_dict`` JSON — e.g. one refined to per-glyph times by
+    :mod:`muvid.lyricvid.glyph_align`) is used as is; then an existing muvid
     alignment beats a subtitle file, which beats aligning lyrics ourselves,
     which beats transcribing from nothing.
     """
+    if timed_text is not None:
+        import json
+
+        from muvid.lyricvid.timed_text import from_dict
+
+        return from_dict(json.loads(Path(timed_text).read_text(encoding="utf-8")))
     if project is not None:
         return from_alignment_store(project)
     if subtitles is not None:
@@ -211,6 +220,7 @@ def render(request: RenderRequest) -> RenderResult:
         subtitles=inputs.get("subtitles"),
         project=inputs.get("project"),
         aligner=params.get("aligner"),
+        timed_text=inputs.get("timed_text"),
     )
 
     repair_notes: list[str] = []

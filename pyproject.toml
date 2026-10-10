@@ -164,6 +164,18 @@ scoring-lipsync = [
     "demucs",
     "syncnet-python",
 ]
+# OPT-IN, OFF BY DEFAULT — per-glyph lyric timing (muvid.lyricvid.glyph_align, muvid#142):
+# a CTC forced aligner (torchaudio MMS_FA) over a Demucs vocal stem, plus librosa onsets for
+# the verification report. NOT commercial-clean: the MMS_FA and htdemucs weights are
+# CC-BY-NC-4.0, so never on the prod connector, and weights are fetched only when the caller
+# passes allow_download=True / MUVID_ALLOW_WEIGHT_DOWNLOAD=1. All imports are lazy.
+lyricvid-glyphs = [
+    "torch",
+    "torchaudio>=2.1,<2.10",  # forced_align is deprecated upstream (pytorch/audio#3902)
+    "soundfile",
+    "demucs",
+    "librosa",
+]
 # The LYRIC VIDEO subgenre's default renderer (muvid.lyricvid.render_ass): the computed
 # scene is emitted as an ASS subtitle document and burnt in with ffmpeg's `subtitles`
 # filter, which IS libass — so this extra buys a pure-Python document builder and no new

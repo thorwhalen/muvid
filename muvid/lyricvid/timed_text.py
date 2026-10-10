@@ -33,7 +33,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field, replace
 from pathlib import Path
-from typing import Any, Iterable, Iterator, Sequence
+from typing import Any, Iterable, Iterator, Mapping, Sequence
 
 __all__ = [
     "Word",
@@ -49,6 +49,22 @@ __all__ = [
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
+class Glyph:
+    """One written character of a word, with its own time on the song timeline.
+
+    Present only when something measured below the word (a per-character forced
+    aligner, e.g. :mod:`muvid.lyricvid.glyph_align`). For a script written in
+    syllables (kana), this is where "highlight the character as it is sung"
+    gets its times; for an alphabet it is rarely meaningful.
+    """
+
+    text: str
+    start: float
+    end: float
+    measured: bool = True
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
 class Word:
     """One sung word on the song timeline. Times are seconds, absolute."""
 
@@ -57,6 +73,9 @@ class Word:
     end: float
     #: False when the time was interpolated inside a line rather than measured.
     measured: bool = True
+    #: Per-character times, when measured (empty otherwise). Concatenated, the
+    #: glyph texts equal ``text``.
+    glyphs: tuple[Glyph, ...] = ()
 
     @property
     def duration(self) -> float:
@@ -163,6 +182,21 @@ class TimedText:
                                     "start": w.start,
                                     "end": w.end,
                                     "measured": w.measured,
+                                    **(
+                                        {
+                                            "glyphs": [
+                                                {
+                                                    "text": g.text,
+                                                    "start": g.start,
+                                                    "end": g.end,
+                                                    "measured": g.measured,
+                                                }
+                                                for g in w.glyphs
+                                            ]
+                                        }
+                                        if w.glyphs
+                                        else {}
+                                    ),
                                 }
                                 for w in l.words
                             ],
@@ -178,6 +212,112 @@ class TimedText:
 # --------------------------------------------------------------------------
 # builders
 # --------------------------------------------------------------------------
+
+
+def from_dict(d: Mapping[str, Any]) -> TimedText:
+    """Inverse of :meth:`TimedText.to_dict` — a saved timing file, reloaded.
+
+    >>> tt = from_word_records([{"text": "a", "start": 1.0, "end": 1.5, "line_end": True}])
+    >>> from_dict(tt.to_dict()) == tt
+    True
+    """
+
+    def _glyph(g: Mapping[str, Any]) -> Glyph:
+        return Glyph(
+            text=g["text"],
+            start=float(g["start"]),
+            end=float(g["end"]),
+            measured=bool(g.get("measured", True)),
+        )
+
+    def _word(w: Mapping[str, Any]) -> Word:
+        return Word(
+            text=w["text"],
+            start=float(w["start"]),
+            end=float(w["end"]),
+            measured=bool(w.get("measured", True)),
+            glyphs=tuple(_glyph(g) for g in w.get("glyphs", ())),
+        )
+
+    return TimedText(
+        sections=tuple(
+            Section(
+                label=s.get("label", "*"),
+                lines=tuple(
+                    Line(
+                        words=tuple(_word(w) for w in ln["words"]),
+                        index=int(ln.get("index", 0)),
+                        text=ln.get("text", ""),
+                    )
+                    for ln in s["lines"]
+                ),
+            )
+            for s in d["sections"]
+        ),
+        duration=float(d.get("duration", 0.0)),
+        source=d.get("source", "dict"),
+    )
+
+
+def from_word_records(
+    records: Iterable[Mapping[str, Any]],
+    *,
+    duration: float = 0.0,
+    source: str = "word-records",
+) -> TimedText:
+    """Words whose line and section breaks are KNOWN, not guessed from gaps.
+
+    Each record carries ``text``, ``start``, ``end``, and optionally
+    ``line_end`` (a lyric line ends after this word), ``section`` (a section
+    label starting at this word) and ``success`` (``False`` = the source could
+    not place it: kept, but ``measured=False``). This is the shape of a vendor's
+    own lyric alignment — e.g. ``arioso``'s Suno ``get_timestamped_lyrics`` —
+    where :func:`from_words`' gap heuristic would throw the real line breaks
+    away.
+
+    >>> tt = from_word_records([
+    ...     {"text": "a", "start": 0.0, "end": 0.4, "section": "Intro"},
+    ...     {"text": "b", "start": 0.5, "end": 0.9, "line_end": True},
+    ...     {"text": "c", "start": 1.0, "end": 1.4, "section": "Verse"},
+    ... ], duration=2.0)
+    >>> [(s.label, [l.text for l in s.lines]) for s in tt.sections]
+    [('Intro', ['a b']), ('Verse', ['c'])]
+    """
+    sections: list[Section] = []
+    label, lines, cur = "*", [], []
+
+    def _close_line() -> None:
+        nonlocal cur
+        if cur:
+            lines.append(Line(words=tuple(cur), index=sum(len(s.lines) for s in sections) + len(lines)))
+        cur = []
+
+    def _close_section() -> None:
+        nonlocal lines
+        _close_line()
+        if lines:
+            sections.append(Section(label=label, lines=tuple(lines)))
+        lines = []
+
+    for r in records:
+        text = str(r.get("text", "")).strip()
+        if not text or r.get("start") is None or r.get("end") is None:
+            continue
+        if r.get("section"):
+            _close_section()
+            label = str(r["section"])
+        cur.append(
+            Word(
+                text=text,
+                start=float(r["start"]),
+                end=max(float(r["start"]), float(r["end"])),
+                measured=r.get("success") is not False,
+            )
+        )
+        if r.get("line_end"):
+            _close_line()
+    _close_section()
+    return TimedText(sections=tuple(sections), duration=duration, source=source)
 
 
 def from_words(

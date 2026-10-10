@@ -225,6 +225,7 @@ def render_lyric_video(
     lyrics: str | None = None,
     subtitles: str | None = None,
     project: str | None = None,
+    timed_text: str | None = None,
     treatment: Mapping[str, Any] | str | None = None,
     renderer: str = "auto",
     title: str = "",
@@ -257,6 +258,7 @@ def render_lyric_video(
             ("lyrics", lyrics),
             ("subtitles", subtitles),
             ("project", project),
+            ("timed_text", timed_text),
         )
         if v
     }
