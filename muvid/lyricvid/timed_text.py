@@ -289,7 +289,12 @@ def from_word_records(
     def _close_line() -> None:
         nonlocal cur
         if cur:
-            lines.append(Line(words=tuple(cur), index=sum(len(s.lines) for s in sections) + len(lines)))
+            lines.append(
+                Line(
+                    words=tuple(cur),
+                    index=sum(len(s.lines) for s in sections) + len(lines),
+                )
+            )
         cur = []
 
     def _close_section() -> None:
