@@ -260,7 +260,9 @@ python -m muvid.lyricvid render song.mp3 out.mp4 --timed-text glyphs.json --trea
   A vendor transcript can list a repeat nobody sang — the stem is silent there
   and the aligner crams those words into a few frames. `glyphs` now **drops**
   such a line by itself (`remedy: "drop"`, `why: "unsung"` in `reconciled`):
-  every word squeezed by the aligner AND the stem quiet over half its window.
+  every word squeezed by the aligner AND the stem quiet over half its window,
+  a second of it unbroken (that is what spares a short sung line whose vendor
+  time is merely late).
   Read those records — a dropped line is gone from the video. Neither signal
   alone is enough (a sung staccato line has a quiet vendor window too; a fast
   sung pair gets squeezed too), so do not loosen it to one. `--keep-unsung`

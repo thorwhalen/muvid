@@ -263,3 +263,39 @@ def test_read_stem_reads_a_real_file(tmp_path):
     sf.write(tmp_path / "v.wav", y, _SR)
     got, sr = ga._read_stem(tmp_path / "v.wav")
     assert sr == _SR and len(got) == len(y)
+
+
+def _one_squeezed_line(text, start, end, duration):
+    coarse = from_word_records([{"text": text, "start": start, "end": end, "line_end": True}],
+                               duration=duration)
+    from dataclasses import replace
+    fine = _with_glyphs(coarse)
+    fine = replace(fine, sections=tuple(replace(s, lines=tuple(replace(l, words=tuple(
+        replace(w, glyphs=tuple(replace(g, start=start + i * 0.01, end=start + i * 0.01 + 0.01)
+                                for i, g in enumerate(w.glyphs))) for w in l.words))
+        for l in s.lines)) for s in fine.sections))
+    return fine, coarse
+
+
+def test_a_short_sung_line_whose_vendor_window_is_late_is_not_dropped(stem_of):
+    """Review of muvid#144: sung at 7.0-7.3 s, the vendor says 8.0-8.3 s — the
+    aligner misses it AND the window is quiet, but no second of silence fits."""
+    fine, coarse = _one_squeezed_line("フン", 8.0, 8.3, duration=11.0)
+    stem = stem_of(_stem((1.0, 2.0), (7.0, 7.3)))
+    _, records = ga.reconcile(fine, coarse,
+                              detectors=(*ga.default_detectors(), ga.unsung(stem)))
+    assert [r["remedy"] for r in records] == ["replace"]
+
+
+def test_a_line_past_the_end_of_the_stem_is_not_judged(stem_of):
+    fine, coarse = _one_squeezed_line("タン", 20.0, 22.0, duration=30.0)
+    stem = stem_of(_stem((1.0, 2.0), duration=11.0))  # ends at 11 s, quiet tail
+    _, records = ga.reconcile(fine, coarse,
+                              detectors=(*ga.default_detectors(), ga.unsung(stem)))
+    assert all(r["remedy"] == "replace" for r in records)
+
+
+def test_default_thresholds_are_refused_alongside_explicit_detectors():
+    fine, coarse = _song_with_a_ghost_line()
+    with pytest.raises(ValueError, match="default_detectors"):
+        ga.reconcile(fine, coarse, disagree_s=1.0, detectors=ga.default_detectors())

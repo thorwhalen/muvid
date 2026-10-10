@@ -427,11 +427,19 @@ def word_agreement(
 #: it). ``drop``: remove the word, and a line or section left empty (it was
 #: never sung, so lighting it at ANY time is wrong).
 REMEDIES = ("replace", "drop")
+#: When several detectors flag one word, the lowest rank decides. Every remedy
+#: needs a rank AND a branch in :func:`reconcile` — a new one is never read as
+#: an old one (a remedy falling through to ``drop`` would delete words).
+_REMEDY_RANK = {"drop": 0, "replace": 1}
 #: :func:`unsung`'s thresholds, measured on a real song (muvid#144): a frame is
 #: quiet below this many dB under the stem's own loud level...
 UNSUNG_QUIET_DB = -40.0
-#: ...and a line is unsung when at least this share of its window is quiet.
+#: ...and a line is unsung when at least this share of its window is quiet...
 UNSUNG_QUIET_SHARE = 0.5
+#: ...in one unbroken stretch at least this long. A ghost repeat is a whole
+#: line of silence (2 s on the measured song); a short sung line whose vendor
+#: window is merely LATE lands on a quiet tail too, but a short one.
+UNSUNG_MIN_QUIET_S = 1.0
 #: Frame length for the stem's RMS level.
 UNSUNG_FRAME_S = 0.05
 #: The stem's "loud level" is this percentile of its frame RMS, so the threshold
@@ -545,6 +553,7 @@ def unsung(
     among: Detector | None = None,
     quiet_db: float = UNSUNG_QUIET_DB,
     quiet_share: float = UNSUNG_QUIET_SHARE,
+    min_quiet_s: float = UNSUNG_MIN_QUIET_S,
     frame_s: float = UNSUNG_FRAME_S,
 ) -> Detector:
     """Lines a vendor transcript lists but nobody sang. Remedy: ``drop``.
@@ -552,7 +561,11 @@ def unsung(
     A LINE is unsung when both hold: ``among`` (default :func:`squeezed`)
     distrusts every word in it — the aligner, searching the line's window, found
     nothing to put them on — and the vocal stem is quiet (``quiet_db`` under its
-    own loud level) over at least ``quiet_share`` of the line's coarse window.
+    own loud level) over at least ``quiet_share`` of the line's coarse window,
+    including one unbroken quiet stretch of ``min_quiet_s``. The window is
+    shifted by the vendor's measured bias (median fine-minus-coarse start over
+    the words ``among`` trusts), and a window running past the end of the stem
+    is not judged at all.
 
     Both, because neither instrument is enough alone. Measured on the song that
     motivated this (muvid#144: a Suno transcript listing a repeated タン タン タン
@@ -561,6 +574,13 @@ def unsung(
     windows run on into the silence after a word, so a quiet window is common —
     while squeeze alone also flags a sung, fast スター ダンス (0.04 quiet).
     Together they separate the ghost and nothing else.
+
+    What they do NOT separate unaided is one short sung line whose vendor
+    window is a second late: the aligner (searching ±``MARGIN_S``) misses it
+    and squeezes, and the window lands on the silence after it — measured on
+    the same song, the last line (フン) shifted +1 s was dropped. The unbroken
+    ``min_quiet_s`` is what refuses that case: a short window cannot hold a
+    second of silence, a ghost line is silence end to end.
 
     The unit is the line, because a transcript repeats lines, and because the
     first ghost word's own window held the decaying tail of the previous held
@@ -574,7 +594,12 @@ def unsung(
         import numpy as np
 
         flagged = among.find(fine, coarse)
-        cw = list(coarse.words())
+        fw, cw = list(fine.words()), list(coarse.words())
+        if len(fw) != len(cw):
+            raise ValueError("unsung needs the same word sequence in both timings")
+        trusted = [_word_start(x) - _word_start(y)
+                   for k, (x, y) in enumerate(zip(fw, cw)) if k not in flagged]
+        bias = float(np.median(trusted)) if trusted else 0.0
         level = None
         out: dict[int, str] = {}
         i = 0
@@ -585,33 +610,45 @@ def unsung(
                 continue
             if level is None:  # read the stem only when there is a candidate
                 level = _frame_levels_db(vocals, frame_s=frame_s)
-            t0 = min(cw[k].start for k in idx)
-            t1 = max(cw[k].end for k in idx)
-            a = min(int(round(t0 / frame_s)), max(0, len(level) - 1))
-            b = max(a + 1, int(round(t1 / frame_s)))
-            share = float(np.mean(level[a:b] < quiet_db)) if len(level) else 0.0
-            if share >= quiet_share:
+            a = max(0, int(round((min(cw[k].start for k in idx) + bias) / frame_s)))
+            b = max(a + 1, int(round((max(cw[k].end for k in idx) + bias) / frame_s)))
+            if b > len(level):  # past the stem's end: nothing to judge it by
+                continue
+            quiet = level[a:b] < quiet_db
+            share = float(np.mean(quiet))
+            run_s = _longest_run(quiet) * frame_s
+            if share >= quiet_share and run_s >= min_quiet_s:
                 why = (f"line {ln.text!r}: every word {among.name}, and the stem is "
-                       f"quiet over {share:.0%} of its window")
+                       f"quiet over {share:.0%} of its window ({run_s:.1f} s unbroken)")
                 out.update({k: why for k in idx})
         return out
 
     return Detector(name="unsung", find=find, remedy="drop")
 
 
+def _longest_run(mask) -> int:
+    """Length of the longest run of ``True`` in a boolean sequence."""
+    best = cur = 0
+    for v in mask:
+        cur = cur + 1 if v else 0
+        best = max(best, cur)
+    return best
+
+
 def reconcile(
     fine: TimedText,
     coarse: TimedText,
     *,
-    disagree_s: float = DISAGREE_S,
-    min_glyph_s: float = MIN_GLYPH_S,
+    disagree_s: float | None = None,
+    min_glyph_s: float | None = None,
     detectors: Sequence[Detector] | None = None,
 ) -> tuple[TimedText, list[dict[str, Any]]]:
     """Distrust the fine timing where a detector says so; remedy it; say where.
 
     ``detectors`` defaults to :func:`default_detectors` (``squeezed`` and
     ``disagrees``, both ``replace``; ``disagree_s`` and ``min_glyph_s`` tune
-    them). Add :func:`unsung` when you have the vocal stem::
+    them, and are refused alongside explicit ``detectors``, which they could
+    not reach). Add :func:`unsung` when you have the vocal stem::
 
         reconcile(fine, coarse, detectors=(*default_detectors(), unsung(stem)))
 
@@ -630,7 +667,12 @@ def reconcile(
     if [w.text for w in a] != [w.text for w in b]:
         raise ValueError("reconcile needs the same word sequence in both timings")
     if detectors is None:
-        detectors = default_detectors(disagree_s=disagree_s, min_glyph_s=min_glyph_s)
+        detectors = default_detectors(
+            disagree_s=DISAGREE_S if disagree_s is None else disagree_s,
+            min_glyph_s=MIN_GLYPH_S if min_glyph_s is None else min_glyph_s)
+    elif disagree_s is not None or min_glyph_s is not None:
+        raise ValueError("disagree_s/min_glyph_s tune the DEFAULT detectors; with "
+                         "detectors=, pass them to default_detectors(...) instead")
     flags: dict[int, list[tuple[Detector, str]]] = {}
     for d in detectors:
         for k, why in d.find(fine, coarse).items():
@@ -648,11 +690,13 @@ def reconcile(
             for w in ln.words:
                 fl = flags.get(k)
                 if fl:
-                    d, why = next(((d, y) for d, y in fl if d.remedy == "drop"), fl[0])
+                    d, why = min(fl, key=lambda f: _REMEDY_RANK[f[0].remedy])
                     rec = {"index": k, "text": w.text, "fine": round(_word_start(w), 3),
                            "why": d.name, "detail": why, "remedy": d.remedy,
                            "flagged_by": [x.name for x, _ in fl], "used": None}
-                    if d.remedy == "replace":
+                    if d.remedy == "drop":
+                        pass  # gone: no window is right for a word nobody sang
+                    elif d.remedy == "replace":
                         c = b[k]
                         shifted = replace(c, start=c.start + bias, end=c.end + bias,
                                           measured=False, glyphs=())
@@ -661,6 +705,8 @@ def reconcile(
                         words.append(replace(w, start=shifted.start, end=shifted.end,
                                              measured=False, glyphs=glyphs))
                         rec["used"] = round(shifted.start, 3)
+                    else:  # pragma: no cover - Detector refuses unknown remedies
+                        raise AssertionError(f"no branch for remedy {d.remedy!r}")
                     records.append(rec)
                 else:
                     words.append(w)
