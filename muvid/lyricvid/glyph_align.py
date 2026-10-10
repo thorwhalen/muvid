@@ -82,14 +82,21 @@ _KANA_ROWS = {
     "p": "パピプペポ",
 }
 _KANA: dict[str, str] = {
-    k: c + v
-    for c, row in _KANA_ROWS.items()
-    for v, k in zip("aiueo", row)
-    if k != "_"
+    k: c + v for c, row in _KANA_ROWS.items() for v, k in zip("aiueo", row) if k != "_"
 }
 _KANA.update(
-    {"シ": "shi", "チ": "chi", "ツ": "tsu", "フ": "fu", "ジ": "ji", "ヂ": "ji",
-     "ヅ": "zu", "ヲ": "o", "ン": "n", "ヴ": "vu"}
+    {
+        "シ": "shi",
+        "チ": "chi",
+        "ツ": "tsu",
+        "フ": "fu",
+        "ジ": "ji",
+        "ヂ": "ji",
+        "ヅ": "zu",
+        "ヲ": "o",
+        "ン": "n",
+        "ヴ": "vu",
+    }
 )
 #: Small kana that modify the glyph before them.
 _SMALL_Y = {"ャ": "ya", "ュ": "yu", "ョ": "yo"}
@@ -199,34 +206,51 @@ def _interpolated(word: Word, chunks: Sequence[tuple[str, str]]) -> tuple[Glyph,
     n = max(1, len(chunks))
     step = (word.end - word.start) / n
     return tuple(
-        Glyph(text=g, start=word.start + i * step, end=word.start + (i + 1) * step,
-              measured=False)
+        Glyph(
+            text=g,
+            start=word.start + i * step,
+            end=word.start + (i + 1) * step,
+            measured=False,
+        )
         for i, (g, _) in enumerate(chunks)
     )
 
 
-def _align_line(line: Line, *, wav, sr: int, model, dic, romanize: Romanizer,
-                margin_s: float) -> Line:
+def _align_line(
+    line: Line, *, wav, sr: int, model, dic, romanize: Romanizer, margin_s: float
+) -> Line:
     import torch
     import torchaudio.functional as F
 
     t0 = max(0.0, line.start - margin_s)
     t1 = line.end + margin_s
-    seg = wav[:, int(t0 * sr): int(t1 * sr)]
+    seg = wav[:, int(t0 * sr) : int(t1 * sr)]
     chunks = [romanize(w.text) for w in line.words]
     letters = [c for ws in chunks for _, r in ws for c in r if c in dic]
     if not letters or seg.shape[1] < sr // 10:
-        return replace(line, words=tuple(
-            replace(w, glyphs=_interpolated(w, ch)) for w, ch in zip(line.words, chunks)))
+        return replace(
+            line,
+            words=tuple(
+                replace(w, glyphs=_interpolated(w, ch))
+                for w, ch in zip(line.words, chunks)
+            ),
+        )
     with torch.inference_mode():
         emission, _ = model(seg)
     star = dic["*"]
-    targets = torch.tensor([[star] + [dic[c] for c in letters] + [star]], dtype=torch.int32)
+    targets = torch.tensor(
+        [[star] + [dic[c] for c in letters] + [star]], dtype=torch.int32
+    )
     try:
         ali, scores = F.forced_align(emission, targets, blank=0)
     except RuntimeError:  # window too short for the targets: no honest answer
-        return replace(line, words=tuple(
-            replace(w, glyphs=_interpolated(w, ch)) for w, ch in zip(line.words, chunks)))
+        return replace(
+            line,
+            words=tuple(
+                replace(w, glyphs=_interpolated(w, ch))
+                for w, ch in zip(line.words, chunks)
+            ),
+        )
     spans = [s for s in F.merge_tokens(ali[0], scores[0].exp()) if s.token != star]
     ratio = seg.shape[1] / emission.shape[1] / sr
     k = 0
@@ -236,13 +260,19 @@ def _align_line(line: Line, *, wav, sr: int, model, dic, romanize: Romanizer,
         for g, r in ws:
             n = sum(1 for c in r if c in dic)
             if n == 0:  # no onset of its own: placed by _place_silent below
-                glyphs.append(Glyph(text=g, start=float("nan"), end=float("nan"),
-                                    measured=False))
+                glyphs.append(
+                    Glyph(text=g, start=float("nan"), end=float("nan"), measured=False)
+                )
                 continue
-            sp = spans[k: k + n]
+            sp = spans[k : k + n]
             k += n
-            glyphs.append(Glyph(text=g, start=round(t0 + sp[0].start * ratio, 3),
-                                end=round(t0 + sp[-1].end * ratio, 3)))
+            glyphs.append(
+                Glyph(
+                    text=g,
+                    start=round(t0 + sp[0].start * ratio, 3),
+                    end=round(t0 + sp[-1].end * ratio, 3),
+                )
+            )
         words.append(replace(w, glyphs=tuple(glyphs)))
     return _place_silent(replace(line, words=tuple(words)))
 
@@ -260,19 +290,40 @@ def _place_silent(line: Line) -> Line:
         if g.start == g.start:  # not NaN
             times.append((g.start, g.end))
             continue
-        prev = next((times[j] for j in range(i - 1, -1, -1) if flat[j].measured),
-                    (line.start, line.start))
-        nxt = next((flat[j].start for j in range(i + 1, len(flat))
-                    if flat[j].start == flat[j].start), None)
-        at = ((prev[0] + nxt) / 2 if nxt is not None
-              else min(line.end, prev[0] + max(0.05, (prev[1] - prev[0]) / 2)))
+        prev = next(
+            (times[j] for j in range(i - 1, -1, -1) if flat[j].measured),
+            (line.start, line.start),
+        )
+        nxt = next(
+            (
+                flat[j].start
+                for j in range(i + 1, len(flat))
+                if flat[j].start == flat[j].start
+            ),
+            None,
+        )
+        at = (
+            (prev[0] + nxt) / 2
+            if nxt is not None
+            else min(line.end, prev[0] + max(0.05, (prev[1] - prev[0]) / 2))
+        )
         times.append((at, at))
     it = iter(times)
-    return replace(line, words=tuple(
-        replace(w, glyphs=tuple(
-            g if g.measured else replace(g, start=round(t[0], 3), end=round(t[1], 3))
-            for g, t in ((g, next(it)) for g in w.glyphs)))
-        for w in line.words))
+    return replace(
+        line,
+        words=tuple(
+            replace(
+                w,
+                glyphs=tuple(
+                    g
+                    if g.measured
+                    else replace(g, start=round(t[0], 3), end=round(t[1], 3))
+                    for g, t in ((g, next(it)) for g in w.glyphs)
+                ),
+            )
+            for w in line.words
+        ),
+    )
 
 
 def refine_glyphs(
@@ -297,17 +348,30 @@ def refine_glyphs(
     return replace(
         timed_text,
         sections=tuple(
-            replace(s, lines=tuple(
-                _align_line(ln, wav=wav, sr=sr, model=model, dic=dic,
-                            romanize=romanize, margin_s=margin_s)
-                for ln in s.lines))
+            replace(
+                s,
+                lines=tuple(
+                    _align_line(
+                        ln,
+                        wav=wav,
+                        sr=sr,
+                        model=model,
+                        dic=dic,
+                        romanize=romanize,
+                        margin_s=margin_s,
+                    )
+                    for ln in s.lines
+                ),
+            )
             for s in timed_text.sections
         ),
         source=f"{timed_text.source}+glyph_align",
     )
 
 
-def vocal_stem(audio: Path | str, *, out_dir: Path | str, allow_download: bool = False) -> Path:
+def vocal_stem(
+    audio: Path | str, *, out_dir: Path | str, allow_download: bool = False
+) -> Path:
     """The song's separated vocal stem (Demucs), raising rather than degrading.
 
     Reuses the footage scorer's separator; that one returns ``None`` on any
@@ -339,9 +403,15 @@ def vocal_stem(audio: Path | str, *, out_dir: Path | str, allow_download: bool =
 
 
 def _glyph_starts(tt: TimedText) -> list[float]:
-    return [g.start for w in tt.words() for g in w.glyphs
-            if g.measured and g.end > g.start and unicodedata.category(g.text)[0] == "L"
-            and g.text not in "ーッっ"]
+    return [
+        g.start
+        for w in tt.words()
+        for g in w.glyphs
+        if g.measured
+        and g.end > g.start
+        and unicodedata.category(g.text)[0] == "L"
+        and g.text not in "ーッっ"
+    ]
 
 
 def onset_report(
@@ -374,8 +444,9 @@ def onset_report(
 
     dist = np.array([np.min(np.abs(onsets - t)) for t in starts])
     rng = np.random.default_rng(seed)
-    base = np.mean([share(starts + rng.uniform(-0.5, 0.5, len(starts)))
-                    for _ in range(trials)])
+    base = np.mean(
+        [share(starts + rng.uniform(-0.5, 0.5, len(starts))) for _ in range(trials)]
+    )
     return {
         "n_glyphs": int(len(starts)),
         "n_onsets": int(len(onsets)),
@@ -405,8 +476,14 @@ def word_agreement(
         raise ValueError("word_agreement needs the same word sequence in both timings")
     d = np.array([start(x) - start(y) for x, y in zip(a, b)])
     bad = [
-        {"index": i, "text": x.text, "fine": round(start(x), 3), "coarse": round(start(y), 3)}
-        for i, (x, y, dd) in enumerate(zip(a, b, d)) if abs(dd) > disagree_s
+        {
+            "index": i,
+            "text": x.text,
+            "fine": round(start(x), 3),
+            "coarse": round(start(y), 3),
+        }
+        for i, (x, y, dd) in enumerate(zip(a, b, d))
+        if abs(dd) > disagree_s
     ]
     return {
         "n_words": len(a),
@@ -487,9 +564,13 @@ def squeezed(*, min_glyph_s: float = MIN_GLYPH_S) -> Detector:
         for ln in fine.lines():
             sounded = []
             for w in ln.words:
-                sounded += [(w_idx, g.start) for g in w.glyphs
-                            if g.measured and g.text not in "ーッっ"
-                            and unicodedata.east_asian_width(g.text[0]) in "WF"]
+                sounded += [
+                    (w_idx, g.start)
+                    for g in w.glyphs
+                    if g.measured
+                    and g.text not in "ーッっ"
+                    and unicodedata.east_asian_width(g.text[0]) in "WF"
+                ]
                 w_idx += 1
             for (wa, t), (wb, u) in zip(sounded, sounded[1:]):
                 if 0 <= u - t < min_glyph_s:
@@ -508,9 +589,15 @@ def disagrees(*, disagree_s: float = DISAGREE_S) -> Detector:
     """
 
     def find(fine: TimedText, coarse: TimedText) -> dict[int, str]:
-        diffs = (_word_start(x) - _word_start(y) for x, y in zip(fine.words(), coarse.words()))
-        return {i: f"starts {d:+.2f} s from the coarse timing"
-                for i, d in enumerate(diffs) if abs(d) > disagree_s}
+        diffs = (
+            _word_start(x) - _word_start(y)
+            for x, y in zip(fine.words(), coarse.words())
+        )
+        return {
+            i: f"starts {d:+.2f} s from the coarse timing"
+            for i, d in enumerate(diffs)
+            if abs(d) > disagree_s
+        }
 
     return Detector(name="disagrees", find=find)
 
@@ -597,8 +684,11 @@ def unsung(
         fw, cw = list(fine.words()), list(coarse.words())
         if len(fw) != len(cw):
             raise ValueError("unsung needs the same word sequence in both timings")
-        trusted = [_word_start(x) - _word_start(y)
-                   for k, (x, y) in enumerate(zip(fw, cw)) if k not in flagged]
+        trusted = [
+            _word_start(x) - _word_start(y)
+            for k, (x, y) in enumerate(zip(fw, cw))
+            if k not in flagged
+        ]
         bias = float(np.median(trusted)) if trusted else 0.0
         level = None
         out: dict[int, str] = {}
@@ -618,8 +708,10 @@ def unsung(
             share = float(np.mean(quiet))
             run_s = _longest_run(quiet) * frame_s
             if share >= quiet_share and run_s >= min_quiet_s:
-                why = (f"line {ln.text!r}: every word {among.name}, and the stem is "
-                       f"quiet over {share:.0%} of its window ({run_s:.1f} s unbroken)")
+                why = (
+                    f"line {ln.text!r}: every word {among.name}, and the stem is "
+                    f"quiet over {share:.0%} of its window ({run_s:.1f} s unbroken)"
+                )
                 out.update({k: why for k in idx})
         return out
 
@@ -669,16 +761,22 @@ def reconcile(
     if detectors is None:
         detectors = default_detectors(
             disagree_s=DISAGREE_S if disagree_s is None else disagree_s,
-            min_glyph_s=MIN_GLYPH_S if min_glyph_s is None else min_glyph_s)
+            min_glyph_s=MIN_GLYPH_S if min_glyph_s is None else min_glyph_s,
+        )
     elif disagree_s is not None or min_glyph_s is not None:
-        raise ValueError("disagree_s/min_glyph_s tune the DEFAULT detectors; with "
-                         "detectors=, pass them to default_detectors(...) instead")
+        raise ValueError(
+            "disagree_s/min_glyph_s tune the DEFAULT detectors; with "
+            "detectors=, pass them to default_detectors(...) instead"
+        )
     flags: dict[int, list[tuple[Detector, str]]] = {}
     for d in detectors:
         for k, why in d.find(fine, coarse).items():
             flags.setdefault(k, []).append((d, why))
-    good = [_word_start(x) - _word_start(y)
-            for k, (x, y) in enumerate(zip(a, b)) if k not in flags]
+    good = [
+        _word_start(x) - _word_start(y)
+        for k, (x, y) in enumerate(zip(a, b))
+        if k not in flags
+    ]
     bias = float(np.median(good)) if good else 0.0
 
     records, k = [], 0
@@ -691,19 +789,41 @@ def reconcile(
                 fl = flags.get(k)
                 if fl:
                     d, why = min(fl, key=lambda f: _REMEDY_RANK[f[0].remedy])
-                    rec = {"index": k, "text": w.text, "fine": round(_word_start(w), 3),
-                           "why": d.name, "detail": why, "remedy": d.remedy,
-                           "flagged_by": [x.name for x, _ in fl], "used": None}
+                    rec = {
+                        "index": k,
+                        "text": w.text,
+                        "fine": round(_word_start(w), 3),
+                        "why": d.name,
+                        "detail": why,
+                        "remedy": d.remedy,
+                        "flagged_by": [x.name for x, _ in fl],
+                        "used": None,
+                    }
                     if d.remedy == "drop":
                         pass  # gone: no window is right for a word nobody sang
                     elif d.remedy == "replace":
                         c = b[k]
-                        shifted = replace(c, start=c.start + bias, end=c.end + bias,
-                                          measured=False, glyphs=())
-                        glyphs = _interpolated(shifted, [(g.text, "") for g in w.glyphs] or
-                                               [(ch, "") for ch in w.text])
-                        words.append(replace(w, start=shifted.start, end=shifted.end,
-                                             measured=False, glyphs=glyphs))
+                        shifted = replace(
+                            c,
+                            start=c.start + bias,
+                            end=c.end + bias,
+                            measured=False,
+                            glyphs=(),
+                        )
+                        glyphs = _interpolated(
+                            shifted,
+                            [(g.text, "") for g in w.glyphs]
+                            or [(ch, "") for ch in w.text],
+                        )
+                        words.append(
+                            replace(
+                                w,
+                                start=shifted.start,
+                                end=shifted.end,
+                                measured=False,
+                                glyphs=glyphs,
+                            )
+                        )
                         rec["used"] = round(shifted.start, 3)
                     else:  # pragma: no cover - Detector refuses unknown remedies
                         raise AssertionError(f"no branch for remedy {d.remedy!r}")
@@ -723,5 +843,11 @@ def glyph_rows(tt: TimedText) -> Iterable[dict[str, Any]]:
     for li, ln in enumerate(tt.lines()):
         for wi, w in enumerate(ln.words):
             for g in w.glyphs:
-                yield {"line": li, "word": wi, "text": g.text, "start": g.start,
-                       "end": g.end, "measured": g.measured}
+                yield {
+                    "line": li,
+                    "word": wi,
+                    "text": g.text,
+                    "start": g.start,
+                    "end": g.end,
+                    "measured": g.measured,
+                }

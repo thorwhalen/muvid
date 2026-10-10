@@ -130,7 +130,9 @@ def _text_width(text: str, size: float, tracking: float = 0.0) -> float:
     >>> _text_width("カス", 1.0) == 2 * _WIDE_CHAR_W
     True
     """
-    if all(_char_w(c) == _CHAR_W for c in text):  # bit-identical to before for non-wide text
+    if all(
+        _char_w(c) == _CHAR_W for c in text
+    ):  # bit-identical to before for non-wide text
         return len(text) * size * (_CHAR_W + tracking)
     return sum(_char_w(c) + tracking for c in text) * size
 
@@ -398,7 +400,9 @@ def _word_glyphs(word: Word, *, line: Line) -> tuple[Glyph, ...]:
     chars = [c for c in word.text if not c.isspace()]
     step = (end - start) / max(1, len(chars))
     return tuple(
-        Glyph(text=c, start=start + i * step, end=start + (i + 1) * step, measured=False)
+        Glyph(
+            text=c, start=start + i * step, end=start + (i + 1) * step, measured=False
+        )
         for i, c in enumerate(chars)
     )
 
@@ -447,8 +451,13 @@ def _glyph_pages(*, sc, direction, lines, tt, canvas, **_) -> list[Cue]:
     # by glyph times, not by Line.end: a held last note (or a vendor's generous
     # word end) would otherwise keep the old page up while the next is sung.
     page_glyphs = [
-        [g for line in pg for w in line.words for g in _word_glyphs(w, line=line)
-         if g.text.strip()]
+        [
+            g
+            for line in pg
+            for w in line.words
+            for g in _word_glyphs(w, line=line)
+            if g.text.strip()
+        ]
         for pg in pages
     ]
     keep = [i for i, gs in enumerate(page_glyphs) if gs]  # a page with nothing to light
@@ -497,21 +506,41 @@ def _glyph_pages(*, sc, direction, lines, tt, canvas, **_) -> list[Cue]:
                 if not g.text.strip():
                     continue
                 x = x0 + (off + cw / 2) * size / canvas.aspect
-                ghost, ink = strong if (not emphasis or key(g.text[0]) in emphasis) else mild
+                ghost, ink = (
+                    strong if (not emphasis or key(g.text[0]) in emphasis) else mild
+                )
                 ignite = min(max(shown, g.start - lead), turn)  # stays on its page
                 cues.append(
-                    Cue(text=g.text, x=x, y=y, size=size, t_in=shown,
-                        t_full=shown + _PAGE_FADE_S, t_out=ignite,
-                        t_gone=ignite + _GLYPH_IGNITE_S, colour=ghost,
-                        motion="fade", layer=0,
-                        extra={"measured": g.measured, "page": n})
+                    Cue(
+                        text=g.text,
+                        x=x,
+                        y=y,
+                        size=size,
+                        t_in=shown,
+                        t_full=shown + _PAGE_FADE_S,
+                        t_out=ignite,
+                        t_gone=ignite + _GLYPH_IGNITE_S,
+                        colour=ghost,
+                        motion="fade",
+                        layer=0,
+                        extra={"measured": g.measured, "page": n},
+                    )
                 )
                 cues.append(
-                    Cue(text=g.text, x=x, y=y, size=size, t_in=ignite,
-                        t_full=ignite + _GLYPH_IGNITE_S, t_out=turn,
-                        t_gone=turn + _PAGE_FADE_S, colour=ink,
-                        motion="fade", layer=1,
-                        extra={"measured": g.measured, "page": n})
+                    Cue(
+                        text=g.text,
+                        x=x,
+                        y=y,
+                        size=size,
+                        t_in=ignite,
+                        t_full=ignite + _GLYPH_IGNITE_S,
+                        t_out=turn,
+                        t_gone=turn + _PAGE_FADE_S,
+                        colour=ink,
+                        motion="fade",
+                        layer=1,
+                        extra={"measured": g.measured, "page": n},
+                    )
                 )
     return cues
 

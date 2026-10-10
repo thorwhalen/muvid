@@ -173,9 +173,15 @@ def glyphs(
 
     coarse = from_dict(_json.loads(Path(timing).read_text(encoding="utf-8")))
     ga._load_mms(allow_download=allow_download)  # refuse BEFORE separating, not after
-    stem = Path(vocals) if vocals else ga.vocal_stem(
-        audio, out_dir=workdir or tempfile.mkdtemp(prefix="muvid-glyphs-"),
-        allow_download=allow_download)
+    stem = (
+        Path(vocals)
+        if vocals
+        else ga.vocal_stem(
+            audio,
+            out_dir=workdir or tempfile.mkdtemp(prefix="muvid-glyphs-"),
+            allow_download=allow_download,
+        )
+    )
     fine = ga.refine_glyphs(coarse, stem, allow_download=allow_download)
     agreement = ga.word_agreement(fine, coarse)
     replaced: list = []
@@ -183,10 +189,17 @@ def glyphs(
         detectors = ga.default_detectors() + (() if keep_unsung else (ga.unsung(stem),))
         fine, replaced = ga.reconcile(fine, coarse, detectors=detectors)
     Path(output).write_text(
-        _json.dumps(fine.to_dict(), ensure_ascii=False, indent=1), encoding="utf-8")
-    _emit({"output": output, "vocals": str(stem),
-           "onsets": ga.onset_report(fine, stem),
-           "agreement": agreement, "reconciled": replaced})
+        _json.dumps(fine.to_dict(), ensure_ascii=False, indent=1), encoding="utf-8"
+    )
+    _emit(
+        {
+            "output": output,
+            "vocals": str(stem),
+            "onsets": ga.onset_report(fine, stem),
+            "agreement": agreement,
+            "reconciled": replaced,
+        }
+    )
 
 
 _FUNCS = [subgenres, vocabulary, schema, analyze, propose, validate, render, glyphs]
