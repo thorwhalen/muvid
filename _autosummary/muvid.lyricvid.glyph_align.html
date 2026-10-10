@@ -225,19 +225,22 @@ connector, and it never downloads weights unless the caller says
 <tr class="row-even"><td><p><a class="reference internal" href="#muvid.lyricvid.glyph_align.refine_glyphs" title="muvid.lyricvid.glyph_align.refine_glyphs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">refine_glyphs</span></code></a>(timed_text, vocals, *[, ...])</p></td>
 <td><p>Return <code class="docutils literal notranslate"><span class="pre">timed_text</span></code> with measured <code class="xref py py-attr docutils literal notranslate"><span class="pre">Word.glyphs</span></code> on every word.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.lyricvid.glyph_align.romanize_kana" title="muvid.lyricvid.glyph_align.romanize_kana"><code class="xref py py-obj docutils literal notranslate"><span class="pre">romanize_kana</span></code></a>(word)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.lyricvid.glyph_align.romanize_hepburn" title="muvid.lyricvid.glyph_align.romanize_hepburn"><code class="xref py py-obj docutils literal notranslate"><span class="pre">romanize_hepburn</span></code></a>(text)</p></td>
+<td><p>Display romanisation (modified Hepburn) of kana text: what a learner reads.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#muvid.lyricvid.glyph_align.romanize_kana" title="muvid.lyricvid.glyph_align.romanize_kana"><code class="xref py py-obj docutils literal notranslate"><span class="pre">romanize_kana</span></code></a>(word)</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">(glyph,</span> <span class="pre">romaji)</span></code> per glyph, the romaji chunks concatenating to the word.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#muvid.lyricvid.glyph_align.squeezed" title="muvid.lyricvid.glyph_align.squeezed"><code class="xref py py-obj docutils literal notranslate"><span class="pre">squeezed</span></code></a>(*[, min_glyph_s])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.lyricvid.glyph_align.squeezed" title="muvid.lyricvid.glyph_align.squeezed"><code class="xref py py-obj docutils literal notranslate"><span class="pre">squeezed</span></code></a>(*[, min_glyph_s])</p></td>
 <td><p>Words with two sounded glyphs starting less than <code class="docutils literal notranslate"><span class="pre">min_glyph_s</span></code> apart.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.lyricvid.glyph_align.unsung" title="muvid.lyricvid.glyph_align.unsung"><code class="xref py py-obj docutils literal notranslate"><span class="pre">unsung</span></code></a>(vocals, *[, among, quiet_db, ...])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#muvid.lyricvid.glyph_align.unsung" title="muvid.lyricvid.glyph_align.unsung"><code class="xref py py-obj docutils literal notranslate"><span class="pre">unsung</span></code></a>(vocals, *[, among, quiet_db, ...])</p></td>
 <td><p>Lines a vendor transcript lists but nobody sang.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#muvid.lyricvid.glyph_align.vocal_stem" title="muvid.lyricvid.glyph_align.vocal_stem"><code class="xref py py-obj docutils literal notranslate"><span class="pre">vocal_stem</span></code></a>(audio, *, out_dir[, allow_download])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.lyricvid.glyph_align.vocal_stem" title="muvid.lyricvid.glyph_align.vocal_stem"><code class="xref py py-obj docutils literal notranslate"><span class="pre">vocal_stem</span></code></a>(audio, *, out_dir[, allow_download])</p></td>
 <td><p>The song's separated vocal stem (Demucs), raising rather than degrading.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#muvid.lyricvid.glyph_align.word_agreement" title="muvid.lyricvid.glyph_align.word_agreement"><code class="xref py py-obj docutils literal notranslate"><span class="pre">word_agreement</span></code></a>(fine, coarse, *[, disagree_s])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#muvid.lyricvid.glyph_align.word_agreement" title="muvid.lyricvid.glyph_align.word_agreement"><code class="xref py py-obj docutils literal notranslate"><span class="pre">word_agreement</span></code></a>(fine, coarse, *[, disagree_s])</p></td>
 <td><p>Compare word starts (first glyph start when present) of two timings.</p></td>
 </tr>
 </tbody>
@@ -415,6 +418,40 @@ replace nothing else. A line with nothing romanisable keeps evenly spread,
 </dl>
 </dd></dl>
 <dl class="py function">
+<dt class="sig sig-object py" id="muvid.lyricvid.glyph_align.romanize_hepburn">
+<span class="sig-prename descclassname"><span class="pre">muvid.lyricvid.glyph_align.</span></span><span class="sig-name descname"><span class="pre">romanize_hepburn</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">text</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/muvid/lyricvid/glyph_align.html#romanize_hepburn"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#muvid.lyricvid.glyph_align.romanize_hepburn" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#muvid.lyricvid.glyph_align.romanize_hepburn'">¶</a></dt>
+<dd><p>Display romanisation (modified Hepburn) of kana text: what a learner reads.</p>
+<p><a class="reference internal" href="#muvid.lyricvid.glyph_align.romanize_kana" title="muvid.lyricvid.glyph_align.romanize_kana"><code class="xref py py-func docutils literal notranslate"><span class="pre">romanize_kana()</span></code></a> is an ALIGNMENT romaniser — <code class="docutils literal notranslate"><span class="pre">ー</span></code> is silent there,
+because it has no onset. Read on screen it needs a macron. Also <code class="docutils literal notranslate"><span class="pre">ン</span></code>
+before a vowel or <code class="docutils literal notranslate"><span class="pre">y</span></code> takes an apostrophe, <code class="docutils literal notranslate"><span class="pre">ッ</span></code> before <code class="docutils literal notranslate"><span class="pre">ch</span></code> is <code class="docutils literal notranslate"><span class="pre">t</span></code>,
+and glides keep their <code class="docutils literal notranslate"><span class="pre">w</span></code>/<code class="docutils literal notranslate"><span class="pre">y</span></code> (muvid#145).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" rel="nofollow noopener" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code><svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a></span></p>
+</dd>
+</dl>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="gp">&gt;&gt;&gt; </span><span class="n">romanize_hepburn</span><span class="p">(</span><span class="s2">"バス バス スタート"</span><span class="p">)</span>
+</span><span id="line-2"><span class="go">'basu basu sutāto'</span>
+</span><span id="line-3"><span class="gp">&gt;&gt;&gt; </span><span class="n">romanize_hepburn</span><span class="p">(</span><span class="s2">"ハンバーガー"</span><span class="p">)</span>
+</span><span id="line-4"><span class="go">'hanbāgā'</span>
+</span><span id="line-5"><span class="gp">&gt;&gt;&gt; </span><span class="n">romanize_hepburn</span><span class="p">(</span><span class="s2">"カップ マッチ シャツ"</span><span class="p">)</span>
+</span><span id="line-6"><span class="go">'kappu matchi shatsu'</span>
+</span><span id="line-7"><span class="gp">&gt;&gt;&gt; </span><span class="n">romanize_hepburn</span><span class="p">(</span><span class="s2">"キンエン ウィンドウ"</span><span class="p">)</span>
+</span><span id="line-8"><span class="go">"kin'en windou"</span>
+</span></code></pre></div>
+</div>
+<p>Anything that is not kana is KEPT, not dropped — kanji, digits, Latin, an
+unknown kana — because a caption that silently loses a word looks right:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="gp">&gt;&gt;&gt; </span><span class="n">romanize_hepburn</span><span class="p">(</span><span class="s2">"東京 バス、スタート! Café"</span><span class="p">)</span>
+</span><span id="line-2"><span class="go">'東京 basu, sutāto! Café'</span>
+</span></code></pre></div>
+</div>
+<p>Input is NFKC-normalised first, so half-width (<code class="docutils literal notranslate"><span class="pre">ﾊﾞｽ</span></code>) and decomposed
+(<code class="docutils literal notranslate"><span class="pre">ハ</span></code> + combining <code class="docutils literal notranslate"><span class="pre">゙</span></code>) kana read as the composed glyphs. Hiragana long
+vowels spelt with a second vowel (<code class="docutils literal notranslate"><span class="pre">とうきょう</span></code>) keep both letters: telling
+<code class="docutils literal notranslate"><span class="pre">ou</span></code> the long vowel from <code class="docutils literal notranslate"><span class="pre">o``+``u</span></code> needs a dictionary.</p>
+</dd></dl>
+<dl class="py function">
 <dt class="sig sig-object py" id="muvid.lyricvid.glyph_align.romanize_kana">
 <span class="sig-prename descclassname"><span class="pre">muvid.lyricvid.glyph_align.</span></span><span class="sig-name descname"><span class="pre">romanize_kana</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">word</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/muvid/lyricvid/glyph_align.html#romanize_kana"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#muvid.lyricvid.glyph_align.romanize_kana" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#muvid.lyricvid.glyph_align.romanize_kana'">¶</a></dt>
 <dd><p><code class="docutils literal notranslate"><span class="pre">(glyph,</span> <span class="pre">romaji)</span></code> per glyph, the romaji chunks concatenating to the word.</p>
@@ -537,6 +574,7 @@ of words that disagree by more than <code class="docutils literal notranslate"><
 <li><a :data-current="activeSection === '#muvid.lyricvid.glyph_align.onset_report'" class="reference internal" href="#muvid.lyricvid.glyph_align.onset_report"><code class="docutils literal notranslate"><span class="pre">onset_report()</span></code></a></li>
 <li><a :data-current="activeSection === '#muvid.lyricvid.glyph_align.reconcile'" class="reference internal" href="#muvid.lyricvid.glyph_align.reconcile"><code class="docutils literal notranslate"><span class="pre">reconcile()</span></code></a></li>
 <li><a :data-current="activeSection === '#muvid.lyricvid.glyph_align.refine_glyphs'" class="reference internal" href="#muvid.lyricvid.glyph_align.refine_glyphs"><code class="docutils literal notranslate"><span class="pre">refine_glyphs()</span></code></a></li>
+<li><a :data-current="activeSection === '#muvid.lyricvid.glyph_align.romanize_hepburn'" class="reference internal" href="#muvid.lyricvid.glyph_align.romanize_hepburn"><code class="docutils literal notranslate"><span class="pre">romanize_hepburn()</span></code></a></li>
 <li><a :data-current="activeSection === '#muvid.lyricvid.glyph_align.romanize_kana'" class="reference internal" href="#muvid.lyricvid.glyph_align.romanize_kana"><code class="docutils literal notranslate"><span class="pre">romanize_kana()</span></code></a></li>
 <li><a :data-current="activeSection === '#muvid.lyricvid.glyph_align.squeezed'" class="reference internal" href="#muvid.lyricvid.glyph_align.squeezed"><code class="docutils literal notranslate"><span class="pre">squeezed()</span></code></a></li>
 <li><a :data-current="activeSection === '#muvid.lyricvid.glyph_align.unsung'" class="reference internal" href="#muvid.lyricvid.glyph_align.unsung"><code class="docutils literal notranslate"><span class="pre">unsung()</span></code></a></li>
@@ -555,7 +593,7 @@ of words that disagree by more than <code class="docutils literal notranslate"><
 </div>
 </footer>
 </div>
-<script src="../_static/documentation_options.js?v=f81738d5"></script>
+<script src="../_static/documentation_options.js?v=cfefb2bf"></script>
 <script src="../_static/doctools.js?v=fd6eb6e6"></script>
 <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
 <script src="../_static/clipboard.min.js?v=a7894cd8"></script>

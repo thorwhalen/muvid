@@ -145,9 +145,12 @@ model wrote reaches a renderer as a coordinate or a time.
 (2, 'one')
 ```
 
-### muvid.lyricvid.render_lyric_video(audio, output, , lyrics=None, subtitles=None, project=None, timed_text=None, treatment=None, renderer='auto', title='', persona=None, aligner=None, width=1920, height=1080, fps=30, workdir=None)
+### muvid.lyricvid.render_lyric_video(audio, output, , lyrics=None, subtitles=None, project=None, timed_text=None, treatment=None, renderer='auto', title='', persona=None, aligner=None, width=1920, height=1080, fps=30, workdir=None, captions=None)
 
 Render a lyric video. The one verb that produces a file.
+
+`captions` (`{language: transform}`, or that as JSON) also writes one
+`.srt` per language beside it — see `export_captions()`.
 
 Everything else in this module exists so that a caller can decide *what* to
 render before paying for it.
@@ -157,8 +160,9 @@ render before paying for it.
 
 ### Modules
 
-| [`director`](muvid.lyricvid.director.md#module-muvid.lyricvid.director)       | The creative director — a song in, one or more [`TreatmentSpec`](#muvid.lyricvid.TreatmentSpec)s out.                                                                      |
+| [`captions`](muvid.lyricvid.captions.md#module-muvid.lyricvid.captions)       | Caption tracks: one subtitle file per language, timed per sung line (muvid#145).                                                                                                         |
 |------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [`director`](muvid.lyricvid.director.md#module-muvid.lyricvid.director)       | The creative director — a song in, one or more [`TreatmentSpec`](#muvid.lyricvid.TreatmentSpec)s out.                                                                      |
 | [`glyph_align`](muvid.lyricvid.glyph_align.md#module-muvid.lyricvid.glyph_align) | Per-glyph timing: when was each written character sung? (muvid#142)                                                                                                                      |
 | [`manifest`](muvid.lyricvid.manifest.md#module-muvid.lyricvid.manifest)       | The lyric-video subgenre's manifest — muvid's own first plugin.                                                                                                                          |
 | [`pipeline`](muvid.lyricvid.pipeline.md#module-muvid.lyricvid.pipeline)       | The lyric-video pipeline — the one path from a song to a finished video.                                                                                                                 |

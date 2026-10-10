@@ -1,4 +1,4 @@
-> built 2026-10-10 15:15 UTC from aae261d (main) · muvid 0.0.81. Details: build_info.json
+> built 2026-10-10 15:32 UTC from 18238b0 (main) · muvid 0.0.82. Details: build_info.json
 
 # index.html.md
 
@@ -8627,6 +8627,89 @@ pass-through; absent → `None`.
   [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]]
 
 
+# _autosummary/muvid.lyricvid.captions.html.md
+
+# muvid.lyricvid.captions
+
+Caption tracks: one subtitle file per language, timed per sung line (muvid#145).
+
+A lyric video for learners wants toggleable caption tracks on YouTube — a
+translation, a transliteration (Hepburn romaji for kana) — timed from the same
+[`TimedText`](_autosummary/muvid.lyricvid.timed_text.html.md#muvid.lyricvid.timed_text.TimedText) that drives the picture, so the
+words on screen and the caption under them change together.
+
+Each language is a **transform** of a line’s text:
+
+- a mapping `{line text: caption}` — a hand-written translation. A sung line
+  the mapping does not cover is an ERROR naming every such line: a caption track
+  with silent holes is a plausible artifact nobody re-checks;
+- a callable `line text -> caption`;
+- a name from [`CAPTION_TRANSFORMS`](_autosummary/muvid.lyricvid.captions.html.md#muvid.lyricvid.captions.CAPTION_TRANSFORMS) (`"hepburn"`, `"original"`) — the
+  form that survives JSON, so a render request or the CLI can ask for it.
+
+A transform returning `""` omits that line from its track, on purpose.
+Every check happens before any track is built — a remote render request
+reaches this through the `captions` param, and the subgenre schema validator
+does not read `anyOf` — so a malformed request fails as a `ValueError`
+before the render, never after it.
+
+Timing, per line: the caption appears `lead_s` before the line’s first sung
+glyph (or word) — a reader needs the head start — stays at least `min_s`, and
+leaves when the next line’s caption arrives (the last one `tail_s` after its
+line ends). `offset_s` shifts everything, e.g. by a title card prepended to
+the video. Lines are captioned in the order they are SUNG, whatever order the
+timing lists them in; lines sung together get overlapping captions rather
+than one of them a few milliseconds long. No caption outlasts the song. The
+files hand straight to `yb.youtube.CaptionTrack(path, language)`.
+
+`pysubs2` (the `lyricvid` extra, which the default renderer already needs)
+is imported only when a track is built.
+
+### Module Attributes
+
+| [`CAPTION_TRANSFORMS`](_autosummary/muvid.lyricvid.captions.html.md#muvid.lyricvid.captions.CAPTION_TRANSFORMS)   | Named transforms — what a JSON caller (a render request, the CLI) can ask for.   |
+|-----------------------------------------------------------------------|----------------------------------------------------------------------------------|
+
+### Functions
+
+| [`caption_tracks`](_autosummary/muvid.lyricvid.captions.html.md#muvid.lyricvid.captions.caption_tracks)(timed_text, transforms, \*[, ...])   | One subtitle track per language, a caption per sung line.                  |
+|------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------|
+| [`write_caption_tracks`](_autosummary/muvid.lyricvid.captions.html.md#muvid.lyricvid.captions.write_caption_tracks)(tracks, out_dir, \*[, ...])    | Save each track as `{out_dir}/{stem}.{lang}.{fmt}`; return `{lang: path}`. |
+
+### muvid.lyricvid.captions.CAPTION_TRANSFORMS *: [dict](https://docs.python.org/3/builtins/stdtypes.html#dict)[[str](https://docs.python.org/3/builtins/stdtypes.html#str), [Callable](https://docs.python.org/3/library/typing.html#typing.Callable)[[[str](https://docs.python.org/3/builtins/stdtypes.html#str)], [str](https://docs.python.org/3/builtins/stdtypes.html#str)]]* *= {'hepburn': <function \_hepburn>, 'original': <function <lambda>>}*
+
+Named transforms — what a JSON caller (a render request, the CLI) can ask for.
+
+### muvid.lyricvid.captions.caption_tracks(timed_text, transforms, , lead_s=0.15, min_s=1.2, tail_s=1.5, offset_s=0.0)
+
+One subtitle track per language, a caption per sung line.
+
+`transforms` maps a BCP-47 language tag to a `LineTransform`.
+Every transform is checked (unknown names, uncovered lines) before any
+track is built, so a bad request fails whole rather than half-written.
+
+* **Return type:**
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), `SSAFile`]
+
+```pycon
+>>> from muvid.lyricvid.timed_text import from_word_records
+>>> tt = from_word_records([
+...     {"text": "バス", "start": 1.0, "end": 1.5, "line_end": True},
+...     {"text": "スタート", "start": 2.0, "end": 3.0, "line_end": True}])
+>>> tracks = caption_tracks(tt, {"en": {"バス": "Bus", "スタート": "Start"},
+...                              "ja-Latn": "hepburn"})
+>>> [(e.start, e.end, e.text) for e in tracks["ja-Latn"]]
+[(850, 1850, 'basu'), (1850, 3050, 'sutāto')]
+```
+
+### muvid.lyricvid.captions.write_caption_tracks(tracks, out_dir, , stem='captions', fmt='srt')
+
+Save each track as `{out_dir}/{stem}.{lang}.{fmt}`; return `{lang: path}`.
+
+* **Return type:**
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)]
+
+
 # _autosummary/muvid.lyricvid.director.html.md
 
 # muvid.lyricvid.director
@@ -9117,6 +9200,7 @@ connector, and it never downloads weights unless the caller says
 | [`onset_report`](_autosummary/muvid.lyricvid.glyph_align.html.md#muvid.lyricvid.glyph_align.onset_report)(timed_text, vocals, \*[, tol_s, ...]) | How well glyph starts sit on acoustic onsets of the vocal stem.                                                       |
 | [`reconcile`](_autosummary/muvid.lyricvid.glyph_align.html.md#muvid.lyricvid.glyph_align.reconcile)(fine, coarse, \*[, disagree_s, ...])     | Distrust the fine timing where a detector says so; remedy it; say where.                                              |
 | [`refine_glyphs`](_autosummary/muvid.lyricvid.glyph_align.html.md#muvid.lyricvid.glyph_align.refine_glyphs)(timed_text, vocals, \*[, ...])       | Return `timed_text` with measured `Word.glyphs` on every word.                                                        |
+| [`romanize_hepburn`](_autosummary/muvid.lyricvid.glyph_align.html.md#muvid.lyricvid.glyph_align.romanize_hepburn)(text)                             | Display romanisation (modified Hepburn) of kana text: what a learner reads.                                           |
 | [`romanize_kana`](_autosummary/muvid.lyricvid.glyph_align.html.md#muvid.lyricvid.glyph_align.romanize_kana)(word)                                | `(glyph, romaji)` per glyph, the romaji chunks concatenating to the word.                                             |
 | [`squeezed`](_autosummary/muvid.lyricvid.glyph_align.html.md#muvid.lyricvid.glyph_align.squeezed)(\*[, min_glyph_s])                        | Words with two sounded glyphs starting less than `min_glyph_s` apart.                                                 |
 | [`unsung`](_autosummary/muvid.lyricvid.glyph_align.html.md#muvid.lyricvid.glyph_align.unsung)(vocals, \*[, among, quiet_db, ...])         | Lines a vendor transcript lists but nobody sang.                                                                      |
@@ -9266,6 +9350,42 @@ replace nothing else. A line with nothing romanisable keeps evenly spread,
 
 * **Return type:**
   [`TimedText`](_autosummary/muvid.lyricvid.timed_text.html.md#muvid.lyricvid.timed_text.TimedText)
+
+### muvid.lyricvid.glyph_align.romanize_hepburn(text)
+
+Display romanisation (modified Hepburn) of kana text: what a learner reads.
+
+[`romanize_kana()`](_autosummary/muvid.lyricvid.glyph_align.html.md#muvid.lyricvid.glyph_align.romanize_kana) is an ALIGNMENT romaniser — `ー` is silent there,
+because it has no onset. Read on screen it needs a macron. Also `ン`
+before a vowel or `y` takes an apostrophe, `ッ` before `ch` is `t`,
+and glides keep their `w`/`y` (muvid#145).
+
+* **Return type:**
+  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+
+```pycon
+>>> romanize_hepburn("バス バス スタート")
+'basu basu sutāto'
+>>> romanize_hepburn("ハンバーガー")
+'hanbāgā'
+>>> romanize_hepburn("カップ マッチ シャツ")
+'kappu matchi shatsu'
+>>> romanize_hepburn("キンエン ウィンドウ")
+"kin'en windou"
+```
+
+Anything that is not kana is KEPT, not dropped — kanji, digits, Latin, an
+unknown kana — because a caption that silently loses a word looks right:
+
+```pycon
+>>> romanize_hepburn("東京 バス、スタート! Café")
+'東京 basu, sutāto! Café'
+```
+
+Input is NFKC-normalised first, so half-width (`ﾊﾞｽ`) and decomposed
+(`ハ` + combining `゙`) kana read as the composed glyphs. Hiragana long
+vowels spelt with a second vowel (`とうきょう`) keep both letters: telling
+`ou` the long vowel from `o``+``u` needs a dictionary.
 
 ### muvid.lyricvid.glyph_align.romanize_kana(word)
 
@@ -9513,9 +9633,12 @@ model wrote reaches a renderer as a coordinate or a time.
 (2, 'one')
 ```
 
-### muvid.lyricvid.render_lyric_video(audio, output, , lyrics=None, subtitles=None, project=None, timed_text=None, treatment=None, renderer='auto', title='', persona=None, aligner=None, width=1920, height=1080, fps=30, workdir=None)
+### muvid.lyricvid.render_lyric_video(audio, output, , lyrics=None, subtitles=None, project=None, timed_text=None, treatment=None, renderer='auto', title='', persona=None, aligner=None, width=1920, height=1080, fps=30, workdir=None, captions=None)
 
 Render a lyric video. The one verb that produces a file.
+
+`captions` (`{language: transform}`, or that as JSON) also writes one
+`.srt` per language beside it — see `export_captions()`.
 
 Everything else in this module exists so that a caller can decide *what* to
 render before paying for it.
@@ -9525,8 +9648,9 @@ render before paying for it.
 
 ### Modules
 
-| [`director`](_autosummary/muvid.lyricvid.director.html.md#module-muvid.lyricvid.director)       | The creative director — a song in, one or more [`TreatmentSpec`](_autosummary/muvid.lyricvid.html.md#muvid.lyricvid.TreatmentSpec)s out.                                                                      |
+| [`captions`](_autosummary/muvid.lyricvid.captions.html.md#module-muvid.lyricvid.captions)       | Caption tracks: one subtitle file per language, timed per sung line (muvid#145).                                                                                                         |
 |------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [`director`](_autosummary/muvid.lyricvid.director.html.md#module-muvid.lyricvid.director)       | The creative director — a song in, one or more [`TreatmentSpec`](_autosummary/muvid.lyricvid.html.md#muvid.lyricvid.TreatmentSpec)s out.                                                                      |
 | [`glyph_align`](_autosummary/muvid.lyricvid.glyph_align.html.md#module-muvid.lyricvid.glyph_align) | Per-glyph timing: when was each written character sung? (muvid#142)                                                                                                                      |
 | [`manifest`](_autosummary/muvid.lyricvid.manifest.html.md#module-muvid.lyricvid.manifest)       | The lyric-video subgenre's manifest — muvid's own first plugin.                                                                                                                          |
 | [`pipeline`](_autosummary/muvid.lyricvid.pipeline.html.md#module-muvid.lyricvid.pipeline)       | The lyric-video pipeline — the one path from a song to a finished video.                                                                                                                 |
@@ -9633,7 +9757,9 @@ Render one lyric video. Satisfies [`muvid.subgenres.Renderer`](_autosummary/muvi
 `request.inputs` takes `audio` (required) and any of `lyrics`,
 `subtitles`, `project`. `request.params` takes `treatment` (a
 treatment spec as a mapping, or omitted to have one proposed), `renderer`,
-`width`, `height`, `fps`, `aligner` and `persona`.
+`width`, `height`, `fps`, `aligner` and `persona`, and
+`captions` — `{language: transform}` (see [`muvid.lyricvid.captions`](_autosummary/muvid.lyricvid.captions.html.md#module-muvid.lyricvid.captions)),
+each written beside the video as an `.srt` artifact `captions.<language>`.
 
 * **Return type:**
   [`RenderResult`](_autosummary/muvid.subgenres.html.md#muvid.subgenres.RenderResult)
@@ -10889,6 +11015,7 @@ Nothing here imports a renderer, an LLM client or numpy at module scope, so
 | [`propose_treatments`](_autosummary/muvid.lyricvid.tools.html.md#muvid.lyricvid.tools.propose_treatments)(audio, \*[, lyrics, ...])      | Propose `n` treatments, ranked, each with its rationale.               |
 | [`validate_treatment`](_autosummary/muvid.lyricvid.tools.html.md#muvid.lyricvid.tools.validate_treatment)(treatment)                     | Validate a treatment, and return the repaired version alongside.       |
 | [`render_lyric_video`](_autosummary/muvid.lyricvid.tools.html.md#muvid.lyricvid.tools.render_lyric_video)(audio, output, \*[, ...])      | Render a lyric video.                                                  |
+| [`export_captions`](_autosummary/muvid.lyricvid.tools.html.md#muvid.lyricvid.tools.export_captions)(timed_text, output_dir, ...)      | Write one caption file per language for a saved timing (muvid#145).    |
 
 ### muvid.lyricvid.tools.analyze_song(audio, , lyrics=None, subtitles=None, project=None, aligner=None, max_lines=40)
 
@@ -10915,6 +11042,20 @@ Every installed subgenre, without importing any renderer.
 True
 ```
 
+### muvid.lyricvid.tools.export_captions(timed_text, output_dir, tracks, , offset_s=0.0, lead_s=None, min_s=None, tail_s=None, stem='captions', fmt='srt')
+
+Write one caption file per language for a saved timing (muvid#145).
+
+`timed_text` is a TimedText JSON file (e.g. `glyphs`’ output);
+`tracks` maps a BCP-47 tag to a named transform (`"hepburn"`,
+`"original"`) or a `{line text: caption}` mapping. `offset_s` shifts
+every caption — by a title card put in front of the video, say. Returns
+`{"tracks": {language: {"path", "n_captions"}}}`; each path goes straight
+into `yb.youtube.CaptionTrack(path, language)`.
+
+* **Return type:**
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]
+
 ### muvid.lyricvid.tools.propose_treatments(audio, , lyrics=None, subtitles=None, project=None, n=3, title='', reference_image=None, use_llm=False, model=None)
 
 Propose `n` treatments, ranked, each with its rationale.
@@ -10927,9 +11068,12 @@ as zero.
 * **Return type:**
   [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]
 
-### muvid.lyricvid.tools.render_lyric_video(audio, output, , lyrics=None, subtitles=None, project=None, timed_text=None, treatment=None, renderer='auto', title='', persona=None, aligner=None, width=1920, height=1080, fps=30, workdir=None)
+### muvid.lyricvid.tools.render_lyric_video(audio, output, , lyrics=None, subtitles=None, project=None, timed_text=None, treatment=None, renderer='auto', title='', persona=None, aligner=None, width=1920, height=1080, fps=30, workdir=None, captions=None)
 
 Render a lyric video. The one verb that produces a file.
+
+`captions` (`{language: transform}`, or that as JSON) also writes one
+`.srt` per language beside it — see [`export_captions()`](_autosummary/muvid.lyricvid.tools.html.md#muvid.lyricvid.tools.export_captions).
 
 Everything else in this module exists so that a caller can decide *what* to
 render before paying for it.
@@ -16354,7 +16498,7 @@ Rendered white; colour comes from the accent `tint`. `options={"mode":
 
 # About this build
 
-This documentation was built on **2026-10-10 15:15 UTC** from commit <a href="https://github.com/reeleehq/muvid/commit/aae261d1cf2757d48289d206aa9cc2e200bc6fd0"><code>aae261d</code></a> on branch <code>main</code>, for **muvid 0.0.81** (from <code>pyproject.toml</code>).
+This documentation was built on **2026-10-10 15:32 UTC** from commit <a href="https://github.com/reeleehq/muvid/commit/18238b0067b70ebda5719e190d6386e298bba6ae"><code>18238b0</code></a> on branch <code>main</code>, for **muvid 0.0.82** (from <code>pyproject.toml</code>).
 
 #### NOTE
 Nothing suggests a mismatch: the tree was clean at the commit above, and the documented version is the one on PyPI.
@@ -16363,9 +16507,9 @@ Nothing suggests a mismatch: the tree was clean at the commit above, and the doc
 
 |                     |                                                                                                                                                       |
 |---------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Commit              | <a href="https://github.com/reeleehq/muvid/commit/aae261d1cf2757d48289d206aa9cc2e200bc6fd0"><code>aae261d1cf2757d48289d206aa9cc2e200bc6fd0</code></a> |
+| Commit              | <a href="https://github.com/reeleehq/muvid/commit/18238b0067b70ebda5719e190d6386e298bba6ae"><code>18238b0067b70ebda5719e190d6386e298bba6ae</code></a> |
 | Branch              | <code>main</code>                                                                                                                                     |
-| Tags at this commit | <code>0.0.81</code>                                                                                                                                   |
+| Tags at this commit | <code>0.0.82</code>                                                                                                                                   |
 | Working tree        | clean                                                                                                                                                 |
 | Remote              | <code>https://github.com/reeleehq/muvid</code>                                                                                                        |
 
@@ -16374,9 +16518,9 @@ Nothing suggests a mismatch: the tree was clean at the commit above, and the doc
 |              |                                                                                            |
 |--------------|--------------------------------------------------------------------------------------------|
 | Repository   | <code>reeleehq/muvid</code>                                                                |
-| Run          | <a href="https://github.com/reeleehq/muvid/actions/runs/38062369092">38062369092</a>       |
+| Run          | <a href="https://github.com/reeleehq/muvid/actions/runs/38063561183">38063561183</a>       |
 | Ref          | <code>refs/heads/main</code>                                                               |
-| Event commit | <code>3cc2f53535ce0b07efb42e34284d335dd19513e7</code> (in the history of the built commit) |
+| Event commit | <code>6c4238e6b1f31e3f9202e26db6d777a55113c9e4</code> (in the history of the built commit) |
 
 ## Tools
 
@@ -16401,13 +16545,13 @@ Nothing suggests a mismatch: the tree was clean at the commit above, and the doc
 
 ## Package on PyPI
 
-Latest release: <a href="https://pypi.org/project/muvid/0.0.81/">0.0.81</a>, the same as the documented version.
+Latest release: <a href="https://pypi.org/project/muvid/0.0.82/">0.0.82</a>, the same as the documented version.
 
 ## Reproduce
 
 ```bash
 git clone https://github.com/reeleehq/muvid && cd muvid
-git checkout aae261d1cf2757d48289d206aa9cc2e200bc6fd0
+git checkout 18238b0067b70ebda5719e190d6386e298bba6ae
 pip install "epythet==0.2.12"
 epythet quickstart . --ignore tests/ scrap/ examples/
 ```

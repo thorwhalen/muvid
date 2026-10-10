@@ -22,6 +22,7 @@ Nothing here imports a renderer, an LLM client or numpy at module scope, so
 | [`propose_treatments`](#muvid.lyricvid.tools.propose_treatments)(audio, \*[, lyrics, ...])      | Propose `n` treatments, ranked, each with its rationale.               |
 | [`validate_treatment`](#muvid.lyricvid.tools.validate_treatment)(treatment)                     | Validate a treatment, and return the repaired version alongside.       |
 | [`render_lyric_video`](#muvid.lyricvid.tools.render_lyric_video)(audio, output, \*[, ...])      | Render a lyric video.                                                  |
+| [`export_captions`](#muvid.lyricvid.tools.export_captions)(timed_text, output_dir, ...)      | Write one caption file per language for a saved timing (muvid#145).    |
 
 ### muvid.lyricvid.tools.analyze_song(audio, , lyrics=None, subtitles=None, project=None, aligner=None, max_lines=40)
 
@@ -48,6 +49,20 @@ Every installed subgenre, without importing any renderer.
 True
 ```
 
+### muvid.lyricvid.tools.export_captions(timed_text, output_dir, tracks, , offset_s=0.0, lead_s=None, min_s=None, tail_s=None, stem='captions', fmt='srt')
+
+Write one caption file per language for a saved timing (muvid#145).
+
+`timed_text` is a TimedText JSON file (e.g. `glyphs`’ output);
+`tracks` maps a BCP-47 tag to a named transform (`"hepburn"`,
+`"original"`) or a `{line text: caption}` mapping. `offset_s` shifts
+every caption — by a title card put in front of the video, say. Returns
+`{"tracks": {language: {"path", "n_captions"}}}`; each path goes straight
+into `yb.youtube.CaptionTrack(path, language)`.
+
+* **Return type:**
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]
+
 ### muvid.lyricvid.tools.propose_treatments(audio, , lyrics=None, subtitles=None, project=None, n=3, title='', reference_image=None, use_llm=False, model=None)
 
 Propose `n` treatments, ranked, each with its rationale.
@@ -60,9 +75,12 @@ as zero.
 * **Return type:**
   [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]
 
-### muvid.lyricvid.tools.render_lyric_video(audio, output, , lyrics=None, subtitles=None, project=None, timed_text=None, treatment=None, renderer='auto', title='', persona=None, aligner=None, width=1920, height=1080, fps=30, workdir=None)
+### muvid.lyricvid.tools.render_lyric_video(audio, output, , lyrics=None, subtitles=None, project=None, timed_text=None, treatment=None, renderer='auto', title='', persona=None, aligner=None, width=1920, height=1080, fps=30, workdir=None, captions=None)
 
 Render a lyric video. The one verb that produces a file.
+
+`captions` (`{language: transform}`, or that as JSON) also writes one
+`.srt` per language beside it — see [`export_captions()`](#muvid.lyricvid.tools.export_captions).
 
 Everything else in this module exists so that a caller can decide *what* to
 render before paying for it.

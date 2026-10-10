@@ -59,6 +59,7 @@ connector, and it never downloads weights unless the caller says
 | [`onset_report`](#muvid.lyricvid.glyph_align.onset_report)(timed_text, vocals, \*[, tol_s, ...]) | How well glyph starts sit on acoustic onsets of the vocal stem.                                                       |
 | [`reconcile`](#muvid.lyricvid.glyph_align.reconcile)(fine, coarse, \*[, disagree_s, ...])     | Distrust the fine timing where a detector says so; remedy it; say where.                                              |
 | [`refine_glyphs`](#muvid.lyricvid.glyph_align.refine_glyphs)(timed_text, vocals, \*[, ...])       | Return `timed_text` with measured `Word.glyphs` on every word.                                                        |
+| [`romanize_hepburn`](#muvid.lyricvid.glyph_align.romanize_hepburn)(text)                             | Display romanisation (modified Hepburn) of kana text: what a learner reads.                                           |
 | [`romanize_kana`](#muvid.lyricvid.glyph_align.romanize_kana)(word)                                | `(glyph, romaji)` per glyph, the romaji chunks concatenating to the word.                                             |
 | [`squeezed`](#muvid.lyricvid.glyph_align.squeezed)(\*[, min_glyph_s])                        | Words with two sounded glyphs starting less than `min_glyph_s` apart.                                                 |
 | [`unsung`](#muvid.lyricvid.glyph_align.unsung)(vocals, \*[, among, quiet_db, ...])         | Lines a vendor transcript lists but nobody sang.                                                                      |
@@ -208,6 +209,42 @@ replace nothing else. A line with nothing romanisable keeps evenly spread,
 
 * **Return type:**
   [`TimedText`](muvid.lyricvid.timed_text.md#muvid.lyricvid.timed_text.TimedText)
+
+### muvid.lyricvid.glyph_align.romanize_hepburn(text)
+
+Display romanisation (modified Hepburn) of kana text: what a learner reads.
+
+[`romanize_kana()`](#muvid.lyricvid.glyph_align.romanize_kana) is an ALIGNMENT romaniser — `ー` is silent there,
+because it has no onset. Read on screen it needs a macron. Also `ン`
+before a vowel or `y` takes an apostrophe, `ッ` before `ch` is `t`,
+and glides keep their `w`/`y` (muvid#145).
+
+* **Return type:**
+  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+
+```pycon
+>>> romanize_hepburn("バス バス スタート")
+'basu basu sutāto'
+>>> romanize_hepburn("ハンバーガー")
+'hanbāgā'
+>>> romanize_hepburn("カップ マッチ シャツ")
+'kappu matchi shatsu'
+>>> romanize_hepburn("キンエン ウィンドウ")
+"kin'en windou"
+```
+
+Anything that is not kana is KEPT, not dropped — kanji, digits, Latin, an
+unknown kana — because a caption that silently loses a word looks right:
+
+```pycon
+>>> romanize_hepburn("東京 バス、スタート! Café")
+'東京 basu, sutāto! Café'
+```
+
+Input is NFKC-normalised first, so half-width (`ﾊﾞｽ`) and decomposed
+(`ハ` + combining `゙`) kana read as the composed glyphs. Hiragana long
+vowels spelt with a second vowel (`とうきょう`) keep both letters: telling
+`ou` the long vowel from `o``+``u` needs a dictionary.
 
 ### muvid.lyricvid.glyph_align.romanize_kana(word)
 

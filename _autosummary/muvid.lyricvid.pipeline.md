@@ -75,7 +75,9 @@ Render one lyric video. Satisfies [`muvid.subgenres.Renderer`](muvid.subgenres.m
 `request.inputs` takes `audio` (required) and any of `lyrics`,
 `subtitles`, `project`. `request.params` takes `treatment` (a
 treatment spec as a mapping, or omitted to have one proposed), `renderer`,
-`width`, `height`, `fps`, `aligner` and `persona`.
+`width`, `height`, `fps`, `aligner` and `persona`, and
+`captions` — `{language: transform}` (see [`muvid.lyricvid.captions`](muvid.lyricvid.captions.md#module-muvid.lyricvid.captions)),
+each written beside the video as an `.srt` artifact `captions.<language>`.
 
 * **Return type:**
   [`RenderResult`](muvid.subgenres.md#muvid.subgenres.RenderResult)
