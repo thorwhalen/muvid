@@ -276,6 +276,32 @@ python -m muvid.lyricvid render song.mp3 out.mp4 --timed-text glyphs.json --trea
   and `word_gap` ~0.9 em read well on a phone. Use a CJK font
   (`typography.family`, e.g. "Hiragino Sans" on macOS, "Noto Sans CJK JP" on Linux).
 
+## Caption tracks — translation and romaji for YouTube
+
+A learner wants toggleable captions under the video: a translation, a
+transliteration. They are timed per sung line from the same timing that drives
+the picture, so the caption changes with the words on screen:
+
+```bash
+python -m muvid.lyricvid captions glyphs.json caps/ \
+    '{"en": "en.json", "ja-Latn": "hepburn"}' --offset-s 0.8 --stem song
+# -> caps/song.en.srt, caps/song.ja-Latn.srt
+```
+
+- Each language (a BCP-47 tag) maps to a **named transform** (`hepburn`:
+  romaji with macrons, `sutāto`; `original`), a `{line text: caption}` mapping,
+  or a path to a JSON file holding one. Write the translation yourself, keyed
+  by each line's text exactly as the timing has it; **a line it does not cover
+  is an error naming every such line** — map a line to `""` to omit it.
+- `--offset-s` is for anything prepended to the video (a title card). Leave it
+  0 when captioning the render itself — or pass `captions` to `render`, which
+  writes `captions.<lang>.srt` artifacts beside the video and refuses an
+  uncovered translation before it renders.
+- Hand each file to `yb.youtube.CaptionTrack(path, language)` — see the
+  `yb-publish` skill.
+- `romanize_hepburn` is for READING; `romanize_kana` is for ALIGNING (`ー`
+  silent, no macron). Do not swap them.
+
 ## Choosing a renderer
 
 `ass` (the default) is frame-exact, needs no browser, renders in seconds, and

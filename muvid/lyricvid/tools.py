@@ -25,6 +25,7 @@ __all__ = [
     "propose_treatments",
     "validate_treatment",
     "render_lyric_video",
+    "export_captions",
 ]
 
 
@@ -235,8 +236,12 @@ def render_lyric_video(
     height: int = 1080,
     fps: int = 30,
     workdir: str | None = None,
+    captions: Mapping[str, Any] | str | None = None,
 ) -> dict[str, Any]:
     """Render a lyric video. The one verb that produces a file.
+
+    ``captions`` (``{language: transform}``, or that as JSON) also writes one
+    ``.srt`` per language beside it — see :func:`export_captions`.
 
     Everything else in this module exists so that a caller can decide *what* to
     render before paying for it.
@@ -248,6 +253,8 @@ def render_lyric_video(
 
     if isinstance(treatment, str):
         treatment = json.loads(treatment)
+    if isinstance(captions, str):
+        captions = json.loads(captions)
 
     out = Path(output)
     wd = Path(workdir) if workdir else Path(tempfile.mkdtemp(prefix="muvid-lyricvid-"))
@@ -273,6 +280,7 @@ def render_lyric_video(
             ("width", width),
             ("height", height),
             ("fps", fps),
+            ("captions", captions or None),
         )
         if v is not None
     }
@@ -282,3 +290,45 @@ def render_lyric_video(
         )
     )
     return result.to_dict()
+
+
+def export_captions(
+    timed_text: str,
+    output_dir: str,
+    tracks: Mapping[str, Any] | str,
+    *,
+    offset_s: float = 0.0,
+    lead_s: float | None = None,
+    min_s: float | None = None,
+    tail_s: float | None = None,
+    stem: str = "captions",
+    fmt: str = "srt",
+) -> dict[str, Any]:
+    """Write one caption file per language for a saved timing (muvid#145).
+
+    ``timed_text`` is a TimedText JSON file (e.g. ``glyphs``' output);
+    ``tracks`` maps a BCP-47 tag to a named transform (``"hepburn"``,
+    ``"original"``) or a ``{line text: caption}`` mapping. ``offset_s`` shifts
+    every caption — by a title card put in front of the video, say. Returns
+    ``{"tracks": {language: {"path", "n_captions"}}}``; each path goes straight
+    into ``yb.youtube.CaptionTrack(path, language)``.
+    """
+    from muvid.lyricvid import captions as _c
+    from muvid.lyricvid.timed_text import from_dict
+
+    if isinstance(tracks, str):
+        tracks = json.loads(tracks)
+    tt = from_dict(json.loads(Path(timed_text).read_text(encoding="utf-8")))
+    timing = {
+        k: v
+        for k, v in (("lead_s", lead_s), ("min_s", min_s), ("tail_s", tail_s))
+        if v is not None
+    }
+    built = _c.caption_tracks(tt, tracks, offset_s=offset_s, **timing)
+    paths = _c.write_caption_tracks(built, output_dir, stem=stem, fmt=fmt)
+    return {
+        "tracks": {
+            lang: {"path": str(p), "n_captions": len(built[lang])}
+            for lang, p in paths.items()
+        }
+    }

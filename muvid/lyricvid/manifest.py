@@ -81,6 +81,24 @@ _PARAMS = {
         "width": {"type": "integer", "default": 1920, "minimum": 16},
         "height": {"type": "integer", "default": 1080, "minimum": 16},
         "fps": {"type": "integer", "default": 30, "minimum": 1, "maximum": 120},
+        "captions": {
+            "type": "object",
+            "description": "Caption tracks to write beside the video, one per "
+            "language: a BCP-47 tag (e.g. 'en', 'ja-Latn') mapped to how a sung "
+            "line is captioned — a named transform ('hepburn': romaji for kana; "
+            "'original': the line as written) or a {line text: caption} mapping "
+            "such as a translation, which must cover every sung line. Each "
+            "becomes an .srt artifact, timed per line, ready to upload as a "
+            "YouTube caption track.",
+            "additionalProperties": {
+                "anyOf": [
+                    # the names of muvid.lyricvid.captions.CAPTION_TRANSFORMS
+                    # (a test pins the two together; manifests stay stdlib-only)
+                    {"type": "string", "enum": ["hepburn", "original"]},
+                    {"type": "object", "additionalProperties": {"type": "string"}},
+                ]
+            },
+        },
     },
 }
 

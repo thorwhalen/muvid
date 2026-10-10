@@ -38,6 +38,7 @@ connector, and it never downloads weights unless the caller says
 from __future__ import annotations
 
 import os
+import re
 import unicodedata
 from dataclasses import dataclass, replace
 from pathlib import Path
@@ -165,6 +166,105 @@ def romanize_kana(word: str) -> list[tuple[str, str]]:
             out.append((g, k.lower()))
         else:
             out.append((g, ""))
+    return out
+
+
+_MACRON = dict(zip("aiueo", "āīūēō"))
+#: Glyph pairs Hepburn writes as one sound, where the per-glyph alignment
+#: chunks would give two vowels or lose the glide (ウィ "ui", クァ "ka").
+_HEPBURN_PAIRS = {
+    "ウィ": "wi",
+    "ウェ": "we",
+    "ウォ": "wo",
+    "イェ": "ye",
+    "クァ": "kwa",
+    "クィ": "kwi",
+    "クェ": "kwe",
+    "クォ": "kwo",
+    "グァ": "gwa",
+}
+#: Japanese punctuation, written the Latin way.
+_HEPBURN_PUNCT = str.maketrans(
+    {
+        "、": ", ",
+        "。": ". ",
+        "・": " ",
+        "「": '"',
+        "」": '"',
+        "『": '"',
+        "』": '"',
+        "〜": "~",
+    }
+)
+
+
+def _is_kana(ch: str) -> bool:
+    return 0x3041 <= ord(ch) <= 0x3096 or 0x30A1 <= ord(ch) <= 0x30FA or ch == "ー"
+
+
+def romanize_hepburn(text: str) -> str:
+    """Display romanisation (modified Hepburn) of kana text: what a learner reads.
+
+    :func:`romanize_kana` is an ALIGNMENT romaniser — ``ー`` is silent there,
+    because it has no onset. Read on screen it needs a macron. Also ``ン``
+    before a vowel or ``y`` takes an apostrophe, ``ッ`` before ``ch`` is ``t``,
+    and glides keep their ``w``/``y`` (muvid#145).
+
+    >>> romanize_hepburn("バス バス スタート")
+    'basu basu sutāto'
+    >>> romanize_hepburn("ハンバーガー")
+    'hanbāgā'
+    >>> romanize_hepburn("カップ マッチ シャツ")
+    'kappu matchi shatsu'
+    >>> romanize_hepburn("キンエン ウィンドウ")
+    "kin'en windou"
+
+    Anything that is not kana is KEPT, not dropped — kanji, digits, Latin, an
+    unknown kana — because a caption that silently loses a word looks right:
+
+    >>> romanize_hepburn("東京 バス、スタート! Café")
+    '東京 basu, sutāto! Café'
+
+    Input is NFKC-normalised first, so half-width (``ﾊﾞｽ``) and decomposed
+    (``ハ`` + combining ``゙``) kana read as the composed glyphs. Hiragana long
+    vowels spelt with a second vowel (``とうきょう``) keep both letters: telling
+    ``ou`` the long vowel from ``o``+``u`` needs a dictionary.
+    """
+    text = unicodedata.normalize("NFKC", text)
+    out, run = [], ""
+    for ch in text + "\0":
+        if _is_kana(ch):
+            run += ch
+            continue
+        if run:
+            out.append(_hepburn_kana(run))
+            run = ""
+        if ch != "\0":
+            out.append(ch.translate(_HEPBURN_PUNCT))
+    return re.sub(r" +([,.!?])", r"\1", re.sub(r"\s+", " ", "".join(out))).strip()
+
+
+def _hepburn_kana(run: str) -> str:
+    chunks = romanize_kana(run)
+    out, prev, i = "", "", 0
+    while i < len(chunks):
+        g, r = chunks[i]
+        k = _to_katakana(g)
+        pair = k + _to_katakana(chunks[i + 1][0]) if i + 1 < len(chunks) else ""
+        if pair in _HEPBURN_PAIRS:
+            r, i = _HEPBURN_PAIRS[pair], i + 1
+        if k == "ー":
+            if out and out[-1] in _MACRON:
+                out = out[:-1] + _MACRON[out[-1]]
+        elif not r and k not in "ッ":  # a kana this romaniser does not know: keep it
+            out += g
+        else:
+            if k == "ッ" and r == "c":  # ッチ: "tch", not "cch"
+                r = "t"
+            if prev == "ン" and r[:1] in ("a", "i", "u", "e", "o", "y"):
+                out += "'"
+            out += r
+        prev, i = k, i + 1
     return out
 
 
