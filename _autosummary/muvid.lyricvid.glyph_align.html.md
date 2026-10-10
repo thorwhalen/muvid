@@ -24,7 +24,11 @@ Another script needs another romaniser, nothing else.
 Verification lives here too, because a timing nobody checked is a guess:
 [`onset_report()`](#muvid.lyricvid.glyph_align.onset_report) measures how close glyph starts sit to acoustic onsets in
 the vocal stem, against a random-jitter baseline, and [`word_agreement()`](#muvid.lyricvid.glyph_align.word_agreement)
-lists the words where two timings disagree.
+lists the words where two timings disagree. [`reconcile()`](#muvid.lyricvid.glyph_align.reconcile) then acts on
+what a list of [`Detector`](#muvid.lyricvid.glyph_align.Detector) s distrusts — each names words and a remedy
+(`replace`: fall back to the vendor window; `drop`: it was never sung).
+[`unsung()`](#muvid.lyricvid.glyph_align.unsung) is the one that drops: a line the aligner could not place over
+which the vocal stem is silent (muvid#144).
 
 Licensing — read before shipping anything: the `MMS_FA` weights are
 **CC-BY-NC-4.0** and htdemucs (vocal separation) is CC-BY-NC too. So this is an
@@ -34,26 +38,52 @@ connector, and it never downloads weights unless the caller says
 
 ### Module Attributes
 
-| [`MARGIN_S`](#muvid.lyricvid.glyph_align.MARGIN_S)    | Seconds of audio kept either side of a line's coarse window.                                                                        |
-|--------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------|
-| [`ONSET_TOL_S`](#muvid.lyricvid.glyph_align.ONSET_TOL_S) | Onset tolerance for [`onset_report()`](#muvid.lyricvid.glyph_align.onset_report).                                                |
-| [`DISAGREE_S`](#muvid.lyricvid.glyph_align.DISAGREE_S)  | Two timings of a word disagree when their starts differ by more than this.                                                          |
-| [`MIN_GLYPH_S`](#muvid.lyricvid.glyph_align.MIN_GLYPH_S) | Two sounded glyphs whose STARTS are closer than this were squeezed together by the aligner, not sung (a mora takes ~0.1 s or more). |
+| [`MARGIN_S`](#muvid.lyricvid.glyph_align.MARGIN_S)              | Seconds of audio kept either side of a line's coarse window.                                                                                          |
+|------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [`ONSET_TOL_S`](#muvid.lyricvid.glyph_align.ONSET_TOL_S)           | Onset tolerance for [`onset_report()`](#muvid.lyricvid.glyph_align.onset_report).                                                                  |
+| [`DISAGREE_S`](#muvid.lyricvid.glyph_align.DISAGREE_S)            | Two timings of a word disagree when their starts differ by more than this.                                                                            |
+| [`MIN_GLYPH_S`](#muvid.lyricvid.glyph_align.MIN_GLYPH_S)           | Two sounded glyphs whose STARTS are closer than this were squeezed together by the aligner, not sung (a mora takes ~0.1 s or more).                   |
+| [`REMEDIES`](#muvid.lyricvid.glyph_align.REMEDIES)              | What [`reconcile()`](#muvid.lyricvid.glyph_align.reconcile) may do with a word a detector distrusts.                                            |
+| [`UNSUNG_QUIET_DB`](#muvid.lyricvid.glyph_align.UNSUNG_QUIET_DB)       | a frame is quiet below this many dB under the stem's own loud level...                                                                                |
+| [`UNSUNG_QUIET_SHARE`](#muvid.lyricvid.glyph_align.UNSUNG_QUIET_SHARE)    | ...and a line is unsung when at least this share of its window is quiet...                                                                            |
+| [`UNSUNG_MIN_QUIET_S`](#muvid.lyricvid.glyph_align.UNSUNG_MIN_QUIET_S)    | ...in one unbroken stretch at least this long.                                                                                                        |
+| [`UNSUNG_FRAME_S`](#muvid.lyricvid.glyph_align.UNSUNG_FRAME_S)        | Frame length for the stem's RMS level.                                                                                                                |
+| [`UNSUNG_REF_PERCENTILE`](#muvid.lyricvid.glyph_align.UNSUNG_REF_PERCENTILE) | The stem's "loud level" is this percentile of its frame RMS, so the threshold follows the mix rather than an absolute dBFS a quieter stem would fail. |
 
 ### Functions
 
-| [`glyph_rows`](#muvid.lyricvid.glyph_align.glyph_rows)(tt)                                     | One flat record per glyph, for a table or a quick look.                   |
-|-----------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------|
-| [`onset_report`](#muvid.lyricvid.glyph_align.onset_report)(timed_text, vocals, \*[, tol_s, ...]) | How well glyph starts sit on acoustic onsets of the vocal stem.           |
-| [`reconcile`](#muvid.lyricvid.glyph_align.reconcile)(fine, coarse, \*[, disagree_s, ...])     | Distrust the fine timing where it is implausible; say where.              |
-| [`refine_glyphs`](#muvid.lyricvid.glyph_align.refine_glyphs)(timed_text, vocals, \*[, ...])       | Return `timed_text` with measured `Word.glyphs` on every word.            |
-| [`romanize_kana`](#muvid.lyricvid.glyph_align.romanize_kana)(word)                                | `(glyph, romaji)` per glyph, the romaji chunks concatenating to the word. |
-| [`vocal_stem`](#muvid.lyricvid.glyph_align.vocal_stem)(audio, \*, out_dir[, allow_download])   | The song's separated vocal stem (Demucs), raising rather than degrading.  |
-| [`word_agreement`](#muvid.lyricvid.glyph_align.word_agreement)(fine, coarse, \*[, disagree_s])     | Compare word starts (first glyph start when present) of two timings.      |
+| [`default_detectors`](#muvid.lyricvid.glyph_align.default_detectors)(\*[, disagree_s, min_glyph_s])   | What [`reconcile()`](#muvid.lyricvid.glyph_align.reconcile) runs when given none: the two that need no audio.   |
+|-----------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------|
+| [`disagrees`](#muvid.lyricvid.glyph_align.disagrees)(\*[, disagree_s])                        | Words whose fine start is more than `disagree_s` from the coarse one.                                                 |
+| [`glyph_rows`](#muvid.lyricvid.glyph_align.glyph_rows)(tt)                                     | One flat record per glyph, for a table or a quick look.                                                               |
+| [`onset_report`](#muvid.lyricvid.glyph_align.onset_report)(timed_text, vocals, \*[, tol_s, ...]) | How well glyph starts sit on acoustic onsets of the vocal stem.                                                       |
+| [`reconcile`](#muvid.lyricvid.glyph_align.reconcile)(fine, coarse, \*[, disagree_s, ...])     | Distrust the fine timing where a detector says so; remedy it; say where.                                              |
+| [`refine_glyphs`](#muvid.lyricvid.glyph_align.refine_glyphs)(timed_text, vocals, \*[, ...])       | Return `timed_text` with measured `Word.glyphs` on every word.                                                        |
+| [`romanize_kana`](#muvid.lyricvid.glyph_align.romanize_kana)(word)                                | `(glyph, romaji)` per glyph, the romaji chunks concatenating to the word.                                             |
+| [`squeezed`](#muvid.lyricvid.glyph_align.squeezed)(\*[, min_glyph_s])                        | Words with two sounded glyphs starting less than `min_glyph_s` apart.                                                 |
+| [`unsung`](#muvid.lyricvid.glyph_align.unsung)(vocals, \*[, among, quiet_db, ...])         | Lines a vendor transcript lists but nobody sang.                                                                      |
+| [`vocal_stem`](#muvid.lyricvid.glyph_align.vocal_stem)(audio, \*, out_dir[, allow_download])   | The song's separated vocal stem (Demucs), raising rather than degrading.                                              |
+| [`word_agreement`](#muvid.lyricvid.glyph_align.word_agreement)(fine, coarse, \*[, disagree_s])     | Compare word starts (first glyph start when present) of two timings.                                                  |
+
+### Classes
+
+| [`Detector`](#muvid.lyricvid.glyph_align.Detector)(\*, name, find[, remedy])   | Names the words of a fine timing not to trust, and what to do about them.   |
+|---------------------------------------------------------------------------------------|-----------------------------------------------------------------------------|
 
 ### muvid.lyricvid.glyph_align.DISAGREE_S *= 0.3*
 
 Two timings of a word disagree when their starts differ by more than this.
+
+### *class* muvid.lyricvid.glyph_align.Detector(, name, find, remedy='replace')
+
+Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+
+Names the words of a fine timing not to trust, and what to do about them.
+
+`find(fine, coarse)` gets both timings (same word sequence) and returns
+`{word_index: reason}`, indices into `list(fine.words())`. `remedy`
+is one of [`REMEDIES`](#muvid.lyricvid.glyph_align.REMEDIES); when several detectors flag one word, `drop`
+wins — a word nobody sang has no window worth falling back to.
 
 ### muvid.lyricvid.glyph_align.MARGIN_S *= 0.5*
 
@@ -70,6 +100,57 @@ span length: CTC spans are spiky, so a perfectly sung `ン` can be 20 ms.
 ### muvid.lyricvid.glyph_align.ONSET_TOL_S *= 0.08*
 
 Onset tolerance for [`onset_report()`](#muvid.lyricvid.glyph_align.onset_report).
+
+### muvid.lyricvid.glyph_align.REMEDIES *= ('replace', 'drop')*
+
+What [`reconcile()`](#muvid.lyricvid.glyph_align.reconcile) may do with a word a detector distrusts. `replace`:
+fall back to the coarse window shifted by the measured bias, glyphs spread
+evenly and marked unmeasured (the word was sung; the aligner could not place
+it). `drop`: remove the word, and a line or section left empty (it was
+never sung, so lighting it at ANY time is wrong).
+
+### muvid.lyricvid.glyph_align.UNSUNG_FRAME_S *= 0.05*
+
+Frame length for the stem’s RMS level.
+
+### muvid.lyricvid.glyph_align.UNSUNG_MIN_QUIET_S *= 1.0*
+
+…in one unbroken stretch at least this long. A ghost repeat is a whole
+line of silence (2 s on the measured song); a short sung line whose vendor
+window is merely LATE lands on a quiet tail too, but a short one.
+
+### muvid.lyricvid.glyph_align.UNSUNG_QUIET_DB *= -40.0*
+
+a frame is
+quiet below this many dB under the stem’s own loud level…
+
+* **Type:**
+  [`unsung()`](#muvid.lyricvid.glyph_align.unsung)’s thresholds, measured on a real song (muvid#144)
+
+### muvid.lyricvid.glyph_align.UNSUNG_QUIET_SHARE *= 0.5*
+
+…and a line is unsung when at least this share of its window is quiet…
+
+### muvid.lyricvid.glyph_align.UNSUNG_REF_PERCENTILE *= 95.0*
+
+The stem’s “loud level” is this percentile of its frame RMS, so the threshold
+follows the mix rather than an absolute dBFS a quieter stem would fail.
+
+### muvid.lyricvid.glyph_align.default_detectors(, disagree_s=0.3, min_glyph_s=0.04)
+
+What [`reconcile()`](#muvid.lyricvid.glyph_align.reconcile) runs when given none: the two that need no audio.
+
+* **Return type:**
+  [`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`Detector`](#muvid.lyricvid.glyph_align.Detector), [`...`](https://docs.python.org/3/builtins/constants.html#Ellipsis)]
+
+### muvid.lyricvid.glyph_align.disagrees(, disagree_s=0.3)
+
+Words whose fine start is more than `disagree_s` from the coarse one.
+
+Remedy: `replace`.
+
+* **Return type:**
+  [`Detector`](#muvid.lyricvid.glyph_align.Detector)
 
 ### muvid.lyricvid.glyph_align.glyph_rows(tt)
 
@@ -90,19 +171,27 @@ onset track makes any time look “near” something.
 * **Return type:**
   [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]
 
-### muvid.lyricvid.glyph_align.reconcile(fine, coarse, , disagree_s=0.3, min_glyph_s=0.04)
+### muvid.lyricvid.glyph_align.reconcile(fine, coarse, , disagree_s=None, min_glyph_s=None, detectors=None)
 
-Distrust the fine timing where it is implausible; say where.
+Distrust the fine timing where a detector says so; remedy it; say where.
 
-A word is distrusted when its start disagrees with the coarse timing by
-more than `disagree_s`, or when a sounded glyph lasts under
-`min_glyph_s` (CTC squeezing a word it could not hear into a few frames —
-seen on a song where the vendor’s transcript listed a repeat the singer
-never sang). Such a word falls back to its COARSE window, shifted by the
-median offset between the two timings over the words they agree on (vendor
-times run late; the bias is measured, not assumed), with its glyphs spread
-evenly and marked `measured=False`. Returns the timing and one record per
-replaced word.
+`detectors` defaults to [`default_detectors()`](#muvid.lyricvid.glyph_align.default_detectors) (`squeezed` and
+`disagrees`, both `replace`; `disagree_s` and `min_glyph_s` tune
+them, and are refused alongside explicit `detectors`, which they could
+not reach). Add [`unsung()`](#muvid.lyricvid.glyph_align.unsung) when you have the vocal stem:
+
+```default
+reconcile(fine, coarse, detectors=(*default_detectors(), unsung(stem)))
+```
+
+`replace` puts a word back in its COARSE window, shifted by the median
+offset between the two timings over the words no detector flagged (vendor
+times run late; the bias is measured, not assumed), glyphs spread evenly
+and marked `measured=False`. `drop` removes it, and any line or section
+left empty. Returns the timing and one record per affected word: `why`
+(the deciding detector), `detail`, `remedy`, `flagged_by` (every
+detector that flagged it) and `used` (the start it got; `None` when
+dropped).
 
 * **Return type:**
   [`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`TimedText`](muvid.lyricvid.timed_text.html.md#muvid.lyricvid.timed_text.TimedText), [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]]]
@@ -144,6 +233,55 @@ replace nothing else. A line with nothing romanisable keeps evenly spread,
 
 A glyph with an empty chunk (`ー`, punctuation) has no onset of its own;
 the aligner places it between its neighbours and marks it unmeasured.
+
+### muvid.lyricvid.glyph_align.squeezed(, min_glyph_s=0.04)
+
+Words with two sounded glyphs starting less than `min_glyph_s` apart.
+
+CTC squeezing a word it could not hear into a few frames. Judged on
+syllabic glyphs (kana/CJK: one mora each) only — letters of an alphabet are
+legitimately ~30 ms apart — and only between neighbours in the same line
+(lines are aligned in overlapping windows). Remedy: `replace`.
+
+* **Return type:**
+  [`Detector`](#muvid.lyricvid.glyph_align.Detector)
+
+### muvid.lyricvid.glyph_align.unsung(vocals, , among=None, quiet_db=-40.0, quiet_share=0.5, min_quiet_s=1.0, frame_s=0.05)
+
+Lines a vendor transcript lists but nobody sang. Remedy: `drop`.
+
+A LINE is unsung when both hold: `among` (default [`squeezed()`](#muvid.lyricvid.glyph_align.squeezed))
+distrusts every word in it — the aligner, searching the line’s window, found
+nothing to put them on — and the vocal stem is quiet (`quiet_db` under its
+own loud level) over at least `quiet_share` of the line’s coarse window,
+including one unbroken quiet stretch of `min_quiet_s`. The window is
+shifted by the vendor’s measured bias (median fine-minus-coarse start over
+the words `among` trusts), and a window running past the end of the stem
+is not judged at all.
+
+Both, because neither instrument is enough alone. Measured on the song that
+motivated this (muvid#144: a Suno transcript listing a repeated タン タン タン
+at 36-38 s that the stem shows nobody sang), the stem alone puts a sung,
+staccato ストップ ストップ at 0.63 quiet against the ghost’s 0.75 — vendor
+windows run on into the silence after a word, so a quiet window is common —
+while squeeze alone also flags a sung, fast スター ダンス (0.04 quiet).
+Together they separate the ghost and nothing else.
+
+What they do NOT separate unaided is one short sung line whose vendor
+window is a second late: the aligner (searching ±\`\`MARGIN_S\`\`) misses it
+and squeezes, and the window lands on the silence after it — measured on
+the same song, the last line (フン) shifted +1 s was dropped. The unbroken
+`min_quiet_s` is what refuses that case: a short window cannot hold a
+second of silence, a ghost line is silence end to end.
+
+The unit is the line, because a transcript repeats lines, and because the
+first ghost word’s own window held the decaying tail of the previous held
+note: sound, but not its sound. `among` is squeeze and not disagreement
+on purpose — a line the vendor MISPLACED was sung somewhere else, and
+dropping it would delete a sung line.
+
+* **Return type:**
+  [`Detector`](#muvid.lyricvid.glyph_align.Detector)
 
 ### muvid.lyricvid.glyph_align.vocal_stem(audio, , out_dir, allow_download=False)
 
