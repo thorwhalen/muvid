@@ -233,6 +233,40 @@ is expensive to diagnose later:
 - **Only use values from the closed vocabularies.** Anything else gets silently
   repaired to a default, and you will wonder why your motion did nothing.
 
+## Lighting each character as it is sung — `glyph_pages`
+
+For learning to read a script along with a song (first use: katakana), the
+unit is the **character**, not the word. Two steps:
+
+```bash
+# 1. word times with REAL line breaks -> per-glyph times (+ reports to read)
+python -m muvid.lyricvid glyphs song.mp3 words.json glyphs.json   # --vocals stem.wav to skip Demucs
+# 2. render pages of a few lines, each glyph grey until sung
+python -m muvid.lyricvid render song.mp3 out.mp4 --timed-text glyphs.json --treatment t.json
+```
+
+- `words.json` is a `TimedText.to_dict()`; build it from a vendor's word
+  alignment with `timed_text.from_word_records` (e.g. arioso's Suno
+  `get_timestamped_lyrics`, which keeps Suno's real line and section breaks).
+- `glyphs` force-aligns each line inside its word window (torchaudio MMS_FA
+  over the Demucs vocal stem; extra `muvid[lyricvid-glyphs]`). **Both weights
+  are CC-BY-NC-4.0** and are never downloaded unless you pass
+  `--allow-download`. Romanisation is a strategy slot (`romanize=`); kana is
+  built in.
+- **Read the report.** `onsets.near_onset` against `random_baseline` is the
+  evidence (measured: 0.70 vs 0.41, median 43 ms from an onset); `reconciled`
+  lists words the aligner squeezed or that disagree with the vendor, which fall
+  back to the vendor window shifted by the measured bias, marked unmeasured.
+  A vendor transcript can list a repeat nobody sang — the stem is silent there
+  and the aligner crams those words into a few frames: drop them from the
+  timing (detecting it automatically is a follow-up).
+- `ー` has no onset; it is placed midway between its neighbours, unmeasured.
+- Treatment: archetype `glyph_pages`, `params.emphasis` = the target
+  characters (`fold_marks: true` makes `ハ` cover `バ`/`パ`); others get a milder
+  grey and highlight (`mild_dim`/`mild_fg` to override). `lines_on_screen` 2
+  and `word_gap` ~0.9 em read well on a phone. Use a CJK font
+  (`typography.family`, e.g. "Hiragino Sans" on macOS, "Noto Sans CJK JP" on Linux).
+
 ## Choosing a renderer
 
 `ass` (the default) is frame-exact, needs no browser, renders in seconds, and

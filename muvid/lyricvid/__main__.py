@@ -110,6 +110,7 @@ def render(
     lyrics: str = "",
     subtitles: str = "",
     project: str = "",
+    timed_text: str = "",
     treatment: str = "",
     renderer: str = "auto",
     title: str = "",
@@ -131,6 +132,7 @@ def render(
             lyrics=lyrics or None,
             subtitles=subtitles or None,
             project=project or None,
+            timed_text=timed_text or None,
             treatment=treat,
             renderer=renderer,
             title=title,
@@ -144,7 +146,43 @@ def render(
     )
 
 
-_FUNCS = [subgenres, vocabulary, schema, analyze, propose, validate, render]
+def glyphs(
+    audio: str,
+    timing: str,
+    output: str,
+    *,
+    vocals: str = "",
+    workdir: str = "",
+    allow_download: bool = False,
+    no_reconcile: bool = False,
+) -> None:
+    """Refine word TIMING (TimedText JSON) to per-glyph times; write OUTPUT JSON.
+
+    Separates the vocals first unless --vocals is given. Prints the onset and
+    agreement reports: read them before trusting the result (muvid#142).
+    """
+    import tempfile
+    from pathlib import Path
+
+    from muvid.lyricvid import glyph_align as ga
+    from muvid.lyricvid.timed_text import from_dict
+
+    coarse = from_dict(_json.loads(Path(timing).read_text(encoding="utf-8")))
+    stem = Path(vocals) if vocals else ga.vocal_stem(
+        audio, out_dir=workdir or tempfile.mkdtemp(prefix="muvid-glyphs-"))
+    fine = ga.refine_glyphs(coarse, stem, allow_download=allow_download)
+    agreement = ga.word_agreement(fine, coarse)
+    replaced: list = []
+    if not no_reconcile:
+        fine, replaced = ga.reconcile(fine, coarse)
+    Path(output).write_text(
+        _json.dumps(fine.to_dict(), ensure_ascii=False, indent=1), encoding="utf-8")
+    _emit({"output": output, "vocals": str(stem),
+           "onsets": ga.onset_report(fine, stem),
+           "agreement": agreement, "reconciled": replaced})
+
+
+_FUNCS = [subgenres, vocabulary, schema, analyze, propose, validate, render, glyphs]
 
 
 def main() -> int:

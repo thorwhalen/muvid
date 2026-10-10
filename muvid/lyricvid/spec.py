@@ -80,6 +80,15 @@ ARCHETYPES: dict[str, str] = {
         "prefer 'shape_fill' when the shape is a picture the words pour into, "
         "and 'concrete_page' when the layout is simply lines on a page."
     ),
+    "glyph_pages": (
+        "A few lines per page, every CHARACTER shown dim from the page's start "
+        "and each lighting up at the moment its own sound is sung. For learning "
+        "to read a script (kana, an alphabet) along with a song. Needs per-glyph "
+        "times (muvid.lyricvid.glyph_align); without them a word's characters "
+        "are spread over the word and marked unmeasured. params: "
+        "lines_on_screen, size, emphasis (the target characters, highlighted "
+        "strongly; others get milder grey and highlight), fold_marks."
+    ),
     "shape_fill": (
         "Words packed into the outline of a shape, filling it as the song "
         "proceeds. Use when the song has one strong concrete image."

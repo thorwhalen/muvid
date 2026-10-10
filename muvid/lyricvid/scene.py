@@ -18,11 +18,12 @@ which is the seam a plugin author or a future muvid uses to grow the vocabulary.
 from __future__ import annotations
 
 import math
+import unicodedata
 from dataclasses import dataclass, field
 from typing import Any, Callable, Sequence
 
 from muvid.lyricvid import spec as spec_mod
-from muvid.lyricvid.timed_text import Line, TimedText, Word
+from muvid.lyricvid.timed_text import Glyph, Line, TimedText, Word
 
 __all__ = [
     "Canvas",
@@ -111,9 +112,25 @@ def _apply_case(text: str, case: str) -> str:
 _CHAR_W = 0.62
 
 
+#: Advance of a full-width character (kana, CJK, full-width forms) as a
+#: fraction of cap height: they occupy a whole em, not ``_CHAR_W`` of one.
+_WIDE_CHAR_W = 1.0
+
+
+def _char_w(ch: str) -> float:
+    """``_WIDE_CHAR_W`` for East Asian Wide/Fullwidth characters, else ``_CHAR_W``."""
+    return _WIDE_CHAR_W if unicodedata.east_asian_width(ch) in "WF" else _CHAR_W
+
+
 def _text_width(text: str, size: float, tracking: float = 0.0) -> float:
-    """Approximate rendered width, in the same normalised units as ``size``."""
-    return len(text) * size * (_CHAR_W + tracking)
+    """Approximate rendered width, in the same normalised units as ``size``.
+
+    >>> _text_width("ab", 1.0) == 2 * _CHAR_W
+    True
+    >>> _text_width("カス", 1.0) == 2 * _WIDE_CHAR_W
+    True
+    """
+    return sum(_char_w(c) + tracking for c in text) * size
 
 
 def _fit_size(text: str, *, max_frac: float, canvas: Canvas, base: float) -> float:
@@ -352,6 +369,143 @@ def _karaoke_wipe(*, sc, direction, lines, tt, canvas, **_) -> list[Cue]:
 #: Expressed as an overlap between two cues rather than as a renderer effect,
 #: so it works on both backends (see ``_concrete_page``, ``_calligram``).
 _IGNITE_CROSSFADE_S = 0.12
+
+
+def _mix(a: str, b: str, t: float) -> str:
+    """``#rrggbb`` colour ``t`` of the way from ``a`` to ``b``.
+
+    >>> _mix("#000000", "#ffffff", 0.5)
+    '#808080'
+    """
+    ca = [int(a[i : i + 2], 16) for i in (1, 3, 5)]
+    cb = [int(b[i : i + 2], 16) for i in (1, 3, 5)]
+    return "#" + "".join(f"{round(x + (y - x) * t):02x}" for x, y in zip(ca, cb))
+
+
+def _fold(ch: str) -> str:
+    """The base character, voicing marks dropped: ``バ``/``パ`` -> ``ハ``."""
+    return unicodedata.normalize("NFD", ch)[0]
+
+
+def _word_glyphs(word: Word, *, line: Line) -> tuple[Glyph, ...]:
+    """Measured glyphs if any, else the word's characters spread over it, unmeasured."""
+    if word.glyphs:
+        return word.glyphs
+    start, end = (word.start, word.end) if word.measured else (line.start, line.end)
+    chars = [c for c in word.text if not c.isspace()]
+    step = (end - start) / max(1, len(chars))
+    return tuple(
+        Glyph(text=c, start=start + i * step, end=start + (i + 1) * step, measured=False)
+        for i, c in enumerate(chars)
+    )
+
+
+#: Seconds a glyph takes to go from grey to lit in ``glyph_pages``. Short on
+#: purpose: the point is that the eye sees the change AT the sound.
+_GLYPH_IGNITE_S = 0.04
+#: Seconds a ``glyph_pages`` page fades in / out.
+_PAGE_FADE_S = 0.15
+
+
+@register_archetype("glyph_pages")
+def _glyph_pages(*, sc, direction, lines, tt, canvas, **_) -> list[Cue]:
+    """Pages of a few lines; each glyph dim from the page start, lit when sung.
+
+    Per glyph, two overlapping cues (the renderer-neutral dim->ink construction
+    of ``concrete_page``/``calligram``): a ghost from the page's start until
+    the glyph's measured start, and the ink from then until the page turns.
+    Glyphs in ``params.emphasis`` (compared after dropping voicing marks when
+    ``fold_marks``, so ``ハ`` covers ``バ`` and ``パ``) use the palette's
+    ``dim``/``accent``; the rest a milder grey and highlight
+    (``params.mild_dim``/``mild_fg``, derived from the palette by default).
+    With no ``emphasis`` every glyph is a target.
+    """
+    p = sc.params
+    pal = direction.palette
+    per_page = max(1, int(p.get("lines_on_screen", 2)))
+    base_size = float(p.get("size", 0.12))
+    preroll = float(p.get("preroll_s", 0.8))
+    hold = float(p.get("hold_s", 1.0))
+    fold = bool(p.get("fold_marks", True))
+    key = _fold if fold else (lambda c: c)
+    emphasis = {key(c) for c in str(p.get("emphasis", "")) if not c.isspace()}
+    strong = (pal.dim, pal.accent)
+    mild = (
+        str(p.get("mild_dim") or _mix(pal.dim, pal.bg, 0.55)),
+        str(p.get("mild_fg") or _mix(pal.fg, pal.dim, 0.35)),
+    )
+    word_gap = float(p.get("word_gap", 0.45))  # em between words
+    lead = sc.timing.lead_s
+
+    min_lit = float(p.get("min_lit_s", 0.25))
+    min_preview = float(p.get("min_preview_s", 0.25))
+    pages = [lines[i : i + per_page] for i in range(0, len(lines), per_page)]
+    # When the first / last glyph of each page lights up. Page turns are driven
+    # by glyph times, not by Line.end: a held last note (or a vendor's generous
+    # word end) would otherwise keep the old page up while the next is sung.
+    page_glyphs = [
+        [g for line in pg for w in line.words for g in _word_glyphs(w, line=line)]
+        for pg in pages
+    ]
+    firsts = [min(g.start for g in gs) - lead for gs in page_glyphs]
+    lasts = [max(g.start for g in gs) - lead for gs in page_glyphs]
+
+    def _turn(n: int) -> float:
+        """When page ``n`` gives way: after its last glyph has been lit a
+        moment, and before the next page's first glyph, which the learner should
+        see grey first. The preview wins when the two collide."""
+        if n + 1 == len(pages):
+            return max(tt.duration or 0.0, lasts[n] + hold)
+        nxt = firsts[n + 1]
+        t = max(nxt - preroll, lasts[n] + min_lit)
+        return max(lasts[n] + _GLYPH_IGNITE_S, min(t, nxt - min_preview))
+
+    cues: list[Cue] = []
+    prev_end = 0.0
+    for n, page in enumerate(pages):
+        shown = max(0.0, firsts[n] - preroll, prev_end)
+        turn = _turn(n)
+        prev_end = turn
+        # lay out every line of the page at one size: the widest line decides
+        rows = []
+        for line in page:
+            items = []  # (glyph, x-offset in em, width in em)
+            x = 0.0
+            for wi, w in enumerate(line.words):
+                if wi:
+                    x += word_gap
+                for g in _word_glyphs(w, line=line):
+                    cw = sum(_char_w(c) for c in g.text)
+                    items.append((g, x, cw))
+                    x += cw
+            rows.append((items, x))
+        widest = max((wd for _, wd in rows), default=1.0) or 1.0
+        size = min(base_size, 0.9 * canvas.aspect / widest)
+        gap = size * 1.7
+        for r, (items, width) in enumerate(rows):
+            y = 0.5 + (r - (len(rows) - 1) / 2) * gap
+            x0 = 0.5 - (width * size / canvas.aspect) / 2
+            for g, off, cw in items:
+                if not g.text.strip():
+                    continue
+                x = x0 + (off + cw / 2) * size / canvas.aspect
+                ghost, ink = strong if (not emphasis or key(g.text[0]) in emphasis) else mild
+                ignite = min(max(shown, g.start - lead), turn)  # stays on its page
+                cues.append(
+                    Cue(text=g.text, x=x, y=y, size=size, t_in=shown,
+                        t_full=shown + _PAGE_FADE_S, t_out=ignite,
+                        t_gone=ignite + _GLYPH_IGNITE_S, colour=ghost,
+                        motion="fade", layer=0,
+                        extra={"measured": g.measured, "page": n})
+                )
+                cues.append(
+                    Cue(text=g.text, x=x, y=y, size=size, t_in=ignite,
+                        t_full=ignite + _GLYPH_IGNITE_S, t_out=turn,
+                        t_gone=turn + _PAGE_FADE_S, colour=ink,
+                        motion="fade", layer=1,
+                        extra={"measured": g.measured, "page": n})
+                )
+    return cues
 
 
 @register_archetype("concrete_page")
