@@ -114,3 +114,32 @@ def test_weights_never_downloaded_unasked(monkeypatch, tmp_path):
     monkeypatch.delenv("MUVID_ALLOW_WEIGHT_DOWNLOAD", raising=False)
     with pytest.raises(RuntimeError, match="never downloads"):
         ga._load_mms(allow_download=False)
+
+
+def test_reconcile_does_not_flag_alphabet_letters():
+    w = Word(text="love", start=1.0, end=1.4, glyphs=tuple(
+        Glyph(text=c, start=1.0 + i * 0.02, end=1.0 + i * 0.02 + 0.02) for i, c in enumerate("love")))
+    from muvid.lyricvid.timed_text import Section, TimedText
+    fine = TimedText(sections=(Section(label="*", lines=(Line(words=(w,)),)),), duration=3.0)
+    coarse = TimedText(sections=(Section(label="*", lines=(Line(words=(replace_glyphs(w),)),)),),
+                       duration=3.0)
+    _, replaced = ga.reconcile(fine, coarse)
+    assert replaced == []
+
+
+def replace_glyphs(w):
+    from dataclasses import replace
+    return replace(w, glyphs=())
+
+
+def test_glyph_pages_skips_empty_pages_and_previews_next_page():
+    recs = [{"text": "カス", "start": 1.0, "end": 2.6, "line_end": True},
+            {"text": "タト", "start": 2.5, "end": 3.0, "line_end": True}]
+    tt = _with_glyphs(from_word_records(recs, duration=5.0))
+    sc = compile_scene(S.coerce(_treatment(lines_on_screen=1))[0], tt, canvas=Canvas(width=1920, height=1080))
+    ta_ghost = [c for c in sc.cues if c.text == "タ" and c.layer == 0][0]
+    assert ta_ghost.t_out - ta_ghost.t_in >= 0.2  # seen grey before it is sung
+
+
+def test_romanize_word_final_sokuon_is_silent():
+    assert ga.romanize_kana("カッ") == [("カ", "ka"), ("ッ", "")]

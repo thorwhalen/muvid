@@ -745,7 +745,9 @@ def _build_field(mask: Any) -> _Field:
 
 def _text_width(text: str, size: float) -> float:
     """Approximate rendered width, in the same units as ``size`` (scene.py's metric)."""
-    return len(text) * size * _CHAR_W
+    from muvid.lyricvid.scene import _text_width as _scene_text_width
+
+    return _scene_text_width(text, size)
 
 
 def bounding_box(

@@ -168,8 +168,10 @@ def glyphs(
     from muvid.lyricvid.timed_text import from_dict
 
     coarse = from_dict(_json.loads(Path(timing).read_text(encoding="utf-8")))
+    ga._load_mms(allow_download=allow_download)  # refuse BEFORE separating, not after
     stem = Path(vocals) if vocals else ga.vocal_stem(
-        audio, out_dir=workdir or tempfile.mkdtemp(prefix="muvid-glyphs-"))
+        audio, out_dir=workdir or tempfile.mkdtemp(prefix="muvid-glyphs-"),
+        allow_download=allow_download)
     fine = ga.refine_glyphs(coarse, stem, allow_download=allow_download)
     agreement = ga.word_agreement(fine, coarse)
     replaced: list = []

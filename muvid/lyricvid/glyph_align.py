@@ -128,8 +128,10 @@ def romanize_kana(word: str) -> list[tuple[str, str]]:
             # repeated vowel at the END of the held note, not where it starts)
             out.append((g, ""))
         elif k == "ッ":
-            follow = _KANA.get(nxt, "t")
-            out.append((g, follow[0] if follow else "t"))
+            # doubles the NEXT consonant; word-final (a glottal stop) has no
+            # sound of its own to align
+            follow = _KANA.get(nxt, "")
+            out.append((g, follow[0] if follow else ""))
         elif k in _SMALL_Y or k in _SMALL_V:
             out.append((g, (_SMALL_Y | _SMALL_V)[k]))
         elif k in _KANA:
@@ -142,7 +144,7 @@ def romanize_kana(word: str) -> list[tuple[str, str]]:
                     # (`zip` reads `kata` lazily, so the next step sees this)
                     kata[i + 1] = "_V" + _SMALL_Y[nxt][-1]
                     continue
-                r = r[:-1]
+                r = r[:-1] if len(r) > 1 else r
             elif nxt in _SMALL_V:  # ファ, ティ: drop the base vowel
                 r = r[:-1] if len(r) > 1 else r
             out.append((g, r))
@@ -216,7 +218,11 @@ def _align_line(line: Line, *, wav, sr: int, model, dic, romanize: Romanizer,
         emission, _ = model(seg)
     star = dic["*"]
     targets = torch.tensor([[star] + [dic[c] for c in letters] + [star]], dtype=torch.int32)
-    ali, scores = F.forced_align(emission, targets, blank=0)
+    try:
+        ali, scores = F.forced_align(emission, targets, blank=0)
+    except RuntimeError:  # window too short for the targets: no honest answer
+        return replace(line, words=tuple(
+            replace(w, glyphs=_interpolated(w, ch)) for w, ch in zip(line.words, chunks)))
     spans = [s for s in F.merge_tokens(ali[0], scores[0].exp()) if s.token != star]
     ratio = seg.shape[1] / emission.shape[1] / sr
     k = 0
@@ -250,11 +256,12 @@ def _place_silent(line: Line) -> Line:
         if g.start == g.start:  # not NaN
             times.append((g.start, g.end))
             continue
-        prev = next((times[j] for j in range(i - 1, -1, -1) if times[j][0] == times[j][0]),
+        prev = next((times[j] for j in range(i - 1, -1, -1) if flat[j].measured),
                     (line.start, line.start))
         nxt = next((flat[j].start for j in range(i + 1, len(flat))
                     if flat[j].start == flat[j].start), None)
-        at = (prev[0] + nxt) / 2 if nxt is not None else prev[0] + max(0.1, prev[1] - prev[0])
+        at = ((prev[0] + nxt) / 2 if nxt is not None
+              else min(line.end, prev[0] + max(0.05, (prev[1] - prev[0]) / 2)))
         times.append((at, at))
     it = iter(times)
     return replace(line, words=tuple(
@@ -296,7 +303,7 @@ def refine_glyphs(
     )
 
 
-def vocal_stem(audio: Path | str, *, out_dir: Path | str) -> Path:
+def vocal_stem(audio: Path | str, *, out_dir: Path | str, allow_download: bool = False) -> Path:
     """The song's separated vocal stem (Demucs), raising rather than degrading.
 
     Reuses the footage scorer's separator; that one returns ``None`` on any
@@ -305,6 +312,14 @@ def vocal_stem(audio: Path | str, *, out_dir: Path | str) -> Path:
     """
     from muvid.footage.scoring.lipsync import separate_master_vocals
 
+    if not (allow_download or os.environ.get("MUVID_ALLOW_WEIGHT_DOWNLOAD") == "1"):
+        # Demucs fetches its (CC-BY-NC) weights on first use, and offers no
+        # cheap "is it cached?" probe: the caller must say yes, or hand us a stem.
+        raise RuntimeError(
+            "Vocal separation may download the htdemucs weights (CC-BY-NC). "
+            "Pass allow_download=True (CLI: --allow-download) or supply a vocal "
+            "stem yourself (CLI: --vocals)."
+        )
     out = separate_master_vocals(str(audio), out_dir=str(out_dir))
     if out is None:
         raise RuntimeError(
@@ -423,11 +438,21 @@ def reconcile(
         return w.glyphs[0].start if w.glyphs else w.start
 
     a, b = list(fine.words()), list(coarse.words())
-    # word index of every sounded, measured glyph, in sung order
-    sounded = [(i, g.start) for i, w in enumerate(a) for g in w.glyphs
-               if g.measured and g.text not in "ーッっ"]
-    crushed = {i for (i, t), (j, u) in zip(sounded, sounded[1:])
-               for i in (i, j) if u - t < min_glyph_s}
+    # Squeezing is judged on syllabic glyphs (kana/CJK: one mora each) only —
+    # letters of an alphabet are legitimately ~30 ms apart — and only between
+    # neighbours in the same line (lines are aligned in overlapping windows).
+    crushed: set[int] = set()
+    w_idx = 0
+    for ln in fine.lines():
+        sounded = []
+        for w in ln.words:
+            sounded += [(w_idx, g.start) for g in w.glyphs
+                        if g.measured and g.text not in "ーッっ"
+                        and unicodedata.east_asian_width(g.text[0]) in "WF"]
+            w_idx += 1
+        for (wa, t), (wb, u) in zip(sounded, sounded[1:]):
+            if 0 <= u - t < min_glyph_s:
+                crushed |= {wa, wb}
 
     if [w.text for w in a] != [w.text for w in b]:
         raise ValueError("reconcile needs the same word sequence in both timings")
@@ -449,7 +474,7 @@ def reconcile(
                     glyphs = _interpolated(shifted, [(g.text, "") for g in w.glyphs] or
                                            [(ch, "") for ch in w.text])
                     words.append(replace(w, start=shifted.start, end=shifted.end,
-                                         glyphs=glyphs))
+                                         measured=False, glyphs=glyphs))
                     replaced.append({"index": k, "text": w.text,
                                      "fine": round(start(w), 3),
                                      "used": round(shifted.start, 3),

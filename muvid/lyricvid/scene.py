@@ -130,6 +130,8 @@ def _text_width(text: str, size: float, tracking: float = 0.0) -> float:
     >>> _text_width("カス", 1.0) == 2 * _WIDE_CHAR_W
     True
     """
+    if all(_char_w(c) == _CHAR_W for c in text):  # bit-identical to before for non-wide text
+        return len(text) * size * (_CHAR_W + tracking)
     return sum(_char_w(c) + tracking for c in text) * size
 
 
@@ -391,7 +393,8 @@ def _word_glyphs(word: Word, *, line: Line) -> tuple[Glyph, ...]:
     """Measured glyphs if any, else the word's characters spread over it, unmeasured."""
     if word.glyphs:
         return word.glyphs
-    start, end = (word.start, word.end) if word.measured else (line.start, line.end)
+    # an unmeasured word's own times are already interpolated inside its line
+    start, end = word.start, word.end
     chars = [c for c in word.text if not c.isspace()]
     step = (end - start) / max(1, len(chars))
     return tuple(
@@ -444,9 +447,13 @@ def _glyph_pages(*, sc, direction, lines, tt, canvas, **_) -> list[Cue]:
     # by glyph times, not by Line.end: a held last note (or a vendor's generous
     # word end) would otherwise keep the old page up while the next is sung.
     page_glyphs = [
-        [g for line in pg for w in line.words for g in _word_glyphs(w, line=line)]
+        [g for line in pg for w in line.words for g in _word_glyphs(w, line=line)
+         if g.text.strip()]
         for pg in pages
     ]
+    keep = [i for i, gs in enumerate(page_glyphs) if gs]  # a page with nothing to light
+    pages = [pages[i] for i in keep]
+    page_glyphs = [page_glyphs[i] for i in keep]
     firsts = [min(g.start for g in gs) - lead for gs in page_glyphs]
     lasts = [max(g.start for g in gs) - lead for gs in page_glyphs]
 
@@ -458,7 +465,8 @@ def _glyph_pages(*, sc, direction, lines, tt, canvas, **_) -> list[Cue]:
             return max(tt.duration or 0.0, lasts[n] + hold)
         nxt = firsts[n + 1]
         t = max(nxt - preroll, lasts[n] + min_lit)
-        return max(lasts[n] + _GLYPH_IGNITE_S, min(t, nxt - min_preview))
+        # preview wins: a glyph of this page sung after that is lit at the turn
+        return max(0.0, min(t, nxt - min_preview))
 
     cues: list[Cue] = []
     prev_end = 0.0
@@ -532,7 +540,7 @@ def _concrete_page(*, sc, direction, lines, tt, canvas, **_) -> list[Cue]:
     top = float(sc.params.get("top", 0.08))
     bottom = float(sc.params.get("bottom", 0.94))
     leading = float(sc.params.get("leading", 1.18))
-    widest = max((len(l.text) for l in rows), default=1)
+    widest = max((_text_width(l.text, 1.0) / _CHAR_W for l in rows), default=1)
 
     # one size that makes both the tallest column and the widest row fit
     size_h = (bottom - top) / max(1, len(rows)) / leading
