@@ -33,11 +33,11 @@ ASR are imported inside the functions that need them.
 
 ### Classes
 
-| [`Word`](#muvid.lyricvid.timed_text.Word)(\*, text, start, end[, measured])      | One sung word on the song timeline.                                     |
-|----------------------------------------------------------------------------------------------|-------------------------------------------------------------------------|
-| [`Line`](#muvid.lyricvid.timed_text.Line)(\*, words[, index, text])              | One sung line.                                                          |
-| [`Section`](#muvid.lyricvid.timed_text.Section)(\*, label, lines)                   | A labelled span — `verse`, `chorus`, whatever the lyrics document says. |
-| [`TimedText`](#muvid.lyricvid.timed_text.TimedText)(\*, sections[, duration, source]) | The whole song's text, timed.                                           |
+| [`Word`](#muvid.lyricvid.timed_text.Word)(\*, text, start, end[, measured, glyphs])   | One sung word on the song timeline.                                     |
+|---------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------|
+| [`Line`](#muvid.lyricvid.timed_text.Line)(\*, words[, index, text])                   | One sung line.                                                          |
+| [`Section`](#muvid.lyricvid.timed_text.Section)(\*, label, lines)                        | A labelled span — `verse`, `chorus`, whatever the lyrics document says. |
+| [`TimedText`](#muvid.lyricvid.timed_text.TimedText)(\*, sections[, duration, source])      | The whole song's text, timed.                                           |
 
 ### *class* muvid.lyricvid.timed_text.Line(, words, index=0, text='')
 
@@ -76,11 +76,16 @@ vacuous truth that reads as reassurance in a report.
 
 Where the timing came from, for provenance and for honest reporting.
 
-### *class* muvid.lyricvid.timed_text.Word(, text, start, end, measured=True)
+### *class* muvid.lyricvid.timed_text.Word(, text, start, end, measured=True, glyphs=())
 
 Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
 One sung word on the song timeline. Times are seconds, absolute.
+
+#### glyphs *: [tuple](https://docs.python.org/3/builtins/stdtypes.html#tuple)[Glyph, ...]*
+
+Per-character times, when measured (empty otherwise). Concatenated, the
+glyph texts equal `text`.
 
 #### measured *: [bool](https://docs.python.org/3/builtins/functions.html#bool)*
 

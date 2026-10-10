@@ -38,11 +38,13 @@ function”, resolved lazily so listing costs no import.
 * **Type:**
   name -> “module
 
-### muvid.lyricvid.pipeline.build_timed_text(, audio, lyrics=None, subtitles=None, project=None, aligner=None)
+### muvid.lyricvid.pipeline.build_timed_text(, audio, lyrics=None, subtitles=None, project=None, aligner=None, timed_text=None)
 
 Get measured word times from whichever input the caller actually has.
 
-Order of preference is by how much the input is *trusted*: an existing muvid
+Order of preference is by how much the input is *trusted*: a saved timing
+file (`TimedText.to_dict` JSON — e.g. one refined to per-glyph times by
+[`muvid.lyricvid.glyph_align`](muvid.lyricvid.glyph_align.html.md#module-muvid.lyricvid.glyph_align)) is used as is; then an existing muvid
 alignment beats a subtitle file, which beats aligning lyrics ourselves,
 which beats transcribing from nothing.
 

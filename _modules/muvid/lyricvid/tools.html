@@ -431,61 +431,63 @@
 </span><span id="line-225">    <span class="n">lyrics</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 </span><span id="line-226">    <span class="n">subtitles</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 </span><span id="line-227">    <span class="n">project</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-</span><span id="line-228">    <span class="n">treatment</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-</span><span id="line-229">    <span class="n">renderer</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"auto"</span><span class="p">,</span>
-</span><span id="line-230">    <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">,</span>
-</span><span id="line-231">    <span class="n">persona</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-</span><span id="line-232">    <span class="n">aligner</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-</span><span id="line-233">    <span class="n">width</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1920</span><span class="p">,</span>
-</span><span id="line-234">    <span class="n">height</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1080</span><span class="p">,</span>
-</span><span id="line-235">    <span class="n">fps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">30</span><span class="p">,</span>
-</span><span id="line-236">    <span class="n">workdir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-</span><span id="line-237"><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-</span><span id="line-238"><span class="w">    </span><span class="sd">"""Render a lyric video. The one verb that produces a file.</span>
-</span><span id="line-239">
-</span><span id="line-240"><span class="sd">    Everything else in this module exists so that a caller can decide *what* to</span>
-</span><span id="line-241"><span class="sd">    render before paying for it.</span>
-</span><span id="line-242"><span class="sd">    """</span>
-</span><span id="line-243">    <span class="kn">import</span><span class="w"> </span><span class="nn">tempfile</span>
-</span><span id="line-244">
-</span><span id="line-245">    <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.subgenres</span><span class="w"> </span><span class="kn">import</span> <span class="n">RenderRequest</span>
-</span><span id="line-246">    <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.lyricvid.pipeline</span><span class="w"> </span><span class="kn">import</span> <span class="n">render</span> <span class="k">as</span> <span class="n">_render</span>
-</span><span id="line-247">
-</span><span id="line-248">    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">treatment</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-</span><span id="line-249">        <span class="n">treatment</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">treatment</span><span class="p">)</span>
-</span><span id="line-250">
-</span><span id="line-251">    <span class="n">out</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>
-</span><span id="line-252">    <span class="n">wd</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">workdir</span><span class="p">)</span> <span class="k">if</span> <span class="n">workdir</span> <span class="k">else</span> <span class="n">Path</span><span class="p">(</span><span class="n">tempfile</span><span class="o">.</span><span class="n">mkdtemp</span><span class="p">(</span><span class="n">prefix</span><span class="o">=</span><span class="s2">"muvid-lyricvid-"</span><span class="p">))</span>
-</span><span id="line-253">    <span class="n">inputs</span> <span class="o">=</span> <span class="p">{</span>
-</span><span id="line-254">        <span class="n">k</span><span class="p">:</span> <span class="n">v</span>
-</span><span id="line-255">        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="p">(</span>
-</span><span id="line-256">            <span class="p">(</span><span class="s2">"audio"</span><span class="p">,</span> <span class="n">audio</span><span class="p">),</span>
-</span><span id="line-257">            <span class="p">(</span><span class="s2">"lyrics"</span><span class="p">,</span> <span class="n">lyrics</span><span class="p">),</span>
-</span><span id="line-258">            <span class="p">(</span><span class="s2">"subtitles"</span><span class="p">,</span> <span class="n">subtitles</span><span class="p">),</span>
-</span><span id="line-259">            <span class="p">(</span><span class="s2">"project"</span><span class="p">,</span> <span class="n">project</span><span class="p">),</span>
-</span><span id="line-260">        <span class="p">)</span>
-</span><span id="line-261">        <span class="k">if</span> <span class="n">v</span>
-</span><span id="line-262">    <span class="p">}</span>
-</span><span id="line-263">    <span class="n">params</span> <span class="o">=</span> <span class="p">{</span>
-</span><span id="line-264">        <span class="n">k</span><span class="p">:</span> <span class="n">v</span>
-</span><span id="line-265">        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="p">(</span>
-</span><span id="line-266">            <span class="p">(</span><span class="s2">"treatment"</span><span class="p">,</span> <span class="n">treatment</span><span class="p">),</span>
-</span><span id="line-267">            <span class="p">(</span><span class="s2">"renderer"</span><span class="p">,</span> <span class="n">renderer</span><span class="p">),</span>
-</span><span id="line-268">            <span class="p">(</span><span class="s2">"title"</span><span class="p">,</span> <span class="n">title</span><span class="p">),</span>
-</span><span id="line-269">            <span class="p">(</span><span class="s2">"persona"</span><span class="p">,</span> <span class="n">persona</span><span class="p">),</span>
-</span><span id="line-270">            <span class="p">(</span><span class="s2">"aligner"</span><span class="p">,</span> <span class="n">aligner</span><span class="p">),</span>
-</span><span id="line-271">            <span class="p">(</span><span class="s2">"width"</span><span class="p">,</span> <span class="n">width</span><span class="p">),</span>
-</span><span id="line-272">            <span class="p">(</span><span class="s2">"height"</span><span class="p">,</span> <span class="n">height</span><span class="p">),</span>
-</span><span id="line-273">            <span class="p">(</span><span class="s2">"fps"</span><span class="p">,</span> <span class="n">fps</span><span class="p">),</span>
-</span><span id="line-274">        <span class="p">)</span>
-</span><span id="line-275">        <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-</span><span id="line-276">    <span class="p">}</span>
-</span><span id="line-277">    <span class="n">result</span> <span class="o">=</span> <span class="n">_render</span><span class="p">(</span>
-</span><span id="line-278">        <span class="n">RenderRequest</span><span class="p">(</span>
-</span><span id="line-279">            <span class="n">subgenre</span><span class="o">=</span><span class="s2">"lyric-video"</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="n">inputs</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">,</span> <span class="n">workdir</span><span class="o">=</span><span class="n">wd</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="n">out</span>
-</span><span id="line-280">        <span class="p">)</span>
-</span><span id="line-281">    <span class="p">)</span>
-</span><span id="line-282">    <span class="k">return</span> <span class="n">result</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span></div>
+</span><span id="line-228">    <span class="n">timed_text</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="line-229">    <span class="n">treatment</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="line-230">    <span class="n">renderer</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"auto"</span><span class="p">,</span>
+</span><span id="line-231">    <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">,</span>
+</span><span id="line-232">    <span class="n">persona</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="line-233">    <span class="n">aligner</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="line-234">    <span class="n">width</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1920</span><span class="p">,</span>
+</span><span id="line-235">    <span class="n">height</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1080</span><span class="p">,</span>
+</span><span id="line-236">    <span class="n">fps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">30</span><span class="p">,</span>
+</span><span id="line-237">    <span class="n">workdir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="line-238"><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+</span><span id="line-239"><span class="w">    </span><span class="sd">"""Render a lyric video. The one verb that produces a file.</span>
+</span><span id="line-240">
+</span><span id="line-241"><span class="sd">    Everything else in this module exists so that a caller can decide *what* to</span>
+</span><span id="line-242"><span class="sd">    render before paying for it.</span>
+</span><span id="line-243"><span class="sd">    """</span>
+</span><span id="line-244">    <span class="kn">import</span><span class="w"> </span><span class="nn">tempfile</span>
+</span><span id="line-245">
+</span><span id="line-246">    <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.subgenres</span><span class="w"> </span><span class="kn">import</span> <span class="n">RenderRequest</span>
+</span><span id="line-247">    <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.lyricvid.pipeline</span><span class="w"> </span><span class="kn">import</span> <span class="n">render</span> <span class="k">as</span> <span class="n">_render</span>
+</span><span id="line-248">
+</span><span id="line-249">    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">treatment</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+</span><span id="line-250">        <span class="n">treatment</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">treatment</span><span class="p">)</span>
+</span><span id="line-251">
+</span><span id="line-252">    <span class="n">out</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>
+</span><span id="line-253">    <span class="n">wd</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">workdir</span><span class="p">)</span> <span class="k">if</span> <span class="n">workdir</span> <span class="k">else</span> <span class="n">Path</span><span class="p">(</span><span class="n">tempfile</span><span class="o">.</span><span class="n">mkdtemp</span><span class="p">(</span><span class="n">prefix</span><span class="o">=</span><span class="s2">"muvid-lyricvid-"</span><span class="p">))</span>
+</span><span id="line-254">    <span class="n">inputs</span> <span class="o">=</span> <span class="p">{</span>
+</span><span id="line-255">        <span class="n">k</span><span class="p">:</span> <span class="n">v</span>
+</span><span id="line-256">        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="p">(</span>
+</span><span id="line-257">            <span class="p">(</span><span class="s2">"audio"</span><span class="p">,</span> <span class="n">audio</span><span class="p">),</span>
+</span><span id="line-258">            <span class="p">(</span><span class="s2">"lyrics"</span><span class="p">,</span> <span class="n">lyrics</span><span class="p">),</span>
+</span><span id="line-259">            <span class="p">(</span><span class="s2">"subtitles"</span><span class="p">,</span> <span class="n">subtitles</span><span class="p">),</span>
+</span><span id="line-260">            <span class="p">(</span><span class="s2">"project"</span><span class="p">,</span> <span class="n">project</span><span class="p">),</span>
+</span><span id="line-261">            <span class="p">(</span><span class="s2">"timed_text"</span><span class="p">,</span> <span class="n">timed_text</span><span class="p">),</span>
+</span><span id="line-262">        <span class="p">)</span>
+</span><span id="line-263">        <span class="k">if</span> <span class="n">v</span>
+</span><span id="line-264">    <span class="p">}</span>
+</span><span id="line-265">    <span class="n">params</span> <span class="o">=</span> <span class="p">{</span>
+</span><span id="line-266">        <span class="n">k</span><span class="p">:</span> <span class="n">v</span>
+</span><span id="line-267">        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="p">(</span>
+</span><span id="line-268">            <span class="p">(</span><span class="s2">"treatment"</span><span class="p">,</span> <span class="n">treatment</span><span class="p">),</span>
+</span><span id="line-269">            <span class="p">(</span><span class="s2">"renderer"</span><span class="p">,</span> <span class="n">renderer</span><span class="p">),</span>
+</span><span id="line-270">            <span class="p">(</span><span class="s2">"title"</span><span class="p">,</span> <span class="n">title</span><span class="p">),</span>
+</span><span id="line-271">            <span class="p">(</span><span class="s2">"persona"</span><span class="p">,</span> <span class="n">persona</span><span class="p">),</span>
+</span><span id="line-272">            <span class="p">(</span><span class="s2">"aligner"</span><span class="p">,</span> <span class="n">aligner</span><span class="p">),</span>
+</span><span id="line-273">            <span class="p">(</span><span class="s2">"width"</span><span class="p">,</span> <span class="n">width</span><span class="p">),</span>
+</span><span id="line-274">            <span class="p">(</span><span class="s2">"height"</span><span class="p">,</span> <span class="n">height</span><span class="p">),</span>
+</span><span id="line-275">            <span class="p">(</span><span class="s2">"fps"</span><span class="p">,</span> <span class="n">fps</span><span class="p">),</span>
+</span><span id="line-276">        <span class="p">)</span>
+</span><span id="line-277">        <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+</span><span id="line-278">    <span class="p">}</span>
+</span><span id="line-279">    <span class="n">result</span> <span class="o">=</span> <span class="n">_render</span><span class="p">(</span>
+</span><span id="line-280">        <span class="n">RenderRequest</span><span class="p">(</span>
+</span><span id="line-281">            <span class="n">subgenre</span><span class="o">=</span><span class="s2">"lyric-video"</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="n">inputs</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">,</span> <span class="n">workdir</span><span class="o">=</span><span class="n">wd</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="n">out</span>
+</span><span id="line-282">        <span class="p">)</span>
+</span><span id="line-283">    <span class="p">)</span>
+</span><span id="line-284">    <span class="k">return</span> <span class="n">result</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span></div>
 
 </span></code></pre></div>
     </div></div>
@@ -500,7 +502,7 @@
 </footer>
     </div>
     
-    <script src="../../../_static/documentation_options.js?v=ae06b2e5"></script>
+    <script src="../../../_static/documentation_options.js?v=5c6fbccc"></script>
     <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>

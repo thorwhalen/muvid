@@ -1,4 +1,4 @@
-> built 2026-10-05 11:18 UTC from e1c9066 (main) · muvid 0.0.79. Details: build_info.json
+> built 2026-10-10 14:22 UTC from 6f204eb (main) · muvid 0.0.80. Details: build_info.json
 
 # index.html.md
 
@@ -9054,6 +9054,178 @@ Resolve a slug or a [`Persona`](_autosummary/muvid.lyricvid.director.html.md#muv
 ```
 
 
+# _autosummary/muvid.lyricvid.glyph_align.html.md
+
+# muvid.lyricvid.glyph_align
+
+Per-glyph timing: when was each written character sung? (muvid#142)
+
+A word-level alignment says when `バカンス` was sung; a learner watching
+katakana needs to see `バ`, `カ`, `ン` and `ス` light up one by one, each
+at the moment its sound starts. This module refines any word-timed
+[`TimedText`](_autosummary/muvid.lyricvid.timed_text.html.md#muvid.lyricvid.timed_text.TimedText) (from Suno’s own timestamps, an
+enhanced LRC, a whisper match…) into one with measured
+[`glyphs`](_autosummary/muvid.lyricvid.timed_text.html.md#muvid.lyricvid.timed_text.Word.glyphs).
+
+How: each lyric line is cut out of the separated vocal stem, widened by
+`margin_s` on both sides, and force-aligned with a CTC model (torchaudio’s
+`MMS_FA`, trained on romanised speech in 1,000+ languages) against the line’s
+romanisation, one romaji chunk per glyph, with a `<star>` token either side
+to absorb breaths and ad-libs. Aligning per line, inside the coarse word
+window, is what keeps one mis-sung line from dragging every later one.
+
+Romanisation is a strategy slot (`romanize=`): [`romanize_kana()`](_autosummary/muvid.lyricvid.glyph_align.html.md#muvid.lyricvid.glyph_align.romanize_kana) covers
+katakana and hiragana, including `ー` (lengthens the previous vowel), `ッ`
+(doubles the next consonant) and the small `ャュョァィゥェォ` combinations.
+Another script needs another romaniser, nothing else.
+
+Verification lives here too, because a timing nobody checked is a guess:
+[`onset_report()`](_autosummary/muvid.lyricvid.glyph_align.html.md#muvid.lyricvid.glyph_align.onset_report) measures how close glyph starts sit to acoustic onsets in
+the vocal stem, against a random-jitter baseline, and [`word_agreement()`](_autosummary/muvid.lyricvid.glyph_align.html.md#muvid.lyricvid.glyph_align.word_agreement)
+lists the words where two timings disagree.
+
+Licensing — read before shipping anything: the `MMS_FA` weights are
+**CC-BY-NC-4.0** and htdemucs (vocal separation) is CC-BY-NC too. So this is an
+opt-in extra (`muvid[lyricvid-glyphs]`), never a default, never on the prod
+connector, and it never downloads weights unless the caller says
+`allow_download=True` (or `MUVID_ALLOW_WEIGHT_DOWNLOAD=1`).
+
+### Module Attributes
+
+| [`MARGIN_S`](_autosummary/muvid.lyricvid.glyph_align.html.md#muvid.lyricvid.glyph_align.MARGIN_S)    | Seconds of audio kept either side of a line's coarse window.                                                                        |
+|--------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------|
+| [`ONSET_TOL_S`](_autosummary/muvid.lyricvid.glyph_align.html.md#muvid.lyricvid.glyph_align.ONSET_TOL_S) | Onset tolerance for [`onset_report()`](_autosummary/muvid.lyricvid.glyph_align.html.md#muvid.lyricvid.glyph_align.onset_report).                                                |
+| [`DISAGREE_S`](_autosummary/muvid.lyricvid.glyph_align.html.md#muvid.lyricvid.glyph_align.DISAGREE_S)  | Two timings of a word disagree when their starts differ by more than this.                                                          |
+| [`MIN_GLYPH_S`](_autosummary/muvid.lyricvid.glyph_align.html.md#muvid.lyricvid.glyph_align.MIN_GLYPH_S) | Two sounded glyphs whose STARTS are closer than this were squeezed together by the aligner, not sung (a mora takes ~0.1 s or more). |
+
+### Functions
+
+| [`glyph_rows`](_autosummary/muvid.lyricvid.glyph_align.html.md#muvid.lyricvid.glyph_align.glyph_rows)(tt)                                     | One flat record per glyph, for a table or a quick look.                   |
+|-----------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------|
+| [`onset_report`](_autosummary/muvid.lyricvid.glyph_align.html.md#muvid.lyricvid.glyph_align.onset_report)(timed_text, vocals, \*[, tol_s, ...]) | How well glyph starts sit on acoustic onsets of the vocal stem.           |
+| [`reconcile`](_autosummary/muvid.lyricvid.glyph_align.html.md#muvid.lyricvid.glyph_align.reconcile)(fine, coarse, \*[, disagree_s, ...])     | Distrust the fine timing where it is implausible; say where.              |
+| [`refine_glyphs`](_autosummary/muvid.lyricvid.glyph_align.html.md#muvid.lyricvid.glyph_align.refine_glyphs)(timed_text, vocals, \*[, ...])       | Return `timed_text` with measured `Word.glyphs` on every word.            |
+| [`romanize_kana`](_autosummary/muvid.lyricvid.glyph_align.html.md#muvid.lyricvid.glyph_align.romanize_kana)(word)                                | `(glyph, romaji)` per glyph, the romaji chunks concatenating to the word. |
+| [`vocal_stem`](_autosummary/muvid.lyricvid.glyph_align.html.md#muvid.lyricvid.glyph_align.vocal_stem)(audio, \*, out_dir[, allow_download])   | The song's separated vocal stem (Demucs), raising rather than degrading.  |
+| [`word_agreement`](_autosummary/muvid.lyricvid.glyph_align.html.md#muvid.lyricvid.glyph_align.word_agreement)(fine, coarse, \*[, disagree_s])     | Compare word starts (first glyph start when present) of two timings.      |
+
+### muvid.lyricvid.glyph_align.DISAGREE_S *= 0.3*
+
+Two timings of a word disagree when their starts differ by more than this.
+
+### muvid.lyricvid.glyph_align.MARGIN_S *= 0.5*
+
+Seconds of audio kept either side of a line’s coarse window. Vendor word
+times run late and miss leading consonants; too wide a window lets the
+aligner wander into the neighbouring line.
+
+### muvid.lyricvid.glyph_align.MIN_GLYPH_S *= 0.04*
+
+Two sounded glyphs whose STARTS are closer than this were squeezed together
+by the aligner, not sung (a mora takes ~0.1 s or more). Start-to-start, not
+span length: CTC spans are spiky, so a perfectly sung `ン` can be 20 ms.
+
+### muvid.lyricvid.glyph_align.ONSET_TOL_S *= 0.08*
+
+Onset tolerance for [`onset_report()`](_autosummary/muvid.lyricvid.glyph_align.html.md#muvid.lyricvid.glyph_align.onset_report).
+
+### muvid.lyricvid.glyph_align.glyph_rows(tt)
+
+One flat record per glyph, for a table or a quick look.
+
+* **Return type:**
+  [`Iterable`](https://docs.python.org/3/library/typing.html#typing.Iterable)[[`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]]
+
+### muvid.lyricvid.glyph_align.onset_report(timed_text, vocals, , tol_s=0.08, seed=0, trials=20)
+
+How well glyph starts sit on acoustic onsets of the vocal stem.
+
+`near_onset` is the share of glyph starts within `tol_s` of a detected
+onset; `random_baseline` is the same share after jittering every start
+by up to ±0.5 s — the gap between the two is the evidence, since a dense
+onset track makes any time look “near” something.
+
+* **Return type:**
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]
+
+### muvid.lyricvid.glyph_align.reconcile(fine, coarse, , disagree_s=0.3, min_glyph_s=0.04)
+
+Distrust the fine timing where it is implausible; say where.
+
+A word is distrusted when its start disagrees with the coarse timing by
+more than `disagree_s`, or when a sounded glyph lasts under
+`min_glyph_s` (CTC squeezing a word it could not hear into a few frames —
+seen on a song where the vendor’s transcript listed a repeat the singer
+never sang). Such a word falls back to its COARSE window, shifted by the
+median offset between the two timings over the words they agree on (vendor
+times run late; the bias is measured, not assumed), with its glyphs spread
+evenly and marked `measured=False`. Returns the timing and one record per
+replaced word.
+
+* **Return type:**
+  [`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`TimedText`](_autosummary/muvid.lyricvid.timed_text.html.md#muvid.lyricvid.timed_text.TimedText), [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]]]
+
+### muvid.lyricvid.glyph_align.refine_glyphs(timed_text, vocals, \*, romanize=<function romanize_kana>, margin_s=0.5, allow_download=False)
+
+Return `timed_text` with measured `Word.glyphs` on every word.
+
+`vocals` should be a separated vocal stem (see [`vocal_stem()`](_autosummary/muvid.lyricvid.glyph_align.html.md#muvid.lyricvid.glyph_align.vocal_stem)): the
+accompaniment confuses a CTC model far more than it confuses a listener.
+The coarse word times are only used as per-line windows; the glyph times
+replace nothing else. A line with nothing romanisable keeps evenly spread,
+`measured=False` glyphs rather than invented precision.
+
+* **Return type:**
+  [`TimedText`](_autosummary/muvid.lyricvid.timed_text.html.md#muvid.lyricvid.timed_text.TimedText)
+
+### muvid.lyricvid.glyph_align.romanize_kana(word)
+
+`(glyph, romaji)` per glyph, the romaji chunks concatenating to the word.
+
+* **Return type:**
+  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]]
+
+```pycon
+>>> romanize_kana("バカンス")
+[('バ', 'ba'), ('カ', 'ka'), ('ン', 'n'), ('ス', 'su')]
+>>> romanize_kana("スーパー")
+[('ス', 'su'), ('ー', ''), ('パ', 'pa'), ('ー', '')]
+>>> romanize_kana("カップ")
+[('カ', 'ka'), ('ッ', 'p'), ('プ', 'pu')]
+>>> romanize_kana("シャツ")
+[('シ', 'sh'), ('ャ', 'a'), ('ツ', 'tsu')]
+>>> romanize_kana("キャンディー")
+[('キ', 'k'), ('ャ', 'ya'), ('ン', 'n'), ('デ', 'd'), ('ィ', 'i'), ('ー', '')]
+>>> romanize_kana("ok!")
+[('o', 'o'), ('k', 'k'), ('!', '')]
+```
+
+A glyph with an empty chunk (`ー`, punctuation) has no onset of its own;
+the aligner places it between its neighbours and marks it unmeasured.
+
+### muvid.lyricvid.glyph_align.vocal_stem(audio, , out_dir, allow_download=False)
+
+The song’s separated vocal stem (Demucs), raising rather than degrading.
+
+Reuses the footage scorer’s separator; that one returns `None` on any
+failure because lip-sync is optional there, but here no stem means no
+trustworthy glyph times, so the absence is an error.
+
+* **Return type:**
+  [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)
+
+### muvid.lyricvid.glyph_align.word_agreement(fine, coarse, , disagree_s=0.3)
+
+Compare word starts (first glyph start when present) of two timings.
+
+The two must hold the same words in the same order (`fine` is normally
+`refine_glyphs(coarse, ...)`). Returns summary statistics and the list
+of words that disagree by more than `disagree_s` — the ones to look at.
+
+* **Return type:**
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]
+
+
 # _autosummary/muvid.lyricvid.html.md
 
 # muvid.lyricvid
@@ -9203,7 +9375,7 @@ model wrote reaches a renderer as a coordinate or a time.
 (2, 'one')
 ```
 
-### muvid.lyricvid.render_lyric_video(audio, output, , lyrics=None, subtitles=None, project=None, treatment=None, renderer='auto', title='', persona=None, aligner=None, width=1920, height=1080, fps=30, workdir=None)
+### muvid.lyricvid.render_lyric_video(audio, output, , lyrics=None, subtitles=None, project=None, timed_text=None, treatment=None, renderer='auto', title='', persona=None, aligner=None, width=1920, height=1080, fps=30, workdir=None)
 
 Render a lyric video. The one verb that produces a file.
 
@@ -9215,17 +9387,18 @@ render before paying for it.
 
 ### Modules
 
-| [`director`](_autosummary/muvid.lyricvid.director.html.md#module-muvid.lyricvid.director)     | The creative director — a song in, one or more [`TreatmentSpec`](_autosummary/muvid.lyricvid.html.md#muvid.lyricvid.TreatmentSpec)s out.                                                                      |
-|----------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| [`manifest`](_autosummary/muvid.lyricvid.manifest.html.md#module-muvid.lyricvid.manifest)     | The lyric-video subgenre's manifest — muvid's own first plugin.                                                                                                                          |
-| [`pipeline`](_autosummary/muvid.lyricvid.pipeline.html.md#module-muvid.lyricvid.pipeline)     | The lyric-video pipeline — the one path from a song to a finished video.                                                                                                                 |
-| [`render_ass`](_autosummary/muvid.lyricvid.render_ass.html.md#module-muvid.lyricvid.render_ass) | The default lyric-video renderer: a [`Scene`](_autosummary/muvid.lyricvid.scene.html.md#muvid.lyricvid.scene.Scene) as ASS.                                                            |
-| [`render_web`](_autosummary/muvid.lyricvid.render_web.html.md#module-muvid.lyricvid.render_web) | The web backend: a [`Scene`](_autosummary/muvid.lyricvid.scene.html.md#muvid.lyricvid.scene.Scene) as a deterministic HTML page, screenshotted frame by frame and muxed with the song. |
-| [`scene`](_autosummary/muvid.lyricvid.scene.html.md#module-muvid.lyricvid.scene)           | The renderer-neutral scene — every number computed, no renderer opinions.                                                                                                                |
-| [`shape`](_autosummary/muvid.lyricvid.shape.html.md#module-muvid.lyricvid.shape)           | Packing words INSIDE a shape — the shape-word-cloud construction.                                                                                                                        |
-| [`spec`](_autosummary/muvid.lyricvid.spec.html.md#module-muvid.lyricvid.spec)             | The treatment spec — what a director (human or model) decides, as data.                                                                                                                  |
-| [`timed_text`](_autosummary/muvid.lyricvid.timed_text.html.md#module-muvid.lyricvid.timed_text) | The timed text tree — song → sections → lines → words, with measured times.                                                                                                              |
-| [`tools`](_autosummary/muvid.lyricvid.tools.html.md#module-muvid.lyricvid.tools)           | The SSOT verbs for the lyric-video subgenre.                                                                                                                                             |
+| [`director`](_autosummary/muvid.lyricvid.director.html.md#module-muvid.lyricvid.director)       | The creative director — a song in, one or more [`TreatmentSpec`](_autosummary/muvid.lyricvid.html.md#muvid.lyricvid.TreatmentSpec)s out.                                                                      |
+|------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [`glyph_align`](_autosummary/muvid.lyricvid.glyph_align.html.md#module-muvid.lyricvid.glyph_align) | Per-glyph timing: when was each written character sung? (muvid#142)                                                                                                                      |
+| [`manifest`](_autosummary/muvid.lyricvid.manifest.html.md#module-muvid.lyricvid.manifest)       | The lyric-video subgenre's manifest — muvid's own first plugin.                                                                                                                          |
+| [`pipeline`](_autosummary/muvid.lyricvid.pipeline.html.md#module-muvid.lyricvid.pipeline)       | The lyric-video pipeline — the one path from a song to a finished video.                                                                                                                 |
+| [`render_ass`](_autosummary/muvid.lyricvid.render_ass.html.md#module-muvid.lyricvid.render_ass)   | The default lyric-video renderer: a [`Scene`](_autosummary/muvid.lyricvid.scene.html.md#muvid.lyricvid.scene.Scene) as ASS.                                                            |
+| [`render_web`](_autosummary/muvid.lyricvid.render_web.html.md#module-muvid.lyricvid.render_web)   | The web backend: a [`Scene`](_autosummary/muvid.lyricvid.scene.html.md#muvid.lyricvid.scene.Scene) as a deterministic HTML page, screenshotted frame by frame and muxed with the song. |
+| [`scene`](_autosummary/muvid.lyricvid.scene.html.md#module-muvid.lyricvid.scene)             | The renderer-neutral scene — every number computed, no renderer opinions.                                                                                                                |
+| [`shape`](_autosummary/muvid.lyricvid.shape.html.md#module-muvid.lyricvid.shape)             | Packing words INSIDE a shape — the shape-word-cloud construction.                                                                                                                        |
+| [`spec`](_autosummary/muvid.lyricvid.spec.html.md#module-muvid.lyricvid.spec)               | The treatment spec — what a director (human or model) decides, as data.                                                                                                                  |
+| [`timed_text`](_autosummary/muvid.lyricvid.timed_text.html.md#module-muvid.lyricvid.timed_text)   | The timed text tree — song → sections → lines → words, with measured times.                                                                                                              |
+| [`tools`](_autosummary/muvid.lyricvid.tools.html.md#module-muvid.lyricvid.tools)             | The SSOT verbs for the lyric-video subgenre.                                                                                                                                             |
 
 
 # _autosummary/muvid.lyricvid.manifest.html.md
@@ -9285,11 +9458,13 @@ function”, resolved lazily so listing costs no import.
 * **Type:**
   name -> “module
 
-### muvid.lyricvid.pipeline.build_timed_text(, audio, lyrics=None, subtitles=None, project=None, aligner=None)
+### muvid.lyricvid.pipeline.build_timed_text(, audio, lyrics=None, subtitles=None, project=None, aligner=None, timed_text=None)
 
 Get measured word times from whichever input the caller actually has.
 
-Order of preference is by how much the input is *trusted*: an existing muvid
+Order of preference is by how much the input is *trusted*: a saved timing
+file (`TimedText.to_dict` JSON — e.g. one refined to per-glyph times by
+[`muvid.lyricvid.glyph_align`](_autosummary/muvid.lyricvid.glyph_align.html.md#module-muvid.lyricvid.glyph_align)) is used as is; then an existing muvid
 alignment beats a subtitle file, which beats aligning lyrics ourselves,
 which beats transcribing from nothing.
 
@@ -10167,7 +10342,7 @@ slightly-wrong model output still renders.
 | [`TreatmentSpec`](_autosummary/muvid.lyricvid.spec.html.md#muvid.lyricvid.spec.TreatmentSpec)(\*[, spec_version, title, ...])     | A complete, renderable treatment.                          |
 | [`Typography`](_autosummary/muvid.lyricvid.spec.html.md#muvid.lyricvid.spec.Typography)(\*[, family, weight, case, ...])       | Type choices.                                              |
 
-### muvid.lyricvid.spec.ARCHETYPES *: [dict](https://docs.python.org/3/builtins/stdtypes.html#dict)[[str](https://docs.python.org/3/builtins/stdtypes.html#str), [str](https://docs.python.org/3/builtins/stdtypes.html#str)]* *= {'calligram': "Each line becomes a slanting streak of UPRIGHT letters, one letter per slot, the streaks fanning open as they descend — the Apollinaire 'Il pleut' construction. Use for a calligram or concrete poem whose shape is made by the run of the text itself rather than by an outline; prefer 'shape_fill' when the shape is a picture the words pour into, and 'concrete_page' when the layout is simply lines on a page.", 'concrete_page': "The whole lyric is typeset as a fixed page — one CENTRED HORIZONTAL ROW per line — and each word ignites in reading order as it is sung. The page never reflows. Use when the poem is lines on a page. It cannot slant, indent or shape anything: for a calligram or a concrete poem whose picture is made by the run of the text, use 'calligram'; for words poured into an outline, use 'shape_fill'.", 'karaoke_wipe': 'Two lines at the bottom, the current one wiped syllable by syllable as it is sung. The classic karaoke treatment; the most legible option.', 'one_word_centred': 'One word at a time, large, centred. The default lyric-video look: unmissable, works at any aspect ratio, reads on a phone.', 'scatter': 'Words appear away from centre and drift, density rising with energy. Use for chaos, crowds, or an instrumental-heavy chorus.', 'shape_fill': 'Words packed into the outline of a shape, filling it as the song proceeds. Use when the song has one strong concrete image.', 'stacked_lines': 'Lines accumulate down the frame and hold, so the viewer can read back what has already been sung. Good for narrative or dense lyrics.', 'text_on_path': 'Words follow a curve across the frame. Cheap, distinctive, and good for a single repeated hook.'}*
+### muvid.lyricvid.spec.ARCHETYPES *: [dict](https://docs.python.org/3/builtins/stdtypes.html#dict)[[str](https://docs.python.org/3/builtins/stdtypes.html#str), [str](https://docs.python.org/3/builtins/stdtypes.html#str)]* *= {'calligram': "Each line becomes a slanting streak of UPRIGHT letters, one letter per slot, the streaks fanning open as they descend — the Apollinaire 'Il pleut' construction. Use for a calligram or concrete poem whose shape is made by the run of the text itself rather than by an outline; prefer 'shape_fill' when the shape is a picture the words pour into, and 'concrete_page' when the layout is simply lines on a page.", 'concrete_page': "The whole lyric is typeset as a fixed page — one CENTRED HORIZONTAL ROW per line — and each word ignites in reading order as it is sung. The page never reflows. Use when the poem is lines on a page. It cannot slant, indent or shape anything: for a calligram or a concrete poem whose picture is made by the run of the text, use 'calligram'; for words poured into an outline, use 'shape_fill'.", 'glyph_pages': "A few lines per page, every CHARACTER shown dim from the page's start and each lighting up at the moment its own sound is sung. For learning to read a script (kana, an alphabet) along with a song. Needs per-glyph times (muvid.lyricvid.glyph_align); without them a word's characters are spread over the word and marked unmeasured. params: lines_on_screen, size, emphasis (the target characters, highlighted strongly; others get milder grey and highlight), fold_marks.", 'karaoke_wipe': 'Two lines at the bottom, the current one wiped syllable by syllable as it is sung. The classic karaoke treatment; the most legible option.', 'one_word_centred': 'One word at a time, large, centred. The default lyric-video look: unmissable, works at any aspect ratio, reads on a phone.', 'scatter': 'Words appear away from centre and drift, density rising with energy. Use for chaos, crowds, or an instrumental-heavy chorus.', 'shape_fill': 'Words packed into the outline of a shape, filling it as the song proceeds. Use when the song has one strong concrete image.', 'stacked_lines': 'Lines accumulate down the frame and hold, so the viewer can read back what has already been sung. Good for narrative or dense lyrics.', 'text_on_path': 'Words follow a curve across the frame. Cheap, distinctive, and good for a single repeated hook.'}*
 
 How words are placed on screen. The renderer owns the geometry; the spec
 only names the family and its knobs.
@@ -10406,11 +10581,11 @@ ASR are imported inside the functions that need them.
 
 ### Classes
 
-| [`Word`](_autosummary/muvid.lyricvid.timed_text.html.md#muvid.lyricvid.timed_text.Word)(\*, text, start, end[, measured])      | One sung word on the song timeline.                                     |
-|----------------------------------------------------------------------------------------------|-------------------------------------------------------------------------|
-| [`Line`](_autosummary/muvid.lyricvid.timed_text.html.md#muvid.lyricvid.timed_text.Line)(\*, words[, index, text])              | One sung line.                                                          |
-| [`Section`](_autosummary/muvid.lyricvid.timed_text.html.md#muvid.lyricvid.timed_text.Section)(\*, label, lines)                   | A labelled span — `verse`, `chorus`, whatever the lyrics document says. |
-| [`TimedText`](_autosummary/muvid.lyricvid.timed_text.html.md#muvid.lyricvid.timed_text.TimedText)(\*, sections[, duration, source]) | The whole song's text, timed.                                           |
+| [`Word`](_autosummary/muvid.lyricvid.timed_text.html.md#muvid.lyricvid.timed_text.Word)(\*, text, start, end[, measured, glyphs])   | One sung word on the song timeline.                                     |
+|---------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------|
+| [`Line`](_autosummary/muvid.lyricvid.timed_text.html.md#muvid.lyricvid.timed_text.Line)(\*, words[, index, text])                   | One sung line.                                                          |
+| [`Section`](_autosummary/muvid.lyricvid.timed_text.html.md#muvid.lyricvid.timed_text.Section)(\*, label, lines)                        | A labelled span — `verse`, `chorus`, whatever the lyrics document says. |
+| [`TimedText`](_autosummary/muvid.lyricvid.timed_text.html.md#muvid.lyricvid.timed_text.TimedText)(\*, sections[, duration, source])      | The whole song's text, timed.                                           |
 
 ### *class* muvid.lyricvid.timed_text.Line(, words, index=0, text='')
 
@@ -10449,11 +10624,16 @@ vacuous truth that reads as reassurance in a report.
 
 Where the timing came from, for provenance and for honest reporting.
 
-### *class* muvid.lyricvid.timed_text.Word(, text, start, end, measured=True)
+### *class* muvid.lyricvid.timed_text.Word(, text, start, end, measured=True, glyphs=())
 
 Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
 One sung word on the song timeline. Times are seconds, absolute.
+
+#### glyphs *: [tuple](https://docs.python.org/3/builtins/stdtypes.html#tuple)[Glyph, ...]*
+
+Per-character times, when measured (empty otherwise). Concatenated, the
+glyph texts equal `text`.
 
 #### measured *: [bool](https://docs.python.org/3/builtins/functions.html#bool)*
 
@@ -10609,7 +10789,7 @@ as zero.
 * **Return type:**
   [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]
 
-### muvid.lyricvid.tools.render_lyric_video(audio, output, , lyrics=None, subtitles=None, project=None, treatment=None, renderer='auto', title='', persona=None, aligner=None, width=1920, height=1080, fps=30, workdir=None)
+### muvid.lyricvid.tools.render_lyric_video(audio, output, , lyrics=None, subtitles=None, project=None, timed_text=None, treatment=None, renderer='auto', title='', persona=None, aligner=None, width=1920, height=1080, fps=30, workdir=None)
 
 Render a lyric video. The one verb that produces a file.
 
@@ -16036,29 +16216,29 @@ Rendered white; colour comes from the accent `tint`. `options={"mode":
 
 # About this build
 
-This documentation was built on **2026-10-05 11:18 UTC** from commit <a href="https://github.com/thorwhalen/muvid/commit/e1c90667176cf1a6cf7d6b0703245e44e62846e5"><code>e1c9066</code></a> on branch <code>main</code>, for **muvid 0.0.79** (from <code>pyproject.toml</code>).
+This documentation was built on **2026-10-10 14:22 UTC** from commit <a href="https://github.com/reeleehq/muvid/commit/6f204eb7cc3ba16472435f51e9de8a264843ef3c"><code>6f204eb</code></a> on branch <code>main</code>, for **muvid 0.0.80** (from <code>pyproject.toml</code>).
 
 #### NOTE
 Nothing suggests a mismatch: the tree was clean at the commit above, and the documented version is the one on PyPI.
 
 ## Source
 
-|                     |                                                                                                                                                         |
-|---------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Commit              | <a href="https://github.com/thorwhalen/muvid/commit/e1c90667176cf1a6cf7d6b0703245e44e62846e5"><code>e1c90667176cf1a6cf7d6b0703245e44e62846e5</code></a> |
-| Branch              | <code>main</code>                                                                                                                                       |
-| Tags at this commit | <code>0.0.79</code>                                                                                                                                     |
-| Working tree        | clean                                                                                                                                                   |
-| Remote              | <code>https://github.com/thorwhalen/muvid</code>                                                                                                        |
+|                     |                                                                                                                                                       |
+|---------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Commit              | <a href="https://github.com/reeleehq/muvid/commit/6f204eb7cc3ba16472435f51e9de8a264843ef3c"><code>6f204eb7cc3ba16472435f51e9de8a264843ef3c</code></a> |
+| Branch              | <code>main</code>                                                                                                                                     |
+| Tags at this commit | <code>0.0.80</code>                                                                                                                                   |
+| Working tree        | clean                                                                                                                                                 |
+| Remote              | <code>https://github.com/reeleehq/muvid</code>                                                                                                        |
 
 ## Continuous integration
 
 |              |                                                                                            |
 |--------------|--------------------------------------------------------------------------------------------|
-| Repository   | <code>thorwhalen/muvid</code>                                                              |
-| Run          | <a href="https://github.com/thorwhalen/muvid/actions/runs/37301284355">37301284355</a>     |
+| Repository   | <code>reeleehq/muvid</code>                                                                |
+| Run          | <a href="https://github.com/reeleehq/muvid/actions/runs/38058821900">38058821900</a>       |
 | Ref          | <code>refs/heads/main</code>                                                               |
-| Event commit | <code>eb237525e0328904d429b9b73f5df9f0990f0b07</code> (in the history of the built commit) |
+| Event commit | <code>a4617983eaf4ed876542d7ebb61c4eea62e7e4a3</code> (in the history of the built commit) |
 
 ## Tools
 
@@ -16067,7 +16247,7 @@ Nothing suggests a mismatch: the tree was clean at the commit above, and the doc
 | epythet  | 0.2.12  |
 | Sphinx   | 9.1.0   |
 | docutils | 0.22.4  |
-| Python   | 3.12.14 |
+| Python   | 3.12.15 |
 
 ## Configuration as resolved
 
@@ -16083,13 +16263,13 @@ Nothing suggests a mismatch: the tree was clean at the commit above, and the doc
 
 ## Package on PyPI
 
-Latest release: <a href="https://pypi.org/project/muvid/0.0.79/">0.0.79</a>, the same as the documented version.
+Latest release: <a href="https://pypi.org/project/muvid/0.0.80/">0.0.80</a>, the same as the documented version.
 
 ## Reproduce
 
 ```bash
-git clone https://github.com/thorwhalen/muvid && cd muvid
-git checkout e1c90667176cf1a6cf7d6b0703245e44e62846e5
+git clone https://github.com/reeleehq/muvid && cd muvid
+git checkout 6f204eb7cc3ba16472435f51e9de8a264843ef3c
 pip install "epythet==0.2.12"
 epythet quickstart . --ignore tests/ scrap/ examples/
 ```

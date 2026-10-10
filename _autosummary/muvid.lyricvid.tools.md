@@ -60,7 +60,7 @@ as zero.
 * **Return type:**
   [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]
 
-### muvid.lyricvid.tools.render_lyric_video(audio, output, , lyrics=None, subtitles=None, project=None, treatment=None, renderer='auto', title='', persona=None, aligner=None, width=1920, height=1080, fps=30, workdir=None)
+### muvid.lyricvid.tools.render_lyric_video(audio, output, , lyrics=None, subtitles=None, project=None, timed_text=None, treatment=None, renderer='auto', title='', persona=None, aligner=None, width=1920, height=1080, fps=30, workdir=None)
 
 Render a lyric video. The one verb that produces a file.
 

@@ -946,254 +946,256 @@
 </span><span id="line-745">
 </span><span id="line-746"><span class="k">def</span><span class="w"> </span><span class="nf">_text_width</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 </span><span id="line-747"><span class="w">    </span><span class="sd">"""Approximate rendered width, in the same units as ``size`` (scene.py's metric)."""</span>
-</span><span id="line-748">    <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="n">text</span><span class="p">)</span> <span class="o">*</span> <span class="n">size</span> <span class="o">*</span> <span class="n">_CHAR_W</span>
+</span><span id="line-748">    <span class="kn">from</span><span class="w"> </span><span class="nn">muvid.lyricvid.scene</span><span class="w"> </span><span class="kn">import</span> <span class="n">_text_width</span> <span class="k">as</span> <span class="n">_scene_text_width</span>
 </span><span id="line-749">
-</span><span id="line-750">
+</span><span id="line-750">    <span class="k">return</span> <span class="n">_scene_text_width</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">size</span><span class="p">)</span>
+</span><span id="line-751">
+</span><span id="line-752">
 <div class="viewcode-block" id="bounding_box">
 <a class="viewcode-back" href="../../../_autosummary/muvid.lyricvid.shape.html#muvid.lyricvid.shape.bounding_box">[docs]</a>
-</span><span id="line-751"><span class="k">def</span><span class="w"> </span><span class="nf">bounding_box</span><span class="p">(</span>
-</span><span id="line-752">    <span class="n">placement</span><span class="p">:</span> <span class="n">Placement</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">aspect</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">DEFAULT_ASPECT</span>
-</span><span id="line-753"><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
-</span><span id="line-754"><span class="w">    </span><span class="sd">"""``(x0, y0, x1, y1)`` of a placement's layout box, normalised to the canvas.</span>
-</span><span id="line-755">
-</span><span id="line-756"><span class="sd">    The LAYOUT box — the room the packer reserved, glyphs plus leading and side</span>
-</span><span id="line-757"><span class="sd">    bearings — which is what a caller wants for a hit test, a debug overlay, or</span>
-</span><span id="line-758"><span class="sd">    for asserting that two placements do not collide.</span>
-</span><span id="line-759">
-</span><span id="line-760"><span class="sd">    &gt;&gt;&gt; p = Placement(text='apple', x=0.5, y=0.5, size=0.1)</span>
-</span><span id="line-761"><span class="sd">    &gt;&gt;&gt; [round(c, 3) for c in bounding_box(p, aspect=16 / 9)]</span>
-</span><span id="line-762"><span class="sd">    [0.408, 0.436, 0.592, 0.564]</span>
-</span><span id="line-763"><span class="sd">    """</span>
-</span><span id="line-764">    <span class="n">height</span> <span class="o">=</span> <span class="n">placement</span><span class="o">.</span><span class="n">size</span> <span class="o">*</span> <span class="n">BOX_HEIGHT</span>
-</span><span id="line-765">    <span class="n">width</span> <span class="o">=</span> <span class="n">_text_width</span><span class="p">(</span><span class="n">placement</span><span class="o">.</span><span class="n">text</span><span class="p">,</span> <span class="n">placement</span><span class="o">.</span><span class="n">size</span><span class="p">)</span> <span class="o">*</span> <span class="n">BOX_WIDTH</span>
-</span><span id="line-766">    <span class="k">if</span> <span class="n">placement</span><span class="o">.</span><span class="n">rotated</span><span class="p">:</span>
-</span><span id="line-767">        <span class="n">width</span><span class="p">,</span> <span class="n">height</span> <span class="o">=</span> <span class="n">height</span><span class="p">,</span> <span class="n">width</span>
-</span><span id="line-768">    <span class="n">half_x</span> <span class="o">=</span> <span class="n">width</span> <span class="o">/</span> <span class="mf">2.0</span> <span class="o">/</span> <span class="nb">float</span><span class="p">(</span><span class="n">aspect</span><span class="p">)</span>
-</span><span id="line-769">    <span class="n">half_y</span> <span class="o">=</span> <span class="n">height</span> <span class="o">/</span> <span class="mf">2.0</span>
-</span><span id="line-770">    <span class="k">return</span> <span class="p">(</span>
-</span><span id="line-771">        <span class="n">placement</span><span class="o">.</span><span class="n">x</span> <span class="o">-</span> <span class="n">half_x</span><span class="p">,</span>
-</span><span id="line-772">        <span class="n">placement</span><span class="o">.</span><span class="n">y</span> <span class="o">-</span> <span class="n">half_y</span><span class="p">,</span>
-</span><span id="line-773">        <span class="n">placement</span><span class="o">.</span><span class="n">x</span> <span class="o">+</span> <span class="n">half_x</span><span class="p">,</span>
-</span><span id="line-774">        <span class="n">placement</span><span class="o">.</span><span class="n">y</span> <span class="o">+</span> <span class="n">half_y</span><span class="p">,</span>
-</span><span id="line-775">    <span class="p">)</span></div>
+</span><span id="line-753"><span class="k">def</span><span class="w"> </span><span class="nf">bounding_box</span><span class="p">(</span>
+</span><span id="line-754">    <span class="n">placement</span><span class="p">:</span> <span class="n">Placement</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">aspect</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">DEFAULT_ASPECT</span>
+</span><span id="line-755"><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+</span><span id="line-756"><span class="w">    </span><span class="sd">"""``(x0, y0, x1, y1)`` of a placement's layout box, normalised to the canvas.</span>
+</span><span id="line-757">
+</span><span id="line-758"><span class="sd">    The LAYOUT box — the room the packer reserved, glyphs plus leading and side</span>
+</span><span id="line-759"><span class="sd">    bearings — which is what a caller wants for a hit test, a debug overlay, or</span>
+</span><span id="line-760"><span class="sd">    for asserting that two placements do not collide.</span>
+</span><span id="line-761">
+</span><span id="line-762"><span class="sd">    &gt;&gt;&gt; p = Placement(text='apple', x=0.5, y=0.5, size=0.1)</span>
+</span><span id="line-763"><span class="sd">    &gt;&gt;&gt; [round(c, 3) for c in bounding_box(p, aspect=16 / 9)]</span>
+</span><span id="line-764"><span class="sd">    [0.408, 0.436, 0.592, 0.564]</span>
+</span><span id="line-765"><span class="sd">    """</span>
+</span><span id="line-766">    <span class="n">height</span> <span class="o">=</span> <span class="n">placement</span><span class="o">.</span><span class="n">size</span> <span class="o">*</span> <span class="n">BOX_HEIGHT</span>
+</span><span id="line-767">    <span class="n">width</span> <span class="o">=</span> <span class="n">_text_width</span><span class="p">(</span><span class="n">placement</span><span class="o">.</span><span class="n">text</span><span class="p">,</span> <span class="n">placement</span><span class="o">.</span><span class="n">size</span><span class="p">)</span> <span class="o">*</span> <span class="n">BOX_WIDTH</span>
+</span><span id="line-768">    <span class="k">if</span> <span class="n">placement</span><span class="o">.</span><span class="n">rotated</span><span class="p">:</span>
+</span><span id="line-769">        <span class="n">width</span><span class="p">,</span> <span class="n">height</span> <span class="o">=</span> <span class="n">height</span><span class="p">,</span> <span class="n">width</span>
+</span><span id="line-770">    <span class="n">half_x</span> <span class="o">=</span> <span class="n">width</span> <span class="o">/</span> <span class="mf">2.0</span> <span class="o">/</span> <span class="nb">float</span><span class="p">(</span><span class="n">aspect</span><span class="p">)</span>
+</span><span id="line-771">    <span class="n">half_y</span> <span class="o">=</span> <span class="n">height</span> <span class="o">/</span> <span class="mf">2.0</span>
+</span><span id="line-772">    <span class="k">return</span> <span class="p">(</span>
+</span><span id="line-773">        <span class="n">placement</span><span class="o">.</span><span class="n">x</span> <span class="o">-</span> <span class="n">half_x</span><span class="p">,</span>
+</span><span id="line-774">        <span class="n">placement</span><span class="o">.</span><span class="n">y</span> <span class="o">-</span> <span class="n">half_y</span><span class="p">,</span>
+</span><span id="line-775">        <span class="n">placement</span><span class="o">.</span><span class="n">x</span> <span class="o">+</span> <span class="n">half_x</span><span class="p">,</span>
+</span><span id="line-776">        <span class="n">placement</span><span class="o">.</span><span class="n">y</span> <span class="o">+</span> <span class="n">half_y</span><span class="p">,</span>
+</span><span id="line-777">    <span class="p">)</span></div>
 
-</span><span id="line-776">
-</span><span id="line-777">
-</span><span id="line-778"><span class="k">def</span><span class="w"> </span><span class="nf">_salience_sizes</span><span class="p">(</span><span class="n">texts</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="o">*</span><span class="p">,</span> <span class="n">base_size</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
-</span><span id="line-779"><span class="w">    </span><span class="sd">"""One size per word: earlier and longer words a little larger."""</span>
-</span><span id="line-780">    <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">texts</span><span class="p">)</span>
-</span><span id="line-781">    <span class="n">lengths</span> <span class="o">=</span> <span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">texts</span><span class="p">]</span>
-</span><span id="line-782">    <span class="n">lo</span><span class="p">,</span> <span class="n">hi</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">lengths</span><span class="p">),</span> <span class="nb">max</span><span class="p">(</span><span class="n">lengths</span><span class="p">)</span>
-</span><span id="line-783">    <span class="n">sizes</span> <span class="o">=</span> <span class="p">[]</span>
-</span><span id="line-784">    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">length</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">lengths</span><span class="p">):</span>
-</span><span id="line-785">        <span class="n">order</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">i</span> <span class="o">/</span> <span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="k">if</span> <span class="n">n</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="mf">1.0</span>
-</span><span id="line-786">        <span class="n">span</span> <span class="o">=</span> <span class="p">(</span><span class="n">length</span> <span class="o">-</span> <span class="n">lo</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">hi</span> <span class="o">-</span> <span class="n">lo</span><span class="p">)</span> <span class="k">if</span> <span class="n">hi</span> <span class="o">&gt;</span> <span class="n">lo</span> <span class="k">else</span> <span class="mf">0.5</span>
-</span><span id="line-787">        <span class="n">weight</span> <span class="o">=</span> <span class="n">SALIENCE_ORDER_WEIGHT</span> <span class="o">*</span> <span class="n">order</span> <span class="o">+</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">SALIENCE_ORDER_WEIGHT</span><span class="p">)</span> <span class="o">*</span> <span class="n">span</span>
-</span><span id="line-788">        <span class="n">sizes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-</span><span id="line-789">            <span class="n">base_size</span> <span class="o">*</span> <span class="p">(</span><span class="n">SALIENCE_MIN</span> <span class="o">+</span> <span class="p">(</span><span class="n">SALIENCE_MAX</span> <span class="o">-</span> <span class="n">SALIENCE_MIN</span><span class="p">)</span> <span class="o">*</span> <span class="n">weight</span><span class="p">)</span>
-</span><span id="line-790">        <span class="p">)</span>
-</span><span id="line-791">    <span class="k">return</span> <span class="n">sizes</span>
-</span><span id="line-792">
-</span><span id="line-793">
-</span><span id="line-794"><span class="k">def</span><span class="w"> </span><span class="nf">_seed_pixel</span><span class="p">(</span><span class="n">field</span><span class="p">:</span> <span class="n">_Field</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-795"><span class="w">    </span><span class="sd">"""The free pixel to start a spiral from: deepest, centre-most on a tie."""</span>
-</span><span id="line-796">    <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-</span><span id="line-797">
-</span><span id="line-798">    <span class="n">free</span> <span class="o">=</span> <span class="n">field</span><span class="o">.</span><span class="n">mask</span> <span class="o">&amp;</span> <span class="o">~</span><span class="n">field</span><span class="o">.</span><span class="n">occupied</span>
-</span><span id="line-799">    <span class="k">if</span> <span class="ow">not</span> <span class="n">free</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
-</span><span id="line-800">        <span class="k">return</span> <span class="kc">None</span>
-</span><span id="line-801">    <span class="n">score</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">free</span><span class="p">,</span> <span class="n">field</span><span class="o">.</span><span class="n">distance</span> <span class="o">-</span> <span class="n">field</span><span class="o">.</span><span class="n">seed_penalty</span><span class="p">,</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span>
-</span><span id="line-802">    <span class="n">flat</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">score</span><span class="p">))</span>
-</span><span id="line-803">    <span class="k">return</span> <span class="nb">divmod</span><span class="p">(</span><span class="n">flat</span><span class="p">,</span> <span class="n">field</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
-</span><span id="line-804">
-</span><span id="line-805">
-</span><span id="line-806"><span class="k">def</span><span class="w"> </span><span class="nf">_spiral_hit</span><span class="p">(</span>
-</span><span id="line-807">    <span class="n">field</span><span class="p">:</span> <span class="n">_Field</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">cx</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">cy</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">half_w</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">half_h</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span>
-</span><span id="line-808"><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-809"><span class="w">    </span><span class="sd">"""Walk the spiral from ``(cx, cy)``; return the first box that fits.</span>
-</span><span id="line-810">
-</span><span id="line-811"><span class="sd">    Two tests, cheapest first: the summed-area table says whether the whole box</span>
-</span><span id="line-812"><span class="sd">    is inside the outline (four lookups, vectorised over every candidate at</span>
-</span><span id="line-813"><span class="sd">    once), and only the survivors of that are checked against what is already</span>
-</span><span id="line-814"><span class="sd">    placed.</span>
-</span><span id="line-815"><span class="sd">    """</span>
-</span><span id="line-816">    <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-</span><span id="line-817">
-</span><span id="line-818">    <span class="n">H</span><span class="p">,</span> <span class="n">W</span> <span class="o">=</span> <span class="n">field</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">shape</span>
-</span><span id="line-819">    <span class="n">span</span> <span class="o">=</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="nb">min</span><span class="p">(</span><span class="n">half_w</span><span class="p">,</span> <span class="n">half_h</span><span class="p">)</span>
-</span><span id="line-820">    <span class="n">pitch</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">SPIRAL_PITCH_FRAC</span> <span class="o">*</span> <span class="n">span</span><span class="p">)</span>
-</span><span id="line-821">    <span class="n">step</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">SPIRAL_STEP_FRAC</span> <span class="o">*</span> <span class="n">span</span><span class="p">)</span>
-</span><span id="line-822">    <span class="n">reach</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">hypot</span><span class="p">(</span><span class="n">H</span><span class="p">,</span> <span class="n">W</span><span class="p">)</span>
-</span><span id="line-823">    <span class="n">n</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">MAX_SPIRAL_STEPS</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">reach</span> <span class="o">*</span> <span class="n">reach</span> <span class="o">/</span> <span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">step</span> <span class="o">*</span> <span class="n">pitch</span><span class="p">))</span> <span class="o">+</span> <span class="mi">2</span><span class="p">)</span>
-</span><span id="line-824">    <span class="c1"># Arc-length parametrisation of r = pitch * theta, so candidates are evenly</span>
-</span><span id="line-825">    <span class="c1"># spaced along the spiral instead of bunching at the centre.</span>
-</span><span id="line-826">    <span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">step</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="o">/</span> <span class="n">pitch</span><span class="p">)</span>
-</span><span id="line-827">    <span class="n">angle</span> <span class="o">=</span> <span class="n">theta</span> <span class="o">+</span> <span class="n">GOLDEN_ANGLE</span> <span class="o">*</span> <span class="n">index</span>
-</span><span id="line-828">    <span class="n">xs</span> <span class="o">=</span> <span class="n">cx</span> <span class="o">+</span> <span class="n">pitch</span> <span class="o">*</span> <span class="n">theta</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">angle</span><span class="p">)</span>
-</span><span id="line-829">    <span class="n">ys</span> <span class="o">=</span> <span class="n">cy</span> <span class="o">+</span> <span class="n">pitch</span> <span class="o">*</span> <span class="n">theta</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">angle</span><span class="p">)</span>
-</span><span id="line-830">    <span class="n">x0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">xs</span> <span class="o">-</span> <span class="n">half_w</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span>
-</span><span id="line-831">    <span class="n">x1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">xs</span> <span class="o">+</span> <span class="n">half_w</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span>
-</span><span id="line-832">    <span class="n">y0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">ys</span> <span class="o">-</span> <span class="n">half_h</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span>
-</span><span id="line-833">    <span class="n">y1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">ys</span> <span class="o">+</span> <span class="n">half_h</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span>
-</span><span id="line-834">    <span class="n">on_grid</span> <span class="o">=</span> <span class="p">(</span><span class="n">x0</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">y0</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">x1</span> <span class="o">&lt;=</span> <span class="n">W</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">y1</span> <span class="o">&lt;=</span> <span class="n">H</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">x1</span> <span class="o">&gt;</span> <span class="n">x0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">y1</span> <span class="o">&gt;</span> <span class="n">y0</span><span class="p">)</span>
-</span><span id="line-835">    <span class="n">idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">flatnonzero</span><span class="p">(</span><span class="n">on_grid</span><span class="p">)</span>
-</span><span id="line-836">    <span class="k">if</span> <span class="n">idx</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-</span><span id="line-837">        <span class="k">return</span> <span class="kc">None</span>
-</span><span id="line-838">    <span class="n">s</span> <span class="o">=</span> <span class="n">field</span><span class="o">.</span><span class="n">summed</span>
-</span><span id="line-839">    <span class="n">covered</span> <span class="o">=</span> <span class="p">(</span>
-</span><span id="line-840">        <span class="n">s</span><span class="p">[</span><span class="n">y1</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span> <span class="n">x1</span><span class="p">[</span><span class="n">idx</span><span class="p">]]</span>
-</span><span id="line-841">        <span class="o">-</span> <span class="n">s</span><span class="p">[</span><span class="n">y0</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span> <span class="n">x1</span><span class="p">[</span><span class="n">idx</span><span class="p">]]</span>
-</span><span id="line-842">        <span class="o">-</span> <span class="n">s</span><span class="p">[</span><span class="n">y1</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span> <span class="n">x0</span><span class="p">[</span><span class="n">idx</span><span class="p">]]</span>
-</span><span id="line-843">        <span class="o">+</span> <span class="n">s</span><span class="p">[</span><span class="n">y0</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span> <span class="n">x0</span><span class="p">[</span><span class="n">idx</span><span class="p">]]</span>
-</span><span id="line-844">    <span class="p">)</span>
-</span><span id="line-845">    <span class="n">area</span> <span class="o">=</span> <span class="p">(</span><span class="n">y1</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">-</span> <span class="n">y0</span><span class="p">[</span><span class="n">idx</span><span class="p">])</span> <span class="o">*</span> <span class="p">(</span><span class="n">x1</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">-</span> <span class="n">x0</span><span class="p">[</span><span class="n">idx</span><span class="p">])</span>
-</span><span id="line-846">    <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">idx</span><span class="p">[</span><span class="n">covered</span> <span class="o">==</span> <span class="n">area</span><span class="p">]:</span>
-</span><span id="line-847">        <span class="n">gx0</span><span class="p">,</span> <span class="n">gy0</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">x0</span><span class="p">[</span><span class="n">j</span><span class="p">])</span> <span class="o">-</span> <span class="n">GAP_PX</span><span class="p">),</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">y0</span><span class="p">[</span><span class="n">j</span><span class="p">])</span> <span class="o">-</span> <span class="n">GAP_PX</span><span class="p">)</span>
-</span><span id="line-848">        <span class="n">gx1</span><span class="p">,</span> <span class="n">gy1</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">W</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">x1</span><span class="p">[</span><span class="n">j</span><span class="p">])</span> <span class="o">+</span> <span class="n">GAP_PX</span><span class="p">),</span> <span class="nb">min</span><span class="p">(</span><span class="n">H</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">y1</span><span class="p">[</span><span class="n">j</span><span class="p">])</span> <span class="o">+</span> <span class="n">GAP_PX</span><span class="p">)</span>
-</span><span id="line-849">        <span class="k">if</span> <span class="ow">not</span> <span class="n">field</span><span class="o">.</span><span class="n">occupied</span><span class="p">[</span><span class="n">gy0</span><span class="p">:</span><span class="n">gy1</span><span class="p">,</span> <span class="n">gx0</span><span class="p">:</span><span class="n">gx1</span><span class="p">]</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
-</span><span id="line-850">            <span class="k">return</span> <span class="p">(</span>
-</span><span id="line-851">                <span class="nb">float</span><span class="p">(</span><span class="n">xs</span><span class="p">[</span><span class="n">j</span><span class="p">]),</span>
-</span><span id="line-852">                <span class="nb">float</span><span class="p">(</span><span class="n">ys</span><span class="p">[</span><span class="n">j</span><span class="p">]),</span>
-</span><span id="line-853">                <span class="nb">int</span><span class="p">(</span><span class="n">x0</span><span class="p">[</span><span class="n">j</span><span class="p">]),</span>
-</span><span id="line-854">                <span class="nb">int</span><span class="p">(</span><span class="n">y0</span><span class="p">[</span><span class="n">j</span><span class="p">]),</span>
-</span><span id="line-855">                <span class="nb">int</span><span class="p">(</span><span class="n">x1</span><span class="p">[</span><span class="n">j</span><span class="p">]),</span>
-</span><span id="line-856">                <span class="nb">int</span><span class="p">(</span><span class="n">y1</span><span class="p">[</span><span class="n">j</span><span class="p">]),</span>
-</span><span id="line-857">            <span class="p">)</span>
-</span><span id="line-858">    <span class="k">return</span> <span class="kc">None</span>
-</span><span id="line-859">
-</span><span id="line-860">
-</span><span id="line-861"><span class="k">def</span><span class="w"> </span><span class="nf">_place_word</span><span class="p">(</span>
-</span><span id="line-862">    <span class="n">field</span><span class="p">:</span> <span class="n">_Field</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">allow_rotation</span><span class="p">:</span> <span class="nb">bool</span>
-</span><span id="line-863"><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Placement</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-864"><span class="w">    </span><span class="sd">"""Place one word at one size, upright first, or return None."""</span>
-</span><span id="line-865">    <span class="n">H</span><span class="p">,</span> <span class="n">W</span> <span class="o">=</span> <span class="n">field</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">shape</span>
-</span><span id="line-866">    <span class="n">seed</span> <span class="o">=</span> <span class="n">_seed_pixel</span><span class="p">(</span><span class="n">field</span><span class="p">)</span>
-</span><span id="line-867">    <span class="k">if</span> <span class="n">seed</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-868">        <span class="k">return</span> <span class="kc">None</span>
-</span><span id="line-869">    <span class="n">cy</span><span class="p">,</span> <span class="n">cx</span> <span class="o">=</span> <span class="n">seed</span>
-</span><span id="line-870">    <span class="n">box_w</span> <span class="o">=</span> <span class="n">_text_width</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">size</span><span class="p">)</span> <span class="o">*</span> <span class="n">H</span> <span class="o">*</span> <span class="n">BOX_WIDTH</span>
-</span><span id="line-871">    <span class="n">box_h</span> <span class="o">=</span> <span class="n">size</span> <span class="o">*</span> <span class="n">H</span> <span class="o">*</span> <span class="n">BOX_HEIGHT</span>
-</span><span id="line-872">    <span class="k">for</span> <span class="n">rotated</span> <span class="ow">in</span> <span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span> <span class="k">if</span> <span class="n">allow_rotation</span> <span class="k">else</span> <span class="p">(</span><span class="kc">False</span><span class="p">,):</span>
-</span><span id="line-873">        <span class="n">w</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="p">(</span><span class="n">box_h</span><span class="p">,</span> <span class="n">box_w</span><span class="p">)</span> <span class="k">if</span> <span class="n">rotated</span> <span class="k">else</span> <span class="p">(</span><span class="n">box_w</span><span class="p">,</span> <span class="n">box_h</span><span class="p">)</span>
-</span><span id="line-874">        <span class="n">hit</span> <span class="o">=</span> <span class="n">_spiral_hit</span><span class="p">(</span>
-</span><span id="line-875">            <span class="n">field</span><span class="p">,</span> <span class="n">cx</span><span class="o">=</span><span class="n">cx</span> <span class="o">+</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">cy</span><span class="o">=</span><span class="n">cy</span> <span class="o">+</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">half_w</span><span class="o">=</span><span class="n">w</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">,</span> <span class="n">half_h</span><span class="o">=</span><span class="n">h</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">index</span>
-</span><span id="line-876">        <span class="p">)</span>
-</span><span id="line-877">        <span class="k">if</span> <span class="n">hit</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-878">            <span class="k">continue</span>
-</span><span id="line-879">        <span class="n">px</span><span class="p">,</span> <span class="n">py</span><span class="p">,</span> <span class="n">x0</span><span class="p">,</span> <span class="n">y0</span><span class="p">,</span> <span class="n">x1</span><span class="p">,</span> <span class="n">y1</span> <span class="o">=</span> <span class="n">hit</span>
-</span><span id="line-880">        <span class="n">field</span><span class="o">.</span><span class="n">occupied</span><span class="p">[</span><span class="n">y0</span><span class="p">:</span><span class="n">y1</span><span class="p">,</span> <span class="n">x0</span><span class="p">:</span><span class="n">x1</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
-</span><span id="line-881">        <span class="k">return</span> <span class="n">Placement</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="n">text</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="n">px</span> <span class="o">/</span> <span class="n">W</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">py</span> <span class="o">/</span> <span class="n">H</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">size</span><span class="p">,</span> <span class="n">rotated</span><span class="o">=</span><span class="n">rotated</span><span class="p">)</span>
-</span><span id="line-882">    <span class="k">return</span> <span class="kc">None</span>
-</span><span id="line-883">
-</span><span id="line-884">
+</span><span id="line-778">
+</span><span id="line-779">
+</span><span id="line-780"><span class="k">def</span><span class="w"> </span><span class="nf">_salience_sizes</span><span class="p">(</span><span class="n">texts</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="o">*</span><span class="p">,</span> <span class="n">base_size</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
+</span><span id="line-781"><span class="w">    </span><span class="sd">"""One size per word: earlier and longer words a little larger."""</span>
+</span><span id="line-782">    <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">texts</span><span class="p">)</span>
+</span><span id="line-783">    <span class="n">lengths</span> <span class="o">=</span> <span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">texts</span><span class="p">]</span>
+</span><span id="line-784">    <span class="n">lo</span><span class="p">,</span> <span class="n">hi</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">lengths</span><span class="p">),</span> <span class="nb">max</span><span class="p">(</span><span class="n">lengths</span><span class="p">)</span>
+</span><span id="line-785">    <span class="n">sizes</span> <span class="o">=</span> <span class="p">[]</span>
+</span><span id="line-786">    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">length</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">lengths</span><span class="p">):</span>
+</span><span id="line-787">        <span class="n">order</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">i</span> <span class="o">/</span> <span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="k">if</span> <span class="n">n</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="mf">1.0</span>
+</span><span id="line-788">        <span class="n">span</span> <span class="o">=</span> <span class="p">(</span><span class="n">length</span> <span class="o">-</span> <span class="n">lo</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">hi</span> <span class="o">-</span> <span class="n">lo</span><span class="p">)</span> <span class="k">if</span> <span class="n">hi</span> <span class="o">&gt;</span> <span class="n">lo</span> <span class="k">else</span> <span class="mf">0.5</span>
+</span><span id="line-789">        <span class="n">weight</span> <span class="o">=</span> <span class="n">SALIENCE_ORDER_WEIGHT</span> <span class="o">*</span> <span class="n">order</span> <span class="o">+</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">SALIENCE_ORDER_WEIGHT</span><span class="p">)</span> <span class="o">*</span> <span class="n">span</span>
+</span><span id="line-790">        <span class="n">sizes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+</span><span id="line-791">            <span class="n">base_size</span> <span class="o">*</span> <span class="p">(</span><span class="n">SALIENCE_MIN</span> <span class="o">+</span> <span class="p">(</span><span class="n">SALIENCE_MAX</span> <span class="o">-</span> <span class="n">SALIENCE_MIN</span><span class="p">)</span> <span class="o">*</span> <span class="n">weight</span><span class="p">)</span>
+</span><span id="line-792">        <span class="p">)</span>
+</span><span id="line-793">    <span class="k">return</span> <span class="n">sizes</span>
+</span><span id="line-794">
+</span><span id="line-795">
+</span><span id="line-796"><span class="k">def</span><span class="w"> </span><span class="nf">_seed_pixel</span><span class="p">(</span><span class="n">field</span><span class="p">:</span> <span class="n">_Field</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-797"><span class="w">    </span><span class="sd">"""The free pixel to start a spiral from: deepest, centre-most on a tie."""</span>
+</span><span id="line-798">    <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+</span><span id="line-799">
+</span><span id="line-800">    <span class="n">free</span> <span class="o">=</span> <span class="n">field</span><span class="o">.</span><span class="n">mask</span> <span class="o">&amp;</span> <span class="o">~</span><span class="n">field</span><span class="o">.</span><span class="n">occupied</span>
+</span><span id="line-801">    <span class="k">if</span> <span class="ow">not</span> <span class="n">free</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+</span><span id="line-802">        <span class="k">return</span> <span class="kc">None</span>
+</span><span id="line-803">    <span class="n">score</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">free</span><span class="p">,</span> <span class="n">field</span><span class="o">.</span><span class="n">distance</span> <span class="o">-</span> <span class="n">field</span><span class="o">.</span><span class="n">seed_penalty</span><span class="p">,</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span>
+</span><span id="line-804">    <span class="n">flat</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">score</span><span class="p">))</span>
+</span><span id="line-805">    <span class="k">return</span> <span class="nb">divmod</span><span class="p">(</span><span class="n">flat</span><span class="p">,</span> <span class="n">field</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+</span><span id="line-806">
+</span><span id="line-807">
+</span><span id="line-808"><span class="k">def</span><span class="w"> </span><span class="nf">_spiral_hit</span><span class="p">(</span>
+</span><span id="line-809">    <span class="n">field</span><span class="p">:</span> <span class="n">_Field</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">cx</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">cy</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">half_w</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">half_h</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span>
+</span><span id="line-810"><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-811"><span class="w">    </span><span class="sd">"""Walk the spiral from ``(cx, cy)``; return the first box that fits.</span>
+</span><span id="line-812">
+</span><span id="line-813"><span class="sd">    Two tests, cheapest first: the summed-area table says whether the whole box</span>
+</span><span id="line-814"><span class="sd">    is inside the outline (four lookups, vectorised over every candidate at</span>
+</span><span id="line-815"><span class="sd">    once), and only the survivors of that are checked against what is already</span>
+</span><span id="line-816"><span class="sd">    placed.</span>
+</span><span id="line-817"><span class="sd">    """</span>
+</span><span id="line-818">    <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+</span><span id="line-819">
+</span><span id="line-820">    <span class="n">H</span><span class="p">,</span> <span class="n">W</span> <span class="o">=</span> <span class="n">field</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">shape</span>
+</span><span id="line-821">    <span class="n">span</span> <span class="o">=</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="nb">min</span><span class="p">(</span><span class="n">half_w</span><span class="p">,</span> <span class="n">half_h</span><span class="p">)</span>
+</span><span id="line-822">    <span class="n">pitch</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">SPIRAL_PITCH_FRAC</span> <span class="o">*</span> <span class="n">span</span><span class="p">)</span>
+</span><span id="line-823">    <span class="n">step</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">SPIRAL_STEP_FRAC</span> <span class="o">*</span> <span class="n">span</span><span class="p">)</span>
+</span><span id="line-824">    <span class="n">reach</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">hypot</span><span class="p">(</span><span class="n">H</span><span class="p">,</span> <span class="n">W</span><span class="p">)</span>
+</span><span id="line-825">    <span class="n">n</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">MAX_SPIRAL_STEPS</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">reach</span> <span class="o">*</span> <span class="n">reach</span> <span class="o">/</span> <span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">step</span> <span class="o">*</span> <span class="n">pitch</span><span class="p">))</span> <span class="o">+</span> <span class="mi">2</span><span class="p">)</span>
+</span><span id="line-826">    <span class="c1"># Arc-length parametrisation of r = pitch * theta, so candidates are evenly</span>
+</span><span id="line-827">    <span class="c1"># spaced along the spiral instead of bunching at the centre.</span>
+</span><span id="line-828">    <span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">step</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="o">/</span> <span class="n">pitch</span><span class="p">)</span>
+</span><span id="line-829">    <span class="n">angle</span> <span class="o">=</span> <span class="n">theta</span> <span class="o">+</span> <span class="n">GOLDEN_ANGLE</span> <span class="o">*</span> <span class="n">index</span>
+</span><span id="line-830">    <span class="n">xs</span> <span class="o">=</span> <span class="n">cx</span> <span class="o">+</span> <span class="n">pitch</span> <span class="o">*</span> <span class="n">theta</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">angle</span><span class="p">)</span>
+</span><span id="line-831">    <span class="n">ys</span> <span class="o">=</span> <span class="n">cy</span> <span class="o">+</span> <span class="n">pitch</span> <span class="o">*</span> <span class="n">theta</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">angle</span><span class="p">)</span>
+</span><span id="line-832">    <span class="n">x0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">xs</span> <span class="o">-</span> <span class="n">half_w</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span>
+</span><span id="line-833">    <span class="n">x1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">xs</span> <span class="o">+</span> <span class="n">half_w</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span>
+</span><span id="line-834">    <span class="n">y0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">ys</span> <span class="o">-</span> <span class="n">half_h</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span>
+</span><span id="line-835">    <span class="n">y1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">ys</span> <span class="o">+</span> <span class="n">half_h</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span>
+</span><span id="line-836">    <span class="n">on_grid</span> <span class="o">=</span> <span class="p">(</span><span class="n">x0</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">y0</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">x1</span> <span class="o">&lt;=</span> <span class="n">W</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">y1</span> <span class="o">&lt;=</span> <span class="n">H</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">x1</span> <span class="o">&gt;</span> <span class="n">x0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">y1</span> <span class="o">&gt;</span> <span class="n">y0</span><span class="p">)</span>
+</span><span id="line-837">    <span class="n">idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">flatnonzero</span><span class="p">(</span><span class="n">on_grid</span><span class="p">)</span>
+</span><span id="line-838">    <span class="k">if</span> <span class="n">idx</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+</span><span id="line-839">        <span class="k">return</span> <span class="kc">None</span>
+</span><span id="line-840">    <span class="n">s</span> <span class="o">=</span> <span class="n">field</span><span class="o">.</span><span class="n">summed</span>
+</span><span id="line-841">    <span class="n">covered</span> <span class="o">=</span> <span class="p">(</span>
+</span><span id="line-842">        <span class="n">s</span><span class="p">[</span><span class="n">y1</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span> <span class="n">x1</span><span class="p">[</span><span class="n">idx</span><span class="p">]]</span>
+</span><span id="line-843">        <span class="o">-</span> <span class="n">s</span><span class="p">[</span><span class="n">y0</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span> <span class="n">x1</span><span class="p">[</span><span class="n">idx</span><span class="p">]]</span>
+</span><span id="line-844">        <span class="o">-</span> <span class="n">s</span><span class="p">[</span><span class="n">y1</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span> <span class="n">x0</span><span class="p">[</span><span class="n">idx</span><span class="p">]]</span>
+</span><span id="line-845">        <span class="o">+</span> <span class="n">s</span><span class="p">[</span><span class="n">y0</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span> <span class="n">x0</span><span class="p">[</span><span class="n">idx</span><span class="p">]]</span>
+</span><span id="line-846">    <span class="p">)</span>
+</span><span id="line-847">    <span class="n">area</span> <span class="o">=</span> <span class="p">(</span><span class="n">y1</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">-</span> <span class="n">y0</span><span class="p">[</span><span class="n">idx</span><span class="p">])</span> <span class="o">*</span> <span class="p">(</span><span class="n">x1</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">-</span> <span class="n">x0</span><span class="p">[</span><span class="n">idx</span><span class="p">])</span>
+</span><span id="line-848">    <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">idx</span><span class="p">[</span><span class="n">covered</span> <span class="o">==</span> <span class="n">area</span><span class="p">]:</span>
+</span><span id="line-849">        <span class="n">gx0</span><span class="p">,</span> <span class="n">gy0</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">x0</span><span class="p">[</span><span class="n">j</span><span class="p">])</span> <span class="o">-</span> <span class="n">GAP_PX</span><span class="p">),</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">y0</span><span class="p">[</span><span class="n">j</span><span class="p">])</span> <span class="o">-</span> <span class="n">GAP_PX</span><span class="p">)</span>
+</span><span id="line-850">        <span class="n">gx1</span><span class="p">,</span> <span class="n">gy1</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">W</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">x1</span><span class="p">[</span><span class="n">j</span><span class="p">])</span> <span class="o">+</span> <span class="n">GAP_PX</span><span class="p">),</span> <span class="nb">min</span><span class="p">(</span><span class="n">H</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">y1</span><span class="p">[</span><span class="n">j</span><span class="p">])</span> <span class="o">+</span> <span class="n">GAP_PX</span><span class="p">)</span>
+</span><span id="line-851">        <span class="k">if</span> <span class="ow">not</span> <span class="n">field</span><span class="o">.</span><span class="n">occupied</span><span class="p">[</span><span class="n">gy0</span><span class="p">:</span><span class="n">gy1</span><span class="p">,</span> <span class="n">gx0</span><span class="p">:</span><span class="n">gx1</span><span class="p">]</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+</span><span id="line-852">            <span class="k">return</span> <span class="p">(</span>
+</span><span id="line-853">                <span class="nb">float</span><span class="p">(</span><span class="n">xs</span><span class="p">[</span><span class="n">j</span><span class="p">]),</span>
+</span><span id="line-854">                <span class="nb">float</span><span class="p">(</span><span class="n">ys</span><span class="p">[</span><span class="n">j</span><span class="p">]),</span>
+</span><span id="line-855">                <span class="nb">int</span><span class="p">(</span><span class="n">x0</span><span class="p">[</span><span class="n">j</span><span class="p">]),</span>
+</span><span id="line-856">                <span class="nb">int</span><span class="p">(</span><span class="n">y0</span><span class="p">[</span><span class="n">j</span><span class="p">]),</span>
+</span><span id="line-857">                <span class="nb">int</span><span class="p">(</span><span class="n">x1</span><span class="p">[</span><span class="n">j</span><span class="p">]),</span>
+</span><span id="line-858">                <span class="nb">int</span><span class="p">(</span><span class="n">y1</span><span class="p">[</span><span class="n">j</span><span class="p">]),</span>
+</span><span id="line-859">            <span class="p">)</span>
+</span><span id="line-860">    <span class="k">return</span> <span class="kc">None</span>
+</span><span id="line-861">
+</span><span id="line-862">
+</span><span id="line-863"><span class="k">def</span><span class="w"> </span><span class="nf">_place_word</span><span class="p">(</span>
+</span><span id="line-864">    <span class="n">field</span><span class="p">:</span> <span class="n">_Field</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">allow_rotation</span><span class="p">:</span> <span class="nb">bool</span>
+</span><span id="line-865"><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Placement</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-866"><span class="w">    </span><span class="sd">"""Place one word at one size, upright first, or return None."""</span>
+</span><span id="line-867">    <span class="n">H</span><span class="p">,</span> <span class="n">W</span> <span class="o">=</span> <span class="n">field</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">shape</span>
+</span><span id="line-868">    <span class="n">seed</span> <span class="o">=</span> <span class="n">_seed_pixel</span><span class="p">(</span><span class="n">field</span><span class="p">)</span>
+</span><span id="line-869">    <span class="k">if</span> <span class="n">seed</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-870">        <span class="k">return</span> <span class="kc">None</span>
+</span><span id="line-871">    <span class="n">cy</span><span class="p">,</span> <span class="n">cx</span> <span class="o">=</span> <span class="n">seed</span>
+</span><span id="line-872">    <span class="n">box_w</span> <span class="o">=</span> <span class="n">_text_width</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">size</span><span class="p">)</span> <span class="o">*</span> <span class="n">H</span> <span class="o">*</span> <span class="n">BOX_WIDTH</span>
+</span><span id="line-873">    <span class="n">box_h</span> <span class="o">=</span> <span class="n">size</span> <span class="o">*</span> <span class="n">H</span> <span class="o">*</span> <span class="n">BOX_HEIGHT</span>
+</span><span id="line-874">    <span class="k">for</span> <span class="n">rotated</span> <span class="ow">in</span> <span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span> <span class="k">if</span> <span class="n">allow_rotation</span> <span class="k">else</span> <span class="p">(</span><span class="kc">False</span><span class="p">,):</span>
+</span><span id="line-875">        <span class="n">w</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="p">(</span><span class="n">box_h</span><span class="p">,</span> <span class="n">box_w</span><span class="p">)</span> <span class="k">if</span> <span class="n">rotated</span> <span class="k">else</span> <span class="p">(</span><span class="n">box_w</span><span class="p">,</span> <span class="n">box_h</span><span class="p">)</span>
+</span><span id="line-876">        <span class="n">hit</span> <span class="o">=</span> <span class="n">_spiral_hit</span><span class="p">(</span>
+</span><span id="line-877">            <span class="n">field</span><span class="p">,</span> <span class="n">cx</span><span class="o">=</span><span class="n">cx</span> <span class="o">+</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">cy</span><span class="o">=</span><span class="n">cy</span> <span class="o">+</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">half_w</span><span class="o">=</span><span class="n">w</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">,</span> <span class="n">half_h</span><span class="o">=</span><span class="n">h</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">index</span>
+</span><span id="line-878">        <span class="p">)</span>
+</span><span id="line-879">        <span class="k">if</span> <span class="n">hit</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-880">            <span class="k">continue</span>
+</span><span id="line-881">        <span class="n">px</span><span class="p">,</span> <span class="n">py</span><span class="p">,</span> <span class="n">x0</span><span class="p">,</span> <span class="n">y0</span><span class="p">,</span> <span class="n">x1</span><span class="p">,</span> <span class="n">y1</span> <span class="o">=</span> <span class="n">hit</span>
+</span><span id="line-882">        <span class="n">field</span><span class="o">.</span><span class="n">occupied</span><span class="p">[</span><span class="n">y0</span><span class="p">:</span><span class="n">y1</span><span class="p">,</span> <span class="n">x0</span><span class="p">:</span><span class="n">x1</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+</span><span id="line-883">        <span class="k">return</span> <span class="n">Placement</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="n">text</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="n">px</span> <span class="o">/</span> <span class="n">W</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">py</span> <span class="o">/</span> <span class="n">H</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">size</span><span class="p">,</span> <span class="n">rotated</span><span class="o">=</span><span class="n">rotated</span><span class="p">)</span>
+</span><span id="line-884">    <span class="k">return</span> <span class="kc">None</span>
+</span><span id="line-885">
+</span><span id="line-886">
 <div class="viewcode-block" id="pack_words_into_shape">
 <a class="viewcode-back" href="../../../_autosummary/muvid.lyricvid.shape.html#muvid.lyricvid.shape.pack_words_into_shape">[docs]</a>
-</span><span id="line-885"><span class="k">def</span><span class="w"> </span><span class="nf">pack_words_into_shape</span><span class="p">(</span>
-</span><span id="line-886">    <span class="n">texts</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
-</span><span id="line-887">    <span class="o">*</span><span class="p">,</span>
-</span><span id="line-888">    <span class="n">shape_kind</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"named"</span><span class="p">,</span>
-</span><span id="line-889">    <span class="n">shape_value</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"circle"</span><span class="p">,</span>
-</span><span id="line-890">    <span class="n">aspect</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">DEFAULT_ASPECT</span><span class="p">,</span>
-</span><span id="line-891">    <span class="n">base_size</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.06</span><span class="p">,</span>
-</span><span id="line-892">    <span class="n">grid_height</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">GRID_HEIGHT</span><span class="p">,</span>
-</span><span id="line-893">    <span class="n">margin</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">SHAPE_MARGIN</span><span class="p">,</span>
-</span><span id="line-894">    <span class="n">allow_rotation</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-</span><span id="line-895">    <span class="n">shrink_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">SHRINK_STEPS</span><span class="p">,</span>
-</span><span id="line-896">    <span class="n">mask_options</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-</span><span id="line-897"><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Placement</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
-</span><span id="line-898"><span class="w">    </span><span class="sd">"""Pack ``texts`` inside a shape, in the order given.</span>
-</span><span id="line-899">
-</span><span id="line-900"><span class="sd">    :param texts: the words, in the order they are sung. Order matters twice:</span>
-</span><span id="line-901"><span class="sd">        it decides who gets the roomy middle of the shape, and it feeds the</span>
-</span><span id="line-902"><span class="sd">        salience weight.</span>
-</span><span id="line-903"><span class="sd">    :param shape_kind: ``'named'``, ``'svg_path'`` or ``'mask_image'`` — see</span>
-</span><span id="line-904"><span class="sd">        :data:`SHAPE_KINDS` and :class:`muvid.lyricvid.spec.ShapeRef`.</span>
-</span><span id="line-905"><span class="sd">    :param shape_value: the outline's name, path data, or image path.</span>
-</span><span id="line-906"><span class="sd">    :param aspect: canvas width / height.</span>
-</span><span id="line-907"><span class="sd">    :param base_size: cap height as a fraction of canvas height, before salience.</span>
-</span><span id="line-908"><span class="sd">    :param allow_rotation: also try each word turned 90 degrees.</span>
-</span><span id="line-909"><span class="sd">        ``muvid.lyricvid.scene.Cue`` cannot express a rotation, so ``shape_fill``</span>
-</span><span id="line-910"><span class="sd">        leaves this off; a renderer that can should turn it on.</span>
-</span><span id="line-911"><span class="sd">    :param shrink_steps: how many progressively smaller retries a word gets</span>
-</span><span id="line-912"><span class="sd">        before it is dropped.</span>
-</span><span id="line-913"><span class="sd">    :param mask_options: forwarded to the kind's builder (``threshold`` and</span>
-</span><span id="line-914"><span class="sd">        ``invert`` for ``'mask_image'``, ``curve_samples`` for ``'svg_path'``).</span>
-</span><span id="line-915"><span class="sd">    :returns: one entry per input, in the same order. ``None`` is "did not fit"</span>
-</span><span id="line-916"><span class="sd">        — dropping a word beats overlapping two.</span>
-</span><span id="line-917">
-</span><span id="line-918"><span class="sd">    &gt;&gt;&gt; words = 'apple yum juicy crunchy red yellow green delicious'.split()</span>
-</span><span id="line-919"><span class="sd">    &gt;&gt;&gt; placed = pack_words_into_shape(words, shape_value='apple')</span>
-</span><span id="line-920"><span class="sd">    &gt;&gt;&gt; len(placed) == len(words)</span>
-</span><span id="line-921"><span class="sd">    True</span>
-</span><span id="line-922">
-</span><span id="line-923"><span class="sd">    Same input, same picture — every time, forever:</span>
+</span><span id="line-887"><span class="k">def</span><span class="w"> </span><span class="nf">pack_words_into_shape</span><span class="p">(</span>
+</span><span id="line-888">    <span class="n">texts</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+</span><span id="line-889">    <span class="o">*</span><span class="p">,</span>
+</span><span id="line-890">    <span class="n">shape_kind</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"named"</span><span class="p">,</span>
+</span><span id="line-891">    <span class="n">shape_value</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"circle"</span><span class="p">,</span>
+</span><span id="line-892">    <span class="n">aspect</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">DEFAULT_ASPECT</span><span class="p">,</span>
+</span><span id="line-893">    <span class="n">base_size</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.06</span><span class="p">,</span>
+</span><span id="line-894">    <span class="n">grid_height</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">GRID_HEIGHT</span><span class="p">,</span>
+</span><span id="line-895">    <span class="n">margin</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">SHAPE_MARGIN</span><span class="p">,</span>
+</span><span id="line-896">    <span class="n">allow_rotation</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+</span><span id="line-897">    <span class="n">shrink_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">SHRINK_STEPS</span><span class="p">,</span>
+</span><span id="line-898">    <span class="n">mask_options</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="line-899"><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Placement</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
+</span><span id="line-900"><span class="w">    </span><span class="sd">"""Pack ``texts`` inside a shape, in the order given.</span>
+</span><span id="line-901">
+</span><span id="line-902"><span class="sd">    :param texts: the words, in the order they are sung. Order matters twice:</span>
+</span><span id="line-903"><span class="sd">        it decides who gets the roomy middle of the shape, and it feeds the</span>
+</span><span id="line-904"><span class="sd">        salience weight.</span>
+</span><span id="line-905"><span class="sd">    :param shape_kind: ``'named'``, ``'svg_path'`` or ``'mask_image'`` — see</span>
+</span><span id="line-906"><span class="sd">        :data:`SHAPE_KINDS` and :class:`muvid.lyricvid.spec.ShapeRef`.</span>
+</span><span id="line-907"><span class="sd">    :param shape_value: the outline's name, path data, or image path.</span>
+</span><span id="line-908"><span class="sd">    :param aspect: canvas width / height.</span>
+</span><span id="line-909"><span class="sd">    :param base_size: cap height as a fraction of canvas height, before salience.</span>
+</span><span id="line-910"><span class="sd">    :param allow_rotation: also try each word turned 90 degrees.</span>
+</span><span id="line-911"><span class="sd">        ``muvid.lyricvid.scene.Cue`` cannot express a rotation, so ``shape_fill``</span>
+</span><span id="line-912"><span class="sd">        leaves this off; a renderer that can should turn it on.</span>
+</span><span id="line-913"><span class="sd">    :param shrink_steps: how many progressively smaller retries a word gets</span>
+</span><span id="line-914"><span class="sd">        before it is dropped.</span>
+</span><span id="line-915"><span class="sd">    :param mask_options: forwarded to the kind's builder (``threshold`` and</span>
+</span><span id="line-916"><span class="sd">        ``invert`` for ``'mask_image'``, ``curve_samples`` for ``'svg_path'``).</span>
+</span><span id="line-917"><span class="sd">    :returns: one entry per input, in the same order. ``None`` is "did not fit"</span>
+</span><span id="line-918"><span class="sd">        — dropping a word beats overlapping two.</span>
+</span><span id="line-919">
+</span><span id="line-920"><span class="sd">    &gt;&gt;&gt; words = 'apple yum juicy crunchy red yellow green delicious'.split()</span>
+</span><span id="line-921"><span class="sd">    &gt;&gt;&gt; placed = pack_words_into_shape(words, shape_value='apple')</span>
+</span><span id="line-922"><span class="sd">    &gt;&gt;&gt; len(placed) == len(words)</span>
+</span><span id="line-923"><span class="sd">    True</span>
 </span><span id="line-924">
-</span><span id="line-925"><span class="sd">    &gt;&gt;&gt; placed == pack_words_into_shape(words, shape_value='apple')</span>
-</span><span id="line-926"><span class="sd">    True</span>
-</span><span id="line-927">
-</span><span id="line-928"><span class="sd">    Every placed word is wholly inside the outline:</span>
+</span><span id="line-925"><span class="sd">    Same input, same picture — every time, forever:</span>
+</span><span id="line-926">
+</span><span id="line-927"><span class="sd">    &gt;&gt;&gt; placed == pack_words_into_shape(words, shape_value='apple')</span>
+</span><span id="line-928"><span class="sd">    True</span>
 </span><span id="line-929">
-</span><span id="line-930"><span class="sd">    &gt;&gt;&gt; mask = shape_mask('named', 'apple')</span>
-</span><span id="line-931"><span class="sd">    &gt;&gt;&gt; H, W = mask.shape</span>
-</span><span id="line-932"><span class="sd">    &gt;&gt;&gt; def corners_in_mask(p):</span>
-</span><span id="line-933"><span class="sd">    ...     x0, y0, x1, y1 = bounding_box(p)</span>
-</span><span id="line-934"><span class="sd">    ...     xs = (int(x0 * W), int(x1 * W) - 1)</span>
-</span><span id="line-935"><span class="sd">    ...     ys = (int(y0 * H), int(y1 * H) - 1)</span>
-</span><span id="line-936"><span class="sd">    ...     return all(mask[y][x] for y in ys for x in xs)</span>
-</span><span id="line-937"><span class="sd">    &gt;&gt;&gt; all(corners_in_mask(p) for p in placed if p is not None)</span>
-</span><span id="line-938"><span class="sd">    True</span>
-</span><span id="line-939">
-</span><span id="line-940"><span class="sd">    ...and no two of them collide:</span>
+</span><span id="line-930"><span class="sd">    Every placed word is wholly inside the outline:</span>
+</span><span id="line-931">
+</span><span id="line-932"><span class="sd">    &gt;&gt;&gt; mask = shape_mask('named', 'apple')</span>
+</span><span id="line-933"><span class="sd">    &gt;&gt;&gt; H, W = mask.shape</span>
+</span><span id="line-934"><span class="sd">    &gt;&gt;&gt; def corners_in_mask(p):</span>
+</span><span id="line-935"><span class="sd">    ...     x0, y0, x1, y1 = bounding_box(p)</span>
+</span><span id="line-936"><span class="sd">    ...     xs = (int(x0 * W), int(x1 * W) - 1)</span>
+</span><span id="line-937"><span class="sd">    ...     ys = (int(y0 * H), int(y1 * H) - 1)</span>
+</span><span id="line-938"><span class="sd">    ...     return all(mask[y][x] for y in ys for x in xs)</span>
+</span><span id="line-939"><span class="sd">    &gt;&gt;&gt; all(corners_in_mask(p) for p in placed if p is not None)</span>
+</span><span id="line-940"><span class="sd">    True</span>
 </span><span id="line-941">
-</span><span id="line-942"><span class="sd">    &gt;&gt;&gt; def collide(a, b):</span>
-</span><span id="line-943"><span class="sd">    ...     ax0, ay0, ax1, ay1 = bounding_box(a)</span>
-</span><span id="line-944"><span class="sd">    ...     bx0, by0, bx1, by1 = bounding_box(b)</span>
-</span><span id="line-945"><span class="sd">    ...     return ax0 &lt; bx1 and bx0 &lt; ax1 and ay0 &lt; by1 and by0 &lt; ay1</span>
-</span><span id="line-946"><span class="sd">    &gt;&gt;&gt; ok = [p for p in placed if p is not None]</span>
-</span><span id="line-947"><span class="sd">    &gt;&gt;&gt; any(collide(a, b) for i, a in enumerate(ok) for b in ok[i + 1:])</span>
-</span><span id="line-948"><span class="sd">    False</span>
-</span><span id="line-949">
-</span><span id="line-950"><span class="sd">    An SVG outline works the same way (``M/L/H/V/C/S/Q/T/Z``; arcs are refused):</span>
+</span><span id="line-942"><span class="sd">    ...and no two of them collide:</span>
+</span><span id="line-943">
+</span><span id="line-944"><span class="sd">    &gt;&gt;&gt; def collide(a, b):</span>
+</span><span id="line-945"><span class="sd">    ...     ax0, ay0, ax1, ay1 = bounding_box(a)</span>
+</span><span id="line-946"><span class="sd">    ...     bx0, by0, bx1, by1 = bounding_box(b)</span>
+</span><span id="line-947"><span class="sd">    ...     return ax0 &lt; bx1 and bx0 &lt; ax1 and ay0 &lt; by1 and by0 &lt; ay1</span>
+</span><span id="line-948"><span class="sd">    &gt;&gt;&gt; ok = [p for p in placed if p is not None]</span>
+</span><span id="line-949"><span class="sd">    &gt;&gt;&gt; any(collide(a, b) for i, a in enumerate(ok) for b in ok[i + 1:])</span>
+</span><span id="line-950"><span class="sd">    False</span>
 </span><span id="line-951">
-</span><span id="line-952"><span class="sd">    &gt;&gt;&gt; square = pack_words_into_shape(</span>
-</span><span id="line-953"><span class="sd">    ...     ['one', 'two'], shape_kind='svg_path',</span>
-</span><span id="line-954"><span class="sd">    ...     shape_value='M 0 0 L 10 0 L 10 10 L 0 10 Z')</span>
-</span><span id="line-955"><span class="sd">    &gt;&gt;&gt; [p.text for p in square if p is not None]</span>
-</span><span id="line-956"><span class="sd">    ['one', 'two']</span>
-</span><span id="line-957"><span class="sd">    """</span>
-</span><span id="line-958">    <span class="n">words</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">texts</span><span class="p">)</span>
-</span><span id="line-959">    <span class="k">if</span> <span class="ow">not</span> <span class="n">words</span><span class="p">:</span>
-</span><span id="line-960">        <span class="k">return</span> <span class="p">[]</span>
-</span><span id="line-961">    <span class="n">mask</span> <span class="o">=</span> <span class="n">shape_mask</span><span class="p">(</span>
-</span><span id="line-962">        <span class="n">shape_kind</span><span class="p">,</span>
-</span><span id="line-963">        <span class="n">shape_value</span><span class="p">,</span>
-</span><span id="line-964">        <span class="n">aspect</span><span class="o">=</span><span class="n">aspect</span><span class="p">,</span>
-</span><span id="line-965">        <span class="n">grid_height</span><span class="o">=</span><span class="n">grid_height</span><span class="p">,</span>
-</span><span id="line-966">        <span class="n">margin</span><span class="o">=</span><span class="n">margin</span><span class="p">,</span>
-</span><span id="line-967">        <span class="o">**</span><span class="nb">dict</span><span class="p">(</span><span class="n">mask_options</span> <span class="ow">or</span> <span class="p">{}),</span>
-</span><span id="line-968">    <span class="p">)</span>
-</span><span id="line-969">    <span class="k">if</span> <span class="ow">not</span> <span class="n">mask</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
-</span><span id="line-970">        <span class="k">return</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">words</span><span class="p">)</span>
-</span><span id="line-971">    <span class="n">field</span> <span class="o">=</span> <span class="n">_build_field</span><span class="p">(</span><span class="n">mask</span><span class="p">)</span>
-</span><span id="line-972">    <span class="n">sizes</span> <span class="o">=</span> <span class="n">_salience_sizes</span><span class="p">(</span><span class="n">words</span><span class="p">,</span> <span class="n">base_size</span><span class="o">=</span><span class="n">base_size</span><span class="p">)</span>
-</span><span id="line-973">    <span class="n">placed</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Placement</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-</span><span id="line-974">    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">text</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">words</span><span class="p">):</span>
-</span><span id="line-975">        <span class="k">if</span> <span class="ow">not</span> <span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
-</span><span id="line-976">            <span class="n">placed</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
-</span><span id="line-977">            <span class="k">continue</span>
-</span><span id="line-978">        <span class="n">spot</span> <span class="o">=</span> <span class="kc">None</span>
-</span><span id="line-979">        <span class="k">for</span> <span class="n">attempt</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">shrink_steps</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)):</span>
-</span><span id="line-980">            <span class="n">spot</span> <span class="o">=</span> <span class="n">_place_word</span><span class="p">(</span>
-</span><span id="line-981">                <span class="n">field</span><span class="p">,</span>
-</span><span id="line-982">                <span class="n">text</span><span class="p">,</span>
-</span><span id="line-983">                <span class="n">index</span><span class="o">=</span><span class="n">i</span><span class="p">,</span>
-</span><span id="line-984">                <span class="n">size</span><span class="o">=</span><span class="n">sizes</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">SHRINK_FACTOR</span><span class="o">**</span><span class="n">attempt</span><span class="p">,</span>
-</span><span id="line-985">                <span class="n">allow_rotation</span><span class="o">=</span><span class="n">allow_rotation</span><span class="p">,</span>
-</span><span id="line-986">            <span class="p">)</span>
-</span><span id="line-987">            <span class="k">if</span> <span class="n">spot</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-988">                <span class="k">break</span>
-</span><span id="line-989">        <span class="n">placed</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">spot</span><span class="p">)</span>
-</span><span id="line-990">    <span class="k">return</span> <span class="n">placed</span></div>
+</span><span id="line-952"><span class="sd">    An SVG outline works the same way (``M/L/H/V/C/S/Q/T/Z``; arcs are refused):</span>
+</span><span id="line-953">
+</span><span id="line-954"><span class="sd">    &gt;&gt;&gt; square = pack_words_into_shape(</span>
+</span><span id="line-955"><span class="sd">    ...     ['one', 'two'], shape_kind='svg_path',</span>
+</span><span id="line-956"><span class="sd">    ...     shape_value='M 0 0 L 10 0 L 10 10 L 0 10 Z')</span>
+</span><span id="line-957"><span class="sd">    &gt;&gt;&gt; [p.text for p in square if p is not None]</span>
+</span><span id="line-958"><span class="sd">    ['one', 'two']</span>
+</span><span id="line-959"><span class="sd">    """</span>
+</span><span id="line-960">    <span class="n">words</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">texts</span><span class="p">)</span>
+</span><span id="line-961">    <span class="k">if</span> <span class="ow">not</span> <span class="n">words</span><span class="p">:</span>
+</span><span id="line-962">        <span class="k">return</span> <span class="p">[]</span>
+</span><span id="line-963">    <span class="n">mask</span> <span class="o">=</span> <span class="n">shape_mask</span><span class="p">(</span>
+</span><span id="line-964">        <span class="n">shape_kind</span><span class="p">,</span>
+</span><span id="line-965">        <span class="n">shape_value</span><span class="p">,</span>
+</span><span id="line-966">        <span class="n">aspect</span><span class="o">=</span><span class="n">aspect</span><span class="p">,</span>
+</span><span id="line-967">        <span class="n">grid_height</span><span class="o">=</span><span class="n">grid_height</span><span class="p">,</span>
+</span><span id="line-968">        <span class="n">margin</span><span class="o">=</span><span class="n">margin</span><span class="p">,</span>
+</span><span id="line-969">        <span class="o">**</span><span class="nb">dict</span><span class="p">(</span><span class="n">mask_options</span> <span class="ow">or</span> <span class="p">{}),</span>
+</span><span id="line-970">    <span class="p">)</span>
+</span><span id="line-971">    <span class="k">if</span> <span class="ow">not</span> <span class="n">mask</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+</span><span id="line-972">        <span class="k">return</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">words</span><span class="p">)</span>
+</span><span id="line-973">    <span class="n">field</span> <span class="o">=</span> <span class="n">_build_field</span><span class="p">(</span><span class="n">mask</span><span class="p">)</span>
+</span><span id="line-974">    <span class="n">sizes</span> <span class="o">=</span> <span class="n">_salience_sizes</span><span class="p">(</span><span class="n">words</span><span class="p">,</span> <span class="n">base_size</span><span class="o">=</span><span class="n">base_size</span><span class="p">)</span>
+</span><span id="line-975">    <span class="n">placed</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Placement</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+</span><span id="line-976">    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">text</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">words</span><span class="p">):</span>
+</span><span id="line-977">        <span class="k">if</span> <span class="ow">not</span> <span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
+</span><span id="line-978">            <span class="n">placed</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
+</span><span id="line-979">            <span class="k">continue</span>
+</span><span id="line-980">        <span class="n">spot</span> <span class="o">=</span> <span class="kc">None</span>
+</span><span id="line-981">        <span class="k">for</span> <span class="n">attempt</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">shrink_steps</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)):</span>
+</span><span id="line-982">            <span class="n">spot</span> <span class="o">=</span> <span class="n">_place_word</span><span class="p">(</span>
+</span><span id="line-983">                <span class="n">field</span><span class="p">,</span>
+</span><span id="line-984">                <span class="n">text</span><span class="p">,</span>
+</span><span id="line-985">                <span class="n">index</span><span class="o">=</span><span class="n">i</span><span class="p">,</span>
+</span><span id="line-986">                <span class="n">size</span><span class="o">=</span><span class="n">sizes</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">SHRINK_FACTOR</span><span class="o">**</span><span class="n">attempt</span><span class="p">,</span>
+</span><span id="line-987">                <span class="n">allow_rotation</span><span class="o">=</span><span class="n">allow_rotation</span><span class="p">,</span>
+</span><span id="line-988">            <span class="p">)</span>
+</span><span id="line-989">            <span class="k">if</span> <span class="n">spot</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-990">                <span class="k">break</span>
+</span><span id="line-991">        <span class="n">placed</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">spot</span><span class="p">)</span>
+</span><span id="line-992">    <span class="k">return</span> <span class="n">placed</span></div>
 
 </span></code></pre></div>
     </div></div>
@@ -1208,7 +1210,7 @@
 </footer>
     </div>
     
-    <script src="../../../_static/documentation_options.js?v=ae06b2e5"></script>
+    <script src="../../../_static/documentation_options.js?v=5c6fbccc"></script>
     <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
