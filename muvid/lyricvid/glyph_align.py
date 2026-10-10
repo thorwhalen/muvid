@@ -22,7 +22,11 @@ Another script needs another romaniser, nothing else.
 Verification lives here too, because a timing nobody checked is a guess:
 :func:`onset_report` measures how close glyph starts sit to acoustic onsets in
 the vocal stem, against a random-jitter baseline, and :func:`word_agreement`
-lists the words where two timings disagree.
+lists the words where two timings disagree. :func:`reconcile` then acts on
+what a list of :class:`Detector` s distrusts — each names words and a remedy
+(``replace``: fall back to the vendor window; ``drop``: it was never sung).
+:func:`unsung` is the one that drops: a line the aligner could not place over
+which the vocal stem is silent (muvid#144).
 
 Licensing — read before shipping anything: the ``MMS_FA`` weights are
 **CC-BY-NC-4.0** and htdemucs (vocal separation) is CC-BY-NC too. So this is an
@@ -35,9 +39,9 @@ from __future__ import annotations
 
 import os
 import unicodedata
-from dataclasses import replace
+from dataclasses import dataclass, replace
 from pathlib import Path
-from typing import Any, Callable, Iterable, Sequence
+from typing import Any, Callable, Iterable, Mapping, Sequence
 
 from muvid.lyricvid.timed_text import Glyph, Line, Section, TimedText, Word
 
@@ -490,101 +494,348 @@ def word_agreement(
     }
 
 
+# --------------------------------------------------------------------------
+# reconciliation: detectors name the words to distrust, remedies fix them
+# --------------------------------------------------------------------------
+
+#: What :func:`reconcile` may do with a word a detector distrusts. ``replace``:
+#: fall back to the coarse window shifted by the measured bias, glyphs spread
+#: evenly and marked unmeasured (the word was sung; the aligner could not place
+#: it). ``drop``: remove the word, and a line or section left empty (it was
+#: never sung, so lighting it at ANY time is wrong).
+REMEDIES = ("replace", "drop")
+#: When several detectors flag one word, the lowest rank decides. Every remedy
+#: needs a rank AND a branch in :func:`reconcile` — a new one is never read as
+#: an old one (a remedy falling through to ``drop`` would delete words).
+_REMEDY_RANK = {"drop": 0, "replace": 1}
+#: :func:`unsung`'s thresholds, measured on a real song (muvid#144): a frame is
+#: quiet below this many dB under the stem's own loud level...
+UNSUNG_QUIET_DB = -40.0
+#: ...and a line is unsung when at least this share of its window is quiet...
+UNSUNG_QUIET_SHARE = 0.5
+#: ...in one unbroken stretch at least this long. A ghost repeat is a whole
+#: line of silence (2 s on the measured song); a short sung line whose vendor
+#: window is merely LATE lands on a quiet tail too, but a short one.
+UNSUNG_MIN_QUIET_S = 1.0
+#: Frame length for the stem's RMS level.
+UNSUNG_FRAME_S = 0.05
+#: The stem's "loud level" is this percentile of its frame RMS, so the threshold
+#: follows the mix rather than an absolute dBFS a quieter stem would fail.
+UNSUNG_REF_PERCENTILE = 95.0
+#: A stem whose loud level is below this RMS (-120 dBFS) holds no singing at all.
+_SILENT_RMS = 1e-6
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class Detector:
+    """Names the words of a fine timing not to trust, and what to do about them.
+
+    ``find(fine, coarse)`` gets both timings (same word sequence) and returns
+    ``{word_index: reason}``, indices into ``list(fine.words())``. ``remedy``
+    is one of :data:`REMEDIES`; when several detectors flag one word, ``drop``
+    wins — a word nobody sang has no window worth falling back to.
+    """
+
+    name: str
+    find: Callable[[TimedText, TimedText], Mapping[int, str]]
+    remedy: str = "replace"
+
+    def __post_init__(self) -> None:
+        if self.remedy not in REMEDIES:
+            raise ValueError(f"remedy must be one of {REMEDIES}, not {self.remedy!r}")
+
+
+def _word_start(w: Word) -> float:
+    return w.glyphs[0].start if w.glyphs else w.start
+
+
+def squeezed(*, min_glyph_s: float = MIN_GLYPH_S) -> Detector:
+    """Words with two sounded glyphs starting less than ``min_glyph_s`` apart.
+
+    CTC squeezing a word it could not hear into a few frames. Judged on
+    syllabic glyphs (kana/CJK: one mora each) only — letters of an alphabet are
+    legitimately ~30 ms apart — and only between neighbours in the same line
+    (lines are aligned in overlapping windows). Remedy: ``replace``.
+    """
+
+    def find(fine: TimedText, coarse: TimedText) -> dict[int, str]:
+        out: dict[int, str] = {}
+        w_idx = 0
+        for ln in fine.lines():
+            sounded = []
+            for w in ln.words:
+                sounded += [
+                    (w_idx, g.start)
+                    for g in w.glyphs
+                    if g.measured
+                    and g.text not in "ーッっ"
+                    and unicodedata.east_asian_width(g.text[0]) in "WF"
+                ]
+                w_idx += 1
+            for (wa, t), (wb, u) in zip(sounded, sounded[1:]):
+                if 0 <= u - t < min_glyph_s:
+                    why = f"two glyphs start {round((u - t) * 1000)} ms apart"
+                    out.setdefault(wa, why)
+                    out.setdefault(wb, why)
+        return out
+
+    return Detector(name="squeezed", find=find)
+
+
+def disagrees(*, disagree_s: float = DISAGREE_S) -> Detector:
+    """Words whose fine start is more than ``disagree_s`` from the coarse one.
+
+    Remedy: ``replace``.
+    """
+
+    def find(fine: TimedText, coarse: TimedText) -> dict[int, str]:
+        diffs = (
+            _word_start(x) - _word_start(y)
+            for x, y in zip(fine.words(), coarse.words())
+        )
+        return {
+            i: f"starts {d:+.2f} s from the coarse timing"
+            for i, d in enumerate(diffs)
+            if abs(d) > disagree_s
+        }
+
+    return Detector(name="disagrees", find=find)
+
+
+def default_detectors(
+    *, disagree_s: float = DISAGREE_S, min_glyph_s: float = MIN_GLYPH_S
+) -> tuple[Detector, ...]:
+    """What :func:`reconcile` runs when given none: the two that need no audio."""
+    return (squeezed(min_glyph_s=min_glyph_s), disagrees(disagree_s=disagree_s))
+
+
+def _read_stem(vocals: Path | str):
+    """``(mono samples, sample rate)`` of a stem file."""
+    import soundfile as sf
+
+    y, sr = sf.read(str(vocals), dtype="float32", always_2d=True)
+    return y.mean(1), sr
+
+
+def _frame_levels_db(vocals: Path | str, *, frame_s: float):
+    """Per-frame RMS of the stem, in dB relative to its own loud level."""
+    import numpy as np
+
+    y, sr = _read_stem(vocals)
+    hop = max(1, int(round(frame_s * sr)))
+    n = len(y) // hop
+    rms = np.sqrt(np.mean(y[: n * hop].reshape(n, hop) ** 2, axis=1))
+    ref = float(np.percentile(rms, UNSUNG_REF_PERCENTILE)) if n else 0.0
+    if ref < _SILENT_RMS:
+        # no loud level to be quiet against (a digitally silent stem, or the
+        # wrong file): read every frame as NOT quiet — the safe direction for a
+        # remedy that deletes words
+        return np.zeros(n)
+    return 20 * np.log10(np.maximum(rms, 1e-12) / ref)
+
+
+def unsung(
+    vocals: Path | str,
+    *,
+    among: Detector | None = None,
+    quiet_db: float = UNSUNG_QUIET_DB,
+    quiet_share: float = UNSUNG_QUIET_SHARE,
+    min_quiet_s: float = UNSUNG_MIN_QUIET_S,
+    frame_s: float = UNSUNG_FRAME_S,
+) -> Detector:
+    """Lines a vendor transcript lists but nobody sang. Remedy: ``drop``.
+
+    A LINE is unsung when both hold: ``among`` (default :func:`squeezed`)
+    distrusts every word in it — the aligner, searching the line's window, found
+    nothing to put them on — and the vocal stem is quiet (``quiet_db`` under its
+    own loud level) over at least ``quiet_share`` of the line's coarse window,
+    including one unbroken quiet stretch of ``min_quiet_s``. The window is
+    shifted by the vendor's measured bias (median fine-minus-coarse start over
+    the words ``among`` trusts), and a window running past the end of the stem
+    is not judged at all.
+
+    Both, because neither instrument is enough alone. Measured on the song that
+    motivated this (muvid#144: a Suno transcript listing a repeated タン タン タン
+    at 36-38 s that the stem shows nobody sang), the stem alone puts a sung,
+    staccato ストップ ストップ at 0.63 quiet against the ghost's 0.75 — vendor
+    windows run on into the silence after a word, so a quiet window is common —
+    while squeeze alone also flags a sung, fast スター ダンス (0.04 quiet).
+    Together they separate the ghost and nothing else.
+
+    What they do NOT separate unaided is one short sung line whose vendor
+    window is a second late: the aligner (searching ±``MARGIN_S``) misses it
+    and squeezes, and the window lands on the silence after it — measured on
+    the same song, the last line (フン) shifted +1 s was dropped. The unbroken
+    ``min_quiet_s`` is what refuses that case: a short window cannot hold a
+    second of silence, a ghost line is silence end to end.
+
+    The unit is the line, because a transcript repeats lines, and because the
+    first ghost word's own window held the decaying tail of the previous held
+    note: sound, but not its sound. ``among`` is squeeze and not disagreement
+    on purpose — a line the vendor MISPLACED was sung somewhere else, and
+    dropping it would delete a sung line.
+    """
+    among = among or squeezed()
+
+    def find(fine: TimedText, coarse: TimedText) -> dict[int, str]:
+        import numpy as np
+
+        flagged = among.find(fine, coarse)
+        fw, cw = list(fine.words()), list(coarse.words())
+        if len(fw) != len(cw):
+            raise ValueError("unsung needs the same word sequence in both timings")
+        trusted = [
+            _word_start(x) - _word_start(y)
+            for k, (x, y) in enumerate(zip(fw, cw))
+            if k not in flagged
+        ]
+        bias = float(np.median(trusted)) if trusted else 0.0
+        level = None
+        out: dict[int, str] = {}
+        i = 0
+        for ln in fine.lines():
+            idx = range(i, i + len(ln.words))
+            i += len(ln.words)
+            if not idx or any(k not in flagged for k in idx):
+                continue
+            if level is None:  # read the stem only when there is a candidate
+                level = _frame_levels_db(vocals, frame_s=frame_s)
+            a = max(0, int(round((min(cw[k].start for k in idx) + bias) / frame_s)))
+            b = max(a + 1, int(round((max(cw[k].end for k in idx) + bias) / frame_s)))
+            if b > len(level):  # past the stem's end: nothing to judge it by
+                continue
+            quiet = level[a:b] < quiet_db
+            share = float(np.mean(quiet))
+            run_s = _longest_run(quiet) * frame_s
+            if share >= quiet_share and run_s >= min_quiet_s:
+                why = (
+                    f"line {ln.text!r}: every word {among.name}, and the stem is "
+                    f"quiet over {share:.0%} of its window ({run_s:.1f} s unbroken)"
+                )
+                out.update({k: why for k in idx})
+        return out
+
+    return Detector(name="unsung", find=find, remedy="drop")
+
+
+def _longest_run(mask) -> int:
+    """Length of the longest run of ``True`` in a boolean sequence."""
+    best = cur = 0
+    for v in mask:
+        cur = cur + 1 if v else 0
+        best = max(best, cur)
+    return best
+
+
 def reconcile(
     fine: TimedText,
     coarse: TimedText,
     *,
-    disagree_s: float = DISAGREE_S,
-    min_glyph_s: float = MIN_GLYPH_S,
+    disagree_s: float | None = None,
+    min_glyph_s: float | None = None,
+    detectors: Sequence[Detector] | None = None,
 ) -> tuple[TimedText, list[dict[str, Any]]]:
-    """Distrust the fine timing where it is implausible; say where.
+    """Distrust the fine timing where a detector says so; remedy it; say where.
 
-    A word is distrusted when its start disagrees with the coarse timing by
-    more than ``disagree_s``, or when a sounded glyph lasts under
-    ``min_glyph_s`` (CTC squeezing a word it could not hear into a few frames —
-    seen on a song where the vendor's transcript listed a repeat the singer
-    never sang). Such a word falls back to its COARSE window, shifted by the
-    median offset between the two timings over the words they agree on (vendor
-    times run late; the bias is measured, not assumed), with its glyphs spread
-    evenly and marked ``measured=False``. Returns the timing and one record per
-    replaced word.
+    ``detectors`` defaults to :func:`default_detectors` (``squeezed`` and
+    ``disagrees``, both ``replace``; ``disagree_s`` and ``min_glyph_s`` tune
+    them, and are refused alongside explicit ``detectors``, which they could
+    not reach). Add :func:`unsung` when you have the vocal stem::
+
+        reconcile(fine, coarse, detectors=(*default_detectors(), unsung(stem)))
+
+    ``replace`` puts a word back in its COARSE window, shifted by the median
+    offset between the two timings over the words no detector flagged (vendor
+    times run late; the bias is measured, not assumed), glyphs spread evenly
+    and marked ``measured=False``. ``drop`` removes it, and any line or section
+    left empty. Returns the timing and one record per affected word: ``why``
+    (the deciding detector), ``detail``, ``remedy``, ``flagged_by`` (every
+    detector that flagged it) and ``used`` (the start it got; ``None`` when
+    dropped).
     """
     import numpy as np
 
-    def start(w: Word) -> float:
-        return w.glyphs[0].start if w.glyphs else w.start
-
     a, b = list(fine.words()), list(coarse.words())
-    # Squeezing is judged on syllabic glyphs (kana/CJK: one mora each) only —
-    # letters of an alphabet are legitimately ~30 ms apart — and only between
-    # neighbours in the same line (lines are aligned in overlapping windows).
-    crushed: set[int] = set()
-    w_idx = 0
-    for ln in fine.lines():
-        sounded = []
-        for w in ln.words:
-            sounded += [
-                (w_idx, g.start)
-                for g in w.glyphs
-                if g.measured
-                and g.text not in "ーッっ"
-                and unicodedata.east_asian_width(g.text[0]) in "WF"
-            ]
-            w_idx += 1
-        for (wa, t), (wb, u) in zip(sounded, sounded[1:]):
-            if 0 <= u - t < min_glyph_s:
-                crushed |= {wa, wb}
-
     if [w.text for w in a] != [w.text for w in b]:
         raise ValueError("reconcile needs the same word sequence in both timings")
-    diffs = [start(x) - start(y) for x, y in zip(a, b)]
-    bad = {i for i, d in enumerate(diffs) if abs(d) > disagree_s} | crushed
-    good = [d for i, d in enumerate(diffs) if i not in bad]
+    if detectors is None:
+        detectors = default_detectors(
+            disagree_s=DISAGREE_S if disagree_s is None else disagree_s,
+            min_glyph_s=MIN_GLYPH_S if min_glyph_s is None else min_glyph_s,
+        )
+    elif disagree_s is not None or min_glyph_s is not None:
+        raise ValueError(
+            "disagree_s/min_glyph_s tune the DEFAULT detectors; with "
+            "detectors=, pass them to default_detectors(...) instead"
+        )
+    flags: dict[int, list[tuple[Detector, str]]] = {}
+    for d in detectors:
+        for k, why in d.find(fine, coarse).items():
+            flags.setdefault(k, []).append((d, why))
+    good = [
+        _word_start(x) - _word_start(y)
+        for k, (x, y) in enumerate(zip(a, b))
+        if k not in flags
+    ]
     bias = float(np.median(good)) if good else 0.0
-    replaced, k = [], 0
+
+    records, k = [], 0
     sections = []
     for sec in fine.sections:
         lines = []
         for ln in sec.lines:
             words = []
             for w in ln.words:
-                if k in bad:
-                    c = b[k]
-                    shifted = replace(
-                        c,
-                        start=c.start + bias,
-                        end=c.end + bias,
-                        measured=False,
-                        glyphs=(),
-                    )
-                    glyphs = _interpolated(
-                        shifted,
-                        [(g.text, "") for g in w.glyphs] or [(ch, "") for ch in w.text],
-                    )
-                    words.append(
-                        replace(
-                            w,
-                            start=shifted.start,
-                            end=shifted.end,
+                fl = flags.get(k)
+                if fl:
+                    d, why = min(fl, key=lambda f: _REMEDY_RANK[f[0].remedy])
+                    rec = {
+                        "index": k,
+                        "text": w.text,
+                        "fine": round(_word_start(w), 3),
+                        "why": d.name,
+                        "detail": why,
+                        "remedy": d.remedy,
+                        "flagged_by": [x.name for x, _ in fl],
+                        "used": None,
+                    }
+                    if d.remedy == "drop":
+                        pass  # gone: no window is right for a word nobody sang
+                    elif d.remedy == "replace":
+                        c = b[k]
+                        shifted = replace(
+                            c,
+                            start=c.start + bias,
+                            end=c.end + bias,
                             measured=False,
-                            glyphs=glyphs,
+                            glyphs=(),
                         )
-                    )
-                    replaced.append(
-                        {
-                            "index": k,
-                            "text": w.text,
-                            "fine": round(start(w), 3),
-                            "used": round(shifted.start, 3),
-                            "why": "squeezed" if k in crushed else "disagrees",
-                        }
-                    )
+                        glyphs = _interpolated(
+                            shifted,
+                            [(g.text, "") for g in w.glyphs]
+                            or [(ch, "") for ch in w.text],
+                        )
+                        words.append(
+                            replace(
+                                w,
+                                start=shifted.start,
+                                end=shifted.end,
+                                measured=False,
+                                glyphs=glyphs,
+                            )
+                        )
+                        rec["used"] = round(shifted.start, 3)
+                    else:  # pragma: no cover - Detector refuses unknown remedies
+                        raise AssertionError(f"no branch for remedy {d.remedy!r}")
+                    records.append(rec)
                 else:
                     words.append(w)
                 k += 1
-            lines.append(replace(ln, words=tuple(words)))
-        sections.append(replace(sec, lines=tuple(lines)))
-    return replace(fine, sections=tuple(sections)), replaced
+            if words:
+                lines.append(replace(ln, words=tuple(words)))
+        if lines:
+            sections.append(replace(sec, lines=tuple(lines)))
+    return replace(fine, sections=tuple(sections)), records
 
 
 def glyph_rows(tt: TimedText) -> Iterable[dict[str, Any]]:

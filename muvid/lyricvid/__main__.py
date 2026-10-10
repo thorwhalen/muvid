@@ -155,11 +155,15 @@ def glyphs(
     workdir: str = "",
     allow_download: bool = False,
     no_reconcile: bool = False,
+    keep_unsung: bool = False,
 ) -> None:
     """Refine word TIMING (TimedText JSON) to per-glyph times; write OUTPUT JSON.
 
     Separates the vocals first unless --vocals is given. Prints the onset and
     agreement reports: read them before trusting the result (muvid#142).
+    Lines the transcript lists but the stem shows nobody sang are DROPPED and
+    listed under ``reconciled`` with ``remedy: drop`` (muvid#144);
+    --keep-unsung falls back to their vendor windows instead.
     """
     import tempfile
     from pathlib import Path
@@ -182,7 +186,8 @@ def glyphs(
     agreement = ga.word_agreement(fine, coarse)
     replaced: list = []
     if not no_reconcile:
-        fine, replaced = ga.reconcile(fine, coarse)
+        detectors = ga.default_detectors() + (() if keep_unsung else (ga.unsung(stem),))
+        fine, replaced = ga.reconcile(fine, coarse, detectors=detectors)
     Path(output).write_text(
         _json.dumps(fine.to_dict(), ensure_ascii=False, indent=1), encoding="utf-8"
     )
