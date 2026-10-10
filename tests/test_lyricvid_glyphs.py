@@ -143,3 +143,123 @@ def test_glyph_pages_skips_empty_pages_and_previews_next_page():
 
 def test_romanize_word_final_sokuon_is_silent():
     assert ga.romanize_kana("カッ") == [("カ", "ka"), ("ッ", "")]
+
+
+# --------------------------------------------------------------------------
+# reconcile's detector seam, and the unsung detector (muvid#144)
+# --------------------------------------------------------------------------
+
+_SR = 8000
+
+
+def _song_with_a_ghost_line():
+    """Four lines: sung; a vendor-listed repeat nobody sang; sung but squeezed
+    by the aligner; sung staccato with a long silence after it (not squeezed)."""
+    recs = [
+        {"text": "カス", "start": 1.0, "end": 2.0, "line_end": True},
+        {"text": "タン", "start": 3.0, "end": 4.0},
+        {"text": "タン", "start": 4.0, "end": 5.0, "line_end": True},
+        {"text": "スター", "start": 6.0, "end": 7.0, "line_end": True},
+        {"text": "ストップ", "start": 8.0, "end": 10.0, "line_end": True},
+    ]
+    coarse = from_word_records(recs, duration=11.0)
+    fine = _with_glyphs(coarse)
+
+    def squeeze(w):
+        from dataclasses import replace
+        t = w.start + 0.6  # crammed together, later than the vendor said
+        return replace(w, glyphs=tuple(replace(g, start=t + i * 0.01, end=t + i * 0.01 + 0.01)
+                                       for i, g in enumerate(w.glyphs)))
+
+    from dataclasses import replace
+    fine = replace(fine, sections=tuple(replace(s, lines=tuple(
+        replace(l, words=tuple(squeeze(w) if w.text in ("タン", "スター") else w
+                               for w in l.words)) for l in s.lines)) for s in fine.sections))
+    return fine, coarse
+
+
+def _stem(*spans, duration=11.0):
+    np = pytest.importorskip("numpy")
+    t = np.arange(int(duration * _SR)) / _SR
+    y = np.zeros_like(t, dtype="float32")
+    for a, b in spans:
+        m = (t >= a) & (t < b)
+        y[m] = 0.5 * np.sin(2 * np.pi * 220 * t[m])
+    return y
+
+
+@pytest.fixture
+def stem_of(monkeypatch):
+    def use(y):
+        monkeypatch.setattr(ga, "_read_stem", lambda vocals: (y, _SR))
+        return "vocals.wav"
+    return use
+
+
+def test_unsung_drops_the_silent_squeezed_line_and_nothing_else(stem_of):
+    fine, coarse = _song_with_a_ghost_line()
+    stem = stem_of(_stem((1.0, 2.0), (6.0, 7.0), (8.0, 8.3)))
+    out, records = ga.reconcile(fine, coarse,
+                                detectors=(*ga.default_detectors(), ga.unsung(stem)))
+    assert [l.text for l in out.lines()] == ["カス", "スター", "ストップ"]
+    by = {(r["index"], r["text"]): r for r in records}
+    assert {k for k, r in by.items() if r["remedy"] == "drop"} == {(1, "タン"), (2, "タン")}
+    assert all(r["why"] == "unsung" and r["used"] is None
+               for r in records if r["remedy"] == "drop")
+    # squeezed but SUNG: falls back to its vendor window, it is not deleted
+    star = by[(3, "スター")]
+    assert star["remedy"] == "replace" and star["why"] == "squeezed"
+    # a quiet window alone is not evidence: ストップ is untouched
+    assert all(r["text"] != "ストップ" for r in records)
+
+
+def test_unsung_needs_the_aligner_to_have_failed_too(stem_of):
+    """A silent stem over a line the aligner placed fine drops nothing."""
+    fine, coarse = _song_with_a_ghost_line()
+    fine = _with_glyphs(coarse)  # nothing squeezed
+    stem = stem_of(_stem((1.0, 2.0)))  # every later line is quiet
+    _, records = ga.reconcile(fine, coarse,
+                              detectors=(*ga.default_detectors(), ga.unsung(stem)))
+    assert records == []
+
+
+def test_unsung_ignores_a_digitally_silent_stem(stem_of):
+    """No loud level to be quiet against: never a reason to delete words."""
+    fine, coarse = _song_with_a_ghost_line()
+    stem = stem_of(_stem())
+    _, records = ga.reconcile(fine, coarse,
+                              detectors=(*ga.default_detectors(), ga.unsung(stem)))
+    assert all(r["remedy"] == "replace" for r in records)
+
+
+def test_default_reconcile_still_replaces_the_ghost_line():
+    """Without a stem, the behaviour before muvid#144 is unchanged."""
+    fine, coarse = _song_with_a_ghost_line()
+    out, records = ga.reconcile(fine, coarse)
+    assert [l.text for l in out.lines()] == [l.text for l in coarse.lines()]
+    assert {r["text"] for r in records} == {"タン", "スター"}
+    assert all(r["remedy"] == "replace" for r in records)
+
+
+def test_a_custom_detector_plugs_in_and_drop_beats_replace():
+    fine, coarse = _song_with_a_ghost_line()
+    first = ga.Detector(name="first", find=lambda f, c: {0: "test"}, remedy="drop")
+    also = ga.Detector(name="also", find=lambda f, c: {0: "test"})
+    out, records = ga.reconcile(fine, coarse, detectors=(also, first))
+    assert [l.text for l in out.lines()][0] == "タン タン"  # line 0 left empty: gone
+    assert records == [{"index": 0, "text": "カス", "fine": 1.0, "why": "first",
+                        "detail": "test", "remedy": "drop",
+                        "flagged_by": ["also", "first"], "used": None}]
+
+
+def test_an_unknown_remedy_is_refused():
+    with pytest.raises(ValueError, match="remedy"):
+        ga.Detector(name="x", find=lambda f, c: {}, remedy="mark")
+
+
+def test_read_stem_reads_a_real_file(tmp_path):
+    sf = pytest.importorskip("soundfile")
+    y = _stem((0.0, 0.5), duration=1.0)
+    sf.write(tmp_path / "v.wav", y, _SR)
+    got, sr = ga._read_stem(tmp_path / "v.wav")
+    assert sr == _SR and len(got) == len(y)
