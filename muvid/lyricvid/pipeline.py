@@ -202,7 +202,9 @@ def render(request: RenderRequest) -> RenderResult:
     ``request.inputs`` takes ``audio`` (required) and any of ``lyrics``,
     ``subtitles``, ``project``. ``request.params`` takes ``treatment`` (a
     treatment spec as a mapping, or omitted to have one proposed), ``renderer``,
-    ``width``, ``height``, ``fps``, ``aligner`` and ``persona``.
+    ``width``, ``height``, ``fps``, ``aligner`` and ``persona``, and
+    ``captions`` — ``{language: transform}`` (see :mod:`muvid.lyricvid.captions`),
+    each written beside the video as an ``.srt`` artifact ``captions.<language>``.
     """
     inputs = dict(request.inputs)
     params = dict(request.params)
@@ -251,6 +253,13 @@ def render(request: RenderRequest) -> RenderResult:
         fps=int(params.get("fps", 30)),
     )
     check_render_bounds(canvas, timed.duration)
+    tracks = None
+    if params.get("captions"):
+        from muvid.lyricvid.captions import caption_tracks
+
+        # built BEFORE the render: an uncovered line fails now, not after a
+        # render the caller then has to redo
+        tracks = caption_tracks(timed, params["captions"])
     scene = compile_scene(treatment, timed, canvas=canvas)
 
     requested = params.get("renderer", DEFAULT_RENDERER)
@@ -265,6 +274,14 @@ def render(request: RenderRequest) -> RenderResult:
     # or hand-edit is an opaque artifact, which is the thing this design avoids.
     spec_path = request.workdir / "treatment.json"
     spec_path.write_text(treatment.to_json(), encoding="utf-8")
+    caption_paths: dict[str, Path] = {}
+    if tracks:
+        from muvid.lyricvid.captions import write_caption_tracks
+
+        caption_paths = {
+            f"captions.{lang}": path
+            for lang, path in write_caption_tracks(tracks, request.workdir).items()
+        }
 
     meta: dict[str, Any] = {
         **dict(result.meta),
@@ -287,6 +304,6 @@ def render(request: RenderRequest) -> RenderResult:
         duration_s=result.duration_s
         if result.duration_s is not None
         else timed.duration,
-        artifacts={**dict(result.artifacts), "treatment": spec_path},
+        artifacts={**dict(result.artifacts), "treatment": spec_path, **caption_paths},
         meta=meta,
     )

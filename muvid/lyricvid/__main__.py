@@ -120,10 +120,12 @@ def render(
     height: int = 1080,
     fps: int = 30,
     workdir: str = "",
+    captions: str = "",
 ) -> None:
-    """Render a lyric video from AUDIO to OUTPUT."""
-    from pathlib import Path
+    """Render a lyric video from AUDIO to OUTPUT.
 
+    --captions also writes caption tracks beside it: see the `captions` verb.
+    """
     treat = _json.loads(_treatment_arg(treatment)) if treatment else None
     _emit(
         _tools.render_lyric_video(
@@ -142,6 +144,52 @@ def render(
             height=height,
             fps=fps,
             workdir=workdir or None,
+            captions=_caption_tracks_arg(captions) if captions else None,
+        )
+    )
+
+
+def _caption_tracks_arg(value: str) -> dict:
+    """``{language: transform}`` from inline JSON or a JSON file; a transform
+    that names an existing ``.json`` file is replaced by the mapping it holds."""
+    from pathlib import Path
+
+    from muvid.lyricvid.captions import CAPTION_TRANSFORMS
+
+    tracks = _json.loads(_treatment_arg(value))
+    return {
+        lang: _json.loads(Path(t).read_text(encoding="utf-8"))
+        if isinstance(t, str) and t not in CAPTION_TRANSFORMS and Path(t).is_file()
+        else t
+        for lang, t in tracks.items()
+    }
+
+
+def captions(
+    timing: str,
+    output_dir: str,
+    tracks: str,
+    *,
+    offset_s: float = 0.0,
+    stem: str = "captions",
+    fmt: str = "srt",
+) -> None:
+    """Write one caption file per language for TIMING (TimedText JSON) to OUTPUT_DIR.
+
+    TRACKS is JSON, inline or a file: '{"ja-Latn": "hepburn", "en": "en.json"}'.
+    Each value is a named transform (hepburn, original), a {line text: caption}
+    mapping, or a path to a JSON file holding one. A mapping must cover every
+    sung line (map a line to "" to omit it). --offset-s shifts every caption,
+    e.g. by a title card prepended to the video (muvid#145).
+    """
+    _emit(
+        _tools.export_captions(
+            timing,
+            output_dir,
+            _caption_tracks_arg(tracks),
+            offset_s=offset_s,
+            stem=stem,
+            fmt=fmt,
         )
     )
 
@@ -202,7 +250,17 @@ def glyphs(
     )
 
 
-_FUNCS = [subgenres, vocabulary, schema, analyze, propose, validate, render, glyphs]
+_FUNCS = [
+    subgenres,
+    vocabulary,
+    schema,
+    analyze,
+    propose,
+    validate,
+    render,
+    captions,
+    glyphs,
+]
 
 
 def main() -> int:
